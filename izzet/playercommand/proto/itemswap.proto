@@ -1,0 +1,9 @@
+syntax = "proto3";
+package playercommand;
+
+option go_package = "izzet/playercommand/protogen/playercommand";
+
+message ItemSwap {
+    int64 idx1 = 1;
+    int64 idx2 = 2;
+}

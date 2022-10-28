@@ -1,0 +1,18 @@
+syntax = "proto3";
+package playercommand;
+
+import "itemswap.proto";
+import "other.proto";
+
+option go_package = "izzet/playercommand/protogen/playercommand";
+
+message PlayerCommandList {
+    repeated Wrapper commands = 1;
+}
+
+message Wrapper {
+    oneof playercommand {
+        ItemSwap itemswap = 1;
+        Other other = 2;
+    }
+}

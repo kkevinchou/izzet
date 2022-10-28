@@ -1,0 +1,46 @@
+entity_type: "worker"
+tree: [
+  {type: "sequence", label: ""}
+]
+  # blah: "asdf2"
+
+#
+#
+#
+#
+#
+#
+#entity_type: "worker"
+# tree: [
+#   {type: "move", definition: "asdf"}
+# ]
+#
+#
+
+# seq 1
+# save initial entity position
+# save item
+# save item position
+# move entity to item position
+# pickup item
+
+# seq 2
+# get initial entity position
+# move entity to initial entity position
+# drop item
+
+# seq 3
+# go to the old item position
+
+# seq 4
+# get the item's current position
+# move entity to that position
+# pick up the item
+
+# seq 5
+# get the item's initial position
+# move entity to that position
+# drop item
+
+# seq 6
+# move entity to initial enitty position

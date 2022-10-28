@@ -1,0 +1,14 @@
+syntax = "proto3";
+package components;
+
+option go_package = "izzet/components/protogen/inventory";
+
+message Inventory {
+  repeated InventorySlot items = 1;
+}
+
+message InventorySlot {
+  int64 id = 1;
+  int64 index = 2;
+  int64 count = 3;
+}

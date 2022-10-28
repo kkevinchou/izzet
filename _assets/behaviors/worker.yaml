@@ -1,0 +1,4 @@
+entity_type: "worker"
+behavior_tree: [
+  {field1: "a"}
+]

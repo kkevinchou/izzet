@@ -1,0 +1,55 @@
+entity_type: "worker"
+tree_definitions: [
+  {
+    label: "pickup_item",
+    type: "sequence",
+    nodes: [
+      {define: "item", as: "random_item"},
+      {define: "entity", as: "entity"},
+      {define: "initial_item_position", as: "item.position"},
+      {define: "initial_entity_position", as: "entity.position"},
+      {move: "entity", to: "initial_entity_position"}
+    ]
+  }
+]
+tree:
+  pickup_item:
+    asdf:
+  abcd:
+
+
+#
+#entity_type: "worker"
+# tree: [
+#   {type: "move", definition: "asdf"}
+# ]
+#
+#
+
+# seq 1
+# save initial entity position
+# save item
+# save item position
+# move entity to item position
+# pickup item
+
+# seq 2
+# get initial entity position
+# move entity to initial entity position
+# drop item
+
+# seq 3
+# go to the old item position
+
+# seq 4
+# get the item's current position
+# move entity to that position
+# pick up the item
+
+# seq 5
+# get the item's initial position
+# move entity to that position
+# drop item
+
+# seq 6
+# move entity to initial enitty position

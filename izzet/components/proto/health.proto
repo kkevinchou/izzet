@@ -1,8 +1,0 @@
-syntax = "proto3";
-package components;
-
-option go_package = "izzet/components/protogen/health";
-
-message Health {
-  double value = 1;
-}

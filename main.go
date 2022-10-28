@@ -83,15 +83,8 @@ func main() {
 		}()
 	}
 
-	fmt.Println("starting game on mode:", mode)
-	var game Game
-	if mode == modeClient {
-		game = izzet.NewClientGame("_assets", "shaders")
-	} else if mode == modeServer {
-		game = izzet.NewServerGame("_assets")
-	}
-
-	game.Start()
+	app := izzet.New("_assets", "shaders")
+	app.Start()
 	sdl.Quit()
 }
 

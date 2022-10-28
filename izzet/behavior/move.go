@@ -6,9 +6,9 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/directory"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/behavior"
-	"github.com/kkevinchou/izzet/lib/geometry"
-	"github.com/kkevinchou/izzet/lib/logger"
+	"github.com/kkevinchou/kitolib/behavior"
+	"github.com/kkevinchou/kitolib/geometry"
+	"github.com/kkevinchou/kitolib/logger"
 )
 
 type Mover interface {

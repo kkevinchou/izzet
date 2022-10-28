@@ -1,6 +1,6 @@
 package components
 
-import "github.com/kkevinchou/izzet/lib/animation"
+import "github.com/kkevinchou/kitolib/animation"
 
 type AnimationComponent struct {
 	Player *animation.AnimationPlayer

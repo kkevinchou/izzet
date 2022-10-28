@@ -11,10 +11,10 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems/base"
-	"github.com/kkevinchou/izzet/lib/collision/checks"
-	"github.com/kkevinchou/izzet/lib/collision/collider"
-	"github.com/kkevinchou/izzet/lib/input"
-	"github.com/kkevinchou/izzet/lib/libutils"
+	"github.com/kkevinchou/kitolib/collision/checks"
+	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/libutils"
 )
 
 const (

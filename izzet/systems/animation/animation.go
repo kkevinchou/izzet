@@ -8,7 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/base"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/utils"
-	"github.com/kkevinchou/izzet/lib/libutils"
+	"github.com/kkevinchou/kitolib/libutils"
 )
 
 type World interface {

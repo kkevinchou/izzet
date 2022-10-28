@@ -5,7 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/input"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 func (g *Game) GameOver() {

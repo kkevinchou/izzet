@@ -1,7 +1,7 @@
 package components
 
 import (
-	"github.com/kkevinchou/izzet/lib/collision/collider"
+	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type ColliderComponent struct {

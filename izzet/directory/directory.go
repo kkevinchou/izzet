@@ -8,10 +8,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/managers/path"
 	"github.com/kkevinchou/izzet/izzet/managers/player"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/font"
-	"github.com/kkevinchou/izzet/lib/modelspec"
-	"github.com/kkevinchou/izzet/lib/shaders"
-	"github.com/kkevinchou/izzet/lib/textures"
+	"github.com/kkevinchou/kitolib/font"
+	"github.com/kkevinchou/kitolib/modelspec"
+	"github.com/kkevinchou/kitolib/shaders"
+	"github.com/kkevinchou/kitolib/textures"
 )
 
 type IAssetManager interface {

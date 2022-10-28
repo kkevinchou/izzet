@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/lib/behavior"
+	"github.com/kkevinchou/kitolib/behavior"
 )
 
 type Position struct {

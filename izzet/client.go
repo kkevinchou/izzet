@@ -28,10 +28,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/rpcsender"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/utils/entityutils"
-	"github.com/kkevinchou/izzet/lib/assets"
-	"github.com/kkevinchou/izzet/lib/input"
-	"github.com/kkevinchou/izzet/lib/network"
-	"github.com/kkevinchou/izzet/lib/shaders"
+	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/network"
+	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/veandco/go-sdl2/sdl"
 )
 

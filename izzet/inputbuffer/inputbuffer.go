@@ -6,7 +6,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/knetwork"
 	"github.com/kkevinchou/izzet/izzet/playercommand/protogen/playercommand"
-	"github.com/kkevinchou/izzet/lib/input"
+	"github.com/kkevinchou/kitolib/input"
 	"google.golang.org/protobuf/proto"
 )
 

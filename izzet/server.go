@@ -24,7 +24,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/playerregistration"
 	"github.com/kkevinchou/izzet/izzet/systems/preframe"
 	"github.com/kkevinchou/izzet/izzet/systems/rpcreceiver"
-	"github.com/kkevinchou/izzet/lib/assets"
+	"github.com/kkevinchou/kitolib/assets"
 )
 
 func NewServerGame(assetsDirectory string) *Game {

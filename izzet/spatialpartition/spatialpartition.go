@@ -4,7 +4,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/components"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/lib/collision/collider"
+	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type World interface {

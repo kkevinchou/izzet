@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/lib/network"
+	"github.com/kkevinchou/kitolib/network"
 )
 
 func main() {

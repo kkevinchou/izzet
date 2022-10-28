@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/lib/input"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 type EntityState struct {

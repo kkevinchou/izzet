@@ -7,7 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/spatialpartition"
-	"github.com/kkevinchou/izzet/lib/collision"
+	"github.com/kkevinchou/kitolib/collision"
 )
 
 type World interface {

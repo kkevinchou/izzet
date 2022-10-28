@@ -1,6 +1,6 @@
 package types
 
-import "github.com/kkevinchou/izzet/lib/network"
+import "github.com/kkevinchou/kitolib/network"
 
 type MovementType int
 

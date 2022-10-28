@@ -13,7 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/base"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/utils/entityutils"
-	"github.com/kkevinchou/izzet/lib/metrics"
+	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type World interface {

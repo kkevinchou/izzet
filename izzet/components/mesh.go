@@ -2,7 +2,7 @@ package components
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/lib/model"
+	"github.com/kkevinchou/kitolib/model"
 )
 
 type MeshComponent struct {

@@ -11,8 +11,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/managers/eventbroker"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/spatialpartition"
-	"github.com/kkevinchou/izzet/lib/input"
-	"github.com/kkevinchou/izzet/lib/metrics"
+	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/metrics"
 
 	"github.com/kkevinchou/izzet/izzet/singleton"
 	"github.com/kkevinchou/izzet/izzet/types"

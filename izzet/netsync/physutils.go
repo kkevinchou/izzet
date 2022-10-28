@@ -7,7 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/libutils"
+	"github.com/kkevinchou/kitolib/libutils"
 )
 
 const (

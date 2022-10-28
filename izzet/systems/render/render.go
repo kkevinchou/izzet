@@ -19,8 +19,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/systems/base"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/libutils"
-	"github.com/kkevinchou/izzet/lib/metrics"
+	"github.com/kkevinchou/kitolib/libutils"
+	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )

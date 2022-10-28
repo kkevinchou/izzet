@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/singleton"
 	"github.com/kkevinchou/izzet/izzet/systems/base"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/metrics"
+	"github.com/kkevinchou/kitolib/metrics"
 	"google.golang.org/protobuf/proto"
 )
 

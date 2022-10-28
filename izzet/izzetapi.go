@@ -10,7 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/utils"
-	"github.com/kkevinchou/izzet/lib/metrics"
+	"github.com/kkevinchou/kitolib/metrics"
 )
 
 func (g *Game) GetSingleton() *singleton.Singleton {

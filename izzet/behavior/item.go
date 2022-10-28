@@ -5,8 +5,8 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/directory"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/behavior"
-	"github.com/kkevinchou/izzet/lib/logger"
+	"github.com/kkevinchou/kitolib/behavior"
+	"github.com/kkevinchou/kitolib/logger"
 )
 
 type PickupItem struct {

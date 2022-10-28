@@ -10,12 +10,12 @@ import (
 	"github.com/kkevinchou/izzet/izzet/directory"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/spatialpartition"
-	"github.com/kkevinchou/izzet/lib/collision/collider"
-	"github.com/kkevinchou/izzet/lib/font"
-	"github.com/kkevinchou/izzet/lib/libutils"
-	utils "github.com/kkevinchou/izzet/lib/libutils"
-	"github.com/kkevinchou/izzet/lib/shaders"
-	"github.com/kkevinchou/izzet/lib/textures"
+	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/font"
+	"github.com/kkevinchou/kitolib/libutils"
+	utils "github.com/kkevinchou/kitolib/libutils"
+	"github.com/kkevinchou/kitolib/shaders"
+	"github.com/kkevinchou/kitolib/textures"
 )
 
 const (

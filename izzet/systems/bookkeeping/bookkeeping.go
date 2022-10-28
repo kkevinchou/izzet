@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/singleton"
 	"github.com/kkevinchou/izzet/izzet/systems/base"
 	"github.com/kkevinchou/izzet/izzet/utils"
-	"github.com/kkevinchou/izzet/lib/input"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 type World interface {

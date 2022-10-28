@@ -5,8 +5,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/components"
 	"github.com/kkevinchou/izzet/izzet/directory"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/izzet/lib/collision/collider"
-	"github.com/kkevinchou/izzet/lib/model"
+	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/model"
 )
 
 var (

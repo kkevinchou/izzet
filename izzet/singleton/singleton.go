@@ -5,7 +5,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/playercommand/protogen/playercommand"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/statebuffer"
-	"github.com/kkevinchou/izzet/lib/input"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 // I hate this. Find a better place to put your data, yo

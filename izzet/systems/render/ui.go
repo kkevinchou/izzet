@@ -11,7 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/playercommand/protogen/playercommand"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/utils"
-	"github.com/kkevinchou/izzet/lib/console"
+	"github.com/kkevinchou/kitolib/console"
 )
 
 func (s *RenderSystem) debugWindow() {

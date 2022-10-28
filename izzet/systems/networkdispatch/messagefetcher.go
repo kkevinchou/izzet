@@ -2,7 +2,7 @@ package networkdispatch
 
 import (
 	"github.com/kkevinchou/izzet/izzet/directory"
-	"github.com/kkevinchou/izzet/lib/network"
+	"github.com/kkevinchou/kitolib/network"
 )
 
 func connectedPlayersMessageFetcher(world World) []*network.Message {

@@ -12,8 +12,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/systems/base"
 	"github.com/kkevinchou/izzet/izzet/utils"
-	"github.com/kkevinchou/izzet/lib/metrics"
-	"github.com/kkevinchou/izzet/lib/network"
+	"github.com/kkevinchou/kitolib/metrics"
+	"github.com/kkevinchou/kitolib/network"
 )
 
 type MessageFetcher func(world World) []*network.Message

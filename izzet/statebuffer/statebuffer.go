@@ -5,7 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/knetwork"
-	"github.com/kkevinchou/izzet/lib/libutils"
+	"github.com/kkevinchou/kitolib/libutils"
 )
 
 type BufferedState struct {

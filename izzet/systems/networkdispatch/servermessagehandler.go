@@ -11,7 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/knetwork"
 	"github.com/kkevinchou/izzet/izzet/managers/player"
 	"github.com/kkevinchou/izzet/izzet/utils/entityutils"
-	"github.com/kkevinchou/izzet/lib/network"
+	"github.com/kkevinchou/kitolib/network"
 )
 
 func serverMessageHandler(world World, message *network.Message) {

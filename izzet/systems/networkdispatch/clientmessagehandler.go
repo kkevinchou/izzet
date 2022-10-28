@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/knetwork"
 	"github.com/kkevinchou/izzet/izzet/netsync"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/lib/network"
+	"github.com/kkevinchou/kitolib/network"
 )
 
 func clientMessageHandler(world World, message *network.Message) {

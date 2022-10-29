@@ -11,7 +11,6 @@ func (g *Izzet) Shutdown() {
 }
 
 func (g *Izzet) HandleInput(frameInput input.Input) {
-
 	keyboardInput := frameInput.KeyboardInput
 	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
 		// move this into a system maybe

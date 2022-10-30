@@ -12,8 +12,6 @@ require (
 
 require (
 	github.com/disintegration/imaging v1.6.2 // indirect
-	github.com/kkevinchou/kito v0.0.0-20221028025852-6dc9684252a8 // indirect
 	github.com/qmuntal/gltf v0.23.1 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
-	google.golang.org/grpc v1.50.1 // indirect
 )

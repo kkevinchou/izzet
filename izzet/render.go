@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -59,8 +60,20 @@ func (g *Izzet) Render(delta time.Duration) {
 
 	g.renderToDepthMap(lightViewerContext, lightContext)
 	g.renderToDisplay(cameraViewerContext, lightContext)
+	g.renderImgui()
 
 	g.window.GLSwap()
+}
+
+func (g *Izzet) renderImgui() {
+	g.platform.NewFrame()
+	imgui.NewFrame()
+
+	var open bool
+	imgui.ShowDemoWindow(&open)
+
+	imgui.Render()
+	g.imguiRenderer.Render(g.platform.DisplaySize(), g.platform.FramebufferSize(), imgui.RenderedDrawData())
 }
 
 func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
@@ -84,29 +97,29 @@ func (g *Izzet) renderToDepthMap(viewerContext ViewerContext, lightContext Light
 func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
 	shaderManager := g.shaderManager
 
-	meshModelMatrix := createModelMatrix(
-		mgl64.Scale3D(1, 1, 1),
-		mgl64.QuatIdent().Mat4(),
-		mgl64.Ident4(),
-	)
+	for _, entity := range g.entities {
+		modelMatrix := createModelMatrix(
+			mgl64.Scale3D(1, 1, 1),
+			mgl64.QuatIdent().Mat4(),
+			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
+		)
 
-	// shader := "model_static"
-	// if componentContainer.AnimationComponent != nil {
-	// 	shader = "modelpbr"
-	// }
+		shader := "model_static"
+		if entity.AnimationPlayer != nil {
+			shader = "modelpbr"
+		}
 
-	drawModel(
-		viewerContext,
-		lightContext,
-		g.shadowMap,
-		shaderManager.GetShaderProgram("model_static"),
-		g.assetManager,
-		g.model,
-		nil,
-		meshModelMatrix,
-	)
-
-	// drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{-50, 0, 0}, {50, 0, 0}, {0, 50, 0}}, mgl64.Vec3{1, 0, 0})
+		drawModel(
+			viewerContext,
+			lightContext,
+			g.shadowMap,
+			shaderManager.GetShaderProgram(shader),
+			g.assetManager,
+			entity.Model,
+			entity.AnimationPlayer,
+			modelMatrix,
+		)
+	}
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {

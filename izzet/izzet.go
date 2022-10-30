@@ -24,17 +24,17 @@ type Izzet struct {
 	platform *input.SDLPlatform
 	window   *sdl.Window
 
-	model           *model.Model
-	animationPlayer *animation.AnimationPlayer
-
 	// render properties
 	fovY          float64
 	aspectRatio   float64
 	shaderManager *shaders.ShaderManager
 	assetManager  *assets.AssetManager
 	shadowMap     *ShadowMap
+	imguiRenderer *ImguiOpenGL4Renderer
 
 	camera *Camera
+
+	entities map[string]Entity
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -58,6 +58,12 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 
+	imguiRenderer, err := NewImguiOpenGL4Renderer(imguiIO)
+	if err != nil {
+		panic(err)
+	}
+	g.imguiRenderer = imguiRenderer
+
 	var data int32
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
 
@@ -71,11 +77,6 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	}
 
 	g.shadowMap = shadowMap
-	spec := g.assetManager.GetModel("town_center")
-	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	g.model = model.NewModel(spec, modelConfig)
-	g.model.InitializeRenderingProperties(*g.assetManager)
-	g.animationPlayer = animation.NewAnimationPlayer(g.model)
 
 	compileShaders(g.shaderManager)
 
@@ -83,7 +84,32 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
 	g.camera = &Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
 
+	g.loadEntities()
+
 	return g
+}
+
+func (g *Izzet) loadEntities() {
+	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+
+	g.entities = map[string]Entity{
+		"alpha":       g.loadEntity("alpha", "Walk", mgl64.Vec3{0, 0, 100}, modelConfig),
+		"town_center": g.loadEntity("town_center", "", mgl64.Vec3{0, 0, 0}, modelConfig),
+	}
+}
+
+func (g *Izzet) loadEntity(name string, animationName string, position mgl64.Vec3, modelConfig *model.ModelConfig) Entity {
+	spec := g.assetManager.GetModel(name)
+	model := model.NewModel(spec, modelConfig)
+	model.InitializeRenderingProperties(*g.assetManager)
+
+	var animationPlayer *animation.AnimationPlayer
+	if animationName != "" {
+		animationPlayer = animation.NewAnimationPlayer(model)
+		animationPlayer.PlayAnimation(animationName)
+	}
+
+	return Entity{Model: model, AnimationPlayer: animationPlayer, Position: position}
 }
 
 func (g *Izzet) Start() {

@@ -10,10 +10,6 @@ github.com/go-test/deep v1.0.1 h1:UQhStjbkDClarlmv0am7OXXO4/GaPdCGiUiMTvi28sg=
 github.com/go-test/deep v1.0.1/go.mod h1:wGDj63lr65AM2AQyKZd/NYHGb0R+1RLqB8NKt3aSFNA=
 github.com/inkyblackness/imgui-go/v4 v4.6.0 h1:ShcnXEYl80+xREGBY9OpGWePA6FfJChY9Varsm+3jjE=
 github.com/inkyblackness/imgui-go/v4 v4.6.0/go.mod h1:g8SAGtOYUP7rYaOB2AsVKCEHmPMDmJKgt4z6d+flhb0=
-github.com/kkevinchou/kito v0.0.0-20221028025852-6dc9684252a8 h1:b1oxpj0An2TFphEuOdrwjHn3dvQItr2t0mAW37Pgw7M=
-github.com/kkevinchou/kito v0.0.0-20221028025852-6dc9684252a8/go.mod h1:csbOWAWToWSxNXH8dWNPr74UnSmbXnUGxBZt+EN+dEI=
-github.com/kkevinchou/kitolib v0.0.0-20221028033958-9206c57583fd h1:cAQyeqBHT/x5pK94d0H+evcsB6/K6LmsVQKHDYVUXzM=
-github.com/kkevinchou/kitolib v0.0.0-20221028033958-9206c57583fd/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/kkevinchou/kitolib v0.0.0-20221030000750-9b342aabc8df h1:aP5kKt8xsaClNo4ly0ePC31D8CiP38Uh016j7551fqM=
 github.com/kkevinchou/kitolib v0.0.0-20221030000750-9b342aabc8df/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -32,5 +28,3 @@ golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d/go.mod h1:023OzeP/+EPmXeap
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.6/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
-google.golang.org/grpc v1.50.1 h1:DS/BukOZWp8s6p4Dt/tOaJaTQyPyOoCcrjroHuCeLzY=
-google.golang.org/grpc v1.50.1/go.mod h1:ZgQEeidpAuNRZ8iRrlBKXZQP1ghovWIVhdJRyCDK+GI=

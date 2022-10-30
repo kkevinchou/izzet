@@ -8,6 +8,12 @@ import (
 )
 
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
+	for _, entity := range g.entities {
+		if entity.AnimationPlayer != nil {
+			entity.AnimationPlayer.Update(delta)
+		}
+	}
+
 	keyboardInput := frameInput.KeyboardInput
 	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
 		// move this into a system maybe

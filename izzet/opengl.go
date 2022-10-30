@@ -16,7 +16,7 @@ type Platform interface {
 
 func initOpenGLRenderSettings() {
 	sdl.GLSetSwapInterval(1)
-	gl.ClearColor(1.0, 0.5, 0.5, 0.0)
+	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
 	gl.ClearDepth(1)
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LEQUAL)
@@ -89,4 +89,15 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("quadtex", "quadtex", "quadtex"); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc"); err != nil {
+		panic(err)
+	}
+}
+
+func resetGLRenderSettings() {
+	gl.BindVertexArray(0)
+	gl.UseProgram(0)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.CullFace(gl.BACK)
+	gl.Enable(gl.BLEND)
 }

@@ -8,19 +8,27 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/kitolib/animation"
+	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
-	"github.com/kkevinchou/kitolib/metrics"
+	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
 type Izzet struct {
-	gameOver        bool
-	metricsRegistry *metrics.MetricsRegistry
-	platform        *input.SDLPlatform
-	window          *sdl.Window
+	gameOver bool
+	platform *input.SDLPlatform
+	window   *sdl.Window
+
+	model           *model.Model
+	animationPlayer *animation.AnimationPlayer
 
 	shaderManager *shaders.ShaderManager
+	assetManager  *assets.AssetManager
+
+	shadowMap *ShadowMap
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -31,17 +39,36 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	if err != nil {
 		panic(err)
 	}
+
+	err = ttf.Init()
+	if err != nil {
+		panic(err)
+	}
+
 	imgui.CreateContext(nil)
 	imguiIO := imgui.CurrentIO()
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.window = window
 	g.shaderManager = shaders.NewShaderManager(shaderDirectory)
+	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 
 	var data int32
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
 	settings.RuntimeMaxTextureSize = int(data)
 
-	// compileShaders(g.shaderManager)
+	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, far*shadowDistanceFactor)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create shadow map %s", err))
+	}
+
+	g.shadowMap = shadowMap
+	spec := g.assetManager.GetModel("town_center")
+	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: 4}
+	g.model = model.NewModel(spec, modelConfig)
+	g.model.InitializeRenderingProperties(*g.assetManager)
+	g.animationPlayer = animation.NewAnimationPlayer(g.model)
+
+	compileShaders(g.shaderManager)
 
 	return g
 }
@@ -78,6 +105,8 @@ func (g *Izzet) Start() {
 
 		if renderAccumulator >= msPerFrame {
 			frameCount++
+			g.Render2(time.Duration(16) * time.Millisecond)
+
 			// renderFunction(time.Duration(msPerFrame) * time.Millisecond)
 			initOpenGLRenderSettings()
 			g.window.GLSwap()
@@ -88,14 +117,6 @@ func (g *Izzet) Start() {
 
 func (g *Izzet) runCommandFrame(delta time.Duration) map[string]int {
 	result := map[string]int{}
-	// var total int
-	// for _, system := range g.systems {
-	// 	start := time.Now()
-	// 	system.Update(delta)
-	// 	systemTime := int(time.Since(start).Milliseconds())
-	// 	result[system.Name()] = systemTime
-	// 	total += systemTime
-	// }
 	return result
 }
 

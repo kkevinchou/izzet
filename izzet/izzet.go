@@ -21,6 +21,8 @@ type Izzet struct {
 	gameOver bool
 	platform *input.SDLPlatform
 	window   *sdl.Window
+	vao1     uint32
+	vao2     uint32
 
 	model           *model.Model
 	animationPlayer *animation.AnimationPlayer
@@ -55,6 +57,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	var data int32
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
 	settings.RuntimeMaxTextureSize = int(data)
+	settings.RuntimeMaxTextureSize /= 2
 
 	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, far*shadowDistanceFactor)
 	if err != nil {
@@ -70,7 +73,31 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	compileShaders(g.shaderManager)
 
+	g.vao1 = g.basicTest(0)
+	g.vao2 = g.basicTest(0.25)
+
 	return g
+}
+
+func (g *Izzet) basicTest(offset float32) uint32 {
+	var vertices []float32 = []float32{
+		offset - 0.5, -0.5, 0.0,
+		offset + 0.5, -0.5, 0.0,
+		offset + 0.0, 0.5, 0.0,
+	}
+
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
+	var vbo uint32
+	gl.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	return vao
 }
 
 func (g *Izzet) Start() {
@@ -105,7 +132,7 @@ func (g *Izzet) Start() {
 
 		if renderAccumulator >= msPerFrame {
 			frameCount++
-			g.Render2(time.Duration(16) * time.Millisecond)
+			g.Render(time.Duration(16) * time.Millisecond)
 
 			// renderFunction(time.Duration(msPerFrame) * time.Millisecond)
 			initOpenGLRenderSettings()

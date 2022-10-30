@@ -46,29 +46,6 @@ var update float64
 func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
-func (g *Izzet) Render2(delta time.Duration) {
-	var vertices []float32 = []float32{
-		-0.5, -0.5, 0.0,
-		0.5, -0.5, 0.0,
-		0.0, 0.5, 0.0,
-	}
-
-	var vao uint32
-	gl.GenBuffers(1, &vao)
-	gl.BindVertexArray(vao)
-
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	g.shaderManager.GetShaderProgram("ndc").Use()
-
-	gl.BindVertexArray(vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, 3)
-}
 
 func (g *Izzet) Render(delta time.Duration) {
 	// configure camera viewer context
@@ -77,7 +54,6 @@ func (g *Izzet) Render(delta time.Duration) {
 
 	update += float64(delta.Milliseconds())
 	orientation = mgl64.QuatRotate(toRadians(float64(int(update/1000*360)%360)), mgl64.Vec3{0, 1, 0})
-	fmt.Println(int(update/1000*360) % 360)
 
 	viewerViewMatrix := orientation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
@@ -111,12 +87,112 @@ func (g *Izzet) Render(delta time.Duration) {
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
 	}
 
+	_ = cameraViewerContext
 	_ = lightViewerContext
+	_ = lightContext
 	// s.renderToDepthMap(lightViewerContext, lightContext)
-	g.renderToDisplay(cameraViewerContext, lightContext)
+	// g.renderToDisplay(cameraViewerContext, lightContext)
+	g.renderToDisplay2()
 	// s.renderImgui()
 
 	g.window.GLSwap()
+}
+
+func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
+	defer resetGLRenderSettings()
+
+	gl.Viewport(0, 0, int32(settings.Width), int32(settings.Height))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	g.renderScene(viewerContext, lightContext, false)
+}
+
+var count int
+
+func (g *Izzet) renderToDisplay2() {
+	count += 1
+	defer resetGLRenderSettings()
+
+	gl.Viewport(0, 0, int32(settings.Width), int32(settings.Height))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	if count%2 == 0 {
+		g.shaderManager.GetShaderProgram("ndc").Use()
+		gl.BindVertexArray(g.vao1)
+		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+	} else {
+		g.shaderManager.GetShaderProgram("ndc").Use()
+		gl.BindVertexArray(g.vao2)
+		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+		g.window.GLSwap()
+	}
+}
+
+// renderScene renders a scene from the perspective of a viewer
+func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
+	shaderManager := g.shaderManager
+
+	// meshModelMatrix := createModelMatrix(
+	// 	mgl64.Scale3D(100, 100, 100),
+	// 	mgl64.QuatIdent().Mat4(),
+	// 	mgl64.Ident4(),
+	// )
+
+	// shader := "model_static"
+	// if componentContainer.AnimationComponent != nil {
+	// 	shader = "modelpbr"
+	// }
+
+	// drawModel(
+	// 	viewerContext,
+	// 	lightContext,
+	// 	g.shadowMap,
+	// 	shaderManager.GetShaderProgram("model_static"),
+	// 	g.assetManager,
+	// 	g.model,
+	// 	nil,
+	// 	meshModelMatrix,
+	// )
+
+	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 0, 100}, {100, 100, 100}}, mgl64.Vec3{1, 0, 0})
+	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 100, 100}, {100, 0, 100}}, mgl64.Vec3{1, 0, 0})
+
+	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 0, -100}, {100, 100, -100}}, mgl64.Vec3{1, 0, 0})
+	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 100, -100}, {100, 0, -100}}, mgl64.Vec3{1, 0, 0})
+}
+
+func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
+	return translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
+}
+
+// drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
+func drawTris(viewerContext ViewerContext, shader *shaders.ShaderProgram, points []mgl64.Vec3, color mgl64.Vec3) {
+	var vertices []float32
+	for _, point := range points {
+		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformFloat("alpha", float32(1))
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 
 func drawModel(viewerContext ViewerContext,
@@ -191,79 +267,4 @@ func drawModel(viewerContext ViewerContext,
 		gl.BindVertexArray(meshChunk.VAO())
 		gl.DrawElements(gl.TRIANGLES, int32(meshChunk.VertexCount()), gl.UNSIGNED_INT, nil)
 	}
-}
-
-func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
-	defer resetGLRenderSettings()
-
-	gl.Viewport(0, 0, int32(settings.Width), int32(settings.Height))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	g.renderScene(viewerContext, lightContext, false)
-}
-
-// renderScene renders a scene from the perspective of a viewer
-func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
-	shaderManager := g.shaderManager
-
-	// meshModelMatrix := createModelMatrix(
-	// 	mgl64.Scale3D(100, 100, 100),
-	// 	mgl64.QuatIdent().Mat4(),
-	// 	mgl64.Ident4(),
-	// )
-
-	// shader := "model_static"
-	// if componentContainer.AnimationComponent != nil {
-	// 	shader = "modelpbr"
-	// }
-
-	// drawModel(
-	// 	viewerContext,
-	// 	lightContext,
-	// 	g.shadowMap,
-	// 	shaderManager.GetShaderProgram("model_static"),
-	// 	g.assetManager,
-	// 	g.model,
-	// 	nil,
-	// 	meshModelMatrix,
-	// )
-
-	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 0, 100}, {100, 100, 100}}, mgl64.Vec3{1, 0, 0})
-	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 100, 100}, {100, 0, 100}}, mgl64.Vec3{1, 0, 0})
-
-	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 0, -100}, {100, 100, -100}}, mgl64.Vec3{1, 0, 0})
-	drawTris(viewerContext, shaderManager.GetShaderProgram("flat"), []mgl64.Vec3{{0, 0, 0}, {100, 100, -100}, {100, 0, -100}}, mgl64.Vec3{1, 0, 0})
-}
-
-func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
-	return translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
-}
-
-// drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawTris(viewerContext ViewerContext, shader *shaders.ShaderProgram, points []mgl64.Vec3, color mgl64.Vec3) {
-	var vertices []float32
-	for _, point := range points {
-		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
-	}
-
-	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.BindVertexArray(vao)
-	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformFloat("alpha", float32(1))
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }

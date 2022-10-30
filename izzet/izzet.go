@@ -2,10 +2,12 @@ package izzet
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
@@ -21,8 +23,9 @@ type Izzet struct {
 	gameOver bool
 	platform *input.SDLPlatform
 	window   *sdl.Window
-	vao1     uint32
-	vao2     uint32
+
+	fovY        float64
+	aspectRatio float64
 
 	model           *model.Model
 	animationPlayer *animation.AnimationPlayer
@@ -73,31 +76,10 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	compileShaders(g.shaderManager)
 
-	g.vao1 = g.basicTest(0)
-	g.vao2 = g.basicTest(0.25)
+	g.aspectRatio = float64(settings.Width) / float64(settings.Height)
+	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
 
 	return g
-}
-
-func (g *Izzet) basicTest(offset float32) uint32 {
-	var vertices []float32 = []float32{
-		offset - 0.5, -0.5, 0.0,
-		offset + 0.5, -0.5, 0.0,
-		offset + 0.0, 0.5, 0.0,
-	}
-
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
-
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	return vao
 }
 
 func (g *Izzet) Start() {

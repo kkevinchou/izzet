@@ -89,8 +89,6 @@ func main() {
 }
 
 func loadConfig(c Config) {
-	settings.Host = c.ServerIP
-	settings.Port = c.ServerPort
 	settings.Width = c.Width
 	settings.Height = c.Height
 	settings.Fullscreen = c.Fullscreen

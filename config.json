@@ -1,6 +1,4 @@
 {
-	"serverip": "localhost",
-	"serverport": 8080,
 	"width": 1280,
 	"height": 720,
 	"fullscreen": false 

@@ -24,16 +24,17 @@ type Izzet struct {
 	platform *input.SDLPlatform
 	window   *sdl.Window
 
-	fovY        float64
-	aspectRatio float64
-
 	model           *model.Model
 	animationPlayer *animation.AnimationPlayer
 
+	// render properties
+	fovY          float64
+	aspectRatio   float64
 	shaderManager *shaders.ShaderManager
 	assetManager  *assets.AssetManager
+	shadowMap     *ShadowMap
 
-	shadowMap *ShadowMap
+	camera *Camera
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -59,8 +60,10 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	var data int32
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
-	settings.RuntimeMaxTextureSize = int(data)
-	settings.RuntimeMaxTextureSize /= 2
+
+	// note(kevin) using exactly the max texture size sometimes causes initialization to fail.
+	// so, I cap it at a fraction of the max
+	settings.RuntimeMaxTextureSize = int(float32(data) * .90)
 
 	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, far*shadowDistanceFactor)
 	if err != nil {
@@ -69,7 +72,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	g.shadowMap = shadowMap
 	spec := g.assetManager.GetModel("town_center")
-	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: 4}
+	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	g.model = model.NewModel(spec, modelConfig)
 	g.model.InitializeRenderingProperties(*g.assetManager)
 	g.animationPlayer = animation.NewAnimationPlayer(g.model)
@@ -78,6 +81,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	g.aspectRatio = float64(settings.Width) / float64(settings.Height)
 	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
+	g.camera = &Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
 
 	return g
 }
@@ -100,8 +104,9 @@ func (g *Izzet) Start() {
 
 		runCount := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
-			g.HandleInput(g.platform.PollInput())
-			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
+			input := g.platform.PollInput()
+			g.HandleInput(input)
+			g.runCommandFrame(input, time.Duration(settings.MSPerCommandFrame)*time.Millisecond)
 
 			accumulator -= float64(settings.MSPerCommandFrame)
 			runCount++
@@ -122,11 +127,6 @@ func (g *Izzet) Start() {
 			renderAccumulator -= msPerFrame
 		}
 	}
-}
-
-func (g *Izzet) runCommandFrame(delta time.Duration) map[string]int {
-	result := map[string]int{}
-	return result
 }
 
 func initSeed() {

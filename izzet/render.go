@@ -22,8 +22,8 @@ var (
 
 func (g *Izzet) Render(delta time.Duration) {
 	// configure camera viewer context
-	position := mgl64.Vec3{0, 0, 300}
-	orientation := mgl64.QuatIdent()
+	position := g.camera.Position
+	orientation := g.camera.Orientation
 
 	viewerViewMatrix := orientation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())

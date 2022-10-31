@@ -42,7 +42,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g := &Izzet{}
 	initSeed()
 
-	window, err := initializeOpenGL(settings.Width, settings.Height, settings.Fullscreen)
+	window, err := initializeOpenGL()
 	if err != nil {
 		panic(err)
 	}

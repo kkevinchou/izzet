@@ -16,6 +16,10 @@ func sceneHierarchy(es map[string]*entities.Entity) *entities.Entity {
 	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y * 0.5}
 	imgui.BeginChildV("sceneHierarchy", windowSize, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
+	imgui.Text("Scene Hierarchy")
+	imgui.PopStyleColor()
+
 	keys := make([]string, 0, len(es))
 	for k := range es {
 		keys = append(keys, k)

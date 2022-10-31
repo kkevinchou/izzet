@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
@@ -34,7 +35,7 @@ type Izzet struct {
 
 	camera *Camera
 
-	entities map[string]Entity
+	entities map[string]*entities.Entity
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -92,13 +93,13 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 func (g *Izzet) loadEntities() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	g.entities = map[string]Entity{
+	g.entities = map[string]*entities.Entity{
 		"alpha":       g.loadEntity("alpha", "Walk", mgl64.Vec3{0, 0, 100}, modelConfig),
-		"town_center": g.loadEntity("town_center", "", mgl64.Vec3{0, 0, 0}, modelConfig),
+		"town_center": g.loadEntity("scene", "", mgl64.Vec3{0, 0, 0}, modelConfig),
 	}
 }
 
-func (g *Izzet) loadEntity(name string, animationName string, position mgl64.Vec3, modelConfig *model.ModelConfig) Entity {
+func (g *Izzet) loadEntity(name string, animationName string, position mgl64.Vec3, modelConfig *model.ModelConfig) *entities.Entity {
 	spec := g.assetManager.GetModel(name)
 	model := model.NewModel(spec, modelConfig)
 	model.InitializeRenderingProperties(*g.assetManager)
@@ -109,7 +110,7 @@ func (g *Izzet) loadEntity(name string, animationName string, position mgl64.Vec
 		animationPlayer.PlayAnimation(animationName)
 	}
 
-	return Entity{Model: model, AnimationPlayer: animationPlayer, Position: position}
+	return &entities.Entity{Name: name, Model: model, AnimationPlayer: animationPlayer, Position: position}
 }
 
 func (g *Izzet) Start() {

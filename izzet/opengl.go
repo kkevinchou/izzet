@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -29,7 +30,7 @@ func initOpenGLRenderSettings() {
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
-func initializeOpenGL(windowWidth, windowHeight int, fullscreen bool) (*sdl.Window, error) {
+func initializeOpenGL() (*sdl.Window, error) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
 	}
@@ -45,10 +46,16 @@ func initializeOpenGL(windowWidth, windowHeight int, fullscreen bool) (*sdl.Wind
 	sdl.SetRelativeMouseMode(false)
 
 	windowFlags := sdl.WINDOW_OPENGL
-	if fullscreen {
-		windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
+	if settings.Fullscreen {
+		dm, err := sdl.GetCurrentDisplayMode(0)
+		if err != nil {
+			panic(err)
+		}
+		settings.Width = int(dm.W)
+		settings.Height = int(dm.H)
+		windowFlags |= sdl.WINDOW_MAXIMIZED
 	}
-	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(windowWidth), int32(windowHeight), uint32(windowFlags))
+	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(settings.Width), int32(settings.Height), uint32(windowFlags))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create window %s", err)
 	}

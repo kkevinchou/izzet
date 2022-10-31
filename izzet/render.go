@@ -66,8 +66,6 @@ func (g *Izzet) Render(delta time.Duration) {
 	g.window.GLSwap()
 }
 
-var open bool = true
-
 func (g *Izzet) renderImgui() {
 	g.platform.NewFrame()
 	imgui.NewFrame()
@@ -75,26 +73,23 @@ func (g *Izzet) renderImgui() {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-	// imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
-	// imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
-	// imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
-	// imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-	// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 	imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
 	imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
+	imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
+	imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 5)
+	imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
+	imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
+	imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .65, Y: .79, Z: 0.30, W: 1})
 
-	imgui.SetNextWindowBgAlpha(0)
-	imgui.SetNextWindowPosV(imgui.Vec2{}, imgui.ConditionAlways, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: float32(settings.Width), Y: float32(settings.Height)}, imgui.ConditionAlways)
-
-	imgui.BeginV("root", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize)
 	menus.BuildExplorer(g.entities)
-	imgui.End()
+	menus.BuildPrefabs(g.entities)
 
-	imgui.PopStyleVarV(5)
-
-	// var open bool
-	// imgui.ShowDemoWindow(&open)
+	imgui.PopStyleColor()
+	// imgui.PopStyleVarV(6)
+	imgui.PopStyleVarV(10)
+	var open bool
+	imgui.ShowDemoWindow(&open)
 
 	imgui.Render()
 	g.imguiRenderer.Render(g.platform.DisplaySize(), g.platform.FramebufferSize(), imgui.RenderedDrawData())

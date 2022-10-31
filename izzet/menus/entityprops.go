@@ -12,10 +12,12 @@ import (
 
 func entityProps(entity *entities.Entity) {
 	parentWindowSize := imgui.WindowSize()
-	// imgui.SetNextWindowPos(imgui.Vec2{})
-	imgui.SetNextWindowBgAlpha(0.8)
 	windowSize := imgui.Vec2{X: parentWindowSize.X, Y: parentWindowSize.Y * 0.5}
-	imgui.BeginChildV("entityProps", windowSize, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	imgui.BeginChildV("entityProps", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
+	imgui.Text("Entity Properties")
+	imgui.PopStyleColor()
 
 	if entity != nil {
 		positionStr := fmt.Sprintf("%v", entity.Position)
@@ -25,7 +27,7 @@ func entityProps(entity *entities.Entity) {
 		uiTableRow("Entity Name", entity.Name)
 		if uiTableInputRow("Position", entity.Position, text, nil) {
 			textCopy := *text
-			r := regexp.MustCompile(`\[(?P<x>\d+) (?P<y>\d+) (?P<z>\d+)\]`)
+			r := regexp.MustCompile(`\[(?P<x>-?\d+) (?P<y>-?\d+) (?P<z>-?\d+)\]`)
 			matches := r.FindStringSubmatch(textCopy)
 			if matches != nil {
 				var parseErr bool

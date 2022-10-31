@@ -16,8 +16,10 @@ func BuildExplorer(es map[string]*entities.Entity) {
 	imgui.BeginV("explorer window", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize)
 	imgui.BeginChildV("explorer", imgui.Vec2{}, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 	selectedEntity := sceneHierarchy(es)
 	entityProps(selectedEntity)
+	imgui.PopStyleVar()
 
 	imgui.EndChild()
 	imgui.End()

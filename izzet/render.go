@@ -75,13 +75,19 @@ func (g *Izzet) renderImgui() {
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
 	imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
 	imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
+	imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
+	imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 5)
+	imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
+	imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
+	imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .65, Y: .79, Z: 0.30, W: 1})
 
 	menus.BuildExplorer(g.entities)
 	menus.BuildPrefabs(g.entities)
 
 	imgui.PopStyleColor()
-	imgui.PopStyleVarV(5)
+	// imgui.PopStyleVarV(6)
+	imgui.PopStyleVarV(10)
 	var open bool
 	imgui.ShowDemoWindow(&open)
 

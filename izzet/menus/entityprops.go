@@ -13,7 +13,7 @@ import (
 func entityProps(entity *entities.Entity) {
 	parentWindowSize := imgui.WindowSize()
 	windowSize := imgui.Vec2{X: parentWindowSize.X, Y: parentWindowSize.Y * 0.5}
-	imgui.BeginChildV("entityProps", windowSize, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	imgui.BeginChildV("entityProps", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
 	imgui.Text("Entity Properties")

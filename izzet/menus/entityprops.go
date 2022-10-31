@@ -12,8 +12,6 @@ import (
 
 func entityProps(entity *entities.Entity) {
 	parentWindowSize := imgui.WindowSize()
-	// imgui.SetNextWindowPos(imgui.Vec2{})
-	imgui.SetNextWindowBgAlpha(0.8)
 	windowSize := imgui.Vec2{X: parentWindowSize.X, Y: parentWindowSize.Y * 0.5}
 	imgui.BeginChildV("entityProps", windowSize, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 

@@ -10,8 +10,6 @@ import (
 var hierarchySelection int
 
 func sceneHierarchy(es map[string]*entities.Entity) *entities.Entity {
-	imgui.SetNextWindowBgAlpha(0.8)
-
 	regionSize := imgui.ContentRegionAvail()
 	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y * 0.5}
 	imgui.BeginChildV("sceneHierarchy", windowSize, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)

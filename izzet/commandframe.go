@@ -4,10 +4,13 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/kitolib/input"
 )
 
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
+	gizmo.T.Reset()
+
 	for _, entity := range g.entities {
 		if entity.AnimationPlayer != nil {
 			entity.AnimationPlayer.Update(delta)
@@ -23,10 +26,15 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	var xRel, yRel float64
 
 	mouseInput := frameInput.MouseInput
+
 	var mouseSensitivity float64 = 0.005
 	if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
 		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
+	}
+
+	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+		gizmo.T.Move(gizmo.AxisTypeY, -mouseInput.MouseMotionEvent.YRel)
 	}
 
 	forwardVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 0, -1})

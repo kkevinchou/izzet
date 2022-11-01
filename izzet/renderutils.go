@@ -118,3 +118,79 @@ func drawModel(viewerContext ViewerContext,
 func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
+
+func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+	var points []mgl64.Vec3
+	for _, line := range lines {
+		start := line[0]
+		end := line[1]
+		length := end.Sub(start).Len()
+
+		dir := end.Sub(start).Normalize()
+		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+
+		for _, dp := range defaultPoints(thickness, length) {
+			newEnd := q.Rotate(dp).Add(start)
+			points = append(points, newEnd)
+		}
+	}
+	drawTris(viewerContext, shader, points, color)
+}
+func defaultPoints(thickness float64, length float64) []mgl64.Vec3 {
+	var ht float64 = thickness / 2
+	return []mgl64.Vec3{
+		// front
+		{-ht, -ht, 0},
+		{ht, -ht, 0},
+		{ht, ht, 0},
+
+		{ht, ht, 0},
+		{-ht, ht, 0},
+		{-ht, -ht, 0},
+
+		// back
+		{ht, ht, -length},
+		{ht, -ht, -length},
+		{-ht, -ht, -length},
+
+		{-ht, -ht, -length},
+		{-ht, ht, -length},
+		{ht, ht, -length},
+
+		// right
+		{ht, -ht, 0},
+		{ht, -ht, -length},
+		{ht, ht, -length},
+
+		{ht, ht, -length},
+		{ht, ht, 0},
+		{ht, -ht, 0},
+
+		// left
+		{-ht, ht, -length},
+		{-ht, -ht, -length},
+		{-ht, -ht, 0},
+
+		{-ht, -ht, 0},
+		{-ht, ht, 0},
+		{-ht, ht, -length},
+
+		// top
+		{ht, ht, 0},
+		{ht, ht, -length},
+		{-ht, ht, 0},
+
+		{-ht, ht, 0},
+		{ht, ht, -length},
+		{-ht, ht, -length},
+
+		// bottom
+		{-ht, -ht, 0},
+		{ht, -ht, -length},
+		{ht, -ht, 0},
+
+		{-ht, -ht, -length},
+		{ht, -ht, -length},
+		{-ht, -ht, 0},
+	}
+}

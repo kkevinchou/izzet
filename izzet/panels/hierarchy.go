@@ -6,13 +6,7 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
-
-type World interface {
-	AddEntity(entity *entities.Entity)
-	GetPrefabByID(id int) *prefabs.Prefab
-}
 
 var hierarchySelection int
 

@@ -6,16 +6,19 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 var prefabSelection int
 
-func BuildPrefabs(ps map[int]*prefabs.Prefab) {
+func BuildPrefabs(ps map[int]*prefabs.Prefab, world World) {
 	var heightRatio float32 = 0.15
+	_ = heightRatio
 	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{X: float32(settings.Width) * 0.15, Y: float32(settings.Height) * (1 - heightRatio)}, imgui.ConditionAlways, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: float32(settings.Width)*(1-0.15) + 1, Y: float32(settings.Height) * heightRatio}, imgui.ConditionAlways)
+
+	x, y := world.Window().GetSize()
+	rect := imgui.Vec2{X: float32(x), Y: float32(y)}
+	imgui.SetNextWindowPosV(imgui.Vec2{X: float32(rect.X) * 0.15, Y: float32(rect.Y) * (1 - heightRatio)}, imgui.ConditionAlways, imgui.Vec2{})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: float32(rect.X)*(1-0.15) + 1, Y: float32(rect.Y) * (heightRatio)}, imgui.ConditionAlways)
 
 	imgui.BeginV("prefab window", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize)
 	imgui.BeginChildV("prefab", imgui.Vec2{}, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)

@@ -55,6 +55,9 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	imgui.CreateContext(nil)
 	imguiIO := imgui.CurrentIO()
+	// imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/robotomono-regular.ttf", 20)
+	// imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/helvetica.ttf", 20)
+	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.window = window
 	g.shaderManager = shaders.NewShaderManager(shaderDirectory)
@@ -97,7 +100,7 @@ func (g *Izzet) loadPrefabs() {
 
 	g.prefabs = map[int]*prefabs.Prefab{}
 
-	names := []string{"alpha", "mutant", "scene"}
+	names := []string{"alpha", "mutant", "scene", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha", "alpha"}
 
 	for _, name := range names {
 		spec := g.assetManager.GetModel(name)

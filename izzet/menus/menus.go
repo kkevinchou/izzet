@@ -1,0 +1,4 @@
+package menus
+
+func SetupMenuBar() {
+}

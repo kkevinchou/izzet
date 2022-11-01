@@ -8,6 +8,7 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -82,11 +83,19 @@ func (g *Izzet) renderImgui() {
 	imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .65, Y: .79, Z: 0.30, W: 1})
 
+	// var open1 bool
+	// imgui.SetNextWindowBgAlpha(0)
+	// imgui.SetNextWindowPosV(imgui.Vec2{}, imgui.ConditionAlways, imgui.Vec2{})
+	// imgui.SetNextWindowSizeV(imgui.Vec2{X: float32(settings.Width), Y: float32(settings.Height)}, imgui.ConditionAlways)
+	// imgui.BeginV("explorer root", &open1, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize|imgui.WindowFlagsMenuBar)
+	// imgui.MenuItem("test")
+
 	panels.BuildExplorer(g.entities, g)
-	panels.BuildPrefabs(g.prefabs)
+	panels.BuildPrefabs(g.prefabs, g)
+
+	// imgui.End()
 
 	imgui.PopStyleColor()
-	// imgui.PopStyleVarV(6)
 	imgui.PopStyleVarV(10)
 	var open bool
 	imgui.ShowDemoWindow(&open)
@@ -138,9 +147,28 @@ func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightConte
 			entity.AnimationPlayer,
 			modelMatrix,
 		)
+		drawGizmo(&viewerContext, shaderManager.GetShaderProgram("flat"), entity.Position)
 	}
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
 	return translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
+}
+
+func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+
+	lines := [][]mgl64.Vec3{
+		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 20, 0})},
+	}
+	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{0, 0, 1})
+
+	lines = [][]mgl64.Vec3{
+		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{20, 0, 0})},
+	}
+	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{0, 1, 0})
+
+	lines = [][]mgl64.Vec3{
+		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 0, -20})},
+	}
+	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{1, 0, 0})
 }

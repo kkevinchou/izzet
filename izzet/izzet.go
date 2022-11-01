@@ -10,8 +10,8 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/model"
@@ -35,7 +35,8 @@ type Izzet struct {
 
 	camera *Camera
 
-	entities map[string]*entities.Entity
+	entities map[int]*entities.Entity
+	prefabs  map[int]*prefabs.Prefab
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -85,32 +86,35 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
 	g.camera = &Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
 
+	g.loadPrefabs()
 	g.loadEntities()
 
 	return g
 }
 
-func (g *Izzet) loadEntities() {
+func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	g.entities = map[string]*entities.Entity{
-		"alpha":       g.loadEntity("alpha", "Walk", mgl64.Vec3{0, 0, 100}, modelConfig),
-		"town_center": g.loadEntity("scene", "", mgl64.Vec3{0, 0, 0}, modelConfig),
+	g.prefabs = map[int]*prefabs.Prefab{}
+
+	names := []string{"alpha", "mutant", "scene"}
+
+	for _, name := range names {
+		spec := g.assetManager.GetModel(name)
+		m := model.NewModel(spec, modelConfig)
+		m.InitializeRenderingProperties(*g.assetManager)
+
+		pf := prefabs.CreatePrefab(name, []*model.Model{m})
+		g.prefabs[pf.ID] = pf
 	}
 }
 
-func (g *Izzet) loadEntity(name string, animationName string, position mgl64.Vec3, modelConfig *model.ModelConfig) *entities.Entity {
-	spec := g.assetManager.GetModel(name)
-	model := model.NewModel(spec, modelConfig)
-	model.InitializeRenderingProperties(*g.assetManager)
-
-	var animationPlayer *animation.AnimationPlayer
-	if animationName != "" {
-		animationPlayer = animation.NewAnimationPlayer(model)
-		animationPlayer.PlayAnimation(animationName)
+func (g *Izzet) loadEntities() {
+	g.entities = map[int]*entities.Entity{}
+	for _, pf := range g.prefabs {
+		entity := entities.InstantiateFromPrefab(pf)
+		g.entities[entity.ID] = entity
 	}
-
-	return &entities.Entity{Name: name, Model: model, AnimationPlayer: animationPlayer, Position: position}
 }
 
 func (g *Izzet) Start() {

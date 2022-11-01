@@ -45,7 +45,7 @@ func initializeOpenGL() (*sdl.Window, error) {
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
 	sdl.SetRelativeMouseMode(false)
 
-	windowFlags := sdl.WINDOW_OPENGL
+	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
 	if settings.Fullscreen {
 		dm, err := sdl.GetCurrentDisplayMode(0)
 		if err != nil {

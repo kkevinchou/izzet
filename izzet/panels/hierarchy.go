@@ -1,15 +1,22 @@
-package menus
+package panels
 
 import (
 	"sort"
+	"strconv"
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
+
+type World interface {
+	AddEntity(entity *entities.Entity)
+	GetPrefabByID(id int) *prefabs.Prefab
+}
 
 var hierarchySelection int
 
-func sceneHierarchy(es map[string]*entities.Entity) *entities.Entity {
+func sceneHierarchy(es map[int]*entities.Entity, world World) *entities.Entity {
 	regionSize := imgui.ContentRegionAvail()
 	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y * 0.5}
 	imgui.BeginChildV("sceneHierarchy", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
@@ -18,11 +25,11 @@ func sceneHierarchy(es map[string]*entities.Entity) *entities.Entity {
 	imgui.Text("Scene Hierarchy")
 	imgui.PopStyleColor()
 
-	keys := make([]string, 0, len(es))
+	keys := make([]int, 0, len(es))
 	for k := range es {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Ints(keys)
 
 	var selectedEntity *entities.Entity
 	selectedItem := -1
@@ -36,6 +43,18 @@ func sceneHierarchy(es map[string]*entities.Entity) *entities.Entity {
 		}
 
 		if imgui.TreeNodeV(entity.Name, nodeFlags) {
+			if imgui.BeginDragDropTarget() {
+				if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
+					prefabID, err := strconv.Atoi(string(payload))
+					if err != nil {
+						panic(err)
+					}
+
+					prefab := world.GetPrefabByID(prefabID)
+					entity := entities.InstantiateFromPrefab(prefab)
+					world.AddEntity(entity)
+				}
+			}
 			imgui.TreePop()
 		}
 

@@ -1,4 +1,4 @@
-package menus
+package panels
 
 import (
 	"fmt"

@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
-	"github.com/kkevinchou/izzet/izzet/menus"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -82,8 +82,8 @@ func (g *Izzet) renderImgui() {
 	imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .65, Y: .79, Z: 0.30, W: 1})
 
-	menus.BuildExplorer(g.entities)
-	menus.BuildPrefabs(g.entities)
+	panels.BuildExplorer(g.entities, g)
+	panels.BuildPrefabs(g.prefabs)
 
 	imgui.PopStyleColor()
 	// imgui.PopStyleVarV(6)
@@ -134,7 +134,7 @@ func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightConte
 			g.shadowMap,
 			shaderManager.GetShaderProgram(shader),
 			g.assetManager,
-			entity.Model,
+			entity.Prefab.ModelRefs[0].Model,
 			entity.AnimationPlayer,
 			modelMatrix,
 		)

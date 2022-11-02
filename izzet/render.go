@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
@@ -17,7 +18,7 @@ var (
 	// shadow map properties
 	shadowmapZOffset     float64 = 400
 	fovx                 float64 = 105
-	near                 float64 = 1
+	Near                 float64 = 1
 	far                  float64 = 3000
 	shadowDistanceFactor float64 = .4 // proportion of view fustrum to include in shadow cuboid
 )
@@ -35,11 +36,11 @@ func (g *Izzet) Render(delta time.Duration) {
 		Orientation: orientation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(g.fovY), g.aspectRatio, near, far),
+		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(g.fovY), g.aspectRatio, Near, far),
 	}
 
 	// configure light viewer context
-	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, near, far, g.fovY, g.aspectRatio, shadowDistanceFactor)
+	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, Near, far, g.fovY, g.aspectRatio, shadowDistanceFactor)
 
 	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{-1, -1, -1})
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, shadowmapZOffset)
@@ -170,18 +171,16 @@ func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4
 }
 
 func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
-	lines := [][]mgl64.Vec3{
-		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 20, 0})},
-	}
-	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{0, 0, 1})
+	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
 
-	lines = [][]mgl64.Vec3{
-		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{20, 0, 0})},
+	for i, axis := range gizmo.T.Axes {
+		lines := [][]mgl64.Vec3{
+			[]mgl64.Vec3{position, position.Add(axis)},
+		}
+		color := colors[i]
+		if i == gizmo.T.HoverIndex {
+			color = mgl64.Vec3{1, 1, 0}
+		}
+		drawLines(*viewerContext, shader, lines, 1, color)
 	}
-	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{0, 1, 0})
-
-	lines = [][]mgl64.Vec3{
-		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 0, 20})},
-	}
-	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{1, 0, 0})
 }

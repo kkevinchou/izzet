@@ -7,6 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/input"
 )
 
@@ -16,10 +17,21 @@ func (g *Izzet) handleResize() {
 	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
 }
 
+func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
+	w, h := g.Window().GetSize()
+	x := mouseInput.Position.X()
+	y := mouseInput.Position.Y()
+
+	// -1 for the near plane
+	ndcP := mgl64.Vec4{((x / float64(w)) - 0.5) * 2, ((y / float64(h)) - 0.5) * -2, -1, 1}
+	nearPlanePos := g.viewerContext.InverseViewMatrix.Inv().Mul4(g.viewerContext.ProjectionMatrix.Inv()).Mul4x1(ndcP)
+	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
+
+	return nearPlanePos.Vec3()
+}
+
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	g.handleResize()
-
-	gizmo.T.Reset()
 
 	for _, entity := range g.entities {
 		if entity.AnimationPlayer != nil {
@@ -43,30 +55,62 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 	}
 
-	// convert gizmo axes to world space
-	// line point distance check
-	// if within threshold, adjust
 	if panels.SelectedEntity != nil {
-		points := []mgl64.Vec3{panels.SelectedEntity.Position, panels.SelectedEntity.Position.Add(mgl64.Vec3{0, 20, 0})}
-		// points := []mgl64.Vec3{panels.SelectedEntity.Position}
-		screenSpacePoints := []mgl64.Vec2{}
+		nearPlanePos := g.mousePosToNearPlane(mouseInput)
+		position := panels.SelectedEntity.Position
 
-		w, h := g.window.GetSize()
-		for _, p := range points {
-			newP := g.viewerContext.ProjectionMatrix.Mul4(g.viewerContext.InverseViewMatrix).Mul4x1(p.Vec4(1))
-			ndcP := newP.Mul(1.0 / newP.W()).Vec3()
+		var minDist *float64
+		minAxis := mgl64.Vec3{}
+		motionPivot := mgl64.Vec3{}
+		closestAxisIndex := -1
+		for i, axis := range gizmo.T.Axes {
+			if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
+				length := a.Sub(b).Len()
+				if length > gizmo.ActivationRadius {
+					continue
+				}
 
-			screenP := mgl64.Vec2{(ndcP.X()/2 + 0.5) * float64(w), (1 - (ndcP.Y()/2 + 0.5)) * float64(h)}
-			screenSpacePoints = append(screenSpacePoints, screenP)
+				if minDist == nil || length < float64(*minDist) {
+					minAxis = axis
+					minDist = &length
+					motionPivot = b
+					closestAxisIndex = i
+				}
+			}
 		}
 
-		if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-			// closestPoint := checks.ClosestPointOnLineToPoint(screenSpacePoints[0].Vec3(0), screenSpacePoints[1].Vec3(0), mouseInput.Position.Vec3(0))
-			closestPoint := screenSpacePoints[0].Vec3(0)
-			if mouseInput.Position.Vec3(0).Sub(closestPoint).Len() < 100 {
-				gizmo.T.Move(gizmo.AxisTypeY, -mouseInput.MouseMotionEvent.YRel)
-				// gizmo.T.Move(gizmo.AxisTypeX, mouseInput.MouseMotionEvent.XRel)
+		if minDist != nil {
+			if mouseInput.Buttons[0] && mouseInput.MouseButtonEvent == input.MouseButtonEventDown {
+				gizmo.T.Active = true
+				gizmo.T.TranslationDir = minAxis
+				gizmo.T.MotionPivot = motionPivot.Sub(position)
+				gizmo.T.HoverIndex = closestAxisIndex
 			}
+
+			if !gizmo.T.Active {
+				gizmo.T.HoverIndex = closestAxisIndex
+			}
+		} else {
+			if !gizmo.T.Active {
+				gizmo.T.HoverIndex = -1
+			}
+		}
+
+		if !mouseInput.MouseMotionEvent.IsZero() {
+			if _, b, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
+				if gizmo.T.Active && mouseInput.Buttons[0] {
+					newPosition := b.Sub(gizmo.T.MotionPivot)
+					newPosition[0] = float64(int(newPosition[0]))
+					newPosition[1] = float64(int(newPosition[1]))
+					newPosition[2] = float64(int(newPosition[2]))
+					panels.SelectedEntity.Position = newPosition
+				}
+			}
+		}
+
+		if mouseInput.MouseButtonEvent == input.MouseButtonEventUp {
+			gizmo.T.Active = false
+			gizmo.T.HoverIndex = closestAxisIndex
 		}
 	}
 

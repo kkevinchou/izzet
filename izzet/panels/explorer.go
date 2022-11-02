@@ -5,7 +5,6 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/gizmo"
 )
 
 var open bool = true
@@ -41,12 +40,6 @@ func BuildExplorer(es map[int]*entities.Entity, world World) {
 	}
 
 	entityProps(selectedEntity)
-
-	if selectedEntity != nil {
-		if gizmo.T.Active() {
-			selectedEntity.Position = selectedEntity.Position.Add(gizmo.T.Translation())
-		}
-	}
 
 	imgui.PopStyleVar()
 

@@ -6,7 +6,7 @@ var (
 	// dynamic settings loaded from config
 	Width      int  = 0
 	Height     int  = 0
-	Fullscreen bool = true
+	Fullscreen bool = false
 
 	ShowImguiDemoWindow   = false
 	RuntimeMaxTextureSize int

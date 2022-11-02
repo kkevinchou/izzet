@@ -1,14 +1,24 @@
 package izzet
 
 import (
+	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/input"
 )
 
+func (g *Izzet) handleResize() {
+	w, h := g.window.GetSize()
+	g.aspectRatio = float64(w) / float64(h)
+	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
+}
+
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
+	g.handleResize()
+
 	gizmo.T.Reset()
 
 	for _, entity := range g.entities {
@@ -36,8 +46,28 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	// convert gizmo axes to world space
 	// line point distance check
 	// if within threshold, adjust
-	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-		gizmo.T.Move(gizmo.AxisTypeY, -mouseInput.MouseMotionEvent.YRel)
+	if panels.SelectedEntity != nil {
+		points := []mgl64.Vec3{panels.SelectedEntity.Position, panels.SelectedEntity.Position.Add(mgl64.Vec3{0, 20, 0})}
+		// points := []mgl64.Vec3{panels.SelectedEntity.Position}
+		screenSpacePoints := []mgl64.Vec2{}
+
+		w, h := g.window.GetSize()
+		for _, p := range points {
+			newP := g.viewerContext.ProjectionMatrix.Mul4(g.viewerContext.InverseViewMatrix).Mul4x1(p.Vec4(1))
+			ndcP := newP.Mul(1.0 / newP.W()).Vec3()
+
+			screenP := mgl64.Vec2{(ndcP.X()/2 + 0.5) * float64(w), (1 - (ndcP.Y()/2 + 0.5)) * float64(h)}
+			screenSpacePoints = append(screenSpacePoints, screenP)
+		}
+
+		if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+			// closestPoint := checks.ClosestPointOnLineToPoint(screenSpacePoints[0].Vec3(0), screenSpacePoints[1].Vec3(0), mouseInput.Position.Vec3(0))
+			closestPoint := screenSpacePoints[0].Vec3(0)
+			if mouseInput.Position.Vec3(0).Sub(closestPoint).Len() < 100 {
+				gizmo.T.Move(gizmo.AxisTypeY, -mouseInput.MouseMotionEvent.YRel)
+				// gizmo.T.Move(gizmo.AxisTypeX, mouseInput.MouseMotionEvent.XRel)
+			}
+		}
 	}
 
 	forwardVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 0, -1})

@@ -7,7 +7,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/panels"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -109,17 +108,20 @@ func (g *Izzet) renderImgui() {
 }
 
 func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
-	if panels.SelectedEntity != nil {
-		gl.Clear(gl.DEPTH_BUFFER_BIT)
-		entity := g.entities[panels.SelectedEntity.ID]
-		drawGizmo(&viewerContext, g.shaderManager.GetShaderProgram("flat"), entity.Position)
+	if panels.SelectedEntity == nil {
+		return
 	}
+
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	entity := g.entities[panels.SelectedEntity.ID]
+	drawGizmo(&viewerContext, g.shaderManager.GetShaderProgram("flat"), entity.Position)
 }
 
 func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings()
 
-	gl.Viewport(0, 0, int32(settings.Width), int32(settings.Height))
+	w, h := g.window.GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -159,7 +161,6 @@ func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightConte
 			entity.AnimationPlayer,
 			modelMatrix,
 		)
-		// drawGizmo(&viewerContext, shaderManager.GetShaderProgram("flat"), entity.Position)
 	}
 
 }
@@ -180,7 +181,7 @@ func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, posi
 	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{0, 1, 0})
 
 	lines = [][]mgl64.Vec3{
-		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 0, -20})},
+		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 0, 20})},
 	}
 	drawLines(*viewerContext, shader, lines, 1, mgl64.Vec3{1, 0, 0})
 }

@@ -12,6 +12,8 @@ github.com/inkyblackness/imgui-go/v4 v4.6.0 h1:ShcnXEYl80+xREGBY9OpGWePA6FfJChY9
 github.com/inkyblackness/imgui-go/v4 v4.6.0/go.mod h1:g8SAGtOYUP7rYaOB2AsVKCEHmPMDmJKgt4z6d+flhb0=
 github.com/kkevinchou/kitolib v0.0.0-20221030000750-9b342aabc8df h1:aP5kKt8xsaClNo4ly0ePC31D8CiP38Uh016j7551fqM=
 github.com/kkevinchou/kitolib v0.0.0-20221030000750-9b342aabc8df/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
+github.com/kkevinchou/kitolib v0.0.0-20221102064723-31e68e9b1549 h1:8Qsz0ua6VGztavxa/e9nvDyhkERIT4nxxuFYYhg3O2w=
+github.com/kkevinchou/kitolib v0.0.0-20221102064723-31e68e9b1549/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qmuntal/gltf v0.23.1 h1:R8vkbJXmARbD/oI+Yn3252I2qDQ8mljsc88BJJEdYMY=

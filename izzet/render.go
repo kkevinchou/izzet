@@ -147,6 +147,10 @@ func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightConte
 			entity.AnimationPlayer,
 			modelMatrix,
 		)
+		// drawGizmo(&viewerContext, shaderManager.GetShaderProgram("flat"), entity.Position)
+	}
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	for _, entity := range g.entities {
 		drawGizmo(&viewerContext, shaderManager.GetShaderProgram("flat"), entity.Position)
 	}
 }

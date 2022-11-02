@@ -27,7 +27,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	mouseInput := frameInput.MouseInput
 
-	var mouseSensitivity float64 = 0.005
+	var mouseSensitivity float64 = 0.003
 	if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
 		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity

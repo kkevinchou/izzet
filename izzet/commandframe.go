@@ -33,6 +33,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 	}
 
+	// convert gizmo axes to world space
+	// line point distance check
+	// if within threshold, adjust
 	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		gizmo.T.Move(gizmo.AxisTypeY, -mouseInput.MouseMotionEvent.YRel)
 	}

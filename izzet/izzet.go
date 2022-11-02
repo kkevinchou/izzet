@@ -37,6 +37,8 @@ type Izzet struct {
 
 	entities map[int]*entities.Entity
 	prefabs  map[int]*prefabs.Prefab
+
+	viewerContext ViewerContext
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {

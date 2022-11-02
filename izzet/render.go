@@ -60,8 +60,12 @@ func (g *Izzet) Render(delta time.Duration) {
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
 	}
 
+	g.viewerContext = cameraViewerContext
+
 	g.renderToDepthMap(lightViewerContext, lightContext)
 	g.renderToDisplay(cameraViewerContext, lightContext)
+	g.renderGizmos(cameraViewerContext)
+
 	g.renderImgui()
 
 	g.window.GLSwap()
@@ -102,6 +106,14 @@ func (g *Izzet) renderImgui() {
 
 	imgui.Render()
 	g.imguiRenderer.Render(g.platform.DisplaySize(), g.platform.FramebufferSize(), imgui.RenderedDrawData())
+}
+
+func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
+	if panels.SelectedEntity != nil {
+		gl.Clear(gl.DEPTH_BUFFER_BIT)
+		entity := g.entities[panels.SelectedEntity.ID]
+		drawGizmo(&viewerContext, g.shaderManager.GetShaderProgram("flat"), entity.Position)
+	}
 }
 
 func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
@@ -149,10 +161,7 @@ func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightConte
 		)
 		// drawGizmo(&viewerContext, shaderManager.GetShaderProgram("flat"), entity.Position)
 	}
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	for _, entity := range g.entities {
-		drawGizmo(&viewerContext, shaderManager.GetShaderProgram("flat"), entity.Position)
-	}
+
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
@@ -160,7 +169,6 @@ func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4
 }
 
 func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
-
 	lines := [][]mgl64.Vec3{
 		[]mgl64.Vec3{position, position.Add(mgl64.Vec3{0, 20, 0})},
 	}

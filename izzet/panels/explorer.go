@@ -24,7 +24,7 @@ func BuildExplorer(es map[int]*entities.Entity, world World) {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 	selectedEntity := sceneHierarchy(es, world)
 	if imgui.IsItemClicked() {
-		hierarchySelection = 0
+		HierarchySelection = 0
 	}
 
 	if imgui.BeginDragDropTarget() {

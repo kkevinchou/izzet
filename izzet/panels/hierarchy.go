@@ -8,7 +8,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
-var hierarchySelection int
+var HierarchySelection int
+var SelectedEntity *entities.Entity
 
 func sceneHierarchy(es map[int]*entities.Entity, world World) *entities.Entity {
 	regionSize := imgui.ContentRegionAvail()
@@ -31,7 +32,7 @@ func sceneHierarchy(es map[int]*entities.Entity, world World) *entities.Entity {
 		entity := es[k]
 
 		nodeFlags := imgui.TreeNodeFlagsNone | imgui.TreeNodeFlagsLeaf
-		if hierarchySelection&(1<<i) != 0 {
+		if HierarchySelection&(1<<i) != 0 {
 			selectedEntity = entity
 			nodeFlags |= imgui.TreeNodeFlagsSelected
 		}
@@ -55,11 +56,12 @@ func sceneHierarchy(es map[int]*entities.Entity, world World) *entities.Entity {
 		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
 			selectedItem = i
 		}
-
 	}
 	if selectedItem != -1 {
-		hierarchySelection = (1 << selectedItem)
+		HierarchySelection = (1 << selectedItem)
 	}
+
+	SelectedEntity = selectedEntity
 
 	imgui.EndChild()
 	return selectedEntity

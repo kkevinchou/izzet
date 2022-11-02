@@ -16,7 +16,6 @@ type Platform interface {
 }
 
 func initOpenGLRenderSettings() {
-	sdl.GLSetSwapInterval(1)
 	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
 	gl.ClearDepth(1)
 	gl.Enable(gl.DEPTH_TEST)

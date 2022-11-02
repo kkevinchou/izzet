@@ -23,7 +23,7 @@ const (
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.
 	MSPerCommandFrame int = 16
-	FPS               int = 60
+	FPS               int = 144
 
 	// Animation
 	MaxAnimationJointWeights = 4

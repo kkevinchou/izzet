@@ -153,7 +153,7 @@ func (g *Izzet) Start() {
 
 		if renderAccumulator >= msPerFrame {
 			frameCount++
-			g.Render(time.Duration(16) * time.Millisecond)
+			g.Render(time.Duration(msPerFrame) * time.Millisecond)
 
 			// renderFunction(time.Duration(msPerFrame) * time.Millisecond)
 			initOpenGLRenderSettings()

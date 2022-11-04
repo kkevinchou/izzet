@@ -133,7 +133,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.camera.Orientation = newOrientation
 
-	cameraSpeed := 100
+	cameraSpeed := 18
 	controlVector := getControlVector(keyboardInput)
 	movementVector := rightVector.Mul(controlVector[0]).Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector[1])).Add(forwardVector.Mul(controlVector[2]))
 	movementDelta := movementVector.Mul(float64(cameraSpeed) / float64(delta.Milliseconds()))

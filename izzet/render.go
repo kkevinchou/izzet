@@ -94,7 +94,21 @@ func (g *Izzet) renderImgui() {
 	// imgui.BeginV("explorer root", &open1, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize|imgui.WindowFlagsMenuBar)
 	// imgui.MenuItem("test")
 
-	panels.BuildExplorer(g.entities, g)
+	imgui.BeginMainMenuBar()
+	menuBarSize := imgui.WindowSize()
+	if imgui.BeginMenu("file") {
+		if imgui.MenuItem("New") {
+		}
+
+		if imgui.MenuItem("Open") {
+		}
+		imgui.EndMenu()
+	}
+	imgui.EndMainMenuBar()
+
+	// menuBarSize := imgui.Vec2{}
+
+	panels.BuildExplorer(g.entities, g, menuBarSize)
 	panels.BuildPrefabs(g.prefabs, g)
 
 	// imgui.End()

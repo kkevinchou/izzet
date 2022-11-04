@@ -9,11 +9,11 @@ import (
 
 var open bool = true
 
-func BuildExplorer(es map[int]*entities.Entity, world World) {
+func BuildExplorer(es map[int]*entities.Entity, world World, menuBarSize imgui.Vec2) {
 	x, y := world.Window().GetSize()
-	rect := imgui.Vec2{X: float32(x), Y: float32(y)}
+	rect := imgui.Vec2{X: float32(x), Y: float32(y) - menuBarSize.Y}
 	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{}, imgui.ConditionAlways, imgui.Vec2{})
+	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionAlways, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: rect.X * 0.15, Y: rect.Y}, imgui.ConditionAlways)
 
 	imgui.BeginV("explorer window", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize)

@@ -6,7 +6,7 @@ require (
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6
 	github.com/go-gl/mathgl v1.0.0
 	github.com/inkyblackness/imgui-go/v4 v4.6.0
-	github.com/kkevinchou/kitolib v0.0.0-20221105011216-3b613380297b
+	github.com/kkevinchou/kitolib v0.0.0-20221105054421-11ab3af10eef
 	github.com/veandco/go-sdl2 v0.4.25
 )
 

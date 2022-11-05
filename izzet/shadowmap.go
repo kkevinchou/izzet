@@ -16,6 +16,10 @@ type ShadowMap struct {
 	shadowDistance float64
 }
 
+func (s *ShadowMap) DepthMapFBO() uint32 {
+	return s.depthMapFBO
+}
+
 func (s *ShadowMap) Prepare() {
 	gl.CullFace(gl.FRONT)
 	gl.Viewport(0, 0, int32(s.height), int32(s.height))

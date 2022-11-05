@@ -20,6 +20,10 @@ github.com/kkevinchou/kitolib v0.0.0-20221104051753-2441dce6b14a h1:bjLoNszRvHa1
 github.com/kkevinchou/kitolib v0.0.0-20221104051753-2441dce6b14a/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/kkevinchou/kitolib v0.0.0-20221105011216-3b613380297b h1:XQqAe8V4DldLmoSX2/5Sc4/dNU5vLgxTTyLe8AmXmKU=
 github.com/kkevinchou/kitolib v0.0.0-20221105011216-3b613380297b/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
+github.com/kkevinchou/kitolib v0.0.0-20221105052827-fe13b3b6d73a h1:I6KqtaX1NEzmEM+uLfy5uk47WCxsw88gmUF/XErGb9o=
+github.com/kkevinchou/kitolib v0.0.0-20221105052827-fe13b3b6d73a/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
+github.com/kkevinchou/kitolib v0.0.0-20221105054421-11ab3af10eef h1:FKRJqSv9Ug+H9vDMAKHdyrvam2UJfSfAAFACD6GHONI=
+github.com/kkevinchou/kitolib v0.0.0-20221105054421-11ab3af10eef/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qmuntal/gltf v0.23.1 h1:R8vkbJXmARbD/oI+Yn3252I2qDQ8mljsc88BJJEdYMY=

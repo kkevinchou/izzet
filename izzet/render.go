@@ -65,9 +65,9 @@ func (g *Izzet) Render(delta time.Duration) {
 	g.renderToDepthMap(lightViewerContext, lightContext)
 	g.renderToDisplay(cameraViewerContext, lightContext)
 	g.renderGizmos(cameraViewerContext)
+	// drawHUDTextureToQuad(cameraViewerContext, g.shaderManager.GetShaderProgram("depthDebug"), g.shadowMap.depthTexture, 1)
 
 	g.renderImgui()
-
 	g.window.GLSwap()
 }
 

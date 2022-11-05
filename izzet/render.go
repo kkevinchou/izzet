@@ -77,7 +77,7 @@ func (g *Izzet) renderImgui() {
 
 	imgui.BeginMainMenuBar()
 	menuBarSize := imgui.WindowSize()
-	if imgui.BeginMenu("file") {
+	if imgui.BeginMenu("File") {
 		if imgui.MenuItem("New") {
 		}
 

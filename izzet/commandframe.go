@@ -45,6 +45,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.Shutdown()
 	}
 
+	g.gizmo(frameInput)
+	g.cameraMovement(frameInput, delta)
+}
+func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
 	var mouseSensitivity float64 = 0.003
@@ -52,9 +56,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 	}
-
-	g.gizmo(frameInput)
-
 	forwardVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 	upVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 1, 0})
 	// there's probably away to get the right vector directly rather than going crossing the up vector :D
@@ -74,12 +75,44 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.camera.Orientation = newOrientation
 
-	cameraSpeed := 18
+	keyboardInput := frameInput.KeyboardInput
 	controlVector := getControlVector(keyboardInput)
-	movementVector := rightVector.Mul(controlVector[0]).Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector[1])).Add(forwardVector.Mul(controlVector[2]))
-	movementDelta := movementVector.Mul(float64(cameraSpeed) / float64(delta.Milliseconds()))
 
-	g.camera.Position = g.camera.Position.Add(movementDelta)
+	movementVector := rightVector.Mul(controlVector[0]).Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector[1])).Add(forwardVector.Mul(controlVector[2]))
+
+	if !movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+		if g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+			g.camera.Speed = 3
+		} else {
+			// TODO(kevin) parameterize how slowly we accelerate based on how long we want to drift for
+			g.camera.Speed *= 1.1
+			if g.camera.Speed > 18 {
+				g.camera.Speed = 18
+			}
+		}
+	}
+
+	movementDelta := movementVector.Mul(float64(g.camera.Speed) / float64(delta.Milliseconds()))
+
+	if movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+		// start drifting if we were moving last frame but not the current one
+		if !g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+			g.camera.Drift = g.camera.LastFrameMovementVector.Mul(float64(g.camera.Speed) / float64(delta.Milliseconds()))
+		} else {
+			// TODO(kevin) parameterize how slowly we decay based on how long we want to drift for
+			g.camera.Drift = g.camera.Drift.Mul(0.92)
+			if g.camera.Drift.Len() < 0.01 {
+				g.camera.Drift = mgl64.Vec3{}
+			}
+		}
+		g.camera.Speed = 0
+	} else {
+		// if we're actively moving the camera, remove all drift
+		g.camera.Drift = mgl64.Vec3{}
+	}
+
+	g.camera.Position = g.camera.Position.Add(movementDelta).Add(g.camera.Drift)
+	g.camera.LastFrameMovementVector = movementVector
 }
 
 func (g *Izzet) gizmo(frameInput input.Input) {
@@ -110,7 +143,7 @@ func (g *Izzet) gizmo(frameInput input.Input) {
 		}
 
 		if minDist != nil {
-			if mouseInput.Buttons[0] && mouseInput.MouseButtonEvent == input.MouseButtonEventDown {
+			if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 				gizmo.T.Active = true
 				gizmo.T.TranslationDir = minAxis
 				gizmo.T.MotionPivot = motionPivot.Sub(position)
@@ -138,7 +171,7 @@ func (g *Izzet) gizmo(frameInput input.Input) {
 			}
 		}
 
-		if mouseInput.MouseButtonEvent == input.MouseButtonEventUp {
+		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 			gizmo.T.Active = false
 			gizmo.T.HoverIndex = closestAxisIndex
 		}

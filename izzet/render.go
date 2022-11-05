@@ -75,6 +75,18 @@ func (g *Izzet) renderImgui() {
 	g.platform.NewFrame()
 	imgui.NewFrame()
 
+	imgui.BeginMainMenuBar()
+	menuBarSize := imgui.WindowSize()
+	if imgui.BeginMenu("file") {
+		if imgui.MenuItem("New") {
+		}
+
+		if imgui.MenuItem("Open") {
+		}
+		imgui.EndMenu()
+	}
+	imgui.EndMainMenuBar()
+
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
@@ -93,20 +105,6 @@ func (g *Izzet) renderImgui() {
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: float32(settings.Width), Y: float32(settings.Height)}, imgui.ConditionAlways)
 	// imgui.BeginV("explorer root", &open1, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize|imgui.WindowFlagsMenuBar)
 	// imgui.MenuItem("test")
-
-	imgui.BeginMainMenuBar()
-	menuBarSize := imgui.WindowSize()
-	if imgui.BeginMenu("file") {
-		if imgui.MenuItem("New") {
-		}
-
-		if imgui.MenuItem("Open") {
-		}
-		imgui.EndMenu()
-	}
-	imgui.EndMainMenuBar()
-
-	// menuBarSize := imgui.Vec2{}
 
 	panels.BuildExplorer(g.entities, g, menuBarSize)
 	panels.BuildPrefabs(g.prefabs, g)

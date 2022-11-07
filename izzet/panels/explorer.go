@@ -9,7 +9,7 @@ import (
 
 var open bool = true
 
-func BuildExplorer(es map[int]*entities.Entity, world World, menuBarSize imgui.Vec2) {
+func BuildExplorer(es []*entities.Entity, world World, menuBarSize imgui.Vec2) {
 	x, y := world.Window().GetSize()
 	rect := imgui.Vec2{X: float32(x), Y: float32(y) - menuBarSize.Y}
 	imgui.SetNextWindowBgAlpha(0.8)

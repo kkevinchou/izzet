@@ -1,14 +1,20 @@
 package izzet
 
 import (
+	"encoding/binary"
 	"math"
 	"time"
 
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/input"
+)
+
+var (
+	maxUInt32 uint32 = ^uint32(0)
 )
 
 func (g *Izzet) handleResize() {
@@ -33,7 +39,7 @@ func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	g.handleResize()
 
-	for _, entity := range g.entities {
+	for _, entity := range g.Entities() {
 		if entity.AnimationPlayer != nil {
 			entity.AnimationPlayer.Update(delta)
 		}
@@ -47,7 +53,37 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.gizmo(frameInput)
 	g.cameraMovement(frameInput, delta)
+	g.entitySelect(frameInput, delta)
 }
+
+func (g *Izzet) entitySelect(frameInput input.Input, delta time.Duration) {
+	mouseInput := frameInput.MouseInput
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+		data := make([]byte, 4)
+		_, h := g.window.GetSize()
+		gl.ReadPixels(int32(mouseInput.Position[0]), int32(h)-int32(mouseInput.Position[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+
+		// NOTE(kevin) actually not sure why, but this works
+		// i would've expected to need to multiply by 255, but apparently it's handled somehow
+		uintID := binary.LittleEndian.Uint32(data)
+
+		// max uint32 is reserved for not selecting any objects
+		if uintID != maxUInt32 {
+			id := int(uintID)
+			for i, e := range g.Entities() {
+				if e.ID == id {
+					panels.HierarchySelection = (1 << i)
+				}
+			}
+		}
+	}
+}
+
 func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput

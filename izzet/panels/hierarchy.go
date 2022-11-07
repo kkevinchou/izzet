@@ -1,7 +1,6 @@
 package panels
 
 import (
-	"sort"
 	"strconv"
 
 	"github.com/inkyblackness/imgui-go/v4"
@@ -11,7 +10,7 @@ import (
 var HierarchySelection int
 var SelectedEntity *entities.Entity
 
-func sceneHierarchy(es map[int]*entities.Entity, world World) *entities.Entity {
+func sceneHierarchy(es []*entities.Entity, world World) *entities.Entity {
 	regionSize := imgui.ContentRegionAvail()
 	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y * 0.5}
 	imgui.BeginChildV("sceneHierarchy", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
@@ -20,18 +19,11 @@ func sceneHierarchy(es map[int]*entities.Entity, world World) *entities.Entity {
 	imgui.Text("Scene Hierarchy")
 	imgui.PopStyleColor()
 
-	keys := make([]int, 0, len(es))
-	for k := range es {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
-
 	var selectedEntity *entities.Entity
 	selectedItem := -1
-	for i, k := range keys {
-		entity := es[k]
-
+	for i, entity := range es {
 		nodeFlags := imgui.TreeNodeFlagsNone | imgui.TreeNodeFlagsLeaf
+
 		if HierarchySelection&(1<<i) != 0 {
 			selectedEntity = entity
 			nodeFlags |= imgui.TreeNodeFlagsSelected

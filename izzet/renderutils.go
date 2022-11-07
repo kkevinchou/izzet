@@ -14,6 +14,53 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+func idToPickingColor(id int) mgl32.Vec4 {
+	var r float32 = float32((id&0x000000FF)>>0) / 255
+	var g float32 = float32((id&0x0000FF00)>>8) / 255
+	var b float32 = float32((id&0x00FF0000)>>16) / 255
+	var a float32 = float32((id&0xFF000000)>>24) / 255
+	return mgl32.Vec4{r, g, b, a}
+}
+
+func drawWIthID(viewerContext ViewerContext,
+	shader *shaders.ShaderProgram,
+	assetManager *assets.AssetManager,
+	model *model.Model,
+	animationPlayer *animation.AnimationPlayer,
+	modelMatrix mgl64.Mat4,
+	id int,
+) {
+	// TOOD(kevin): i hate this... Ideally we incorporate the model.RootTransforms to the vertex positions
+	// and the animation poses so that we don't have to multiple this matrix every frame.
+	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix).Mul4(model.RootTransforms())
+	_, r, _ := utils.Decompose(m32ModelMatrix)
+
+	shader.Use()
+	shader.SetUniformMat4("model", m32ModelMatrix)
+	shader.SetUniformMat4("modelRotationMatrix", r.Mat4())
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	shader.SetUniformVec4("pickingColor", idToPickingColor(id))
+
+	if animationPlayer != nil {
+		animationTransforms := animationPlayer.AnimationTransforms()
+		// if animationTransforms is nil, the shader will execute reading into invalid memory
+		// so, we need to explicitly guard for this
+		if animationTransforms == nil {
+			panic("animationTransforms not found")
+		}
+		for i := 0; i < len(animationTransforms); i++ {
+			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
+		}
+	}
+
+	for _, meshChunk := range model.MeshChunks() {
+		gl.BindVertexArray(meshChunk.VAO())
+		gl.DrawElements(gl.TRIANGLES, int32(meshChunk.VertexCount()), gl.UNSIGNED_INT, nil)
+	}
+}
+
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func drawTris(viewerContext ViewerContext, shader *shaders.ShaderProgram, points []mgl64.Vec3, color mgl64.Vec3) {
 	var vertices []float32

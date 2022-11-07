@@ -33,5 +33,4 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 
 	id += 1
 	return e
-
 }

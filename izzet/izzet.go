@@ -33,6 +33,9 @@ type Izzet struct {
 	shadowMap     *ShadowMap
 	imguiRenderer *ImguiOpenGL4Renderer
 
+	colorPickingFB      uint32
+	colorPickingTexture uint32
+
 	camera *Camera
 
 	entities map[int]*entities.Entity
@@ -82,8 +85,10 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
-
 	g.shadowMap = shadowMap
+
+	w, h := g.window.GetSize()
+	g.colorPickingFB, g.colorPickingTexture = g.initColorPickingFB(int(w), int(h))
 
 	compileShaders(g.shaderManager)
 
@@ -102,7 +107,7 @@ func (g *Izzet) loadPrefabs() {
 
 	g.prefabs = map[int]*prefabs.Prefab{}
 
-	names := []string{"alpha", "mutant", "scene"}
+	names := []string{"alpha", "mutant", "scene", "town_center"}
 
 	for _, name := range names {
 		spec := g.assetManager.GetModel(name)
@@ -116,7 +121,7 @@ func (g *Izzet) loadPrefabs() {
 
 func (g *Izzet) loadEntities() {
 	g.entities = map[int]*entities.Entity{}
-	for _, pf := range g.prefabs {
+	for _, pf := range g.Prefabs() {
 		entity := entities.InstantiateFromPrefab(pf)
 		g.entities[entity.ID] = entity
 	}

@@ -1,6 +1,7 @@
 package izzet
 
 import (
+	"errors"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -64,8 +65,9 @@ func (g *Izzet) Render(delta time.Duration) {
 
 	g.renderToDepthMap(lightViewerContext, lightContext)
 	g.renderToDisplay(cameraViewerContext, lightContext)
+	g.renderColorPicking(cameraViewerContext)
+	// drawHUDTextureToQuad(cameraViewerContext, g.shaderManager.GetShaderProgram("depthDebug"), g.colorPickingTexture, 1)
 	g.renderGizmos(cameraViewerContext)
-	// drawHUDTextureToQuad(cameraViewerContext, g.shaderManager.GetShaderProgram("depthDebug"), g.shadowMap.depthTexture, 1)
 
 	g.renderImgui()
 	g.window.GLSwap()
@@ -106,8 +108,8 @@ func (g *Izzet) renderImgui() {
 	// imgui.BeginV("explorer root", &open1, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize|imgui.WindowFlagsMenuBar)
 	// imgui.MenuItem("test")
 
-	panels.BuildExplorer(g.entities, g, menuBarSize)
-	panels.BuildPrefabs(g.prefabs, g)
+	panels.BuildExplorer(g.Entities(), g, menuBarSize)
+	panels.BuildPrefabs(g.Prefabs(), g)
 
 	// imgui.End()
 
@@ -152,7 +154,7 @@ func (g *Izzet) renderToDepthMap(viewerContext ViewerContext, lightContext Light
 func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
 	shaderManager := g.shaderManager
 
-	for _, entity := range g.entities {
+	for _, entity := range g.Entities() {
 		modelMatrix := createModelMatrix(
 			mgl64.Scale3D(1, 1, 1),
 			mgl64.QuatIdent().Mat4(),
@@ -195,4 +197,67 @@ func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, posi
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)
 	}
+}
+
+func (g *Izzet) initColorPickingFB(width int, height int) (uint32, uint32) {
+	var colorPickingFBO uint32
+	gl.GenFramebuffers(1, &colorPickingFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, colorPickingFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB,
+		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
+	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize color picking fbo"))
+	}
+
+	return colorPickingFBO, texture
+}
+
+func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
+	gl.ClearColor(1, 1, 1, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	shaderManager := g.shaderManager
+
+	for _, entity := range g.Entities() {
+		modelMatrix := createModelMatrix(
+			mgl64.Scale3D(1, 1, 1),
+			mgl64.QuatIdent().Mat4(),
+			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
+		)
+
+		shader := "color_picking"
+		// if entity.AnimationPlayer != nil {
+		// 	shader = "modelpbr"
+		// }
+
+		drawWIthID(
+			viewerContext,
+			shaderManager.GetShaderProgram(shader),
+			g.assetManager,
+			entity.Prefab.ModelRefs[0].Model,
+			entity.AnimationPlayer,
+			modelMatrix,
+			entity.ID,
+		)
+	}
+
 }

@@ -2,7 +2,6 @@ package panels
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -10,7 +9,7 @@ import (
 
 var prefabSelection int
 
-func BuildPrefabs(ps map[int]*prefabs.Prefab, world World) {
+func BuildPrefabs(ps []*prefabs.Prefab, world World) {
 	var heightRatio float32 = 0.15
 	_ = heightRatio
 	imgui.SetNextWindowBgAlpha(0.8)
@@ -31,7 +30,7 @@ func BuildPrefabs(ps map[int]*prefabs.Prefab, world World) {
 	imgui.End()
 }
 
-func prefabsUI(ps map[int]*prefabs.Prefab) {
+func prefabsUI(ps []*prefabs.Prefab) {
 	regionSize := imgui.ContentRegionAvail()
 	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y}
 	imgui.BeginChildV("prefab", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
@@ -40,17 +39,9 @@ func prefabsUI(ps map[int]*prefabs.Prefab) {
 	imgui.Text("Prefabs")
 	imgui.PopStyleColor()
 
-	keys := make([]int, 0, len(ps))
-	for k := range ps {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
-
 	var selectedPrefab *prefabs.Prefab
 	selectedItem := -1
-	for i, k := range keys {
-		prefab := ps[k]
-
+	for i, prefab := range ps {
 		nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 		if prefabSelection&(1<<i) != 0 {
 			selectedPrefab = prefab

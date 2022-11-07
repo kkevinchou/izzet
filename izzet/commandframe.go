@@ -15,6 +15,10 @@ import (
 
 var (
 	maxUInt32 uint32 = ^uint32(0)
+
+	// we shift 8 bits since 8 bits are reserved for the alpha channel
+	// the max id is used to indicate no entity was selected
+	emptyColorPickingID uint32 = maxUInt32 >> 8
 )
 
 func (g *Izzet) handleResize() {
@@ -57,6 +61,11 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 }
 
 func (g *Izzet) entitySelect(frameInput input.Input, delta time.Duration) {
+	// gizmo interactions supercede entity selection
+	if gizmo.T.Active {
+		return
+	}
+
 	mouseInput := frameInput.MouseInput
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
@@ -66,20 +75,21 @@ func (g *Izzet) entitySelect(frameInput input.Input, delta time.Duration) {
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		data := make([]byte, 4)
 		_, h := g.window.GetSize()
-		gl.ReadPixels(int32(mouseInput.Position[0]), int32(h)-int32(mouseInput.Position[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+		gl.ReadPixels(int32(mouseInput.Position[0]), int32(h)-int32(mouseInput.Position[1]), 1, 1, gl.RGB, gl.UNSIGNED_BYTE, gl.Ptr(data))
 
 		// NOTE(kevin) actually not sure why, but this works
 		// i would've expected to need to multiply by 255, but apparently it's handled somehow
 		uintID := binary.LittleEndian.Uint32(data)
 
-		// max uint32 is reserved for not selecting any objects
-		if uintID != maxUInt32 {
+		if uintID != emptyColorPickingID {
 			id := int(uintID)
 			for i, e := range g.Entities() {
 				if e.ID == id {
 					panels.HierarchySelection = (1 << i)
 				}
 			}
+		} else {
+			panels.HierarchySelection = 0
 		}
 	}
 }

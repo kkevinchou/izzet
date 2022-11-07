@@ -14,12 +14,11 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-func idToPickingColor(id int) mgl32.Vec4 {
+func idToPickingColor(id int) mgl32.Vec3 {
 	var r float32 = float32((id&0x000000FF)>>0) / 255
 	var g float32 = float32((id&0x0000FF00)>>8) / 255
 	var b float32 = float32((id&0x00FF0000)>>16) / 255
-	var a float32 = float32((id&0xFF000000)>>24) / 255
-	return mgl32.Vec4{r, g, b, a}
+	return mgl32.Vec3{r, g, b}
 }
 
 func drawWIthID(viewerContext ViewerContext,
@@ -41,7 +40,7 @@ func drawWIthID(viewerContext ViewerContext,
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformVec4("pickingColor", idToPickingColor(id))
+	shader.SetUniformVec3("pickingColor", idToPickingColor(id))
 
 	if animationPlayer != nil {
 		animationTransforms := animationPlayer.AnimationTransforms()

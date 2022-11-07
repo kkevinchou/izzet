@@ -209,7 +209,7 @@ func (g *Izzet) initColorPickingFB(width int, height int) (uint32, uint32) {
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB,
-		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+		int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 

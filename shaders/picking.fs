@@ -3,9 +3,9 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 
-uniform vec4 pickingColor;
+uniform vec3 pickingColor;
 
 void main()
 {
-    FragColor = pickingColor;
+    FragColor = vec4(pickingColor, 1);
 }

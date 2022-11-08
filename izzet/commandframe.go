@@ -19,7 +19,7 @@ var (
 	// we shift 8 bits since 8 bits are reserved for the alpha channel
 	// the max id is used to indicate no entity was selected
 	emptyColorPickingID uint32  = maxUInt32 >> 8
-	maxCameraSpeed      float64 = 300 // units per second
+	maxCameraSpeed      float64 = 400 // units per second
 )
 
 func (g *Izzet) handleResize() {
@@ -76,7 +76,10 @@ func (g *Izzet) entitySelect(frameInput input.Input, delta time.Duration) {
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		data := make([]byte, 4)
 		_, h := g.window.GetSize()
-		gl.ReadPixels(int32(mouseInput.Position[0]), int32(h)-int32(mouseInput.Position[1]), 1, 1, gl.RGB, gl.UNSIGNED_BYTE, gl.Ptr(data))
+		gl.ReadPixels(int32(mouseInput.Position[0]), int32(h)-int32(mouseInput.Position[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+
+		// discard the alpha channel data
+		data[3] = 0
 
 		// NOTE(kevin) actually not sure why, but this works
 		// i would've expected to need to multiply by 255, but apparently it's handled somehow

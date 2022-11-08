@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -62,13 +63,20 @@ func (g *Izzet) Render(delta time.Duration) {
 		// if the viewer moves along -y, the universe moves along +y
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
 	}
+	_ = lightContext
+	_ = lightViewerContext
 
 	g.viewerContext = cameraViewerContext
 
 	g.renderToDepthMap(lightViewerContext, lightContext)
 	g.renderToDisplay(cameraViewerContext, lightContext)
 	g.renderColorPicking(cameraViewerContext)
-	drawHUDTextureToQuad(cameraViewerContext, g.shaderManager.GetShaderProgram("depthDebug"), g.colorPickingTexture, 1)
+
+	// probably only need to run this once?
+	g.renderCircle()
+	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
+	drawTexturedQuad(&cameraViewerContext, g.shaderManager, g.tmpTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+
 	g.renderGizmos(cameraViewerContext)
 
 	g.renderImgui()
@@ -124,6 +132,17 @@ func (g *Izzet) renderImgui() {
 	g.imguiRenderer.Render(g.platform.DisplaySize(), g.platform.FramebufferSize(), imgui.RenderedDrawData())
 }
 
+func (g *Izzet) renderCircle() {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, g.tmpFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	shaderManager := g.shaderManager
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"))
+}
+
 func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
 	if panels.SelectedEntity == nil {
 		return
@@ -136,12 +155,10 @@ func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
 
 func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings()
-
 	w, h := g.window.GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
 	g.renderScene(viewerContext, lightContext, false)
 }
 
@@ -210,8 +227,8 @@ func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
 	var texture uint32
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB,
-		int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 

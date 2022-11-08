@@ -92,13 +92,19 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("flat", "flat", "flat"); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("quadtex", "quadtex", "quadtex"); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc"); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("color_picking", "model_static", "picking"); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("basic_quad", "basic_quad", "basic_quad"); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("basic_quad_world", "basic_quad_world", "basic_quad"); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("unit_circle", "unit_circle", "unit_circle"); err != nil {
 		panic(err)
 	}
 }

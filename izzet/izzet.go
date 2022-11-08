@@ -92,7 +92,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	w, h := g.window.GetSize()
 	g.colorPickingFB, g.colorPickingTexture = g.initFrameBuffer(int(w), int(h))
-	g.tmpFB, g.tmpTexture = g.initFrameBuffer(int(w), int(h))
+	g.tmpFB, g.tmpTexture = g.initFrameBuffer(1024, 1024)
 
 	compileShaders(g.shaderManager)
 

@@ -12,7 +12,6 @@ uniform mat4 projection;
 uniform float alpha;
 
 void main() {
-    // FragPos = vec3(model * vec4(aPos, 1.0));
     Alpha = alpha;
     gl_Position = projection *view * vec4(aPos, 1.0);
 }

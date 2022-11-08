@@ -242,6 +242,87 @@ func defaultPoints(thickness float64, length float64) []mgl64.Vec3 {
 	}
 }
 
+func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4) {
+	// texture coords top left = 0,0 | bottom right = 1,1
+	var vertices []float32 = []float32{
+		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
+		1 * hudScale, -1 * hudScale, 0, 1.0, 0.0,
+		1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
+		1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
+		-1 * hudScale, 1 * hudScale, 0, 0.0, 1.0,
+		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
+	}
+
+	// if we're just rendering something directly to screen without a world position
+	// adjust x coord by aspect ratio
+	if modelMatrix == nil {
+		for i := 0; i < len(vertices); i += 5 {
+			x := vertices[i]
+			vertices[i] = x / aspectRatio
+		}
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	gl.EnableVertexAttribArray(1)
+
+	gl.BindVertexArray(vao)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	if modelMatrix != nil {
+		shader := shaderManager.GetShaderProgram("basic_quad_world")
+		shader.Use()
+		shader.SetUniformMat4("model", *modelMatrix)
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	} else {
+		shader := shaderManager.GetShaderProgram("basic_quad")
+		shader.Use()
+	}
+
+	gl.Enable(gl.BLEND)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+}
+
+func drawCircle(shader *shaders.ShaderProgram) {
+	var vertices []float32 = []float32{
+		-1, -1, 0,
+		1, -1, 0,
+		1, 1, 0,
+		1, 1, 0,
+		-1, 1, 0,
+		-1, -1, 0,
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+
+	shader.Use()
+
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+}
+
 // drawHUDTextureToQuad does a shitty perspective based rendering of a flat texture
 func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
 	// texture coords top left = 0,0 | bottom right = 1,1
@@ -274,7 +355,7 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
 	shader.Use()
-	shader.SetUniformMat4("model", mgl32.Translate3D(1.2, 0.8, -2))
+	shader.SetUniformMat4("model", mgl32.Translate3D(0, 0, -2))
 	shader.SetUniformMat4("view", mgl32.Ident4())
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 

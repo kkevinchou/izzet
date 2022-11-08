@@ -68,7 +68,7 @@ func (g *Izzet) Render(delta time.Duration) {
 	g.renderToDepthMap(lightViewerContext, lightContext)
 	g.renderToDisplay(cameraViewerContext, lightContext)
 	g.renderColorPicking(cameraViewerContext)
-	// drawHUDTextureToQuad(cameraViewerContext, g.shaderManager.GetShaderProgram("depthDebug"), g.colorPickingTexture, 1)
+	drawHUDTextureToQuad(cameraViewerContext, g.shaderManager.GetShaderProgram("depthDebug"), g.colorPickingTexture, 1)
 	g.renderGizmos(cameraViewerContext)
 
 	g.renderImgui()
@@ -201,10 +201,10 @@ func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, posi
 	}
 }
 
-func (g *Izzet) initColorPickingFB(width int, height int) (uint32, uint32) {
-	var colorPickingFBO uint32
-	gl.GenFramebuffers(1, &colorPickingFBO)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, colorPickingFBO)
+func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	var texture uint32
@@ -225,10 +225,10 @@ func (g *Izzet) initColorPickingFB(width int, height int) (uint32, uint32) {
 
 	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
 	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize color picking fbo"))
+		panic(errors.New("failed to initalize frame buffer"))
 	}
 
-	return colorPickingFBO, texture
+	return fbo, texture
 }
 
 func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {

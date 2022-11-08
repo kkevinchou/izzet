@@ -36,6 +36,9 @@ type Izzet struct {
 	colorPickingFB      uint32
 	colorPickingTexture uint32
 
+	tmpFB      uint32
+	tmpTexture uint32
+
 	camera *Camera
 
 	entities map[int]*entities.Entity
@@ -88,7 +91,8 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.shadowMap = shadowMap
 
 	w, h := g.window.GetSize()
-	g.colorPickingFB, g.colorPickingTexture = g.initColorPickingFB(int(w), int(h))
+	g.colorPickingFB, g.colorPickingTexture = g.initFrameBuffer(int(w), int(h))
+	g.tmpFB, g.tmpTexture = g.initFrameBuffer(int(w), int(h))
 
 	compileShaders(g.shaderManager)
 

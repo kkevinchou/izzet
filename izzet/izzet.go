@@ -102,37 +102,18 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	return g
 }
 
-func (g *Izzet) loadPrefabs() {
-	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-
-	g.prefabs = map[int]*prefabs.Prefab{}
-
-	names := []string{"alpha", "mutant", "scene", "town_center"}
-
-	for _, name := range names {
-		spec := g.assetManager.GetModel(name)
-		m := model.NewModel(spec, modelConfig)
-		m.InitializeRenderingProperties(*g.assetManager)
-
-		pf := prefabs.CreatePrefab(name, []*model.Model{m})
-		g.prefabs[pf.ID] = pf
-	}
-}
-
-func (g *Izzet) loadEntities() {
-	g.entities = map[int]*entities.Entity{}
-	for _, pf := range g.Prefabs() {
-		entity := entities.InstantiateFromPrefab(pf)
-		g.entities[entity.ID] = entity
-	}
-}
-
 func (g *Izzet) Start() {
 	var accumulator float64
 	var renderAccumulator float64
 
 	msPerFrame := float64(1000) / float64(settings.FPS)
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
+
+	// immediate updates when swapping buffers
+	err := sdl.GLSetSwapInterval(0)
+	if err != nil {
+		panic(err)
+	}
 
 	frameCount := 0
 	for !g.gameOver {
@@ -162,8 +143,6 @@ func (g *Izzet) Start() {
 			frameCount++
 			g.Render(time.Duration(msPerFrame) * time.Millisecond)
 
-			// renderFunction(time.Duration(msPerFrame) * time.Millisecond)
-			initOpenGLRenderSettings()
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame
 		}
@@ -174,4 +153,29 @@ func initSeed() {
 	seed := settings.Seed
 	fmt.Printf("initializing with seed %d ...\n", seed)
 	rand.Seed(seed)
+}
+
+func (g *Izzet) loadPrefabs() {
+	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+
+	g.prefabs = map[int]*prefabs.Prefab{}
+
+	names := []string{"alpha", "mutant", "scene", "town_center"}
+
+	for _, name := range names {
+		spec := g.assetManager.GetModel(name)
+		m := model.NewModel(spec, modelConfig)
+		m.InitializeRenderingProperties(*g.assetManager)
+
+		pf := prefabs.CreatePrefab(name, []*model.Model{m})
+		g.prefabs[pf.ID] = pf
+	}
+}
+
+func (g *Izzet) loadEntities() {
+	g.entities = map[int]*entities.Entity{}
+	for _, pf := range g.Prefabs() {
+		entity := entities.InstantiateFromPrefab(pf)
+		g.entities[entity.ID] = entity
+	}
 }

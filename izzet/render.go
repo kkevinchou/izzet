@@ -25,6 +25,8 @@ var (
 )
 
 func (g *Izzet) Render(delta time.Duration) {
+	initOpenGLRenderSettings()
+
 	// configure camera viewer context
 	position := g.camera.Position
 	orientation := g.camera.Orientation

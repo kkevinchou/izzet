@@ -18,7 +18,8 @@ var (
 
 	// we shift 8 bits since 8 bits are reserved for the alpha channel
 	// the max id is used to indicate no entity was selected
-	emptyColorPickingID uint32 = maxUInt32 >> 8
+	emptyColorPickingID uint32  = maxUInt32 >> 8
+	maxCameraSpeed      float64 = 300 // units per second
 )
 
 func (g *Izzet) handleResize() {
@@ -128,25 +129,31 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 
 	if !movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
 		if g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
-			g.camera.Speed = 3
+			// this is the starting speed that the camera accelerates from
+			g.camera.Speed = maxCameraSpeed * 0.3
 		} else {
 			// TODO(kevin) parameterize how slowly we accelerate based on how long we want to drift for
-			g.camera.Speed *= 1.1
-			if g.camera.Speed > 18 {
-				g.camera.Speed = 18
+			g.camera.Speed *= 1.03
+			if g.camera.Speed > maxCameraSpeed {
+				g.camera.Speed = maxCameraSpeed
 			}
 		}
 	}
 
-	movementDelta := movementVector.Mul(float64(g.camera.Speed) / float64(delta.Milliseconds()))
+	if !movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+		movementVector = movementVector.Normalize()
+	}
+
+	perFrameMovement := float64(g.camera.Speed) * float64(delta.Milliseconds()) / 1000
+	movementDelta := movementVector.Mul(perFrameMovement)
 
 	if movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
 		// start drifting if we were moving last frame but not the current one
 		if !g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
-			g.camera.Drift = g.camera.LastFrameMovementVector.Mul(float64(g.camera.Speed) / float64(delta.Milliseconds()))
+			g.camera.Drift = g.camera.LastFrameMovementVector.Mul(perFrameMovement)
 		} else {
 			// TODO(kevin) parameterize how slowly we decay based on how long we want to drift for
-			g.camera.Drift = g.camera.Drift.Mul(0.92)
+			g.camera.Drift = g.camera.Drift.Mul(0.93)
 			if g.camera.Drift.Len() < 0.01 {
 				g.camera.Drift = mgl64.Vec3{}
 			}

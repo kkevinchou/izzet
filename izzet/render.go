@@ -76,7 +76,6 @@ func (g *Izzet) Render(delta time.Duration) {
 	g.renderCircle()
 	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
 	drawTexturedQuad(&cameraViewerContext, g.shaderManager, g.tmpTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
-
 	g.renderGizmos(cameraViewerContext)
 
 	g.renderImgui()
@@ -140,7 +139,7 @@ func (g *Izzet) renderCircle() {
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	shaderManager := g.shaderManager
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"))
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 0, 0, 1})
 }
 
 func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
@@ -252,6 +251,9 @@ func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	// modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
+	// drawTexturedQuad(&viewerContext, g.shaderManager, g.tmpTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
 
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	shaderManager := g.shaderManager

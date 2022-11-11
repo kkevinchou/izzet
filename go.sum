@@ -26,6 +26,8 @@ github.com/kkevinchou/kitolib v0.0.0-20221105054421-11ab3af10eef h1:FKRJqSv9Ug+H
 github.com/kkevinchou/kitolib v0.0.0-20221105054421-11ab3af10eef/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/kkevinchou/kitolib v0.0.0-20221107070357-2f4f90a96d96 h1:/Mqq6L1MmIiDro2BgabD3gScnUc/a0W67x1yVn2+Q78=
 github.com/kkevinchou/kitolib v0.0.0-20221107070357-2f4f90a96d96/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
+github.com/kkevinchou/kitolib v0.0.0-20221111042151-65edd8517944 h1:xzy1wJ7nRyzhNZUYXJretJfMV915S0INaSI3r7HJvvE=
+github.com/kkevinchou/kitolib v0.0.0-20221111042151-65edd8517944/go.mod h1:QATSGQ4Fcjv8UASG9++NR3pkB9lw/gZJgswUUdtYJew=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qmuntal/gltf v0.23.1 h1:R8vkbJXmARbD/oI+Yn3252I2qDQ8mljsc88BJJEdYMY=

@@ -295,7 +295,7 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func drawCircle(shader *shaders.ShaderProgram) {
+func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {
 	var vertices []float32 = []float32{
 		-1, -1, 0,
 		1, -1, 0,
@@ -319,6 +319,7 @@ func drawCircle(shader *shaders.ShaderProgram) {
 	gl.BindVertexArray(vao)
 
 	shader.Use()
+	shader.SetUniformVec4("color", utils.Vec4F64To4F32(color))
 
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }

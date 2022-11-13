@@ -93,11 +93,11 @@ func (g *Izzet) renderCircleGizmo(cameraViewerContext *ViewerContext) {
 	// probably only need to run this once?
 	g.renderCircle()
 	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
-	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.redCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.redCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix, true)
 	modelMatrix = t.Mul4(r).Mul4(s)
-	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.greenCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.greenCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix, true)
 	modelMatrix = t1.Mul4(r1).Mul4(s1)
-	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.blueCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.blueCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix, true)
 }
 
 func (g *Izzet) renderImgui() {

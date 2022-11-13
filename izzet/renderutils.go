@@ -242,7 +242,7 @@ func defaultPoints(thickness float64, length float64) []mgl64.Vec3 {
 	}
 }
 
-func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4) {
+func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
 	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{
 		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
@@ -251,6 +251,19 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
 		-1 * hudScale, 1 * hudScale, 0, 0.0, 1.0,
 		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
+	}
+
+	var backVertices []float32 = []float32{
+		1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
+		1 * hudScale, -1 * hudScale, 0, 1.0, 0.0,
+		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
+		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
+		-1 * hudScale, 1 * hudScale, 0, 0.0, 1.0,
+		1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
+	}
+
+	if doubleSided {
+		vertices = append(vertices, backVertices...)
 	}
 
 	// if we're just rendering something directly to screen without a world position
@@ -292,7 +305,7 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 	}
 
 	gl.Enable(gl.BLEND)
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 
 func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {

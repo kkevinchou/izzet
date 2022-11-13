@@ -16,17 +16,7 @@ type Platform interface {
 }
 
 func initOpenGLRenderSettings() {
-	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
-	gl.ClearDepth(1)
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LEQUAL)
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
-	gl.FrontFace(gl.CCW)
-	gl.Enable(gl.MULTISAMPLE)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.Enable(gl.BLEND)
-	gl.Disable(gl.FRAMEBUFFER_SRGB)
+	defaultSettings()
 }
 
 func initializeOpenGL() (*sdl.Window, error) {
@@ -110,9 +100,22 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 }
 
 func resetGLRenderSettings() {
+	defaultSettings()
 	gl.BindVertexArray(0)
 	gl.UseProgram(0)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+}
+
+func defaultSettings() {
+	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
+	gl.ClearDepth(1)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LEQUAL)
+	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
+	gl.FrontFace(gl.CCW)
+	gl.Enable(gl.MULTISAMPLE)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Enable(gl.BLEND)
+	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }

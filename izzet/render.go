@@ -2,6 +2,7 @@ package izzet
 
 import (
 	"errors"
+	"math"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -69,17 +70,34 @@ func (g *Izzet) Render(delta time.Duration) {
 	g.viewerContext = cameraViewerContext
 
 	g.renderToDepthMap(lightViewerContext, lightContext)
-	g.renderToDisplay(cameraViewerContext, lightContext)
 	g.renderColorPicking(cameraViewerContext)
+	g.renderToDisplay(cameraViewerContext, lightContext)
+	g.renderCircleGizmo(&cameraViewerContext)
 
-	// probably only need to run this once?
-	g.renderCircle()
-	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
-	drawTexturedQuad(&cameraViewerContext, g.shaderManager, g.tmpTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
 	g.renderGizmos(cameraViewerContext)
 
 	g.renderImgui()
 	g.window.GLSwap()
+}
+
+func (g *Izzet) renderCircleGizmo(cameraViewerContext *ViewerContext) {
+	defer resetGLRenderSettings()
+	r := mgl32.HomogRotate3DY(90 * math.Pi / 180)
+	t := mgl32.Translate3D(0, 300, 0)
+	s := mgl32.Scale3D(50, 50, 50)
+
+	r1 := mgl32.HomogRotate3DX(-90 * math.Pi / 180)
+	t1 := mgl32.Translate3D(0, 300, 0)
+	s1 := mgl32.Scale3D(50, 50, 50)
+
+	// probably only need to run this once?
+	g.renderCircle()
+	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
+	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.redCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+	modelMatrix = t.Mul4(r).Mul4(s)
+	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.greenCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+	modelMatrix = t1.Mul4(r1).Mul4(s1)
+	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.blueCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
 }
 
 func (g *Izzet) renderImgui() {
@@ -132,14 +150,24 @@ func (g *Izzet) renderImgui() {
 }
 
 func (g *Izzet) renderCircle() {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, g.tmpFB)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	shaderManager := g.shaderManager
+	var alpha float64 = 1
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, g.redCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 0, 0, alpha})
 
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, g.greenCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 1, 0, alpha})
 
-	shaderManager := g.shaderManager
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 0, 0, 1})
+	gl.BindFramebuffer(gl.FRAMEBUFFER, g.blueCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
 }
 
 func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
@@ -248,6 +276,7 @@ func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
 }
 
 func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {
+	defer resetGLRenderSettings()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

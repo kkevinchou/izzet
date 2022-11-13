@@ -12,6 +12,4 @@ void main() {
     distance = step(0, distance);
 
     FragColor = vec4(vec3(color), distance * color.a);
-
-    // FragColor = vec4(0, 1, 0, 1);
 }

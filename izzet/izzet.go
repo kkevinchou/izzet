@@ -36,8 +36,12 @@ type Izzet struct {
 	colorPickingFB      uint32
 	colorPickingTexture uint32
 
-	tmpFB      uint32
-	tmpTexture uint32
+	redCircleFB        uint32
+	redCircleTexture   uint32
+	greenCircleFB      uint32
+	greenCircleTexture uint32
+	blueCircleFB       uint32
+	blueCircleTexture  uint32
 
 	camera *Camera
 
@@ -92,7 +96,9 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	w, h := g.window.GetSize()
 	g.colorPickingFB, g.colorPickingTexture = g.initFrameBuffer(int(w), int(h))
-	g.tmpFB, g.tmpTexture = g.initFrameBuffer(1024, 1024)
+	g.redCircleFB, g.redCircleTexture = g.initFrameBuffer(1024, 1024)
+	g.greenCircleFB, g.greenCircleTexture = g.initFrameBuffer(1024, 1024)
+	g.blueCircleFB, g.blueCircleTexture = g.initFrameBuffer(1024, 1024)
 
 	compileShaders(g.shaderManager)
 

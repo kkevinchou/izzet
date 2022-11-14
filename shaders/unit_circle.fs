@@ -10,6 +10,9 @@ void main() {
 
     float distance = 1 - length(uv);
     distance = step(0, distance);
-
-    FragColor = vec4(vec3(color), distance * color.a);
+    if (distance < 0.1) {
+        discard;
+    } else {
+        FragColor = vec4(vec3(color), distance * color.a);
+    }
 }

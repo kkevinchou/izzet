@@ -304,7 +304,6 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		shader.Use()
 	}
 
-	gl.Enable(gl.BLEND)
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 

@@ -374,3 +374,9 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
+
+func (g *Izzet) initSkybox() {
+	var textureID uint32
+	gl.GenTextures(1, &textureID)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, textureID)
+}

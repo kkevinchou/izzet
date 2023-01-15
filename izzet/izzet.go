@@ -170,7 +170,7 @@ func (g *Izzet) loadPrefabs() {
 
 	g.prefabs = map[int]*prefabs.Prefab{}
 
-	names := []string{"alpha", "mutant", "scene", "town_center", "Archery_SecondAge_Level3", "Barracks_FirstAge_Level3", "PineTree_5", "Rock_5", "TowerHouse_SecondAge"}
+	names := []string{"alpha", "mutant", "scene", "town_center"}
 
 	for _, name := range names {
 		spec := g.assetManager.GetModel(name)

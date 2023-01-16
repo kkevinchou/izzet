@@ -82,6 +82,9 @@ func (g *Izzet) Render(delta time.Duration) {
 
 func (g *Izzet) renderCircleGizmo(cameraViewerContext *ViewerContext) {
 	defer resetGLRenderSettings()
+	w, h := g.window.GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+
 	r := mgl32.HomogRotate3DY(90 * math.Pi / 180)
 	t := mgl32.Translate3D(0, 300, 0)
 	s := mgl32.Scale3D(50, 50, 50)
@@ -277,6 +280,8 @@ func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
 
 func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {
 	defer resetGLRenderSettings()
+	w, h := g.window.GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

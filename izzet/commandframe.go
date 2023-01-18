@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/collision/checks"
@@ -56,7 +57,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.Shutdown()
 	}
 
-	g.gizmo(frameInput)
+	newEntityPosition := g.gizmo(frameInput, panels.SelectedEntity)
+	if newEntityPosition != nil {
+		panels.SelectedEntity.Position = *newEntityPosition
+	}
 	g.cameraMovement(frameInput, delta)
 	g.entitySelect(frameInput, delta)
 }
@@ -171,67 +175,70 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 	g.camera.LastFrameMovementVector = movementVector
 }
 
-func (g *Izzet) gizmo(frameInput input.Input) {
+func (g *Izzet) gizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Vec3 {
+	if selectedEntity == nil {
+		return nil
+	}
+
 	mouseInput := frameInput.MouseInput
+	nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	position := selectedEntity.Position
 
-	if panels.SelectedEntity != nil {
-		nearPlanePos := g.mousePosToNearPlane(mouseInput)
-		position := panels.SelectedEntity.Position
+	var minDist *float64
+	minAxis := mgl64.Vec3{}
+	motionPivot := mgl64.Vec3{}
+	closestAxisIndex := -1
 
-		var minDist *float64
-		minAxis := mgl64.Vec3{}
-		motionPivot := mgl64.Vec3{}
-		closestAxisIndex := -1
-		for i, axis := range gizmo.T.Axes {
-			if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
-				length := a.Sub(b).Len()
-				if length > gizmo.ActivationRadius {
-					continue
-				}
-
-				if minDist == nil || length < float64(*minDist) {
-					minAxis = axis
-					minDist = &length
-					motionPivot = b
-					closestAxisIndex = i
-				}
-			}
-		}
-
-		if minDist != nil {
-			if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-				gizmo.T.Active = true
-				gizmo.T.TranslationDir = minAxis
-				gizmo.T.MotionPivot = motionPivot.Sub(position)
-				gizmo.T.HoverIndex = closestAxisIndex
+	for i, axis := range gizmo.T.Axes {
+		if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
+			length := a.Sub(b).Len()
+			if length > gizmo.ActivationRadius {
+				continue
 			}
 
-			if !gizmo.T.Active {
-				gizmo.T.HoverIndex = closestAxisIndex
+			if minDist == nil || length < *minDist {
+				minAxis = axis
+				minDist = &length
+				motionPivot = b
+				closestAxisIndex = i
 			}
-		} else {
-			if !gizmo.T.Active {
-				gizmo.T.HoverIndex = -1
-			}
-		}
-
-		if !mouseInput.MouseMotionEvent.IsZero() {
-			if _, b, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
-				if gizmo.T.Active && mouseInput.Buttons[0] {
-					newPosition := b.Sub(gizmo.T.MotionPivot)
-					newPosition[0] = float64(int(newPosition[0]))
-					newPosition[1] = float64(int(newPosition[1]))
-					newPosition[2] = float64(int(newPosition[2]))
-					panels.SelectedEntity.Position = newPosition
-				}
-			}
-		}
-
-		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-			gizmo.T.Active = false
-			gizmo.T.HoverIndex = closestAxisIndex
 		}
 	}
+
+	// mouse is close to one of the axes
+	if minDist != nil {
+		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+			gizmo.T.Active = true
+			gizmo.T.TranslationDir = minAxis
+			gizmo.T.MotionPivot = motionPivot.Sub(position)
+			gizmo.T.HoverIndex = closestAxisIndex
+		}
+
+		if !gizmo.T.Active {
+			gizmo.T.HoverIndex = closestAxisIndex
+		}
+	} else if !gizmo.T.Active {
+		gizmo.T.HoverIndex = -1
+	}
+
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+		gizmo.T.Active = false
+		gizmo.T.HoverIndex = closestAxisIndex
+	}
+
+	var newEntityPosition *mgl64.Vec3
+	// handle when mouse moves the translation slider
+	if gizmo.T.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+		if _, b, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
+			newPosition := b.Sub(gizmo.T.MotionPivot)
+			newPosition[0] = float64(int(newPosition[0]))
+			newPosition[1] = float64(int(newPosition[1]))
+			newPosition[2] = float64(int(newPosition[2]))
+			newEntityPosition = &newPosition
+		}
+	}
+
+	return newEntityPosition
 }
 
 func getControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {

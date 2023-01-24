@@ -1,6 +1,7 @@
 package izzet
 
 import (
+	"errors"
 	"math"
 	"time"
 
@@ -263,16 +264,16 @@ func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
 
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
-	// var rbo uint32
-	// gl.GenRenderbuffers(1, &rbo)
-	// gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-	// gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
-	// gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
+	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
 
-	// gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
-	// if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-	// 	panic(errors.New("failed to initalize frame buffer"))
-	// }
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
 
 	return fbo, texture
 }

@@ -1,7 +1,9 @@
-package izzet
+package render
 
 import (
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -9,10 +11,17 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/camera"
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 var (
@@ -26,12 +35,87 @@ var (
 	shadowDistanceFactor float64 = .4 // proportion of view fustrum to include in shadow cuboid
 )
 
-func (g *Izzet) Render(delta time.Duration) {
+type World interface {
+	AssetManager() *assets.AssetManager
+	Camera() *camera.Camera
+	Prefabs() []*prefabs.Prefab
+	Entities() []*entities.Entity
+
+	// for panels
+	AddEntity(entity *entities.Entity)
+	GetPrefabByID(id int) *prefabs.Prefab
+	Window() *sdl.Window
+	Platform() *input.SDLPlatform
+}
+
+type Renderer struct {
+	world         World
+	shaderManager *shaders.ShaderManager
+
+	// render properties
+	fovY        float64
+	aspectRatio float64
+	// shaderManager *shaders.ShaderManager
+	shadowMap     *ShadowMap
+	imguiRenderer *ImguiOpenGL4Renderer
+
+	colorPickingFB      uint32
+	colorPickingTexture uint32
+
+	redCircleFB        uint32
+	redCircleTexture   uint32
+	greenCircleFB      uint32
+	greenCircleTexture uint32
+	blueCircleFB       uint32
+	blueCircleTexture  uint32
+
+	viewerContext ViewerContext
+}
+
+func New(world World, shaderDirectory string) *Renderer {
+	r := &Renderer{world: world}
+	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
+
+	imguiIO := imgui.CurrentIO()
+	imguiRenderer, err := NewImguiOpenGL4Renderer(imguiIO)
+	if err != nil {
+		panic(err)
+	}
+	r.imguiRenderer = imguiRenderer
+
+	var data int32
+	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
+
+	// note(kevin) using exactly the max texture size sometimes causes initialization to fail.
+	// so, I cap it at a fraction of the max
+	settings.RuntimeMaxTextureSize = int(float32(data) * .90)
+
+	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, far*shadowDistanceFactor)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create shadow map %s", err))
+	}
+	r.shadowMap = shadowMap
+
+	w, h := r.world.Window().GetSize()
+	r.colorPickingFB, r.colorPickingTexture = r.initFrameBuffer(int(w), int(h))
+	r.redCircleFB, r.redCircleTexture = r.initFrameBuffer(1024, 1024)
+	r.greenCircleFB, r.greenCircleTexture = r.initFrameBuffer(1024, 1024)
+	r.blueCircleFB, r.blueCircleTexture = r.initFrameBuffer(1024, 1024)
+
+	compileShaders(r.shaderManager)
+
+	r.aspectRatio = float64(settings.Width) / float64(settings.Height)
+	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
+
+	return r
+}
+
+func (r *Renderer) Render(delta time.Duration) {
 	initOpenGLRenderSettings()
 
 	// configure camera viewer context
-	position := g.camera.Position
-	orientation := g.camera.Orientation
+	position := r.world.Camera().Position
+	orientation := r.world.Camera().Orientation
 
 	viewerViewMatrix := orientation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
@@ -41,11 +125,11 @@ func (g *Izzet) Render(delta time.Duration) {
 		Orientation: orientation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(g.fovY), g.aspectRatio, Near, far),
+		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(r.fovY), r.aspectRatio, Near, far),
 	}
 
 	// configure light viewer context
-	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, Near, far, g.fovY, g.aspectRatio, shadowDistanceFactor)
+	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, Near, far, r.fovY, r.aspectRatio, shadowDistanceFactor)
 
 	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{-1, -1, -1})
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, shadowmapZOffset)
@@ -67,25 +151,24 @@ func (g *Izzet) Render(delta time.Duration) {
 	_ = lightContext
 	_ = lightViewerContext
 
-	g.viewerContext = cameraViewerContext
+	r.viewerContext = cameraViewerContext
 
-	g.renderToDepthMap(lightViewerContext, lightContext)
-	g.renderColorPicking(cameraViewerContext)
-	g.renderToDisplay(cameraViewerContext, lightContext)
-	g.renderCircleGizmo(&cameraViewerContext)
+	r.renderToDepthMap(lightViewerContext, lightContext)
+	r.renderColorPicking(cameraViewerContext)
+	r.renderToDisplay(cameraViewerContext, lightContext)
+	r.renderCircleGizmo(&cameraViewerContext)
 
-	g.renderGizmos(cameraViewerContext)
+	r.renderGizmos(cameraViewerContext)
 
-	g.renderImgui()
-	g.window.GLSwap()
+	r.renderImgui()
 }
 
-func (g *Izzet) renderCircleGizmo(cameraViewerContext *ViewerContext) {
+func (r *Renderer) renderCircleGizmo(cameraViewerContext *ViewerContext) {
 	defer resetGLRenderSettings()
-	w, h := g.window.GetSize()
+	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 
-	r := mgl32.HomogRotate3DY(90 * math.Pi / 180)
+	rotation := mgl32.HomogRotate3DY(90 * math.Pi / 180)
 	t := mgl32.Translate3D(0, 300, 0)
 	s := mgl32.Scale3D(50, 50, 50)
 
@@ -94,17 +177,17 @@ func (g *Izzet) renderCircleGizmo(cameraViewerContext *ViewerContext) {
 	s1 := mgl32.Scale3D(50, 50, 50)
 
 	// probably only need to run this once?
-	g.renderCircle()
+	r.renderCircle()
 	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
-	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.redCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix, true)
-	modelMatrix = t.Mul4(r).Mul4(s)
-	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.greenCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix, true)
+	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.redCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
+	modelMatrix = t.Mul4(rotation).Mul4(s)
+	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.greenCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
 	modelMatrix = t1.Mul4(r1).Mul4(s1)
-	drawTexturedQuad(cameraViewerContext, g.shaderManager, g.blueCircleTexture, 0.5, float32(g.aspectRatio), &modelMatrix, true)
+	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.blueCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
 }
 
-func (g *Izzet) renderImgui() {
-	g.platform.NewFrame()
+func (r *Renderer) renderImgui() {
+	r.world.Platform().NewFrame()
 	imgui.NewFrame()
 
 	imgui.BeginMainMenuBar()
@@ -138,8 +221,8 @@ func (g *Izzet) renderImgui() {
 	// imgui.BeginV("explorer root", &open1, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize|imgui.WindowFlagsMenuBar)
 	// imgui.MenuItem("test")
 
-	panels.BuildExplorer(g.Entities(), g, menuBarSize)
-	panels.BuildPrefabs(g.Prefabs(), g)
+	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize)
+	panels.BuildPrefabs(r.world.Prefabs(), r.world)
 
 	// imgui.End()
 
@@ -149,61 +232,61 @@ func (g *Izzet) renderImgui() {
 	imgui.ShowDemoWindow(&open)
 
 	imgui.Render()
-	g.imguiRenderer.Render(g.platform.DisplaySize(), g.platform.FramebufferSize(), imgui.RenderedDrawData())
+	r.imguiRenderer.Render(r.world.Platform().DisplaySize(), r.world.Platform().FramebufferSize(), imgui.RenderedDrawData())
 }
 
-func (g *Izzet) renderCircle() {
+func (r *Renderer) renderCircle() {
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	shaderManager := g.shaderManager
+	shaderManager := r.shaderManager
 	var alpha float64 = 1
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, g.redCircleFB)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.redCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 0, 0, alpha})
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, g.greenCircleFB)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.greenCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 1, 0, alpha})
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, g.blueCircleFB)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blueCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
 }
 
-func (g *Izzet) renderGizmos(viewerContext ViewerContext) {
+func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	if panels.SelectedEntity == nil {
 		return
 	}
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	entity := g.entities[panels.SelectedEntity.ID]
-	drawGizmo(&viewerContext, g.shaderManager.GetShaderProgram("flat"), entity.Position)
+	entity := r.world.Entities()[panels.SelectedEntity.ID]
+	drawGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 }
 
-func (g *Izzet) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings()
-	w, h := g.window.GetSize()
+	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	g.renderScene(viewerContext, lightContext, false)
+	r.renderScene(viewerContext, lightContext, false)
 }
 
-func (g *Izzet) renderToDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings()
-	g.shadowMap.Prepare()
+	r.shadowMap.Prepare()
 
-	g.renderScene(viewerContext, lightContext, true)
+	r.renderScene(viewerContext, lightContext, true)
 }
 
 // renderScene renders a scene from the perspective of a viewer
-func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
-	shaderManager := g.shaderManager
+func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
+	shaderManager := r.shaderManager
 
-	for _, entity := range g.Entities() {
+	for _, entity := range r.world.Entities() {
 		modelMatrix := createModelMatrix(
 			mgl64.Scale3D(1, 1, 1),
 			mgl64.QuatIdent().Mat4(),
@@ -218,9 +301,9 @@ func (g *Izzet) renderScene(viewerContext ViewerContext, lightContext LightConte
 		drawModel(
 			viewerContext,
 			lightContext,
-			g.shadowMap,
+			r.shadowMap,
 			shaderManager.GetShaderProgram(shader),
-			g.assetManager,
+			r.world.AssetManager(),
 			entity.Prefab.ModelRefs[0].Model,
 			entity.AnimationPlayer,
 			modelMatrix,
@@ -248,7 +331,7 @@ func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, posi
 	}
 }
 
-func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
+func (r *Renderer) initFrameBuffer(width int, height int) (uint32, uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -278,21 +361,21 @@ func (g *Izzet) initFrameBuffer(width int, height int) (uint32, uint32) {
 	return fbo, texture
 }
 
-func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {
+func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 	defer resetGLRenderSettings()
-	w, h := g.window.GetSize()
+	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
-	// drawTexturedQuad(&viewerContext, g.shaderManager, g.tmpTexture, 0.5, float32(g.aspectRatio), &modelMatrix)
+	// drawTexturedQuad(&viewerContext, r.shaderManager, r.tmpTexture, 0.5, float32(r.aspectRatio), &modelMatrix)
 
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	shaderManager := g.shaderManager
+	shaderManager := r.shaderManager
 
-	for _, entity := range g.Entities() {
+	for _, entity := range r.world.Entities() {
 		modelMatrix := createModelMatrix(
 			mgl64.Scale3D(1, 1, 1),
 			mgl64.QuatIdent().Mat4(),
@@ -307,12 +390,44 @@ func (g *Izzet) renderColorPicking(viewerContext ViewerContext) {
 		drawWIthID(
 			viewerContext,
 			shaderManager.GetShaderProgram(shader),
-			g.assetManager,
+			r.world.AssetManager(),
 			entity.Prefab.ModelRefs[0].Model,
 			entity.AnimationPlayer,
 			modelMatrix,
 			entity.ID,
 		)
 	}
+}
 
+func (r *Renderer) ViewerContext() ViewerContext {
+	return r.viewerContext
+}
+
+func (r *Renderer) handleResize() {
+	w, h := r.world.Window().GetSize()
+	r.aspectRatio = float64(w) / float64(h)
+	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
+}
+
+func (r *Renderer) EntitySelect(pixelPosition mgl64.Vec2, delta time.Duration) *int {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	data := make([]byte, 4)
+	_, h := r.world.Window().GetSize()
+	gl.ReadPixels(int32(pixelPosition[0]), int32(h)-int32(pixelPosition[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+
+	// discard the alpha channel data
+	data[3] = 0
+
+	// NOTE(kevin) actually not sure why, but this works
+	// i would've expected to need to multiply by 255, but apparently it's handled somehow
+	uintID := binary.LittleEndian.Uint32(data)
+	if uintID == settings.EmptyColorPickingID {
+		return nil
+	}
+
+	id := int(uintID)
+	return &id
 }

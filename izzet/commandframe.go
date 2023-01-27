@@ -1,11 +1,8 @@
 package izzet
 
 import (
-	"encoding/binary"
-	"math"
 	"time"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -15,19 +12,8 @@ import (
 )
 
 var (
-	maxUInt32 uint32 = ^uint32(0)
-
-	// we shift 8 bits since 8 bits are reserved for the alpha channel
-	// the max id is used to indicate no entity was selected
-	emptyColorPickingID uint32  = maxUInt32 >> 8
-	maxCameraSpeed      float64 = 400 // units per second
+	maxCameraSpeed float64 = 400 // units per second
 )
-
-func (g *Izzet) handleResize() {
-	w, h := g.window.GetSize()
-	g.aspectRatio = float64(w) / float64(h)
-	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
-}
 
 func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
 	w, h := g.Window().GetSize()
@@ -36,15 +22,13 @@ func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
 
 	// -1 for the near plane
 	ndcP := mgl64.Vec4{((x / float64(w)) - 0.5) * 2, ((y / float64(h)) - 0.5) * -2, -1, 1}
-	nearPlanePos := g.viewerContext.InverseViewMatrix.Inv().Mul4(g.viewerContext.ProjectionMatrix.Inv()).Mul4x1(ndcP)
+	nearPlanePos := g.renderer.ViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.ViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()
 }
 
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
-	g.handleResize()
-
 	for _, entity := range g.Entities() {
 		if entity.AnimationPlayer != nil {
 			entity.AnimationPlayer.Update(delta)
@@ -62,42 +46,21 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		panels.SelectedEntity.Position = *newEntityPosition
 	}
 	g.cameraMovement(frameInput, delta)
-	g.entitySelect(frameInput, delta)
-}
 
-func (g *Izzet) entitySelect(frameInput input.Input, delta time.Duration) {
 	// gizmo interactions supercede entity selection
-	if gizmo.T.Active {
-		return
-	}
-
-	mouseInput := frameInput.MouseInput
-
-	gl.BindFramebuffer(gl.FRAMEBUFFER, g.colorPickingFB)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-		data := make([]byte, 4)
-		_, h := g.window.GetSize()
-		gl.ReadPixels(int32(mouseInput.Position[0]), int32(h)-int32(mouseInput.Position[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
-
-		// discard the alpha channel data
-		data[3] = 0
-
-		// NOTE(kevin) actually not sure why, but this works
-		// i would've expected to need to multiply by 255, but apparently it's handled somehow
-		uintID := binary.LittleEndian.Uint32(data)
-
-		if uintID != emptyColorPickingID {
-			id := int(uintID)
-			for i, e := range g.Entities() {
-				if e.ID == id {
-					panels.HierarchySelection = (1 << i)
+	if !gizmo.T.Active {
+		mouseInput := frameInput.MouseInput
+		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+			entityID := g.renderer.EntitySelect(mouseInput.Position, delta)
+			if entityID == nil {
+				panels.HierarchySelection = 0
+			} else {
+				for i, e := range g.Entities() {
+					if e.ID == *entityID {
+						panels.HierarchySelection = (1 << i)
+					}
 				}
 			}
-		} else {
-			panels.HierarchySelection = 0
 		}
 	}
 }

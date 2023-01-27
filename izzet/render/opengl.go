@@ -1,12 +1,8 @@
-package izzet
+package render
 
 import (
-	"fmt"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 type Platform interface {
@@ -17,50 +13,6 @@ type Platform interface {
 
 func initOpenGLRenderSettings() {
 	defaultSettings()
-}
-
-func initializeOpenGL() (*sdl.Window, error) {
-	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-		return nil, fmt.Errorf("failed to init SDL %s", err)
-	}
-
-	// Enable hints for multisampling which allows opengl to use the default
-	// multisampling algorithms implemented by the OpenGL rasterizer
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
-	sdl.SetRelativeMouseMode(false)
-
-	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
-	if settings.Fullscreen {
-		dm, err := sdl.GetCurrentDisplayMode(0)
-		if err != nil {
-			panic(err)
-		}
-		settings.Width = int(dm.W)
-		settings.Height = int(dm.H)
-		windowFlags |= sdl.WINDOW_MAXIMIZED
-	}
-	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(settings.Width), int32(settings.Height), uint32(windowFlags))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create window %s", err)
-	}
-
-	_, err = window.GLCreateContext()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create context %s", err)
-	}
-
-	if err := gl.Init(); err != nil {
-		return nil, fmt.Errorf("failed to init OpenGL %s", err)
-	}
-
-	fmt.Println("Open GL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
-
-	return window, nil
 }
 
 func compileShaders(shaderManager *shaders.ShaderManager) {

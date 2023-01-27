@@ -3,8 +3,11 @@ package izzet
 import (
 	"sort"
 
+	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -14,10 +17,6 @@ func (g *Izzet) AddEntity(entity *entities.Entity) {
 
 func (g *Izzet) GetPrefabByID(id int) *prefabs.Prefab {
 	return g.prefabs[id]
-}
-
-func (g *Izzet) Window() *sdl.Window {
-	return g.window
 }
 
 func (g *Izzet) Entities() []*entities.Entity {
@@ -50,4 +49,20 @@ func (g *Izzet) Prefabs() []*prefabs.Prefab {
 	}
 
 	return ps
+}
+
+func (g *Izzet) AssetManager() *assets.AssetManager {
+	return g.assetManager
+}
+
+func (g *Izzet) Camera() *camera.Camera {
+	return g.camera
+}
+
+func (g *Izzet) Window() *sdl.Window {
+	return g.window
+}
+
+func (g *Izzet) Platform() *input.SDLPlatform {
+	return g.platform
 }

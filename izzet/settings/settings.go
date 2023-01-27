@@ -27,4 +27,9 @@ const (
 
 	// Animation
 	MaxAnimationJointWeights = 4
+
+	maxUInt32 uint32 = ^uint32(0)
+	// we shift 8 bits since 8 bits are reserved for the alpha channel
+	// the max id is used to indicate no entity was selected
+	EmptyColorPickingID uint32 = maxUInt32 >> 8
 )

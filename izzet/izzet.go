@@ -2,63 +2,47 @@ package izzet
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/model"
-	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
 
 type Izzet struct {
 	gameOver bool
-	platform *input.SDLPlatform
 	window   *sdl.Window
+	platform *input.SDLPlatform
 
-	// render properties
-	fovY          float64
-	aspectRatio   float64
-	shaderManager *shaders.ShaderManager
-	assetManager  *assets.AssetManager
-	shadowMap     *ShadowMap
-	imguiRenderer *ImguiOpenGL4Renderer
+	assetManager *assets.AssetManager
 
-	colorPickingFB      uint32
-	colorPickingTexture uint32
-
-	redCircleFB        uint32
-	redCircleTexture   uint32
-	greenCircleFB      uint32
-	greenCircleTexture uint32
-	blueCircleFB       uint32
-	blueCircleTexture  uint32
-
-	camera *Camera
+	camera *camera.Camera
 
 	entities map[int]*entities.Entity
 	prefabs  map[int]*prefabs.Prefab
 
-	viewerContext ViewerContext
+	renderer *render.Renderer
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
-	g := &Izzet{}
 	initSeed()
-
+	g := &Izzet{}
 	window, err := initializeOpenGL()
 	if err != nil {
 		panic(err)
 	}
+	g.window = window
 
 	err = ttf.Init()
 	if err != nil {
@@ -71,40 +55,9 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	// imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/helvetica.ttf", 20)
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
-	g.window = window
-	g.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
-
-	imguiRenderer, err := NewImguiOpenGL4Renderer(imguiIO)
-	if err != nil {
-		panic(err)
-	}
-	g.imguiRenderer = imguiRenderer
-
-	var data int32
-	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
-
-	// note(kevin) using exactly the max texture size sometimes causes initialization to fail.
-	// so, I cap it at a fraction of the max
-	settings.RuntimeMaxTextureSize = int(float32(data) * .90)
-
-	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, far*shadowDistanceFactor)
-	if err != nil {
-		panic(fmt.Sprintf("failed to create shadow map %s", err))
-	}
-	g.shadowMap = shadowMap
-
-	w, h := g.window.GetSize()
-	g.colorPickingFB, g.colorPickingTexture = g.initFrameBuffer(int(w), int(h))
-	g.redCircleFB, g.redCircleTexture = g.initFrameBuffer(1024, 1024)
-	g.greenCircleFB, g.greenCircleTexture = g.initFrameBuffer(1024, 1024)
-	g.blueCircleFB, g.blueCircleTexture = g.initFrameBuffer(1024, 1024)
-
-	compileShaders(g.shaderManager)
-
-	g.aspectRatio = float64(settings.Width) / float64(settings.Height)
-	g.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/g.aspectRatio))
-	g.camera = &Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
+	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
+	g.renderer = render.New(g, shaderDirectory)
 
 	g.loadPrefabs()
 	g.loadEntities()
@@ -151,8 +104,7 @@ func (g *Izzet) Start() {
 
 		if renderAccumulator >= msPerFrame {
 			frameCount++
-			g.Render(time.Duration(msPerFrame) * time.Millisecond)
-
+			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame
 		}
@@ -188,4 +140,49 @@ func (g *Izzet) loadEntities() {
 		entity := entities.InstantiateFromPrefab(pf)
 		g.entities[entity.ID] = entity
 	}
+}
+
+func initializeOpenGL() (*sdl.Window, error) {
+	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
+		return nil, fmt.Errorf("failed to init SDL %s", err)
+	}
+
+	// Enable hints for multisampling which allows opengl to use the default
+	// multisampling algorithms implemented by the OpenGL rasterizer
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
+	sdl.SetRelativeMouseMode(false)
+
+	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
+	if settings.Fullscreen {
+		dm, err := sdl.GetCurrentDisplayMode(0)
+		if err != nil {
+			panic(err)
+		}
+		settings.Width = int(dm.W)
+		settings.Height = int(dm.H)
+		windowFlags |= sdl.WINDOW_MAXIMIZED
+	}
+
+	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(settings.Width), int32(settings.Height), uint32(windowFlags))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create window %s", err)
+	}
+
+	_, err = window.GLCreateContext()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create context %s", err)
+	}
+
+	if err := gl.Init(); err != nil {
+		return nil, fmt.Errorf("failed to init OpenGL %s", err)
+	}
+
+	fmt.Println("Open GL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
+
+	return window, nil
 }

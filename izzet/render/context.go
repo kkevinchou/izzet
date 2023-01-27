@@ -1,4 +1,4 @@
-package izzet
+package render
 
 import "github.com/go-gl/mathgl/mgl64"
 

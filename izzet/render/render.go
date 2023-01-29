@@ -263,7 +263,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	entity := r.world.Entities()[panels.SelectedEntity.ID]
-	drawGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+	drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 }
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
@@ -316,7 +316,7 @@ func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4
 	return translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 }
 
-func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
 
 	for i, axis := range gizmo.T.Axes {

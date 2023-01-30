@@ -156,33 +156,30 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.renderToDepthMap(lightViewerContext, lightContext)
 	r.renderColorPicking(cameraViewerContext)
 	r.renderToDisplay(cameraViewerContext, lightContext)
-	r.renderCircleGizmo(&cameraViewerContext)
 
 	r.renderGizmos(cameraViewerContext)
 
 	r.renderImgui()
 }
 
-func (r *Renderer) renderCircleGizmo(cameraViewerContext *ViewerContext) {
+func (r *Renderer) renderCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
 	defer resetGLRenderSettings()
 	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 
-	rotation := mgl32.HomogRotate3DY(90 * math.Pi / 180)
-	t := mgl32.Translate3D(0, 300, 0)
+	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
 	s := mgl32.Scale3D(50, 50, 50)
 
+	r2 := mgl32.HomogRotate3DY(90 * math.Pi / 180)
 	r1 := mgl32.HomogRotate3DX(-90 * math.Pi / 180)
-	t1 := mgl32.Translate3D(0, 300, 0)
-	s1 := mgl32.Scale3D(50, 50, 50)
 
 	// probably only need to run this once?
 	r.renderCircle()
-	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
+	modelMatrix := t.Mul4(s)
 	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.redCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
-	modelMatrix = t.Mul4(rotation).Mul4(s)
+	modelMatrix = t.Mul4(r2).Mul4(s)
 	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.greenCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
-	modelMatrix = t1.Mul4(r1).Mul4(s1)
+	modelMatrix = t.Mul4(r1).Mul4(s)
 	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.blueCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
 }
 
@@ -263,7 +260,8 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	entity := r.world.Entities()[panels.SelectedEntity.ID]
-	drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+	// drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+	r.renderCircleGizmo(&viewerContext, entity.Position)
 }
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {

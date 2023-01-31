@@ -77,7 +77,7 @@ func (g *Izzet) selectEntity(frameInput input.Input) {
 	}
 
 	// select the entity in the hierarchy
-	entityID := g.renderer.EntitySelect(mouseInput.Position)
+	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 	if entityID == nil {
 		panels.HierarchySelection = 0
 		gizmo.CurrentGizmoMode = gizmo.GizmoModeNone

@@ -12,7 +12,19 @@ const (
 	ActivationRadius = 10
 )
 
+type GizmoMode string
+
+var (
+	GizmoModeNone        GizmoMode = "NONE"
+	GizmoModeTranslation GizmoMode = "TRANSLATION"
+	GizmoModeRotation    GizmoMode = "ROTATION"
+
+	CurrentGizmoMode GizmoMode = GizmoModeNone
+)
+
 func init() {
+	CurrentGizmoMode = GizmoModeNone
 	axes := []mgl64.Vec3{mgl64.Vec3{20, 0, 0}, mgl64.Vec3{0, 20, 0}, mgl64.Vec3{0, 0, 20}}
 	T = &TranslationGizmo{Axes: axes}
+	R = &RotationGizmo{}
 }

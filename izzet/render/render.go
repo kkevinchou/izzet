@@ -260,8 +260,11 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	entity := r.world.Entities()[panels.SelectedEntity.ID]
-	// drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
-	r.renderCircleGizmo(&viewerContext, entity.Position)
+	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+		r.renderCircleGizmo(&viewerContext, entity.Position)
+	}
 }
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
@@ -407,7 +410,7 @@ func (r *Renderer) handleResize() {
 	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
 }
 
-func (r *Renderer) EntitySelect(pixelPosition mgl64.Vec2, delta time.Duration) *int {
+func (r *Renderer) EntitySelect(pixelPosition mgl64.Vec2) *int {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 

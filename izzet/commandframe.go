@@ -40,11 +40,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.Shutdown()
 	}
 
-	// gizmo interactions supercede entity selection
-
 	g.selectEntity(frameInput)
 	g.cameraMovement(frameInput, delta)
 
+	// set gizmo mode
 	if panels.SelectedEntity != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeNone {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
@@ -57,11 +56,17 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		}
 	}
 
-	// gizmo
-
-	newEntityPosition := g.handleTranslationGizmo(frameInput, panels.SelectedEntity)
-	if newEntityPosition != nil {
-		panels.SelectedEntity.Position = *newEntityPosition
+	// handle gizmo transforms
+	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+		newEntityPosition := g.handleTranslationGizmo(frameInput, panels.SelectedEntity)
+		if newEntityPosition != nil {
+			panels.SelectedEntity.Position = *newEntityPosition
+		}
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+		newEntityRotation := g.handleRotationGizmo(frameInput, panels.SelectedEntity)
+		if newEntityRotation != nil {
+			panels.SelectedEntity.Rotation = *newEntityRotation
+		}
 	}
 }
 
@@ -162,6 +167,12 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 	g.camera.LastFrameMovementVector = movementVector
 }
 
+// TODO: move this method out of izzet and into the gizmo package?
+func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Quat {
+	return nil
+}
+
+// TODO: move this method out of izzet and into the gizmo package?
 func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Vec3 {
 	if selectedEntity == nil {
 		return nil

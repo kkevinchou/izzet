@@ -169,6 +169,36 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 
 // TODO: move this method out of izzet and into the gizmo package?
 func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Quat {
+	if selectedEntity == nil {
+		return nil
+	}
+
+	// mouseInput := frameInput.MouseInput
+	// nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	// position := selectedEntity.Position
+
+	// var minDist *float64
+	// minAxis := mgl64.Vec3{}
+	// motionPivot := mgl64.Vec3{}
+	// closestAxisIndex := -1
+
+	// for i, axis := range gizmo.T.Axes {
+	// 	// ClosestPointsLineVSCircle
+	// 	if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
+	// 		length := a.Sub(b).Len()
+	// 		if length > gizmo.ActivationRadius {
+	// 			continue
+	// 		}
+
+	// 		if minDist == nil || length < *minDist {
+	// 			minAxis = axis
+	// 			minDist = &length
+	// 			motionPivot = b
+	// 			closestAxisIndex = i
+	// 		}
+	// 	}
+	// }
+
 	return nil
 }
 

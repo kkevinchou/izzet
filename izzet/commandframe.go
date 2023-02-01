@@ -173,31 +173,61 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 		return nil
 	}
 
-	// mouseInput := frameInput.MouseInput
+	mouseInput := frameInput.MouseInput
 	// nearPlanePos := g.mousePosToNearPlane(mouseInput)
 	// position := selectedEntity.Position
 
-	// var minDist *float64
-	// minAxis := mgl64.Vec3{}
-	// motionPivot := mgl64.Vec3{}
-	// closestAxisIndex := -1
+	var minDist *float64
+	closestAxisIndex := -1
 
-	// for i, axis := range gizmo.T.Axes {
-	// 	// ClosestPointsLineVSCircle
-	// 	if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
-	// 		length := a.Sub(b).Len()
-	// 		if length > gizmo.ActivationRadius {
-	// 			continue
-	// 		}
+	for i, axis := range gizmo.R.Axes {
+		_ = axis
+		// ClosestPointsLineVSCircle
+		a := mgl64.Vec3{}
+		b := mgl64.Vec3{}
+		nonParallel := false
+		// if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
+		if nonParallel {
+			length := a.Sub(b).Len()
+			if length > gizmo.ActivationRadius {
+				continue
+			}
 
-	// 		if minDist == nil || length < *minDist {
-	// 			minAxis = axis
-	// 			minDist = &length
-	// 			motionPivot = b
-	// 			closestAxisIndex = i
-	// 		}
-	// 	}
-	// }
+			if minDist == nil || length < *minDist {
+				minDist = &length
+				closestAxisIndex = i
+			}
+		}
+	}
+
+	// mouse is close to one of the axes
+	if minDist != nil {
+		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+			gizmo.R.Active = true
+			gizmo.R.MotionPivot = mouseInput.Position
+			gizmo.R.HoverIndex = closestAxisIndex
+		}
+
+		if !gizmo.R.Active {
+			gizmo.R.HoverIndex = closestAxisIndex
+		}
+	} else if !gizmo.R.Active {
+		gizmo.R.HoverIndex = -1
+	}
+
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+		gizmo.R.Active = false
+		gizmo.R.HoverIndex = closestAxisIndex
+	}
+
+	// handle when mouse moves the rotation gizmo
+	if gizmo.R.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+		delta := mouseInput.Position.Sub(gizmo.R.MotionPivot)
+		_ = delta
+		computedQuat := mgl64.QuatIdent().Mul(selectedEntity.Rotation)
+		gizmo.R.MotionPivot = mouseInput.Position
+		return &computedQuat
+	}
 
 	return nil
 }

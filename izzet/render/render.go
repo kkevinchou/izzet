@@ -310,7 +310,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			modelMatrix,
 		)
 	}
-
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {

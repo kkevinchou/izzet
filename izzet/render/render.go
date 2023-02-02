@@ -392,7 +392,7 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 	for _, entity := range r.world.Entities() {
 		modelMatrix := createModelMatrix(
 			mgl64.Scale3D(1, 1, 1),
-			mgl64.QuatIdent().Mat4(),
+			entity.Rotation.Mat4(),
 			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
 		)
 

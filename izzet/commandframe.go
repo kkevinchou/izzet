@@ -182,12 +182,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	closestAxisIndex := -1
 
 	for i, axis := range gizmo.R.Axes {
-		// a := mgl64.Vec3{}
-		// b := mgl64.Vec3{}
-		// nonParallel := false
-		// if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
-
-		ray := collider.Ray{Origin: g.camera.Position, Direction: nearPlanePos.Sub(g.camera.Position)}
+		ray := collider.Ray{Origin: g.camera.Position, Direction: nearPlanePos.Sub(g.camera.Position).Normalize()}
 		plane := collider.Plane{Point: position, Normal: axis.Normal}
 
 		intersect, front := checks.IntersectRayPlane(ray, plane)
@@ -196,7 +191,12 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 		}
 
 		dist := position.Sub(*intersect).Len()
-		if dist > gizmo.ActivationRadius {
+
+		circleRadius := axis.Radius
+		activationRange := 3
+
+		if dist >= float64(circleRadius)-float64(activationRange) && dist <= float64(circleRadius)+float64(activationRange) {
+		} else {
 			continue
 		}
 

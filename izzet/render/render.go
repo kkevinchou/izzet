@@ -237,7 +237,7 @@ func (r *Renderer) renderCircle() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 1, 0, alpha})
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
@@ -324,7 +324,7 @@ func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position 
 	gl.Viewport(0, 0, int32(w), int32(h))
 
 	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
-	s := mgl32.Scale3D(50, 50, 50)
+	s := mgl32.Scale3D(25, 25, 25)
 
 	rotations := []mgl32.Mat4{
 		mgl32.Ident4(),
@@ -337,7 +337,11 @@ func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position 
 	r.renderCircle()
 	for i := 0; i < 3; i++ {
 		modelMatrix := t.Mul4(rotations[i]).Mul4(s)
-		drawTexturedQuad(cameraViewerContext, r.shaderManager, textures[i], 0.5, float32(r.aspectRatio), &modelMatrix, true)
+		texture := textures[i]
+		if i == gizmo.R.HoverIndex {
+			texture = r.yellowCircleTexture
+		}
+		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &modelMatrix, true)
 	}
 }
 

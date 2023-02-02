@@ -5,9 +5,8 @@ import "github.com/go-gl/mathgl/mgl64"
 var R *RotationGizmo
 
 type Circle struct {
-	Position mgl64.Vec3
-	Normal   mgl64.Vec3
-	Radius   float64
+	Normal mgl64.Vec3
+	Radius float64
 }
 
 type RotationGizmo struct {

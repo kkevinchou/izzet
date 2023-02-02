@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/collision/checks"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 )
 
@@ -174,29 +175,34 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	}
 
 	mouseInput := frameInput.MouseInput
-	// nearPlanePos := g.mousePosToNearPlane(mouseInput)
-	// position := selectedEntity.Position
+	nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	position := selectedEntity.Position
 
 	var minDist *float64
 	closestAxisIndex := -1
 
 	for i, axis := range gizmo.R.Axes {
-		_ = axis
-		// ClosestPointsLineVSCircle
-		a := mgl64.Vec3{}
-		b := mgl64.Vec3{}
-		nonParallel := false
+		// a := mgl64.Vec3{}
+		// b := mgl64.Vec3{}
+		// nonParallel := false
 		// if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
-		if nonParallel {
-			length := a.Sub(b).Len()
-			if length > gizmo.ActivationRadius {
-				continue
-			}
 
-			if minDist == nil || length < *minDist {
-				minDist = &length
-				closestAxisIndex = i
-			}
+		ray := collider.Ray{Origin: g.camera.Position, Direction: nearPlanePos.Sub(g.camera.Position)}
+		plane := collider.Plane{Point: position, Normal: axis.Normal}
+
+		intersect, front := checks.IntersectRayPlane(ray, plane)
+		if !front || intersect == nil {
+			continue
+		}
+
+		dist := position.Sub(*intersect).Len()
+		if dist > gizmo.ActivationRadius {
+			continue
+		}
+
+		if minDist == nil || dist < *minDist {
+			minDist = &dist
+			closestAxisIndex = i
 		}
 	}
 

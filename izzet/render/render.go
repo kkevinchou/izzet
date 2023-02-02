@@ -62,12 +62,14 @@ type Renderer struct {
 	colorPickingFB      uint32
 	colorPickingTexture uint32
 
-	redCircleFB        uint32
-	redCircleTexture   uint32
-	greenCircleFB      uint32
-	greenCircleTexture uint32
-	blueCircleFB       uint32
-	blueCircleTexture  uint32
+	redCircleFB         uint32
+	redCircleTexture    uint32
+	greenCircleFB       uint32
+	greenCircleTexture  uint32
+	blueCircleFB        uint32
+	blueCircleTexture   uint32
+	yellowCircleFB      uint32
+	yellowCircleTexture uint32
 
 	viewerContext ViewerContext
 }
@@ -101,6 +103,7 @@ func New(world World, shaderDirectory string) *Renderer {
 	r.redCircleFB, r.redCircleTexture = r.initFrameBuffer(1024, 1024)
 	r.greenCircleFB, r.greenCircleTexture = r.initFrameBuffer(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.initFrameBuffer(1024, 1024)
+	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBuffer(1024, 1024)
 
 	compileShaders(r.shaderManager)
 
@@ -160,27 +163,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.renderGizmos(cameraViewerContext)
 
 	r.renderImgui()
-}
-
-func (r *Renderer) renderCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
-	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
-
-	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
-	s := mgl32.Scale3D(50, 50, 50)
-
-	r2 := mgl32.HomogRotate3DY(90 * math.Pi / 180)
-	r1 := mgl32.HomogRotate3DX(-90 * math.Pi / 180)
-
-	// probably only need to run this once?
-	r.renderCircle()
-	modelMatrix := t.Mul4(s)
-	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.redCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
-	modelMatrix = t.Mul4(r2).Mul4(s)
-	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.greenCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
-	modelMatrix = t.Mul4(r1).Mul4(s)
-	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.blueCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
 }
 
 func (r *Renderer) renderImgui() {
@@ -251,6 +233,11 @@ func (r *Renderer) renderCircle() {
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
@@ -263,7 +250,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		r.renderCircleGizmo(&viewerContext, entity.Position)
+		r.drawCircleGizmo(&viewerContext, entity.Position)
 	}
 }
 
@@ -328,6 +315,29 @@ func drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderPr
 			color = mgl64.Vec3{1, 1, 0}
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)
+	}
+}
+
+func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
+	defer resetGLRenderSettings()
+	w, h := r.world.Window().GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+
+	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
+	s := mgl32.Scale3D(50, 50, 50)
+
+	rotations := []mgl32.Mat4{
+		mgl32.Ident4(),
+		mgl32.HomogRotate3DY(90 * math.Pi / 180),
+		mgl32.HomogRotate3DX(-90 * math.Pi / 180),
+	}
+
+	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
+
+	r.renderCircle()
+	for i := 0; i < 3; i++ {
+		modelMatrix := t.Mul4(rotations[i]).Mul4(s)
+		drawTexturedQuad(cameraViewerContext, r.shaderManager, textures[i], 0.5, float32(r.aspectRatio), &modelMatrix, true)
 	}
 }
 

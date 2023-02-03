@@ -2,6 +2,7 @@ package panels
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 
@@ -58,6 +59,9 @@ func entityProps(entity *entities.Entity) {
 				}
 			}
 		}
+
+		euler := QuatToEuler(entity.Rotation)
+		uiTableRow("Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
 		imgui.EndTable()
 	}
 
@@ -82,4 +86,35 @@ func uiTableRow(label string, value any) {
 	imgui.Text(label)
 	imgui.TableSetColumnIndex(1)
 	imgui.Text(fmt.Sprintf("%v", value))
+}
+
+func QuatToEuler(q mgl64.Quat) mgl64.Vec3 {
+	// Convert a quaternion into euler angles (roll, pitch, yaw)
+	// roll is rotation around x in radians (counterclockwise)
+	// pitch is rotation around y in radians (counterclockwise)
+	// yaw is rotation around z in radians (counterclockwise)
+	x := q.X()
+	y := q.Y()
+	z := q.Z()
+	w := q.W
+
+	t0 := 2.0 * (w*x + y*z)
+	t1 := 1.0 - 2.0*(x*x+y*y)
+	roll_x := math.Atan2(t0, t1)
+
+	t2 := 2.0 * (w*y - z*x)
+	if t2 > 1 {
+		t2 = 1
+	}
+
+	if t2 < -1 {
+		t2 = -1
+	}
+	pitch_y := math.Asin(t2)
+
+	t3 := +2.0 * (w*z + x*y)
+	t4 := +1.0 - 2.0*(y*y+z*z)
+	yaw_z := math.Atan2(t3, t4)
+
+	return mgl64.Vec3{mgl64.RadToDeg(roll_x), mgl64.RadToDeg(pitch_y), mgl64.RadToDeg(yaw_z)} // in radians
 }

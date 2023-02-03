@@ -75,7 +75,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 func (g *Izzet) selectEntity(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 
-	if gizmo.T.Active || gizmo.R.Active {
+	if gizmo.T.Active || gizmo.R.Active || gizmo.T.HoverIndex != -1 || gizmo.R.HoverIndex != -1 {
 		return
 	}
 

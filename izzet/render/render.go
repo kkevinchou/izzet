@@ -62,12 +62,14 @@ type Renderer struct {
 	colorPickingFB      uint32
 	colorPickingTexture uint32
 
-	redCircleFB        uint32
-	redCircleTexture   uint32
-	greenCircleFB      uint32
-	greenCircleTexture uint32
-	blueCircleFB       uint32
-	blueCircleTexture  uint32
+	redCircleFB         uint32
+	redCircleTexture    uint32
+	greenCircleFB       uint32
+	greenCircleTexture  uint32
+	blueCircleFB        uint32
+	blueCircleTexture   uint32
+	yellowCircleFB      uint32
+	yellowCircleTexture uint32
 
 	viewerContext ViewerContext
 }
@@ -101,6 +103,7 @@ func New(world World, shaderDirectory string) *Renderer {
 	r.redCircleFB, r.redCircleTexture = r.initFrameBuffer(1024, 1024)
 	r.greenCircleFB, r.greenCircleTexture = r.initFrameBuffer(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.initFrameBuffer(1024, 1024)
+	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBuffer(1024, 1024)
 
 	compileShaders(r.shaderManager)
 
@@ -156,34 +159,10 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.renderToDepthMap(lightViewerContext, lightContext)
 	r.renderColorPicking(cameraViewerContext)
 	r.renderToDisplay(cameraViewerContext, lightContext)
-	r.renderCircleGizmo(&cameraViewerContext)
 
 	r.renderGizmos(cameraViewerContext)
 
 	r.renderImgui()
-}
-
-func (r *Renderer) renderCircleGizmo(cameraViewerContext *ViewerContext) {
-	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
-
-	rotation := mgl32.HomogRotate3DY(90 * math.Pi / 180)
-	t := mgl32.Translate3D(0, 300, 0)
-	s := mgl32.Scale3D(50, 50, 50)
-
-	r1 := mgl32.HomogRotate3DX(-90 * math.Pi / 180)
-	t1 := mgl32.Translate3D(0, 300, 0)
-	s1 := mgl32.Scale3D(50, 50, 50)
-
-	// probably only need to run this once?
-	r.renderCircle()
-	modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
-	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.redCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
-	modelMatrix = t.Mul4(rotation).Mul4(s)
-	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.greenCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
-	modelMatrix = t1.Mul4(r1).Mul4(s1)
-	drawTexturedQuad(cameraViewerContext, r.shaderManager, r.blueCircleTexture, 0.5, float32(r.aspectRatio), &modelMatrix, true)
 }
 
 func (r *Renderer) renderImgui() {
@@ -254,6 +233,11 @@ func (r *Renderer) renderCircle() {
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 1, 0, alpha})
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
@@ -263,7 +247,11 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	entity := r.world.Entities()[panels.SelectedEntity.ID]
-	drawGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+		r.drawCircleGizmo(&viewerContext, entity.Position)
+	}
 }
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
@@ -289,7 +277,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 	for _, entity := range r.world.Entities() {
 		modelMatrix := createModelMatrix(
 			mgl64.Scale3D(1, 1, 1),
-			mgl64.QuatIdent().Mat4(),
+			entity.Rotation.Mat4(),
 			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
 		)
 
@@ -309,14 +297,13 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			modelMatrix,
 		)
 	}
-
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
 	return translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 }
 
-func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
 
 	for i, axis := range gizmo.T.Axes {
@@ -328,6 +315,33 @@ func drawGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, posi
 			color = mgl64.Vec3{1, 1, 0}
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)
+	}
+}
+
+func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
+	defer resetGLRenderSettings()
+	w, h := r.world.Window().GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+
+	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
+	s := mgl32.Scale3D(25, 25, 25)
+
+	rotations := []mgl32.Mat4{
+		mgl32.Ident4(),
+		mgl32.HomogRotate3DY(90 * math.Pi / 180),
+		mgl32.HomogRotate3DX(-90 * math.Pi / 180),
+	}
+
+	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
+
+	r.renderCircle()
+	for i := 0; i < 3; i++ {
+		modelMatrix := t.Mul4(rotations[i]).Mul4(s)
+		texture := textures[i]
+		if i == gizmo.R.HoverIndex {
+			texture = r.yellowCircleTexture
+		}
+		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &modelMatrix, true)
 	}
 }
 
@@ -378,7 +392,7 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 	for _, entity := range r.world.Entities() {
 		modelMatrix := createModelMatrix(
 			mgl64.Scale3D(1, 1, 1),
-			mgl64.QuatIdent().Mat4(),
+			entity.Rotation.Mat4(),
 			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
 		)
 
@@ -409,7 +423,7 @@ func (r *Renderer) handleResize() {
 	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
 }
 
-func (r *Renderer) EntitySelect(pixelPosition mgl64.Vec2, delta time.Duration) *int {
+func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 

@@ -17,6 +17,7 @@ void main() {
     if (dist > 1 || dist < 0.9) {
         discard;
     } else {
+        // FragColor = vec4(vec3(color), color.a);
         FragColor = vec4(vec3(color), color.a);
     }
 }

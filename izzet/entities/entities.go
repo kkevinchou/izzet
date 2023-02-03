@@ -25,8 +25,9 @@ type Entity struct {
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 	e := &Entity{
-		ID:   id,
-		Name: fmt.Sprintf("%s-%d", prefab.Name, id),
+		ID:       id,
+		Name:     fmt.Sprintf("%s-%d", prefab.Name, id),
+		Rotation: mgl64.QuatIdent(),
 
 		Prefab: prefab,
 	}

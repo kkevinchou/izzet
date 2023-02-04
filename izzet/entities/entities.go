@@ -24,6 +24,12 @@ type Entity struct {
 }
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
+	e := InstantiateFromPrefabStaticID(id, prefab)
+	id += 1
+	return e
+}
+
+func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 	e := &Entity{
 		ID:       id,
 		Name:     fmt.Sprintf("%s-%d", prefab.Name, id),
@@ -32,6 +38,5 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 		Prefab: prefab,
 	}
 
-	id += 1
 	return e
 }

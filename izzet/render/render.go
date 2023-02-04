@@ -50,6 +50,7 @@ type World interface {
 	Platform() *input.SDLPlatform
 
 	Serializer() *serialization.Serializer
+	LoadSerializedWorld(serializedWorld serialization.SerializedWorld)
 }
 
 type Renderer struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/veandco/go-sdl2/sdl"
@@ -65,4 +66,8 @@ func (g *Izzet) Window() *sdl.Window {
 
 func (g *Izzet) Platform() *input.SDLPlatform {
 	return g.platform
+}
+
+func (g *Izzet) Serializer() *serialization.Serializer {
+	return g.serializer
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
+	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -32,7 +33,8 @@ type Izzet struct {
 	entities map[int]*entities.Entity
 	prefabs  map[int]*prefabs.Prefab
 
-	renderer *render.Renderer
+	renderer   *render.Renderer
+	serializer *serialization.Serializer
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -59,8 +61,11 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
 	g.renderer = render.New(g, shaderDirectory)
 
+	g.entities = map[int]*entities.Entity{}
+	g.prefabs = map[int]*prefabs.Prefab{}
 	g.loadPrefabs()
 	g.loadEntities()
+	g.serializer = serialization.New(g)
 
 	return g
 }
@@ -120,8 +125,6 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	g.prefabs = map[int]*prefabs.Prefab{}
-
 	names := []string{"alpha", "mutant", "scene", "town_center"}
 
 	for _, name := range names {
@@ -135,8 +138,10 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
-	g.entities = map[int]*entities.Entity{}
 	for _, pf := range g.Prefabs() {
+		if pf.Name != "scene" {
+			continue
+		}
 		entity := entities.InstantiateFromPrefab(pf)
 		g.entities[entity.ID] = entity
 	}
@@ -185,4 +190,17 @@ func initializeOpenGL() (*sdl.Window, error) {
 	fmt.Println("Open GL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
 
 	return window, nil
+}
+
+func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
+	w, h := g.Window().GetSize()
+	x := mouseInput.Position.X()
+	y := mouseInput.Position.Y()
+
+	// -1 for the near plane
+	ndcP := mgl64.Vec4{((x / float64(w)) - 0.5) * 2, ((y / float64(h)) - 0.5) * -2, -1, 1}
+	nearPlanePos := g.renderer.ViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.ViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
+	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
+
+	return nearPlanePos.Vec3()
 }

@@ -55,7 +55,7 @@ func (s *Serializer) WriteOut(filepath string) {
 		Entities: serializedEntities,
 	}
 
-	bytes, err := json.Marshal(serializedWorld)
+	bytes, err := json.MarshalIndent(serializedWorld, "", "    ")
 	if err != nil {
 		panic(err)
 	}

@@ -17,19 +17,6 @@ var (
 	maxCameraSpeed float64 = 400 // units per second
 )
 
-func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
-	w, h := g.Window().GetSize()
-	x := mouseInput.Position.X()
-	y := mouseInput.Position.Y()
-
-	// -1 for the near plane
-	ndcP := mgl64.Vec4{((x / float64(w)) - 0.5) * 2, ((y / float64(h)) - 0.5) * -2, -1, 1}
-	nearPlanePos := g.renderer.ViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.ViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
-	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
-
-	return nearPlanePos.Vec3()
-}
-
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	for _, entity := range g.Entities() {
 		if entity.AnimationPlayer != nil {
@@ -73,7 +60,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			panels.SelectedEntity.Rotation = *newEntityRotation
 		}
 	}
-
 }
 
 func (g *Izzet) selectEntity(frameInput input.Input) {

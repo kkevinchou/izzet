@@ -72,9 +72,13 @@ func (g *Izzet) Serializer() *serialization.Serializer {
 	return g.serializer
 }
 
-func (g *Izzet) LoadSerializedWorld(serializedWorld serialization.SerializedWorld) {
-	es := g.serializer.DeserializeEntities(serializedWorld.Entities)
+func (g *Izzet) SaveWorld() {
+	g.serializer.WriteOut("./scene.txt")
+}
 
+func (g *Izzet) LoadWorld() {
+	g.serializer.ReadIn("./scene.txt")
+	es := g.serializer.Entities()
 	g.entities = map[int]*entities.Entity{}
 	for _, e := range es {
 		g.entities[e.ID] = e

@@ -28,7 +28,8 @@ type SerializedEntity struct {
 }
 
 type Serializer struct {
-	world World
+	world           World
+	serializedWorld SerializedWorld
 }
 
 func New(world World) *Serializer {
@@ -73,7 +74,7 @@ func (s *Serializer) WriteOut(filepath string) {
 	}
 }
 
-func (s *Serializer) ReadIn(filepath string) SerializedWorld {
+func (s *Serializer) ReadIn(filepath string) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		panic(err)
@@ -93,12 +94,12 @@ func (s *Serializer) ReadIn(filepath string) SerializedWorld {
 		panic(err)
 	}
 
-	return serializedWorld
+	s.serializedWorld = serializedWorld
 }
 
-func (s *Serializer) DeserializeEntities(sEntities []SerializedEntity) []*entities.Entity {
+func (s *Serializer) Entities() []*entities.Entity {
 	dsEntities := []*entities.Entity{}
-	for _, e := range sEntities {
+	for _, e := range s.serializedWorld.Entities {
 		dsEntity := entities.InstantiateFromPrefabStaticID(e.ID, s.world.GetPrefabByID(e.PrefabID))
 		dsEntity.Position = e.Position
 		dsEntity.Rotation = e.Rotation

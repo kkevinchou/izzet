@@ -15,57 +15,57 @@ func entityProps(entity *entities.Entity) {
 	parentWindowSize := imgui.WindowSize()
 	windowSize := imgui.Vec2{X: parentWindowSize.X, Y: parentWindowSize.Y * 0.5}
 	imgui.BeginChildV("entityProps", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
+		// imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
+		// imgui.PopStyleColor()
 
-	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
-	imgui.Text("Entity Properties")
-	imgui.PopStyleColor()
+		if entity != nil {
+			positionStr := fmt.Sprintf("%v", entity.Position)
+			text := &positionStr
 
-	if entity != nil {
-		positionStr := fmt.Sprintf("%v", entity.Position)
-		text := &positionStr
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders, imgui.Vec2{}, 0)
+			uiTableRow("Entity Name", entity.Name)
+			if uiTableInputRow("Position", entity.Position, text, nil) {
+				textCopy := *text
+				r := regexp.MustCompile(`\[(?P<x>-?\d+) (?P<y>-?\d+) (?P<z>-?\d+)\]`)
+				matches := r.FindStringSubmatch(textCopy)
+				if matches != nil {
+					var parseErr bool
+					var newPosition mgl64.Vec3
+					for i, name := range r.SubexpNames() {
+						// https://pkg.go.dev/regexp#Regexp.SubexpNames
+						// first name is always the empty string since the regexp as a whole cannot be named
+						if i == 0 {
+							continue
+						}
 
-		imgui.BeginTableV("", 2, imgui.TableFlagsBorders, imgui.Vec2{}, 0)
-		uiTableRow("Entity Name", entity.Name)
-		if uiTableInputRow("Position", entity.Position, text, nil) {
-			textCopy := *text
-			r := regexp.MustCompile(`\[(?P<x>-?\d+) (?P<y>-?\d+) (?P<z>-?\d+)\]`)
-			matches := r.FindStringSubmatch(textCopy)
-			if matches != nil {
-				var parseErr bool
-				var newPosition mgl64.Vec3
-				for i, name := range r.SubexpNames() {
-					// https://pkg.go.dev/regexp#Regexp.SubexpNames
-					// first name is always the empty string since the regexp as a whole cannot be named
-					if i == 0 {
-						continue
+						if i < 1 || i > 3 {
+							parseErr = true
+							continue
+						}
+
+						value, err := strconv.Atoi(matches[r.SubexpIndex(name)])
+						if err != nil {
+							parseErr = true
+							continue
+						}
+
+						newPosition[i-1] = float64(value)
 					}
 
-					if i < 1 || i > 3 {
-						parseErr = true
-						continue
+					if !parseErr {
+						entity.Position = newPosition
 					}
-
-					value, err := strconv.Atoi(matches[r.SubexpIndex(name)])
-					if err != nil {
-						parseErr = true
-						continue
-					}
-
-					newPosition[i-1] = float64(value)
-				}
-
-				if !parseErr {
-					entity.Position = newPosition
 				}
 			}
+
+			euler := QuatToEuler(entity.Rotation)
+			uiTableRow("Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
+			imgui.EndTable()
 		}
-
-		euler := QuatToEuler(entity.Rotation)
-		uiTableRow("Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
-		imgui.EndTable()
 	}
-
 	imgui.EndChild()
+
 }
 
 func uiTableInputRow(label string, value any, text *string, cb imgui.InputTextCallback) bool {

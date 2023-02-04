@@ -14,8 +14,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/menus"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -46,6 +48,9 @@ type World interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	Window() *sdl.Window
 	Platform() *input.SDLPlatform
+
+	Serializer() *serialization.Serializer
+	LoadSerializedWorld(serializedWorld serialization.SerializedWorld)
 }
 
 type Renderer struct {
@@ -169,17 +174,7 @@ func (r *Renderer) renderImgui() {
 	r.world.Platform().NewFrame()
 	imgui.NewFrame()
 
-	imgui.BeginMainMenuBar()
-	menuBarSize := imgui.WindowSize()
-	if imgui.BeginMenu("File") {
-		if imgui.MenuItem("New") {
-		}
-
-		if imgui.MenuItem("Open") {
-		}
-		imgui.EndMenu()
-	}
-	imgui.EndMainMenuBar()
+	menuBarSize := menus.SetupMenuBar(r.world)
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)

@@ -42,7 +42,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.Shutdown()
 	}
 
-	g.selectEntity(frameInput)
+	mouseInput := frameInput.MouseInput
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+		g.selectEntity(frameInput)
+	}
 	g.cameraMovement(frameInput, delta)
 
 	// set gizmo mode
@@ -70,16 +73,13 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			panels.SelectedEntity.Rotation = *newEntityRotation
 		}
 	}
+
 }
 
 func (g *Izzet) selectEntity(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 
-	if gizmo.T.Active || gizmo.R.Active || gizmo.T.HoverIndex != -1 || gizmo.R.HoverIndex != -1 {
-		return
-	}
-
-	if mouseInput.MouseButtonEvent[0] != input.MouseButtonEventDown {
+	if gizmo.T.HoverIndex != -1 || gizmo.R.HoverIndex != -1 {
 		return
 	}
 

@@ -1,6 +1,7 @@
 package izzet
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/kkevinchou/izzet/izzet/camera"
@@ -77,7 +78,11 @@ func (g *Izzet) SaveWorld() {
 }
 
 func (g *Izzet) LoadWorld() {
-	g.serializer.ReadIn("./scene.txt")
+	err := g.serializer.ReadIn("./scene.txt")
+	if err != nil {
+		fmt.Println("failed to load world: ", err)
+		return
+	}
 	es := g.serializer.Entities()
 	g.entities = map[int]*entities.Entity{}
 	for _, e := range es {

@@ -74,27 +74,28 @@ func (s *Serializer) WriteOut(filepath string) {
 	}
 }
 
-func (s *Serializer) ReadIn(filepath string) {
+func (s *Serializer) ReadIn(filepath string) error {
 	f, err := os.Open(filepath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	defer f.Close()
 
 	bytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var serializedWorld SerializedWorld
 
 	err = json.Unmarshal(bytes, &serializedWorld)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	s.serializedWorld = serializedWorld
+	return nil
 }
 
 func (s *Serializer) Entities() []*entities.Entity {

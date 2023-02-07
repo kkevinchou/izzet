@@ -21,9 +21,9 @@ func BuildExplorer(es []*entities.Entity, world World, menuBarSize imgui.Vec2) {
 	imgui.BeginChildV("explorer", imgui.Vec2{}, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
-	selectedEntity := sceneHierarchy(es, world)
+	sceneHierarchy(es, world)
 	if imgui.IsItemClicked() {
-		HierarchySelection = 0
+		SelectEntity(nil)
 	}
 
 	if imgui.BeginDragDropTarget() {
@@ -36,11 +36,11 @@ func BuildExplorer(es []*entities.Entity, world World, menuBarSize imgui.Vec2) {
 			prefab := world.GetPrefabByID(prefabID)
 			entity := entities.InstantiateFromPrefab(prefab)
 			world.AddEntity(entity)
+			SelectEntity(entity)
 		}
 	}
 
-	entityProps(selectedEntity)
-
+	entityProps(SelectedEntity())
 	imgui.PopStyleVar()
 
 	imgui.EndChild()

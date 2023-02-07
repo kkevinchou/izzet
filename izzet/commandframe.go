@@ -50,14 +50,14 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	// handle gizmo transforms
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		newEntityPosition := g.handleTranslationGizmo(frameInput, panels.SelectedEntity)
+		newEntityPosition := g.handleTranslationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityPosition != nil {
-			panels.SelectedEntity.Position = *newEntityPosition
+			panels.SelectedEntity().Position = *newEntityPosition
 		}
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		newEntityRotation := g.handleRotationGizmo(frameInput, panels.SelectedEntity)
+		newEntityRotation := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityRotation != nil {
-			panels.SelectedEntity.Rotation = *newEntityRotation
+			panels.SelectedEntity().Rotation = *newEntityRotation
 		}
 	}
 }
@@ -72,16 +72,17 @@ func (g *Izzet) selectEntity(frameInput input.Input) {
 	// select the entity in the hierarchy
 	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 	if entityID == nil {
-		panels.HierarchySelection = 0
+		panels.SelectEntity(nil)
 		gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 	} else {
-		for i, e := range g.Entities() {
+		for _, e := range g.Entities() {
 			if e.ID == *entityID {
-				panels.HierarchySelection = (1 << i)
+				panels.SelectEntity(e)
 			}
 		}
 	}
 }
+
 func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput

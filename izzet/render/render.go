@@ -237,12 +237,12 @@ func (r *Renderer) renderCircle() {
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
-	if panels.SelectedEntity == nil {
+	if panels.SelectedEntity() == nil {
 		return
 	}
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	entity := r.world.Entities()[panels.SelectedEntity.ID]
+	entity := r.world.Entities()[panels.SelectedEntity().ID]
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {

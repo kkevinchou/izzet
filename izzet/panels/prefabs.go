@@ -7,8 +7,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
 
-var prefabSelection int
-
 func BuildPrefabs(ps []*prefabs.Prefab, world World) {
 	var heightRatio float32 = 0.15
 	_ = heightRatio
@@ -39,22 +37,12 @@ func prefabsUI(ps []*prefabs.Prefab) {
 	imgui.Text("Prefabs")
 	imgui.PopStyleColor()
 
-	var selectedPrefab *prefabs.Prefab
-	selectedItem := -1
-	for i, prefab := range ps {
+	for _, prefab := range ps {
 		nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
-		if prefabSelection&(1<<i) != 0 {
-			selectedPrefab = prefab
-			nodeFlags |= imgui.TreeNodeFlagsSelected
-		}
 
 		if imgui.TreeNodeV(prefab.Name, nodeFlags) {
-			if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
-				str := fmt.Sprintf("%d", prefab.ID)
-				imgui.SetDragDropPayload("prefabid", []byte(str), imgui.ConditionNone)
-				imgui.EndDragDropSource()
-			}
-
+			// this call allows drag/drop from an expanded tree node
+			beginPrefabDragDrop(prefab.ID)
 			if imgui.TreeNodeV("meshes", imgui.TreeNodeFlagsNone) {
 				for _, mr := range prefab.ModelRefs {
 					if imgui.TreeNodeV(mr.Name, imgui.TreeNodeFlagsLeaf) {
@@ -65,17 +53,17 @@ func prefabsUI(ps []*prefabs.Prefab) {
 			}
 			imgui.TreePop()
 		}
-
-		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
-			selectedItem = i
-		}
-
+		// this call allows drag/drop from a collapsed tree node
+		beginPrefabDragDrop(prefab.ID)
 	}
-	if selectedItem != -1 {
-		prefabSelection = (1 << selectedItem)
-	}
-
-	_ = selectedPrefab
 
 	imgui.EndChild()
+}
+
+func beginPrefabDragDrop(id int) {
+	if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
+		str := fmt.Sprintf("%d", id)
+		imgui.SetDragDropPayload("prefabid", []byte(str), imgui.ConditionNone)
+		imgui.EndDragDropSource()
+	}
 }

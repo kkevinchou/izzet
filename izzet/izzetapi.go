@@ -88,10 +88,20 @@ func (g *Izzet) LoadWorld() {
 		fmt.Println("failed to load world: ", err)
 		return
 	}
+
+	var maxID int
 	es := g.serializer.Entities()
 	g.entities = map[int]*entities.Entity{}
 	for _, e := range es {
+		if e.ID > maxID {
+			maxID = e.ID
+		}
 		g.entities[e.ID] = e
 	}
+
+	if len(g.entities) > 0 {
+		entities.SetNextID(maxID + 1)
+	}
+
 	panels.SelectEntity(nil)
 }

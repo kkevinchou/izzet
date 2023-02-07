@@ -23,6 +23,10 @@ type Entity struct {
 	AnimationPlayer *animation.AnimationPlayer
 }
 
+func SetNextID(nextID int) {
+	id = nextID
+}
+
 func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 	e := InstantiateFromPrefabStaticID(id, prefab)
 	id += 1

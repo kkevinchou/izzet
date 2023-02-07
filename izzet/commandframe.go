@@ -215,16 +215,33 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 
 	// handle when mouse moves the rotation gizmo
 	if gizmo.R.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+		viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 		delta := mouseInput.Position.Sub(gizmo.R.MotionPivot)
 		sensitivity := 2 * math.Pi / 1000
 		magnitude := (delta[0] + delta[1]) * float64(sensitivity)
 		rotation := mgl64.QuatIdent()
+
 		if gizmo.R.HoverIndex == 0 {
-			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, -1})
+			// rotation around Z axis
+			var dir float64 = 1
+			if viewDir.Dot(mgl64.Vec3{0, 0, -1}) > 0 {
+				dir = -1
+			}
+			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, dir})
 		} else if gizmo.R.HoverIndex == 1 {
-			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{-1, 0, 0})
+			// rotation around X axis
+			var dir float64 = 1
+			if viewDir.Dot(mgl64.Vec3{-1, 0, 0}) > 0 {
+				dir = -1
+			}
+			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{dir, 0, 0})
 		} else if gizmo.R.HoverIndex == 2 {
-			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, -1, 0})
+			// rotation around Y axis
+			var dir float64 = 1
+			if viewDir.Dot(mgl64.Vec3{0, -1, 0}) > 0 {
+				dir = -1
+			}
+			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, dir, 0})
 		}
 		computedQuat := rotation.Mul(selectedEntity.Rotation)
 		gizmo.R.MotionPivot = mouseInput.Position

@@ -139,7 +139,7 @@ func (g *Izzet) loadPrefabs() {
 
 func (g *Izzet) loadEntities() {
 	for _, pf := range g.Prefabs() {
-		if pf.Name != "scene" {
+		if pf.Name != "scene" && pf.Name != "town_center" {
 			continue
 		}
 		entity := entities.InstantiateFromPrefab(pf)

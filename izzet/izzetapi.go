@@ -6,6 +6,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
@@ -19,6 +20,10 @@ func (g *Izzet) AddEntity(entity *entities.Entity) {
 
 func (g *Izzet) GetPrefabByID(id int) *prefabs.Prefab {
 	return g.prefabs[id]
+}
+
+func (g *Izzet) GetEntityByID(id int) *entities.Entity {
+	return g.entities[id]
 }
 
 func (g *Izzet) Entities() []*entities.Entity {
@@ -88,4 +93,5 @@ func (g *Izzet) LoadWorld() {
 	for _, e := range es {
 		g.entities[e.ID] = e
 	}
+	panels.SelectEntity(nil)
 }

@@ -42,6 +42,7 @@ type World interface {
 	Camera() *camera.Camera
 	Prefabs() []*prefabs.Prefab
 	Entities() []*entities.Entity
+	GetEntityByID(id int) *entities.Entity
 
 	// for panels
 	AddEntity(entity *entities.Entity)
@@ -242,7 +243,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	}
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	entity := r.world.Entities()[panels.SelectedEntity().ID]
+	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {

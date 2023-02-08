@@ -45,6 +45,8 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
 		} else if _, ok := keyboardInput[input.KeyboardKeyR]; ok {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeRotation
+		} else if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeScale
 		}
 	}
 
@@ -58,6 +60,12 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		newEntityRotation := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityRotation != nil {
 			panels.SelectedEntity().Rotation = *newEntityRotation
+		}
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+		scaleDelta := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
+		if scaleDelta != nil {
+			entity := panels.SelectedEntity()
+			entity.Scale = entity.Scale.Add(*scaleDelta)
 		}
 	}
 }
@@ -250,6 +258,94 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	}
 
 	return nil
+}
+
+// TODO: move this method out of izzet and into the gizmo package?
+func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Vec3 {
+	if selectedEntity == nil {
+		return nil
+	}
+
+	mouseInput := frameInput.MouseInput
+	nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	position := selectedEntity.Position
+
+	var minDist *float64
+	minAxis := mgl64.Vec3{}
+	closestAxisIndex := -1
+
+	for i, axis := range gizmo.S.Axes {
+		if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
+			length := a.Sub(b).Len()
+			if length > gizmo.ActivationRadius {
+				continue
+			}
+
+			if minDist == nil || length < *minDist {
+				minAxis = axis
+				minDist = &length
+				closestAxisIndex = i
+			}
+		}
+	}
+
+	// mouse is close to one of the axes
+	if minDist != nil {
+		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+			gizmo.S.Active = true
+			gizmo.S.ScaleDir = minAxis
+			gizmo.S.MotionPivot = mouseInput.Position
+			gizmo.S.HoverIndex = closestAxisIndex
+		}
+
+		if !gizmo.S.Active {
+			gizmo.S.HoverIndex = closestAxisIndex
+		}
+	} else if !gizmo.S.Active {
+		gizmo.S.HoverIndex = -1
+	}
+
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+		gizmo.S.Active = false
+		gizmo.S.HoverIndex = closestAxisIndex
+	}
+
+	var newEntityScale *mgl64.Vec3
+	// handle when mouse moves the translation slider
+	if gizmo.S.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+		if _, _, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.S.ScaleDir)); nonParallel {
+			viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
+			delta := mouseInput.Position.Sub(gizmo.S.MotionPivot)
+			sensitivity := 0.01
+			magnitude := (delta[0] - delta[1]) * float64(sensitivity)
+
+			if gizmo.S.HoverIndex == 0 {
+				// X Scale
+				var dir float64 = 1
+				if viewDir.Dot(mgl64.Vec3{0, 0, -1}) < 0 {
+					dir = -1
+				}
+				newEntityScale = &mgl64.Vec3{dir * magnitude, 0, 0}
+			} else if gizmo.S.HoverIndex == 1 {
+				// Y Scale
+				var dir float64 = 1
+				// if viewDir.Dot(mgl64.Vec3{0, 1, 0}) > 0 {
+				// 	dir = -1
+				// }
+				newEntityScale = &mgl64.Vec3{0, dir * magnitude, 0}
+			} else if gizmo.S.HoverIndex == 2 {
+				// Z Scale
+				var dir float64 = 1
+				if viewDir.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
+					dir = -1
+				}
+				newEntityScale = &mgl64.Vec3{0, 0, dir * magnitude}
+			}
+		}
+		gizmo.S.MotionPivot = mouseInput.Position
+	}
+
+	return newEntityScale
 }
 
 // TODO: move this method out of izzet and into the gizmo package?

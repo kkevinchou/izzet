@@ -248,6 +248,8 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
 		r.drawCircleGizmo(&viewerContext, entity.Position)
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
 	}
 }
 
@@ -273,7 +275,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 	for _, entity := range r.world.Entities() {
 		modelMatrix := createModelMatrix(
-			mgl64.Scale3D(1, 1, 1),
+			mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()),
 			entity.Rotation.Mat4(),
 			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
 		)
@@ -315,6 +317,20 @@ func drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderPr
 	}
 }
 
+func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
+
+	for i, axis := range gizmo.S.Axes {
+		lines := [][]mgl64.Vec3{
+			[]mgl64.Vec3{position, position.Add(axis)},
+		}
+		color := colors[i]
+		if i == gizmo.S.HoverIndex {
+			color = mgl64.Vec3{1, 1, 0}
+		}
+		drawLines(*viewerContext, shader, lines, 1, color)
+	}
+}
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
 	defer resetGLRenderSettings()
 	w, h := r.world.Window().GetSize()

@@ -35,9 +35,12 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 
 func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 	e := &Entity{
-		ID:       id,
-		Name:     fmt.Sprintf("%s-%d", prefab.Name, id),
+		ID:   id,
+		Name: fmt.Sprintf("%s-%d", prefab.Name, id),
+
+		Position: mgl64.Vec3{0, 0, 0},
 		Rotation: mgl64.QuatIdent(),
+		Scale:    mgl64.Vec3{1, 1, 1},
 
 		Prefab: prefab,
 	}

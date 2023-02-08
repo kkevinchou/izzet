@@ -18,6 +18,7 @@ var (
 	GizmoModeNone        GizmoMode = "NONE"
 	GizmoModeTranslation GizmoMode = "TRANSLATION"
 	GizmoModeRotation    GizmoMode = "ROTATION"
+	GizmoModeScale       GizmoMode = "SCALE"
 
 	CurrentGizmoMode GizmoMode = GizmoModeNone
 )
@@ -33,4 +34,5 @@ func init() {
 			Circle{Normal: mgl64.Vec3{0, 1, 0}, Radius: 25},
 		},
 		HoverIndex: -1}
+	S = &ScaleGizmo{Axes: axes, HoverIndex: -1}
 }

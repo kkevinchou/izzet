@@ -25,6 +25,7 @@ type SerializedEntity struct {
 	// Position []float64
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
+	Scale    mgl64.Vec3
 }
 
 type Serializer struct {
@@ -48,6 +49,7 @@ func (s *Serializer) WriteOut(filepath string) {
 				// Position: []float64{position.X(), position.Y(), position.Z(),
 				Position: position,
 				Rotation: entity.Rotation,
+				Scale:    entity.Scale,
 			},
 		)
 	}
@@ -102,8 +104,14 @@ func (s *Serializer) Entities() []*entities.Entity {
 	dsEntities := []*entities.Entity{}
 	for _, e := range s.serializedWorld.Entities {
 		dsEntity := entities.InstantiateFromPrefabStaticID(e.ID, s.world.GetPrefabByID(e.PrefabID))
+
 		dsEntity.Position = e.Position
 		dsEntity.Rotation = e.Rotation
+		dsEntity.Scale = e.Scale
+		if dsEntity.Scale.X() == 0 && dsEntity.Scale.Y() == 0 && dsEntity.Scale.Z() == 0 {
+			dsEntity.Scale = mgl64.Vec3{1, 1, 1}
+		}
+
 		dsEntities = append(dsEntities, dsEntity)
 	}
 	return dsEntities

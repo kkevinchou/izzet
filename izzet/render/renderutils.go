@@ -242,6 +242,44 @@ func defaultPoints(thickness float64, length float64) []mgl64.Vec3 {
 	}
 }
 
+func drawWithNDC(shaderManager *shaders.ShaderManager) {
+	// triangle
+	// var vertices []float32 = []float32{
+	// 	-0.5, -0.5, 1,
+	// 	0.5, -0.5, 1,
+	// 	0.0, 0.5, 1,
+	// }
+
+	var back float32 = 1
+
+	// full screen
+	var vertices []float32 = []float32{
+		-1, 1, back,
+		-1, -1, back,
+		1, -1, back,
+
+		1, -1, back,
+		1, 1, back,
+		-1, 1, back,
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+	gl.BindVertexArray(vao)
+
+	shader := shaderManager.GetShaderProgram("skybox")
+	shader.Use()
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+}
+
 func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
 	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{

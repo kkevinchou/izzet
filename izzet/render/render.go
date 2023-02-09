@@ -163,13 +163,15 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	r.viewerContext = cameraViewerContext
 
+	r.clearMainFrameBuffer()
+	r.renderSkybox()
 	r.renderToDepthMap(lightViewerContext, lightContext)
 	r.renderColorPicking(cameraViewerContext)
 	r.renderToDisplay(cameraViewerContext, lightContext)
 
 	r.renderGizmos(cameraViewerContext)
 
-	r.renderImgui()
+	// r.renderImgui()
 }
 
 func (r *Renderer) renderImgui() {
@@ -258,7 +260,6 @@ func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext Lig
 	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	r.renderScene(viewerContext, lightContext, false)
 }
 
@@ -424,6 +425,24 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 			entity.ID,
 		)
 	}
+}
+
+func (r *Renderer) clearMainFrameBuffer() {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+}
+
+func (r *Renderer) renderSkybox() {
+	defer resetGLRenderSettings()
+	w, h := r.world.Window().GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+
+	drawWithNDC(r.shaderManager)
+
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	shaderManager := r.shaderManager
+	shaderManager.GetShaderProgram("skybox").Use()
+
 }
 
 func (r *Renderer) ViewerContext() ViewerContext {

@@ -171,7 +171,7 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	r.renderGizmos(cameraViewerContext)
 
-	// r.renderImgui()
+	r.renderImgui()
 }
 
 func (r *Renderer) renderImgui() {

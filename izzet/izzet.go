@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/camera"
+	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -33,8 +34,9 @@ type Izzet struct {
 	entities map[int]*entities.Entity
 	prefabs  map[int]*prefabs.Prefab
 
-	renderer   *render.Renderer
-	serializer *serialization.Serializer
+	renderer    *render.Renderer
+	serializer  *serialization.Serializer
+	editHistory *edithistory.EditHistory
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -66,6 +68,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadPrefabs()
 	g.loadEntities()
 	g.serializer = serialization.New(g)
+	g.editHistory = edithistory.New()
 
 	return g
 }

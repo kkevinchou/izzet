@@ -10,8 +10,9 @@ type Circle struct {
 }
 
 type RotationGizmo struct {
-	MotionPivot mgl64.Vec2
-	Axes        []Circle
-	Active      bool
-	HoverIndex  int
+	MotionPivot        mgl64.Vec2
+	Axes               []Circle
+	Active             bool
+	HoverIndex         int
+	ActivationRotation mgl64.Quat
 }

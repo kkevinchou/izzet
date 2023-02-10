@@ -49,7 +49,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	g.cameraMovement(frameInput, delta)
 
 	// set gizmo mode
-	if panels.SelectedEntity != nil {
+	if panels.SelectedEntity() != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeNone {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
 		}

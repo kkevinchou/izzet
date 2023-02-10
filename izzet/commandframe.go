@@ -227,11 +227,12 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 		viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 		delta := mouseInput.Position.Sub(gizmo.R.MotionPivot)
 		sensitivity := 2 * math.Pi / 1000
-		magnitude := (delta[0] + delta[1]) * float64(sensitivity)
 		rotation := mgl64.QuatIdent()
 
 		if gizmo.R.HoverIndex == 0 {
 			// rotation around Z axis
+			horizontalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{0, 0, -1}))
+			magnitude := (horizontalAlignment*delta[0] + delta[1]) * float64(sensitivity)
 			var dir float64 = 1
 			if viewDir.Dot(mgl64.Vec3{0, 0, -1}) > 0 {
 				dir = -1
@@ -239,6 +240,8 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, dir})
 		} else if gizmo.R.HoverIndex == 1 {
 			// rotation around X axis
+			horizontalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{1, 0, 0}))
+			magnitude := (horizontalAlignment*delta[0] + delta[1]) * float64(sensitivity)
 			var dir float64 = 1
 			if viewDir.Dot(mgl64.Vec3{-1, 0, 0}) > 0 {
 				dir = -1
@@ -246,6 +249,8 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{dir, 0, 0})
 		} else if gizmo.R.HoverIndex == 2 {
 			// rotation around Y axis
+			verticalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{0, 1, 0}))
+			magnitude := (delta[0] + verticalAlignment*delta[1]) * float64(sensitivity)
 			var dir float64 = 1
 			if viewDir.Dot(mgl64.Vec3{0, -1, 0}) > 0 {
 				dir = -1

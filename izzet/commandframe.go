@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
@@ -27,6 +28,18 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	keyboardInput := frameInput.KeyboardInput
 	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
 		g.Shutdown()
+	}
+
+	// TODO - find some better keybindings
+	if event, ok := keyboardInput[input.KeyboardKeyO]; ok {
+		if event.Event == input.KeyboardEventDown {
+			g.Undo()
+		}
+	}
+	if event, ok := keyboardInput[input.KeyboardKeyP]; ok {
+		if event.Event == input.KeyboardEventDown {
+			g.Redo()
+		}
 	}
 
 	mouseInput := frameInput.MouseInput
@@ -208,6 +221,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			gizmo.R.Active = true
 			gizmo.R.MotionPivot = mouseInput.Position
 			gizmo.R.HoverIndex = closestAxisIndex
+			gizmo.R.ActivationRotation = selectedEntity.Rotation
 		}
 
 		if !gizmo.R.Active {
@@ -220,6 +234,9 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.R.Active = false
 		gizmo.R.HoverIndex = closestAxisIndex
+		g.AppendEdit(
+			edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.Rotation, selectedEntity),
+		)
 	}
 
 	// handle when mouse moves the rotation gizmo
@@ -301,6 +318,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 			gizmo.S.ScaleDir = minAxis
 			gizmo.S.MotionPivot = mouseInput.Position
 			gizmo.S.HoverIndex = closestAxisIndex
+			gizmo.S.ActivationScale = selectedEntity.Scale
 		}
 
 		if !gizmo.S.Active {
@@ -313,6 +331,9 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.S.Active = false
 		gizmo.S.HoverIndex = closestAxisIndex
+		g.AppendEdit(
+			edithistory.NewScaleEdit(gizmo.S.ActivationScale, selectedEntity.Scale, selectedEntity),
+		)
 	}
 
 	var newEntityScale *mgl64.Vec3
@@ -391,6 +412,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			gizmo.T.TranslationDir = minAxis
 			gizmo.T.MotionPivot = motionPivot.Sub(position)
 			gizmo.T.HoverIndex = closestAxisIndex
+			gizmo.T.ActivationPosition = position
 		}
 
 		if !gizmo.T.Active {
@@ -403,6 +425,9 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.T.Active = false
 		gizmo.T.HoverIndex = closestAxisIndex
+		g.AppendEdit(
+			edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.Position, selectedEntity),
+		)
 	}
 
 	var newEntityPosition *mgl64.Vec3

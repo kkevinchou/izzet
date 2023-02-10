@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/izzet/camera"
+	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -104,4 +105,17 @@ func (g *Izzet) LoadWorld() {
 	}
 
 	panels.SelectEntity(nil)
+	g.editHistory.Clear()
+}
+
+func (g *Izzet) AppendEdit(edit edithistory.Edit) {
+	g.editHistory.Append(edit)
+}
+
+func (g *Izzet) Redo() {
+	g.editHistory.Redo()
+}
+
+func (g *Izzet) Undo() {
+	g.editHistory.Undo()
 }

@@ -12,3 +12,9 @@ type ScaleGizmo struct {
 	HoverIndex      int
 	ActivationScale mgl64.Vec3
 }
+
+func (g *ScaleGizmo) Reset() {
+	g.HoverIndex = -1
+	g.ActivationScale = mgl64.Vec3{}
+	g.Active = false
+}

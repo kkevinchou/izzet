@@ -21,7 +21,7 @@ func (eh *EditHistory) Append(e Edit) {
 	eh.editList = eh.editList[:eh.cursor+1]
 	eh.editList = append(eh.editList, e)
 	eh.cursor += 1
-	// fmt.Println(len(eh.editList))
+	// fmt.Println("APPEND", eh.cursor)
 }
 
 func (eh *EditHistory) Undo() bool {
@@ -32,6 +32,7 @@ func (eh *EditHistory) Undo() bool {
 	edit := eh.editList[eh.cursor]
 	edit.Undo()
 	eh.cursor -= 1
+	// fmt.Println("UNDO", eh.cursor)
 	return true
 }
 
@@ -43,6 +44,7 @@ func (eh *EditHistory) Redo() bool {
 	eh.cursor += 1
 	edit := eh.editList[eh.cursor]
 	edit.Redo()
+	// fmt.Println("REDO", eh.cursor)
 	return true
 }
 

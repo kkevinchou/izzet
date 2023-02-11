@@ -12,3 +12,9 @@ type TranslationGizmo struct {
 	HoverIndex         int
 	ActivationPosition mgl64.Vec3
 }
+
+func (g *TranslationGizmo) Reset() {
+	g.HoverIndex = -1
+	g.ActivationPosition = mgl64.Vec3{}
+	g.Active = false
+}

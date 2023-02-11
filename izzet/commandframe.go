@@ -30,6 +30,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.Shutdown()
 	}
 
+	// undo/undo
 	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
 		if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {
 			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
@@ -43,6 +44,15 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 					g.Undo()
 				}
 			}
+		}
+	}
+
+	// delete entity
+	// TODO - find better key
+	if event, ok := keyboardInput[input.KeyboardKeyO]; ok {
+		if event.Event == input.KeyboardEventUp {
+			g.DeleteEntity(panels.SelectedEntity())
+			panels.SelectEntity(nil)
 		}
 	}
 

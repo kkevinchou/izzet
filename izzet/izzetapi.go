@@ -19,6 +19,13 @@ func (g *Izzet) AddEntity(entity *entities.Entity) {
 	g.entities[entity.ID] = entity
 }
 
+func (g *Izzet) DeleteEntity(entity *entities.Entity) {
+	if entity == nil {
+		return
+	}
+	delete(g.entities, entity.ID)
+}
+
 func (g *Izzet) GetPrefabByID(id int) *prefabs.Prefab {
 	return g.prefabs[id]
 }

@@ -31,15 +31,16 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 
 	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
-		if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
-			if event.Event == input.KeyboardEventUp {
-				g.Undo()
-			}
-		}
 		if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {
 			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
 				if event.Event == input.KeyboardEventUp {
 					g.Redo()
+				}
+			}
+		} else {
+			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
+				if event.Event == input.KeyboardEventUp {
+					g.Undo()
 				}
 			}
 		}
@@ -47,7 +48,12 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	mouseInput := frameInput.MouseInput
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		g.selectEntity(frameInput)
+		if newSelection := g.selectEntity(frameInput); newSelection {
+			// fmt.Println("RESET")
+			gizmo.T.Reset()
+			gizmo.R.Reset()
+			gizmo.S.Reset()
+		}
 	}
 	g.cameraMovement(frameInput, delta)
 
@@ -86,25 +92,28 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 }
 
-func (g *Izzet) selectEntity(frameInput input.Input) {
+func (g *Izzet) selectEntity(frameInput input.Input) bool {
 	mouseInput := frameInput.MouseInput
 
-	if gizmo.T.HoverIndex != -1 || gizmo.R.HoverIndex != -1 {
-		return
+	if gizmo.T.HoverIndex != -1 || gizmo.R.HoverIndex != -1 || gizmo.S.HoverIndex != -1 {
+		return false
 	}
 
+	var newSelection bool
 	// select the entity in the hierarchy
 	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 	if entityID == nil {
-		panels.SelectEntity(nil)
+		newSelection = panels.SelectEntity(nil)
 		gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 	} else {
 		for _, e := range g.Entities() {
 			if e.ID == *entityID {
-				panels.SelectEntity(e)
+				newSelection = panels.SelectEntity(e)
 			}
 		}
 	}
+
+	return newSelection
 }
 
 func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {

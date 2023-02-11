@@ -16,3 +16,9 @@ type RotationGizmo struct {
 	HoverIndex         int
 	ActivationRotation mgl64.Quat
 }
+
+func (g *RotationGizmo) Reset() {
+	g.HoverIndex = -1
+	g.ActivationRotation = mgl64.QuatIdent()
+	g.Active = false
+}

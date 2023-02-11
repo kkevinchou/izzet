@@ -15,8 +15,10 @@ type World interface {
 	Window() *sdl.Window
 }
 
-func SelectEntity(entity *entities.Entity) {
+func SelectEntity(entity *entities.Entity) bool {
+	newSelection := entity != selectedEntity
 	selectedEntity = entity
+	return newSelection
 }
 
 func SelectedEntity() *entities.Entity {

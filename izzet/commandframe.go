@@ -53,6 +53,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			gizmo.T.Reset()
 			gizmo.R.Reset()
 			gizmo.S.Reset()
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		}
 	}
 	g.cameraMovement(frameInput, delta)
@@ -94,10 +95,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 func (g *Izzet) selectEntity(frameInput input.Input) bool {
 	mouseInput := frameInput.MouseInput
-
-	if gizmo.T.HoverIndex != -1 || gizmo.R.HoverIndex != -1 || gizmo.S.HoverIndex != -1 {
-		return false
-	}
 
 	var newSelection bool
 	// select the entity in the hierarchy

@@ -45,5 +45,10 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 		Prefab: prefab,
 	}
 
+	if len(prefab.ModelRefs[0].Model.Animations()) > 0 {
+		e.AnimationPlayer = animation.NewAnimationPlayer(prefab.ModelRefs[0].Model)
+		e.AnimationPlayer.PlayAnimation("Walk")
+	}
+
 	return e
 }

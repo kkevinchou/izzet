@@ -50,9 +50,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		if newSelection := g.selectEntity(frameInput); newSelection {
 			// fmt.Println("RESET")
-			gizmo.T.Reset()
-			gizmo.R.Reset()
-			gizmo.S.Reset()
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		}
 	}
@@ -245,15 +242,14 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 		gizmo.R.HoverIndex = -1
 	}
 
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		gizmo.R.Active = false
-		gizmo.R.HoverIndex = closestAxisIndex
+	if gizmo.R.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		if gizmo.R.ActivationRotation != selectedEntity.Rotation {
 			// fmt.Println("Edit ID Rotation", selectedEntity.ID)
 			g.AppendEdit(
 				edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.Rotation, selectedEntity),
 			)
 		}
+		gizmo.R.Reset()
 	}
 
 	// handle when mouse moves the rotation gizmo
@@ -346,7 +342,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		gizmo.S.HoverIndex = -1
 	}
 
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+	if gizmo.S.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.S.Active = false
 		gizmo.S.HoverIndex = closestAxisIndex
 		// fmt.Println("Edit ID Scale", selectedEntity.ID)
@@ -355,6 +351,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 				edithistory.NewScaleEdit(gizmo.S.ActivationScale, selectedEntity.Scale, selectedEntity),
 			)
 		}
+		gizmo.S.Reset()
 	}
 
 	var newEntityScale *mgl64.Vec3
@@ -444,15 +441,14 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 		gizmo.T.HoverIndex = -1
 	}
 
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		gizmo.T.Active = false
-		gizmo.T.HoverIndex = closestAxisIndex
+	if gizmo.T.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		// fmt.Println("Edit ID translate", selectedEntity.ID)
 		if gizmo.T.ActivationPosition != position {
 			g.AppendEdit(
 				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.Position, selectedEntity),
 			)
 		}
+		gizmo.T.Reset()
 	}
 
 	var newEntityPosition *mgl64.Vec3

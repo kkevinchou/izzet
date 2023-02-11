@@ -21,6 +21,7 @@ func (eh *EditHistory) Append(e Edit) {
 	eh.editList = eh.editList[:eh.cursor+1]
 	eh.editList = append(eh.editList, e)
 	eh.cursor += 1
+	// fmt.Println(len(eh.editList))
 }
 
 func (eh *EditHistory) Undo() bool {

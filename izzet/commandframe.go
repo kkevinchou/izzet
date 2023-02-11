@@ -30,15 +30,18 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.Shutdown()
 	}
 
-	// TODO - find some better keybindings
-	if event, ok := keyboardInput[input.KeyboardKeyO]; ok {
-		if event.Event == input.KeyboardEventUp {
-			g.Undo()
+	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
+		if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
+			if event.Event == input.KeyboardEventUp {
+				g.Undo()
+			}
 		}
-	}
-	if event, ok := keyboardInput[input.KeyboardKeyP]; ok {
-		if event.Event == input.KeyboardEventUp {
-			g.Redo()
+		if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {
+			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
+				if event.Event == input.KeyboardEventUp {
+					g.Redo()
+				}
+			}
 		}
 	}
 
@@ -105,6 +108,10 @@ func (g *Izzet) selectEntity(frameInput input.Input) {
 }
 
 func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
+	if !frameInput.MouseInput.Buttons[1] {
+		return
+	}
+
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
 	var mouseSensitivity float64 = 0.003
@@ -222,6 +229,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			gizmo.R.MotionPivot = mouseInput.Position
 			gizmo.R.HoverIndex = closestAxisIndex
 			gizmo.R.ActivationRotation = selectedEntity.Rotation
+			// fmt.Println("Activate ID Rotation", selectedEntity.ID)
 		}
 
 		if !gizmo.R.Active {
@@ -234,9 +242,12 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.R.Active = false
 		gizmo.R.HoverIndex = closestAxisIndex
-		g.AppendEdit(
-			edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.Rotation, selectedEntity),
-		)
+		if gizmo.R.ActivationRotation != selectedEntity.Rotation {
+			// fmt.Println("Edit ID Rotation", selectedEntity.ID)
+			g.AppendEdit(
+				edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.Rotation, selectedEntity),
+			)
+		}
 	}
 
 	// handle when mouse moves the rotation gizmo
@@ -319,6 +330,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 			gizmo.S.MotionPivot = mouseInput.Position
 			gizmo.S.HoverIndex = closestAxisIndex
 			gizmo.S.ActivationScale = selectedEntity.Scale
+			// fmt.Println("Activate ID Scale", selectedEntity.ID)
 		}
 
 		if !gizmo.S.Active {
@@ -331,9 +343,12 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.S.Active = false
 		gizmo.S.HoverIndex = closestAxisIndex
-		g.AppendEdit(
-			edithistory.NewScaleEdit(gizmo.S.ActivationScale, selectedEntity.Scale, selectedEntity),
-		)
+		// fmt.Println("Edit ID Scale", selectedEntity.ID)
+		if gizmo.S.ActivationScale != selectedEntity.Scale {
+			g.AppendEdit(
+				edithistory.NewScaleEdit(gizmo.S.ActivationScale, selectedEntity.Scale, selectedEntity),
+			)
+		}
 	}
 
 	var newEntityScale *mgl64.Vec3
@@ -413,6 +428,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			gizmo.T.MotionPivot = motionPivot.Sub(position)
 			gizmo.T.HoverIndex = closestAxisIndex
 			gizmo.T.ActivationPosition = position
+			// fmt.Println("Activate ID translate", selectedEntity.ID)
 		}
 
 		if !gizmo.T.Active {
@@ -425,9 +441,12 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		gizmo.T.Active = false
 		gizmo.T.HoverIndex = closestAxisIndex
-		g.AppendEdit(
-			edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.Position, selectedEntity),
-		)
+		// fmt.Println("Edit ID translate", selectedEntity.ID)
+		if gizmo.T.ActivationPosition != position {
+			g.AppendEdit(
+				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.Position, selectedEntity),
+			)
+		}
 	}
 
 	var newEntityPosition *mgl64.Vec3

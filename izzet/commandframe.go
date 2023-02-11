@@ -32,12 +32,12 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	// TODO - find some better keybindings
 	if event, ok := keyboardInput[input.KeyboardKeyO]; ok {
-		if event.Event == input.KeyboardEventDown {
+		if event.Event == input.KeyboardEventUp {
 			g.Undo()
 		}
 	}
 	if event, ok := keyboardInput[input.KeyboardKeyP]; ok {
-		if event.Event == input.KeyboardEventDown {
+		if event.Event == input.KeyboardEventUp {
 			g.Redo()
 		}
 	}

@@ -15,3 +15,5 @@ require (
 	github.com/qmuntal/gltf v0.23.1 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
 )
+
+replace github.com/kkevinchou/kitolib => ../kitolib

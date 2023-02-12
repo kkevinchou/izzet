@@ -128,7 +128,7 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"alpha", "alpha2", "mutant", "scene", "town_center"}
+	names := []string{"alpha", "mutant", "scene", "town_center"}
 
 	for _, name := range names {
 		spec := g.assetManager.GetModel(name)

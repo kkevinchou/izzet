@@ -147,6 +147,13 @@ func (g *Izzet) loadEntities() {
 		}
 		entity := entities.InstantiateFromPrefab(pf)
 		g.entities[entity.ID] = entity
+
+		if pf.Name == "alpha" {
+			entity.AnimationPlayer.PlayAnimation("Cast2")
+			entity.AnimationPlayer.UpdateTo(0)
+			entity.Scale = mgl64.Vec3{5, 5, 5}
+			entity.Position = mgl64.Vec3{0, -100, 0}
+		}
 	}
 }
 

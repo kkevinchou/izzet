@@ -47,9 +47,6 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 
 	if len(prefab.ModelRefs[0].Model.Animations()) > 0 {
 		e.AnimationPlayer = animation.NewAnimationPlayer(prefab.ModelRefs[0].Model)
-		e.AnimationPlayer.PlayAnimation("Cast2")
-		e.AnimationPlayer.UpdateTo(0)
-		// e.Scale = mgl64.Vec3{10, 10, 10}
 	}
 
 	return e

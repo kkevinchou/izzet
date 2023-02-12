@@ -42,7 +42,7 @@ func drawWIthID(viewerContext ViewerContext,
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformVec3("pickingColor", idToPickingColor(id))
 
-	if animationPlayer != nil {
+	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		animationTransforms := animationPlayer.AnimationTransforms()
 		// if animationTransforms is nil, the shader will execute reading into invalid memory
 		// so, we need to explicitly guard for this
@@ -113,7 +113,7 @@ func drawModel(viewerContext ViewerContext,
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformInt("shadowMap", 31)
 
-	if animationPlayer != nil {
+	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		animationTransforms := animationPlayer.AnimationTransforms()
 		// if animationTransforms is nil, the shader will execute reading into invalid memory
 		// so, we need to explicitly guard for this

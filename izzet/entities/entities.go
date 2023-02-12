@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
+	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var id int
@@ -20,6 +21,7 @@ type Entity struct {
 	Rotation mgl64.Quat
 	Scale    mgl64.Vec3
 
+	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer
 }
 
@@ -45,7 +47,9 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 		Prefab: prefab,
 	}
 
-	if len(prefab.ModelRefs[0].Model.Animations()) > 0 {
+	// animation setup
+	e.Animations = prefab.ModelRefs[0].Model.Animations()
+	if len(e.Animations) > 0 {
 		e.AnimationPlayer = animation.NewAnimationPlayer(prefab.ModelRefs[0].Model)
 	}
 

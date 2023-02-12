@@ -128,7 +128,7 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"alpha", "mutant", "scene", "town_center"}
+	names := []string{"alpha", "alpha2", "mutant", "scene", "town_center"}
 
 	for _, name := range names {
 		spec := g.assetManager.GetModel(name)
@@ -141,16 +141,15 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
+	modelName := "alpha2"
 	for _, pf := range g.Prefabs() {
-		if pf.Name != "alpha" {
+		if pf.Name != modelName {
 			continue
 		}
 		entity := entities.InstantiateFromPrefab(pf)
 		g.entities[entity.ID] = entity
 
-		if pf.Name == "alpha" {
-			entity.AnimationPlayer.PlayAnimation("Cast2")
-			entity.AnimationPlayer.UpdateTo(0)
+		if pf.Name == modelName {
 			entity.Scale = mgl64.Vec3{5, 5, 5}
 			entity.Position = mgl64.Vec3{0, -100, 0}
 		}

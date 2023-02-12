@@ -287,7 +287,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		)
 
 		shader := "model_static"
-		if entity.AnimationPlayer != nil {
+		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 			shader = "modelpbr"
 		}
 

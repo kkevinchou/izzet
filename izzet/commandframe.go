@@ -21,7 +21,7 @@ var (
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	for _, entity := range g.Entities() {
 		if entity.AnimationPlayer != nil {
-			entity.AnimationPlayer.Update(delta)
+			// entity.AnimationPlayer.Update(delta)
 		}
 	}
 

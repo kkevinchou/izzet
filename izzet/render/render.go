@@ -209,6 +209,11 @@ func (r *Renderer) renderImgui() {
 	var open bool
 	imgui.ShowDemoWindow(&open)
 
+	// if panels.SelectedEntity() != nil {
+	e := r.world.GetEntityByID(0)
+	panels.BuildAnimation(r.world, e)
+	// }
+
 	imgui.Render()
 	r.imguiRenderer.Render(r.world.Platform().DisplaySize(), r.world.Platform().FramebufferSize(), imgui.RenderedDrawData())
 }

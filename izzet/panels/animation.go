@@ -14,6 +14,7 @@ var inputText string
 
 // var animation string
 var currentItem int32
+var LoopAnimation bool
 
 func BuildAnimation(world World, entity *entities.Entity) {
 	imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
@@ -32,10 +33,14 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	if imgui.ListBox("animations", &currentItem, anims) {
 		entity.AnimationPlayer.PlayAnimation(anims[currentItem])
 		entity.AnimationPlayer.UpdateTo(0)
-
 	}
-	imgui.SliderInt("cool slider", &val, 0, int32(fullAnimationLength.Milliseconds()))
-	entity.AnimationPlayer.UpdateTo(time.Duration(val) * time.Millisecond)
+	imgui.Checkbox("loop", &LoopAnimation)
+
+	if imgui.SliderInt("cool slider", &val, 0, int32(fullAnimationLength.Milliseconds())) {
+		entity.AnimationPlayer.UpdateTo(time.Duration(val) * time.Millisecond)
+		LoopAnimation = false
+	}
+
 	imgui.InputText("some input text", &inputText)
 	if imgui.Button("Add Annotation") {
 		fmt.Println("clicked")

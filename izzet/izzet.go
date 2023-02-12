@@ -141,7 +141,7 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
-	modelName := "alpha2"
+	modelName := "alpha"
 	for _, pf := range g.Prefabs() {
 		if pf.Name != modelName {
 			continue
@@ -150,7 +150,6 @@ func (g *Izzet) loadEntities() {
 		g.entities[entity.ID] = entity
 
 		if pf.Name == modelName {
-			entity.Scale = mgl64.Vec3{5, 5, 5}
 			entity.Position = mgl64.Vec3{0, -100, 0}
 		}
 	}

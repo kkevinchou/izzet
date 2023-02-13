@@ -95,14 +95,12 @@ func (g *Izzet) Start() {
 		accumulator += delta
 		renderAccumulator += delta
 
-		runCount := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			input := g.platform.PollInput()
 			g.HandleInput(input)
 			g.runCommandFrame(input, time.Duration(settings.MSPerCommandFrame)*time.Millisecond)
 
 			accumulator -= float64(settings.MSPerCommandFrame)
-			runCount++
 		}
 
 		// prevents lighting my CPU on fire
@@ -112,6 +110,8 @@ func (g *Izzet) Start() {
 
 		if renderAccumulator >= msPerFrame {
 			frameCount++
+			// g.renderer.PreRenderImgui()
+			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -51,20 +52,13 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	// delete entity
 	// TODO - find better key
-	if event, ok := keyboardInput[input.KeyboardKeyO]; ok {
+	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
 		if event.Event == input.KeyboardEventUp {
 			g.DeleteEntity(panels.SelectedEntity())
 			panels.SelectEntity(nil)
 		}
 	}
 
-	mouseInput := frameInput.MouseInput
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		if newSelection := g.selectEntity(frameInput); newSelection {
-			// fmt.Println("RESET")
-			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
-		}
-	}
 	g.cameraMovement(frameInput, delta)
 
 	// set gizmo mode
@@ -82,22 +76,33 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		}
 	}
 
+	var gizmoHovered bool = false
 	// handle gizmo transforms
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		newEntityPosition := g.handleTranslationGizmo(frameInput, panels.SelectedEntity())
+		newEntityPosition, hoverIndex := g.handleTranslationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityPosition != nil {
 			panels.SelectedEntity().Position = *newEntityPosition
 		}
+		gizmoHovered = hoverIndex != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		newEntityRotation := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
+		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityRotation != nil {
 			panels.SelectedEntity().Rotation = *newEntityRotation
 		}
+		gizmoHovered = hoverIndex != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		scaleDelta := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
+		scaleDelta, hoverIndex := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
 		if scaleDelta != nil {
 			entity := panels.SelectedEntity()
 			entity.Scale = entity.Scale.Add(*scaleDelta)
+		}
+		gizmoHovered = hoverIndex != -1
+	}
+
+	mouseInput := frameInput.MouseInput
+	if !gizmoHovered && !imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow) && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+		if newSelection := g.selectEntity(frameInput); newSelection {
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		}
 	}
 }
@@ -200,9 +205,9 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 }
 
 // TODO: move this method out of izzet and into the gizmo package?
-func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Quat {
+func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Quat, int) {
 	if selectedEntity == nil {
-		return nil
+		return nil, -1
 	}
 
 	mouseInput := frameInput.MouseInput
@@ -247,10 +252,12 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			// fmt.Println("Activate ID Rotation", selectedEntity.ID)
 		}
 
-		if !gizmo.R.Active {
-			gizmo.R.HoverIndex = closestAxisIndex
-		}
+		gizmo.R.HoverIndex = closestAxisIndex
 	} else if !gizmo.R.Active {
+		// specifically check that the gizmo is not active before reseting.
+		// this supports the scenario where we initially click and drag a gizmo
+		// to the point where the mouse leaves the range of any axes
+		gizmo.R.Reset()
 		gizmo.R.HoverIndex = -1
 	}
 
@@ -301,16 +308,16 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 		}
 		computedQuat := rotation.Mul(selectedEntity.Rotation)
 		gizmo.R.MotionPivot = mouseInput.Position
-		return &computedQuat
+		return &computedQuat, gizmo.R.HoverIndex
 	}
 
-	return nil
+	return nil, gizmo.R.HoverIndex
 }
 
 // TODO: move this method out of izzet and into the gizmo package?
-func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Vec3 {
+func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Vec3, int) {
 	if selectedEntity == nil {
-		return nil
+		return nil, -1
 	}
 
 	mouseInput := frameInput.MouseInput
@@ -347,10 +354,12 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 			// fmt.Println("Activate ID Scale", selectedEntity.ID)
 		}
 
-		if !gizmo.S.Active {
-			gizmo.S.HoverIndex = closestAxisIndex
-		}
+		gizmo.S.HoverIndex = closestAxisIndex
 	} else if !gizmo.S.Active {
+		// specifically check that the gizmo is not active before reseting.
+		// this supports the scenario where we initially click and drag a gizmo
+		// to the point where the mouse leaves the range of any axes
+		gizmo.S.Reset()
 		gizmo.S.HoverIndex = -1
 	}
 
@@ -401,13 +410,13 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		gizmo.S.MotionPivot = mouseInput.Position
 	}
 
-	return newEntityScale
+	return newEntityScale, gizmo.S.HoverIndex
 }
 
 // TODO: move this method out of izzet and into the gizmo package?
-func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *entities.Entity) *mgl64.Vec3 {
+func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Vec3, int) {
 	if selectedEntity == nil {
-		return nil
+		return nil, -1
 	}
 
 	mouseInput := frameInput.MouseInput
@@ -446,11 +455,12 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			// fmt.Println("Activate ID translate", selectedEntity.ID)
 		}
 
-		if !gizmo.T.Active {
-			gizmo.T.HoverIndex = closestAxisIndex
-		}
+		gizmo.T.HoverIndex = closestAxisIndex
 	} else if !gizmo.T.Active {
-		gizmo.T.HoverIndex = -1
+		// specifically check that the gizmo is not active before reseting.
+		// this supports the scenario where we initially click and drag a gizmo
+		// to the point where the mouse leaves the range of any axes
+		gizmo.T.Reset()
 	}
 
 	if gizmo.T.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
@@ -475,7 +485,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 		}
 	}
 
-	return newEntityPosition
+	return newEntityPosition, gizmo.T.HoverIndex
 }
 
 func getControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {

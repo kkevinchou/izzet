@@ -22,9 +22,6 @@ func BuildExplorer(es []*entities.Entity, world World, menuBarSize imgui.Vec2) {
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 	sceneHierarchy(es, world)
-	if imgui.IsItemClicked() {
-		SelectEntity(nil)
-	}
 
 	if imgui.BeginDragDropTarget() {
 		if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {

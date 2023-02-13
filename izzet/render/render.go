@@ -171,10 +171,10 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	r.renderGizmos(cameraViewerContext)
 
-	r.renderImgui()
+	r.RenderImgui()
 }
 
-func (r *Renderer) renderImgui() {
+func (r *Renderer) RenderImgui() {
 	r.world.Platform().NewFrame()
 	imgui.NewFrame()
 
@@ -210,6 +210,7 @@ func (r *Renderer) renderImgui() {
 	imgui.ShowDemoWindow(&open)
 
 	e := panels.SelectedEntity()
+	// e = r.world.GetEntityByID(0)
 	if e != nil {
 		if e.AnimationPlayer != nil {
 			panels.BuildAnimation(r.world, e)

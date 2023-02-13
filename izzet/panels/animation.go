@@ -1,7 +1,6 @@
 package panels
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
@@ -43,10 +42,8 @@ func BuildAnimation(world World, entity *entities.Entity) {
 
 	imgui.InputText("some input text", &inputText)
 	if imgui.Button("Add Annotation") {
-		fmt.Println("clicked")
 		inputText = ""
 	}
 
 	imgui.End()
-
 }

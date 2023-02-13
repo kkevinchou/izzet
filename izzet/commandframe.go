@@ -252,7 +252,9 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			// fmt.Println("Activate ID Rotation", selectedEntity.ID)
 		}
 
-		gizmo.R.HoverIndex = closestAxisIndex
+		if !gizmo.R.Active {
+			gizmo.R.HoverIndex = closestAxisIndex
+		}
 	} else if !gizmo.R.Active {
 		// specifically check that the gizmo is not active before reseting.
 		// this supports the scenario where we initially click and drag a gizmo

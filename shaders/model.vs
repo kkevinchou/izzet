@@ -33,7 +33,7 @@ void main() {
     // b = vec4(totalPos.xyz, 1)
     // a does not equal b here.
 
-	for(int i = 0; i < 1; i++){
+	for(int i = 0; i < MAX_WEIGHTS; i++){
 		int jointIndex = jointIndices[i];
 
 		mat4 jointTransform = jointTransforms[jointIndex];

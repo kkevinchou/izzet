@@ -1,6 +1,8 @@
 package menus
 
 import (
+	"fmt"
+
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
@@ -19,7 +21,9 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		if imgui.MenuItem("Load") {
 			world.LoadWorld()
 			// entities := world.Serializer().DeserializeEntities(serializedWorld.Entities)
-
+		}
+		if imgui.MenuItem("Add Collision Volume") {
+			fmt.Println("yo")
 		}
 		imgui.EndMenu()
 	}

@@ -12,6 +12,7 @@ var selectedEntity *entities.Entity
 type World interface {
 	AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab
+	GetEntityByID(id int) *entities.Entity
 	Window() *sdl.Window
 }
 

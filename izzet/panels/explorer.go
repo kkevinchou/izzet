@@ -35,6 +35,7 @@ func BuildExplorer(es []*entities.Entity, world World, menuBarSize imgui.Vec2) {
 			world.AddEntity(entity)
 			SelectEntity(entity)
 		}
+		imgui.EndDragDropTarget()
 	}
 
 	entityProps(SelectedEntity())

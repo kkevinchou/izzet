@@ -1,6 +1,9 @@
 package panels
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
@@ -22,18 +25,22 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 		}
 
 		if imgui.TreeNodeV(entity.Name, nodeFlags) {
-			// if imgui.BeginDragDropTarget() {
-			// 	if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
-			// 		prefabID, err := strconv.Atoi(string(payload))
-			// 		if err != nil {
-			// 			panic(err)
-			// 		}
-
-			// 		prefab := world.GetPrefabByID(prefabID)
-			// 		entity := entities.InstantiateFromPrefab(prefab)
-			// 		world.AddEntity(entity)
-			// 	}
-			// }
+			if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
+				str := fmt.Sprintf("%d", entity.ID)
+				imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
+				imgui.EndDragDropSource()
+			}
+			if imgui.BeginDragDropTarget() {
+				if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
+					childID, err := strconv.Atoi(string(payload))
+					if err != nil {
+						panic(err)
+					}
+					child := world.GetEntityByID(childID)
+					child.Parent = world.GetEntityByID(entity.ID)
+				}
+				imgui.EndDragDropTarget()
+			}
 			imgui.TreePop()
 		}
 

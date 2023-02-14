@@ -289,25 +289,12 @@ func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext Li
 	r.renderScene(viewerContext, lightContext, true)
 }
 
-func computeModelMatrix(entity *entities.Entity) mgl64.Mat4 {
-	modelMatrix := createModelMatrix(
-		mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()),
-		entity.Rotation.Mat4(),
-		mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
-	)
-	if entity.Parent != nil {
-		parentModelMatrix := computeModelMatrix(entity.Parent)
-		modelMatrix = parentModelMatrix.Mul4(modelMatrix)
-	}
-	return modelMatrix
-}
-
 // renderScene renders a scene from the perspective of a viewer
 func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
-		modelMatrix := computeModelMatrix(entity)
+		modelMatrix := entities.ComputeTransformMatrix(entity)
 
 		shader := "model_static"
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
@@ -431,7 +418,7 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
-		modelMatrix := computeModelMatrix(entity)
+		modelMatrix := entities.ComputeTransformMatrix(entity)
 
 		shader := "color_picking"
 		// TODO: color picking shader for animated entities?

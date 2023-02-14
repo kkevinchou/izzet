@@ -210,7 +210,6 @@ func (r *Renderer) RenderImgui() {
 	imgui.ShowDemoWindow(&open)
 
 	e := panels.SelectedEntity()
-	// e = r.world.GetEntityByID(0)
 	if e != nil {
 		if e.AnimationPlayer != nil {
 			panels.BuildAnimation(r.world, e)
@@ -247,19 +246,31 @@ func (r *Renderer) renderCircle() {
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 1, 0, alpha})
 }
 
+func calcPosition(entity *entities.Entity) mgl64.Vec3 {
+	var position mgl64.Vec3
+	for entity != nil {
+		position = position.Add(entity.Position)
+		entity = entity.Parent
+	}
+	return position
+}
+
 func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	if panels.SelectedEntity() == nil {
 		return
 	}
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
+
 	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
+	position := calcPosition(entity)
+
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		r.drawCircleGizmo(&viewerContext, entity.Position)
+		r.drawCircleGizmo(&viewerContext, position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), entity.Position)
+		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	}
 }
 
@@ -278,22 +289,33 @@ func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext Li
 	r.renderScene(viewerContext, lightContext, true)
 }
 
+func computeModelMatrix(entity *entities.Entity) mgl64.Mat4 {
+	modelMatrix := createModelMatrix(
+		mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()),
+		entity.Rotation.Mat4(),
+		mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
+	)
+	if entity.Parent != nil {
+		parentModelMatrix := computeModelMatrix(entity.Parent)
+		modelMatrix = parentModelMatrix.Mul4(modelMatrix)
+	}
+	return modelMatrix
+}
+
 // renderScene renders a scene from the perspective of a viewer
 func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
-		modelMatrix := createModelMatrix(
-			mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()),
-			entity.Rotation.Mat4(),
-			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
-		)
+		modelMatrix := computeModelMatrix(entity)
 
 		shader := "model_static"
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 			shader = "modelpbr"
 		}
 
+		// if native object, do special render call
+		// else:
 		drawModel(
 			viewerContext,
 			lightContext,
@@ -405,23 +427,14 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	// modelMatrix := mgl32.Translate3D(0, 300, 0).Mul4(mgl32.Scale3D(50, 50, 50))
-	// drawTexturedQuad(&viewerContext, r.shaderManager, r.tmpTexture, 0.5, float32(r.aspectRatio), &modelMatrix)
-
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
-		modelMatrix := createModelMatrix(
-			mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()),
-			entity.Rotation.Mat4(),
-			mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2]),
-		)
+		modelMatrix := computeModelMatrix(entity)
 
 		shader := "color_picking"
-		// if entity.AnimationPlayer != nil {
-		// 	shader = "modelpbr"
-		// }
+		// TODO: color picking shader for animated entities?
 
 		drawWIthID(
 			viewerContext,

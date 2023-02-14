@@ -12,15 +12,21 @@ import (
 var id int
 
 type Entity struct {
-	ID     int
-	Name   string
-	Prefab *prefabs.Prefab
+	ID   int
+	Name string
+
+	Parent *Entity
 
 	// each Entity has their own transforms and animation player
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
 	Scale    mgl64.Vec3
 
+	// native objects
+	// -- cube, capsule, cylinder, etc
+
+	// 3D imported models
+	Prefab          *prefabs.Prefab
 	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer
 }

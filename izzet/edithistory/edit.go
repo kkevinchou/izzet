@@ -20,11 +20,11 @@ func NewPositionEdit(lastPosition, currentPosition mgl64.Vec3, entity *entities.
 }
 
 func (e *PositionEdit) Undo() {
-	e.Entity.Position = e.LastPosition
+	e.Entity.LocalPosition = e.LastPosition
 }
 
 func (e *PositionEdit) Redo() {
-	e.Entity.Position = e.CurrentPosition
+	e.Entity.LocalPosition = e.CurrentPosition
 }
 
 type RotationEdit struct {

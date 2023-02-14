@@ -40,7 +40,7 @@ func New(world World) *Serializer {
 func (s *Serializer) WriteOut(filepath string) {
 	serializedEntities := []SerializedEntity{}
 	for _, entity := range s.world.Entities() {
-		position := entity.Position
+		position := entity.WorldPosition()
 		serializedEntities = append(
 			serializedEntities,
 			SerializedEntity{
@@ -105,7 +105,7 @@ func (s *Serializer) Entities() []*entities.Entity {
 	for _, e := range s.serializedWorld.Entities {
 		dsEntity := entities.InstantiateFromPrefabStaticID(e.ID, s.world.GetPrefabByID(e.PrefabID))
 
-		dsEntity.Position = e.Position
+		dsEntity.LocalPosition = e.Position
 		dsEntity.Rotation = e.Rotation
 		dsEntity.Scale = e.Scale
 		if dsEntity.Scale.X() == 0 && dsEntity.Scale.Y() == 0 && dsEntity.Scale.Z() == 0 {

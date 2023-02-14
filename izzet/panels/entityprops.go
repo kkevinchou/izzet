@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 func entityProps(entity *entities.Entity) {
@@ -20,12 +21,12 @@ func entityProps(entity *entities.Entity) {
 		// imgui.PopStyleColor()
 
 		if entity != nil {
-			positionStr := fmt.Sprintf("%v", entity.Position)
+			positionStr := fmt.Sprintf("%v", utils.PPrintVec(entity.WorldPosition()))
 			text := &positionStr
 
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders, imgui.Vec2{}, 0)
 			uiTableRow("Entity Name", entity.Name)
-			if uiTableInputRow("Position", entity.Position, text, nil) {
+			if uiTableInputRow("Position", entity.WorldPosition(), text, nil) {
 				textCopy := *text
 				r := regexp.MustCompile(`\[(?P<x>-?\d+) (?P<y>-?\d+) (?P<z>-?\d+)\]`)
 				matches := r.FindStringSubmatch(textCopy)
@@ -54,7 +55,7 @@ func entityProps(entity *entities.Entity) {
 					}
 
 					if !parseErr {
-						entity.Position = newPosition
+						entity.LocalPosition = newPosition
 					}
 				}
 			}

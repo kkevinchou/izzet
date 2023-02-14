@@ -61,3 +61,19 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 
 	return e
 }
+
+// ComputeTransformMatrix calculates the final transform matrix for model
+// by traversing its parental hierarchy if it exists
+func ComputeTransformMatrix(entity *Entity) mgl64.Mat4 {
+	translationMatrix := mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2])
+	rotationMatrix := entity.Rotation.Mat4()
+	scaleMatrix := mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z())
+
+	modelMatrix := translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
+	if entity.Parent != nil {
+		parentModelMatrix := ComputeTransformMatrix(entity.Parent)
+		modelMatrix = parentModelMatrix.Mul4(modelMatrix)
+	}
+
+	return modelMatrix
+}

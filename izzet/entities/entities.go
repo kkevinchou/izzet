@@ -18,9 +18,9 @@ type Entity struct {
 	Parent *Entity
 
 	// each Entity has their own transforms and animation player
-	Position mgl64.Vec3
-	Rotation mgl64.Quat
-	Scale    mgl64.Vec3
+	LocalPosition mgl64.Vec3
+	Rotation      mgl64.Quat
+	Scale         mgl64.Vec3
 
 	// native objects
 	// -- cube, capsule, cylinder, etc
@@ -29,6 +29,11 @@ type Entity struct {
 	Prefab          *prefabs.Prefab
 	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer
+}
+
+func (e *Entity) WorldPosition() mgl64.Vec3 {
+	m := ComputeTransformMatrix(e)
+	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
 }
 
 func SetNextID(nextID int) {
@@ -46,9 +51,9 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 		ID:   id,
 		Name: fmt.Sprintf("%s-%d", prefab.Name, id),
 
-		Position: mgl64.Vec3{0, 0, 0},
-		Rotation: mgl64.QuatIdent(),
-		Scale:    mgl64.Vec3{1, 1, 1},
+		LocalPosition: mgl64.Vec3{0, 0, 0},
+		Rotation:      mgl64.QuatIdent(),
+		Scale:         mgl64.Vec3{1, 1, 1},
 
 		Prefab: prefab,
 	}
@@ -65,7 +70,7 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 // ComputeTransformMatrix calculates the final transform matrix for model
 // by traversing its parental hierarchy if it exists
 func ComputeTransformMatrix(entity *Entity) mgl64.Mat4 {
-	translationMatrix := mgl64.Translate3D(entity.Position[0], entity.Position[1], entity.Position[2])
+	translationMatrix := mgl64.Translate3D(entity.LocalPosition[0], entity.LocalPosition[1], entity.LocalPosition[2])
 	rotationMatrix := entity.Rotation.Mat4()
 	scaleMatrix := mgl64.Scale3D(entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z())
 

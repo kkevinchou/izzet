@@ -79,9 +79,17 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	var gizmoHovered bool = false
 	// handle gizmo transforms
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		newEntityPosition, hoverIndex := g.handleTranslationGizmo(frameInput, panels.SelectedEntity())
-		if newEntityPosition != nil {
-			panels.SelectedEntity().Position = *newEntityPosition
+		entity := panels.SelectedEntity()
+		newPosition, hoverIndex := g.handleTranslationGizmo(frameInput, entity)
+		if newPosition != nil {
+			if entity.Parent != nil {
+				// the computed position is in world space, so we need to compute the local space position
+				// that would result in the world space position after applying parent transforms
+				localPosition := entities.ComputeTransformMatrix(entity.Parent).Inv().Mul4x1(newPosition.Vec4(1)).Vec3()
+				entity.LocalPosition = localPosition
+			} else {
+				entity.LocalPosition = *newPosition
+			}
 		}
 		gizmoHovered = hoverIndex != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
@@ -212,7 +220,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 
 	mouseInput := frameInput.MouseInput
 	nearPlanePos := g.mousePosToNearPlane(mouseInput)
-	position := selectedEntity.Position
+	position := selectedEntity.WorldPosition()
 
 	var minDist *float64
 	closestAxisIndex := -1
@@ -324,7 +332,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 
 	mouseInput := frameInput.MouseInput
 	nearPlanePos := g.mousePosToNearPlane(mouseInput)
-	position := selectedEntity.Position
+	position := selectedEntity.WorldPosition()
 
 	var minDist *float64
 	minAxis := mgl64.Vec3{}
@@ -356,7 +364,9 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 			// fmt.Println("Activate ID Scale", selectedEntity.ID)
 		}
 
-		gizmo.S.HoverIndex = closestAxisIndex
+		if !gizmo.S.Active {
+			gizmo.S.HoverIndex = closestAxisIndex
+		}
 	} else if !gizmo.S.Active {
 		// specifically check that the gizmo is not active before reseting.
 		// this supports the scenario where we initially click and drag a gizmo
@@ -423,7 +433,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 
 	mouseInput := frameInput.MouseInput
 	nearPlanePos := g.mousePosToNearPlane(mouseInput)
-	position := selectedEntity.Position
+	position := selectedEntity.WorldPosition()
 
 	var minDist *float64
 	minAxis := mgl64.Vec3{}
@@ -457,7 +467,9 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			// fmt.Println("Activate ID translate", selectedEntity.ID)
 		}
 
-		gizmo.T.HoverIndex = closestAxisIndex
+		if !gizmo.T.Active {
+			gizmo.T.HoverIndex = closestAxisIndex
+		}
 	} else if !gizmo.T.Active {
 		// specifically check that the gizmo is not active before reseting.
 		// this supports the scenario where we initially click and drag a gizmo
@@ -469,7 +481,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 		// fmt.Println("Edit ID translate", selectedEntity.ID)
 		if gizmo.T.ActivationPosition != position {
 			g.AppendEdit(
-				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.Position, selectedEntity),
+				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.WorldPosition(), selectedEntity),
 			)
 		}
 		gizmo.T.Reset()
@@ -480,9 +492,6 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	if gizmo.T.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		if _, b, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
 			newPosition := b.Sub(gizmo.T.MotionPivot)
-			newPosition[0] = float64(int(newPosition[0]))
-			newPosition[1] = float64(int(newPosition[1]))
-			newPosition[2] = float64(int(newPosition[2]))
 			newEntityPosition = &newPosition
 		}
 	}

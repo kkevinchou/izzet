@@ -246,15 +246,6 @@ func (r *Renderer) renderCircle() {
 	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 1, 0, alpha})
 }
 
-func calcPosition(entity *entities.Entity) mgl64.Vec3 {
-	var position mgl64.Vec3
-	for entity != nil {
-		position = position.Add(entity.Position)
-		entity = entity.Parent
-	}
-	return position
-}
-
 func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	if panels.SelectedEntity() == nil {
 		return
@@ -263,7 +254,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
-	position := calcPosition(entity)
+	position := entity.WorldPosition()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)

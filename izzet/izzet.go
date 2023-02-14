@@ -150,13 +150,13 @@ func (g *Izzet) loadEntities() {
 		entity := entities.InstantiateFromPrefab(pf)
 		g.entities[entity.ID] = entity
 		if pf.Name == modelName {
-			entity.Position = mgl64.Vec3{0, 0, 0}
+			entity.LocalPosition = mgl64.Vec3{0, 0, 0}
 		}
 
 		entity2 := entities.InstantiateFromPrefab(pf)
 		g.entities[entity2.ID] = entity2
 		if pf.Name == modelName {
-			entity2.Position = mgl64.Vec3{50, 0, 0}
+			entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
 		}
 	}
 }

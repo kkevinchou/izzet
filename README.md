@@ -1,31 +1,12 @@
-# izzet
-izzet is a 3D game engine sandbox written with Go/SDL2/OpenGl. Current development has been focused on experimenting with game architectures and rendering
+# Izzet
+Izzet is a 3D game engine sandbox written with Go/OpenGl. I use this space to learn how to implement features common in gaming tech
 
-## Current Features
-Here are a couple of things I've built for izzet:
-1. Entity, Component, System architecture
-1. Rendering GLTF assets (geometry, skinning, animations)
+## Some Features
+1. Loading static and animationed meshes (currently only supporting [GLTF 2.0](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html))
 1. Physically Based Rendering (PBR) support
 1. Shadow mapping
-1. Multiplayer support with client-side prediction, rollback correction, state interpolation
-
-# Installation
-
-Install SDL2 following the instructions at https://github.com/veandco/go-sdl2
-
-# Tools
-
-Windows (My personal dev environment)
-* Mysys2 - https://www.msys2.org/
-* Makefile - https://www.gnu.org/software/make/
-
-# Running the sandbox 
-```
-# running the server:
-make server
-# running the client:
-make
-```
-
-![Test Image](readme_ss.png)
-# kitolib
+1. Entity instantiation
+1. Parenting entities
+1. Gizmo controls for translation, rotation and scale
+1. UI for scene graph, entity properties, and prefabs
+1. World serialization

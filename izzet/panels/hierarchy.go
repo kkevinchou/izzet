@@ -37,9 +37,13 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 						panic(err)
 					}
 					child := world.GetEntityByID(childID)
-					child.Parent = world.GetEntityByID(entity.ID)
+					parent := world.GetEntityByID(entity.ID)
+					world.BuildRelation(parent, child)
 				}
 				imgui.EndDragDropTarget()
+			}
+			if imgui.TreeNodeV("asdf", imgui.TreeNodeFlagsLeaf) {
+				imgui.TreePop()
 			}
 			imgui.TreePop()
 		}

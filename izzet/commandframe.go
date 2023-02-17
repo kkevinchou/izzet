@@ -481,7 +481,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 		// fmt.Println("Edit ID translate", selectedEntity.ID)
 		if gizmo.T.ActivationPosition != position {
 			g.AppendEdit(
-				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.WorldPosition(), selectedEntity),
+				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.LocalPosition, selectedEntity),
 			)
 		}
 		gizmo.T.Reset()

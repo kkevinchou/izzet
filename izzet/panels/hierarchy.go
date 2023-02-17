@@ -2,6 +2,7 @@ package panels
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/inkyblackness/imgui-go/v4"
@@ -18,40 +19,60 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 	imgui.PopStyleColor()
 
 	for _, entity := range es {
-		nodeFlags := imgui.TreeNodeFlagsNone | imgui.TreeNodeFlagsLeaf
-
-		if SelectedEntity() != nil && entity.ID == SelectedEntity().ID {
-			nodeFlags |= imgui.TreeNodeFlagsSelected
-		}
-
-		if imgui.TreeNodeV(entity.Name, nodeFlags) {
-			if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
-				str := fmt.Sprintf("%d", entity.ID)
-				imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
-				imgui.EndDragDropSource()
-			}
-			if imgui.BeginDragDropTarget() {
-				if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
-					childID, err := strconv.Atoi(string(payload))
-					if err != nil {
-						panic(err)
-					}
-					child := world.GetEntityByID(childID)
-					parent := world.GetEntityByID(entity.ID)
-					world.BuildRelation(parent, child)
-				}
-				imgui.EndDragDropTarget()
-			}
-			if imgui.TreeNodeV("asdf", imgui.TreeNodeFlagsLeaf) {
-				imgui.TreePop()
-			}
-			imgui.TreePop()
-		}
-
-		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
-			SelectEntity(entity)
+		if entity.Parent == nil {
+			drawEntity(entity, world)
 		}
 	}
 
 	imgui.EndChild()
+}
+
+func drawEntity(entity *entities.Entity, world World) {
+	nodeFlags := imgui.TreeNodeFlagsNone | imgui.TreeNodeFlagsLeaf
+	if SelectedEntity() != nil && entity.ID == SelectedEntity().ID {
+		nodeFlags |= imgui.TreeNodeFlagsSelected
+	}
+
+	// var childClicked bool
+	if imgui.TreeNodeV(entity.Name, nodeFlags) {
+		if imgui.IsItemClicked() && !imgui.IsItemToggledOpen() {
+			SelectEntity(entity)
+		}
+
+		if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
+			str := fmt.Sprintf("%d", entity.ID)
+			imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
+			imgui.EndDragDropSource()
+		}
+		if imgui.BeginDragDropTarget() {
+			if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
+				childID, err := strconv.Atoi(string(payload))
+				if err != nil {
+					panic(err)
+				}
+				child := world.GetEntityByID(childID)
+				parent := world.GetEntityByID(entity.ID)
+				world.BuildRelation(parent, child)
+			}
+			imgui.EndDragDropTarget()
+		}
+
+		childIDs := sortedIDs(entity.Children)
+		for _, id := range childIDs {
+			child := entity.Children[id]
+			drawEntity(child, world)
+		}
+
+		imgui.TreePop()
+	}
+}
+
+func sortedIDs(m map[int]*entities.Entity) []int {
+	var ids []int
+	for id, _ := range m {
+		ids = append(ids, id)
+	}
+
+	sort.Ints(ids)
+	return ids
 }

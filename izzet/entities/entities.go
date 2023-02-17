@@ -15,7 +15,9 @@ type Entity struct {
 	ID   int
 	Name string
 
-	Parent *Entity
+	// relationships
+	Parent   *Entity
+	Children map[int]*Entity
 
 	// each Entity has their own transforms and animation player
 	LocalPosition mgl64.Vec3
@@ -50,6 +52,8 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 	e := &Entity{
 		ID:   id,
 		Name: fmt.Sprintf("%s-%d", prefab.Name, id),
+
+		Children: map[int]*Entity{},
 
 		LocalPosition: mgl64.Vec3{0, 0, 0},
 		Rotation:      mgl64.QuatIdent(),

@@ -24,6 +24,7 @@ func (g *Izzet) DeleteEntity(entity *entities.Entity) {
 		return
 	}
 	delete(g.entities, entity.ID)
+	g.RemoveParent(entity)
 }
 
 func (g *Izzet) GetPrefabByID(id int) *prefabs.Prefab {
@@ -125,4 +126,17 @@ func (g *Izzet) Redo() {
 
 func (g *Izzet) Undo() {
 	g.editHistory.Undo()
+}
+
+func (g *Izzet) BuildRelation(parent *entities.Entity, child *entities.Entity) {
+	parent.Children[child.ID] = child
+	g.RemoveParent(child)
+	child.Parent = parent
+}
+
+func (g *Izzet) RemoveParent(child *entities.Entity) {
+	if parent := child.Parent; parent != nil {
+		delete(parent.Children, child.ID)
+		child.Parent = nil
+	}
 }

@@ -43,6 +43,7 @@ type World interface {
 	Prefabs() []*prefabs.Prefab
 	Entities() []*entities.Entity
 	GetEntityByID(id int) *entities.Entity
+	BuildRelation(parent *entities.Entity, child *entities.Entity)
 
 	// for panels
 	AddEntity(entity *entities.Entity)

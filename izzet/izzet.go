@@ -60,7 +60,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
-	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
+	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 150, 300}, Orientation: mgl64.QuatIdent()}
 	g.renderer = render.New(g, shaderDirectory)
 
 	g.entities = map[int]*entities.Entity{}
@@ -141,22 +141,24 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
-	modelName := "alpha"
 
 	for _, pf := range g.Prefabs() {
-		if pf.Name != modelName {
-			continue
-		}
-		entity := entities.InstantiateFromPrefab(pf)
-		g.entities[entity.ID] = entity
-		if pf.Name == modelName {
-			entity.LocalPosition = mgl64.Vec3{0, 0, 0}
-		}
+		if pf.Name == "alpha" {
+			modelName := "alpha"
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
+			if pf.Name == modelName {
+				entity.LocalPosition = mgl64.Vec3{0, 0, 0}
+			}
 
-		entity2 := entities.InstantiateFromPrefab(pf)
-		g.entities[entity2.ID] = entity2
-		if pf.Name == modelName {
-			entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
+			entity2 := entities.InstantiateFromPrefab(pf)
+			g.entities[entity2.ID] = entity2
+			if pf.Name == modelName {
+				entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
+			}
+		} else if pf.Name == "scene" {
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
 		}
 	}
 }

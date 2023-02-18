@@ -419,6 +419,14 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)
 	}
+	cLines := cubeLines(5)
+	for _, line := range cLines {
+		for i := range line {
+			line[i] = line[i].Add(position)
+		}
+	}
+	cubeColor := mgl64.Vec3{1, 1, 1}
+	drawLines(*viewerContext, shader, cLines, 0.5, cubeColor)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
 	defer resetGLRenderSettings()

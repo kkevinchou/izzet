@@ -175,6 +175,68 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.RenderImgui()
 }
 
+// renderScene renders a scene from the perspective of a viewer
+func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
+	shaderManager := r.shaderManager
+
+	for _, entity := range r.world.Entities() {
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+
+		if entity.Prefab != nil {
+			shader := "model_static"
+			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+				shader = "modelpbr"
+			}
+
+			// if native object, do special render call
+			// else:
+			drawModel(
+				viewerContext,
+				lightContext,
+				r.shadowMap,
+				shaderManager.GetShaderProgram(shader),
+				r.world.AssetManager(),
+				entity.Prefab.ModelRefs[0].Model,
+				entity.AnimationPlayer,
+				modelMatrix,
+			)
+		} else if entity.ShapeData != nil {
+		}
+	}
+}
+
+func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
+	defer resetGLRenderSettings()
+	w, h := r.world.Window().GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
+	gl.ClearColor(1, 1, 1, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	shaderManager := r.shaderManager
+
+	for _, entity := range r.world.Entities() {
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+
+		if entity.Prefab != nil {
+			shader := "color_picking"
+			// TODO: color picking shader for animated entities?
+
+			drawModelWIthID(
+				viewerContext,
+				shaderManager.GetShaderProgram(shader),
+				r.world.AssetManager(),
+				entity.Prefab.ModelRefs[0].Model,
+				entity.AnimationPlayer,
+				modelMatrix,
+				entity.ID,
+			)
+		} else if entity.ShapeData != nil {
+		}
+	}
+}
+
 func (r *Renderer) RenderImgui() {
 	r.world.Platform().NewFrame()
 	imgui.NewFrame()
@@ -279,68 +341,6 @@ func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext Li
 	r.shadowMap.Prepare()
 
 	r.renderScene(viewerContext, lightContext, true)
-}
-
-// renderScene renders a scene from the perspective of a viewer
-func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
-	shaderManager := r.shaderManager
-
-	for _, entity := range r.world.Entities() {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
-
-		if entity.Prefab != nil {
-			shader := "model_static"
-			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-				shader = "modelpbr"
-			}
-
-			// if native object, do special render call
-			// else:
-			drawModel(
-				viewerContext,
-				lightContext,
-				r.shadowMap,
-				shaderManager.GetShaderProgram(shader),
-				r.world.AssetManager(),
-				entity.Prefab.ModelRefs[0].Model,
-				entity.AnimationPlayer,
-				modelMatrix,
-			)
-		} else if entity.ShapeData != nil {
-		}
-	}
-}
-
-func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
-	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
-	gl.ClearColor(1, 1, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	shaderManager := r.shaderManager
-
-	for _, entity := range r.world.Entities() {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
-
-		if entity.Prefab != nil {
-			shader := "color_picking"
-			// TODO: color picking shader for animated entities?
-
-			drawModelWIthID(
-				viewerContext,
-				shaderManager.GetShaderProgram(shader),
-				r.world.AssetManager(),
-				entity.Prefab.ModelRefs[0].Model,
-				entity.AnimationPlayer,
-				modelMatrix,
-				entity.ID,
-			)
-		} else if entity.ShapeData != nil {
-		}
-	}
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {

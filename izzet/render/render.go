@@ -288,23 +288,58 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 	for _, entity := range r.world.Entities() {
 		modelMatrix := entities.ComputeTransformMatrix(entity)
 
-		shader := "model_static"
-		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-			shader = "modelpbr"
-		}
+		if entity.Prefab != nil {
+			shader := "model_static"
+			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+				shader = "modelpbr"
+			}
 
-		// if native object, do special render call
-		// else:
-		drawModel(
-			viewerContext,
-			lightContext,
-			r.shadowMap,
-			shaderManager.GetShaderProgram(shader),
-			r.world.AssetManager(),
-			entity.Prefab.ModelRefs[0].Model,
-			entity.AnimationPlayer,
-			modelMatrix,
-		)
+			// if native object, do special render call
+			// else:
+			drawModel(
+				viewerContext,
+				lightContext,
+				r.shadowMap,
+				shaderManager.GetShaderProgram(shader),
+				r.world.AssetManager(),
+				entity.Prefab.ModelRefs[0].Model,
+				entity.AnimationPlayer,
+				modelMatrix,
+			)
+		} else if entity.ShapeData != nil {
+		}
+	}
+}
+
+func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
+	defer resetGLRenderSettings()
+	w, h := r.world.Window().GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
+	gl.ClearColor(1, 1, 1, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	shaderManager := r.shaderManager
+
+	for _, entity := range r.world.Entities() {
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+
+		if entity.Prefab != nil {
+			shader := "color_picking"
+			// TODO: color picking shader for animated entities?
+
+			drawWIthID(
+				viewerContext,
+				shaderManager.GetShaderProgram(shader),
+				r.world.AssetManager(),
+				entity.Prefab.ModelRefs[0].Model,
+				entity.AnimationPlayer,
+				modelMatrix,
+				entity.ID,
+			)
+		} else if entity.ShapeData != nil {
+		}
 	}
 }
 
@@ -396,35 +431,6 @@ func (r *Renderer) initFrameBuffer(width int, height int) (uint32, uint32) {
 	}
 
 	return fbo, texture
-}
-
-func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
-	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
-	gl.ClearColor(1, 1, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	shaderManager := r.shaderManager
-
-	for _, entity := range r.world.Entities() {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
-
-		shader := "color_picking"
-		// TODO: color picking shader for animated entities?
-
-		drawWIthID(
-			viewerContext,
-			shaderManager.GetShaderProgram(shader),
-			r.world.AssetManager(),
-			entity.Prefab.ModelRefs[0].Model,
-			entity.AnimationPlayer,
-			modelMatrix,
-			entity.ID,
-		)
-	}
 }
 
 func (r *Renderer) clearMainFrameBuffer() {

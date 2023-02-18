@@ -184,6 +184,47 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	drawTris(viewerContext, points, color)
 }
 
+func CubeLines(length float64) [][]mgl64.Vec3 {
+	directions := [][]float64{
+		[]float64{-1, 1, 0.5},
+		[]float64{-1, -1, 0.5},
+		[]float64{1, -1, 0.5},
+		[]float64{1, 1, 0.5},
+	}
+
+	position := mgl64.Vec3{}
+	var lines [][]mgl64.Vec3
+	var frontPoints []mgl64.Vec3
+
+	// front points
+	for _, direction := range directions {
+		point := position.Add(mgl64.Vec3{direction[0] * length / 2, direction[1] * length / 2, direction[2] * length})
+		frontPoints = append(frontPoints, point)
+	}
+	for i := range frontPoints {
+		line := []mgl64.Vec3{frontPoints[i], frontPoints[(i+1)%len(frontPoints)]}
+		lines = append(lines, line)
+	}
+
+	// back points
+	var backPoints []mgl64.Vec3
+	for _, point := range frontPoints {
+		backPoints = append(backPoints, point.Add(mgl64.Vec3{0, 0, -length}))
+	}
+	for i := range backPoints {
+		line := []mgl64.Vec3{backPoints[i], backPoints[(i+1)%len(backPoints)]}
+		lines = append(lines, line)
+	}
+
+	// connect front and back
+	for i := range frontPoints {
+		line := []mgl64.Vec3{frontPoints[i], backPoints[i]}
+		lines = append(lines, line)
+	}
+
+	return lines
+}
+
 func rectPrismPoints(thickness float64, length float64) []mgl64.Vec3 {
 	var ht float64 = thickness / 2
 	return []mgl64.Vec3{

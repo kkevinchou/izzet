@@ -31,7 +31,7 @@ type ShapeData struct {
 
 func CreateCube() *Entity {
 	entity := InstantiateBaseEntity("cube", id)
-	entity.ShapeData = &ShapeData{Cube: &CubeData{Width: 5, Length: 5, Height: 5}}
+	entity.ShapeData = &ShapeData{Cube: &CubeData{Width: 25, Length: 25, Height: 25}}
 	id += 1
 	return entity
 }

@@ -411,10 +411,10 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 
 	for i, axis := range gizmo.S.Axes {
 		lines := [][]mgl64.Vec3{
-			[]mgl64.Vec3{position, position.Add(axis)},
+			[]mgl64.Vec3{position, position.Add(axis.Vector)},
 		}
 		color := colors[i]
-		if i == gizmo.S.HoverIndex {
+		if axis.Type == gizmo.S.HoveredAxisType || gizmo.S.HoveredAxisType == gizmo.AllAxis {
 			color = mgl64.Vec3{1, 1, 0}
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)

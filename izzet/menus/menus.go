@@ -1,14 +1,14 @@
 package menus
 
 import (
-	"fmt"
-
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
 type World interface {
 	SaveWorld()
 	LoadWorld()
+	AddEntity(entity *entities.Entity)
 }
 
 func SetupMenuBar(world World) imgui.Vec2 {
@@ -23,7 +23,7 @@ func SetupMenuBar(world World) imgui.Vec2 {
 			// entities := world.Serializer().DeserializeEntities(serializedWorld.Entities)
 		}
 		if imgui.MenuItem("Add Collision Volume") {
-			fmt.Println("yo")
+			world.AddEntity(entities.CreateCube())
 		}
 		imgui.EndMenu()
 	}

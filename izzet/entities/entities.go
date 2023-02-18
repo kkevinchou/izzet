@@ -21,7 +21,7 @@ type Entity struct {
 	Scale         mgl64.Vec3
 
 	// shape component
-	shapeData *ShapeData
+	ShapeData *ShapeData
 
 	// prefabs
 	Prefab *prefabs.Prefab

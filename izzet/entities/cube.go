@@ -1,0 +1,37 @@
+package entities
+
+type ShapeType string
+
+var (
+	CubeShapeType   ShapeType = "CUBE"
+	SphereShapeType ShapeType = "SPHERE"
+)
+
+type CubeData struct {
+	Width  float64
+	Length float64
+	Height float64
+}
+
+type SphereData struct {
+	Radius float64
+}
+
+type CapsuleData struct {
+	Radius float64
+	Length float64
+}
+
+type ShapeData struct {
+	Type    ShapeType
+	Cube    *CubeData
+	Sphere  *SphereData
+	Capsule *CapsuleData
+}
+
+func CreateCube() *Entity {
+	entity := InstantiateBaseEntity("cube", id)
+	entity.shapeData = &ShapeData{Cube: &CubeData{Width: 5, Length: 5, Height: 5}}
+	id += 1
+	return entity
+}

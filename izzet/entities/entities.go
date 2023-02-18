@@ -15,20 +15,22 @@ type Entity struct {
 	ID   int
 	Name string
 
-	// relationships
-	Parent   *Entity
-	Children map[int]*Entity
-
 	// each Entity has their own transforms and animation player
 	LocalPosition mgl64.Vec3
 	Rotation      mgl64.Quat
 	Scale         mgl64.Vec3
 
-	// native objects
-	// -- cube, capsule, cylinder, etc
+	// shape component
+	shapeData *ShapeData
 
-	// 3D imported models
-	Prefab          *prefabs.Prefab
+	// prefabs
+	Prefab *prefabs.Prefab
+
+	// relationships
+	Parent   *Entity
+	Children map[int]*Entity
+
+	// animation
 	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer
 }
@@ -48,19 +50,22 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 	return e
 }
 
-func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
-	e := &Entity{
+func InstantiateBaseEntity(name string, id int) *Entity {
+	return &Entity{
 		ID:   id,
-		Name: fmt.Sprintf("%s-%d", prefab.Name, id),
+		Name: fmt.Sprintf("%s-%d", name, id),
 
 		Children: map[int]*Entity{},
 
 		LocalPosition: mgl64.Vec3{0, 0, 0},
 		Rotation:      mgl64.QuatIdent(),
 		Scale:         mgl64.Vec3{1, 1, 1},
-
-		Prefab: prefab,
 	}
+}
+
+func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
+	e := InstantiateBaseEntity(prefab.Name, id)
+	e.Prefab = prefab
 
 	// animation setup
 	e.Animations = prefab.ModelRefs[0].Model.Animations()

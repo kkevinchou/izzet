@@ -45,6 +45,7 @@ func drawEntity(entity *entities.Entity, world World) {
 				child := entities.CreateCube()
 				world.AddEntity(child)
 				world.BuildRelation(entity, child)
+				SelectEntity(child)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()

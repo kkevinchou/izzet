@@ -8,9 +8,7 @@ var (
 )
 
 type CubeData struct {
-	Width  float64
 	Length float64
-	Height float64
 }
 
 type SphereData struct {
@@ -31,7 +29,7 @@ type ShapeData struct {
 
 func CreateCube() *Entity {
 	entity := InstantiateBaseEntity("cube", id)
-	entity.ShapeData = &ShapeData{Cube: &CubeData{Width: 25, Length: 25, Height: 25}}
+	entity.ShapeData = &ShapeData{Cube: &CubeData{Length: 50}}
 	id += 1
 	return entity
 }

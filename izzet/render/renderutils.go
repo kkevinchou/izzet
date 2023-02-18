@@ -184,7 +184,7 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	drawTris(viewerContext, points, color)
 }
 
-func CubeLines(length float64) [][]mgl64.Vec3 {
+func cubeLines(length float64) [][]mgl64.Vec3 {
 	directions := [][]float64{
 		[]float64{-1, 1, 0.5},
 		[]float64{-1, -1, 0.5},
@@ -225,6 +225,64 @@ func CubeLines(length float64) [][]mgl64.Vec3 {
 	return lines
 }
 
+func cubePoints(length float64) []mgl64.Vec3 {
+	var ht float64 = length / 2
+	return []mgl64.Vec3{
+		// front
+		{-ht, -ht, ht},
+		{ht, -ht, ht},
+		{ht, ht, ht},
+
+		{ht, ht, ht},
+		{-ht, ht, ht},
+		{-ht, -ht, ht},
+
+		// back
+		{ht, ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, -ht},
+
+		{-ht, -ht, -ht},
+		{-ht, ht, -ht},
+		{ht, ht, -ht},
+
+		// right
+		{ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, ht, -ht},
+
+		{ht, ht, -ht},
+		{ht, ht, ht},
+		{ht, -ht, ht},
+
+		// left
+		{-ht, ht, -ht},
+		{-ht, -ht, -ht},
+		{-ht, -ht, ht},
+
+		{-ht, -ht, ht},
+		{-ht, ht, ht},
+		{-ht, ht, -ht},
+
+		// top
+		{ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, ht},
+
+		{-ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, -ht},
+
+		// bottom
+		{-ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, -ht, ht},
+
+		{-ht, -ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, ht},
+	}
+}
 func rectPrismPoints(thickness float64, length float64) []mgl64.Vec3 {
 	var ht float64 = thickness / 2
 	return []mgl64.Vec3{

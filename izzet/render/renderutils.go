@@ -225,6 +225,8 @@ func cubeLines(length float64) [][]mgl64.Vec3 {
 	return lines
 }
 
+// TODO: find a clean way to take 8 cube points and generate both
+// a wireframe lines of the cube and the triangulated lines
 func cubePoints(length float64) []mgl64.Vec3 {
 	var ht float64 = length / 2
 	return []mgl64.Vec3{

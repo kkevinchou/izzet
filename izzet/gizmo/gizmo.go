@@ -2,12 +2,6 @@ package gizmo
 
 import "github.com/go-gl/mathgl/mgl64"
 
-type AxisType string
-
-var AxisTypeX AxisType = "X"
-var AxisTypeY AxisType = "Y"
-var AxisTypeZ AxisType = "Z"
-
 const (
 	ActivationRadius = 10
 )
@@ -34,5 +28,11 @@ func init() {
 			Circle{Normal: mgl64.Vec3{0, 1, 0}, Radius: 25},
 		},
 		HoverIndex: -1}
-	S = &ScaleGizmo{Axes: axes, HoverIndex: -1}
+
+	segments := []Axis{
+		Axis{Vector: mgl64.Vec3{20, 0, 0}, Type: XAxis},
+		Axis{Vector: mgl64.Vec3{0, 20, 0}, Type: YAxis},
+		Axis{Vector: mgl64.Vec3{0, 0, 20}, Type: ZAxis},
+	}
+	S = &ScaleGizmo{Axes: segments, HoveredAxisType: NullAxis}
 }

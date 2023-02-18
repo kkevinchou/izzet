@@ -201,15 +201,11 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		} else if entity.ShapeData != nil {
 			var points []mgl64.Vec3
 			cube := entity.ShapeData.Cube
-
 			points = rectPrismPoints(cube.Width, cube.Length)
-			for i := 0; i < len(points); i++ {
-				points[i] = points[i].Add(entity.WorldPosition())
-			}
 
 			shader := shaderManager.GetShaderProgram("flat")
 			shader.Use()
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			shader.SetUniformFloat("alpha", float32(1))
@@ -254,15 +250,11 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 		} else if entity.ShapeData != nil {
 			var points []mgl64.Vec3
 			cube := entity.ShapeData.Cube
-
 			points = rectPrismPoints(cube.Width, cube.Length)
-			for i := 0; i < len(points); i++ {
-				points[i] = points[i].Add(entity.WorldPosition())
-			}
 
 			shader := shaderManager.GetShaderProgram("color_picking")
 			shader.Use()
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			shader.SetUniformFloat("alpha", float32(1))

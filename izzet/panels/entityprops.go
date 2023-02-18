@@ -9,7 +9,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 func entityProps(entity *entities.Entity) {
@@ -21,14 +20,15 @@ func entityProps(entity *entities.Entity) {
 		// imgui.PopStyleColor()
 
 		if entity != nil {
-			positionStr := fmt.Sprintf("%v", utils.PPrintVec(entity.WorldPosition()))
+			position := entity.WorldPosition()
+			positionStr := fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
 			text := &positionStr
 
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders, imgui.Vec2{}, 0)
 			uiTableRow("Entity Name", entity.Name)
-			if uiTableInputRow("Position", entity.WorldPosition(), text, nil) {
+			if uiTableInputRow("Position", text, nil) {
 				textCopy := *text
-				r := regexp.MustCompile(`\[(?P<x>-?\d+) (?P<y>-?\d+) (?P<z>-?\d+)\]`)
+				r := regexp.MustCompile(`\{(?P<x>-?\d+), (?P<y>-?\d+), (?P<z>-?\d+)\}`)
 				matches := r.FindStringSubmatch(textCopy)
 				if matches != nil {
 					var parseErr bool
@@ -62,6 +62,7 @@ func entityProps(entity *entities.Entity) {
 
 			euler := QuatToEuler(entity.Rotation)
 			uiTableRow("Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
+			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()))
 			imgui.EndTable()
 		}
 	}
@@ -69,7 +70,7 @@ func entityProps(entity *entities.Entity) {
 
 }
 
-func uiTableInputRow(label string, value any, text *string, cb imgui.InputTextCallback) bool {
+func uiTableInputRow(label string, text *string, cb imgui.InputTextCallback) bool {
 	imgui.TableNextRow()
 	imgui.TableSetColumnIndex(0)
 	imgui.Text(label)

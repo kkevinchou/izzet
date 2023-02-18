@@ -329,7 +329,7 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 			shader := "color_picking"
 			// TODO: color picking shader for animated entities?
 
-			drawWIthID(
+			drawModelWIthID(
 				viewerContext,
 				shaderManager.GetShaderProgram(shader),
 				r.world.AssetManager(),

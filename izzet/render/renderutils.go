@@ -21,7 +21,7 @@ func idToPickingColor(id int) mgl32.Vec3 {
 	return mgl32.Vec3{r, g, b}
 }
 
-func drawWIthID(viewerContext ViewerContext,
+func drawModelWIthID(viewerContext ViewerContext,
 	shader *shaders.ShaderProgram,
 	assetManager *assets.AssetManager,
 	model *model.Model,

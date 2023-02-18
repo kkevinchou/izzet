@@ -41,7 +41,7 @@ func drawEntity(entity *entities.Entity, world World) {
 
 		imgui.PushID(entity.Name)
 		if imgui.BeginPopupContextItem() {
-			if imgui.Button("Add Cube Collider") {
+			if imgui.Button("Add Cube") {
 				child := entities.CreateCube()
 				world.AddEntity(child)
 				world.BuildRelation(entity, child)

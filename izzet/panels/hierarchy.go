@@ -39,6 +39,18 @@ func drawEntity(entity *entities.Entity, world World) {
 			SelectEntity(entity)
 		}
 
+		imgui.PushID(entity.Name)
+		if imgui.BeginPopupContextItem() {
+			if imgui.Button("Add Cube Collider") {
+				child := entities.CreateCube()
+				world.AddEntity(child)
+				world.BuildRelation(entity, child)
+				imgui.CloseCurrentPopup()
+			}
+			imgui.EndPopup()
+		}
+		imgui.PopID()
+
 		if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
 			str := fmt.Sprintf("%d", entity.ID)
 			imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)

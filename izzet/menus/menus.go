@@ -20,10 +20,6 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		}
 		if imgui.MenuItem("Load") {
 			world.LoadWorld()
-			// entities := world.Serializer().DeserializeEntities(serializedWorld.Entities)
-		}
-		if imgui.MenuItem("Add Collision Volume") {
-			world.AddEntity(entities.CreateCube())
 		}
 		imgui.EndMenu()
 	}

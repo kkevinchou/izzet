@@ -393,11 +393,19 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		if _, _, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.S.ScaleDir)); nonParallel {
 			viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 			delta := mouseInput.Position.Sub(gizmo.S.MotionPivot)
-			sensitivity := 0.01
-			magnitude := (delta[0] - delta[1]) * float64(sensitivity)
+			var xSensitivity float64 = 0.01
+			var ySensitivity float64 = 0.01
+
+			// horizontalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{1, 0, 0}))
+			// magnitude := (horizontalAlignment*delta[0] + delta[1]) * float64(sensitivity)
+
+			// verticalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{0, 1, 0}))
+			// magnitude := (delta[0] + verticalAlignment*delta[1]) * float64(sensitivity)
 
 			if gizmo.S.HoverIndex == 0 {
 				// X Scale
+				ySensitivity *= 0.1
+				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
 				var dir float64 = 1
 				if viewDir.Dot(mgl64.Vec3{0, 0, -1}) < 0 {
 					dir = -1
@@ -405,13 +413,14 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 				newEntityScale = &mgl64.Vec3{dir * magnitude, 0, 0}
 			} else if gizmo.S.HoverIndex == 1 {
 				// Y Scale
+				xSensitivity *= 0.1
+				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
 				var dir float64 = 1
-				// if viewDir.Dot(mgl64.Vec3{0, 1, 0}) > 0 {
-				// 	dir = -1
-				// }
 				newEntityScale = &mgl64.Vec3{0, dir * magnitude, 0}
 			} else if gizmo.S.HoverIndex == 2 {
 				// Z Scale
+				ySensitivity *= 0.1
+				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
 				var dir float64 = 1
 				if viewDir.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
 					dir = -1

@@ -61,7 +61,7 @@ func drawModelWIthID(viewerContext ViewerContext,
 }
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawTris(viewerContext ViewerContext, shader *shaders.ShaderProgram, points []mgl64.Vec3, color mgl64.Vec3) {
+func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
@@ -79,12 +79,6 @@ func drawTris(viewerContext ViewerContext, shader *shaders.ShaderProgram, points
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformFloat("alpha", float32(1))
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 
@@ -176,14 +170,21 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 		dir := end.Sub(start).Normalize()
 		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
 
-		for _, dp := range defaultPoints(thickness, length) {
+		for _, dp := range rectPrismPoints(thickness, length) {
 			newEnd := q.Rotate(dp).Add(start)
 			points = append(points, newEnd)
 		}
 	}
-	drawTris(viewerContext, shader, points, color)
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformFloat("alpha", float32(1))
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	drawTris(viewerContext, points, color)
 }
-func defaultPoints(thickness float64, length float64) []mgl64.Vec3 {
+
+func rectPrismPoints(thickness float64, length float64) []mgl64.Vec3 {
 	var ht float64 = thickness / 2
 	return []mgl64.Vec3{
 		// front

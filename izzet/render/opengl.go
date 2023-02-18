@@ -37,7 +37,7 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc"); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("color_picking", "model_static", "picking"); err != nil {
+	if err := shaderManager.CompileShaderProgram("color_picking", "flat", "picking"); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("basic_quad", "basic_quad", "basic_quad"); err != nil {

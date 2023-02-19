@@ -405,41 +405,61 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
 			scaleDir = mgl64.Vec3{0, 1, 0}
 		} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
-			scaleDir = mgl64.Vec3{0, 0, -1}
+			scaleDir = mgl64.Vec3{0, 0, 1}
 		} else {
 			panic("WAT")
 		}
 
 		if _, _, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
 			viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
+			rightVector := g.Camera().Orientation.Rotate(mgl64.Vec3{1, 0, 0})
 			delta := mouseInput.Position.Sub(gizmo.S.MotionPivot)
 			var xSensitivity float64 = 0.01
 			var ySensitivity float64 = 0.01
 
 			if gizmo.S.HoveredAxisType == gizmo.XAxis {
 				// X Scale
-				ySensitivity *= 0.1
-				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
-				var dir float64 = 1
-				if viewDir.Dot(mgl64.Vec3{0, 0, -1}) < 0 {
-					dir = -1
+				yWeight := math.Abs(viewDir.Dot(mgl64.Vec3{1, 0, 0}))
+				xWeight := 1 - yWeight
+				xSensitivity := 0.01 * xWeight
+				ySensitivity := 0.01 * yWeight
+
+				var xDir float64 = 1
+				if rightVector.Dot(mgl64.Vec3{1, 0, 0}) < 0 {
+					xDir = -1
 				}
-				newEntityScale = &mgl64.Vec3{dir * magnitude, 0, 0}
+
+				var yDir float64 = 1
+				if viewDir.Dot(mgl64.Vec3{1, 0, 0}) < 0 {
+					yDir = -1
+				}
+
+				magnitude := (delta[0]*xSensitivity*xDir - delta[1]*ySensitivity*yDir)
+				newEntityScale = &mgl64.Vec3{magnitude, 0, 0}
 			} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
 				// Y Scale
 				xSensitivity *= 0.1
 				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
-				var dir float64 = 1
-				newEntityScale = &mgl64.Vec3{0, dir * magnitude, 0}
+				newEntityScale = &mgl64.Vec3{0, magnitude, 0}
 			} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
 				// Z Scale
-				ySensitivity *= 0.1
-				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
-				var dir float64 = 1
-				if viewDir.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
-					dir = -1
+				yWeight := math.Abs(viewDir.Dot(mgl64.Vec3{0, 0, 1}))
+				xWeight := 1 - yWeight
+				xSensitivity := 0.01 * xWeight
+				ySensitivity := 0.01 * yWeight
+
+				var xDir float64 = 1
+				if rightVector.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
+					xDir = -1
 				}
-				newEntityScale = &mgl64.Vec3{0, 0, dir * magnitude}
+
+				var yDir float64 = 1
+				if viewDir.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
+					yDir = -1
+				}
+
+				magnitude := (delta[0]*xSensitivity*xDir - delta[1]*ySensitivity*yDir)
+				newEntityScale = &mgl64.Vec3{0, 0, magnitude}
 			}
 		}
 	}
@@ -447,6 +467,18 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	gizmo.S.MotionPivot = mouseInput.Position
 
 	return newEntityScale, gizmo.S.HoveredAxisType != gizmo.NullAxis
+}
+
+// func WorldToScreen(viewerContext ViewerContext, worldCoord mgl64.Vec3) mgl64.Vec2 {
+// 	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldCoord.Vec4(1))
+// 	screenPos = screenPos.Mul(1 / screenPos.W())
+// 	return screenPos.Vec2()
+// }
+
+func dropY(v mgl64.Vec3) mgl64.Vec3 {
+	new := v
+	new[1] = 0
+	return new
 }
 
 // TODO: move this method out of izzet and into the gizmo package?

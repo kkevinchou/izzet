@@ -414,8 +414,6 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 			viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 			rightVector := g.Camera().Orientation.Rotate(mgl64.Vec3{1, 0, 0})
 			delta := mouseInput.Position.Sub(gizmo.S.MotionPivot)
-			var xSensitivity float64 = 0.01
-			var ySensitivity float64 = 0.01
 
 			if gizmo.S.HoveredAxisType == gizmo.XAxis {
 				// X Scale
@@ -438,8 +436,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 				newEntityScale = &mgl64.Vec3{magnitude, 0, 0}
 			} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
 				// Y Scale
-				xSensitivity *= 0.1
-				magnitude := (delta[0]*xSensitivity - delta[1]*ySensitivity)
+				magnitude := (delta[0]*0.001 - delta[1]*0.01)
 				newEntityScale = &mgl64.Vec3{0, magnitude, 0}
 			} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
 				// Z Scale

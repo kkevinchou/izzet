@@ -414,6 +414,7 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 	}
 	var cubeSize float64 = 5
 	cubeLineThickness := 0.5
+	hoverColor := mgl64.Vec3{1, 1, 0}
 
 	for _, axis := range gizmo.S.Axes {
 		lines := [][]mgl64.Vec3{
@@ -421,7 +422,7 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 		}
 		color := axisColors[axis.Type]
 		if axis.Type == gizmo.S.HoveredAxisType || gizmo.S.HoveredAxisType == gizmo.AllAxis {
-			color = mgl64.Vec3{1, 1, 0}
+			color = hoverColor
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)
 
@@ -441,7 +442,10 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 			line[i] = line[i].Add(position)
 		}
 	}
-	cubeColor := mgl64.Vec3{1, 1, 1}
+	var cubeColor = mgl64.Vec3{1, 1, 1}
+	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
+		cubeColor = hoverColor
+	}
 	drawLines(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {

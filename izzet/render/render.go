@@ -407,26 +407,42 @@ func drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderPr
 }
 
 func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
-	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
+	axisColors := map[gizmo.AxisType]mgl64.Vec3{
+		gizmo.XAxis: mgl64.Vec3{1, 0, 0},
+		gizmo.YAxis: mgl64.Vec3{0, 0, 1},
+		gizmo.ZAxis: mgl64.Vec3{0, 1, 0},
+	}
+	var cubeSize float64 = 5
+	cubeLineThickness := 0.5
 
-	for i, axis := range gizmo.S.Axes {
+	for _, axis := range gizmo.S.Axes {
 		lines := [][]mgl64.Vec3{
 			[]mgl64.Vec3{position, position.Add(axis.Vector)},
 		}
-		color := colors[i]
+		color := axisColors[axis.Type]
 		if axis.Type == gizmo.S.HoveredAxisType || gizmo.S.HoveredAxisType == gizmo.AllAxis {
 			color = mgl64.Vec3{1, 1, 0}
 		}
 		drawLines(*viewerContext, shader, lines, 1, color)
+
+		cLines := cubeLines(cubeSize)
+		for _, line := range cLines {
+			for i := range line {
+				line[i] = line[i].Add(position).Add(axis.Vector)
+			}
+		}
+		drawLines(*viewerContext, shader, cLines, cubeLineThickness, color)
 	}
-	cLines := cubeLines(5)
+
+	// center of scale gizmo
+	cLines := cubeLines(cubeSize)
 	for _, line := range cLines {
 		for i := range line {
 			line[i] = line[i].Add(position)
 		}
 	}
 	cubeColor := mgl64.Vec3{1, 1, 1}
-	drawLines(*viewerContext, shader, cLines, 0.5, cubeColor)
+	drawLines(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
 	defer resetGLRenderSettings()

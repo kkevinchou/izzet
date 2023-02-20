@@ -60,7 +60,7 @@ func entityProps(entity *entities.Entity) {
 				}
 			}
 
-			euler := QuatToEuler(entity.Rotation)
+			euler := QuatToEuler(entity.WorldRotation())
 			uiTableRow("Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
 			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()))
 			imgui.EndTable()

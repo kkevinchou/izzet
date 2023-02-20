@@ -83,19 +83,38 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		newPosition, hoverIndex := g.handleTranslationGizmo(frameInput, entity)
 		if newPosition != nil {
 			if entity.Parent != nil {
-				// the computed position is in world space, so we need to compute the local space position
-				// that would result in the world space position after applying parent transforms
-				localPosition := entities.ComputeTransformMatrix(entity.Parent).Inv().Mul4x1(newPosition.Vec4(1)).Vec3()
-				entity.LocalPosition = localPosition
+				// the computed position is in world space but entity.LocalPosition is in local space
+				// to compute the new local space position we need to do conversions
+
+				// compute the full transformation matrix, excluding local transformations
+				// i.e. local transformations should not affect how the gizmo affects the entity
+				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+
+				// take the new world position and convert it to local space
+				newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(newPosition.Vec4(1)).Vec3()
+
+				entity.LocalPosition = newPositionInLocalSpace
 			} else {
 				entity.LocalPosition = *newPosition
 			}
 		}
 		gizmoHovered = hoverIndex != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+		entity := panels.SelectedEntity()
 		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityRotation != nil {
-			panels.SelectedEntity().Rotation = *newEntityRotation
+			if entity.Parent != nil {
+				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+
+				r := mgl64.Mat4ToQuat(transformMatrix)
+				rMat := r.Mat4()      // local to world space
+				rMatInv := rMat.Inv() // world to local space
+				computedRotation := mgl64.Mat4ToQuat(rMatInv).Mul(*newEntityRotation)
+
+				entity.LocalRotation = computedRotation
+			} else {
+				entity.LocalRotation = *newEntityRotation
+			}
 		}
 		gizmoHovered = hoverIndex != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
@@ -256,7 +275,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			gizmo.R.Active = true
 			gizmo.R.MotionPivot = mouseInput.Position
 			gizmo.R.HoverIndex = closestAxisIndex
-			gizmo.R.ActivationRotation = selectedEntity.Rotation
+			gizmo.R.ActivationRotation = selectedEntity.WorldRotation()
 			// fmt.Println("Activate ID Rotation", selectedEntity.ID)
 		}
 
@@ -272,10 +291,10 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	}
 
 	if gizmo.R.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		if gizmo.R.ActivationRotation != selectedEntity.Rotation {
+		if gizmo.R.ActivationRotation != selectedEntity.WorldRotation() {
 			// fmt.Println("Edit ID Rotation", selectedEntity.ID)
 			g.AppendEdit(
-				edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.Rotation, selectedEntity),
+				edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.WorldRotation(), selectedEntity),
 			)
 		}
 		gizmo.R.Reset()
@@ -316,7 +335,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			}
 			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, dir, 0})
 		}
-		computedQuat := rotation.Mul(selectedEntity.Rotation)
+		computedQuat := rotation.Mul(selectedEntity.WorldRotation())
 		gizmo.R.MotionPivot = mouseInput.Position
 		return &computedQuat, gizmo.R.HoverIndex
 	}

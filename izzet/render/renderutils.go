@@ -285,6 +285,7 @@ func cubePoints(length float64) []mgl64.Vec3 {
 		{-ht, -ht, ht},
 	}
 }
+
 func rectPrismPoints(thickness float64, length float64) []mgl64.Vec3 {
 	var ht float64 = thickness / 2
 	return []mgl64.Vec3{

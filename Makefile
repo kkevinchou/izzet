@@ -9,10 +9,15 @@ PROTOC_PATH = ~/protoc-21.7-win64/bin/protoc.exe
 pprof:
 	go tool pprof -http=localhost:7070 profile
 
-.PHONY: profile
-profile:
+.PHONY: profilecpu
+profilecpu:
 	curl http://localhost:6868/debug/pprof/profile?seconds=20 -o profile
 	go tool pprof -http=localhost:6969 profile
+
+.PHONY: profileheap
+profileheap:
+	curl http://localhost:6868/debug/pprof/heap?seconds=20 -o heap
+	go tool pprof -http=localhost:6969 heap
 
 .PHONY: test
 test:

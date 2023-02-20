@@ -170,7 +170,7 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 		dir := end.Sub(start).Normalize()
 		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
 
-		for _, dp := range rectPrismPoints(thickness, length) {
+		for _, dp := range linePoints(thickness, length) {
 			newEnd := q.Rotate(dp).Add(start)
 			points = append(points, newEnd)
 		}
@@ -286,7 +286,7 @@ func cubePoints(length float64) []mgl64.Vec3 {
 	}
 }
 
-func rectPrismPoints(thickness float64, length float64) []mgl64.Vec3 {
+func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 	var ht float64 = thickness / 2
 	return []mgl64.Vec3{
 		// front

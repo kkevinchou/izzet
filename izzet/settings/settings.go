@@ -7,6 +7,7 @@ var (
 	Width      int  = 0
 	Height     int  = 0
 	Fullscreen bool = false
+	Profile    bool = false
 
 	ShowImguiDemoWindow   = false
 	RuntimeMaxTextureSize int
@@ -15,10 +16,6 @@ var (
 const (
 	LoggingLevel       = 1
 	Seed         int64 = 1234567
-
-	PProfEnabled    bool = false
-	PProfClientPort int  = 6060
-	PProfServerPort int  = 6061
 
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.

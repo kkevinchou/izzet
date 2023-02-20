@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 
 	_ "net/http/pprof"
 
@@ -36,10 +34,6 @@ type Game interface {
 }
 
 func main() {
-	// memory ballast
-	ballast := make([]byte, 1<<34)
-	_ = ballast
-
 	configFile, err := os.Open("config.json")
 	if err != nil {
 		fmt.Printf("failed to load config.json, using defaults: %s\n", err)
@@ -65,23 +59,9 @@ func main() {
 		loadConfig(configSettings)
 	}
 
-	var mode string = modeClient
-	if len(os.Args) > 1 {
-		mode = strings.ToUpper(os.Args[1])
-		if mode != modeLocal && mode != modeClient && mode != modeServer {
-			panic(fmt.Sprintf("unexpected mode %s", mode))
-		}
-	}
-
-	if settings.PProfEnabled {
-		go func() {
-			if mode == modeClient {
-				log.Println(http.ListenAndServe(fmt.Sprintf("localhost:%d", settings.PProfClientPort), nil))
-			} else {
-				log.Println(http.ListenAndServe(fmt.Sprintf("localhost:%d", settings.PProfServerPort), nil))
-			}
-		}()
-	}
+	go func() {
+		http.ListenAndServe(":6868", nil)
+	}()
 
 	app := izzet.New("_assets", "shaders")
 	app.Start()
@@ -92,13 +72,12 @@ func loadConfig(c Config) {
 	settings.Width = c.Width
 	settings.Height = c.Height
 	settings.Fullscreen = c.Fullscreen
+	settings.Profile = c.Profile
 }
 
 type Config struct {
-	ServerIP   string
-	ServerPort int
-	Mode       string
 	Width      int
 	Height     int
 	Fullscreen bool
+	Profile    bool
 }

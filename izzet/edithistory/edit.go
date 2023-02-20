@@ -42,11 +42,11 @@ func NewRotationEdit(lastRotation, currentRotation mgl64.Quat, entity *entities.
 }
 
 func (e *RotationEdit) Undo() {
-	e.Entity.Rotation = e.LastRotation
+	e.Entity.LocalRotation = e.LastRotation
 }
 
 func (e *RotationEdit) Redo() {
-	e.Entity.Rotation = e.CurrentRotation
+	e.Entity.LocalRotation = e.CurrentRotation
 }
 
 type ScaleEdit struct {

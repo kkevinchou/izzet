@@ -48,7 +48,7 @@ func (s *Serializer) WriteOut(filepath string) {
 				PrefabID: entity.Prefab.ID,
 				// Position: []float64{position.X(), position.Y(), position.Z(),
 				Position: position,
-				Rotation: entity.Rotation,
+				Rotation: entity.WorldRotation(),
 				Scale:    entity.Scale,
 			},
 		)
@@ -106,7 +106,7 @@ func (s *Serializer) Entities() []*entities.Entity {
 		dsEntity := entities.InstantiateFromPrefabStaticID(e.ID, s.world.GetPrefabByID(e.PrefabID))
 
 		dsEntity.LocalPosition = e.Position
-		dsEntity.Rotation = e.Rotation
+		dsEntity.LocalRotation = e.Rotation
 		dsEntity.Scale = e.Scale
 		if dsEntity.Scale.X() == 0 && dsEntity.Scale.Y() == 0 && dsEntity.Scale.Z() == 0 {
 			dsEntity.Scale = mgl64.Vec3{1, 1, 1}

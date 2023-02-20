@@ -37,6 +37,8 @@ type Izzet struct {
 	renderer    *render.Renderer
 	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
+
+	commandFrameCount int
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -99,6 +101,7 @@ func (g *Izzet) Start() {
 			input := g.platform.PollInput()
 			g.HandleInput(input)
 			g.runCommandFrame(input, time.Duration(settings.MSPerCommandFrame)*time.Millisecond)
+			g.commandFrameCount++
 
 			accumulator -= float64(settings.MSPerCommandFrame)
 		}
@@ -146,9 +149,8 @@ func (g *Izzet) loadEntities() {
 		if pf.Name == "alpha" {
 			entity := entities.InstantiateFromPrefab(pf)
 			g.entities[entity.ID] = entity
-			if pf.Name == pf.Name {
-				entity.LocalPosition = mgl64.Vec3{0, 0, 0}
-			}
+			// entity.AnimationPlayer.PlayAnimation("Cast1")
+			// entity.AnimationPlayer.UpdateTo(0)
 
 			// entity2 := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity2.ID] = entity2
@@ -158,6 +160,12 @@ func (g *Izzet) loadEntities() {
 		} else if pf.Name == "scene" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity
+		} else if pf.Name == "lootbox" {
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
+			i := 36
+			entity.ParentJoint = &i
+			g.BuildRelation(g.GetEntityByID(0), entity)
 		}
 	}
 }

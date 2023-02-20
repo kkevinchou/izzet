@@ -206,7 +206,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 				var jointLines [][]mgl64.Vec3
 				model := r.world.AssetManager().GetModel(entity.Prefab.Name)
-
 				animationTransforms := entity.AnimationPlayer.AnimationTransforms()
 
 				for jid, jointTransform := range animationTransforms {

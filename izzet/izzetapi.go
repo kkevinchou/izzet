@@ -140,3 +140,7 @@ func (g *Izzet) RemoveParent(child *entities.Entity) {
 		child.Parent = nil
 	}
 }
+
+func (g *Izzet) CommandFrame() int {
+	return g.commandFrameCount
+}

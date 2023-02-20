@@ -198,6 +198,39 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				entity.AnimationPlayer,
 				modelMatrix,
 			)
+
+			// TODO: optimize this - can probably cache some of these computations
+			if panels.RenderJoints && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+				jointShader := shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+
+				var jointLines [][]mgl64.Vec3
+				model := r.world.AssetManager().GetModel(entity.Prefab.Name)
+
+				animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+
+				for jid, jointTransform := range animationTransforms {
+					lines := cubeLines(10)
+					jt := utils.Mat4F32ToF64(jointTransform)
+					for _, line := range lines {
+						points := line
+						for i := 0; i < len(points); i++ {
+							bindTransform := model.JointMap[jid].FullBindTransform
+							points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+						}
+					}
+					jointLines = append(jointLines, lines...)
+				}
+
+				for _, line := range jointLines {
+					points := line
+					for i := 0; i < len(points); i++ {
+						points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+					}
+				}
+
+				drawLines(viewerContext, jointShader, jointLines, 0.5, color)
+			}
 		} else if entity.ShapeData != nil && !shadowPass {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}

@@ -14,6 +14,16 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+var lineCache map[string][]mgl64.Vec3
+
+func init() {
+	lineCache = map[string][]mgl64.Vec3{}
+}
+
+func genLineKey(thickness, length float64) string {
+	return fmt.Sprintf("%.3f_%.3f", thickness, length)
+}
+
 func idToPickingColor(id int) mgl32.Vec3 {
 	var r float32 = float32((id&0x000000FF)>>0) / 255
 	var g float32 = float32((id&0x0000FF00)>>8) / 255
@@ -287,8 +297,13 @@ func cubePoints(length float64) []mgl64.Vec3 {
 }
 
 func linePoints(thickness float64, length float64) []mgl64.Vec3 {
+	cacheKey := genLineKey(thickness, length)
+	if _, ok := lineCache[cacheKey]; ok {
+		return lineCache[cacheKey]
+	}
+
 	var ht float64 = thickness / 2
-	return []mgl64.Vec3{
+	linePoints := []mgl64.Vec3{
 		// front
 		{-ht, -ht, 0},
 		{ht, -ht, 0},
@@ -343,6 +358,9 @@ func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 		{ht, -ht, -length},
 		{-ht, -ht, 0},
 	}
+
+	lineCache[cacheKey] = linePoints
+	return linePoints
 }
 
 func drawWithNDC(shaderManager *shaders.ShaderManager) {

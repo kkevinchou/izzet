@@ -1,11 +1,13 @@
 package panels
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var val int32
@@ -48,5 +50,23 @@ func BuildAnimation(world World, entity *entities.Entity) {
 		inputText = ""
 	}
 
+	imgui.LabelText("", "Joints")
+	drawJoint(entity.Model.RootJoint())
+
 	imgui.End()
+}
+
+func drawJoint(joint *modelspec.JointSpec) {
+	nodeFlags := imgui.TreeNodeFlagsNone
+
+	if len(joint.Children) == 0 {
+		nodeFlags = nodeFlags | imgui.TreeNodeFlagsLeaf
+	}
+	if imgui.TreeNodeV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags) {
+		for _, child := range joint.Children {
+			drawJoint(child)
+		}
+		imgui.TreePop()
+	}
+
 }

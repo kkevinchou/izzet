@@ -20,13 +20,13 @@ func entityProps(entity *entities.Entity) {
 		// imgui.PopStyleColor()
 
 		if entity != nil {
-			position := entity.WorldPosition()
+			position := entity.LocalPosition
 			positionStr := fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
 			text := &positionStr
 
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders, imgui.Vec2{}, 0)
 			uiTableRow("Entity Name", entity.Name)
-			if uiTableInputRow("Position", text, nil) {
+			if uiTableInputRow("Local Position", text, nil) {
 				textCopy := *text
 				r := regexp.MustCompile(`\{(?P<x>-?\d+), (?P<y>-?\d+), (?P<z>-?\d+)\}`)
 				matches := r.FindStringSubmatch(textCopy)
@@ -59,10 +59,18 @@ func entityProps(entity *entities.Entity) {
 					}
 				}
 			}
+			euler := QuatToEuler(entity.LocalRotation)
+			uiTableRow("Local Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
 
-			euler := QuatToEuler(entity.WorldRotation())
-			uiTableRow("Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
 			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()))
+
+			position = entity.WorldPosition()
+			positionStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
+			uiTableRow("World Position", positionStr)
+
+			euler = QuatToEuler(entity.WorldRotation())
+			uiTableRow("World Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
+
 			imgui.EndTable()
 		}
 	}

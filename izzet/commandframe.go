@@ -152,10 +152,6 @@ func (g *Izzet) selectEntity(frameInput input.Input) bool {
 }
 
 func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
-	if !frameInput.MouseInput.Buttons[1] {
-		return
-	}
-
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
 	var mouseSensitivity float64 = 0.003
@@ -184,6 +180,9 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 
 	keyboardInput := frameInput.KeyboardInput
 	controlVector := getControlVector(keyboardInput)
+	if !frameInput.MouseInput.Buttons[1] {
+		controlVector = mgl64.Vec3{}
+	}
 
 	movementVector := rightVector.Mul(controlVector[0]).Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector[1])).Add(forwardVector.Mul(controlVector[2]))
 

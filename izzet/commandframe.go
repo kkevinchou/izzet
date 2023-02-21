@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 var (
@@ -106,8 +107,8 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			if entity.Parent != nil {
 				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
 				worldToLocalMatrix := transformMatrix.Inv()
-				computedRotation := mgl64.Mat4ToQuat(worldToLocalMatrix).Mul(*newEntityRotation)
-
+				_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
+				computedRotation := r.Mul(*newEntityRotation)
 				entity.LocalRotation = computedRotation
 			} else {
 				entity.LocalRotation = *newEntityRotation

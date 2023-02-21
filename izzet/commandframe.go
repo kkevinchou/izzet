@@ -104,7 +104,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
 		if newEntityRotation != nil {
 			if entity.Parent != nil {
-				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity).Inv()
+				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
 				worldToLocalMatrix := transformMatrix.Inv()
 				computedRotation := mgl64.Mat4ToQuat(worldToLocalMatrix).Mul(*newEntityRotation)
 

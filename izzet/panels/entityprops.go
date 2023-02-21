@@ -61,6 +61,7 @@ func entityProps(entity *entities.Entity) {
 			}
 			euler := QuatToEuler(entity.LocalRotation)
 			uiTableRow("Local Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
+			uiTableRow("Local Quat", fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", entity.LocalRotation.X(), entity.LocalRotation.Y(), entity.LocalRotation.Z(), entity.LocalRotation.W))
 
 			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()))
 

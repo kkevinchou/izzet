@@ -48,7 +48,8 @@ func (e *Entity) WorldPosition() mgl64.Vec3 {
 
 func (e *Entity) WorldRotation() mgl64.Quat {
 	m := ComputeTransformMatrix(e)
-	return mgl64.Mat4ToQuat(m)
+	_, r, _ := utils.DecomposeF64(m)
+	return r
 }
 
 func SetNextID(nextID int) {

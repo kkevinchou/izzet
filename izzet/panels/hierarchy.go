@@ -40,6 +40,8 @@ func drawEntity(entity *entities.Entity, world World) {
 		}
 
 		imgui.PushID(entity.Name)
+		imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
+		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Cube") {
 				child := entities.CreateCube()
@@ -54,8 +56,16 @@ func drawEntity(entity *entities.Entity, world World) {
 				world.BuildRelation(world.GetEntityByID(0), entity)
 				imgui.CloseCurrentPopup()
 			}
+			if entity.Parent != nil {
+				if imgui.Button("Remove Parent") {
+					world.RemoveParent(entity)
+					imgui.CloseCurrentPopup()
+				}
+			}
 			imgui.EndPopup()
 		}
+		imgui.PopStyleColor()
+		imgui.PopStyleColor()
 		imgui.PopID()
 
 		if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {

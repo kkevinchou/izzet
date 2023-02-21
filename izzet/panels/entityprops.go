@@ -24,40 +24,10 @@ func entityProps(entity *entities.Entity) {
 			positionStr := fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
 			text := &positionStr
 
-			imgui.BeginTableV("", 2, imgui.TableFlagsBorders, imgui.Vec2{}, 0)
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			uiTableRow("Entity Name", entity.Name)
 			if uiTableInputRow("Local Position", text, nil) {
-				textCopy := *text
-				r := regexp.MustCompile(`\{(?P<x>-?\d+), (?P<y>-?\d+), (?P<z>-?\d+)\}`)
-				matches := r.FindStringSubmatch(textCopy)
-				if matches != nil {
-					var parseErr bool
-					var newPosition mgl64.Vec3
-					for i, name := range r.SubexpNames() {
-						// https://pkg.go.dev/regexp#Regexp.SubexpNames
-						// first name is always the empty string since the regexp as a whole cannot be named
-						if i == 0 {
-							continue
-						}
-
-						if i < 1 || i > 3 {
-							parseErr = true
-							continue
-						}
-
-						value, err := strconv.Atoi(matches[r.SubexpIndex(name)])
-						if err != nil {
-							parseErr = true
-							continue
-						}
-
-						newPosition[i-1] = float64(value)
-					}
-
-					if !parseErr {
-						entity.LocalPosition = newPosition
-					}
-				}
+				uiTableInputPosition(entity, text)
 			}
 			euler := QuatToEuler(entity.LocalRotation)
 			uiTableRow("Local Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
@@ -77,6 +47,40 @@ func entityProps(entity *entities.Entity) {
 	}
 	imgui.EndChild()
 
+}
+
+func uiTableInputPosition(entity *entities.Entity, text *string) {
+	textCopy := *text
+	r := regexp.MustCompile(`\{(?P<x>-?\d+), (?P<y>-?\d+), (?P<z>-?\d+)\}`)
+	matches := r.FindStringSubmatch(textCopy)
+	if matches != nil {
+		var parseErr bool
+		var newPosition mgl64.Vec3
+		for i, name := range r.SubexpNames() {
+			// https://pkg.go.dev/regexp#Regexp.SubexpNames
+			// first name is always the empty string since the regexp as a whole cannot be named
+			if i == 0 {
+				continue
+			}
+
+			if i < 1 || i > 3 {
+				parseErr = true
+				continue
+			}
+
+			value, err := strconv.Atoi(matches[r.SubexpIndex(name)])
+			if err != nil {
+				parseErr = true
+				continue
+			}
+
+			newPosition[i-1] = float64(value)
+		}
+
+		if !parseErr {
+			entity.LocalPosition = newPosition
+		}
+	}
 }
 
 func uiTableInputRow(label string, text *string, cb imgui.InputTextCallback) bool {

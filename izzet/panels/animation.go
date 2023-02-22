@@ -16,7 +16,11 @@ var inputText string
 // var animation string
 var currentItem int32
 var LoopAnimation bool
+
 var RenderJoints bool
+var JointHover *int
+
+var JointsToRender []int
 
 func BuildAnimation(world World, entity *entities.Entity) {
 	imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
@@ -32,13 +36,14 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	}
 	sort.Strings(anims)
 
+	imgui.LabelText("", entity.Name)
 	if imgui.ListBox("animations", &currentItem, anims) {
 		entity.AnimationPlayer.PlayAnimation(anims[currentItem])
 		entity.AnimationPlayer.UpdateTo(0)
 	}
 	imgui.Checkbox("loop", &LoopAnimation)
 	imgui.SameLine()
-	imgui.Checkbox("render joints", &RenderJoints)
+	imgui.Checkbox("render all joints", &RenderJoints)
 
 	if imgui.SliderInt("cool slider", &val, 0, int32(fullAnimationLength.Milliseconds())) {
 		entity.AnimationPlayer.UpdateTo(time.Duration(val) * time.Millisecond)
@@ -51,22 +56,37 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	}
 
 	imgui.LabelText("", "Joints")
-	drawJoint(entity.Model.RootJoint())
+	JointHover = nil
+	JointsToRender = nil
+	drawJointTree(entity.Model.RootJoint())
+
+	if RenderJoints {
+		for jid, _ := range entity.Model.ModelSpecification().JointMap {
+			JointsToRender = append(JointsToRender, jid)
+		}
+	} else if JointHover != nil {
+		JointsToRender = append(JointsToRender, *JointHover)
+	}
 
 	imgui.End()
 }
 
-func drawJoint(joint *modelspec.JointSpec) {
+func drawJointTree(joint *modelspec.JointSpec) {
 	nodeFlags := imgui.TreeNodeFlagsNone
 
 	if len(joint.Children) == 0 {
 		nodeFlags = nodeFlags | imgui.TreeNodeFlagsLeaf
 	}
 	if imgui.TreeNodeV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags) {
+		if imgui.IsItemHovered() {
+			JointHover = &joint.ID
+		}
 		for _, child := range joint.Children {
-			drawJoint(child)
+			drawJointTree(child)
 		}
 		imgui.TreePop()
+	} else if imgui.IsItemHovered() {
+		JointHover = &joint.ID
 	}
 
 }

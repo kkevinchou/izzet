@@ -58,7 +58,7 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	imgui.LabelText("", "Joints")
 	JointHover = nil
 	JointsToRender = nil
-	drawJointTree(entity.Model.RootJoint())
+	drawJointTree(world, entity.Model.RootJoint())
 
 	if RenderJoints {
 		for jid, _ := range entity.Model.ModelSpecification().JointMap {
@@ -71,7 +71,7 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	imgui.End()
 }
 
-func drawJointTree(joint *modelspec.JointSpec) {
+func drawJointTree(world World, joint *modelspec.JointSpec) {
 	nodeFlags := imgui.TreeNodeFlagsNone
 
 	if len(joint.Children) == 0 {
@@ -81,12 +81,42 @@ func drawJointTree(joint *modelspec.JointSpec) {
 		if imgui.IsItemHovered() {
 			JointHover = &joint.ID
 		}
+
 		for _, child := range joint.Children {
-			drawJointTree(child)
+			drawJointTree(world, child)
 		}
 		imgui.TreePop()
 	} else if imgui.IsItemHovered() {
 		JointHover = &joint.ID
 	}
+
+	imgui.PushID(joint.Name)
+	imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+	if imgui.BeginPopupContextItem() {
+		if imgui.Button("Create Socket") {
+			socket := entities.CreateSocket()
+			world.AddEntity(socket)
+			world.BuildRelation(SelectedEntity(), socket)
+			socket.ParentJoint = &joint.ID
+			imgui.CloseCurrentPopup()
+		}
+		// if imgui.Button("Assign Socket") {
+		// 	imgui.OpenPopup("my cool popup")
+		// 	if imgui.BeginPopup("my cool popup") {
+		// 		if imgui.BeginMenu("sub menu") {
+		// 			imgui.MenuItem("click")
+		// 			imgui.EndMenu()
+		// 		}
+		// 		imgui.EndPopup()
+		// 	}
+		// 	// imgui.EndPopup()
+		// 	// imgui.CloseCurrentPopup()
+		// }
+		imgui.EndPopup()
+	}
+	imgui.PopStyleColor()
+	imgui.PopStyleColor()
+	imgui.PopID()
 
 }

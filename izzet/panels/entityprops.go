@@ -42,6 +42,18 @@ func entityProps(entity *entities.Entity) {
 			euler = QuatToEuler(entity.WorldRotation())
 			uiTableRow("World Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
 
+			parentStr := "nil"
+			if entity.Parent != nil {
+				parentStr = fmt.Sprintf("%s", entity.Parent.Name)
+			}
+			uiTableRow("Parent", parentStr)
+
+			parentJointStr := "nil"
+			if entity.ParentJoint != nil {
+				parentJointStr = fmt.Sprintf("%d", *entity.ParentJoint)
+			}
+			uiTableRow("Parent Joint", parentJointStr)
+
 			imgui.EndTable()
 		}
 	}

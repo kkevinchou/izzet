@@ -50,12 +50,6 @@ func drawEntity(entity *entities.Entity, world World) {
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()
 			}
-			if imgui.Button("Parent to right hand") {
-				i := 36
-				entity.ParentJoint = &i
-				world.BuildRelation(world.GetEntityByID(0), entity)
-				imgui.CloseCurrentPopup()
-			}
 			if entity.Parent != nil {
 				if imgui.Button("Remove Parent") {
 					world.RemoveParent(entity)

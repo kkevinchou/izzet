@@ -129,8 +129,8 @@ func (g *Izzet) Undo() {
 }
 
 func (g *Izzet) BuildRelation(parent *entities.Entity, child *entities.Entity) {
-	parent.Children[child.ID] = child
 	g.RemoveParent(child)
+	parent.Children[child.ID] = child
 	child.Parent = parent
 }
 

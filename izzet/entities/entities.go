@@ -31,6 +31,9 @@ type Entity struct {
 	// model
 	Model *model.Model
 
+	// socket
+	IsSocket bool
+
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity

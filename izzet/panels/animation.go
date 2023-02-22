@@ -99,16 +99,14 @@ func drawJointTree(world World, parent *entities.Entity, joint *modelspec.JointS
 					if entity.IsSocket {
 						socketCount++
 
-						var alreadyParented bool
-
-						selectedText := "[ ]"
+						var isParented bool
 						if entity.ParentJoint != nil && *entity.ParentJoint == joint.ID {
-							alreadyParented = true
-							selectedText = "[X]"
+							isParented = true
 						}
-						menuItemText := fmt.Sprintf("%s %s", entity.Name, selectedText)
-						if imgui.MenuItem(menuItemText) {
-							if !alreadyParented {
+
+						if imgui.MenuItemV(entity.Name, "", isParented, true) {
+							// toggle parented status
+							if !isParented {
 								world.BuildRelation(parent, entity)
 								entity.ParentJoint = &joint.ID
 							} else {

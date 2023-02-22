@@ -15,6 +15,7 @@ type World interface {
 	GetEntityByID(id int) *entities.Entity
 	BuildRelation(parent *entities.Entity, child *entities.Entity)
 	RemoveParent(child *entities.Entity)
+	Entities() []*entities.Entity
 	Window() *sdl.Window
 }
 

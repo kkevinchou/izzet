@@ -7,6 +7,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/model"
@@ -147,6 +148,13 @@ func drawModel(viewerContext ViewerContext,
 			shader.SetUniformFloat("metallic", pbr.PBRMetallicRoughness.MetalicFactor)
 			shader.SetUniformFloat("roughness", pbr.PBRMetallicRoughness.RoughnessFactor)
 			shader.SetUniformFloat("ao", 1.0)
+			if panels.DBG.MultiplyAlbedo {
+				shader.SetUniformInt("asdf", 1)
+				fmt.Println(pbr.PBRMetallicRoughness.BaseColorFactor.Vec3())
+			} else {
+				shader.SetUniformInt("asdf", 0)
+				fmt.Println(pbr.PBRMetallicRoughness.BaseColorFactor.Vec3())
+			}
 		} else {
 			shader.SetUniformInt("hasPBRMaterial", 0)
 		}

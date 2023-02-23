@@ -163,9 +163,10 @@ func (g *Izzet) loadEntities() {
 		} else if pf.Name == "lootbox" {
 			entity := entities.InstantiateFromPrefab(pf)
 			g.entities[entity.ID] = entity
-			i := 36
-			entity.ParentJoint = &i
-			g.BuildRelation(g.GetEntityByID(0), entity)
+			parent := g.GetEntityByID(0)
+			joint := parent.Model.ModelSpecification().JointMap[0]
+			entity.ParentJoint = joint
+			g.BuildRelation(parent, entity)
 		}
 	}
 }

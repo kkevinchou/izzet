@@ -50,7 +50,7 @@ func entityProps(entity *entities.Entity) {
 
 			parentJointStr := "nil"
 			if entity.ParentJoint != nil {
-				parentJointStr = fmt.Sprintf("%d", *entity.ParentJoint)
+				parentJointStr = entity.ParentJoint.Name
 			}
 			uiTableRow("Parent Joint", parentJointStr)
 

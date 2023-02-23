@@ -5,7 +5,7 @@ out vec4 FragColor;
 uniform vec3  albedo;
 uniform float metallic;
 uniform float roughness;
-uniform float ao;
+uniform float ao; // ambient occlusion
 
 // lights
 uniform vec3 lightPositions[4];
@@ -23,6 +23,9 @@ uniform float shadowDistance;
 uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
 uniform vec4 pbrBaseColorFactor;
+
+// asdf
+uniform int asdf;
 
 const float PI = 3.14159265359;
 
@@ -151,9 +154,12 @@ void main()
         float shadow = ShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
         // shadow = 0;
 
+        // in gltf 2.0 if we have both the base color factor and base color texture defined
+        // the base color factor is a linear multiple of the texture values
+        // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
         vec3 in_albedo = albedo; 
         if (hasPBRBaseColorTexture == 1) {
-            in_albedo = texture(modelTexture, fs_in.TexCoord).xyz;
+            in_albedo = in_albedo * texture(modelTexture, fs_in.TexCoord).xyz;
         }
         Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, lightColor, in_albedo);
     // }   
@@ -175,6 +181,6 @@ void main()
     //         I've experimented with enabling/disabling. it seems like if i gamma correct
     //         I want to disable the OpenGL setting, and if I don't, I want to enable it instead.
     color = pow(color, vec3(1.0/2.2));
-   
+
     FragColor = vec4(color, 1.0);
 }

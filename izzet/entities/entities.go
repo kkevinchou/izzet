@@ -37,7 +37,7 @@ type Entity struct {
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity
-	ParentJoint *int
+	ParentJoint *modelspec.JointSpec
 
 	// animation
 	Animations      map[string]*modelspec.AnimationSpec
@@ -104,8 +104,8 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 		if parentJoint != nil && parent != nil && parent.AnimationPlayer != nil && parent.AnimationPlayer.CurrentAnimation() != "" {
 			modelSpec := parent.Model.ModelSpecification()
 			animationTransforms := parent.AnimationPlayer.AnimationTransforms()
-			jointTransform := animationTransforms[*parentJoint]
-			bindTransform := modelSpec.JointMap[*parentJoint].FullBindTransform
+			jointTransform := animationTransforms[parentJoint.ID]
+			bindTransform := modelSpec.JointMap[parentJoint.ID].FullBindTransform
 			animModelMatrix = utils.Mat4F32ToF64(jointTransform).Mul4(utils.Mat4F32ToF64(bindTransform))
 		}
 	}

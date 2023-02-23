@@ -77,64 +77,66 @@ func drawJointTree(world World, parent *entities.Entity, joint *modelspec.JointS
 	if len(joint.Children) == 0 {
 		nodeFlags = nodeFlags | imgui.TreeNodeFlagsLeaf
 	}
-	if imgui.TreeNodeV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags) {
-		if imgui.IsItemHovered() {
-			JointHover = &joint.ID
-		}
 
-		imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
-		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-		if imgui.BeginPopupContextItem() {
-			if imgui.Button("Create Socket") {
-				socket := entities.CreateSocket()
-				world.AddEntity(socket)
-				world.BuildRelation(SelectedEntity(), socket)
-				socket.ParentJoint = &joint.ID
-				imgui.CloseCurrentPopup()
-			}
+	opened := imgui.TreeNodeV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags)
 
-			if imgui.BeginMenu("Assign Socket") {
-				socketCount := 0
-				for _, entity := range world.Entities() {
-					if entity.IsSocket {
-						socketCount++
+	imgui.PushID(joint.Name)
+	setupMenu(world, parent, joint)
+	imgui.PopID()
+	if imgui.IsItemHovered() {
+		JointHover = &joint.ID
+	}
 
-						var isParented bool
-						if entity.ParentJoint != nil && *entity.ParentJoint == joint.ID {
-							isParented = true
-						}
-
-						if imgui.MenuItemV(entity.Name, "", isParented, true) {
-							// toggle parented status
-							if !isParented {
-								world.BuildRelation(parent, entity)
-								entity.ParentJoint = &joint.ID
-							} else {
-								world.RemoveParent(entity)
-								entity.ParentJoint = nil
-							}
-						}
-					}
-				}
-
-				if socketCount == 0 {
-					imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 0.5})
-					imgui.MenuItem("none")
-					imgui.PopStyleColor()
-				}
-				imgui.EndMenu()
-			}
-			imgui.EndPopup()
-		}
-
-		imgui.PopStyleColor()
-		imgui.PopStyleColor()
-
+	if opened {
 		for _, child := range joint.Children {
 			drawJointTree(world, parent, child)
 		}
 		imgui.TreePop()
-	} else if imgui.IsItemHovered() {
-		JointHover = &joint.ID
 	}
+}
+
+func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec) {
+	imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+	if imgui.BeginPopupContextItem() {
+		if imgui.Button("Create Socket") {
+			socket := entities.CreateSocket()
+			world.AddEntity(socket)
+			world.BuildRelation(SelectedEntity(), socket)
+			socket.ParentJoint = joint
+			imgui.CloseCurrentPopup()
+		}
+
+		if imgui.BeginMenu("Assign Socket") {
+			socketCount := 0
+			for _, entity := range world.Entities() {
+				if entity.IsSocket {
+					socketCount++
+
+					isParented := entity.ParentJoint != nil && entity.ParentJoint.ID == joint.ID
+					if imgui.MenuItemV(entity.Name, "", isParented, true) {
+						// toggle parented status
+						if isParented {
+							world.RemoveParent(entity)
+							entity.ParentJoint = nil
+						} else {
+							world.BuildRelation(parent, entity)
+							entity.ParentJoint = joint
+						}
+					}
+				}
+			}
+
+			if socketCount == 0 {
+				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 0.5})
+				imgui.MenuItem("none")
+				imgui.PopStyleColor()
+			}
+			imgui.EndMenu()
+		}
+		imgui.EndPopup()
+	}
+
+	imgui.PopStyleColor()
+	imgui.PopStyleColor()
 }

@@ -149,10 +149,8 @@ func drawModel(viewerContext ViewerContext,
 			shader.SetUniformFloat("roughness", pbr.PBRMetallicRoughness.RoughnessFactor)
 			shader.SetUniformFloat("ao", 1.0)
 			if panels.DBG.MultiplyAlbedo {
-				shader.SetUniformInt("asdf", 1)
 				fmt.Println(pbr.PBRMetallicRoughness.BaseColorFactor.Vec3())
 			} else {
-				shader.SetUniformInt("asdf", 0)
 				fmt.Println(pbr.PBRMetallicRoughness.BaseColorFactor.Vec3())
 			}
 		} else {

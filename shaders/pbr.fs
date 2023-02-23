@@ -24,9 +24,6 @@ uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
 uniform vec4 pbrBaseColorFactor;
 
-// asdf
-uniform int asdf;
-
 const float PI = 3.14159265359;
 
 in VS_OUT {

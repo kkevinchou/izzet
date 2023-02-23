@@ -40,20 +40,17 @@ func main() {
 	} else {
 		configBytes, err := io.ReadAll(configFile)
 		if err != nil {
-			fmt.Println(err)
-			return
+			panic(err)
 		}
 
 		if err = configFile.Close(); err != nil {
-			fmt.Println(err)
-			return
+			panic(err)
 		}
 
 		var configSettings Config
 		err = json.Unmarshal(configBytes, &configSettings)
 		if err != nil {
-			fmt.Println(err)
-			return
+			panic(err)
 		}
 
 		loadConfig(configSettings)

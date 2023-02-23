@@ -279,7 +279,6 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 			gizmo.R.MotionPivot = mouseInput.Position
 			gizmo.R.HoverIndex = closestAxisIndex
 			gizmo.R.ActivationRotation = selectedEntity.WorldRotation()
-			// fmt.Println("Activate ID Rotation", selectedEntity.ID)
 		}
 
 		if !gizmo.R.Active {
@@ -295,7 +294,6 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 
 	if gizmo.R.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		if gizmo.R.ActivationRotation != selectedEntity.WorldRotation() {
-			// fmt.Println("Edit ID Rotation", selectedEntity.ID)
 			g.AppendEdit(
 				edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.WorldRotation(), selectedEntity),
 			)
@@ -539,7 +537,6 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			gizmo.T.MotionPivot = motionPivot.Sub(position)
 			gizmo.T.HoverIndex = closestAxisIndex
 			gizmo.T.ActivationPosition = position
-			// fmt.Println("Activate ID translate", selectedEntity.ID)
 		}
 
 		if !gizmo.T.Active {
@@ -553,7 +550,6 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	}
 
 	if gizmo.T.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		// fmt.Println("Edit ID translate", selectedEntity.ID)
 		if gizmo.T.ActivationPosition != position {
 			g.AppendEdit(
 				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.LocalPosition, selectedEntity),

@@ -329,6 +329,7 @@ func (r *Renderer) RenderImgui() {
 
 	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize)
 	panels.BuildPrefabs(r.world.Prefabs(), r.world)
+	panels.BuildDebug(r.world)
 
 	// imgui.End()
 

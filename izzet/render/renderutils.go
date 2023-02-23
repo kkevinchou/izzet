@@ -7,6 +7,8 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/model"
@@ -92,6 +94,27 @@ func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 
+type Light struct {
+	Direction mgl64.Vec3
+	Diffuse   mgl64.Vec3
+	Type      int // 0 - directional
+}
+
+// i considered using uniform blocks but the memory layout management seems like a huge pain
+// https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
+func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*Light) {
+	if len(lights) > settings.MaxLightCount {
+		panic(fmt.Sprintf("light count of %d exceeds max %d", len(lights), settings.MaxLightCount))
+	}
+
+	shader.SetUniformInt("lightCount", int32(len(lights)))
+	for i, light := range lights {
+		shader.SetUniformInt(fmt.Sprintf("lights[%d].type", i), int32(light.Type))
+		shader.SetUniformVec3(fmt.Sprintf("lights[%d].dir", i), utils.Vec3F64ToF32(light.Direction))
+		shader.SetUniformVec3(fmt.Sprintf("lights[%d].diffuse", i), utils.Vec3F64ToF32(light.Diffuse))
+	}
+}
+
 func drawModel(viewerContext ViewerContext,
 	lightContext LightContext,
 	shadowMap *ShadowMap,
@@ -113,9 +136,15 @@ func drawModel(viewerContext ViewerContext,
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", float32(shadowMap.ShadowDistance()))
-	shader.SetUniformVec3("directionalLightDir", utils.Vec3F64ToF32(lightContext.DirectionalLightDir))
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformInt("shadowMap", 31)
+
+	light1 := Light{
+		Type:      0,
+		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
+		Diffuse:   mgl64.Vec3{5, 5, 5},
+	}
+	setupLightingUniforms(shader, []*Light{&light1})
 
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		animationTransforms := animationPlayer.AnimationTransforms()

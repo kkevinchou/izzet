@@ -1,6 +1,7 @@
 #version 330 core
 out vec4 FragColor;
 
+
 // material parameters
 uniform vec3  albedo;
 uniform float metallic;
@@ -8,9 +9,25 @@ uniform float roughness;
 uniform float ao; // ambient occlusion
 
 // lights
-uniform vec3 lightPositions[4];
-uniform vec3 lightColors[4];
-uniform vec3 directionalLightDir;
+const int MAX_LIGHTS = 10;
+
+struct Light {
+    // the light type
+    // 0 - directional
+    int type;
+
+    // general props
+    vec3 diffuse;
+
+    // directional
+    vec3 dir;
+
+    // positional
+    vec3 position;
+};
+
+uniform int lightCount;
+uniform Light lights[MAX_LIGHTS];
 
 uniform vec3 viewPos;
 uniform sampler2D modelTexture;
@@ -107,13 +124,18 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }  
 
-vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float lightDistance, vec3 lightColor, vec3 in_albedo) {
+vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float lightDistance, vec3 lightColor, vec3 in_albedo, int do_attenuation) {
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, in_albedo, metallic);
 
     // calculate per-light radiance
     vec3 H = normalize(fragToCam + fragToLight);
+
     float attenuation = 1.0 / (lightDistance * lightDistance);
+    if (do_attenuation == 0) {
+        attenuation = 1.0;
+    }
+
     vec3 radiance     = lightColor * attenuation;        
     
     // cook-torrance brdf
@@ -140,29 +162,40 @@ void main()
 	           
     // reflectance equation
     vec3 Lo = vec3(0.0);
-    // for(int i = 0; i < 4; ++i) {
-        // vec3 fragToLight = normalize(lightPositions[i] - fs_in.FragPos);
+    vec3 in_albedo = albedo;
+    if (hasPBRBaseColorTexture == 1) {
+        in_albedo = in_albedo * texture(modelTexture, fs_in.TexCoord).xyz;
+    }
+
+    for(int i = 0; i < lightCount; ++i) {
         vec3 fragToCam = normalize(viewPos - fs_in.FragPos);
-        // float distance = length(lightPositions[i] - fs_in.FragPos);
+        float distance = length(lights[i].position - fs_in.FragPos);
+
+        Light light = lights[i];
         
-        float distance = 1;
-        vec3 fragToLight = -directionalLightDir;
-        vec3 lightColor = vec3(5);
+        vec3 fragToLight;
+        if (light.type == 0) {
+            fragToLight = -normalize(light.dir);
+        } else {
+            fragToLight = normalize(light.position - fs_in.FragPos);
+        }
+
+        vec3 lightColor = light.diffuse;
         float shadow = ShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
-        // shadow = 0;
 
         // in gltf 2.0 if we have both the base color factor and base color texture defined
         // the base color factor is a linear multiple of the texture values
         // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-        vec3 in_albedo = albedo; 
-        if (hasPBRBaseColorTexture == 1) {
-            in_albedo = in_albedo * texture(modelTexture, fs_in.TexCoord).xyz;
+
+        int do_attenuation = 1;
+        if (lights[0].type == 0) {
+            do_attenuation = 0;
         }
-        Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, lightColor, in_albedo);
-    // }   
+
+        Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, lightColor, in_albedo, do_attenuation);
+    }
   
     vec3 ambient = vec3(0.1) * in_albedo * ao;
-    // ambient = vec3(0);
     vec3 color = ambient + Lo;
 	
     color = color / (color + vec3(1.0));

@@ -158,8 +158,8 @@ func (g *Izzet) loadEntities() {
 			// 	entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
 			// }
 		} else if pf.Name == "scene" {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// g.entities[entity.ID] = entity
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
 		} else if pf.Name == "lootbox" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity

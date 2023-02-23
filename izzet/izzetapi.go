@@ -94,8 +94,7 @@ func (g *Izzet) SaveWorld() {
 func (g *Izzet) LoadWorld() {
 	err := g.serializer.ReadIn("./scene.txt")
 	if err != nil {
-		fmt.Println("failed to load world: ", err)
-		return
+		panic(fmt.Sprintf("failed to load world: %s", err))
 	}
 
 	var maxID int

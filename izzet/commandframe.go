@@ -125,11 +125,17 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 
 	mouseInput := frameInput.MouseInput
-	if !gizmoHovered && !imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow) && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		if newSelection := g.selectEntity(frameInput); newSelection {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		}
 	}
+}
+
+func InteractingWithUI() bool {
+	anyPopup := imgui.IsPopupOpenV("", imgui.PopupFlagsAnyPopup)
+	anyWindow := imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow)
+	return anyPopup || anyWindow
 }
 
 func (g *Izzet) selectEntity(frameInput input.Input) bool {

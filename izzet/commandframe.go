@@ -21,42 +21,13 @@ var (
 )
 
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
+	g.handleSimplyKeyCommands(frameInput)
+
 	for _, entity := range g.Entities() {
 		if entity.AnimationPlayer != nil {
 			if panels.LoopAnimation {
 				entity.AnimationPlayer.Update(delta)
 			}
-		}
-	}
-
-	keyboardInput := frameInput.KeyboardInput
-	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
-		g.Shutdown()
-	}
-
-	// undo/undo
-	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
-		if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {
-			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
-				if event.Event == input.KeyboardEventUp {
-					g.Redo()
-				}
-			}
-		} else {
-			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
-				if event.Event == input.KeyboardEventUp {
-					g.Undo()
-				}
-			}
-		}
-	}
-
-	// delete entity
-	// TODO - find better key
-	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
-		if event.Event == input.KeyboardEventUp {
-			g.DeleteEntity(panels.SelectedEntity())
-			panels.SelectEntity(nil)
 		}
 	}
 
@@ -130,6 +101,40 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		}
 	}
+}
+
+func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
+	keyboardInput := frameInput.KeyboardInput
+	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
+		g.Shutdown()
+	}
+
+	// undo/undo
+	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
+		if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {
+			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
+				if event.Event == input.KeyboardEventUp {
+					g.Redo()
+				}
+			}
+		} else {
+			if event, ok := keyboardInput[input.KeyboardKeyZ]; ok {
+				if event.Event == input.KeyboardEventUp {
+					g.Undo()
+				}
+			}
+		}
+	}
+
+	// delete entity
+	// TODO - find better key
+	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
+		if event.Event == input.KeyboardEventUp {
+			g.DeleteEntity(panels.SelectedEntity())
+			panels.SelectEntity(nil)
+		}
+	}
+
 }
 
 func InteractingWithUI() bool {

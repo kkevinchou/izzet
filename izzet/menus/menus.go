@@ -3,6 +3,7 @@ package menus
 import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/panels"
 )
 
 type World interface {
@@ -20,6 +21,9 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		}
 		if imgui.MenuItem("Load") {
 			world.LoadWorld()
+		}
+		if imgui.MenuItem("Show Debug") {
+			panels.ShowDebug = !panels.ShowDebug
 		}
 		imgui.EndMenu()
 	}

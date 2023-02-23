@@ -104,6 +104,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 }
 
 func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
+	// shutdown
 	keyboardInput := frameInput.KeyboardInput
 	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
 		g.Shutdown()
@@ -127,7 +128,6 @@ func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
 	}
 
 	// delete entity
-	// TODO - find better key
 	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
 		if event.Event == input.KeyboardEventUp {
 			g.DeleteEntity(panels.SelectedEntity())
@@ -135,6 +135,11 @@ func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
 		}
 	}
 
+	if event, ok := keyboardInput[input.KeyboardKeyF1]; ok {
+		if event.Event == input.KeyboardEventUp {
+			panels.ShowDebug = !panels.ShowDebug
+		}
+	}
 }
 
 func InteractingWithUI() bool {

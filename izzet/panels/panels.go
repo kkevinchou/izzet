@@ -8,7 +8,7 @@ import (
 
 // var HierarchySelection int
 var selectedEntity *entities.Entity
-var ShowDebug bool
+var ShowDebug bool = true
 
 type World interface {
 	AddEntity(entity *entities.Entity)

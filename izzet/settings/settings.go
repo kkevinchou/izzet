@@ -29,4 +29,7 @@ const (
 	// we shift 8 bits since 8 bits are reserved for the alpha channel
 	// the max id is used to indicate no entity was selected
 	EmptyColorPickingID uint32 = maxUInt32 >> 8
+
+	// this number should like up with MAX_LIGHTS in the fragment shader
+	MaxLightCount int = 10
 )

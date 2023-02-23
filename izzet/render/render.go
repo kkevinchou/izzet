@@ -143,7 +143,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	// configure light viewer context
 	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, Near, far, r.fovY, r.aspectRatio, shadowDistanceFactor)
 
-	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{-1, -1, -1})
+	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)})
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, shadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
 
@@ -155,7 +155,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	}
 
 	lightContext := LightContext{
-		DirectionalLightDir: lightOrientation.Rotate(mgl64.Vec3{0, 0, -1}),
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),

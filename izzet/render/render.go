@@ -42,6 +42,7 @@ type World interface {
 	Camera() *camera.Camera
 	Prefabs() []*prefabs.Prefab
 	Entities() []*entities.Entity
+	Lights() []*entities.Entity
 	GetEntityByID(id int) *entities.Entity
 	BuildRelation(parent *entities.Entity, child *entities.Entity)
 	RemoveParent(child *entities.Entity)
@@ -143,7 +144,28 @@ func (r *Renderer) Render(delta time.Duration) {
 	// configure light viewer context
 	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, Near, far, r.fovY, r.aspectRatio, shadowDistanceFactor)
 
-	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)})
+	// find the directional light if there is one
+	lights := r.world.Lights()
+	var directionalLight *entities.Entity
+	for _, light := range lights {
+		if light.LightInfo.Type == 0 {
+			directionalLight = light
+			break
+		}
+	}
+
+	var directionalLightX, directionalLightY, directionalLightZ float64 = 0, -1, 0
+	if directionalLight != nil {
+		directionalLight.LightInfo.Direction[0] = float64(panels.DBG.DirectionalLightX)
+		directionalLight.LightInfo.Direction[1] = float64(panels.DBG.DirectionalLightY)
+		directionalLight.LightInfo.Direction[2] = float64(panels.DBG.DirectionalLightZ)
+
+		directionalLightX = directionalLight.LightInfo.Direction.X()
+		directionalLightY = directionalLight.LightInfo.Direction.Y()
+		directionalLightZ = directionalLight.LightInfo.Direction.Z()
+	}
+
+	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, shadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
 
@@ -158,6 +180,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
+		Lights:           r.world.Lights(),
 	}
 	_ = lightContext
 	_ = lightViewerContext

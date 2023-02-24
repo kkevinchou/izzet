@@ -1,6 +1,9 @@
 package render
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/entities"
+)
 
 type ViewerContext struct {
 	Position    mgl64.Vec3
@@ -12,4 +15,5 @@ type ViewerContext struct {
 
 type LightContext struct {
 	LightSpaceMatrix mgl64.Mat4
+	Lights           []*entities.Entity
 }

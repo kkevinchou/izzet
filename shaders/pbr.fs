@@ -188,7 +188,7 @@ void main()
         // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
 
         int do_attenuation = 1;
-        if (lights[0].type == 0) {
+        if (lights[i].type == 0) {
             do_attenuation = 0;
         }
 

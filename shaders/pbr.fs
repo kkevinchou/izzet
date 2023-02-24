@@ -136,24 +136,25 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
         attenuation = 1.0;
     }
 
-    vec3 radiance     = lightColor * attenuation;        
+    vec3 radiance = lightColor * attenuation;        
     
     // cook-torrance brdf
     float NDF = DistributionGGX(normal, H, roughness);        
-    float G   = GeometrySmith(normal, fragToCam, fragToLight, roughness);      
-    vec3 F    = fresnelSchlick(max(dot(H, fragToCam), 0.0), F0);       
+    float G = GeometrySmith(normal, fragToCam, fragToLight, roughness);      
+    vec3 F = fresnelSchlick(max(dot(H, fragToCam), 0.0), F0);       
     
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;	  
     
-    vec3 numerator    = NDF * G * F;
+    vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(normal, fragToCam), 0.0) * max(dot(normal, fragToLight), 0.0) + 0.0001;
-    vec3 specular     = numerator / denominator;  
+    vec3 specular = numerator / denominator;  
         
     // add to outgoing radiance Lo
     float NdotL = max(dot(normal, fragToLight), 0.0);                
-    return (kD * in_albedo / PI + specular) * radiance * NdotL; 
+
+    return (kD * in_albedo / PI + specular) * radiance * NdotL;
 }
 
 void main()
@@ -182,6 +183,7 @@ void main()
 
         vec3 lightColor = light.diffuse;
         float shadow = ShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
+        shadow = 0;
 
         // in gltf 2.0 if we have both the base color factor and base color texture defined
         // the base color factor is a linear multiple of the texture values
@@ -198,8 +200,10 @@ void main()
     vec3 ambient = vec3(0.1) * in_albedo * ao;
     vec3 color = ambient + Lo;
 	
+    // HDR tone mapping
     color = color / (color + vec3(1.0));
 
+    // Gamma correction
     // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally
     // store textures in SRGB format which we then need to gamma correct herea.
     // PARAMETERS:

@@ -26,7 +26,7 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		if imgui.MenuItem("Create Point Light") {
 			lightInfo := &entities.LightInfo{
 				Type:    1,
-				Diffuse: mgl64.Vec3{1, 1, 1},
+				Diffuse: mgl64.Vec3{2000, 2000, 2000},
 			}
 			light := entities.CreateLight(lightInfo)
 			world.AddEntity(light)

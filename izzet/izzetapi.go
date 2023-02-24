@@ -143,3 +143,14 @@ func (g *Izzet) RemoveParent(child *entities.Entity) {
 func (g *Izzet) CommandFrame() int {
 	return g.commandFrameCount
 }
+
+func (g *Izzet) Lights() []*entities.Entity {
+	allEntities := g.Entities()
+	result := []*entities.Entity{}
+	for _, e := range allEntities {
+		if e.LightInfo != nil {
+			result = append(result, e)
+		}
+	}
+	return result
+}

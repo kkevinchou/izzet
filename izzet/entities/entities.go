@@ -34,6 +34,9 @@ type Entity struct {
 	// socket
 	IsSocket bool
 
+	// light
+	LightInfo *LightInfo
+
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity

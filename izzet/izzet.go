@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -144,6 +145,12 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
+	lightInfo := &entities.LightInfo{
+		Diffuse:   mgl64.Vec3{5, 5, 5},
+		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
+	}
+	directionalLight := entities.CreateLight(lightInfo)
+	g.entities[directionalLight.ID] = directionalLight
 
 	for _, pf := range g.Prefabs() {
 		if pf.Name == "alpha" {

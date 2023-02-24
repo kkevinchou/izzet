@@ -1,6 +1,7 @@
 package menus
 
 import (
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/panels"
@@ -21,6 +22,14 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		}
 		if imgui.MenuItem("Load") {
 			world.LoadWorld()
+		}
+		if imgui.MenuItem("Create Point Light") {
+			lightInfo := &entities.LightInfo{
+				Type:    1,
+				Diffuse: mgl64.Vec3{1, 1, 1},
+			}
+			light := entities.CreateLight(lightInfo)
+			world.AddEntity(light)
 		}
 		if imgui.MenuItem("Show Debug") {
 			panels.ShowDebug = !panels.ShowDebug

@@ -3,8 +3,6 @@ package panels
 import "github.com/inkyblackness/imgui-go/v4"
 
 type DebugSettings struct {
-	MultiplyAlbedo bool
-
 	DirectionalLightX int32
 	DirectionalLightY int32
 	DirectionalLightZ int32

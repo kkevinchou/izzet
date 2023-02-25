@@ -37,6 +37,9 @@ type Entity struct {
 	// light
 	LightInfo *LightInfo
 
+	// image
+	ImageInfo *ImageInfo
+
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity

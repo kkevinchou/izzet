@@ -424,6 +424,48 @@ func drawWithNDC(shaderManager *shaders.ShaderManager) {
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 
+func drawBillboardTexture(
+	viewerContext *ViewerContext,
+	shaderManager *shaders.ShaderManager,
+	texture uint32,
+	modelMatrix mgl64.Mat4,
+) {
+	// texture coords top left = 0,0 | bottom right = 1,1
+	var vertices []float32 = []float32{
+		-1, -1, 0, 0.0, 0.0,
+		1, -1, 0, 1.0, 0.0,
+		1, 1, 0, 1.0, 1.0,
+		1, 1, 0, 1.0, 1.0,
+		-1, 1, 0, 0.0, 1.0,
+		-1, -1, 0, 0.0, 0.0,
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	gl.EnableVertexAttribArray(1)
+
+	gl.BindVertexArray(vao)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	shader := shaderManager.GetShaderProgram("basic_quad_world")
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+}
 func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
 	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{

@@ -131,6 +131,7 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
     // calculate per-light radiance
     vec3 H = normalize(fragToCam + fragToLight);
 
+    // float attenuation = 1.0 / (1 + 0.01 * lightDistance + 0.001 * (lightDistance * lightDistance));
     float attenuation = 1.0 / (lightDistance * lightDistance);
     if (do_attenuation == 0) {
         attenuation = 1.0;
@@ -143,13 +144,12 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
     float G = GeometrySmith(normal, fragToCam, fragToLight, roughness); // how much of the microfacets are self shadowing
     vec3 F = fresnelSchlick(max(dot(H, fragToCam), 0.0), F0); // how much energy is reflected in a specular fashion
     
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;
-    
     vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(normal, fragToCam), 0.0) * max(dot(normal, fragToLight), 0.0) + 0.0001;
     vec3 specular = numerator / denominator;  
+
+    vec3 kD = vec3(1.0) - F;
+    kD *= 1.0 - metallic;
         
     // add to outgoing radiance Lo
     float NdotL = max(dot(normal, fragToLight), 0.0);
@@ -175,10 +175,9 @@ void main()
     }
 
     for(int i = 0; i < lightCount; ++i) {
-        vec3 fragToCam = normalize(viewPos - fs_in.FragPos);
-        float distance = length(lights[i].position - fs_in.FragPos);
-
         Light light = lights[i];
+        vec3 fragToCam = normalize(viewPos - fs_in.FragPos);
+        float distance = length(light.position - fs_in.FragPos);
         
         vec3 fragToLight;
         if (light.type == 0) {

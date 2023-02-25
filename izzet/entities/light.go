@@ -10,14 +10,16 @@ type LightInfo struct {
 
 func CreateLight(lightInfo *LightInfo) *Entity {
 	entity := InstantiateBaseEntity("light", id)
+	entity.ImageInfo = &ImageInfo{ImageName: "light.png"}
 	entity.LightInfo = lightInfo
-	entity.ShapeData = []*ShapeData{
-		&ShapeData{
-			Cube: &CubeData{
-				15,
-			},
-		},
-	}
+	entity.Scale = mgl64.Vec3{10, 10, 10}
+	// entity.ShapeData = []*ShapeData{
+	// 	&ShapeData{
+	// 		Cube: &CubeData{
+	// 			15,
+	// 		},
+	// 	},
+	// }
 	id += 1
 	return entity
 }

@@ -259,6 +259,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				}
 			}
 		}
+
 		if len(entity.ShapeData) > 0 && !shadowPass {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
@@ -273,6 +274,17 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				}
 
 				drawLines(viewerContext, shader, lines, 0.5, color)
+			}
+		}
+
+		if entity.ImageInfo != nil && !shadowPass {
+			// shader := shaderManager.GetShaderProgram("flat")
+			texture := r.world.AssetManager().GetTexture("light")
+
+			if texture != nil {
+				drawBillboardTexture(&viewerContext, shaderManager, texture.ID, modelMatrix)
+			} else {
+				fmt.Println("couldn't find texture", "light")
 			}
 		}
 	}

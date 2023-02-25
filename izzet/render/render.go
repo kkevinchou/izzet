@@ -259,19 +259,21 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				}
 			}
 		}
-		if entity.ShapeData != nil && !shadowPass {
+		if len(entity.ShapeData) > 0 && !shadowPass {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
 
-			lines := cubeLines(entity.ShapeData.Cube.Length)
-			for _, line := range lines {
-				points := line
-				for i := 0; i < len(points); i++ {
-					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+			for _, shapeData := range entity.ShapeData {
+				lines := cubeLines(shapeData.Cube.Length)
+				for _, line := range lines {
+					points := line
+					for i := 0; i < len(points); i++ {
+						points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+					}
 				}
-			}
 
-			drawLines(viewerContext, shader, lines, 0.5, color)
+				drawLines(viewerContext, shader, lines, 0.5, color)
+			}
 		}
 	}
 }
@@ -303,24 +305,31 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 				modelMatrix,
 				entity.ID,
 			)
-		} else if entity.ShapeData != nil {
-			var points []mgl64.Vec3
-			cube := entity.ShapeData.Cube
-			points = cubePoints(cube.Length)
+		} else if len(entity.ShapeData) > 0 {
+			// color picking only supports cubes atm
+			for _, shapeData := range entity.ShapeData {
+				cube := shapeData.Cube
+				if cube == nil {
+					continue
+				}
 
-			shader := shaderManager.GetShaderProgram("color_picking")
-			shader.Use()
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			shader.SetUniformFloat("alpha", float32(1))
-			shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
+				points := cubePoints(cube.Length)
 
-			drawTris(
-				viewerContext,
-				points,
-				mgl64.Vec3{1, 0, 0},
-			)
+				shader := shaderManager.GetShaderProgram("color_picking")
+				shader.Use()
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+				shader.SetUniformFloat("alpha", float32(1))
+				shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
+
+				drawTris(
+					viewerContext,
+					points,
+					mgl64.Vec3{1, 0, 0},
+				)
+			}
+
 		}
 	}
 }

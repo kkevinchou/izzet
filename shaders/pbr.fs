@@ -136,23 +136,23 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
         attenuation = 1.0;
     }
 
-    vec3 radiance = lightColor * attenuation;        
+    vec3 radiance = lightColor * attenuation; 
     
     // cook-torrance brdf
-    float NDF = DistributionGGX(normal, H, roughness);        
-    float G = GeometrySmith(normal, fragToCam, fragToLight, roughness);      
-    vec3 F = fresnelSchlick(max(dot(H, fragToCam), 0.0), F0);       
+    float NDF = DistributionGGX(normal, H, roughness); // what proportion of microfacts are aligned with the bisecting vector, causing light to bounce towards the camera
+    float G = GeometrySmith(normal, fragToCam, fragToLight, roughness); // how much of the microfacets are self shadowing
+    vec3 F = fresnelSchlick(max(dot(H, fragToCam), 0.0), F0); // how much energy is reflected in a specular fashion
     
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;	  
+    kD *= 1.0 - metallic;
     
     vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(normal, fragToCam), 0.0) * max(dot(normal, fragToLight), 0.0) + 0.0001;
     vec3 specular = numerator / denominator;  
         
     // add to outgoing radiance Lo
-    float NdotL = max(dot(normal, fragToLight), 0.0);                
+    float NdotL = max(dot(normal, fragToLight), 0.0);
 
     return (kD * in_albedo / PI + specular) * radiance * NdotL;
 }

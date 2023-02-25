@@ -30,6 +30,7 @@ func SetupMenuBar(world World) imgui.Vec2 {
 			}
 			light := entities.CreateLight(lightInfo)
 			world.AddEntity(light)
+			panels.SelectEntity(light)
 		}
 		if imgui.MenuItem("Show Debug") {
 			panels.ShowDebug = !panels.ShowDebug

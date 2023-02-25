@@ -17,7 +17,7 @@ struct Light {
     int type;
 
     // general props
-    vec3 diffuse;
+    vec4 diffuse;
 
     // directional
     vec3 dir;
@@ -187,7 +187,7 @@ void main()
             fragToLight = normalize(light.position - fs_in.FragPos);
         }
 
-        vec3 lightColor = light.diffuse;
+        vec3 lightColor = vec3(light.diffuse) * light.diffuse.w; // multiply color by intensity
         float shadow = ShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
         shadow = 0;
 

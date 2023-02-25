@@ -146,7 +146,7 @@ func (g *Izzet) loadPrefabs() {
 
 func (g *Izzet) loadEntities() {
 	lightInfo := &entities.LightInfo{
-		Diffuse:   mgl64.Vec3{5, 5, 5},
+		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
 		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)

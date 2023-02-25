@@ -3,7 +3,7 @@ package entities
 import "github.com/go-gl/mathgl/mgl64"
 
 type LightInfo struct {
-	Diffuse   mgl64.Vec3
+	Diffuse   mgl64.Vec4 // W component is the intensity
 	Direction mgl64.Vec3
 	Type      int // 0 - directional
 }

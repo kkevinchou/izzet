@@ -6,12 +6,16 @@ type DebugSettings struct {
 	DirectionalLightX int32
 	DirectionalLightY int32
 	DirectionalLightZ int32
+	Roughness         float32
+	Metallic          float32
 }
 
 var DBG DebugSettings = DebugSettings{
-	DirectionalLightX: -1,
-	DirectionalLightY: -1,
-	DirectionalLightZ: -1,
+	DirectionalLightX: 0,
+	DirectionalLightY: 0,
+	DirectionalLightZ: 0,
+	Roughness:         0.8,
+	Metallic:          0.8,
 }
 
 func BuildDebug(world World) {
@@ -27,6 +31,8 @@ func BuildDebug(world World) {
 	imgui.InputInt("directional light X", &DBG.DirectionalLightX)
 	imgui.InputInt("directional light Y", &DBG.DirectionalLightY)
 	imgui.InputInt("directional light Z", &DBG.DirectionalLightZ)
+	imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
+	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 	imgui.End()
 
 }

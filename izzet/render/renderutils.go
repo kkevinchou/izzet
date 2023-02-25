@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
@@ -164,8 +165,10 @@ func drawModel(viewerContext ViewerContext,
 			}
 
 			shader.SetUniformVec3("albedo", pbr.PBRMetallicRoughness.BaseColorFactor.Vec3())
-			shader.SetUniformFloat("metallic", pbr.PBRMetallicRoughness.MetalicFactor)
-			shader.SetUniformFloat("roughness", pbr.PBRMetallicRoughness.RoughnessFactor)
+			shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+			shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+			// shader.SetUniformFloat("metallic", pbr.PBRMetallicRoughness.MetalicFactor)
+			// shader.SetUniformFloat("roughness", pbr.PBRMetallicRoughness.RoughnessFactor)
 			shader.SetUniformFloat("ao", 1.0)
 		} else {
 			shader.SetUniformInt("hasPBRMaterial", 0)

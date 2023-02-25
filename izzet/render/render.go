@@ -258,7 +258,8 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					drawLines(viewerContext, jointShader, jointLines, 0.5, color)
 				}
 			}
-		} else if entity.ShapeData != nil && !shadowPass {
+		}
+		if entity.ShapeData != nil && !shadowPass {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
 

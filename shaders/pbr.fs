@@ -168,6 +168,12 @@ void main()
         in_albedo = in_albedo * texture(modelTexture, fs_in.TexCoord).xyz;
     }
 
+    // failsafe for when we pass in too many lights, i hope you like hot pink
+    if (lightCount > MAX_LIGHTS) {
+        FragColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
+        return;
+    }
+
     for(int i = 0; i < lightCount; ++i) {
         vec3 fragToCam = normalize(viewPos - fs_in.FragPos);
         float distance = length(lights[i].position - fs_in.FragPos);

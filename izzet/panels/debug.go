@@ -3,19 +3,21 @@ package panels
 import "github.com/inkyblackness/imgui-go/v4"
 
 type DebugSettings struct {
-	DirectionalLightX int32
-	DirectionalLightY int32
-	DirectionalLightZ int32
-	Roughness         float32
-	Metallic          float32
+	DirectionalLightX   int32
+	DirectionalLightY   int32
+	DirectionalLightZ   int32
+	Roughness           float32
+	Metallic            float32
+	PointLightIntensity int32
 }
 
 var DBG DebugSettings = DebugSettings{
-	DirectionalLightX: 0,
-	DirectionalLightY: 0,
-	DirectionalLightZ: 0,
-	Roughness:         0.8,
-	Metallic:          0.8,
+	DirectionalLightX:   0,
+	DirectionalLightY:   0,
+	DirectionalLightZ:   0,
+	Roughness:           0.8,
+	Metallic:            0.8,
+	PointLightIntensity: 8000,
 }
 
 func BuildDebug(world World) {
@@ -31,6 +33,7 @@ func BuildDebug(world World) {
 	imgui.InputInt("directional light X", &DBG.DirectionalLightX)
 	imgui.InputInt("directional light Y", &DBG.DirectionalLightY)
 	imgui.InputInt("directional light Z", &DBG.DirectionalLightZ)
+	imgui.InputInt("point light intensity", &DBG.PointLightIntensity)
 	imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
 	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 	imgui.End()

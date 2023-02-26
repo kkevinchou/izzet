@@ -124,12 +124,15 @@ func drawModel(viewerContext ViewerContext,
 	model *model.Model,
 	animationPlayer *animation.AnimationPlayer,
 	modelMatrix mgl64.Mat4,
+	pointLightShadowPass bool,
+	pointLightDepthCubeMap uint32,
 ) {
 	// TOOD(kevin): i hate this... Ideally we incorporate the model.RootTransforms to the vertex positions
 	// and the animation poses so that we don't have to multiple this matrix every frame.
 	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix).Mul4(model.RootTransforms())
 	_, r, _ := utils.Decompose(m32ModelMatrix)
 
+	// TODO refactor - move common shader setup outside of draw model
 	shader.Use()
 	shader.SetUniformMat4("model", m32ModelMatrix)
 	shader.SetUniformMat4("modelRotationMatrix", r.Mat4())
@@ -139,6 +142,7 @@ func drawModel(viewerContext ViewerContext,
 	shader.SetUniformFloat("shadowDistance", float32(shadowMap.ShadowDistance()))
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformInt("shadowMap", 31)
+	shader.SetUniformInt("depthCubeMap", 30)
 
 	setupLightingUniforms(shader, lightContext.Lights)
 
@@ -153,6 +157,12 @@ func drawModel(viewerContext ViewerContext,
 			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
 		}
 	}
+
+	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+
+	gl.ActiveTexture(gl.TEXTURE30)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, pointLightDepthCubeMap)
 
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, shadowMap.DepthTexture())

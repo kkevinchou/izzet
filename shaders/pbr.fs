@@ -36,10 +36,15 @@ uniform sampler2D modelTexture;
 uniform sampler2D shadowMap;
 uniform float shadowDistance;
 
+// point light shadows
+uniform samplerCube depthCubeMap;
+uniform float far_plane;
+
 // pbr materials
 uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
 uniform vec4 pbrBaseColorFactor;
+uniform float bias;
 
 const float PI = 3.14159265359;
 
@@ -51,7 +56,26 @@ in VS_OUT {
     vec2 TexCoord;
 } fs_in;
 
-float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
+float PointLightShadowCalculation(vec3 fragPos, vec3 lightPos)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = fragPos - lightPos;
+    // ise the fragment to light vector to sample from the depth map    
+    float closestDepth = texture(depthCubeMap, fragToLight).r;
+    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
+    closestDepth *= far_plane;
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+    // test for shadows
+    // float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
+    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;        
+    // display closestDepth as debug (to visualize depth cubemap)
+    // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);    
+        
+    return shadow;
+}
+
+float DirectionalLightShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 {
     if (length(vec3(fs_in.View * vec4(fs_in.FragPos, 1))) > shadowDistance) {
         return 0;
@@ -184,11 +208,14 @@ void main()
         int do_attenuation = 1;
 
         if (light.type == 0) {
+            // directional light case
             fragToLight = -normalize(light.dir);
-            shadow = ShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
+            shadow = DirectionalLightShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
             do_attenuation = 0;
         } else {
+            // handle point shadows here
             fragToLight = normalize(light.position - fs_in.FragPos);
+            shadow = PointLightShadowCalculation(fs_in.FragPos, light.position);
         }
 
         vec3 lightColor = vec3(light.diffuse) * light.diffuse.w; // multiply color by intensity

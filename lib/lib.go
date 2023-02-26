@@ -1,17 +1,23 @@
 package lib
 
-import "github.com/go-gl/gl/v4.1-core/gl"
+import (
+	"errors"
 
-func InitDepthCubeMap() uint32 {
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/settings"
+)
 
+func InitDepthCubeMap() (uint32, uint32) {
 	var depthCubeMapFBO uint32
 	gl.GenFramebuffers(1, &depthCubeMapFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, depthCubeMapFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
-	var depthCubeMap uint32
-	gl.GenTextures(1, &depthCubeMap)
+	var depthCubeMapTexture uint32
+	gl.GenTextures(1, &depthCubeMapTexture)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, depthCubeMapTexture)
 
-	width, height := 1920, 1080
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, depthCubeMap)
+	width, height := settings.DepthCubeMapWidth, settings.DepthCubeMapHeight
 	for i := 0; i < 6; i++ {
 		gl.TexImage2D(
 			gl.TEXTURE_CUBE_MAP_POSITIVE_X+uint32(i),
@@ -32,11 +38,13 @@ func InitDepthCubeMap() uint32 {
 	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, depthCubeMapFBO)
-	gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, depthCubeMap, 0)
+	gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, depthCubeMapTexture, 0)
 	gl.DrawBuffer(gl.NONE)
 	gl.ReadBuffer(gl.NONE)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
-	return depthCubeMap
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return depthCubeMapFBO, depthCubeMapTexture
 }

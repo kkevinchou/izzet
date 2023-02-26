@@ -66,10 +66,12 @@ type Renderer struct {
 	// render properties
 	fovY        float64
 	aspectRatio float64
+
 	// shaderManager *shaders.ShaderManager
-	shadowMap     *ShadowMap
-	imguiRenderer *ImguiOpenGL4Renderer
-	depthCubeMap  uint32
+	shadowMap           *ShadowMap
+	imguiRenderer       *ImguiOpenGL4Renderer
+	depthCubeMapTexture uint32
+	depthCubeMapFBO     uint32
 
 	colorPickingFB      uint32
 	colorPickingTexture uint32
@@ -109,7 +111,7 @@ func New(world World, shaderDirectory string) *Renderer {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
 	r.shadowMap = shadowMap
-	r.depthCubeMap = lib.InitDepthCubeMap()
+	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 
 	w, h := r.world.Window().GetSize()
 	r.colorPickingFB, r.colorPickingTexture = r.initFrameBuffer(int(w), int(h))
@@ -201,13 +203,120 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.RenderImgui()
 }
 
+func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+	defer resetGLRenderSettings()
+
+	shadowPassContext := &ShadowPassContext{Type: ShadowPassDirectional}
+	// directional shadow map
+	r.shadowMap.Prepare()
+	r.renderScene(viewerContext, lightContext, shadowPassContext)
+
+	// // point light shadow maps
+	resetGLRenderSettings()
+	r.renderToCubeDepthMap(viewerContext, lightContext)
+}
+
+func computeCubeMapTransforms(position mgl64.Vec3, near, far float64) []mgl64.Mat4 {
+	projectionMatrix := mgl64.Perspective(mgl64.DegToRad(90), float64(settings.DepthCubeMapWidth)/float64(settings.DepthCubeMapHeight), near, far)
+
+	cubeMapTransforms := []mgl64.Mat4{
+		projectionMatrix.Mul4( // right
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{1, 0, 0}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+		projectionMatrix.Mul4( // left
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{-1, 0, 0}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+		projectionMatrix.Mul4( // up
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, 1, 0}),
+				mgl64.Vec3{0, 0, 1},
+			),
+		),
+		projectionMatrix.Mul4( // down
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, -1, 0}),
+				mgl64.Vec3{0, 0, -1},
+			),
+		),
+		projectionMatrix.Mul4( // back
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, 0, 1}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+		projectionMatrix.Mul4( // front
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, 0, -1}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+	}
+	return cubeMapTransforms
+}
+
+func (r *Renderer) renderToCubeDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+	defer resetGLRenderSettings()
+
+	pointLight := r.world.Lights()[0]
+	if pointLight.LightInfo.Type != 1 {
+		panic("not a point light")
+	}
+
+	gl.Viewport(0, 0, int32(settings.DepthCubeMapWidth), int32(settings.DepthCubeMapHeight))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.depthCubeMapFBO)
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	// gl.CullFace(gl.FRONT)
+
+	position := pointLight.WorldPosition()
+	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, settings.DepthCubeMapFar)
+
+	shader := r.shaderManager.GetShaderProgram("point_shadow")
+	shader.Use()
+	for i, transform := range shadowTransforms {
+		shader.SetUniformMat4(fmt.Sprintf("shadowMatrices[%d]", i), utils.Mat4F64ToF32(transform))
+	}
+	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
+	shader.SetUniformInt("depthCubeMap", 30)
+
+	gl.ActiveTexture(gl.TEXTURE30)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+
+	for _, entity := range r.world.Entities() {
+		if entity.Prefab != nil {
+			modelMatrix := entities.ComputeTransformMatrix(entity)
+			model := entity.Prefab.ModelRefs[0].Model
+
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+
+			for _, meshChunk := range model.MeshChunks() {
+				gl.BindVertexArray(meshChunk.VAO())
+				gl.DrawElements(gl.TRIANGLES, int32(meshChunk.VertexCount()), gl.UNSIGNED_INT, nil)
+			}
+		}
+	}
+}
+
 // renderScene renders a scene from the perspective of a viewer
-func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPass bool) {
+func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPassContext *ShadowPassContext) {
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
 		modelMatrix := entities.ComputeTransformMatrix(entity)
 
+		pointLightShadowPass := false
 		if entity.Prefab != nil {
 			shader := "model_static"
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
@@ -223,6 +332,8 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				entity.Prefab.ModelRefs[0].Model,
 				entity.AnimationPlayer,
 				modelMatrix,
+				pointLightShadowPass,
+				r.depthCubeMapTexture,
 			)
 
 			// joint rendering for the selected entity
@@ -263,7 +374,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		if len(entity.ShapeData) > 0 && !shadowPass {
+		if len(entity.ShapeData) > 0 && shadowPassContext == nil {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
 
@@ -280,7 +391,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		if entity.ImageInfo != nil && !shadowPass {
+		if entity.ImageInfo != nil && shadowPassContext == nil {
 			texture := r.world.AssetManager().GetTexture("light")
 			if texture != nil {
 				a := mgl64.Vec4{0, 1, 0, 1}
@@ -399,7 +510,11 @@ func (r *Renderer) RenderImgui() {
 
 	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize)
 	panels.BuildPrefabs(r.world.Prefabs(), r.world)
-	panels.BuildDebug(r.world)
+	panels.BuildDebug(
+		r.world,
+		r.depthCubeMapTexture,
+		r.aspectRatio,
+	)
 
 	// imgui.End()
 
@@ -469,14 +584,7 @@ func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext Lig
 	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.renderScene(viewerContext, lightContext, false)
-}
-
-func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext LightContext) {
-	defer resetGLRenderSettings()
-	r.shadowMap.Prepare()
-
-	r.renderScene(viewerContext, lightContext, true)
+	r.renderScene(viewerContext, lightContext, nil)
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
@@ -608,11 +716,6 @@ func (r *Renderer) renderSkybox() {
 	gl.Viewport(0, 0, int32(w), int32(h))
 
 	drawWithNDC(r.shaderManager)
-
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	shaderManager := r.shaderManager
-	shaderManager.GetShaderProgram("skybox").Use()
-
 }
 
 func (r *Renderer) ViewerContext() ViewerContext {

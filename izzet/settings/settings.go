@@ -32,4 +32,9 @@ const (
 
 	// this number should like up with MAX_LIGHTS in the fragment shader
 	MaxLightCount int = 10
+
+	DepthCubeMapWidth  float32 = 4096
+	DepthCubeMapHeight float32 = 4096
+	DepthCubeMapNear   float64 = 1
+	DepthCubeMapFar    float64 = 1000
 )

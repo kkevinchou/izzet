@@ -16,37 +16,48 @@ func initOpenGLRenderSettings() {
 }
 
 func compileShaders(shaderManager *shaders.ShaderManager) {
-	if err := shaderManager.CompileShaderProgram("skybox", "skybox", "skybox"); err != nil {
+	if err := shaderManager.CompileShaderProgram("skybox", "skybox", "skybox", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("modelpbr", "model", "pbr"); err != nil {
+	if err := shaderManager.CompileShaderProgram("modelpbr", "model", "pbr", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug"); err != nil {
+	// shader for rendering the depth cubemap for point shadows
+	if err := shaderManager.CompileShaderProgram("modelpbr_pointshadow", "model", "pbr", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("model_static", "model_static", "pbr"); err != nil {
+	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("depthDebug", "basictexture", "depthvalue"); err != nil {
+	if err := shaderManager.CompileShaderProgram("model_static", "model_static", "pbr", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("flat", "flat", "flat"); err != nil {
+	// shader for rendering the depth cubemap for point shadows
+	if err := shaderManager.CompileShaderProgram("point_shadow", "point_shadow", "point_shadow", "point_shadow"); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc"); err != nil {
+	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("color_picking", "flat", "picking"); err != nil {
+	if err := shaderManager.CompileShaderProgram("depthDebug", "basictexture", "depthvalue", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("basic_quad", "basic_quad", "basic_quad"); err != nil {
+	if err := shaderManager.CompileShaderProgram("flat", "flat", "flat", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("basic_quad_world", "basic_quad_world", "basic_quad"); err != nil {
+	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("unit_circle", "unit_circle", "unit_circle"); err != nil {
+	if err := shaderManager.CompileShaderProgram("color_picking", "flat", "picking", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("basic_quad", "basic_quad", "basic_quad", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("basic_quad_world", "basic_quad_world", "basic_quad", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("unit_circle", "unit_circle", "unit_circle", ""); err != nil {
 		panic(err)
 	}
 }

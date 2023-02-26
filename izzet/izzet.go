@@ -63,7 +63,11 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
-	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
+
+	g.camera = &camera.Camera{
+		Position:    mgl64.Vec3{250, 200, 300},
+		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
+	}
 	g.renderer = render.New(g, shaderDirectory)
 
 	g.entities = map[int]*entities.Entity{}
@@ -145,6 +149,15 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
+	lightInfo2 := &entities.LightInfo{
+		Diffuse: mgl64.Vec4{1, 1, 1, 8000},
+		Type:    1,
+	}
+	pointLight := entities.CreateLight(lightInfo2)
+	pointLight.LocalPosition = mgl64.Vec3{0, 50, 402}
+	g.entities[pointLight.ID] = pointLight
+	panels.SelectEntity(pointLight)
+
 	lightInfo := &entities.LightInfo{
 		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
 		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
@@ -154,8 +167,8 @@ func (g *Izzet) loadEntities() {
 
 	for _, pf := range g.Prefabs() {
 		if pf.Name == "alpha" {
-			entity := entities.InstantiateFromPrefab(pf)
-			g.entities[entity.ID] = entity
+			// entity := entities.InstantiateFromPrefab(pf)
+			// g.entities[entity.ID] = entity
 			// entity.AnimationPlayer.PlayAnimation("Cast1")
 			// entity.AnimationPlayer.UpdateTo(0)
 

@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -68,6 +69,7 @@ type Renderer struct {
 	// shaderManager *shaders.ShaderManager
 	shadowMap     *ShadowMap
 	imguiRenderer *ImguiOpenGL4Renderer
+	depthCubeMap  uint32
 
 	colorPickingFB      uint32
 	colorPickingTexture uint32
@@ -107,6 +109,7 @@ func New(world World, shaderDirectory string) *Renderer {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
 	r.shadowMap = shadowMap
+	r.depthCubeMap = lib.InitDepthCubeMap()
 
 	w, h := r.world.Window().GetSize()
 	r.colorPickingFB, r.colorPickingTexture = r.initFrameBuffer(int(w), int(h))

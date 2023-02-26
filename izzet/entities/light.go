@@ -12,6 +12,7 @@ func CreateLight(lightInfo *LightInfo) *Entity {
 	entity := InstantiateBaseEntity("light", id)
 	entity.ImageInfo = &ImageInfo{ImageName: "light.png"}
 	entity.LightInfo = lightInfo
+	entity.Billboard = &BillboardInfo{}
 	entity.Scale = mgl64.Vec3{10, 10, 10}
 	// entity.ShapeData = []*ShapeData{
 	// 	&ShapeData{

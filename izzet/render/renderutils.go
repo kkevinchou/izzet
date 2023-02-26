@@ -429,15 +429,22 @@ func drawBillboardTexture(
 	shaderManager *shaders.ShaderManager,
 	texture uint32,
 	modelMatrix mgl64.Mat4,
+	cameraUp mgl64.Vec3,
+	cameraRight mgl64.Vec3,
 ) {
-	// texture coords top left = 0,0 | bottom right = 1,1
+	topLeft := utils.Vec3F64ToF32(cameraRight.Mul(-1).Add(cameraUp))
+	bottomLeft := utils.Vec3F64ToF32(cameraRight.Mul(-1).Add(cameraUp.Mul(-1)))
+	topRight := utils.Vec3F64ToF32(cameraRight.Mul(1).Add(cameraUp))
+	bottomRight := utils.Vec3F64ToF32(cameraRight.Mul(1).Add(cameraUp.Mul(-1)))
+
 	var vertices []float32 = []float32{
-		-1, -1, 0, 0.0, 0.0,
-		1, -1, 0, 1.0, 0.0,
-		1, 1, 0, 1.0, 1.0,
-		1, 1, 0, 1.0, 1.0,
-		-1, 1, 0, 0.0, 1.0,
-		-1, -1, 0, 0.0, 0.0,
+		bottomLeft.X(), bottomLeft.Y(), bottomLeft.Z(), 0.0, 0.0,
+		bottomRight.X(), bottomRight.Y(), bottomRight.Z(), 1.0, 0.0,
+		topRight.X(), topRight.Y(), topRight.Z(), 1.0, 1.0,
+
+		topRight.X(), topRight.Y(), topRight.Z(), 1.0, 1.0,
+		topLeft.X(), topLeft.Y(), topLeft.Z(), 0.0, 1.0,
+		bottomLeft.X(), bottomLeft.Y(), bottomLeft.Z(), 0.0, 0.0,
 	}
 
 	var vbo, vao uint32
@@ -467,7 +474,6 @@ func drawBillboardTexture(
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
-	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{
 		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
 		1 * hudScale, -1 * hudScale, 0, 1.0, 0.0,

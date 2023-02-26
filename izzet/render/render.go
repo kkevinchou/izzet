@@ -278,11 +278,16 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 
 		if entity.ImageInfo != nil && !shadowPass {
-			// shader := shaderManager.GetShaderProgram("flat")
 			texture := r.world.AssetManager().GetTexture("light")
-
 			if texture != nil {
-				drawBillboardTexture(&viewerContext, shaderManager, texture.ID, modelMatrix)
+				a := mgl64.Vec4{0, 1, 0, 1}
+				b := mgl64.Vec4{1, 0, 0, 1}
+				cameraUp := viewerContext.Orientation.Mat4().Mul4x1(a).Vec3()
+				cameraRight := viewerContext.Orientation.Mat4().Mul4x1(b).Vec3()
+
+				if entity.Billboard != nil {
+					drawBillboardTexture(&viewerContext, shaderManager, texture.ID, modelMatrix, cameraUp, cameraRight)
+				}
 			} else {
 				fmt.Println("couldn't find texture", "light")
 			}

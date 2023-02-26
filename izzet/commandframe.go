@@ -142,12 +142,6 @@ func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
 	}
 }
 
-func InteractingWithUI() bool {
-	anyPopup := imgui.IsPopupOpenV("", imgui.PopupFlagsAnyPopup)
-	anyWindow := imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow)
-	return anyPopup || anyWindow
-}
-
 func (g *Izzet) selectEntity(frameInput input.Input) bool {
 	mouseInput := frameInput.MouseInput
 
@@ -601,4 +595,10 @@ func getControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {
 		controlVector[1]++
 	}
 	return controlVector
+}
+
+func InteractingWithUI() bool {
+	anyPopup := imgui.IsPopupOpenV("", imgui.PopupFlagsAnyPopup)
+	anyWindow := imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow)
+	return anyPopup || anyWindow
 }

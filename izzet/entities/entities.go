@@ -40,6 +40,9 @@ type Entity struct {
 	// image
 	ImageInfo *ImageInfo
 
+	// misc
+	Billboard *BillboardInfo
+
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity

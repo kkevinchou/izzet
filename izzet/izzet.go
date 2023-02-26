@@ -63,7 +63,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
-	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 100, 300}, Orientation: mgl64.QuatIdent()}
+	g.camera = &camera.Camera{Position: mgl64.Vec3{0, 0, 300}, Orientation: mgl64.QuatIdent()}
 	g.renderer = render.New(g, shaderDirectory)
 
 	g.entities = map[int]*entities.Entity{}

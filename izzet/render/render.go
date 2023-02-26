@@ -292,6 +292,24 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				fmt.Println("couldn't find texture", "light")
 			}
 		}
+
+		lightInfo := entity.LightInfo
+		if lightInfo != nil {
+			if lightInfo.Type == 0 {
+				shader := shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+
+				dir := lightInfo.Direction.Normalize().Mul(50)
+				// directional light arrow
+				lines := [][]mgl64.Vec3{
+					[]mgl64.Vec3{
+						entity.WorldPosition(),
+						entity.WorldPosition().Add(dir),
+					},
+				}
+				drawLines(viewerContext, shader, lines, 0.5, color)
+			}
+		}
 	}
 }
 

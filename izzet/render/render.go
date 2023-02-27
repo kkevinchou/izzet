@@ -195,7 +195,8 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.clearMainFrameBuffer()
 	r.renderSkybox()
 
-	r.renderToDepthMap(lightViewerContext, lightContext)
+	r.renderToSquareDepthMap(lightViewerContext, lightContext)
+	r.renderToCubeDepthMap()
 	r.renderColorPicking(cameraViewerContext)
 	r.renderToDisplay(cameraViewerContext, lightContext)
 
@@ -203,70 +204,57 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.renderImgui()
 }
 
-func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings()
-
-	shadowPassContext := &ShadowPassContext{Type: ShadowPassDirectional}
-	// directional shadow map
 	r.shadowMap.Prepare()
-	r.renderScene(viewerContext, lightContext, shadowPassContext)
+	shaderManager := r.shaderManager
 
-	// // point light shadow maps
-	resetGLRenderSettings()
-	r.renderToCubeDepthMap(viewerContext, lightContext)
-}
+	for _, entity := range r.world.Entities() {
+		modelMatrix := entities.ComputeTransformMatrix(entity)
 
-func computeCubeMapTransforms(position mgl64.Vec3, near, far float64) []mgl64.Mat4 {
-	projectionMatrix := mgl64.Perspective(mgl64.DegToRad(90), float64(settings.DepthCubeMapWidth)/float64(settings.DepthCubeMapHeight), near, far)
+		if entity.Prefab != nil {
+			shader := shaderManager.GetShaderProgram("modelpbr")
+			shader.Use()
 
-	cubeMapTransforms := []mgl64.Mat4{
-		projectionMatrix.Mul4( // right
-			mgl64.LookAtV(
-				position,
-				position.Add(mgl64.Vec3{1, 0, 0}),
-				mgl64.Vec3{0, -1, 0},
-			),
-		),
-		projectionMatrix.Mul4( // left
-			mgl64.LookAtV(
-				position,
-				position.Add(mgl64.Vec3{-1, 0, 0}),
-				mgl64.Vec3{0, -1, 0},
-			),
-		),
-		projectionMatrix.Mul4( // up
-			mgl64.LookAtV(
-				position,
-				position.Add(mgl64.Vec3{0, 1, 0}),
-				mgl64.Vec3{0, 0, 1},
-			),
-		),
-		projectionMatrix.Mul4( // down
-			mgl64.LookAtV(
-				position,
-				position.Add(mgl64.Vec3{0, -1, 0}),
-				mgl64.Vec3{0, 0, -1},
-			),
-		),
-		projectionMatrix.Mul4( // back
-			mgl64.LookAtV(
-				position,
-				position.Add(mgl64.Vec3{0, 0, 1}),
-				mgl64.Vec3{0, -1, 0},
-			),
-		),
-		projectionMatrix.Mul4( // front
-			mgl64.LookAtV(
-				position,
-				position.Add(mgl64.Vec3{0, 0, -1}),
-				mgl64.Vec3{0, -1, 0},
-			),
-		),
+			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+				shader.SetUniformInt("isAnimated", 1)
+				animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+				// if animationTransforms is nil, the shader will execute reading into invalid memory
+				// so, we need to explicitly guard for this
+				if animationTransforms == nil {
+					panic("animationTransforms not found")
+				}
+				for i := 0; i < len(animationTransforms); i++ {
+					shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
+				}
+			} else {
+				shader.SetUniformInt("isAnimated", 0)
+			}
+
+			// TOOD(kevin): i hate this... Ideally we incorporate the model.RootTransforms to the vertex positions
+			// and the animation poses so that we don't have to multiple this matrix every frame.
+			model := entity.Prefab.ModelRefs[0].Model
+			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix).Mul4(model.RootTransforms())
+			_, rotation, _ := utils.Decompose(m32ModelMatrix)
+
+			// TODO refactor - move common shader setup outside of draw model
+			shader.SetUniformMat4("model", m32ModelMatrix)
+			shader.SetUniformMat4("modelRotationMatrix", rotation.Mat4())
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+
+			for _, meshChunk := range model.MeshChunks() {
+				gl.BindVertexArray(meshChunk.VAO())
+				gl.DrawElements(gl.TRIANGLES, int32(meshChunk.VertexCount()), gl.UNSIGNED_INT, nil)
+			}
+		}
 	}
-	return cubeMapTransforms
 }
 
-func (r *Renderer) renderToCubeDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToCubeDepthMap() {
 	defer resetGLRenderSettings()
 
 	pointLight := r.world.Lights()[0]
@@ -309,13 +297,12 @@ func (r *Renderer) renderToCubeDepthMap(viewerContext ViewerContext, lightContex
 }
 
 // renderScene renders a scene from the perspective of a viewer
-func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, shadowPassContext *ShadowPassContext) {
+func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext) {
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
 		modelMatrix := entities.ComputeTransformMatrix(entity)
 
-		pointLightShadowPass := false
 		if entity.Prefab != nil {
 			shaderName := "modelpbr"
 			shader := shaderManager.GetShaderProgram(shaderName)
@@ -335,7 +322,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				entity.Prefab.ModelRefs[0].Model,
 				entity.AnimationPlayer,
 				modelMatrix,
-				pointLightShadowPass,
 				r.depthCubeMapTexture,
 			)
 
@@ -377,7 +363,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		if len(entity.ShapeData) > 0 && shadowPassContext == nil {
+		if len(entity.ShapeData) > 0 {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
 
@@ -394,7 +380,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		if entity.ImageInfo != nil && shadowPassContext == nil {
+		if entity.ImageInfo != nil {
 			texture := r.world.AssetManager().GetTexture("light")
 			if texture != nil {
 				a := mgl64.Vec4{0, 1, 0, 1}
@@ -587,7 +573,7 @@ func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext Lig
 	w, h := r.world.Window().GetSize()
 	gl.Viewport(0, 0, int32(w), int32(h))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.renderScene(viewerContext, lightContext, nil)
+	r.renderScene(viewerContext, lightContext)
 }
 
 func createModelMatrix(scaleMatrix, rotationMatrix, translationMatrix mgl64.Mat4) mgl64.Mat4 {
@@ -752,4 +738,54 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 
 	id := int(uintID)
 	return &id
+}
+
+func computeCubeMapTransforms(position mgl64.Vec3, near, far float64) []mgl64.Mat4 {
+	projectionMatrix := mgl64.Perspective(mgl64.DegToRad(90), float64(settings.DepthCubeMapWidth)/float64(settings.DepthCubeMapHeight), near, far)
+
+	cubeMapTransforms := []mgl64.Mat4{
+		projectionMatrix.Mul4( // right
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{1, 0, 0}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+		projectionMatrix.Mul4( // left
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{-1, 0, 0}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+		projectionMatrix.Mul4( // up
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, 1, 0}),
+				mgl64.Vec3{0, 0, 1},
+			),
+		),
+		projectionMatrix.Mul4( // down
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, -1, 0}),
+				mgl64.Vec3{0, 0, -1},
+			),
+		),
+		projectionMatrix.Mul4( // back
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, 0, 1}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+		projectionMatrix.Mul4( // front
+			mgl64.LookAtV(
+				position,
+				position.Add(mgl64.Vec3{0, 0, -1}),
+				mgl64.Vec3{0, -1, 0},
+			),
+		),
+	}
+	return cubeMapTransforms
 }

@@ -124,7 +124,6 @@ func drawModel(viewerContext ViewerContext,
 	model *model.Model,
 	animationPlayer *animation.AnimationPlayer,
 	modelMatrix mgl64.Mat4,
-	pointLightShadowPass bool,
 	pointLightDepthCubeMap uint32,
 ) {
 	// TOOD(kevin): i hate this... Ideally we incorporate the model.RootTransforms to the vertex positions

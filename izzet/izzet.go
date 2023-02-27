@@ -163,6 +163,7 @@ func (g *Izzet) loadEntities() {
 		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)
+	directionalLight.LocalPosition = mgl64.Vec3{0, 200, 0}
 	g.entities[directionalLight.ID] = directionalLight
 
 	for _, pf := range g.Prefabs() {

@@ -22,34 +22,41 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 jointTransforms[MAX_JOINTS];
 uniform mat4 lightSpaceMatrix;
+uniform int isAnimated;
 
 void main() {
     vec4 totalPos = vec4(0.0);
 	vec4 totalNormal = vec4(0.0);
 
-    // note: the total position post transformation does not necessarily have W == 1
-    // i.e.
-    // a = totalPos
-    // b = vec4(totalPos.xyz, 1)
-    // a does not equal b here.
+    if (isAnimated == 1) {
+        // note: the total position post transformation does not necessarily have W == 1
+        // i.e.
+        // a = totalPos
+        // b = vec4(totalPos.xyz, 1)
+        // a does not equal b here.
 
-	for(int i = 0; i < MAX_WEIGHTS; i++){
-		int jointIndex = jointIndices[i];
+        for(int i = 0; i < MAX_WEIGHTS; i++){
+            int jointIndex = jointIndices[i];
 
-		mat4 jointTransform = jointTransforms[jointIndex];
-		vec4 posePosition = jointTransform * vec4(aPos, 1.0);
-		totalPos += posePosition * jointWeights[i];
+            mat4 jointTransform = jointTransforms[jointIndex];
+            vec4 posePosition = jointTransform * vec4(aPos, 1.0);
+            totalPos += posePosition * jointWeights[i];
 
-		vec4 worldNormal = jointTransform * vec4(aNormal, 0.0);
-		totalNormal += worldNormal * jointWeights[i];
-	}
+            vec4 worldNormal = jointTransform * vec4(aNormal, 0.0);
+            totalNormal += worldNormal * jointWeights[i];
+        }
+
+    } else {
+        totalPos = vec4(aPos, 1);
+        totalNormal = vec4(aNormal, 1.0);
+    }
+
+    // TODO: the normal matrix is expensive to calculate and should be passed in as a uniform
+    // vs_out.Normal = transpose(inverse(mat3(model))) * aNormal;
     vs_out.Normal = vec3(transpose(inverse(modelRotationMatrix)) * totalNormal);
-
     vs_out.FragPos = vec3(model * totalPos);
-    vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
-
     vs_out.View = view;
-	vs_out.TexCoord = aTexCoord;
-
+    vs_out.TexCoord = aTexCoord;
+    vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     gl_Position = (projection * (view * (model * totalPos)));
 }

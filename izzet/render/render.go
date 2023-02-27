@@ -194,13 +194,13 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	r.clearMainFrameBuffer()
 	r.renderSkybox()
+
 	r.renderToDepthMap(lightViewerContext, lightContext)
 	r.renderColorPicking(cameraViewerContext)
 	r.renderToDisplay(cameraViewerContext, lightContext)
 
 	r.renderGizmos(cameraViewerContext)
-
-	r.RenderImgui()
+	r.renderImgui()
 }
 
 func (r *Renderer) renderToDepthMap(viewerContext ViewerContext, lightContext LightContext) {
@@ -277,7 +277,6 @@ func (r *Renderer) renderToCubeDepthMap(viewerContext ViewerContext, lightContex
 	gl.Viewport(0, 0, int32(settings.DepthCubeMapWidth), int32(settings.DepthCubeMapHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.depthCubeMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	// gl.CullFace(gl.FRONT)
 
 	position := pointLight.WorldPosition()
 	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, settings.DepthCubeMapFar)
@@ -318,16 +317,20 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 		pointLightShadowPass := false
 		if entity.Prefab != nil {
-			shader := "model_static"
+			shaderName := "modelpbr"
+			shader := shaderManager.GetShaderProgram(shaderName)
+			shader.Use()
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-				shader = "modelpbr"
+				shader.SetUniformInt("isAnimated", 1)
+			} else {
+				shader.SetUniformInt("isAnimated", 0)
 			}
 
 			drawModel(
 				viewerContext,
 				lightContext,
 				r.shadowMap,
-				shaderManager.GetShaderProgram(shader),
+				shader,
 				r.world.AssetManager(),
 				entity.Prefab.ModelRefs[0].Model,
 				entity.AnimationPlayer,
@@ -483,7 +486,7 @@ func (r *Renderer) renderColorPicking(viewerContext ViewerContext) {
 	}
 }
 
-func (r *Renderer) RenderImgui() {
+func (r *Renderer) renderImgui() {
 	r.world.Platform().NewFrame()
 	imgui.NewFrame()
 

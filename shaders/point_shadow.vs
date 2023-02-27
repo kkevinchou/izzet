@@ -12,9 +12,7 @@ layout (location = 4) in vec3 jointWeights;
 uniform mat4 model;
 
 // animation
-uniform mat4 modelRotationMatrix;
 uniform mat4 jointTransforms[MAX_JOINTS];
-uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
 
 void main()

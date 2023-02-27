@@ -36,5 +36,5 @@ const (
 	DepthCubeMapWidth  float32 = 4096
 	DepthCubeMapHeight float32 = 4096
 	DepthCubeMapNear   float64 = 1
-	DepthCubeMapFar    float64 = 1000
+	DepthCubeMapFar    float64 = 800
 )

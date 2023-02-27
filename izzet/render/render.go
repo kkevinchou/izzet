@@ -271,6 +271,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 	shader := r.shaderManager.GetShaderProgram("point_shadow")
 	shader.Use()
+	setupLightingUniforms(shader, lightContext.Lights)
 	for i, transform := range shadowTransforms {
 		shader.SetUniformMat4(fmt.Sprintf("shadowMatrices[%d]", i), utils.Mat4F64ToF32(transform))
 	}
@@ -282,15 +283,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 			modelMatrix := entities.ComputeTransformMatrix(entity)
 			model := entity.Prefab.ModelRefs[0].Model
 			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix).Mul4(model.RootTransforms())
-			_, rotation, _ := utils.Decompose(m32ModelMatrix)
-
 			shader.SetUniformMat4("model", m32ModelMatrix)
-			shader.SetUniformMat4("modelRotationMatrix", rotation.Mat4())
-			// shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			// shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			// shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-
-			setupLightingUniforms(shader, lightContext.Lights)
 
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 				shader.SetUniformInt("isAnimated", 1)

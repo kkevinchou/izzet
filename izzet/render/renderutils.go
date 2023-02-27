@@ -1,6 +1,8 @@
 package render
 
 import (
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 
@@ -614,4 +616,80 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+}
+
+func (r *Renderer) initFrameBuffer(width int, height int) (uint32, uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
+	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return fbo, texture
+}
+
+func (r *Renderer) clearMainFrameBuffer() {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+}
+
+func (r *Renderer) renderSkybox() {
+	defer resetGLRenderSettings()
+	w, h := r.world.Window().GetSize()
+	gl.Viewport(0, 0, int32(w), int32(h))
+
+	drawWithNDC(r.shaderManager)
+}
+
+func (r *Renderer) ViewerContext() ViewerContext {
+	return r.viewerContext
+}
+
+func (r *Renderer) handleResize() {
+	w, h := r.world.Window().GetSize()
+	r.aspectRatio = float64(w) / float64(h)
+	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
+}
+
+func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	data := make([]byte, 4)
+	_, h := r.world.Window().GetSize()
+	gl.ReadPixels(int32(pixelPosition[0]), int32(h)-int32(pixelPosition[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+
+	// discard the alpha channel data
+	data[3] = 0
+
+	// NOTE(kevin) actually not sure why, but this works
+	// i would've expected to need to multiply by 255, but apparently it's handled somehow
+	uintID := binary.LittleEndian.Uint32(data)
+	if uintID == settings.EmptyColorPickingID {
+		return nil
+	}
+
+	id := int(uintID)
+	return &id
 }

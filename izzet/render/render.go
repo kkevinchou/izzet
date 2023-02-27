@@ -271,7 +271,6 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 	shader := r.shaderManager.GetShaderProgram("point_shadow")
 	shader.Use()
-	setupLightingUniforms(shader, lightContext.Lights)
 	for i, transform := range shadowTransforms {
 		shader.SetUniformMat4(fmt.Sprintf("shadowMatrices[%d]", i), utils.Mat4F64ToF32(transform))
 	}

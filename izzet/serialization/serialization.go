@@ -31,6 +31,9 @@ type SerializedEntity struct {
 	Billboard *entities.BillboardInfo
 	LightInfo *entities.LightInfo
 	ImageInfo *entities.ImageInfo
+	ShapeData []*entities.ShapeData
+
+	ChildIDs []int
 }
 
 type Serializer struct {
@@ -44,7 +47,6 @@ func New(world World) *Serializer {
 
 func (s *Serializer) WriteOut(filepath string) {
 	serializedEntities := []SerializedEntity{}
-	// sEntityMap := map[string]SerializedEntity{}
 	for _, entity := range s.world.Entities() {
 		sEntity := SerializedEntity{
 			Name:     entity.Name,
@@ -56,6 +58,14 @@ func (s *Serializer) WriteOut(filepath string) {
 			ImageInfo: entity.ImageInfo,
 			LightInfo: entity.LightInfo,
 			Billboard: entity.Billboard,
+			ShapeData: entity.ShapeData,
+			ChildIDs:  []int{},
+		}
+
+		if entity.Children != nil {
+			for _, child := range entity.Children {
+				sEntity.ChildIDs = append(sEntity.ChildIDs, child.ID)
+			}
 		}
 
 		if entity.Prefab != nil {
@@ -116,6 +126,7 @@ func (s *Serializer) ReadIn(filepath string) error {
 }
 
 func (s *Serializer) Entities() []*entities.Entity {
+	entityMap := map[int]*entities.Entity{}
 	dsEntities := []*entities.Entity{}
 	for _, e := range s.serializedWorld.Entities {
 		var dsEntity *entities.Entity
@@ -128,6 +139,7 @@ func (s *Serializer) Entities() []*entities.Entity {
 		dsEntity.LightInfo = e.LightInfo
 		dsEntity.Billboard = e.Billboard
 		dsEntity.ImageInfo = e.ImageInfo
+		dsEntity.ShapeData = e.ShapeData
 
 		dsEntity.LocalPosition = e.Position
 		dsEntity.LocalRotation = e.Rotation
@@ -136,7 +148,17 @@ func (s *Serializer) Entities() []*entities.Entity {
 			dsEntity.Scale = mgl64.Vec3{1, 1, 1}
 		}
 
+		entityMap[dsEntity.ID] = dsEntity
 		dsEntities = append(dsEntities, dsEntity)
 	}
+
+	// set up parental relationship
+	for _, e := range s.serializedWorld.Entities {
+		for _, id := range e.ChildIDs {
+			entityMap[e.ID].Children[id] = entityMap[id]
+			entityMap[id].Parent = entityMap[e.ID]
+		}
+	}
+
 	return dsEntities
 }

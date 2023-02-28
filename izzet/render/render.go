@@ -403,7 +403,13 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				cameraRight := viewerContext.Orientation.Mat4().Mul4x1(b).Vec3()
 
 				if entity.Billboard != nil {
-					drawBillboardTexture(&viewerContext, shaderManager, texture.ID, modelMatrix, cameraUp, cameraRight)
+					shader := shaderManager.GetShaderProgram("basic_quad_world")
+					shader.Use()
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
 				}
 			} else {
 				fmt.Println("couldn't find texture", "light")
@@ -457,7 +463,32 @@ func (r *Renderer) renderToColorPickingBuffer(viewerContext ViewerContext) {
 				modelMatrix,
 				entity.ID,
 			)
-		} else if len(entity.ShapeData) > 0 {
+		}
+
+		if entity.ImageInfo != nil {
+			texture := r.world.AssetManager().GetTexture("light")
+			if texture != nil {
+				a := mgl64.Vec4{0, 1, 0, 1}
+				b := mgl64.Vec4{1, 0, 0, 1}
+				cameraUp := viewerContext.Orientation.Mat4().Mul4x1(a).Vec3()
+				cameraRight := viewerContext.Orientation.Mat4().Mul4x1(b).Vec3()
+
+				if entity.Billboard != nil {
+					shader := shaderManager.GetShaderProgram("color_picking")
+					shader.Use()
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
+
+					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
+				}
+			} else {
+				fmt.Println("couldn't find texture", "light")
+			}
+		}
+
+		if len(entity.ShapeData) > 0 {
 			// color picking only supports cubes atm
 			for _, shapeData := range entity.ShapeData {
 				cube := shapeData.Cube
@@ -481,7 +512,6 @@ func (r *Renderer) renderToColorPickingBuffer(viewerContext ViewerContext) {
 					mgl64.Vec3{1, 0, 0},
 				)
 			}
-
 		}
 	}
 }

@@ -438,10 +438,7 @@ func drawWithNDC(shaderManager *shaders.ShaderManager) {
 }
 
 func drawBillboardTexture(
-	viewerContext *ViewerContext,
-	shaderManager *shaders.ShaderManager,
 	texture uint32,
-	modelMatrix mgl64.Mat4,
 	cameraUp mgl64.Vec3,
 	cameraRight mgl64.Vec3,
 ) {
@@ -477,12 +474,6 @@ func drawBillboardTexture(
 	gl.BindVertexArray(vao)
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	shader := shaderManager.GetShaderProgram("basic_quad_world")
-	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }

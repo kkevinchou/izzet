@@ -20,12 +20,17 @@ type SerializedWorld struct {
 }
 
 type SerializedEntity struct {
+	Name     string
 	ID       int
-	PrefabID int
+	PrefabID *int
 	// Position []float64
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
 	Scale    mgl64.Vec3
+
+	Billboard *entities.BillboardInfo
+	LightInfo *entities.LightInfo
+	ImageInfo *entities.ImageInfo
 }
 
 type Serializer struct {
@@ -39,18 +44,28 @@ func New(world World) *Serializer {
 
 func (s *Serializer) WriteOut(filepath string) {
 	serializedEntities := []SerializedEntity{}
+	// sEntityMap := map[string]SerializedEntity{}
 	for _, entity := range s.world.Entities() {
-		position := entity.WorldPosition()
+		sEntity := SerializedEntity{
+			Name:     entity.Name,
+			ID:       entity.ID,
+			Position: entity.LocalPosition,
+			Rotation: entity.LocalRotation,
+			Scale:    entity.Scale,
+
+			ImageInfo: entity.ImageInfo,
+			LightInfo: entity.LightInfo,
+			Billboard: entity.Billboard,
+		}
+
+		if entity.Prefab != nil {
+			id := entity.Prefab.ID
+			sEntity.PrefabID = &id
+		}
+
 		serializedEntities = append(
 			serializedEntities,
-			SerializedEntity{
-				ID:       entity.ID,
-				PrefabID: entity.Prefab.ID,
-				// Position: []float64{position.X(), position.Y(), position.Z(),
-				Position: position,
-				Rotation: entity.WorldRotation(),
-				Scale:    entity.Scale,
-			},
+			sEntity,
 		)
 	}
 
@@ -103,7 +118,16 @@ func (s *Serializer) ReadIn(filepath string) error {
 func (s *Serializer) Entities() []*entities.Entity {
 	dsEntities := []*entities.Entity{}
 	for _, e := range s.serializedWorld.Entities {
-		dsEntity := entities.InstantiateFromPrefabStaticID(e.ID, s.world.GetPrefabByID(e.PrefabID))
+		var dsEntity *entities.Entity
+		if e.PrefabID != nil {
+			dsEntity = entities.InstantiateFromPrefabStaticID(*e.PrefabID, s.world.GetPrefabByID(*e.PrefabID))
+		} else {
+			dsEntity = entities.InstantiateBaseEntity(e.Name, e.ID)
+		}
+
+		dsEntity.LightInfo = e.LightInfo
+		dsEntity.Billboard = e.Billboard
+		dsEntity.ImageInfo = e.ImageInfo
 
 		dsEntity.LocalPosition = e.Position
 		dsEntity.LocalRotation = e.Rotation

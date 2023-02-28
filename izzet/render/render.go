@@ -254,9 +254,15 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 	defer resetGLRenderSettings()
 
-	pointLight := r.world.Lights()[0]
-	if pointLight.LightInfo.Type != 1 {
-		panic("not a point light")
+	var pointLight *entities.Entity
+	for _, light := range r.world.Lights() {
+		if light.LightInfo.Type == 1 {
+			pointLight = light
+			break
+		}
+	}
+	if pointLight == nil {
+		return
 	}
 
 	gl.Viewport(0, 0, int32(settings.DepthCubeMapWidth), int32(settings.DepthCubeMapHeight))

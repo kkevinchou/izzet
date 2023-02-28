@@ -49,7 +49,7 @@ type Entity struct {
 	ParentJoint *modelspec.JointSpec
 
 	// particles
-	Particles *Particles
+	Particles *ParticleGenerator
 
 	// animation
 	Animations      map[string]*modelspec.AnimationSpec

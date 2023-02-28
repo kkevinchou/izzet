@@ -164,7 +164,7 @@ func (g *Izzet) loadEntities() {
 	}
 	directionalLight := entities.CreateLight(lightInfo)
 	directionalLight.LocalPosition = mgl64.Vec3{0, 200, 0}
-	directionalLight.Particles = &entities.Particles{}
+	directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.entities[directionalLight.ID] = directionalLight
 
 	for _, pf := range g.Prefabs() {

@@ -477,6 +477,7 @@ func drawBillboardTexture(
 
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
+
 func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
 	var vertices []float32 = []float32{
 		-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,

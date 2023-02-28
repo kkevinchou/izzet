@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/camera"
@@ -431,6 +432,15 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					},
 				}
 				drawLines(viewerContext, shader, lines, 0.5, color)
+			}
+		}
+
+		particles := entity.Particles
+		if particles != nil {
+			texture := r.world.AssetManager().GetTexture("light").ID
+			for _, particle := range particles.GetActiveParticles() {
+				particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
+				drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &particleModelMatrix, true)
 			}
 		}
 	}

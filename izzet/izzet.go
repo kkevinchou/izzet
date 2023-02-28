@@ -168,10 +168,10 @@ func (g *Izzet) loadEntities() {
 
 	for _, pf := range g.Prefabs() {
 		if pf.Name == "alpha" {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// g.entities[entity.ID] = entity
-			// entity.AnimationPlayer.PlayAnimation("Cast1")
-			// entity.AnimationPlayer.UpdateTo(0)
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
+			entity.AnimationPlayer.PlayAnimation("Cast2")
+			entity.AnimationPlayer.UpdateTo(0)
 
 			// entity2 := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity2.ID] = entity2

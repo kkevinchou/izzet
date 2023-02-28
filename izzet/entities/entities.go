@@ -48,6 +48,9 @@ type Entity struct {
 	Children    map[int]*Entity
 	ParentJoint *modelspec.JointSpec
 
+	// particles
+	Particles *Particles
+
 	// animation
 	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer

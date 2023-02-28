@@ -24,10 +24,18 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	g.handleSimplyKeyCommands(frameInput)
 
 	for _, entity := range g.Entities() {
+		// animation system
 		if entity.AnimationPlayer != nil {
 			if panels.LoopAnimation {
 				entity.AnimationPlayer.Update(delta)
 			}
+		}
+
+		// particle system
+		if entity.Particles != nil {
+			entity.Particles.SetPosition(entity.WorldPosition())
+			entity.Particles.Update(delta)
+			// fmt.Println(len(entity.Particles.GetCurrentParticles()))
 		}
 	}
 

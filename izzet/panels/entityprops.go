@@ -25,7 +25,7 @@ func entityProps(entity *entities.Entity) {
 			text := &positionStr
 
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			uiTableRow("Entity Name", entity.Name)
+			uiTableRow("Entity Name", entity.NameID())
 			if uiTableInputRow("Local Position", text, nil) {
 				uiTableInputPosition(entity, text)
 			}

@@ -53,6 +53,10 @@ type Entity struct {
 	AnimationPlayer *animation.AnimationPlayer
 }
 
+func (e *Entity) NameID() string {
+	return fmt.Sprintf("%s-%d", e.Name, e.ID)
+}
+
 func (e *Entity) WorldPosition() mgl64.Vec3 {
 	m := ComputeTransformMatrix(e)
 	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
@@ -77,7 +81,7 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
 func InstantiateBaseEntity(name string, id int) *Entity {
 	return &Entity{
 		ID:   id,
-		Name: fmt.Sprintf("%s-%d", name, id),
+		Name: name,
 
 		Children: map[int]*Entity{},
 

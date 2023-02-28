@@ -34,12 +34,12 @@ func drawEntity(entity *entities.Entity, world World) {
 	}
 
 	// var childClicked bool
-	if imgui.TreeNodeV(entity.Name, nodeFlags) {
+	if imgui.TreeNodeV(entity.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() && !imgui.IsItemToggledOpen() {
 			SelectEntity(entity)
 		}
 
-		imgui.PushID(entity.Name)
+		imgui.PushID(entity.NameID())
 		imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
 		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 		if imgui.BeginPopupContextItem() {

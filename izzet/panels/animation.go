@@ -36,7 +36,7 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	}
 	sort.Strings(anims)
 
-	imgui.LabelText("", entity.Name)
+	imgui.LabelText("", entity.NameID())
 	if imgui.ListBox("animations", &currentItem, anims) {
 		entity.AnimationPlayer.PlayAnimation(anims[currentItem])
 		entity.AnimationPlayer.UpdateTo(0)
@@ -114,7 +114,7 @@ func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec)
 					socketCount++
 
 					isParented := entity.ParentJoint != nil && entity.ParentJoint.ID == joint.ID
-					if imgui.MenuItemV(entity.Name, "", isParented, true) {
+					if imgui.MenuItemV(entity.NameID(), "", isParented, true) {
 						// toggle parented status
 						if isParented {
 							world.RemoveParent(entity)

@@ -1,48 +1,77 @@
 package entities
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-type Particles struct {
+const (
+	particleSpeed      = 150
+	particleSpawnTimer = 5 * time.Millisecond
+)
+
+type ParticleGenerator struct {
 	ElapsedTime time.Duration
 	Accumulator time.Duration
 
 	ParticleList []Particle
 	Position     mgl64.Vec3
+
+	MaxParticles int
+	InsertCursor int
 }
 
 type Particle struct {
 	Position mgl64.Vec3
 	Velocity mgl64.Vec3
+	Active   bool
 }
 
-func (p *Particles) SetPosition(position mgl64.Vec3) {
+func NewParticleGenerator(maxParticles int) *ParticleGenerator {
+	return &ParticleGenerator{
+		MaxParticles: maxParticles,
+		ParticleList: make([]Particle, maxParticles),
+	}
+}
+
+func (p *ParticleGenerator) SetPosition(position mgl64.Vec3) {
 	p.Position = position
 }
 
-func (p *Particles) Update(delta time.Duration) {
+func (p *ParticleGenerator) Update(delta time.Duration) {
 	p.ElapsedTime = p.ElapsedTime + delta
 	p.Accumulator += delta
 
-	for _, particle := range p.ParticleList {
-		particle.Position = particle.Position.Add(particle.Velocity.Mul(delta.Seconds()))
+	for i, particle := range p.ParticleList {
+		if !particle.Active {
+			continue
+		}
+		p.ParticleList[i].Position = particle.Position.Add(particle.Velocity.Mul(delta.Seconds()))
 	}
 
-	if p.Accumulator > time.Duration(1)*time.Second {
-		p.Accumulator -= time.Duration(1) * time.Second
-		p.ParticleList = append(
-			p.ParticleList,
-			Particle{
-				Position: p.Position,
-				Velocity: mgl64.Vec3{1, 0, 0},
-			},
-		)
+	if p.Accumulator > particleSpawnTimer {
+		p.Accumulator -= particleSpawnTimer
+
+		x := rand.Float64()*2 - 1
+		y := rand.Float64()*2 - 1
+		z := rand.Float64()*2 - 1
+		p.ParticleList[p.InsertCursor%p.MaxParticles] = Particle{
+			Position: p.Position,
+			Velocity: mgl64.Vec3{x, y, z}.Mul(particleSpeed),
+			Active:   true,
+		}
+		p.InsertCursor++
 	}
 }
 
-func (p *Particles) GetCurrentParticles() []Particle {
-	return p.ParticleList
+func (p *ParticleGenerator) GetActiveParticles() []Particle {
+	activeParticles := []Particle{}
+	for _, particle := range p.ParticleList {
+		if particle.Active {
+			activeParticles = append(activeParticles, particle)
+		}
+	}
+	return activeParticles
 }

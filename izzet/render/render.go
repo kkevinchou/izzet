@@ -443,6 +443,25 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &particleModelMatrix, true)
 			}
 		}
+
+		collider := entity.Collider
+		if collider != nil {
+			translation := mgl64.Translate3D(entity.LocalPosition.X(), entity.LocalPosition.Y(), entity.LocalPosition.Z())
+			// lots of hacky rendering stuff to get the rectangle to billboard
+			center := mgl64.Vec3{entity.LocalPosition.X(), 0, entity.LocalPosition.Z()}
+			viewerArtificialCenter := mgl64.Vec3{viewerContext.Position.X(), 0, viewerContext.Position.Z()}
+			vecToViewer := viewerArtificialCenter.Sub(center).Normalize()
+			billboardModelMatrix := translation.Mul4(mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, 1}, vecToViewer).Mat4())
+			// drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &particleModelMatrix, true)
+			drawCapsuleCollider(
+				viewerContext,
+				lightContext,
+				shaderManager.GetShaderProgram("flat"),
+				mgl64.Vec3{0.5, 1, 0},
+				collider.CapsuleCollider,
+				billboardModelMatrix,
+			)
+		}
 	}
 }
 

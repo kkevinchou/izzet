@@ -54,6 +54,12 @@ type Entity struct {
 	// animation
 	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer
+
+	// physics
+	Physics *PhysicsComponent
+
+	// collision
+	Collider *ColliderComponent
 }
 
 func (e *Entity) NameID() string {

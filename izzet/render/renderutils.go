@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
@@ -689,4 +690,39 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 
 	id := int(uintID)
 	return &id
+}
+
+func drawCapsuleCollider(viewerContext ViewerContext, lightContext LightContext, shader *shaders.ShaderProgram, color mgl64.Vec3, capsuleCollider *collider.Capsule, billboardModelMatrix mgl64.Mat4) {
+	radius := float32(capsuleCollider.Radius)
+	top := float32(capsuleCollider.Top.Y()) + radius
+	bottom := float32(capsuleCollider.Bottom.Y()) - radius
+
+	vertices := []float32{
+		-radius, bottom, 0,
+		radius, bottom, 0,
+		radius, top, 0,
+		radius, top, 0,
+		-radius, top, 0,
+		-radius, bottom, 0,
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(billboardModelMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformFloat("alpha", float32(0.3))
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }

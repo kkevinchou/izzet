@@ -39,6 +39,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		}
 	}
 
+	g.physicsStep(delta)
 	g.cameraMovement(frameInput, delta)
 
 	// set gizmo mode

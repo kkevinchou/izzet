@@ -17,6 +17,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/model"
 	"github.com/veandco/go-sdl2/sdl"
@@ -155,8 +156,7 @@ func (g *Izzet) loadEntities() {
 	}
 	pointLight := entities.CreateLight(lightInfo2)
 	pointLight.LocalPosition = mgl64.Vec3{0, 50, 402}
-	g.entities[pointLight.ID] = pointLight
-	panels.SelectEntity(pointLight)
+	g.AddEntity(pointLight)
 
 	lightInfo := &entities.LightInfo{
 		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
@@ -164,8 +164,28 @@ func (g *Izzet) loadEntities() {
 	}
 	directionalLight := entities.CreateLight(lightInfo)
 	directionalLight.LocalPosition = mgl64.Vec3{0, 200, 0}
-	directionalLight.Particles = entities.NewParticleGenerator(300)
-	g.entities[directionalLight.ID] = directionalLight
+	directionalLight.Particles = entities.NewParticleGenerator(100)
+	g.AddEntity(directionalLight)
+
+	cube := entities.CreateCube()
+	cube.LocalPosition = mgl64.Vec3{150, 150, 0}
+	cube.Physics = &entities.PhysicsComponent{Velocity: mgl64.Vec3{0, -10, 0}}
+
+	capsule := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
+	cube.Collider = &entities.ColliderComponent{
+		CapsuleCollider: &capsule,
+	}
+	g.AddEntity(cube)
+
+	cube2 := entities.CreateCube()
+	cube2.LocalPosition = mgl64.Vec3{150, 0, 0}
+	cube2.Physics = &entities.PhysicsComponent{}
+
+	capsule2 := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
+	cube2.Collider = &entities.ColliderComponent{
+		CapsuleCollider: &capsule2,
+	}
+	g.AddEntity(cube2)
 
 	for _, pf := range g.Prefabs() {
 		if pf.Name == "alpha" {
@@ -181,7 +201,7 @@ func (g *Izzet) loadEntities() {
 			// }
 		} else if pf.Name == "scene" {
 			entity := entities.InstantiateFromPrefab(pf)
-			g.entities[entity.ID] = entity
+			g.AddEntity(entity)
 		} else if pf.Name == "lootbox" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity

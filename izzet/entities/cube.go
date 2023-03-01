@@ -1,6 +1,8 @@
 package entities
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 type ShapeType string
 

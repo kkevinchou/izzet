@@ -9,7 +9,7 @@ import (
 
 const (
 	particleSpeed      = 150
-	particleSpawnTimer = 5 * time.Millisecond
+	particleSpawnTimer = 2 * time.Millisecond
 )
 
 type ParticleGenerator struct {
@@ -51,7 +51,7 @@ func (p *ParticleGenerator) Update(delta time.Duration) {
 		p.ParticleList[i].Position = particle.Position.Add(particle.Velocity.Mul(delta.Seconds()))
 	}
 
-	if p.Accumulator > particleSpawnTimer {
+	for p.Accumulator > particleSpawnTimer {
 		p.Accumulator -= particleSpawnTimer
 
 		x := rand.Float64()*2 - 1

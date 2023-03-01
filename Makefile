@@ -11,12 +11,12 @@ pprof:
 
 .PHONY: profilecpu
 profilecpu:
-	curl http://localhost:6868/debug/pprof/profile?seconds=20 -o profile
+	curl http://localhost:6868/debug/pprof/profile?seconds=120 -o profile
 	go tool pprof -http=localhost:6969 profile
 
 .PHONY: profileheap
 profileheap:
-	curl http://localhost:6868/debug/pprof/heap?seconds=20 -o heap
+	curl http://localhost:6868/debug/pprof/heap?seconds=300 -o heap
 	go tool pprof -http=localhost:6969 heap
 
 .PHONY: test

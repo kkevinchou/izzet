@@ -45,13 +45,11 @@ func drawModelWIthID(viewerContext ViewerContext,
 	modelMatrix mgl64.Mat4,
 	id int,
 ) {
-	// TOOD(kevin): i hate this... Ideally we incorporate the model.RootTransforms to the vertex positions
-	// and the animation poses so that we don't have to multiple this matrix every frame.
-	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix).Mul4(model.RootTransforms())
+	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 	_, r, _ := utils.Decompose(m32ModelMatrix)
 
 	shader.Use()
-	shader.SetUniformMat4("model", m32ModelMatrix)
+	// shader.SetUniformMat4("model", m32ModelMatrix)
 	shader.SetUniformMat4("modelRotationMatrix", r.Mat4())
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -70,9 +68,13 @@ func drawModelWIthID(viewerContext ViewerContext,
 		}
 	}
 
-	for _, meshChunk := range model.MeshChunks() {
-		gl.BindVertexArray(meshChunk.VAO())
-		gl.DrawElements(gl.TRIANGLES, int32(meshChunk.VertexCount()), gl.UNSIGNED_INT, nil)
+	for _, renderData := range model.RenderData() {
+		ctx := model.CollectionContext()
+		mesh := model.Collection().Meshes[renderData.MeshID]
+		shader.SetUniformMat4("model", renderData.Transform)
+
+		gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+		gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
 	}
 }
 
@@ -129,14 +131,12 @@ func drawModel(viewerContext ViewerContext,
 	modelMatrix mgl64.Mat4,
 	pointLightDepthCubeMap uint32,
 ) {
-	// TOOD(kevin): i hate this... Ideally we incorporate the model.RootTransforms to the vertex positions
-	// and the animation poses so that we don't have to multiple this matrix every frame.
-	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix).Mul4(model.RootTransforms())
+	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 	_, r, _ := utils.Decompose(m32ModelMatrix)
 
 	// TODO refactor - move common shader setup outside of draw model
 	shader.Use()
-	shader.SetUniformMat4("model", m32ModelMatrix)
+	// shader.SetUniformMat4("model", m32ModelMatrix)
 	shader.SetUniformMat4("modelRotationMatrix", r.Mat4())
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -169,8 +169,9 @@ func drawModel(viewerContext ViewerContext,
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, shadowMap.DepthTexture())
 
-	for _, meshChunk := range model.MeshChunks() {
-		if pbr := meshChunk.PBRMaterial(); pbr != nil {
+	for _, renderData := range model.RenderData() {
+		mesh := model.Collection().Meshes[renderData.MeshID]
+		if pbr := mesh.PBRMaterial; pbr != nil {
 			shader.SetUniformInt("hasPBRMaterial", 1)
 			shader.SetUniformVec4("pbrBaseColorFactor", pbr.PBRMetallicRoughness.BaseColorFactor)
 
@@ -188,18 +189,21 @@ func drawModel(viewerContext ViewerContext,
 			shader.SetUniformInt("hasPBRMaterial", 0)
 		}
 
+		ctx := model.CollectionContext()
 		gl.ActiveTexture(gl.TEXTURE0)
-		var textureID uint32
-		if meshChunk.TextureID() != nil {
-			textureID = *meshChunk.TextureID()
-		} else {
-			texture := assetManager.GetTexture(defaultTexture)
-			textureID = texture.ID
-		}
-		gl.BindTexture(gl.TEXTURE_2D, textureID)
 
-		gl.BindVertexArray(meshChunk.VAO())
-		gl.DrawElements(gl.TRIANGLES, int32(meshChunk.VertexCount()), gl.UNSIGNED_INT, nil)
+		var textureID uint32
+		textureName := defaultTexture
+		if mesh.TextureName() != "" {
+			textureName = mesh.TextureName()
+		}
+		texture := assetManager.GetTexture(textureName)
+		textureID = texture.ID
+		gl.BindTexture(gl.TEXTURE_2D, textureID)
+		shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
+
+		gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+		gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
 	}
 }
 

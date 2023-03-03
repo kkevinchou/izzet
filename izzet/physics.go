@@ -116,7 +116,7 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 		}
 	}
 
-	if collisionRuns == absoluteMaxRunCount {
+	if collisionRuns == absoluteMaxRunCount && collisionRuns != 0 {
 		fmt.Println("hit absolute max collision run count", collisionRuns)
 	}
 }

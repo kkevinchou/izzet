@@ -17,7 +17,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets"
-	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/model"
 	"github.com/veandco/go-sdl2/sdl"
@@ -137,26 +136,46 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"alpha", "mutant", "scene", "town_center", "lootbox", "human", "Elf", "Blacksmith", "blue_plane"}
+	names := []string{"vehicle", "alpha", "lootbox", "demo_scene_west"}
 
 	for _, name := range names {
-		spec := g.assetManager.GetModel(name)
-		m := model.NewModel(spec, modelConfig)
-		m.InitializeRenderingProperties(*g.assetManager)
+		var pf *prefabs.Prefab
+		if name == "demo_scene_west" {
+			collection := g.assetManager.GetCollection(name)
+			ctx := model.CreateContext(collection)
 
-		pf := prefabs.CreatePrefab(name, []*model.Model{m})
-		g.prefabs[pf.ID] = pf
+			for i := 0; i < 1872; i++ {
+				m := model.NewModelFromCollection(ctx, i, modelConfig)
+				pf := prefabs.CreatePrefab(fmt.Sprintf("%s-%d", name, i), []*model.Model{m})
+				g.prefabs[pf.ID] = pf
+			}
+		} else if name == "lootbox" {
+			collection := g.assetManager.GetCollection(name)
+			ctx := model.CreateContext(collection)
+
+			for i := 0; i < 2; i++ {
+				m := model.NewModelFromCollection(ctx, i, modelConfig)
+				pf := prefabs.CreatePrefab(fmt.Sprintf("%s-%d", name, i), []*model.Model{m})
+				g.prefabs[pf.ID] = pf
+			}
+		} else {
+			collection := g.assetManager.GetCollection(name)
+			ctx := model.CreateContext(collection)
+			m := model.NewModelFromCollection(ctx, 0, modelConfig)
+			pf = prefabs.CreatePrefab(name, []*model.Model{m})
+			g.prefabs[pf.ID] = pf
+		}
 	}
 }
 
 func (g *Izzet) loadEntities() {
-	lightInfo2 := &entities.LightInfo{
-		Diffuse: mgl64.Vec4{1, 1, 1, 8000},
-		Type:    1,
-	}
-	pointLight := entities.CreateLight(lightInfo2)
-	pointLight.LocalPosition = mgl64.Vec3{0, 50, 402}
-	g.AddEntity(pointLight)
+	// lightInfo2 := &entities.LightInfo{
+	// 	Diffuse: mgl64.Vec4{1, 1, 1, 8000},
+	// 	Type:    1,
+	// }
+	// pointLight := entities.CreateLight(lightInfo2)
+	// pointLight.LocalPosition = mgl64.Vec3{0, 50, 402}
+	// g.AddEntity(pointLight)
 
 	lightInfo := &entities.LightInfo{
 		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
@@ -167,32 +186,32 @@ func (g *Izzet) loadEntities() {
 	directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
-	cube := entities.CreateCube()
-	cube.LocalPosition = mgl64.Vec3{150, 150, 0}
-	cube.Physics = &entities.PhysicsComponent{Velocity: mgl64.Vec3{0, -10, 0}}
+	// cube := entities.CreateCube()
+	// cube.LocalPosition = mgl64.Vec3{150, 150, 0}
+	// cube.Physics = &entities.PhysicsComponent{Velocity: mgl64.Vec3{0, -10, 0}}
 
-	capsule := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
-	cube.Collider = &entities.ColliderComponent{
-		CapsuleCollider: &capsule,
-	}
-	g.AddEntity(cube)
+	// capsule := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
+	// cube.Collider = &entities.ColliderComponent{
+	// 	CapsuleCollider: &capsule,
+	// }
+	// g.AddEntity(cube)
 
-	cube2 := entities.CreateCube()
-	cube2.LocalPosition = mgl64.Vec3{150, 0, 0}
-	cube2.Physics = &entities.PhysicsComponent{}
+	// cube2 := entities.CreateCube()
+	// cube2.LocalPosition = mgl64.Vec3{150, 0, 0}
+	// cube2.Physics = &entities.PhysicsComponent{}
 
-	capsule2 := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
-	cube2.Collider = &entities.ColliderComponent{
-		CapsuleCollider: &capsule2,
-	}
-	g.AddEntity(cube2)
+	// capsule2 := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
+	// cube2.Collider = &entities.ColliderComponent{
+	// 	CapsuleCollider: &capsule2,
+	// }
+	// g.AddEntity(cube2)
 
 	for _, pf := range g.Prefabs() {
 		if pf.Name == "alpha" {
-			entity := entities.InstantiateFromPrefab(pf)
-			g.entities[entity.ID] = entity
-			entity.AnimationPlayer.PlayAnimation("Cast2")
-			entity.AnimationPlayer.UpdateTo(0)
+			// entity := entities.InstantiateFromPrefab(pf)
+			// entity.AnimationPlayer.PlayAnimation("Cast2")
+			// entity.AnimationPlayer.UpdateTo(0)
+			// g.AddEntity(entity)
 
 			// entity2 := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity2.ID] = entity2
@@ -200,8 +219,8 @@ func (g *Izzet) loadEntities() {
 			// 	entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
 			// }
 		} else if pf.Name == "scene" {
-			entity := entities.InstantiateFromPrefab(pf)
-			g.AddEntity(entity)
+			// entity := entities.InstantiateFromPrefab(pf)
+			// g.AddEntity(entity)
 		} else if pf.Name == "lootbox" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity
@@ -209,6 +228,9 @@ func (g *Izzet) loadEntities() {
 			// joint := parent.Model.ModelSpecification().JointMap[0]
 			// entity.ParentJoint = joint
 			// g.BuildRelation(parent, entity)
+		} else {
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
 		}
 	}
 }

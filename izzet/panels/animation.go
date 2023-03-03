@@ -61,7 +61,7 @@ func BuildAnimation(world World, entity *entities.Entity) {
 	drawJointTree(world, entity, entity.Model.RootJoint())
 
 	if RenderJoints {
-		for jid, _ := range entity.Model.ModelSpecification().JointMap {
+		for jid, _ := range entity.Model.JointMap() {
 			JointsToRender = append(JointsToRender, jid)
 		}
 	} else if JointHover != nil {

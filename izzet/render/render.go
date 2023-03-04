@@ -205,8 +205,15 @@ func (r *Renderer) Render(delta time.Duration) {
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings()
 	r.shadowMap.Prepare()
-	shaderManager := r.shaderManager
 
+	if !panels.DBG.EnableShadowMapping {
+		// set the depth to be max value to prevent shadow mapping
+		gl.ClearDepth(1)
+		gl.Clear(gl.DEPTH_BUFFER_BIT)
+		return
+	}
+
+	shaderManager := r.shaderManager
 	for _, entity := range r.world.Entities() {
 		modelMatrix := entities.ComputeTransformMatrix(entity)
 

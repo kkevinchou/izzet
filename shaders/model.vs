@@ -51,9 +51,8 @@ void main() {
         totalNormal = vec4(aNormal, 1.0);
     }
 
-    // TODO: the normal matrix is expensive to calculate and should be passed in as a uniform
-    // vs_out.Normal = transpose(inverse(mat3(model))) * aNormal;
-    vs_out.Normal = vec3(transpose(inverse(modelRotationMatrix)) * totalNormal);
+    // NOTE - just transposing the inverse of the rotation matrix didn't look right for some static geometry
+    vs_out.Normal = vec3(transpose(inverse(model)) * totalNormal);
     vs_out.FragPos = vec3(model * totalPos);
     vs_out.View = view;
     vs_out.TexCoord = aTexCoord;

@@ -230,8 +230,8 @@ func (g *Izzet) loadEntities() {
 			// g.BuildRelation(parent, entity)
 		} else if pf.Name == "mountain" {
 			entity := entities.InstantiateFromPrefab(pf)
-			entity.LocalPosition = mgl64.Vec3{-1200, 0, 511}
-			entity.Scale = mgl64.Vec3{10, 10, 10}
+			// entity.LocalPosition = mgl64.Vec3{0, 0, 0}
+			// entity.Scale = mgl64.Vec3{10, 1, 1}
 			g.entities[entity.ID] = entity
 
 		} else {

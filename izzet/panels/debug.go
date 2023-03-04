@@ -3,23 +3,25 @@ package panels
 import "github.com/inkyblackness/imgui-go/v4"
 
 type DebugSettings struct {
-	DirectionalLightX   int32
-	DirectionalLightY   int32
-	DirectionalLightZ   int32
-	Roughness           float32
-	Metallic            float32
-	PointLightIntensity int32
-	PointLightBias      float32
+	DirectionalLightX         int32
+	DirectionalLightY         int32
+	DirectionalLightZ         int32
+	Roughness                 float32
+	Metallic                  float32
+	PointLightIntensity       int32
+	DirectionalLightIntensity int32
+	PointLightBias            float32
 }
 
 var DBG DebugSettings = DebugSettings{
-	DirectionalLightX:   0,
-	DirectionalLightY:   -1,
-	DirectionalLightZ:   -1,
-	Roughness:           0.8,
-	Metallic:            0.8,
-	PointLightIntensity: 100000,
-	PointLightBias:      1,
+	DirectionalLightX:         0,
+	DirectionalLightY:         -1,
+	DirectionalLightZ:         -1,
+	Roughness:                 0.55,
+	Metallic:                  1.0,
+	PointLightIntensity:       100000,
+	DirectionalLightIntensity: 20,
+	PointLightBias:            1,
 }
 
 func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
@@ -38,12 +40,13 @@ func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
 	imgui.InputInt("directional light Y", &DBG.DirectionalLightY)
 	imgui.InputInt("directional light Z", &DBG.DirectionalLightZ)
 	imgui.InputInt("point light intensity", &DBG.PointLightIntensity)
+	imgui.InputInt("directional light intensity", &DBG.DirectionalLightIntensity)
 	imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 10)
 	imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
 	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 
-	// var imageWidth float32 = 500
-	// imgui.Image(imgui.TextureID(depthTexture), imgui.Vec2{X: imageWidth, Y: imageWidth / float32(aspectRatio)})
+	var imageWidth float32 = 500
+	imgui.Image(imgui.TextureID(depthTexture), imgui.Vec2{X: imageWidth, Y: imageWidth / float32(aspectRatio)})
 	imgui.End()
 
 }

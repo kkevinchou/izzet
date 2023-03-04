@@ -46,11 +46,8 @@ func drawModelWIthID(viewerContext ViewerContext,
 	id int,
 ) {
 	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-	_, r, _ := utils.Decompose(m32ModelMatrix)
 
 	shader.Use()
-	// shader.SetUniformMat4("model", m32ModelMatrix)
-	shader.SetUniformMat4("modelRotationMatrix", r.Mat4())
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -113,6 +110,8 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 		diffuse := utils.Vec4F64ToF32(lightInfo.Diffuse)
 		if lightInfo.Type == 1 {
 			diffuse[3] = float32(panels.DBG.PointLightIntensity)
+		} else if lightInfo.Type == 0 {
+			diffuse[3] = float32(panels.DBG.DirectionalLightIntensity)
 		}
 		shader.SetUniformInt(fmt.Sprintf("lights[%d].type", i), int32(lightInfo.Type))
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].dir", i), utils.Vec3F64ToF32(lightInfo.Direction))
@@ -132,12 +131,6 @@ func drawModel(viewerContext ViewerContext,
 	pointLightDepthCubeMap uint32,
 ) {
 	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-	_, r, _ := utils.Decompose(m32ModelMatrix)
-
-	// TODO refactor - move common shader setup outside of draw model
-	shader.Use()
-	// shader.SetUniformMat4("model", m32ModelMatrix)
-	shader.SetUniformMat4("modelRotationMatrix", r.Mat4())
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))

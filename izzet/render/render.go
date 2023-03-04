@@ -231,11 +231,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 
 			model := entity.Prefab.ModelRefs[0].Model
 			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-			_, rotation, _ := utils.Decompose(m32ModelMatrix)
 
-			// TODO refactor - move common shader setup outside of draw model
-			// shader.SetUniformMat4("model", m32ModelMatrix)
-			shader.SetUniformMat4("modelRotationMatrix", rotation.Mat4())
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -573,7 +569,7 @@ func (r *Renderer) renderImgui() {
 	panels.BuildPrefabs(r.world.Prefabs(), r.world)
 	panels.BuildDebug(
 		r.world,
-		r.depthCubeMapTexture,
+		r.shadowMap.DepthTexture(),
 		r.aspectRatio,
 	)
 

@@ -22,10 +22,6 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("modelpbr", "model", "pbr", ""); err != nil {
 		panic(err)
 	}
-	// shader for rendering the depth cubemap for point shadows
-	if err := shaderManager.CompileShaderProgram("modelpbr_pointshadow", "model", "pbr", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
 		panic(err)
 	}

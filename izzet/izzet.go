@@ -136,7 +136,7 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "lootbox", "demo_scene_west"}
+	names := []string{"vehicle", "alpha", "lootbox", "demo_scene_west", "mountain"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
@@ -144,11 +144,11 @@ func (g *Izzet) loadPrefabs() {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
-			for i := 0; i < 1872; i++ {
-				m := model.NewModelFromCollection(ctx, i, modelConfig)
-				pf := prefabs.CreatePrefab(fmt.Sprintf("%s-%d", name, i), []*model.Model{m})
-				g.prefabs[pf.ID] = pf
-			}
+			// for i := 0; i < 1872; i++ {
+			m := model.NewModelFromCollectionAll(ctx, modelConfig)
+			pf := prefabs.CreatePrefab(name, []*model.Model{m})
+			g.prefabs[pf.ID] = pf
+			// }
 		} else if name == "lootbox" {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
@@ -228,9 +228,15 @@ func (g *Izzet) loadEntities() {
 			// joint := parent.Model.ModelSpecification().JointMap[0]
 			// entity.ParentJoint = joint
 			// g.BuildRelation(parent, entity)
-		} else {
+		} else if pf.Name == "mountain" {
 			entity := entities.InstantiateFromPrefab(pf)
+			entity.LocalPosition = mgl64.Vec3{-1200, 0, 511}
+			entity.Scale = mgl64.Vec3{10, 10, 10}
 			g.entities[entity.ID] = entity
+
+		} else {
+			// entity := entities.InstantiateFromPrefab(pf)
+			// g.entities[entity.ID] = entity
 		}
 	}
 }

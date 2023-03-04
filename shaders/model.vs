@@ -4,9 +4,10 @@ const int MAX_WEIGHTS = 4;
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoord;
-layout (location = 3) in ivec3 jointIndices;
-layout (location = 4) in vec3 jointWeights;
+layout (location = 2) in vec2 aTexCoord0;
+layout (location = 3) in vec2 aTexCoord1;
+layout (location = 4) in ivec3 jointIndices;
+layout (location = 5) in vec3 jointWeights;
 
 out VS_OUT {
     vec3 FragPos;
@@ -23,6 +24,7 @@ uniform mat4 projection;
 uniform mat4 jointTransforms[MAX_JOINTS];
 uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
+uniform int colorTextureCoordIndex;
 
 void main() {
     vec4 totalPos = vec4(0.0);
@@ -55,7 +57,14 @@ void main() {
     vs_out.Normal = vec3(transpose(inverse(model)) * totalNormal);
     vs_out.FragPos = vec3(model * totalPos);
     vs_out.View = view;
-    vs_out.TexCoord = aTexCoord;
+
+    vs_out.TexCoord = aTexCoord0;
+    if (colorTextureCoordIndex == 0) {
+        vs_out.TexCoord = aTexCoord0;
+    } else if (colorTextureCoordIndex == 1) {
+        vs_out.TexCoord = aTexCoord1;
+    }
+
     vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     gl_Position = (projection * (view * (model * totalPos)));
 }

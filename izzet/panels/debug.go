@@ -21,7 +21,7 @@ var DBG DebugSettings = DebugSettings{
 	Roughness:                 0.55,
 	Metallic:                  1.0,
 	PointLightIntensity:       100000,
-	DirectionalLightIntensity: 20,
+	DirectionalLightIntensity: 10,
 	PointLightBias:            1,
 	MaterialOverride:          false,
 }
@@ -43,7 +43,7 @@ func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
 	imgui.InputInt("directional light Z", &DBG.DirectionalLightZ)
 	imgui.InputInt("point light intensity", &DBG.PointLightIntensity)
 	imgui.InputInt("directional light intensity", &DBG.DirectionalLightIntensity)
-	imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 10)
+	imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 1)
 	imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
 	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 	imgui.Checkbox("material override", &DBG.MaterialOverride)

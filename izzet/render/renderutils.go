@@ -175,8 +175,13 @@ func drawModel(viewerContext ViewerContext,
 			}
 
 			shader.SetUniformVec3("albedo", pbr.PBRMetallicRoughness.BaseColorFactor.Vec3())
-			shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-			shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+			if panels.DBG.MaterialOverride {
+				shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+				shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+			} else {
+				shader.SetUniformFloat("roughness", pbr.PBRMetallicRoughness.RoughnessFactor)
+				shader.SetUniformFloat("metallic", pbr.PBRMetallicRoughness.MetalicFactor)
+			}
 			shader.SetUniformFloat("ao", 1.0)
 		} else {
 			shader.SetUniformInt("hasPBRMaterial", 0)

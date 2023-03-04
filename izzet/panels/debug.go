@@ -11,6 +11,7 @@ type DebugSettings struct {
 	PointLightIntensity       int32
 	DirectionalLightIntensity int32
 	PointLightBias            float32
+	MaterialOverride          bool
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -22,6 +23,7 @@ var DBG DebugSettings = DebugSettings{
 	PointLightIntensity:       100000,
 	DirectionalLightIntensity: 20,
 	PointLightBias:            1,
+	MaterialOverride:          false,
 }
 
 func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
@@ -44,6 +46,7 @@ func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
 	imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 10)
 	imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
 	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
+	imgui.Checkbox("material override", &DBG.MaterialOverride)
 
 	var imageWidth float32 = 500
 	imgui.Image(imgui.TextureID(depthTexture), imgui.Vec2{X: imageWidth, Y: imageWidth / float32(aspectRatio)})

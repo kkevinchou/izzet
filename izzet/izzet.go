@@ -136,11 +136,11 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "demo_scene_west"}
+	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "demo_scene"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
-		if name == "demo_scene_west" {
+		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 

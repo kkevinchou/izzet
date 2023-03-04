@@ -136,7 +136,7 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "lootbox", "demo_scene_west", "mountain"}
+	names := []string{"vehicle", "alpha", "demo_scene_west"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
@@ -228,15 +228,9 @@ func (g *Izzet) loadEntities() {
 			// joint := parent.Model.ModelSpecification().JointMap[0]
 			// entity.ParentJoint = joint
 			// g.BuildRelation(parent, entity)
-		} else if pf.Name == "mountain" {
-			entity := entities.InstantiateFromPrefab(pf)
-			// entity.LocalPosition = mgl64.Vec3{0, 0, 0}
-			// entity.Scale = mgl64.Vec3{10, 1, 1}
-			g.entities[entity.ID] = entity
-
 		} else {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// g.entities[entity.ID] = entity
+			entity := entities.InstantiateFromPrefab(pf)
+			g.entities[entity.ID] = entity
 		}
 	}
 }

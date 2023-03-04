@@ -245,7 +245,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 			for _, renderData := range model.RenderData() {
 				ctx := model.CollectionContext()
 				mesh := model.Collection().Meshes[renderData.MeshID]
-				shader.SetUniformMat4("model", renderData.Transform)
+				shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 				gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
 				gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
@@ -285,9 +285,9 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 	for _, entity := range r.world.Entities() {
 		if entity.Prefab != nil {
-			// modelMatrix := entities.ComputeTransformMatrix(entity)
+			modelMatrix := entities.ComputeTransformMatrix(entity)
 			model := entity.Prefab.ModelRefs[0].Model
-			// m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
+			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 				shader.SetUniformInt("isAnimated", 1)
@@ -307,7 +307,8 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 			for _, renderData := range model.RenderData() {
 				ctx := model.CollectionContext()
 				mesh := model.Collection().Meshes[renderData.MeshID]
-				shader.SetUniformMat4("model", renderData.Transform)
+				shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
+				// shader.SetUniformMat4("model", renderData.Transform)
 
 				gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
 				gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)

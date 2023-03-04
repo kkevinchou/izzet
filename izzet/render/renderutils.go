@@ -71,7 +71,7 @@ func drawModelWIthID(viewerContext ViewerContext,
 	for _, renderData := range model.RenderData() {
 		ctx := model.CollectionContext()
 		mesh := model.Collection().Meshes[renderData.MeshID]
-		shader.SetUniformMat4("model", renderData.Transform)
+		shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 		gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
 		gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)

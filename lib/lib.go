@@ -8,10 +8,13 @@ import (
 )
 
 func InitDepthCubeMap() (uint32, uint32) {
+	var storedFBO int32
+	gl.GetIntegerv(gl.FRAMEBUFFER_BINDING, &storedFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(storedFBO))
+
 	var depthCubeMapFBO uint32
 	gl.GenFramebuffers(1, &depthCubeMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthCubeMapFBO)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	var depthCubeMapTexture uint32
 	gl.GenTextures(1, &depthCubeMapTexture)

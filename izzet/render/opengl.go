@@ -55,11 +55,11 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	}
 }
 
-func resetGLRenderSettings() {
+func resetGLRenderSettings(fbo uint32) {
 	defaultSettings()
 	gl.BindVertexArray(0)
 	gl.UseProgram(0)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 }
 
 func defaultSettings() {

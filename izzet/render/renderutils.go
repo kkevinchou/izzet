@@ -631,7 +631,7 @@ func (r *Renderer) initFrameBuffer(width int, height int, colorBufferCount int) 
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	var textures []uint32
 	var drawBuffers []uint32
@@ -669,12 +669,12 @@ func (r *Renderer) initFrameBuffer(width int, height int, colorBufferCount int) 
 }
 
 func (r *Renderer) clearMainFrameBuffer() {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 func (r *Renderer) renderSkybox(renderContext RenderContext) {
-	defer resetGLRenderSettings(r.drawFBO)
+	defer resetGLRenderSettings(r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	drawWithNDC(r.shaderManager)
 }
@@ -684,10 +684,9 @@ func (r *Renderer) ViewerContext() ViewerContext {
 }
 
 func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) *int {
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
-	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.ReadBuffer(r.colorPickingAttachment)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)

@@ -63,9 +63,8 @@ type Renderer struct {
 
 	viewerContext ViewerContext
 
-	drawFBO      uint32
-	drawTexture0 uint32
-	drawTexture1 uint32
+	renderFBO              uint32
+	colorPickingAttachment uint32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -100,12 +99,12 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	compileShaders(r.shaderManager)
 
-	drawFBO, colorTextures := r.initFrameBuffer(width, height, 2)
-	r.drawFBO = drawFBO
-	r.drawTexture0 = colorTextures[0]
-	r.drawTexture1 = colorTextures[1]
+	renderFBO, colorTextures := r.initFrameBuffer(width, height, 2)
+	r.renderFBO = renderFBO
+	mainColorTexture := colorTextures[0]
+	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 
-	panels.DBG.DebugTexture = r.drawTexture0
+	panels.DBG.DebugTexture = mainColorTexture
 	return r
 }
 
@@ -178,7 +177,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToCubeDepthMap(lightContext)
 	r.renderToDisplay(cameraViewerContext, lightContext, renderContext)
 
-	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.drawFBO)
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
@@ -192,7 +191,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
-	defer resetGLRenderSettings(r.drawFBO)
+	defer resetGLRenderSettings(r.renderFBO)
 	r.shadowMap.Prepare()
 
 	if !panels.DBG.EnableShadowMapping {
@@ -247,7 +246,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 }
 
 func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
-	defer resetGLRenderSettings(r.drawFBO)
+	defer resetGLRenderSettings(r.renderFBO)
 
 	var pointLight *entities.Entity
 	for _, light := range r.world.Lights() {
@@ -525,9 +524,9 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 }
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
-	defer resetGLRenderSettings(r.drawFBO)
+	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	r.renderScene(viewerContext, lightContext, renderContext)
 }

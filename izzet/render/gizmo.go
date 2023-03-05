@@ -68,7 +68,7 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 	drawLines(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
-	defer resetGLRenderSettings(r.drawFBO)
+	defer resetGLRenderSettings(r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
 	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
@@ -94,7 +94,7 @@ func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position 
 }
 
 func (r *Renderer) renderCircle() {
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	shaderManager := r.shaderManager
 	var alpha float64 = 1
 

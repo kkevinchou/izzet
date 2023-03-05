@@ -1,6 +1,8 @@
 package panels
 
-import "github.com/inkyblackness/imgui-go/v4"
+import (
+	"github.com/inkyblackness/imgui-go/v4"
+)
 
 type DebugSettings struct {
 	DirectionalLightX         int32
@@ -13,6 +15,7 @@ type DebugSettings struct {
 	PointLightBias            float32
 	MaterialOverride          bool
 	EnableShadowMapping       bool
+	DebugTexture              uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -25,10 +28,10 @@ var DBG DebugSettings = DebugSettings{
 	DirectionalLightIntensity: 10,
 	PointLightBias:            1,
 	MaterialOverride:          false,
-	EnableShadowMapping:       true,
+	EnableShadowMapping:       false,
 }
 
-func BuildDebug(world World, depthTexture uint32, renderContext RenderContext) {
+func BuildDebug(world World, renderContext RenderContext) {
 	if !ShowDebug {
 		return
 	}
@@ -52,7 +55,18 @@ func BuildDebug(world World, depthTexture uint32, renderContext RenderContext) {
 	imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
 
 	var imageWidth float32 = 500
-	imgui.Image(imgui.TextureID(depthTexture), imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())})
+	if DBG.DebugTexture != 0 {
+		texture := createUserSpaceTextureHandle(DBG.DebugTexture)
+		size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+		// invert the Y axis since opengl vs texture coordinate systems differ
+		// https://learnopengl.com/Getting-started/Textures
+		imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+	}
 	imgui.End()
+}
 
+// some detailed comment here
+func createUserSpaceTextureHandle(texture uint32) imgui.TextureID {
+	handle := 1<<63 | uint64(texture)
+	return imgui.TextureID(handle)
 }

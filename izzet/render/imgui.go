@@ -11,18 +11,19 @@ import (
 type ImguiOpenGL4Renderer struct {
 	imguiIO imgui.IO
 
-	glslVersion            string
-	fontTexture            uint32
-	shaderHandle           uint32
-	vertHandle             uint32
-	fragHandle             uint32
-	attribLocationTex      int32
-	attribLocationProjMtx  int32
-	attribLocationPosition int32
-	attribLocationUV       int32
-	attribLocationColor    int32
-	vboHandle              uint32
-	elementsHandle         uint32
+	glslVersion             string
+	fontTexture             uint32
+	shaderHandle            uint32
+	vertHandle              uint32
+	fragHandle              uint32
+	attribLocationImageType int32
+	attribLocationTex       int32
+	attribLocationProjMtx   int32
+	attribLocationPosition  int32
+	attribLocationUV        int32
+	attribLocationColor     int32
+	vboHandle               uint32
+	elementsHandle          uint32
 }
 
 // NewImguiOpenGL4Renderer attempts to initialize a renderer.
@@ -160,7 +161,19 @@ func (renderer *ImguiOpenGL4Renderer) Render(displaySize [2]float32, framebuffer
 			if cmd.HasUserCallback() {
 				cmd.CallUserCallback(list)
 			} else {
-				gl.BindTexture(gl.TEXTURE_2D, uint32(cmd.TextureID()))
+				textureID := cmd.TextureID()
+				var userSpaceTextureFlag uint64 = 1 << 63
+				if userSpaceTextureFlag&uint64(textureID) != 0 {
+					// if false {
+					// mask the lower order bits to get the texture ID, and cast
+					// this drops the flag bits which are in the higher order bits
+					actualTextureID := uint32(textureID & 0xFFFFFFFF)
+					gl.BindTexture(gl.TEXTURE_2D, actualTextureID)
+					gl.Uniform1i(renderer.attribLocationImageType, int32(1))
+				} else {
+					gl.BindTexture(gl.TEXTURE_2D, uint32(textureID))
+					gl.Uniform1i(renderer.attribLocationImageType, int32(0))
+				}
 				clipRect := cmd.ClipRect()
 				gl.Scissor(int32(clipRect.X), int32(fbHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 				gl.DrawElements(gl.TRIANGLES, int32(cmd.ElementCount()), uint32(drawType), unsafe.Pointer(indexBufferOffset))
@@ -229,13 +242,20 @@ void main()
 }
 `
 	fragmentShader := renderer.glslVersion + `
+uniform int ImageType;
 uniform sampler2D Texture;
 in vec2 Frag_UV;
 in vec4 Frag_Color;
 out vec4 Out_Color;
 void main()
 {
-	Out_Color = vec4(Frag_Color.rgb, Frag_Color.a * texture( Texture, Frag_UV.st).r);
+	if (ImageType == 1) {
+		// user space texture
+		Out_Color = texture(Texture, Frag_UV.st).rgba;
+	} else {
+		// imgui space texture (probably a font)
+		Out_Color = vec4(Frag_Color.rgb, Frag_Color.a * texture(Texture, Frag_UV.st).r);
+	}
 }
 `
 	// Out_Color = texture(Texture, Frag_UV));
@@ -259,6 +279,7 @@ void main()
 	gl.AttachShader(renderer.shaderHandle, renderer.fragHandle)
 	gl.LinkProgram(renderer.shaderHandle)
 
+	renderer.attribLocationImageType = gl.GetUniformLocation(renderer.shaderHandle, gl.Str("ImageType"+"\x00"))
 	renderer.attribLocationTex = gl.GetUniformLocation(renderer.shaderHandle, gl.Str("Texture"+"\x00"))
 	renderer.attribLocationProjMtx = gl.GetUniformLocation(renderer.shaderHandle, gl.Str("ProjMtx"+"\x00"))
 	renderer.attribLocationPosition = gl.GetAttribLocation(renderer.shaderHandle, gl.Str("Position"+"\x00"))

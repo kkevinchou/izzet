@@ -120,7 +120,8 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 	}
 }
 
-func drawModel(viewerContext ViewerContext,
+func drawModel(
+	viewerContext ViewerContext,
 	lightContext LightContext,
 	shadowMap *ShadowMap,
 	shader *shaders.ShaderProgram,
@@ -129,6 +130,7 @@ func drawModel(viewerContext ViewerContext,
 	animationPlayer *animation.AnimationPlayer,
 	modelMatrix mgl64.Mat4,
 	pointLightDepthCubeMap uint32,
+	entityID int,
 ) {
 	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
@@ -136,6 +138,7 @@ func drawModel(viewerContext ViewerContext,
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", float32(shadowMap.ShadowDistance()))
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	shader.SetUniformVec3("pickingColor", idToPickingColor(entityID))
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
 
@@ -619,34 +622,50 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func (r *Renderer) initFrameBuffer(width int, height int) (uint32, uint32) {
+func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int) (uint32, uint32) {
+	fbo, textures := r.initFrameBuffer(width, height, 1)
+	return fbo, textures[0]
+}
+
+func (r *Renderer) initFrameBuffer(width int, height int, colorBufferCount int) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
-		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	var textures []uint32
+	var drawBuffers []uint32
 
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+	for i := 0; i < colorBufferCount; i++ {
+		var texture uint32
+		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
+
+		gl.GenTextures(1, &texture)
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+			int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+
+		textures = append(textures, texture)
+		drawBuffers = append(drawBuffers, attachment)
+	}
+
+	gl.DrawBuffers(int32(colorBufferCount), &drawBuffers[0])
 
 	var rbo uint32
 	gl.GenRenderbuffers(1, &rbo)
 	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
-	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
 
-	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
 	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
 		panic(errors.New("failed to initalize frame buffer"))
 	}
 
-	return fbo, texture
+	return fbo, textures
 }
 
 func (r *Renderer) clearMainFrameBuffer() {
@@ -666,7 +685,9 @@ func (r *Renderer) ViewerContext() ViewerContext {
 }
 
 func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) *int {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)

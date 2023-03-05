@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -65,6 +66,10 @@ type Renderer struct {
 	yellowCircleTexture uint32
 
 	viewerContext ViewerContext
+
+	drawFBO      uint32
+	drawTexture0 uint32
+	drawTexture1 uint32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -92,15 +97,53 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 
-	r.colorPickingFB, r.colorPickingTexture = r.initFrameBuffer(width, height)
-	r.redCircleFB, r.redCircleTexture = r.initFrameBuffer(1024, 1024)
-	r.greenCircleFB, r.greenCircleTexture = r.initFrameBuffer(1024, 1024)
-	r.blueCircleFB, r.blueCircleTexture = r.initFrameBuffer(1024, 1024)
-	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBuffer(1024, 1024)
+	// r.newPickingTexture = r.createColorPickingAttachment(width, height)
+	r.colorPickingFB, r.colorPickingTexture = r.initFrameBufferSingleColorAttachment(width, height)
+	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
+	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
+	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
+	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
 
 	compileShaders(r.shaderManager)
 
+	drawFBO, colorTextures := r.initFrameBuffer(width, height, 2)
+	r.drawFBO = drawFBO
+	r.drawTexture0 = colorTextures[0]
+	r.drawTexture1 = colorTextures[1]
+
+	fmt.Println(colorTextures)
+
+	panels.DBG.DebugTexture = r.drawTexture0
 	return r
+}
+
+func (r *Renderer) createColorPickingAttachment(width, height int) uint32 {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, texture, 0)
+
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
+	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
+
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return texture
 }
 
 func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
@@ -172,6 +215,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToCubeDepthMap(lightContext)
 	r.renderToColorPickingBuffer(cameraViewerContext, renderContext)
 	r.renderToDisplay(cameraViewerContext, lightContext, renderContext)
+	r.renderToDisplay2(cameraViewerContext, lightContext, renderContext)
 
 	r.renderGizmos(cameraViewerContext, renderContext)
 	r.renderImgui(renderContext)
@@ -322,6 +366,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				entity.AnimationPlayer,
 				modelMatrix,
 				r.depthCubeMapTexture,
+				entity.ID,
 			)
 
 			// joint rendering for the selected entity
@@ -549,7 +594,6 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	panels.BuildPrefabs(r.world.Prefabs(), r.world, renderContext)
 	panels.BuildDebug(
 		r.world,
-		r.shadowMap.DepthTexture(),
 		renderContext,
 	)
 
@@ -590,7 +634,19 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	defer resetGLRenderSettings()
+
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	r.renderScene(viewerContext, lightContext, renderContext)
+}
+
+func (r *Renderer) renderToDisplay2(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+	defer resetGLRenderSettings()
+
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
+	gl.ClearColor(1, 1, 1, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	gl.ClearColor(1, 1, 1, 1)
 	r.renderScene(viewerContext, lightContext, renderContext)
 }

@@ -24,9 +24,10 @@ import (
 )
 
 type Izzet struct {
-	gameOver bool
-	window   *sdl.Window
-	platform *input.SDLPlatform
+	gameOver      bool
+	window        *sdl.Window
+	platform      *input.SDLPlatform
+	width, height int
 
 	assetManager *assets.AssetManager
 
@@ -73,7 +74,10 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 		Position:    mgl64.Vec3{250, 200, 300},
 		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
 	}
-	g.renderer = render.New(g, shaderDirectory)
+
+	w, h := g.window.GetSize()
+	g.width, g.height = int(w), int(h)
+	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
@@ -125,7 +129,8 @@ func (g *Izzet) Start() {
 			frameCount++
 			// g.renderer.PreRenderImgui()
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
+			renderContext := render.NewRenderContext(g.width, g.height, settings.FovX)
+			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame
 		}
@@ -285,13 +290,12 @@ func initializeOpenGL() (*sdl.Window, error) {
 	return window, nil
 }
 
-func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput) mgl64.Vec3 {
-	w, h := g.Window().GetSize()
+func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput, width, height int) mgl64.Vec3 {
 	x := mouseInput.Position.X()
 	y := mouseInput.Position.Y()
 
 	// -1 for the near plane
-	ndcP := mgl64.Vec4{((x / float64(w)) - 0.5) * 2, ((y / float64(h)) - 0.5) * -2, -1, 1}
+	ndcP := mgl64.Vec4{((x / float64(width)) - 0.5) * 2, ((y / float64(height)) - 0.5) * -2, -1, 1}
 	nearPlanePos := g.renderer.ViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.ViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 

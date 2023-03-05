@@ -3,8 +3,13 @@ package panels
 import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/veandco/go-sdl2/sdl"
 )
+
+type RenderContext interface {
+	Width() int
+	Height() int
+	AspectRatio() float64
+}
 
 // var HierarchySelection int
 var selectedEntity *entities.Entity
@@ -17,7 +22,6 @@ type World interface {
 	BuildRelation(parent *entities.Entity, child *entities.Entity)
 	RemoveParent(child *entities.Entity)
 	Entities() []*entities.Entity
-	Window() *sdl.Window
 }
 
 func SelectEntity(entity *entities.Entity) bool {

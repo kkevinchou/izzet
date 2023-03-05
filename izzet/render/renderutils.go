@@ -192,7 +192,7 @@ func drawModel(viewerContext ViewerContext,
 		gl.ActiveTexture(gl.TEXTURE0)
 
 		var textureID uint32
-		textureName := defaultTexture
+		textureName := settings.DefaultTexture
 		if mesh.TextureName() != "" {
 			textureName = mesh.TextureName()
 		}
@@ -654,10 +654,9 @@ func (r *Renderer) clearMainFrameBuffer() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func (r *Renderer) renderSkybox() {
+func (r *Renderer) renderSkybox(renderContext RenderContext) {
 	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
 	drawWithNDC(r.shaderManager)
 }
@@ -666,20 +665,13 @@ func (r *Renderer) ViewerContext() ViewerContext {
 	return r.viewerContext
 }
 
-func (r *Renderer) handleResize() {
-	w, h := r.world.Window().GetSize()
-	r.aspectRatio = float64(w) / float64(h)
-	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
-}
-
-func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) *int {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	_, h := r.world.Window().GetSize()
-	gl.ReadPixels(int32(pixelPosition[0]), int32(h)-int32(pixelPosition[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(height)-int32(pixelPosition[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
 
 	// discard the alpha channel data
 	data[3] = 0

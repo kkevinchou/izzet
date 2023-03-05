@@ -67,10 +67,9 @@ func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram,
 	}
 	drawLines(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
 }
-func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3) {
+func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
 	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
 	s := mgl32.Scale3D(25, 25, 25)
@@ -90,7 +89,7 @@ func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position 
 		if i == gizmo.R.HoverIndex {
 			texture = r.yellowCircleTexture
 		}
-		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &modelMatrix, true)
+		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, 1, float32(renderContext.AspectRatio()), &modelMatrix, true)
 	}
 }
 

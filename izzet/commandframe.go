@@ -21,6 +21,11 @@ var (
 )
 
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
+	if frameInput.WindowEvent.Resized {
+		w, h := g.window.GetSize()
+		g.width, g.height = int(w), int(h)
+	}
+
 	g.handleSimplyKeyCommands(frameInput)
 
 	for _, entity := range g.Entities() {
@@ -106,7 +111,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	mouseInput := frameInput.MouseInput
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		if newSelection := g.selectEntity(frameInput); newSelection {
+		if newSelection := g.selectEntity(frameInput, g.height); newSelection {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		}
 	}
@@ -151,12 +156,12 @@ func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
 	}
 }
 
-func (g *Izzet) selectEntity(frameInput input.Input) bool {
+func (g *Izzet) selectEntity(frameInput input.Input, height int) bool {
 	mouseInput := frameInput.MouseInput
 
 	var newSelection bool
 	// select the entity in the hierarchy
-	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
+	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, height)
 	if entityID == nil {
 		newSelection = panels.SelectEntity(nil)
 		gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
@@ -254,7 +259,7 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	}
 
 	mouseInput := frameInput.MouseInput
-	nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 	position := selectedEntity.WorldPosition()
 
 	var minDist *float64
@@ -364,7 +369,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	}
 
 	mouseInput := frameInput.MouseInput
-	nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 	position := selectedEntity.WorldPosition()
 
 	closestAxisType := gizmo.NullAxis
@@ -518,7 +523,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	}
 
 	mouseInput := frameInput.MouseInput
-	nearPlanePos := g.mousePosToNearPlane(mouseInput)
+	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 	position := selectedEntity.WorldPosition()
 
 	var minDist *float64

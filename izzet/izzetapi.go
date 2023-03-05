@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 func (g *Izzet) AddEntity(entity *entities.Entity) {
@@ -73,10 +72,6 @@ func (g *Izzet) AssetManager() *assets.AssetManager {
 
 func (g *Izzet) Camera() *camera.Camera {
 	return g.camera
-}
-
-func (g *Izzet) Window() *sdl.Window {
-	return g.window
 }
 
 func (g *Izzet) Platform() *input.SDLPlatform {

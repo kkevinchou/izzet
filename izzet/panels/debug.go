@@ -28,7 +28,7 @@ var DBG DebugSettings = DebugSettings{
 	EnableShadowMapping:       true,
 }
 
-func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
+func BuildDebug(world World, depthTexture uint32, renderContext RenderContext) {
 	if !ShowDebug {
 		return
 	}
@@ -52,7 +52,7 @@ func BuildDebug(world World, depthTexture uint32, aspectRatio float64) {
 	imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
 
 	var imageWidth float32 = 500
-	imgui.Image(imgui.TextureID(depthTexture), imgui.Vec2{X: imageWidth, Y: imageWidth / float32(aspectRatio)})
+	imgui.Image(imgui.TextureID(depthTexture), imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())})
 	imgui.End()
 
 }

@@ -2,7 +2,6 @@ package render
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -22,18 +21,6 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
-	"github.com/veandco/go-sdl2/sdl"
-)
-
-var (
-	defaultTexture string = "color_grid"
-
-	// shadow map properties
-	shadowmapZOffset     float64 = 400
-	fovx                 float64 = 105
-	Near                 float64 = 1
-	far                  float64 = 3000
-	shadowDistanceFactor float64 = .4 // proportion of view fustrum to include in shadow cuboid
 )
 
 type World interface {
@@ -49,7 +36,6 @@ type World interface {
 	// for panels
 	AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab
-	Window() *sdl.Window
 	Platform() *input.SDLPlatform
 
 	Serializer() *serialization.Serializer
@@ -61,11 +47,6 @@ type Renderer struct {
 	world         World
 	shaderManager *shaders.ShaderManager
 
-	// render properties
-	fovY        float64
-	aspectRatio float64
-
-	// shaderManager *shaders.ShaderManager
 	shadowMap           *ShadowMap
 	imguiRenderer       *ImguiOpenGL4Renderer
 	depthCubeMapTexture uint32
@@ -86,7 +67,7 @@ type Renderer struct {
 	viewerContext ViewerContext
 }
 
-func New(world World, shaderDirectory string) *Renderer {
+func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r := &Renderer{world: world}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 
@@ -104,15 +85,14 @@ func New(world World, shaderDirectory string) *Renderer {
 	// so, I cap it at a fraction of the max
 	settings.RuntimeMaxTextureSize = int(float32(data) * .90)
 
-	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, far*shadowDistanceFactor)
+	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, settings.Far)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 
-	w, h := r.world.Window().GetSize()
-	r.colorPickingFB, r.colorPickingTexture = r.initFrameBuffer(int(w), int(h))
+	r.colorPickingFB, r.colorPickingTexture = r.initFrameBuffer(width, height)
 	r.redCircleFB, r.redCircleTexture = r.initFrameBuffer(1024, 1024)
 	r.greenCircleFB, r.greenCircleTexture = r.initFrameBuffer(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.initFrameBuffer(1024, 1024)
@@ -120,13 +100,10 @@ func New(world World, shaderDirectory string) *Renderer {
 
 	compileShaders(r.shaderManager)
 
-	r.aspectRatio = float64(settings.Width) / float64(settings.Height)
-	r.fovY = mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovx)/2)/r.aspectRatio))
-
 	return r
 }
 
-func (r *Renderer) Render(delta time.Duration) {
+func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	initOpenGLRenderSettings()
 
 	// configure camera viewer context
@@ -141,11 +118,11 @@ func (r *Renderer) Render(delta time.Duration) {
 		Orientation: orientation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(r.fovY), r.aspectRatio, Near, far),
+		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), settings.Near, settings.Far),
 	}
 
 	// configure light viewer context
-	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, Near, far, r.fovY, r.aspectRatio, shadowDistanceFactor)
+	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, settings.Near, settings.Far, renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), settings.ShadowMapDistanceFactor)
 
 	// find the directional light if there is one
 	lights := r.world.Lights()
@@ -169,7 +146,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	}
 
 	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, shadowmapZOffset)
+	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, settings.ShadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
 
 	lightViewerContext := ViewerContext{
@@ -185,21 +162,19 @@ func (r *Renderer) Render(delta time.Duration) {
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
 		Lights:           r.world.Lights(),
 	}
-	_ = lightContext
-	_ = lightViewerContext
 
 	r.viewerContext = cameraViewerContext
 
 	r.clearMainFrameBuffer()
-	r.renderSkybox()
+	r.renderSkybox(renderContext)
 
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
-	r.renderToColorPickingBuffer(cameraViewerContext)
-	r.renderToDisplay(cameraViewerContext, lightContext)
+	r.renderToColorPickingBuffer(cameraViewerContext, renderContext)
+	r.renderToDisplay(cameraViewerContext, lightContext, renderContext)
 
-	r.renderGizmos(cameraViewerContext)
-	r.renderImgui()
+	r.renderGizmos(cameraViewerContext, renderContext)
+	r.renderImgui(renderContext)
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
@@ -321,7 +296,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 }
 
 // renderScene renders a scene from the perspective of a viewer
-func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
@@ -449,7 +424,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			texture := r.world.AssetManager().GetTexture("light").ID
 			for _, particle := range particles.GetActiveParticles() {
 				particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-				drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &particleModelMatrix, true)
+				drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(renderContext.AspectRatio()), &particleModelMatrix, true)
 			}
 		}
 
@@ -461,7 +436,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			viewerArtificialCenter := mgl64.Vec3{viewerContext.Position.X(), 0, viewerContext.Position.Z()}
 			vecToViewer := viewerArtificialCenter.Sub(center).Normalize()
 			billboardModelMatrix := translation.Mul4(mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, 1}, vecToViewer).Mat4())
-			// drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(r.aspectRatio), &particleModelMatrix, true)
 			drawCapsuleCollider(
 				viewerContext,
 				lightContext,
@@ -474,10 +448,9 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 	}
 }
 
-func (r *Renderer) renderToColorPickingBuffer(viewerContext ViewerContext) {
+func (r *Renderer) renderToColorPickingBuffer(viewerContext ViewerContext, renderContext RenderContext) {
 	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -554,7 +527,7 @@ func (r *Renderer) renderToColorPickingBuffer(viewerContext ViewerContext) {
 	}
 }
 
-func (r *Renderer) renderImgui() {
+func (r *Renderer) renderImgui(renderContext RenderContext) {
 	r.world.Platform().NewFrame()
 	imgui.NewFrame()
 
@@ -572,12 +545,12 @@ func (r *Renderer) renderImgui() {
 	imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .65, Y: .79, Z: 0.30, W: 1})
 
-	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize)
-	panels.BuildPrefabs(r.world.Prefabs(), r.world)
+	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize, renderContext)
+	panels.BuildPrefabs(r.world.Prefabs(), r.world, renderContext)
 	panels.BuildDebug(
 		r.world,
 		r.shadowMap.DepthTexture(),
-		r.aspectRatio,
+		renderContext,
 	)
 
 	imgui.PopStyleColor()
@@ -596,7 +569,7 @@ func (r *Renderer) renderImgui() {
 	r.imguiRenderer.Render(r.world.Platform().DisplaySize(), r.world.Platform().FramebufferSize(), imgui.RenderedDrawData())
 }
 
-func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
+func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {
 	if panels.SelectedEntity() == nil {
 		return
 	}
@@ -609,16 +582,15 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext) {
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		r.drawCircleGizmo(&viewerContext, position)
+		r.drawCircleGizmo(&viewerContext, position, renderContext)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
 		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	}
 }
 
-func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	defer resetGLRenderSettings()
-	w, h := r.world.Window().GetSize()
-	gl.Viewport(0, 0, int32(w), int32(h))
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.renderScene(viewerContext, lightContext)
+	r.renderScene(viewerContext, lightContext, renderContext)
 }

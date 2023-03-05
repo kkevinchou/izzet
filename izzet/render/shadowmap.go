@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 type ShadowMap struct {
@@ -27,7 +28,7 @@ func (s *ShadowMap) Prepare() {
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 }
 
-func NewShadowMap(width int, height int, shadowDistance float64) (*ShadowMap, error) {
+func NewShadowMap(width int, height int, far float64) (*ShadowMap, error) {
 	var depthMapFBO uint32
 	gl.GenFramebuffers(1, &depthMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
@@ -56,7 +57,7 @@ func NewShadowMap(width int, height int, shadowDistance float64) (*ShadowMap, er
 		depthTexture:   texture,
 		width:          width,
 		height:         height,
-		shadowDistance: shadowDistance,
+		shadowDistance: far * settings.ShadowMapDistanceFactor,
 	}, nil
 }
 
@@ -68,15 +69,14 @@ func (s *ShadowMap) ShadowDistance() float64 {
 	return s.shadowDistance
 }
 
-func CalculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovy, aspectRatio float64, shadowDistance float64) []mgl64.Vec3 {
+func CalculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, shadowDistance float64) []mgl64.Vec3 {
 	viewerViewMatrix := orientation.Mat4()
 
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 	viewMatrix := viewTranslationMatrix.Mul4(viewerViewMatrix)
 
-	fovx := mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovy)/2)*aspectRatio))
-	halfY := math.Tan(mgl64.DegToRad(fovy / 2))
-	halfX := math.Tan(mgl64.DegToRad(fovx / 2))
+	halfY := math.Tan(mgl64.DegToRad(fovY / 2))
+	halfX := math.Tan(mgl64.DegToRad(fovX / 2))
 
 	var verts []mgl64.Vec3
 
@@ -134,7 +134,7 @@ func ComputeDirectionalLightProps(lightOrientationMatrix mgl64.Mat4, frustumPoin
 			maxZ = point.Z()
 		}
 	}
-	maxZ += shadowmapZOffset
+	maxZ += settings.ShadowmapZOffset
 
 	halfX := (maxX - minX) / 2
 	halfY := (maxY - minY) / 2

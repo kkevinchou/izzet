@@ -37,4 +37,15 @@ const (
 	DepthCubeMapHeight float32 = 4096
 	DepthCubeMapNear   float64 = 1
 	DepthCubeMapFar    float64 = 800
+
+	// perspective params
+	Near float64 = 1
+	Far  float64 = 3000
+	FovX float64 = 105
+
+	// shadow map properties
+	ShadowmapZOffset        float64 = 400
+	ShadowMapDistanceFactor float64 = .4 // proportion of view fustrum to include in shadow cuboid
+
+	DefaultTexture string = "color_grid"
 )

@@ -175,16 +175,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderSkybox(renderContext)
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
-	r.renderToDisplay(cameraViewerContext, lightContext, renderContext)
+	r.renderScene(cameraViewerContext, lightContext, renderContext)
 
-	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
-	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
-	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
-	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
-
-	width := int32(renderContext.Width())
-	height := int32(renderContext.Height())
-	gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	blitFBO(r.renderFBO, 0, renderContext.Width(), renderContext.Height())
 
 	r.renderGizmos(cameraViewerContext, renderContext)
 	r.renderImgui(renderContext)
@@ -310,6 +303,11 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 // renderScene renders a scene from the perspective of a viewer
 func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+	defer resetGLRenderSettings(r.renderFBO)
+
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
@@ -523,10 +521,13 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	}
 }
 
-func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
-	defer resetGLRenderSettings(r.renderFBO)
+func blitFBO(source, dest uint32, width, height int) {
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, source)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, dest)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	r.renderScene(viewerContext, lightContext, renderContext)
+	w := int32(width)
+	h := int32(height)
+	gl.BlitFramebuffer(0, 0, w, h, 0, 0, w, h, gl.COLOR_BUFFER_BIT, gl.NEAREST)
 }

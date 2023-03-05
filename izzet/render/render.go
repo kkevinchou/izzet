@@ -1,7 +1,6 @@
 package render
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -53,9 +52,6 @@ type Renderer struct {
 	depthCubeMapTexture uint32
 	depthCubeMapFBO     uint32
 
-	colorPickingFB      uint32
-	colorPickingTexture uint32
-
 	redCircleFB         uint32
 	redCircleTexture    uint32
 	greenCircleFB       uint32
@@ -97,8 +93,6 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 
-	// r.newPickingTexture = r.createColorPickingAttachment(width, height)
-	r.colorPickingFB, r.colorPickingTexture = r.initFrameBufferSingleColorAttachment(width, height)
 	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
 	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024)
@@ -111,39 +105,8 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.drawTexture0 = colorTextures[0]
 	r.drawTexture1 = colorTextures[1]
 
-	fmt.Println(colorTextures)
-
 	panels.DBG.DebugTexture = r.drawTexture0
 	return r
-}
-
-func (r *Renderer) createColorPickingAttachment(width, height int) uint32 {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
-		int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, texture, 0)
-
-	var rbo uint32
-	gl.GenRenderbuffers(1, &rbo)
-	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, int32(width), int32(height))
-	gl.BindRenderbuffer(gl.RENDERBUFFER, 0)
-
-	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, rbo)
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return texture
 }
 
 func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
@@ -213,7 +176,6 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
-	r.renderToColorPickingBuffer(cameraViewerContext, renderContext)
 	r.renderToDisplay(cameraViewerContext, lightContext, renderContext)
 	r.renderToDisplay2(cameraViewerContext, lightContext, renderContext)
 
@@ -438,6 +400,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
 
 					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
 				}
@@ -489,85 +452,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				collider.CapsuleCollider,
 				billboardModelMatrix,
 			)
-		}
-	}
-}
-
-func (r *Renderer) renderToColorPickingBuffer(viewerContext ViewerContext, renderContext RenderContext) {
-	defer resetGLRenderSettings()
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.colorPickingFB)
-	gl.ClearColor(1, 1, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	shaderManager := r.shaderManager
-
-	for _, entity := range r.world.Entities() {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
-
-		if entity.Prefab != nil {
-			shader := "color_picking"
-			// TODO: color picking shader for animated entities?
-
-			drawModelWIthID(
-				viewerContext,
-				shaderManager.GetShaderProgram(shader),
-				r.world.AssetManager(),
-				entity.Prefab.ModelRefs[0].Model,
-				entity.AnimationPlayer,
-				modelMatrix,
-				entity.ID,
-			)
-		}
-
-		if entity.ImageInfo != nil {
-			texture := r.world.AssetManager().GetTexture("light")
-			if texture != nil {
-				a := mgl64.Vec4{0, 1, 0, 1}
-				b := mgl64.Vec4{1, 0, 0, 1}
-				cameraUp := viewerContext.Orientation.Mat4().Mul4x1(a).Vec3()
-				cameraRight := viewerContext.Orientation.Mat4().Mul4x1(b).Vec3()
-
-				if entity.Billboard != nil {
-					shader := shaderManager.GetShaderProgram("color_picking")
-					shader.Use()
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
-
-					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
-				}
-			} else {
-				fmt.Println("couldn't find texture", "light")
-			}
-		}
-
-		if len(entity.ShapeData) > 0 {
-			// color picking only supports cubes atm
-			for _, shapeData := range entity.ShapeData {
-				cube := shapeData.Cube
-				if cube == nil {
-					continue
-				}
-
-				points := cubePoints(cube.Length)
-
-				shader := shaderManager.GetShaderProgram("color_picking")
-				shader.Use()
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-				shader.SetUniformFloat("alpha", float32(1))
-				shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
-
-				drawTris(
-					viewerContext,
-					points,
-					mgl64.Vec3{1, 0, 0},
-				)
-			}
 		}
 	}
 }

@@ -51,6 +51,11 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	}
 	g.window = window
 
+	// prevent load screen flashbang
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	g.window.GLSwap()
+
 	err = ttf.Init()
 	if err != nil {
 		panic(err)

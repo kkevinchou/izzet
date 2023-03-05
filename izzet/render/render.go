@@ -172,19 +172,27 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.viewerContext = cameraViewerContext
 
 	r.clearMainFrameBuffer()
-	r.renderSkybox(renderContext)
 
+	r.renderSkybox(renderContext)
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 	r.renderToDisplay(cameraViewerContext, lightContext, renderContext)
-	r.renderToDisplay2(cameraViewerContext, lightContext, renderContext)
+
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.drawFBO)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+
+	width := int32(renderContext.Width())
+	height := int32(renderContext.Height())
+	gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, gl.COLOR_BUFFER_BIT, gl.NEAREST)
 
 	r.renderGizmos(cameraViewerContext, renderContext)
 	r.renderImgui(renderContext)
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
-	defer resetGLRenderSettings()
+	defer resetGLRenderSettings(r.drawFBO)
 	r.shadowMap.Prepare()
 
 	if !panels.DBG.EnableShadowMapping {
@@ -239,7 +247,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 }
 
 func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
-	defer resetGLRenderSettings()
+	defer resetGLRenderSettings(r.drawFBO)
 
 	var pointLight *entities.Entity
 	for _, light := range r.world.Lights() {
@@ -517,20 +525,9 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 }
 
 func (r *Renderer) renderToDisplay(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
-	defer resetGLRenderSettings()
-
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.renderScene(viewerContext, lightContext, renderContext)
-}
-
-func (r *Renderer) renderToDisplay2(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
-	defer resetGLRenderSettings()
+	defer resetGLRenderSettings(r.drawFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.drawFBO)
-	gl.ClearColor(1, 1, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gl.ClearColor(1, 1, 1, 1)
 	r.renderScene(viewerContext, lightContext, renderContext)
 }

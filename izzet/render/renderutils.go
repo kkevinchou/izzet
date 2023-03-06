@@ -132,7 +132,6 @@ func drawModel(
 	pointLightDepthCubeMap uint32,
 	entityID int,
 ) {
-	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -191,9 +190,7 @@ func drawModel(
 			shader.SetUniformInt("hasPBRMaterial", 0)
 		}
 
-		ctx := model.CollectionContext()
 		gl.ActiveTexture(gl.TEXTURE0)
-
 		var textureID uint32
 		textureName := settings.DefaultTexture
 		if mesh.TextureName() != "" {
@@ -202,10 +199,24 @@ func drawModel(
 		texture := assetManager.GetTexture(textureName)
 		textureID = texture.ID
 		gl.BindTexture(gl.TEXTURE_2D, textureID)
-		shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
+		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(renderData.Transform)
+		shader.SetUniformMat4("model", modelMat)
+
+		ctx := model.CollectionContext()
 		gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+		if modelMat.Det() < 0 {
+			// from the gltf spec:
+			// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),
+			// the determinant of the node’s global transform defines the winding order of that primitive. If the determinant
+			// is a positive value, the winding order triangle faces is counterclockwise; in the opposite case, the winding
+			// order is clockwise.
+			gl.FrontFace(gl.CW)
+		}
 		gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
+		if modelMat.Det() < 0 {
+			gl.FrontFace(gl.CCW)
+		}
 	}
 }
 

@@ -101,10 +101,9 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, 2)
 	r.renderFBO = renderFBO
-	mainColorTexture := colorTextures[0]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 
-	panels.DBG.DebugTexture = mainColorTexture
+	panels.DBG.DebugTexture = colorTextures[0]
 	return r
 }
 

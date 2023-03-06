@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 Pickingcolor;
+layout (location = 1) out vec4 PickingColor;
 
 // material parameters
 uniform vec3  albedo;
@@ -249,5 +249,5 @@ void main()
     color = pow(color, vec3(1.0/2.2));
 
     FragColor = vec4(color, 1.0);
-    Pickingcolor = vec4(pickingColor, 1);
+    PickingColor = vec4(pickingColor, 1);
 }

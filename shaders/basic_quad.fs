@@ -1,6 +1,6 @@
 #version 330 core
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 Pickingcolor;
+layout (location = 1) out vec4 PickingColor;
 
 in vec2 TexCoords;
 uniform sampler2D basictexture;
@@ -13,5 +13,5 @@ void main() {
     }
 
     FragColor = t;
-    Pickingcolor = vec4(pickingColor, 1);
+    PickingColor = vec4(pickingColor, 1);
 }

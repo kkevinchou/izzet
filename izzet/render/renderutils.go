@@ -523,14 +523,14 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 			vertices = append(vertices, backVertices...)
 		}
 
-		// if we're just rendering something directly to screen without a world position
-		// adjust x coord by aspect ratio
-		if modelMatrix == nil {
-			for i := 0; i < len(vertices); i += 5 {
-				x := vertices[i]
-				vertices[i] = x / aspectRatio
-			}
-		}
+		// // if we're just rendering something directly to screen without a world position
+		// // adjust x coord by aspect ratio
+		// if modelMatrix == nil {
+		// 	for i := 0; i < len(vertices); i += 5 {
+		// 		x := vertices[i]
+		// 		vertices[i] = x / aspectRatio
+		// 	}
+		// }
 
 		// var vbo, vao uint32
 		gl.GenBuffers(1, &vbo)

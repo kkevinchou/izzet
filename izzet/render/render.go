@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,6 +44,8 @@ type World interface {
 	SaveWorld()
 }
 
+const mipsCount int = 6
+
 type Renderer struct {
 	world         World
 	shaderManager *shaders.ShaderManager
@@ -64,7 +67,19 @@ type Renderer struct {
 	viewerContext ViewerContext
 
 	renderFBO              uint32
+	mainColorTexture       uint32
 	colorPickingAttachment uint32
+
+	bloomFBO      uint32
+	bloomVAO      uint32
+	bloomTextures []uint32
+
+	compositeFBO     uint32
+	compositeTexture uint32
+	compositeVAO     uint32
+
+	widths  []int32
+	heights []int32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -101,9 +116,11 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, 2)
 	r.renderFBO = renderFBO
+	r.mainColorTexture = colorTextures[0]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 
-	panels.DBG.DebugTexture = colorTextures[0]
+	r.initBloom(1920, 1080)
+	r.initComposite(width, height)
 	return r
 }
 
@@ -175,7 +192,15 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
+	r.downSample(r.mainColorTexture)
+	r.upSample()
+	r.composite(renderContext)
+	// panels.DBG.DebugTexture = r.bloomTextures[0]
+	panels.DBG.DebugTexture = r.compositeTexture
 
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.compositeTexture, 1, float32(renderContext.aspectRatio), nil, false)
 	blitFBO(r.renderFBO, 0, renderContext.Width(), renderContext.Height())
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
@@ -392,7 +417,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 
 		if entity.ImageInfo != nil {
-			texture := r.world.AssetManager().GetTexture("light")
+			texture := r.world.AssetManager().GetTexture("white")
 			if texture != nil {
 				a := mgl64.Vec4{0, 1, 0, 1}
 				b := mgl64.Vec4{1, 0, 0, 1}
@@ -414,23 +439,23 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		lightInfo := entity.LightInfo
-		if lightInfo != nil {
-			if lightInfo.Type == 0 {
-				shader := shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+		// lightInfo := entity.LightInfo
+		// if lightInfo != nil {
+		// 	if lightInfo.Type == 0 {
+		// 		shader := shaderManager.GetShaderProgram("flat")
+		// 		color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
 
-				dir := lightInfo.Direction.Normalize().Mul(50)
-				// directional light arrow
-				lines := [][]mgl64.Vec3{
-					[]mgl64.Vec3{
-						entity.WorldPosition(),
-						entity.WorldPosition().Add(dir),
-					},
-				}
-				drawLines(viewerContext, shader, lines, 0.5, color)
-			}
-		}
+		// 		dir := lightInfo.Direction.Normalize().Mul(50)
+		// 		// directional light arrow
+		// 		lines := [][]mgl64.Vec3{
+		// 			[]mgl64.Vec3{
+		// 				entity.WorldPosition(),
+		// 				entity.WorldPosition().Add(dir),
+		// 			},
+		// 		}
+		// 		drawLines(viewerContext, shader, lines, 0.5, color)
+		// 	}
+		// }
 
 		particles := entity.Particles
 		if particles != nil {
@@ -531,4 +556,216 @@ func blitFBO(source, dest uint32, width, height int) {
 	w := int32(width)
 	h := int32(height)
 	gl.BlitFramebuffer(0, 0, w, h, 0, 0, w, h, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+}
+
+func texCall(width, height int) {
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
+		int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+}
+
+func (r *Renderer) initBloom(maxWidth, maxHeight int) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	var textures []uint32
+
+	width, height := maxWidth, maxHeight
+	for i := 0; i < mipsCount; i++ {
+		width /= 2
+		height /= 2
+
+		r.widths = append(r.widths, int32(width))
+		r.heights = append(r.heights, int32(height))
+
+		var texture uint32
+		gl.GenTextures(1, &texture)
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+
+		texCall(width, height)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+		textures = append(textures, texture)
+	}
+
+	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[0], 0)
+	gl.DrawBuffers(1, &drawBuffers[0])
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	r.bloomFBO = fbo
+	r.bloomTextures = textures
+
+	vertices = []float32{
+		-1, -1, 0.0, 0.0,
+		1, -1, 1.0, 0.0,
+		1, 1, 1.0, 1.0,
+		1, 1, 1.0, 1.0,
+		-1, 1, 0.0, 1.0,
+		-1, -1, 0.0, 0.0,
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+	gl.EnableVertexAttribArray(1)
+	r.bloomVAO = vao
+}
+
+func (r *Renderer) downSample(srcTexture uint32) {
+	defer resetGLRenderSettings(r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.bloomFBO)
+
+	shader := r.shaderManager.GetShaderProgram("bloom_downsample")
+	shader.Use()
+
+	for i := 0; i < len(r.bloomTextures); i++ {
+		width := r.widths[i]
+		height := r.heights[i]
+
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, srcTexture)
+		gl.Viewport(0, 0, width, height)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.bloomTextures[i], 0)
+
+		gl.BindVertexArray(r.bloomVAO)
+		if i < 0 {
+			shader.SetUniformInt("threshold", 1)
+		} else {
+			shader.SetUniformInt("threshold", 0)
+		}
+		gl.DrawArrays(gl.TRIANGLES, 0, 6)
+		srcTexture = r.bloomTextures[i]
+	}
+	// panels.DBG.DebugTexture = srcTexture
+}
+
+func (r *Renderer) upSample() {
+	defer resetGLRenderSettings(r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.bloomFBO)
+
+	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
+	shader.Use()
+
+	mipsCount := len(r.bloomTextures)
+	for i := mipsCount - 1; i > 0; i-- {
+		currentMip := r.bloomTextures[i]
+		nextMip := r.bloomTextures[i-1]
+		r.blend(r.widths[i-1], r.heights[i-1], currentMip, nextMip, nextMip)
+	}
+	// panels.DBG.DebugTexture = baseTexture
+}
+
+func (r *Renderer) initComposite(width, height int) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	texCall(width, height)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+	gl.DrawBuffers(1, &drawBuffers[0])
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	r.compositeFBO, r.compositeTexture = fbo, texture
+
+	vertices = []float32{
+		-1, -1, 0.0, 0.0,
+		1, -1, 1.0, 0.0,
+		1, 1, 1.0, 1.0,
+		1, 1, 1.0, 1.0,
+		-1, 1, 0.0, 1.0,
+		-1, -1, 0.0, 0.0,
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+	gl.EnableVertexAttribArray(1)
+	r.compositeVAO = vao
+}
+
+func (r *Renderer) composite(renderContext RenderContext) {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
+
+	shader := r.shaderManager.GetShaderProgram("composite")
+	shader.Use()
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, r.mainColorTexture)
+
+	gl.ActiveTexture(gl.TEXTURE1)
+	gl.BindTexture(gl.TEXTURE_2D, r.bloomTextures[0])
+
+	shader.SetUniformInt("scene", 0)
+	shader.SetUniformInt("bloomBlur", 1)
+	shader.SetUniformFloat("exposure", panels.DBG.Exposure)
+	shader.SetUniformFloat("bloomStrength", panels.DBG.BloomStrength)
+
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
+
+	gl.BindVertexArray(r.compositeVAO)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	// panels.DBG.DebugTexture = r.compositeTexture
+}
+
+func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
+	gl.ClampColor(gl.CLAMP_READ_COLOR, gl.FALSE)
+
+	shader := r.shaderManager.GetShaderProgram("blend")
+	shader.Use()
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture0)
+
+	gl.ActiveTexture(gl.TEXTURE1)
+	gl.BindTexture(gl.TEXTURE_2D, texture1)
+
+	shader.SetUniformInt("texture1", 0)
+	shader.SetUniformInt("texture2", 1)
+
+	gl.Viewport(0, 0, width, height)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
+
+	gl.BindVertexArray(r.compositeVAO)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+
 }

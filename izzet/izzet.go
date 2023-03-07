@@ -71,7 +71,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{250, 200, 300},
+		Position:    mgl64.Vec3{0, -12, 806},
 		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
 	}
 
@@ -179,21 +179,21 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
-	// lightInfo2 := &entities.LightInfo{
-	// 	Diffuse: mgl64.Vec4{1, 1, 1, 8000},
-	// 	Type:    1,
-	// }
-	// pointLight := entities.CreateLight(lightInfo2)
-	// pointLight.LocalPosition = mgl64.Vec3{0, 50, 402}
-	// g.AddEntity(pointLight)
+	lightInfo2 := &entities.LightInfo{
+		Diffuse: mgl64.Vec4{1, 1, 1, 8},
+		Type:    1,
+	}
+	pointLight := entities.CreateLight(lightInfo2)
+	pointLight.LocalPosition = mgl64.Vec3{0, -12, 806}
+	g.AddEntity(pointLight)
 
 	lightInfo := &entities.LightInfo{
 		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
 		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)
-	directionalLight.LocalPosition = mgl64.Vec3{0, 200, 0}
-	directionalLight.Particles = entities.NewParticleGenerator(100)
+	directionalLight.LocalPosition = mgl64.Vec3{0, 0, 0}
+	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
 	// cube := entities.CreateCube()
@@ -238,7 +238,7 @@ func (g *Izzet) loadEntities() {
 			// joint := parent.Model.ModelSpecification().JointMap[0]
 			// entity.ParentJoint = joint
 			// g.BuildRelation(parent, entity)
-		} else if pf.Name == "demo_scene_west" {
+		} else if pf.Name == "demo_scene_dungeon" {
 			entity := entities.InstantiateFromPrefab(pf)
 			entity.Scale = mgl64.Vec3{10, 10, 10}
 			g.entities[entity.ID] = entity

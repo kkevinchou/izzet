@@ -16,6 +16,8 @@ type DebugSettings struct {
 	MaterialOverride          bool
 	EnableShadowMapping       bool
 	DebugTexture              uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	BloomStrength             float32
+	Exposure                  float32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -29,6 +31,8 @@ var DBG DebugSettings = DebugSettings{
 	PointLightBias:            1,
 	MaterialOverride:          false,
 	EnableShadowMapping:       false,
+	BloomStrength:             0.04,
+	Exposure:                  1.0,
 }
 
 func BuildDebug(world World, renderContext RenderContext) {
@@ -53,6 +57,8 @@ func BuildDebug(world World, renderContext RenderContext) {
 	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 	imgui.Checkbox("material override", &DBG.MaterialOverride)
 	imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
+	imgui.SliderFloat("exposure", &DBG.Exposure, 0, 1)
+	imgui.SliderFloat("bloom strength", &DBG.BloomStrength, 0, 1)
 
 	var imageWidth float32 = 500
 	if DBG.DebugTexture != 0 {

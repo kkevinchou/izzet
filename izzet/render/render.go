@@ -178,6 +178,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	blitFBO(r.renderFBO, 0, renderContext.Width(), renderContext.Height())
 
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.renderGizmos(cameraViewerContext, renderContext)
 	r.renderImgui(renderContext)
 }
@@ -461,6 +462,8 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 }
 
 func (r *Renderer) renderImgui(renderContext RenderContext) {
+	defer resetGLRenderSettings(r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.world.Platform().NewFrame()
 	imgui.NewFrame()
 
@@ -524,7 +527,6 @@ func blitFBO(source, dest uint32, width, height int) {
 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, source)
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, dest)
-	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 
 	w := int32(width)
 	h := int32(height)

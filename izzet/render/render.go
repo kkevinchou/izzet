@@ -159,9 +159,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	var directionalLightX, directionalLightY, directionalLightZ float64 = 0, -1, 0
 	if directionalLight != nil {
-		directionalLight.LightInfo.Direction[0] = float64(panels.DBG.DirectionalLightX)
-		directionalLight.LightInfo.Direction[1] = float64(panels.DBG.DirectionalLightY)
-		directionalLight.LightInfo.Direction[2] = float64(panels.DBG.DirectionalLightZ)
+		directionalLight.LightInfo.Direction[0] = float64(panels.DBG.DirectionalLightDir[0])
+		directionalLight.LightInfo.Direction[1] = float64(panels.DBG.DirectionalLightDir[1])
+		directionalLight.LightInfo.Direction[2] = float64(panels.DBG.DirectionalLightDir[2])
 
 		directionalLightX = directionalLight.LightInfo.Direction.X()
 		directionalLightY = directionalLight.LightInfo.Direction.Y()
@@ -194,7 +194,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
-	panels.DBG.DebugTexture = r.colorPickingTexture
+	panels.DBG.DebugTexture = r.mainColorTexture
 
 	if panels.DBG.Bloom {
 		r.downSample(r.mainColorTexture)
@@ -445,23 +445,23 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		// lightInfo := entity.LightInfo
-		// if lightInfo != nil {
-		// 	if lightInfo.Type == 0 {
-		// 		shader := shaderManager.GetShaderProgram("flat")
-		// 		color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+		lightInfo := entity.LightInfo
+		if lightInfo != nil {
+			if lightInfo.Type == 0 {
+				shader := shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
 
-		// 		dir := lightInfo.Direction.Normalize().Mul(50)
-		// 		// directional light arrow
-		// 		lines := [][]mgl64.Vec3{
-		// 			[]mgl64.Vec3{
-		// 				entity.WorldPosition(),
-		// 				entity.WorldPosition().Add(dir),
-		// 			},
-		// 		}
-		// 		drawLines(viewerContext, shader, lines, 0.5, color)
-		// 	}
-		// }
+				dir := lightInfo.Direction.Normalize().Mul(50)
+				// directional light arrow
+				lines := [][]mgl64.Vec3{
+					[]mgl64.Vec3{
+						entity.WorldPosition(),
+						entity.WorldPosition().Add(dir),
+					},
+				}
+				drawLines(viewerContext, shader, lines, 0.5, color)
+			}
+		}
 
 		particles := entity.Particles
 		if particles != nil {
@@ -658,7 +658,6 @@ func (r *Renderer) downSample(srcTexture uint32) {
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 		srcTexture = r.bloomTextures[i]
 	}
-	// panels.DBG.DebugTexture = srcTexture
 }
 
 func (r *Renderer) upSample() {
@@ -674,7 +673,6 @@ func (r *Renderer) upSample() {
 		nextMip := r.bloomTextures[i-1]
 		r.blend(r.widths[i-1], r.heights[i-1], currentMip, nextMip, nextMip)
 	}
-	// panels.DBG.DebugTexture = baseTexture
 }
 
 func (r *Renderer) initComposite(width, height int) {
@@ -742,14 +740,13 @@ func (r *Renderer) composite(renderContext RenderContext) {
 	shader.SetUniformInt("scene", 0)
 	shader.SetUniformInt("bloomBlur", 1)
 	shader.SetUniformFloat("exposure", panels.DBG.Exposure)
-	shader.SetUniformFloat("bloomStrength", panels.DBG.BloomStrength)
+	shader.SetUniformFloat("bloomIntensity", panels.DBG.BloomIntensity)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 
 	gl.BindVertexArray(r.compositeVAO)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
-	// panels.DBG.DebugTexture = r.compositeTexture
 }
 
 func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
@@ -773,5 +770,4 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 
 	gl.BindVertexArray(r.compositeVAO)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
-
 }

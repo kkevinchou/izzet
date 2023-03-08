@@ -6,7 +6,7 @@ in vec2 TexCoords;
 uniform sampler2D scene;
 uniform sampler2D bloomBlur;
 uniform float exposure = 1.0f;
-uniform float bloomStrength = 0.04f;
+uniform float bloomIntensity = 0.04f;
 // uniform int programChoice;
 
 vec3 bloom_none()
@@ -26,7 +26,7 @@ vec3 bloom_new()
 {
     vec3 hdrColor = texture(scene, TexCoords).rgb;
     vec3 bloomColor = texture(bloomBlur, TexCoords).rgb;
-    return mix(hdrColor, bloomColor, bloomStrength); // linear interpolation
+    return mix(hdrColor, bloomColor, bloomIntensity); // linear interpolation
 }
 
 void main()

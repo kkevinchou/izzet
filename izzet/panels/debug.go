@@ -18,6 +18,8 @@ type DebugSettings struct {
 	DebugTexture              uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 	BloomStrength             float32
 	Exposure                  float32
+	AmbientFactor             float32
+	Bloom                     bool
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -26,13 +28,15 @@ var DBG DebugSettings = DebugSettings{
 	DirectionalLightZ:         -1,
 	Roughness:                 0.55,
 	Metallic:                  1.0,
-	PointLightIntensity:       100000,
+	PointLightIntensity:       100,
 	DirectionalLightIntensity: 10,
 	PointLightBias:            1,
 	MaterialOverride:          false,
-	EnableShadowMapping:       false,
+	EnableShadowMapping:       true,
 	BloomStrength:             0.04,
 	Exposure:                  1.0,
+	AmbientFactor:             0.001,
+	Bloom:                     true,
 }
 
 func BuildDebug(world World, renderContext RenderContext) {
@@ -59,6 +63,8 @@ func BuildDebug(world World, renderContext RenderContext) {
 	imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
 	imgui.SliderFloat("exposure", &DBG.Exposure, 0, 1)
 	imgui.SliderFloat("bloom strength", &DBG.BloomStrength, 0, 1)
+	imgui.SliderFloat("ambient factor", &DBG.AmbientFactor, 0, 1)
+	imgui.Checkbox("bloom", &DBG.Bloom)
 
 	var imageWidth float32 = 500
 	if DBG.DebugTexture != 0 {

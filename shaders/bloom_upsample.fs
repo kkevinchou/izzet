@@ -7,24 +7,25 @@
 // Remember to use a floating-point texture format (for HDR)!
 // Remember to use edge clamping for this texture!
 uniform sampler2D srcTexture;
+uniform float upsamplingRadius;
 
 in vec2 texCoord;
-layout (location = 0) out vec3 upsample;
+layout (location = 0) out vec4 FragColor;
 
 void main()
 {
+    vec3 upsample;
     vec2 srcTexelSize = 1.0 / vec2(textureSize(srcTexture, 0));
-    // float filterRadius = srcTexelSize.x;
-    float filterRadius = 0.005;
-
+    float filterRadius = srcTexelSize.x;
+    // float filterRadius = upsamplingRadius;
 
     // The filter kernel is applied with a radius, specified in texture
     // coordinates, so that the radius will vary across mip resolutions.
     float x = filterRadius;
     float y = filterRadius;
 
-    x = srcTexelSize.x;
-    y = srcTexelSize.y;
+    // x = srcTexelSize.x;
+    // y = srcTexelSize.y;
 
     // Take 9 samples around current texel:
     // a - b - c
@@ -51,4 +52,5 @@ void main()
     upsample += (b+d+f+h)*2.0;
     upsample += (a+c+g+i);
     upsample *= 1.0 / 16.0;
+    FragColor = vec4(upsample, 1.0);
 }

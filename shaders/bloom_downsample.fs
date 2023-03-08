@@ -9,7 +9,8 @@
 // Remember to use a floating-point texture format (for HDR)!
 // Remember to use edge clamping for this texture!
 uniform sampler2D srcTexture;
-uniform int threshold;
+uniform int bloomThresholdEnabled;
+uniform float bloomThreshold;
 
 in vec2 texCoord;
 layout (location = 0) out vec4 downsample;
@@ -77,8 +78,8 @@ void main()
     // downsample = vec4(1, 1, 1, 1);
     // downsample = texture(srcTexture, texCoord).xyzw;
     downsample = vec4(v, 1);
-    if (threshold == 1) {
-        if (downsample.r + downsample.g + downsample.b < 1) {
+    if (bloomThresholdEnabled == 1) {
+        if (downsample.r + downsample.g + downsample.b < bloomThreshold) {
             downsample = vec4(0, 0, 0, 1);
         }
     }

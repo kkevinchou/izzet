@@ -32,7 +32,7 @@ vec3 bloom_new()
 void main()
 {
     // to bloom or not to bloom
-    vec3 result = vec3(0.0);
+    // vec3 result = vec3(0.0);
     // switch (programChoice)
     // {
     // case 1: result = bloom_none(); break;
@@ -42,7 +42,6 @@ void main()
     //     result = bloom_none(); break;
     // }
 
-    result = bloom_new();
 
     // // tone mapping
     // result = vec3(1.0) - exp(-result * exposure);
@@ -51,5 +50,8 @@ void main()
     // result = pow(result, vec3(1.0 / gamma));
     // FragColor = vec4(result, 1.0);
 
-    FragColor = vec4(result, 1.0);
+    vec3 color = bloom_new();
+    color = color / (color + vec3(1.0));
+
+    FragColor = vec4(color, 1.0);
 }

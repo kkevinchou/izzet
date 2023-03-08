@@ -5,9 +5,7 @@ import (
 )
 
 type DebugSettings struct {
-	DirectionalLightX         int32
-	DirectionalLightY         int32
-	DirectionalLightZ         int32
+	DirectionalLightDir       [3]float32
 	Roughness                 float32
 	Metallic                  float32
 	PointLightIntensity       int32
@@ -16,16 +14,14 @@ type DebugSettings struct {
 	MaterialOverride          bool
 	EnableShadowMapping       bool
 	DebugTexture              uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
-	BloomStrength             float32
+	BloomIntensity            float32
 	Exposure                  float32
 	AmbientFactor             float32
 	Bloom                     bool
 }
 
 var DBG DebugSettings = DebugSettings{
-	DirectionalLightX:         0,
-	DirectionalLightY:         -1,
-	DirectionalLightZ:         -1,
+	DirectionalLightDir:       [3]float32{0, -1, -1},
 	Roughness:                 0.55,
 	Metallic:                  1.0,
 	PointLightIntensity:       100,
@@ -33,7 +29,7 @@ var DBG DebugSettings = DebugSettings{
 	PointLightBias:            1,
 	MaterialOverride:          false,
 	EnableShadowMapping:       true,
-	BloomStrength:             0.04,
+	BloomIntensity:            0.04,
 	Exposure:                  1.0,
 	AmbientFactor:             0.001,
 	Bloom:                     true,
@@ -50,21 +46,23 @@ func BuildDebug(world World, renderContext RenderContext) {
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
 	imgui.BeginV("Debug", &open, imgui.WindowFlagsNone)
-	// imgui.Checkbox("multiply albedo", &DBG.MultiplyAlbedo)
-	imgui.InputInt("directional light X", &DBG.DirectionalLightX)
-	imgui.InputInt("directional light Y", &DBG.DirectionalLightY)
-	imgui.InputInt("directional light Z", &DBG.DirectionalLightZ)
-	imgui.InputInt("point light intensity", &DBG.PointLightIntensity)
-	imgui.InputInt("directional light intensity", &DBG.DirectionalLightIntensity)
-	imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 1)
-	imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
-	imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
-	imgui.Checkbox("material override", &DBG.MaterialOverride)
-	imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
-	imgui.SliderFloat("exposure", &DBG.Exposure, 0, 1)
-	imgui.SliderFloat("bloom strength", &DBG.BloomStrength, 0, 1)
-	imgui.SliderFloat("ambient factor", &DBG.AmbientFactor, 0, 1)
-	imgui.Checkbox("bloom", &DBG.Bloom)
+
+	if imgui.CollapsingHeaderV("Lighting Options", imgui.TreeNodeFlagsDefaultOpen) {
+		imgui.SliderFloat("bloom intensity", &DBG.BloomIntensity, 0, 1)
+		imgui.SliderFloat("ambient factor", &DBG.AmbientFactor, 0, 1)
+		imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 1)
+		imgui.InputInt("directional light intensity", &DBG.DirectionalLightIntensity)
+		imgui.InputInt("point light intensity", &DBG.PointLightIntensity)
+		imgui.SliderFloat3("directional light dir", &DBG.DirectionalLightDir, -1, 1)
+		imgui.Checkbox("bloom", &DBG.Bloom)
+		imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
+	}
+	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
+		imgui.SliderFloat("roughness", &DBG.Roughness, 0, 1)
+		imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
+		imgui.SliderFloat("exposure", &DBG.Exposure, 0, 1)
+		imgui.Checkbox("material override", &DBG.MaterialOverride)
+	}
 
 	var imageWidth float32 = 500
 	if DBG.DebugTexture != 0 {

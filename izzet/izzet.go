@@ -187,9 +187,10 @@ func (g *Izzet) loadEntities() {
 	pointLight.LocalPosition = mgl64.Vec3{0, -12, 806}
 	g.AddEntity(pointLight)
 
+	lightDir := panels.DBG.DirectionalLightDir
 	lightInfo := &entities.LightInfo{
 		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
-		Direction: mgl64.Vec3{float64(panels.DBG.DirectionalLightX), float64(panels.DBG.DirectionalLightY), float64(panels.DBG.DirectionalLightZ)}.Normalize(),
+		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)
 	directionalLight.LocalPosition = mgl64.Vec3{0, 0, 0}

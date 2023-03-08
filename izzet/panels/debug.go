@@ -18,6 +18,9 @@ type DebugSettings struct {
 	Exposure                  float32
 	AmbientFactor             float32
 	Bloom                     bool
+	BloomThresholdPasses      int32
+	BloomThreshold            float32
+	BloomUpsamplingRadius     float32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -33,6 +36,9 @@ var DBG DebugSettings = DebugSettings{
 	Exposure:                  1.0,
 	AmbientFactor:             0.001,
 	Bloom:                     true,
+	BloomThresholdPasses:      1,
+	BloomThreshold:            3,
+	BloomUpsamplingRadius:     0.005,
 }
 
 func BuildDebug(world World, renderContext RenderContext) {
@@ -48,12 +54,20 @@ func BuildDebug(world World, renderContext RenderContext) {
 	imgui.BeginV("Debug", &open, imgui.WindowFlagsNone)
 
 	if imgui.CollapsingHeaderV("Lighting Options", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.SliderFloat("bloom intensity", &DBG.BloomIntensity, 0, 1)
 		imgui.SliderFloat("ambient factor", &DBG.AmbientFactor, 0, 1)
+		imgui.Dummy(imgui.Vec2{X: 0, Y: 10})
 		imgui.SliderFloat("point light bias", &DBG.PointLightBias, 0, 1)
-		imgui.InputInt("directional light intensity", &DBG.DirectionalLightIntensity)
 		imgui.InputInt("point light intensity", &DBG.PointLightIntensity)
+		imgui.Dummy(imgui.Vec2{X: 0, Y: 10})
+		imgui.InputInt("directional light intensity", &DBG.DirectionalLightIntensity)
 		imgui.SliderFloat3("directional light dir", &DBG.DirectionalLightDir, -1, 1)
+
+		imgui.Dummy(imgui.Vec2{X: 0, Y: 10})
+		imgui.SliderFloat("bloom intensity", &DBG.BloomIntensity, 0, 5)
+		imgui.SliderInt("bloom threshold passes", &DBG.BloomThresholdPasses, 0, 3)
+		imgui.SliderFloat("bloom threshold", &DBG.BloomThreshold, 0, 3)
+		imgui.SliderFloat("upsampling radius", &DBG.BloomUpsamplingRadius, 0, 1.0)
+
 		imgui.Checkbox("bloom", &DBG.Bloom)
 		imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)
 	}

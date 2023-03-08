@@ -494,15 +494,15 @@ func drawBillboardTexture(
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-var vao, vbo uint32
-var vertices []float32
+var dtqVao, dtqVbo uint32
+var dtqVertices []float32
 
 func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, hudScale float32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
-	if vao == 0 {
-		vertices = []float32{
+	if dtqVao == 0 {
+		dtqVertices = []float32{
 			-1 * hudScale, -1 * hudScale, 0, 0.0, 0.0,
 			1 * hudScale, -1 * hudScale, 0, 1.0, 0.0,
 			1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
@@ -521,7 +521,7 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		}
 
 		if doubleSided {
-			vertices = append(vertices, backVertices...)
+			dtqVertices = append(dtqVertices, backVertices...)
 		}
 
 		// // if we're just rendering something directly to screen without a world position
@@ -533,13 +533,13 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		// 	}
 		// }
 
-		// var vbo, vao uint32
-		gl.GenBuffers(1, &vbo)
-		gl.GenVertexArrays(1, &vao)
+		// var vbo, dtqVao uint32
+		gl.GenBuffers(1, &dtqVbo)
+		gl.GenVertexArrays(1, &dtqVao)
 
-		gl.BindVertexArray(vao)
-		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+		gl.BindVertexArray(dtqVao)
+		gl.BindBuffer(gl.ARRAY_BUFFER, dtqVbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(dtqVertices)*4, gl.Ptr(dtqVertices), gl.STATIC_DRAW)
 
 		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
 		gl.EnableVertexAttribArray(0)
@@ -548,7 +548,7 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		gl.EnableVertexAttribArray(1)
 	}
 
-	gl.BindVertexArray(vao)
+	gl.BindVertexArray(dtqVao)
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
@@ -563,7 +563,7 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		shader.Use()
 	}
 
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
 func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {
@@ -634,12 +634,12 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int) (uint32, uint32) {
-	fbo, textures := r.initFrameBuffer(width, height, 1)
+func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internal int32) (uint32, uint32) {
+	fbo, textures := r.initFrameBuffer(width, height, internal, 1)
 	return fbo, textures[0]
 }
 
-func (r *Renderer) initFrameBuffer(width int, height int, colorBufferCount int) (uint32, []uint32) {
+func (r *Renderer) initFrameBuffer(width int, height int, internal int32, colorBufferCount int) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -656,7 +656,7 @@ func (r *Renderer) initFrameBuffer(width int, height int, colorBufferCount int) 
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+		gl.TexImage2D(gl.TEXTURE_2D, 0, internal,
 			int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
 
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)

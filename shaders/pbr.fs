@@ -41,6 +41,8 @@ uniform float shadowDistance;
 uniform samplerCube depthCubeMap;
 uniform float far_plane;
 
+uniform float ambientFactor;
+
 // pbr materials
 uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
@@ -229,7 +231,7 @@ void main()
         Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, lightColor, in_albedo, do_attenuation);
     }
   
-    vec3 ambient = vec3(0.1) * in_albedo * ao;
+    vec3 ambient = vec3(ambientFactor) * in_albedo * ao;
     vec3 color = ambient + Lo;
 	
     // HDR tone mapping

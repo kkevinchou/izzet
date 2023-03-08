@@ -192,16 +192,20 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
-	r.downSample(r.mainColorTexture)
-	r.upSample()
-	r.composite(renderContext)
-	// panels.DBG.DebugTexture = r.bloomTextures[0]
-	panels.DBG.DebugTexture = r.compositeTexture
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.compositeTexture, 1, float32(renderContext.aspectRatio), nil, false)
+	if panels.DBG.Bloom {
+		r.downSample(r.mainColorTexture)
+		r.upSample()
+		r.composite(renderContext)
+
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+		gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+		drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.compositeTexture, 1, float32(renderContext.aspectRatio), nil, false)
+	}
+
 	blitFBO(r.renderFBO, 0, renderContext.Width(), renderContext.Height())
+
+	panels.DBG.DebugTexture = r.compositeTexture
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.renderGizmos(cameraViewerContext, renderContext)

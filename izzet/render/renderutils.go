@@ -138,6 +138,7 @@ func drawModel(
 	shader.SetUniformFloat("shadowDistance", float32(shadowMap.ShadowDistance()))
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformVec3("pickingColor", idToPickingColor(entityID))
+	shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
 

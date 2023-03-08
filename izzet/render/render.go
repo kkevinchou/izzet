@@ -68,6 +68,7 @@ type Renderer struct {
 
 	renderFBO              uint32
 	mainColorTexture       uint32
+	colorPickingTexture    uint32
 	colorPickingAttachment uint32
 
 	bloomFBO      uint32
@@ -117,6 +118,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, 2)
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
+	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 
 	r.initBloom(1920, 1080)
@@ -192,20 +194,20 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
+	panels.DBG.DebugTexture = r.colorPickingTexture
 
 	if panels.DBG.Bloom {
 		r.downSample(r.mainColorTexture)
 		r.upSample()
 		r.composite(renderContext)
 
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 		gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 		drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.compositeTexture, 1, float32(renderContext.aspectRatio), nil, false)
+		blitFBO(r.compositeFBO, 0, renderContext.Width(), renderContext.Height())
+	} else {
+		blitFBO(r.renderFBO, 0, renderContext.Width(), renderContext.Height())
 	}
-
-	blitFBO(r.renderFBO, 0, renderContext.Width(), renderContext.Height())
-
-	panels.DBG.DebugTexture = r.compositeTexture
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.renderGizmos(cameraViewerContext, renderContext)

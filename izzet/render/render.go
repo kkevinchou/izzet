@@ -76,8 +76,9 @@ type Renderer struct {
 	bloomVertices []float32
 	bloomTextures []uint32
 
-	upsampleFBO      uint32
-	upsampleTextures []uint32
+	upsampleFBO         uint32
+	upsampleTextures    []uint32
+	blendTargetTextures []uint32
 
 	compositeFBO     uint32
 	compositeTexture uint32
@@ -588,6 +589,19 @@ func (r *Renderer) initBloom(maxWidth, maxHeight int) {
 
 		r.upsampleTextures = append(r.upsampleTextures, upsampleTexture)
 
+		var blendTargetTexture uint32
+		gl.GenTextures(1, &blendTargetTexture)
+		gl.BindTexture(gl.TEXTURE_2D, blendTargetTexture)
+
+		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
+			int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+		r.blendTargetTextures = append(r.blendTargetTextures, blendTargetTexture)
+
 		width /= 2
 		height /= 2
 
@@ -693,15 +707,12 @@ func (r *Renderer) upSample() uint32 {
 
 	mipsCount := len(r.bloomTextures)
 
-	var pingPongTextures [2]uint32
-	gl.GenTextures(2, &pingPongTextures[0])
-
-	// upSampleSteps := mipsCount - 1
+	var upSampleSource uint32
+	upSampleSource = r.bloomTextures[mipsCount-1]
 	var i int
 	for i = mipsCount - 1; i > 0; i-- {
-		currentMip := r.bloomTextures[i]
-		nextMip := r.bloomTextures[i-1]
-		upsampleMip := r.upsampleTextures[i]
+		blendTargetMip := r.blendTargetTextures[i]
+		upSampleMip := r.upsampleTextures[i]
 
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.upsampleFBO)
 
@@ -710,29 +721,22 @@ func (r *Renderer) upSample() uint32 {
 		shader.SetUniformFloat("upsamplingRadius", panels.DBG.BloomUpsamplingRadius)
 
 		gl.ActiveTexture(gl.TEXTURE0)
-		gl.BindTexture(gl.TEXTURE_2D, currentMip)
+		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
 
 		gl.Viewport(0, 0, r.widths[i-1], r.heights[i-1])
 		drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upsampleMip, 0)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upSampleMip, 0)
 		gl.DrawBuffers(1, &drawBuffers[0])
 
 		gl.BindVertexArray(r.bloomVAO)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
-		// gl.BindTexture(gl.TEXTURE_2D, texture)
-
-		// gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
-		// 	int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
-		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-		r.blend(r.widths[i-1], r.heights[i-1], upsampleMip, nextMip, nextMip)
+		// r.blend(r.widths[i-1], r.heights[i-1], upSampleMip, r.bloomTextures[i-1], blendTargetMip)
+		r.blend(r.widths[i-1], r.heights[i-1], r.bloomTextures[i-1], upSampleMip, blendTargetMip)
+		upSampleSource = blendTargetMip
 	}
 
-	return r.upsampleTextures[1]
+	return upSampleSource
 }
 
 func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
@@ -747,8 +751,8 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	gl.ActiveTexture(gl.TEXTURE1)
 	gl.BindTexture(gl.TEXTURE_2D, texture1)
 
-	shader.SetUniformInt("texture1", 0)
-	shader.SetUniformInt("texture2", 1)
+	shader.SetUniformInt("texture0", 0)
+	shader.SetUniformInt("texture1", 1)
 
 	gl.Viewport(0, 0, width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)

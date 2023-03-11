@@ -6,7 +6,6 @@ in vec2 TexCoords;
 uniform sampler2D texture0;
 uniform sampler2D texture1;
 
-
 void main()
 {
     vec3 color = texture(texture0, TexCoords).rgb + texture(texture1, TexCoords).rgb;

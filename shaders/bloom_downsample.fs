@@ -12,7 +12,6 @@ uniform sampler2D srcTexture;
 uniform int bloomThresholdEnabled;
 uniform float bloomThreshold;
 uniform int karis;
-uniform float boost;
 
 in vec2 texCoord;
 layout (location = 0) out vec4 downsample;

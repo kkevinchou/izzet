@@ -6,12 +6,19 @@ in vec2 TexCoords;
 uniform sampler2D basictexture;
 uniform vec3 pickingColor;
 
+uniform int doColorOverride;
+uniform vec3 colorOverride;
+
 void main() {
     vec4 t = texture(basictexture, TexCoords);
     if (t.a == 0) {
         discard;
     }
 
-    FragColor = t;
+    if (doColorOverride == 1) {
+        FragColor = vec4(colorOverride, 1);
+    } else {
+        FragColor = t;
+    }
     PickingColor = vec4(pickingColor, 1);
 }

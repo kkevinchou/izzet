@@ -429,7 +429,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 
 		if entity.ImageInfo != nil {
-			texture := r.world.AssetManager().GetTexture("white")
+			texture := r.world.AssetManager().GetTexture("light")
 			if texture != nil {
 				a := mgl64.Vec4{0, 1, 0, 1}
 				b := mgl64.Vec4{1, 0, 0, 1}
@@ -678,7 +678,6 @@ func (r *Renderer) downSample(srcTexture uint32) {
 		} else {
 			shader.SetUniformInt("bloomThresholdEnabled", 0)
 		}
-		shader.SetUniformFloat("boost", panels.DBG.Boost)
 		shader.SetUniformFloat("bloomThreshold", panels.DBG.BloomThreshold)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 		srcTexture = r.bloomTextures[i]

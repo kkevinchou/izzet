@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/shaders"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -32,6 +33,7 @@ type World interface {
 	GetEntityByID(id int) *entities.Entity
 	BuildRelation(parent *entities.Entity, child *entities.Entity)
 	RemoveParent(child *entities.Entity)
+	SpatialPartition() *spatialpartition.SpatialPartition
 
 	// for panels
 	AddEntity(entity *entities.Entity)
@@ -210,6 +212,10 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
+
+	if panels.DBG.RenderSpatialPartition {
+		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
+	}
 
 	var finalRenderTexture uint32
 	if panels.DBG.Bloom {

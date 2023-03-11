@@ -25,6 +25,8 @@ type DebugSettings struct {
 	BloomUpsamplingRadius     float32
 	LightColorOverride        float32
 
+	RenderSpatialPartition bool
+
 	RenderTime float64
 }
 
@@ -45,6 +47,7 @@ var DBG DebugSettings = DebugSettings{
 	BloomThreshold:            0.8,
 	BloomUpsamplingRadius:     0.005,
 	LightColorOverride:        5.0,
+	RenderSpatialPartition:    false,
 }
 
 func BuildDebug(world World, renderContext RenderContext) {
@@ -83,6 +86,7 @@ func BuildDebug(world World, renderContext RenderContext) {
 		imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 		imgui.SliderFloat("exposure", &DBG.Exposure, 0, 1)
 		imgui.Checkbox("material override", &DBG.MaterialOverride)
+		imgui.Checkbox("render spatial partition", &DBG.RenderSpatialPartition)
 	}
 
 	if imgui.CollapsingHeaderV("RenderStats", imgui.TreeNodeFlagsNone) {

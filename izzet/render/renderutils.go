@@ -17,6 +17,7 @@ import (
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/shaders"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -779,4 +780,65 @@ func drawCapsuleCollider(viewerContext ViewerContext, lightContext LightContext,
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("alpha", float32(0.3))
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+}
+
+var (
+	spatialPartitionLineCache [][]mgl64.Vec3
+)
+
+func drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
+	var allLines [][]mgl64.Vec3
+
+	if len(spatialPartitionLineCache) == 0 {
+		d := spatialPartition.PartitionDimension * spatialPartition.PartitionCount
+		var baseHorizontalLines [][]mgl64.Vec3
+
+		// lines along z axis
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			baseHorizontalLines = append(baseHorizontalLines,
+				[]mgl64.Vec3{{float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(-d / 2)}, {float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(d / 2)}},
+			)
+		}
+
+		// // lines along x axis
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			baseHorizontalLines = append(baseHorizontalLines,
+				[]mgl64.Vec3{{float64(-d / 2), float64(-d / 2), float64(-d/2 + i*spatialPartition.PartitionDimension)}, {float64(d / 2), float64(-d / 2), float64(-d/2 + i*spatialPartition.PartitionDimension)}},
+			)
+		}
+
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			for _, b := range baseHorizontalLines {
+				allLines = append(allLines,
+					[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0}), b[1].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0})},
+				)
+			}
+		}
+
+		var baseVerticalLines [][]mgl64.Vec3
+
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			baseVerticalLines = append(baseVerticalLines,
+				[]mgl64.Vec3{{float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(-d / 2)}, {float64(-d/2 + i*spatialPartition.PartitionDimension), float64(d / 2), float64(-d / 2)}},
+			)
+		}
+
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			for _, b := range baseVerticalLines {
+				allLines = append(allLines,
+					[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)}), b[1].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)})},
+				)
+			}
+		}
+		spatialPartitionLineCache = allLines
+	}
+	allLines = spatialPartitionLineCache
+
+	drawLines(
+		viewerContext,
+		shader,
+		allLines,
+		thickness,
+		color,
+	)
 }

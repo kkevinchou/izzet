@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 func (g *Izzet) AddEntity(entity *entities.Entity) {
@@ -148,4 +149,8 @@ func (g *Izzet) Lights() []*entities.Entity {
 		}
 	}
 	return result
+}
+
+func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
+	return g.spatialParition
 }

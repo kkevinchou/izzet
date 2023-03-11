@@ -367,10 +367,18 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			shaderName := "modelpbr"
 			shader := shaderManager.GetShaderProgram(shaderName)
 			shader.Use()
+
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 				shader.SetUniformInt("isAnimated", 1)
 			} else {
 				shader.SetUniformInt("isAnimated", 0)
+			}
+			if !panels.DBG.Bloom {
+				// only tone map if we're not applying bloom, otherwise
+				// we want to keep the HDR values and tone map later
+				shader.SetUniformInt("applyToneMapping", 1)
+			} else {
+				shader.SetUniformInt("applyToneMapping", 0)
 			}
 
 			drawModel(

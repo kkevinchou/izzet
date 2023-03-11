@@ -50,6 +50,8 @@ uniform vec4 pbrBaseColorFactor;
 uniform float bias;
 uniform vec3 pickingColor;
 
+uniform int applyToneMapping;
+
 const float PI = 3.14159265359;
 
 in VS_OUT {
@@ -234,21 +236,23 @@ void main()
     vec3 ambient = vec3(ambientFactor) * in_albedo * ao;
     vec3 color = ambient + Lo;
 	
-    // HDR tone mapping
-    // color = color / (color + vec3(1.0));
+    if (applyToneMapping == 1) {
+        // HDR tone mapping
+        color = color / (color + vec3(1.0));
 
-    // Gamma correction
-    // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally
-    // store textures in SRGB format which we then need to gamma correct herea.
-    // PARAMETERS:
-    //     gl.Enable(gl.FRAMEBUFFER_SRGB)
-    //         OpenGL setting for how the fragment shader outputs colors
-    //     lightColor
-    //         The color of the light. i've tested with (1, 1, 1) to (20, 20, 20)
-    //     gamma correction in the fragment shader
-    //         I've experimented with enabling/disabling. it seems like if i gamma correct
-    //         I want to disable the OpenGL setting, and if I don't, I want to enable it instead.
-    // color = pow(color, vec3(1.0/2.2));
+        // Gamma correction
+        // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally
+        // store textures in SRGB format which we then need to gamma correct herea.
+        // PARAMETERS:
+        //     gl.Enable(gl.FRAMEBUFFER_SRGB)
+        //         OpenGL setting for how the fragment shader outputs colors
+        //     lightColor
+        //         The color of the light. i've tested with (1, 1, 1) to (20, 20, 20)
+        //     gamma correction in the fragment shader
+        //         I've experimented with enabling/disabling. it seems like if i gamma correct
+        //         I want to disable the OpenGL setting, and if I don't, I want to enable it instead.
+        color = pow(color, vec3(1.0/2.2));
+    }
 
     FragColor = vec4(color, 1.0);
     PickingColor = vec4(pickingColor, 1);

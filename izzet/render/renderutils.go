@@ -654,8 +654,51 @@ func (r *Renderer) initFrameBuffer(width int, height int, internal int32, colorB
 
 		gl.GenTextures(1, &texture)
 		gl.BindTexture(gl.TEXTURE_2D, texture)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexImage2D(gl.TEXTURE_2D, 0, internal,
+			int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+
+		textures = append(textures, texture)
+		drawBuffers = append(drawBuffers, attachment)
+	}
+
+	gl.DrawBuffers(int32(colorBufferCount), &drawBuffers[0])
+
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return fbo, textures
+}
+
+func (r *Renderer) initFrameBuffer2(width int, height int, internal int32, colorBufferCount int) (uint32, []uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+
+	var textures []uint32
+	var drawBuffers []uint32
+
+	for i := 0; i < colorBufferCount; i++ {
+		var texture uint32
+		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
+
+		gl.GenTextures(1, &texture)
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 		gl.TexImage2D(gl.TEXTURE_2D, 0, internal,
 			int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
 

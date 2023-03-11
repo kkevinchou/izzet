@@ -29,6 +29,19 @@ vec3 bloom_new()
     return mix(hdrColor, bloomColor, bloomIntensity); // linear interpolation
 }
 
+const float A = 2.51;
+const float B = 0.03;
+const float C = 2.43;
+const float D = 0.59;
+const float E = 0.14;
+
+// ACES tone mapping function
+vec3 acesToneMapping(vec3 color)
+{
+    color = (color * (A * color + B)) / (color * (C * color + D) + E);
+    return clamp(color, 0.0, 1.0);
+}
+
 void main()
 {
     // to bloom or not to bloom
@@ -51,7 +64,9 @@ void main()
     // FragColor = vec4(result, 1.0);
 
     vec3 color = bloom_new();
-    color = color / (color + vec3(1.0));
+    color = acesToneMapping(color);
+    // color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, 1.0);
 }

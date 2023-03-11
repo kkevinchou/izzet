@@ -8,6 +8,7 @@ uniform vec3 pickingColor;
 
 uniform int doColorOverride;
 uniform vec3 colorOverride;
+uniform float colorOverrideIntensity;
 
 void main() {
     vec4 t = texture(basictexture, TexCoords);
@@ -16,7 +17,7 @@ void main() {
     }
 
     if (doColorOverride == 1) {
-        FragColor = vec4(colorOverride, 1);
+        FragColor = vec4(colorOverride * colorOverrideIntensity, 1);
     } else {
         FragColor = t;
     }

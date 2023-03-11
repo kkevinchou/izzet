@@ -44,8 +44,8 @@ type World interface {
 }
 
 const mipsCount int = 6
-const bloomTextureWidth int = 1920
-const bloomTextureHeight int = 1080
+const MaxBloomTextureWidth int = 1920
+const MaxBloomTextureHeight int = 1080
 
 type Renderer struct {
 	world         World
@@ -83,8 +83,8 @@ type Renderer struct {
 	compositeFBO     uint32
 	compositeTexture uint32
 
-	widths  []int32
-	heights []int32
+	widths  []int
+	heights []int
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -126,8 +126,19 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 
-	r.downSampleFBO, r.upSampleFBO, r.downSampleTextures, r.upSampleTextures, r.blendTargetTextures = r.initBloom(bloomTextureWidth, bloomTextureHeight)
-	r.initComposite(width, height)
+	// bloom setup
+	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
+	r.widths = widths
+	r.heights = heights
+	r.downSampleTextures = initSamplingTextures(widths, heights)
+	r.downSampleFBO = initSamplingBuffer(r.downSampleTextures[0])
+
+	widths, heights = createSamplingDimensions(MaxBloomTextureWidth, MaxBloomTextureHeight, 6)
+	r.upSampleTextures = initSamplingTextures(widths, heights)
+	r.blendTargetTextures = initSamplingTextures(widths, heights)
+	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
+
+	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
 	return r
 }
 

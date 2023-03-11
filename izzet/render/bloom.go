@@ -7,56 +7,29 @@ import (
 	"github.com/kkevinchou/izzet/izzet/panels"
 )
 
-func (r *Renderer) initBloom(maxWidth, maxHeight int) (uint32, uint32, []uint32, []uint32, []uint32) {
-	var downSampleFBO uint32
-	gl.GenFramebuffers(1, &downSampleFBO)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, downSampleFBO)
+func createSamplingDimensions(startWidth int, startHeight int, count int) ([]int, []int) {
+	var widths []int
+	var heights []int
 
-	var upSampleFBO uint32
-	gl.GenFramebuffers(1, &upSampleFBO)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, upSampleFBO)
+	width := startWidth
+	height := startHeight
 
-	var (
-		upSampleTextures    []uint32
-		downSampleTextures  []uint32
-		blendTargetTextures []uint32
-	)
-
-	width, height := maxWidth, maxHeight
-	for i := 0; i < mipsCount; i++ {
-		// upsampling textures start one doubling earlier than the downsampling textures
-		// the first step of upsampling is taking the lowest downsampling mip and upsampling it
-		var upsampleTexture uint32
-		gl.GenTextures(1, &upsampleTexture)
-		gl.BindTexture(gl.TEXTURE_2D, upsampleTexture)
-
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
-			int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-		upSampleTextures = append(upSampleTextures, upsampleTexture)
-
-		var blendTargetTexture uint32
-		gl.GenTextures(1, &blendTargetTexture)
-		gl.BindTexture(gl.TEXTURE_2D, blendTargetTexture)
-
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
-			int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-		blendTargetTextures = append(blendTargetTextures, blendTargetTexture)
-
+	for i := 0; i < count; i++ {
+		widths = append(widths, width)
+		heights = append(heights, height)
 		width /= 2
 		height /= 2
+	}
 
-		r.widths = append(r.widths, int32(width))
-		r.heights = append(r.heights, int32(height))
+	return widths, heights
+}
+
+func initSamplingTextures(widths, heights []int) []uint32 {
+	var textures []uint32
+
+	for i := 0; i < len(widths); i++ {
+		width := widths[i]
+		height := heights[i]
 
 		var texture uint32
 		gl.GenTextures(1, &texture)
@@ -69,26 +42,26 @@ func (r *Renderer) initBloom(maxWidth, maxHeight int) (uint32, uint32, []uint32,
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
-		downSampleTextures = append(downSampleTextures, texture)
+		textures = append(textures, texture)
 	}
+
+	return textures
+}
+
+func initSamplingBuffer(texture uint32) uint32 {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, downSampleTextures[0], 0)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 	gl.DrawBuffers(1, &drawBuffers[0])
 
 	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
 		panic(errors.New("failed to initalize frame buffer"))
 	}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, upSampleFBO)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upSampleTextures[0], 0)
-	gl.DrawBuffers(1, &drawBuffers[0])
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return downSampleFBO, upSampleFBO, downSampleTextures, upSampleTextures, blendTargetTextures
+	return fbo
 }
 
 func (r *Renderer) init2f2fVAO() uint32 {
@@ -131,7 +104,7 @@ func (r *Renderer) downSample(srcTexture uint32) {
 
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, srcTexture)
-		gl.Viewport(0, 0, width, height)
+		gl.Viewport(0, 0, int32(width), int32(height))
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.downSampleTextures[i], 0)
 
 		gl.BindVertexArray(r.xyTextureVAO)
@@ -174,7 +147,7 @@ func (r *Renderer) upSample() uint32 {
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
 
-		gl.Viewport(0, 0, r.widths[i-1], r.heights[i-1])
+		gl.Viewport(0, 0, int32(r.widths[i-1]), int32(r.heights[i-1]))
 		drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upSampleMip, 0)
 		gl.DrawBuffers(1, &drawBuffers[0])
@@ -182,8 +155,7 @@ func (r *Renderer) upSample() uint32 {
 		gl.BindVertexArray(r.xyTextureVAO)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
-		// r.blend(r.widths[i-1], r.heights[i-1], upSampleMip, r.bloomTextures[i-1], blendTargetMip)
-		r.blend(r.widths[i-1], r.heights[i-1], r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
+		r.blend(int32(r.widths[i-1]), int32(r.heights[i-1]), r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
 		upSampleSource = blendTargetMip
 	}
 
@@ -197,7 +169,7 @@ func (r *Renderer) upSample() uint32 {
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
 
-	gl.Viewport(0, 0, int32(bloomTextureWidth), int32(bloomTextureHeight))
+	gl.Viewport(0, 0, int32(MaxBloomTextureWidth), int32(MaxBloomTextureHeight))
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blendTargetMip, 0)
 	gl.DrawBuffers(1, &drawBuffers[0])
@@ -228,33 +200,6 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
-}
-
-func (r *Renderer) initComposite(width, height int) {
-	var fbo uint32
-	gl.GenFramebuffers(1, &fbo)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
-		int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-	gl.DrawBuffers(1, &drawBuffers[0])
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	r.compositeFBO, r.compositeTexture = fbo, texture
 }
 
 func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) {

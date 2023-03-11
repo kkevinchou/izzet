@@ -468,8 +468,10 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
-					// shader.SetUniformInt("doColorOverride", 1)
+					shader.SetUniformInt("doColorOverride", 1)
 					// shader.SetUniformVec3("colorOverride", mgl32.Vec3{panels.DBG.LightColorOverride, panels.DBG.LightColorOverride, panels.DBG.LightColorOverride})
+					shader.SetUniformVec3("colorOverride", panels.DBG.LightColorOverride)
+					shader.SetUniformFloat("colorOverrideIntensity", panels.DBG.LightColorOverrideIntensity)
 
 					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
 				}

@@ -91,7 +91,7 @@ func (r *Renderer) init2f2fVAO() uint32 {
 	return vao
 }
 
-func (r *Renderer) downSample(srcTexture uint32) {
+func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 	defer resetGLRenderSettings(r.renderFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.downSampleFBO)
 
@@ -99,8 +99,8 @@ func (r *Renderer) downSample(srcTexture uint32) {
 	shader.Use()
 
 	for i := 0; i < len(r.downSampleTextures); i++ {
-		width := r.widths[i]
-		height := r.heights[i]
+		width := widths[i]
+		height := heights[i]
 
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, srcTexture)
@@ -126,7 +126,7 @@ func (r *Renderer) downSample(srcTexture uint32) {
 
 // double check that the upsampling works and blends the right textures
 // welp, i need to be ping ponging GG
-func (r *Renderer) upSample() uint32 {
+func (r *Renderer) upSample(widths, heights []int) uint32 {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	mipsCount := len(r.downSampleTextures)
@@ -135,6 +135,9 @@ func (r *Renderer) upSample() uint32 {
 	upSampleSource = r.downSampleTextures[mipsCount-1]
 	var i int
 	for i = mipsCount - 1; i > 0; i-- {
+		width := int32(widths[i-1])
+		height := int32(heights[i-1])
+
 		blendTargetMip := r.blendTargetTextures[i]
 		upSampleMip := r.upSampleTextures[i]
 
@@ -147,7 +150,7 @@ func (r *Renderer) upSample() uint32 {
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
 
-		gl.Viewport(0, 0, int32(r.widths[i-1]), int32(r.heights[i-1]))
+		gl.Viewport(0, 0, width, height)
 		drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upSampleMip, 0)
 		gl.DrawBuffers(1, &drawBuffers[0])
@@ -155,7 +158,7 @@ func (r *Renderer) upSample() uint32 {
 		gl.BindVertexArray(r.xyTextureVAO)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
-		r.blend(int32(r.widths[i-1]), int32(r.heights[i-1]), r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
+		r.blend(width, height, r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
 		upSampleSource = blendTargetMip
 	}
 
@@ -202,7 +205,7 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) {
+func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) uint32 {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 
 	shader := r.shaderManager.GetShaderProgram("composite")
@@ -224,4 +227,6 @@ func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uin
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+
+	return r.compositeTexture
 }

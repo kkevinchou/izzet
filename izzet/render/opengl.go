@@ -16,9 +16,6 @@ func initOpenGLRenderSettings() {
 }
 
 func compileShaders(shaderManager *shaders.ShaderManager) {
-	if err := shaderManager.CompileShaderProgram("ktest", "ktest", "ktest", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("blend", "composite", "blend", ""); err != nil {
 		panic(err)
 	}

@@ -26,6 +26,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.width, g.height = int(w), int(h)
 	}
 
+	g.spatialParition.FrameSetup(nil)
 	g.handleSimplyKeyCommands(frameInput)
 
 	for _, entity := range g.Entities() {

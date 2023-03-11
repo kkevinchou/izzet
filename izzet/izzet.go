@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/model"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -41,6 +42,7 @@ type Izzet struct {
 	editHistory *edithistory.EditHistory
 
 	commandFrameCount int
+	spatialParition   *spatialpartition.SpatialPartition
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -85,6 +87,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
+	g.spatialParition = spatialpartition.NewSpatialPartition(200, 10)
 
 	return g
 }

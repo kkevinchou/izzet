@@ -45,6 +45,8 @@ type World interface {
 }
 
 const mipsCount int = 6
+const bloomTextureWidth int = 1920
+const bloomTextureHeight int = 1080
 
 type Renderer struct {
 	world         World
@@ -72,8 +74,7 @@ type Renderer struct {
 	colorPickingAttachment uint32
 
 	bloomFBO      uint32
-	bloomVAO      uint32
-	bloomVertices []float32
+	xyTextureVAO  uint32
 	bloomTextures []uint32
 
 	upsampleFBO         uint32
@@ -111,6 +112,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	}
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
+	r.xyTextureVAO = r.init2f2fVAO()
 
 	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
 	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
@@ -119,13 +121,13 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	compileShaders(r.shaderManager)
 
-	renderFBO, colorTextures := r.initFrameBuffer2(width, height, gl.R11F_G11F_B10F, 2)
+	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.R11F_G11F_B10F, 2)
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 
-	r.initBloom(1920, 1080)
+	r.initBloom(bloomTextureWidth, bloomTextureHeight)
 	r.initComposite(width, height)
 	return r
 }
@@ -640,7 +642,9 @@ func (r *Renderer) initBloom(maxWidth, maxHeight int) {
 
 	r.bloomFBO = fbo
 	r.upsampleFBO = upsampleFBO
+}
 
+func (r *Renderer) init2f2fVAO() uint32 {
 	vertices := []float32{
 		-1, -1, 0.0, 0.0,
 		1, -1, 1.0, 0.0,
@@ -663,8 +667,8 @@ func (r *Renderer) initBloom(maxWidth, maxHeight int) {
 
 	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
 	gl.EnableVertexAttribArray(1)
-	r.bloomVAO = vao
-	r.bloomVertices = vertices
+
+	return vao
 }
 
 func (r *Renderer) downSample(srcTexture uint32) {
@@ -683,7 +687,7 @@ func (r *Renderer) downSample(srcTexture uint32) {
 		gl.Viewport(0, 0, width, height)
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.bloomTextures[i], 0)
 
-		gl.BindVertexArray(r.bloomVAO)
+		gl.BindVertexArray(r.xyTextureVAO)
 		if i == 0 {
 			shader.SetUniformInt("karis", 1)
 		} else {
@@ -728,7 +732,7 @@ func (r *Renderer) upSample() uint32 {
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upSampleMip, 0)
 		gl.DrawBuffers(1, &drawBuffers[0])
 
-		gl.BindVertexArray(r.bloomVAO)
+		gl.BindVertexArray(r.xyTextureVAO)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
 		// r.blend(r.widths[i-1], r.heights[i-1], upSampleMip, r.bloomTextures[i-1], blendTargetMip)
@@ -736,7 +740,25 @@ func (r *Renderer) upSample() uint32 {
 		upSampleSource = blendTargetMip
 	}
 
-	return upSampleSource
+	blendTargetMip := r.blendTargetTextures[0]
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.upsampleFBO)
+
+	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
+	shader.Use()
+	shader.SetUniformFloat("upsamplingRadius", panels.DBG.BloomUpsamplingRadius)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
+
+	gl.Viewport(0, 0, int32(bloomTextureWidth), int32(bloomTextureHeight))
+	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blendTargetMip, 0)
+	gl.DrawBuffers(1, &drawBuffers[0])
+
+	gl.BindVertexArray(r.xyTextureVAO)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+
+	return blendTargetMip
 }
 
 func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
@@ -757,7 +779,7 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	gl.Viewport(0, 0, width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
-	gl.BindVertexArray(r.bloomVAO)
+	gl.BindVertexArray(r.xyTextureVAO)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
@@ -808,6 +830,6 @@ func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uin
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 
-	gl.BindVertexArray(r.bloomVAO)
+	gl.BindVertexArray(r.xyTextureVAO)
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }

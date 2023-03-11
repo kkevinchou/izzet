@@ -102,23 +102,19 @@ void main()
     if (bloomThresholdEnabled == 1) {
         downsample = vec4(0, 0, 0, 1);
     } else if (karis == 1) {
-        if (karis == 1) {
-            vec3 groups[5];
-            groups[0] = (a+b+d+e) * (0.125f/4.0f);
-            groups[1] = (b+c+e+f) * (0.125f/4.0f);
-            groups[2] = (d+e+g+h) * (0.125f/4.0f);
-            groups[3] = (e+f+h+i) * (0.125f/4.0f);
-            groups[4] = (j+k+l+m) * (0.5f/4.0f);
-            groups[0] *= KarisAverage(groups[0]);
-            groups[1] *= KarisAverage(groups[1]);
-            groups[2] *= KarisAverage(groups[2]);
-            groups[3] *= KarisAverage(groups[3]);
-            groups[4] *= KarisAverage(groups[4]);
-            v = groups[0]+groups[1]+groups[2]+groups[3]+groups[4];
-            v = max(v, 0.0001f);
-            downsample = vec4(v, 1);
-        }
+        vec3 groups[5];
+        groups[0] = (a+b+d+e) * (0.125f/4.0f);
+        groups[1] = (b+c+e+f) * (0.125f/4.0f);
+        groups[2] = (d+e+g+h) * (0.125f/4.0f);
+        groups[3] = (e+f+h+i) * (0.125f/4.0f);
+        groups[4] = (j+k+l+m) * (0.5f/4.0f);
+        groups[0] *= KarisAverage(groups[0]);
+        groups[1] *= KarisAverage(groups[1]);
+        groups[2] *= KarisAverage(groups[2]);
+        groups[3] *= KarisAverage(groups[3]);
+        groups[4] *= KarisAverage(groups[4]);
+        v = groups[0]+groups[1]+groups[2]+groups[3]+groups[4];
+        v = max(v, 0.0001f);
+        downsample = vec4(v, 1);
     }
-
-    // downsample = vec4(texture(srcTexture, vec2(texCoord.x + 1*x, texCoord.y)).rgb, 1);
 }

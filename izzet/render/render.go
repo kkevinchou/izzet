@@ -83,8 +83,8 @@ type Renderer struct {
 	compositeFBO     uint32
 	compositeTexture uint32
 
-	widths  []int
-	heights []int
+	bloomTextureWidths  []int
+	bloomTextureHeights []int
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -128,8 +128,8 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
-	r.widths = widths
-	r.heights = heights
+	r.bloomTextureWidths = widths
+	r.bloomTextureHeights = heights
 	r.downSampleTextures = initSamplingTextures(widths, heights)
 	r.downSampleFBO = initSamplingBuffer(r.downSampleTextures[0])
 
@@ -213,12 +213,10 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	var finalRenderTexture uint32
 	if panels.DBG.Bloom {
-		r.downSample(r.mainColorTexture)
-		upsampleTexture := r.upSample()
+		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
+		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		panels.DBG.DebugTexture = upsampleTexture
-		r.composite(renderContext, r.mainColorTexture, upsampleTexture)
-
-		finalRenderTexture = r.compositeTexture
+		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 	} else {
 		finalRenderTexture = r.mainColorTexture
 	}

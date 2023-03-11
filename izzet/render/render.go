@@ -118,7 +118,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	compileShaders(r.shaderManager)
 
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.RGBA, 2)
+	renderFBO, colorTextures := r.initFrameBuffer2(width, height, gl.R11F_G11F_B10F, 2)
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.colorPickingTexture = colorTextures[1]
@@ -201,8 +201,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	var finalRenderTexture uint32
 	if panels.DBG.Bloom {
 		r.downSample(r.mainColorTexture)
-		r.upSample()
-		r.composite(renderContext)
+		upsampleTexture := r.upSample()
+		panels.DBG.DebugTexture = upsampleTexture
+		r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 
 		finalRenderTexture = r.compositeTexture
 	} else {
@@ -667,23 +668,36 @@ func (r *Renderer) downSample(srcTexture uint32) {
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.bloomTextures[i], 0)
 
 		gl.BindVertexArray(r.bloomVAO)
+		if i == 0 {
+			shader.SetUniformInt("karis", 1)
+		} else {
+			shader.SetUniformInt("karis", 0)
+		}
 		if i < int(panels.DBG.BloomThresholdPasses) {
 			shader.SetUniformInt("bloomThresholdEnabled", 1)
 		} else {
 			shader.SetUniformInt("bloomThresholdEnabled", 0)
 		}
+		shader.SetUniformFloat("boost", panels.DBG.Boost)
 		shader.SetUniformFloat("bloomThreshold", panels.DBG.BloomThreshold)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 		srcTexture = r.bloomTextures[i]
 	}
 }
 
-func (r *Renderer) upSample() {
+// double check that the upsampling works and blends the right textures
+// welp, i need to be ping ponging GG
+func (r *Renderer) upSample() uint32 {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	mipsCount := len(r.bloomTextures)
 
-	for i := mipsCount - 1; i > 0; i-- {
+	var pingPongTextures [2]uint32
+	gl.GenTextures(2, &pingPongTextures[0])
+
+	// upSampleSteps := mipsCount - 1
+	var i int
+	for i = mipsCount - 1; i > 0; i-- {
 		currentMip := r.bloomTextures[i]
 		nextMip := r.bloomTextures[i-1]
 		upsampleMip := r.upsampleTextures[i]
@@ -705,8 +719,19 @@ func (r *Renderer) upSample() {
 		gl.BindVertexArray(r.bloomVAO)
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
+		// gl.BindTexture(gl.TEXTURE_2D, texture)
+
+		// gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
+		// 	int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
 		r.blend(r.widths[i-1], r.heights[i-1], upsampleMip, nextMip, nextMip)
 	}
+
+	return r.upsampleTextures[1]
 }
 
 func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
@@ -758,17 +783,17 @@ func (r *Renderer) initComposite(width, height int) {
 	r.compositeFBO, r.compositeTexture = fbo, texture
 }
 
-func (r *Renderer) composite(renderContext RenderContext) {
+func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 
 	shader := r.shaderManager.GetShaderProgram("composite")
 	shader.Use()
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, r.mainColorTexture)
+	gl.BindTexture(gl.TEXTURE_2D, texture0)
 
 	gl.ActiveTexture(gl.TEXTURE1)
-	gl.BindTexture(gl.TEXTURE_2D, r.bloomTextures[0])
+	gl.BindTexture(gl.TEXTURE_2D, texture1)
 
 	shader.SetUniformInt("scene", 0)
 	shader.SetUniformInt("bloomBlur", 1)

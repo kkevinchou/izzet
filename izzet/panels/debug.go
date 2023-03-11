@@ -21,6 +21,7 @@ type DebugSettings struct {
 	BloomThresholdPasses      int32
 	BloomThreshold            float32
 	BloomUpsamplingRadius     float32
+	Boost                     float32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -36,9 +37,10 @@ var DBG DebugSettings = DebugSettings{
 	Exposure:                  1.0,
 	AmbientFactor:             0.001,
 	Bloom:                     true,
-	BloomThresholdPasses:      1,
-	BloomThreshold:            3,
+	BloomThresholdPasses:      0,
+	BloomThreshold:            0.8,
 	BloomUpsamplingRadius:     0.005,
+	Boost:                     15,
 }
 
 func BuildDebug(world World, renderContext RenderContext) {
@@ -63,10 +65,11 @@ func BuildDebug(world World, renderContext RenderContext) {
 		imgui.SliderFloat3("directional light dir", &DBG.DirectionalLightDir, -1, 1)
 
 		imgui.Dummy(imgui.Vec2{X: 0, Y: 10})
-		imgui.SliderFloat("bloom intensity", &DBG.BloomIntensity, 0, 5)
+		imgui.SliderFloat("bloom intensity", &DBG.BloomIntensity, 0, 1)
 		imgui.SliderInt("bloom threshold passes", &DBG.BloomThresholdPasses, 0, 3)
 		imgui.SliderFloat("bloom threshold", &DBG.BloomThreshold, 0, 3)
 		imgui.SliderFloat("upsampling radius", &DBG.BloomUpsamplingRadius, 0, 1.0)
+		imgui.SliderFloat("boost", &DBG.Boost, 0, 100.0)
 
 		imgui.Checkbox("bloom", &DBG.Bloom)
 		imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)

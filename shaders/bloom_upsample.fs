@@ -16,8 +16,8 @@ void main()
 {
     vec3 upsample;
     vec2 srcTexelSize = 1.0 / vec2(textureSize(srcTexture, 0));
-    float filterRadius = srcTexelSize.x;
-    // float filterRadius = upsamplingRadius;
+    // float filterRadius = srcTexelSize.x;
+    float filterRadius = upsamplingRadius;
 
     // The filter kernel is applied with a radius, specified in texture
     // coordinates, so that the radius will vary across mip resolutions.

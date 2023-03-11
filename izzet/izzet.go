@@ -126,6 +126,7 @@ func (g *Izzet) Start() {
 		}
 
 		if renderAccumulator >= msPerFrame {
+			start := time.Now()
 			frameCount++
 			// g.renderer.PreRenderImgui()
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
@@ -133,6 +134,7 @@ func (g *Izzet) Start() {
 			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame
+			panels.DBG.RenderTime = float64(time.Since(start).Microseconds()) / 1000
 		}
 	}
 }

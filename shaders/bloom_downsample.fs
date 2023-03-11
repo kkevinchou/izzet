@@ -99,9 +99,8 @@ void main()
     // downsample = vec4(1, 1, 1, 1);
     // downsample = texture(srcTexture, texCoord).xyzw;
     downsample = vec4(v, 1);
-    if (bloomThresholdEnabled == 1) {
-        downsample = vec4(0, 0, 0, 1);
-    } else if (karis == 1) {
+
+    if (karis == 1) {
         vec3 groups[5];
         groups[0] = (a+b+d+e) * (0.125f/4.0f);
         groups[1] = (b+c+e+f) * (0.125f/4.0f);
@@ -115,6 +114,13 @@ void main()
         groups[4] *= KarisAverage(groups[4]);
         v = groups[0]+groups[1]+groups[2]+groups[3]+groups[4];
         v = max(v, 0.0001f);
-        downsample = vec4(v, 1);
     }
+
+    if (bloomThresholdEnabled == 1) {
+        if (RGBToLuminance(v) < bloomThreshold) {
+            v /= 2;
+        }
+    }
+
+    downsample = vec4(v, 1);
 }

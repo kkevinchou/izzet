@@ -1,6 +1,8 @@
 package panels
 
 import (
+	"fmt"
+
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
@@ -22,6 +24,8 @@ type DebugSettings struct {
 	BloomThreshold            float32
 	BloomUpsamplingRadius     float32
 	LightColorOverride        float32
+
+	RenderTime float64
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -79,6 +83,10 @@ func BuildDebug(world World, renderContext RenderContext) {
 		imgui.SliderFloat("metallic", &DBG.Metallic, 0, 1)
 		imgui.SliderFloat("exposure", &DBG.Exposure, 0, 1)
 		imgui.Checkbox("material override", &DBG.MaterialOverride)
+	}
+
+	if imgui.CollapsingHeaderV("RenderStats", imgui.TreeNodeFlagsNone) {
+		imgui.LabelText("Render Time", fmt.Sprintf("%f", DBG.RenderTime))
 	}
 
 	var imageWidth float32 = 500

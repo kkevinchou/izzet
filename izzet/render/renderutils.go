@@ -165,6 +165,7 @@ func drawModel(
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, shadowMap.DepthTexture())
 
+	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
 		mesh := model.Collection().Meshes[renderData.MeshID]
 		if pbr := mesh.PBRMaterial; pbr != nil {

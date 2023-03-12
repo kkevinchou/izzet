@@ -22,7 +22,7 @@ type DebugSettings struct {
 	Bloom                       bool
 	BloomThresholdPasses        int32
 	BloomThreshold              float32
-	BloomUpsamplingRadius       float32
+	BloomUpsamplingScale        float32
 	LightColorOverride          [3]float32
 	LightColorOverrideIntensity float32
 
@@ -46,7 +46,7 @@ var DBG DebugSettings = DebugSettings{
 	Bloom:                       true,
 	BloomThresholdPasses:        0,
 	BloomThreshold:              0.8,
-	BloomUpsamplingRadius:       0.005,
+	BloomUpsamplingScale:        1.0,
 	LightColorOverride:          [3]float32{1, 1, 1},
 	LightColorOverrideIntensity: 1.0,
 	RenderSpatialPartition:      false,
@@ -77,7 +77,7 @@ func BuildDebug(world World, renderContext RenderContext) {
 		imgui.SliderFloat("bloom intensity", &DBG.BloomIntensity, 0, 1)
 		imgui.SliderInt("bloom threshold passes", &DBG.BloomThresholdPasses, 0, 3)
 		imgui.SliderFloat("bloom threshold", &DBG.BloomThreshold, 0, 3)
-		imgui.SliderFloat("upsampling radius", &DBG.BloomUpsamplingRadius, 0, 1.0)
+		imgui.SliderFloat("upsampling scale", &DBG.BloomUpsamplingScale, 0, 5.0)
 		// imgui.SliderFloat("light color override", &DBG.LightColorOverride, 0, 30)
 		//  ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | misc_flags);
 		imgui.ColorEdit3V("color picker", &DBG.LightColorOverride, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)

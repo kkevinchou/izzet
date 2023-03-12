@@ -12,6 +12,7 @@ uniform float ao; // ambient occlusion
 // lights
 const int MAX_LIGHTS = 10;
 
+
 struct Light {
     // the light type
     // 0 - directional
@@ -53,6 +54,8 @@ uniform vec3 pickingColor;
 uniform int applyToneMapping;
 
 const float PI = 3.14159265359;
+
+const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
 
 in VS_OUT {
     vec3 FragPos;
@@ -200,10 +203,11 @@ void main()
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
     if (lightCount > MAX_LIGHTS) {
-        FragColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
+        FragColor = errorColor;
         return;
     }
 
+    bool firstPointLight = true;
     for(int i = 0; i < lightCount; ++i) {
         Light light = lights[i];
         vec3 fragToCam = normalize(viewPos - fs_in.FragPos);
@@ -218,10 +222,16 @@ void main()
             fragToLight = -normalize(light.dir);
             shadow = DirectionalLightShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
             do_attenuation = 0;
-        } else {
-            // handle point shadows here
+        } else if (light.type == 1) {
             fragToLight = normalize(light.position - fs_in.FragPos);
-            shadow = PointLightShadowCalculation(fs_in.FragPos, light.position);
+            // we only support shadows for the first point light for now
+            if (firstPointLight) {
+                shadow = PointLightShadowCalculation(fs_in.FragPos, light.position);
+                firstPointLight = false;
+            }
+        } else {
+            FragColor = errorColor;
+            return;
         }
 
         vec3 lightColor = vec3(light.diffuse) * light.diffuse.w; // multiply color by intensity

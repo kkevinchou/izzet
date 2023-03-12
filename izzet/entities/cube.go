@@ -13,7 +13,7 @@ var (
 )
 
 type CubeData struct {
-	Length float64
+	Length int
 }
 
 type SphereData struct {
@@ -37,12 +37,13 @@ type ShapeData struct {
 	Line    *LineData
 }
 
-func CreateCube() *Entity {
+// take an int so that we don't explode the number of VAOs we create
+func CreateCube(length int) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
 	entity.ShapeData = []*ShapeData{
 		&ShapeData{
 			Cube: &CubeData{
-				50,
+				Length: length,
 			},
 		},
 	}

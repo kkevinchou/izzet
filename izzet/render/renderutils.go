@@ -250,7 +250,6 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformFloat("alpha", float32(1))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	drawTris(viewerContext, points, color)
 }
@@ -721,7 +720,6 @@ func drawCapsuleCollider(viewerContext ViewerContext, lightContext LightContext,
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-	shader.SetUniformFloat("alpha", float32(0.3))
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
 }
 
@@ -901,14 +899,14 @@ func initCubeVAO(length int) uint32 {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
 	gl.EnableVertexAttribArray(0)
 
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, nil)
-	gl.EnableVertexAttribArray(0)
+	// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, nil)
+	// gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices))/5)
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices))/3)
 
 	return vao
 }

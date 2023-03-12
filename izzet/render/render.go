@@ -85,6 +85,8 @@ type Renderer struct {
 	compositeFBO     uint32
 	compositeTexture uint32
 
+	blendFBO uint32
+
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
@@ -139,12 +141,20 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.blendTargetTextures = initSamplingTextures(widths, heights)
 	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
 
-	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+	gl.GenBuffers(gl.FRAMEBUFFER, &r.blendFBO)
+
+	// the texture is only needed to properly generate the FBO
+	// new textures are binded when we're in the process of blooming
+	r.blendFBO, _ = r.initFBOAndTexture(width, height)
+
+	r.initCompositeFBO(width, height)
+
 	return r
 }
 
 func (r *Renderer) Resized(width, height int) {
 	r.initMainRenderFBO(width, height)
+	r.initCompositeFBO(width, height)
 }
 
 func (r *Renderer) initMainRenderFBO(width, height int) {
@@ -153,6 +163,10 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	r.mainColorTexture = colorTextures[0]
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+}
+
+func (r *Renderer) initCompositeFBO(width, height int) {
+	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
 }
 
 func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {

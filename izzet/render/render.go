@@ -141,8 +141,6 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.blendTargetTextures = initSamplingTextures(widths, heights)
 	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
 
-	gl.GenBuffers(gl.FRAMEBUFFER, &r.blendFBO)
-
 	// the texture is only needed to properly generate the FBO
 	// new textures are binded when we're in the process of blooming
 	r.blendFBO, _ = r.initFBOAndTexture(width, height)

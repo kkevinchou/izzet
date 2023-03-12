@@ -251,6 +251,7 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformFloat("intensity", 1.0)
 	drawTris(viewerContext, points, color)
 }
 

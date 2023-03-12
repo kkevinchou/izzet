@@ -18,31 +18,46 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 	imgui.Text("Scene Hierarchy")
 	imgui.PopStyleColor()
 
+	entityPopup := false
 	for _, entity := range es {
 		if entity.Parent == nil {
-			drawEntity(entity, world)
+			popup := drawEntity(entity, world)
+			entityPopup = entityPopup || popup
 		}
 	}
 
 	imgui.EndChild()
+
+	if !entityPopup {
+		imgui.PushID("sceneHierarchy")
+		if imgui.BeginPopupContextItem() {
+			if imgui.Button("Add Cube") {
+				child := entities.CreateCube(25)
+				world.AddEntity(child)
+				SelectEntity(child)
+				imgui.CloseCurrentPopup()
+			}
+			imgui.EndPopup()
+		}
+		imgui.PopID()
+	}
 }
 
-func drawEntity(entity *entities.Entity, world World) {
+func drawEntity(entity *entities.Entity, world World) bool {
+	popup := false
 	nodeFlags := imgui.TreeNodeFlagsNone | imgui.TreeNodeFlagsLeaf
 	if SelectedEntity() != nil && entity.ID == SelectedEntity().ID {
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}
 
-	// var childClicked bool
 	if imgui.TreeNodeV(entity.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() && !imgui.IsItemToggledOpen() {
 			SelectEntity(entity)
 		}
 
 		imgui.PushID(entity.NameID())
-		imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
-		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 		if imgui.BeginPopupContextItem() {
+			popup = true
 			if imgui.Button("Add Cube") {
 				child := entities.CreateCube(25)
 				world.AddEntity(child)
@@ -58,8 +73,6 @@ func drawEntity(entity *entities.Entity, world World) {
 			}
 			imgui.EndPopup()
 		}
-		imgui.PopStyleColor()
-		imgui.PopStyleColor()
 		imgui.PopID()
 
 		if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
@@ -83,11 +96,13 @@ func drawEntity(entity *entities.Entity, world World) {
 		childIDs := sortedIDs(entity.Children)
 		for _, id := range childIDs {
 			child := entity.Children[id]
-			drawEntity(child, world)
+			childPopup := drawEntity(child, world)
+			popup = popup || childPopup
 		}
 
 		imgui.TreePop()
 	}
+	return popup
 }
 
 func sortedIDs(m map[int]*entities.Entity) []int {

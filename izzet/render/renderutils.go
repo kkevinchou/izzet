@@ -588,7 +588,6 @@ func (r *Renderer) initFrameBuffer(width int, height int, internal int32, colorB
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	var textures []uint32
 	var drawBuffers []uint32
@@ -652,7 +651,7 @@ func (r *Renderer) initFBOAndTexture(width, height int) (uint32, uint32) {
 	return fbo, texture
 }
 
-func (r *Renderer) clearMainFrameBuffer() {
+func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }

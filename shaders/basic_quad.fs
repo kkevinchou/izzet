@@ -6,10 +6,6 @@ in vec2 TexCoords;
 uniform sampler2D basictexture;
 uniform vec3 pickingColor;
 
-uniform int doColorOverride;
-uniform vec3 colorOverride;
-uniform float colorOverrideIntensity;
-
 void main() {
     vec4 t = texture(basictexture, TexCoords);
     if (t.a == 0) {

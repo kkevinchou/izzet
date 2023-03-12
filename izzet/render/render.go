@@ -118,11 +118,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.xyTextureVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[int]uint32{}
 
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.R11F_G11F_B10F, 2)
-	r.renderFBO = renderFBO
-	r.mainColorTexture = colorTextures[0]
-	r.colorPickingTexture = colorTextures[1]
-	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+	r.initMainRenderFBO(width, height)
 
 	// circles for the rotation gizmo
 
@@ -145,6 +141,18 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
 	return r
+}
+
+func (r *Renderer) Resized(width, height int) {
+	r.initMainRenderFBO(width, height)
+}
+
+func (r *Renderer) initMainRenderFBO(width, height int) {
+	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.R11F_G11F_B10F, 2)
+	r.renderFBO = renderFBO
+	r.mainColorTexture = colorTextures[0]
+	r.colorPickingTexture = colorTextures[1]
+	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
@@ -209,7 +217,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	r.viewerContext = cameraViewerContext
 
-	r.clearMainFrameBuffer()
+	r.clearMainFrameBuffer(renderContext)
 
 	r.renderSkybox(renderContext)
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
@@ -362,8 +370,8 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
 	shaderManager := r.shaderManager
 

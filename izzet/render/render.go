@@ -318,6 +318,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
+	// we only support cube depth maps for one point light atm
 	var pointLight *entities.Entity
 	for _, light := range r.world.Lights() {
 		if light.LightInfo.Type == 1 {

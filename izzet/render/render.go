@@ -87,11 +87,14 @@ type Renderer struct {
 
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
+
+	cubeVAO uint32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r := &Renderer{world: world}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
+	compileShaders(r.shaderManager)
 
 	imguiIO := imgui.CurrentIO()
 	imguiRenderer, err := NewImguiOpenGL4Renderer(imguiIO)
@@ -100,12 +103,11 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	}
 	r.imguiRenderer = imguiRenderer
 
-	var data int32
-	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &data)
-
 	// note(kevin) using exactly the max texture size sometimes causes initialization to fail.
 	// so, I cap it at a fraction of the max
-	settings.RuntimeMaxTextureSize = int(float32(data) * .90)
+	var maxTextureSize int32
+	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
+	settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 
 	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, settings.Far)
 	if err != nil {
@@ -114,19 +116,20 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
-
-	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-
-	compileShaders(r.shaderManager)
+	r.cubeVAO = initCubeVAO(15)
 
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.R11F_G11F_B10F, 2)
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+
+	// circles for the rotation gizmo
+
+	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
+	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
+	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
+	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)

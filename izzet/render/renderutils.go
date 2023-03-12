@@ -296,67 +296,6 @@ func cubeLines(length float64) [][]mgl64.Vec3 {
 	return lines
 }
 
-// TODO: find a clean way to take 8 cube points and generate both
-// a wireframe lines of the cube and the triangulated lines
-func cubePoints(length float64) []mgl64.Vec3 {
-	var ht float64 = length / 2
-	return []mgl64.Vec3{
-		// front
-		{-ht, -ht, ht},
-		{ht, -ht, ht},
-		{ht, ht, ht},
-
-		{ht, ht, ht},
-		{-ht, ht, ht},
-		{-ht, -ht, ht},
-
-		// back
-		{ht, ht, -ht},
-		{ht, -ht, -ht},
-		{-ht, -ht, -ht},
-
-		{-ht, -ht, -ht},
-		{-ht, ht, -ht},
-		{ht, ht, -ht},
-
-		// right
-		{ht, -ht, ht},
-		{ht, -ht, -ht},
-		{ht, ht, -ht},
-
-		{ht, ht, -ht},
-		{ht, ht, ht},
-		{ht, -ht, ht},
-
-		// left
-		{-ht, ht, -ht},
-		{-ht, -ht, -ht},
-		{-ht, -ht, ht},
-
-		{-ht, -ht, ht},
-		{-ht, ht, ht},
-		{-ht, ht, -ht},
-
-		// top
-		{ht, ht, ht},
-		{ht, ht, -ht},
-		{-ht, ht, ht},
-
-		{-ht, ht, ht},
-		{ht, ht, -ht},
-		{-ht, ht, -ht},
-
-		// bottom
-		{-ht, -ht, ht},
-		{ht, -ht, -ht},
-		{ht, -ht, ht},
-
-		{-ht, -ht, -ht},
-		{ht, -ht, -ht},
-		{-ht, -ht, ht},
-	}
-}
-
 func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 	cacheKey := genLineKey(thickness, length)
 	if _, ok := lineCache[cacheKey]; ok {
@@ -894,4 +833,82 @@ func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color 
 		thickness,
 		color,
 	)
+}
+
+func initCubeVAO(length int) uint32 {
+	ht := float32(length) / 2
+
+	vertices := []float32{
+		// front
+		-ht, -ht, ht,
+		ht, -ht, ht,
+		ht, ht, ht,
+
+		ht, ht, ht,
+		-ht, ht, ht,
+		-ht, -ht, ht,
+
+		// back
+		ht, ht, -ht,
+		ht, -ht, -ht,
+		-ht, -ht, -ht,
+
+		-ht, -ht, -ht,
+		-ht, ht, -ht,
+		ht, ht, -ht,
+
+		// right
+		ht, -ht, ht,
+		ht, -ht, -ht,
+		ht, ht, -ht,
+
+		ht, ht, -ht,
+		ht, ht, ht,
+		ht, -ht, ht,
+
+		// left
+		-ht, ht, -ht,
+		-ht, -ht, -ht,
+		-ht, -ht, ht,
+
+		-ht, -ht, ht,
+		-ht, ht, ht,
+		-ht, ht, -ht,
+
+		// top
+		ht, ht, ht,
+		ht, ht, -ht,
+		-ht, ht, ht,
+
+		-ht, ht, ht,
+		ht, ht, -ht,
+		-ht, ht, -ht,
+
+		// bottom
+		-ht, -ht, ht,
+		ht, -ht, -ht,
+		ht, -ht, ht,
+
+		-ht, -ht, -ht,
+		ht, -ht, -ht,
+		-ht, -ht, ht,
+	}
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices))/5)
+
+	return vao
 }

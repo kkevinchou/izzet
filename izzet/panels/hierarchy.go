@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
@@ -35,6 +36,16 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 				child := entities.CreateCube(25)
 				world.AddEntity(child)
 				SelectEntity(child)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Point Light") {
+				lightInfo := &entities.LightInfo{
+					Type:    1,
+					Diffuse: mgl64.Vec4{1, 1, 1, 8000},
+				}
+				light := entities.CreateLight(lightInfo)
+				world.AddEntity(light)
+				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()

@@ -465,18 +465,10 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 			1 * hudScale, 1 * hudScale, 0, 1.0, 1.0,
 		}
 
-		if doubleSided {
-			dtqVertices = append(dtqVertices, backVertices...)
-		}
-
-		// // if we're just rendering something directly to screen without a world position
-		// // adjust x coord by aspect ratio
-		// if modelMatrix == nil {
-		// 	for i := 0; i < len(vertices); i += 5 {
-		// 		x := vertices[i]
-		// 		vertices[i] = x / aspectRatio
-		// 	}
-		// }
+		// always add the double sided vertices
+		// when a draw request comes in, if doubleSided is false we only draw the first half of the vertices
+		// this is wasteful for scenarios where we don't need all vertices
+		dtqVertices = append(dtqVertices, backVertices...)
 
 		// var vbo, dtqVao uint32
 		gl.GenBuffers(1, &dtqVbo)
@@ -508,7 +500,13 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		shader.Use()
 	}
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	// honestly we should clean up this quad drawing logic
+	numVertices := 6
+	if doubleSided {
+		numVertices *= 2
+	}
+
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(numVertices))
 }
 
 func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {

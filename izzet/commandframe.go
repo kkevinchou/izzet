@@ -1,7 +1,6 @@
 package izzet
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -27,6 +26,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		w, h := g.window.GetSize()
 		g.width, g.height = int(w), int(h)
 	}
+	mouseInput := frameInput.MouseInput
+	keyboardInput := frameInput.KeyboardInput
+
+	g.handleInputCommands(frameInput)
 
 	var sEntities []spatialpartition.Entity
 	for _, entity := range g.Entities() {
@@ -39,15 +42,15 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	selectedEntity := panels.SelectedEntity()
 	if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
-		fmt.Println("CHECKING WITH", selectedEntity.GetID())
+		// fmt.Println("CHECKING WITH", selectedEntity.GetID())
 		bb := selectedEntity.BoundingBox()
 		for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
-			fmt.Println(entity.GetID())
+			_ = entity
+			// fmt.Println(entity.GetID())
 		}
 	}
 
 	g.spatialPartition.FrameSetup(sEntities)
-	g.handleSimplyKeyCommands(frameInput)
 
 	for _, entity := range g.Entities() {
 		// animation system
@@ -66,7 +69,20 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 
 	g.physicsStep(delta)
-	g.cameraMovement(frameInput, delta)
+
+	var viewRotation mgl64.Vec2
+	var controlVector mgl64.Vec3
+	if g.relativeMouseActive {
+		var xRel, yRel float64
+		var mouseSensitivity float64 = 0.003
+		if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
+			xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
+			yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
+		}
+		viewRotation = mgl64.Vec2{xRel, yRel}
+		controlVector = getControlVector(keyboardInput)
+	}
+	g.cameraMovement(frameInput, viewRotation, controlVector, delta)
 
 	// set gizmo mode
 	if panels.SelectedEntity() != nil {
@@ -130,7 +146,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		gizmoHovered = hovered
 	}
 
-	mouseInput := frameInput.MouseInput
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		if newSelection := g.selectEntity(frameInput, g.height); newSelection {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
@@ -138,11 +153,28 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 }
 
-func (g *Izzet) handleSimplyKeyCommands(frameInput input.Input) {
+func (g *Izzet) handleInputCommands(frameInput input.Input) {
+	mouseInput := frameInput.MouseInput
 	// shutdown
 	keyboardInput := frameInput.KeyboardInput
 	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
 		g.Shutdown()
+	}
+
+	if !InteractingWithUI() {
+		if g.relativeMouseActive {
+			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
+		}
+
+		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
+			g.relativeMouseActive = true
+			g.relativeMouseOrigin[0] = int32(mouseInput.Position[0])
+			g.relativeMouseOrigin[1] = int32(mouseInput.Position[1])
+			g.platform.SetRelativeMouse(true)
+		} else if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
+			g.relativeMouseActive = false
+			g.platform.SetRelativeMouse(false)
+		}
 	}
 
 	// undo/undo
@@ -197,22 +229,15 @@ func (g *Izzet) selectEntity(frameInput input.Input, height int) bool {
 	return newSelection
 }
 
-func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
-	var xRel, yRel float64
-	mouseInput := frameInput.MouseInput
-	var mouseSensitivity float64 = 0.003
-	if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
-		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
-		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
-	}
+func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, controlVector mgl64.Vec3, delta time.Duration) {
 	forwardVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 	upVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 1, 0})
 	// there's probably away to get the right vector directly rather than going crossing the up vector :D
 	rightVector := forwardVector.Cross(upVector)
 
 	// calculate the quaternion for the delta in rotation
-	deltaRotationX := mgl64.QuatRotate(yRel, rightVector)         // pitch
-	deltaRotationY := mgl64.QuatRotate(xRel, mgl64.Vec3{0, 1, 0}) // yaw
+	deltaRotationX := mgl64.QuatRotate(viewRotation[1], rightVector)         // pitch
+	deltaRotationY := mgl64.QuatRotate(viewRotation[0], mgl64.Vec3{0, 1, 0}) // yaw
 	deltaRotation := deltaRotationY.Mul(deltaRotationX)
 
 	newOrientation := deltaRotation.Mul(g.camera.Orientation)
@@ -224,8 +249,8 @@ func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
 
 	g.camera.Orientation = newOrientation
 
-	keyboardInput := frameInput.KeyboardInput
-	controlVector := getControlVector(keyboardInput)
+	// keyboardInput := frameInput.KeyboardInput
+	// controlVector := getControlVector(keyboardInput)
 	if !frameInput.MouseInput.Buttons[1] {
 		controlVector = mgl64.Vec3{}
 	}

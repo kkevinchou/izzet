@@ -41,8 +41,10 @@ type Izzet struct {
 	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
 
-	commandFrameCount int
-	spatialPartition  *spatialpartition.SpatialPartition
+	commandFrameCount   int
+	spatialPartition    *spatialpartition.SpatialPartition
+	relativeMouseOrigin [2]int32
+	relativeMouseActive bool
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {

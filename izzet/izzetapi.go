@@ -152,5 +152,5 @@ func (g *Izzet) Lights() []*entities.Entity {
 }
 
 func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
-	return g.spatialParition
+	return g.spatialPartition
 }

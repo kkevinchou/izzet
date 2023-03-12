@@ -42,7 +42,7 @@ type Izzet struct {
 	editHistory *edithistory.EditHistory
 
 	commandFrameCount int
-	spatialParition   *spatialpartition.SpatialPartition
+	spatialPartition  *spatialpartition.SpatialPartition
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -87,7 +87,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
-	g.spatialParition = spatialpartition.NewSpatialPartition(200, 10)
+	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 10)
 
 	return g
 }

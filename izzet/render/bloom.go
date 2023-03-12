@@ -184,7 +184,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 }
 
 func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blendFBO)
 
 	shader := r.shaderManager.GetShaderProgram("blend")
 	shader.Use()

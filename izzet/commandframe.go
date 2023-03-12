@@ -1,6 +1,7 @@
 package izzet
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -26,7 +28,25 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.width, g.height = int(w), int(h)
 	}
 
-	g.spatialParition.FrameSetup(nil)
+	var sEntities []spatialpartition.Entity
+	for _, entity := range g.Entities() {
+		if entity.BoundingBox() == nil {
+			continue
+		}
+
+		sEntities = append(sEntities, entity)
+	}
+
+	selectedEntity := panels.SelectedEntity()
+	if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
+		fmt.Println("CHECKING WITH", selectedEntity.GetID())
+		bb := selectedEntity.BoundingBox()
+		for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
+			fmt.Println(entity.GetID())
+		}
+	}
+
+	g.spatialPartition.FrameSetup(sEntities)
 	g.handleSimplyKeyCommands(frameInput)
 
 	for _, entity := range g.Entities() {

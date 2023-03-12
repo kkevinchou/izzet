@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -29,7 +30,8 @@ type Entity struct {
 	Prefab *prefabs.Prefab
 
 	// model
-	Model *model.Model
+	Model       *model.Model
+	boundingBox *collider.BoundingBox
 
 	// socket
 	IsSocket bool
@@ -62,6 +64,10 @@ type Entity struct {
 	Collider *ColliderComponent
 }
 
+func (e *Entity) GetID() int {
+	return e.ID
+}
+
 func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
 }
@@ -69,6 +75,22 @@ func (e *Entity) NameID() string {
 func (e *Entity) WorldPosition() mgl64.Vec3 {
 	m := ComputeTransformMatrix(e)
 	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
+}
+
+func (e *Entity) Position() mgl64.Vec3 {
+	return e.WorldPosition()
+}
+
+func (e *Entity) BoundingBox() *collider.BoundingBox {
+	if e.boundingBox == nil {
+		return nil
+	}
+	modelMatrix := ComputeTransformMatrix(e)
+	t, _, s := utils.DecomposeF64(modelMatrix)
+	translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
+	scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
+
+	return e.boundingBox.Transform(translation.Mul4(scale))
 }
 
 func (e *Entity) WorldRotation() mgl64.Quat {
@@ -105,6 +127,7 @@ func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
 	e.Prefab = prefab
 	// TODO: this will break when we have prefabs supporting multiple models
 	e.Model = prefab.ModelRefs[0].Model
+	e.boundingBox = collider.BoundingBoxFromModel(e.Model)
 
 	// animation setup
 	e.Animations = prefab.ModelRefs[0].Model.Animations()

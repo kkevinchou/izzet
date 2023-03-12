@@ -436,6 +436,17 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
+		if entity.BoundingBox() != nil {
+			bb := entity.BoundingBox()
+			drawAABB(
+				viewerContext,
+				shaderManager.GetShaderProgram("flat"),
+				mgl64.Vec3{.2, 0, .7},
+				bb,
+				0.5,
+			)
+		}
+
 		if len(entity.ShapeData) > 0 {
 			shader := shaderManager.GetShaderProgram("flat")
 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
@@ -469,7 +480,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
 					shader.SetUniformInt("doColorOverride", 1)
-					// shader.SetUniformVec3("colorOverride", mgl32.Vec3{panels.DBG.LightColorOverride, panels.DBG.LightColorOverride, panels.DBG.LightColorOverride})
 					shader.SetUniformVec3("colorOverride", panels.DBG.LightColorOverride)
 					shader.SetUniformFloat("colorOverrideIntensity", panels.DBG.LightColorOverrideIntensity)
 

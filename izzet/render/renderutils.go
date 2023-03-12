@@ -167,7 +167,7 @@ func drawModel(
 	gl.BindTexture(gl.TEXTURE_2D, shadowMap.DepthTexture())
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	for _, renderData := range model.RenderData() {
+	for i, renderData := range model.RenderData() {
 		mesh := model.Collection().Meshes[renderData.MeshID]
 		if pbr := mesh.PBRMaterial; pbr != nil {
 			shader.SetUniformInt("hasPBRMaterial", 1)
@@ -203,7 +203,11 @@ func drawModel(
 		textureID = texture.ID
 		gl.BindTexture(gl.TEXTURE_2D, textureID)
 
+		// if i == 0 {
+		// 	fmt.Println(renderData.Transform)
+		// }
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(renderData.Transform)
+		// modelMat := utils.Mat4F64ToF32(modelMatrix)
 		shader.SetUniformMat4("model", modelMat)
 
 		ctx := model.CollectionContext()
@@ -833,6 +837,55 @@ func drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderPro
 		spatialPartitionLineCache = allLines
 	}
 	allLines = spatialPartitionLineCache
+
+	drawLines(
+		viewerContext,
+		shader,
+		allLines,
+		thickness,
+		color,
+	)
+}
+
+func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, aabb *collider.BoundingBox, thickness float64) {
+	var allLines [][]mgl64.Vec3
+
+	d := aabb.MaxVertex.Sub(aabb.MinVertex)
+	xd := d.X()
+	yd := d.Y()
+	zd := d.Z()
+
+	baseHorizontalLines := [][]mgl64.Vec3{}
+	baseHorizontalLines = append(baseHorizontalLines,
+		[]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
+		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
+		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
+		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
+	)
+
+	for i := 0; i < 2; i++ {
+		for _, b := range baseHorizontalLines {
+			allLines = append(allLines,
+				[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
+			)
+		}
+	}
+
+	baseVerticalLines := [][]mgl64.Vec3{}
+	for i := 0; i < 2; i++ {
+		baseVerticalLines = append(baseVerticalLines,
+			[]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{0, yd, 0})},
+			[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, yd, 0})},
+		)
+	}
+
+	for i := 0; i < 2; i++ {
+		for _, b := range baseVerticalLines {
+			allLines = append(allLines,
+				[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
+			)
+		}
+	}
 
 	drawLines(
 		viewerContext,

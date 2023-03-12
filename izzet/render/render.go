@@ -545,6 +545,16 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 
 	menuBarSize := menus.SetupMenuBar(r.world)
 
+	inActiveColorBg := imgui.Vec4{X: .1, Y: .1, Z: 0.1, W: 1}
+	activeColorBg := imgui.Vec4{X: .3, Y: .3, Z: 0.3, W: 1}
+	hoverColorBg := imgui.Vec4{X: .25, Y: .25, Z: 0.25, W: 1}
+	inActiveColorControl := imgui.Vec4{X: .4, Y: .4, Z: 0.4, W: 1}
+	hoverColorControl := imgui.Vec4{X: .45, Y: .45, Z: 0.45, W: 1}
+	activeColorControl := imgui.Vec4{X: .5, Y: .5, Z: 0.5, W: 1}
+	headerColor := imgui.Vec4{X: 0.3, Y: 0.3, Z: 0.3, W: 1}
+	hoveredHeaderColor := imgui.Vec4{X: 0.4, Y: 0.4, Z: 0.4, W: 1}
+	titleColor := imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 1}
+
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
@@ -555,7 +565,21 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
 	imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
-	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .65, Y: .79, Z: 0.30, W: 1})
+	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+	imgui.PushStyleColor(imgui.StyleColorHeader, headerColor)
+	imgui.PushStyleColor(imgui.StyleColorHeaderActive, headerColor)
+	imgui.PushStyleColor(imgui.StyleColorHeaderHovered, hoveredHeaderColor)
+	imgui.PushStyleColor(imgui.StyleColorTitleBg, titleColor)
+	imgui.PushStyleColor(imgui.StyleColorTitleBgActive, titleColor)
+	imgui.PushStyleColor(imgui.StyleColorSliderGrab, inActiveColorControl)
+	imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, activeColorControl)
+	imgui.PushStyleColor(imgui.StyleColorFrameBg, inActiveColorBg)
+	imgui.PushStyleColor(imgui.StyleColorFrameBgActive, activeColorBg)
+	imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, hoverColorBg)
+	imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+	imgui.PushStyleColor(imgui.StyleColorButton, inActiveColorControl)
+	imgui.PushStyleColor(imgui.StyleColorButtonActive, activeColorControl)
+	imgui.PushStyleColor(imgui.StyleColorButtonHovered, hoverColorControl)
 
 	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize, renderContext)
 	panels.BuildPrefabs(r.world.Prefabs(), r.world, renderContext)
@@ -564,7 +588,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 		renderContext,
 	)
 
-	imgui.PopStyleColor()
+	imgui.PopStyleColorV(15)
 	imgui.PopStyleVarV(10)
 	var open bool
 	imgui.ShowDemoWindow(&open)

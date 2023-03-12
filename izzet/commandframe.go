@@ -25,7 +25,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	if frameInput.WindowEvent.Resized {
 		w, h := g.window.GetSize()
 		g.width, g.height = int(w), int(h)
+		g.renderer.Resized(g.width, g.height)
 	}
+
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 

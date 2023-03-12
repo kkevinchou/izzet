@@ -43,7 +43,7 @@ var DBG DebugSettings = DebugSettings{
 	BloomIntensity:            0.04,
 	Exposure:                  1.0,
 	AmbientFactor:             0.001,
-	Bloom:                     true,
+	Bloom:                     false,
 	BloomThresholdPasses:      0,
 	BloomThreshold:            0.8,
 	BloomUpsamplingScale:      1.0,

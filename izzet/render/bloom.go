@@ -145,7 +145,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 
 		shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 		shader.Use()
-		shader.SetUniformFloat("upsamplingRadius", panels.DBG.BloomUpsamplingRadius)
+		shader.SetUniformFloat("upSamplingScale", panels.DBG.BloomUpsamplingScale)
 
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
@@ -167,7 +167,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 
 	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 	shader.Use()
-	shader.SetUniformFloat("upsamplingRadius", panels.DBG.BloomUpsamplingRadius)
+	shader.SetUniformFloat("upSamplingScale", panels.DBG.BloomUpsamplingScale)
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)

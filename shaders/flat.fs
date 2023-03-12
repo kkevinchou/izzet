@@ -4,12 +4,11 @@ out vec4 FragColor;
 
 in vec3 FragPos;  
 in vec3 Normal;  
-in float Alpha;
 
 uniform vec3 color;
+uniform float intensity;
 
 void main()
 {
-    vec3 objectColor = color;
-    FragColor = vec4(objectColor, Alpha);
+    FragColor = vec4(color * intensity, 1);
 }

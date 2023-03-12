@@ -16,10 +16,6 @@ void main() {
         discard;
     }
 
-    if (doColorOverride == 1) {
-        FragColor = vec4(colorOverride * colorOverrideIntensity, 1);
-    } else {
-        FragColor = t;
-    }
+    FragColor = t;
     PickingColor = vec4(pickingColor, 1);
 }

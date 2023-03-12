@@ -7,24 +7,24 @@ import (
 )
 
 type DebugSettings struct {
-	DirectionalLightDir         [3]float32
-	Roughness                   float32
-	Metallic                    float32
-	PointLightIntensity         int32
-	DirectionalLightIntensity   int32
-	PointLightBias              float32
-	MaterialOverride            bool
-	EnableShadowMapping         bool
-	DebugTexture                uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
-	BloomIntensity              float32
-	Exposure                    float32
-	AmbientFactor               float32
-	Bloom                       bool
-	BloomThresholdPasses        int32
-	BloomThreshold              float32
-	BloomUpsamplingScale        float32
-	LightColorOverride          [3]float32
-	LightColorOverrideIntensity float32
+	DirectionalLightDir       [3]float32
+	Roughness                 float32
+	Metallic                  float32
+	PointLightIntensity       int32
+	DirectionalLightIntensity int32
+	PointLightBias            float32
+	MaterialOverride          bool
+	EnableShadowMapping       bool
+	DebugTexture              uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	BloomIntensity            float32
+	Exposure                  float32
+	AmbientFactor             float32
+	Bloom                     bool
+	BloomThresholdPasses      int32
+	BloomThreshold            float32
+	BloomUpsamplingScale      float32
+	Color                     [3]float32
+	ColorIntensity            float32
 
 	RenderSpatialPartition bool
 
@@ -32,24 +32,24 @@ type DebugSettings struct {
 }
 
 var DBG DebugSettings = DebugSettings{
-	DirectionalLightDir:         [3]float32{0, -1, -1},
-	Roughness:                   0.55,
-	Metallic:                    1.0,
-	PointLightIntensity:         100,
-	DirectionalLightIntensity:   10,
-	PointLightBias:              1,
-	MaterialOverride:            false,
-	EnableShadowMapping:         true,
-	BloomIntensity:              0.04,
-	Exposure:                    1.0,
-	AmbientFactor:               0.001,
-	Bloom:                       true,
-	BloomThresholdPasses:        0,
-	BloomThreshold:              0.8,
-	BloomUpsamplingScale:        1.0,
-	LightColorOverride:          [3]float32{1, 1, 1},
-	LightColorOverrideIntensity: 1.0,
-	RenderSpatialPartition:      false,
+	DirectionalLightDir:       [3]float32{0, -1, -1},
+	Roughness:                 0.55,
+	Metallic:                  1.0,
+	PointLightIntensity:       100,
+	DirectionalLightIntensity: 10,
+	PointLightBias:            1,
+	MaterialOverride:          false,
+	EnableShadowMapping:       true,
+	BloomIntensity:            0.04,
+	Exposure:                  1.0,
+	AmbientFactor:             0.001,
+	Bloom:                     true,
+	BloomThresholdPasses:      0,
+	BloomThreshold:            0.8,
+	BloomUpsamplingScale:      1.0,
+	Color:                     [3]float32{1, 1, 1},
+	ColorIntensity:            1.0,
+	RenderSpatialPartition:    false,
 }
 
 func BuildDebug(world World, renderContext RenderContext) {
@@ -78,11 +78,9 @@ func BuildDebug(world World, renderContext RenderContext) {
 		imgui.SliderInt("bloom threshold passes", &DBG.BloomThresholdPasses, 0, 3)
 		imgui.SliderFloat("bloom threshold", &DBG.BloomThreshold, 0, 3)
 		imgui.SliderFloat("upsampling scale", &DBG.BloomUpsamplingScale, 0, 5.0)
-		// imgui.SliderFloat("light color override", &DBG.LightColorOverride, 0, 30)
-		//  ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | misc_flags);
-		imgui.ColorEdit3V("color picker", &DBG.LightColorOverride, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+		imgui.ColorEdit3V("color picker", &DBG.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 		imgui.SameLine()
-		imgui.SliderFloat("light color intensity", &DBG.LightColorOverrideIntensity, 0, 15)
+		imgui.SliderFloat("color intensity", &DBG.ColorIntensity, 0, 50)
 
 		imgui.Checkbox("bloom", &DBG.Bloom)
 		imgui.Checkbox("enable shadow mapping", &DBG.EnableShadowMapping)

@@ -88,7 +88,7 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAO uint32
+	cubeVAOs map[int]uint32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -116,7 +116,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
-	r.cubeVAO = initCubeVAO(15)
+	r.cubeVAOs = map[int]uint32{}
 
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.R11F_G11F_B10F, 2)
 	r.renderFBO = renderFBO
@@ -452,18 +452,26 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 		if len(entity.ShapeData) > 0 {
 			shader := shaderManager.GetShaderProgram("flat")
-			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+			shader.Use()
+
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 			for _, shapeData := range entity.ShapeData {
-				lines := cubeLines(shapeData.Cube.Length)
-				for _, line := range lines {
-					points := line
-					for i := 0; i < len(points); i++ {
-						points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+				if shapeData.Cube != nil {
+					var ok bool
+					var vao uint32
+					if vao, ok = r.cubeVAOs[shapeData.Cube.Length]; !ok {
+						vao = initCubeVAO(int(shapeData.Cube.Length))
+						r.cubeVAOs[shapeData.Cube.Length] = vao
 					}
-				}
 
-				drawLines(viewerContext, shader, lines, 0.5, color)
+					gl.BindVertexArray(vao)
+					shader.SetUniformVec3("color", panels.DBG.Color)
+					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
+					gl.DrawArrays(gl.TRIANGLES, 0, 48)
+				}
 			}
 		}
 
@@ -482,9 +490,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
-					shader.SetUniformInt("doColorOverride", 1)
-					shader.SetUniformVec3("colorOverride", panels.DBG.LightColorOverride)
-					shader.SetUniformFloat("colorOverrideIntensity", panels.DBG.LightColorOverrideIntensity)
 
 					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
 				}

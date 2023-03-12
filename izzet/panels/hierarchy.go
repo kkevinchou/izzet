@@ -44,7 +44,7 @@ func drawEntity(entity *entities.Entity, world World) {
 		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Cube") {
-				child := entities.CreateCube()
+				child := entities.CreateCube(25)
 				world.AddEntity(child)
 				world.BuildRelation(entity, child)
 				SelectEntity(child)

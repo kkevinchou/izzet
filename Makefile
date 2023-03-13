@@ -34,7 +34,7 @@ clean:
 
 .PHONY: release
 release: clean
-	mkdir $(RELEASE_FOLDER)
+	mkdir -p $(RELEASE_FOLDER)
 	cp config.json $(RELEASE_FOLDER)/
 	cp -r shaders $(RELEASE_FOLDER)/
 	cp -r _assets $(RELEASE_FOLDER)/

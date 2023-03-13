@@ -7,34 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
 
-func BuildPrefabs(ps []*prefabs.Prefab, world World, renderContext RenderContext) {
-	var heightRatio float32 = 0.15
-	imgui.SetNextWindowBgAlpha(0.8)
-
-	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
-	imgui.SetNextWindowPosV(imgui.Vec2{X: float32(rect.X) * 0.15, Y: float32(rect.Y) * (1 - heightRatio)}, imgui.ConditionAlways, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: float32(rect.X)*(1-0.15) + 1, Y: float32(rect.Y) * (heightRatio)}, imgui.ConditionAlways)
-
-	imgui.BeginV("prefab window", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoResize)
-	imgui.BeginChildV("prefab", imgui.Vec2{}, false, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
-
-	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
-	prefabsUI(ps)
-	imgui.PopStyleVar()
-
-	imgui.EndChild()
-	imgui.End()
-}
-
 func prefabsUI(ps []*prefabs.Prefab) {
-	regionSize := imgui.ContentRegionAvail()
-	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y}
-	imgui.BeginChildV("prefab", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
-
-	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
-	imgui.Text("Prefabs")
-	imgui.PopStyleColor()
-
 	for _, prefab := range ps {
 		nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 
@@ -54,8 +27,6 @@ func prefabsUI(ps []*prefabs.Prefab) {
 		// this call allows drag/drop from a collapsed tree node
 		beginPrefabDragDrop(prefab.ID)
 	}
-
-	imgui.EndChild()
 }
 
 func beginPrefabDragDrop(id int) {

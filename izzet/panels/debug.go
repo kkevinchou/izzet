@@ -43,7 +43,7 @@ var DBG DebugSettings = DebugSettings{
 	BloomIntensity:            0.04,
 	Exposure:                  1.0,
 	AmbientFactor:             0.001,
-	Bloom:                     false,
+	Bloom:                     true,
 	BloomThresholdPasses:      0,
 	BloomThreshold:            0.8,
 	BloomUpsamplingScale:      1.0,
@@ -60,7 +60,7 @@ func BuildDebug(world World, renderContext RenderContext) {
 	// drawHUDTextureToQuad(cameraViewerContext, r.shaderManager.GetShaderProgram("depthDebug"), r.shadowMap.depthTexture, 1)
 
 	imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: 500, Y: 300}, imgui.ConditionFirstUseEver)
 
 	imgui.BeginV("Debug", &open, imgui.WindowFlagsNone)
 

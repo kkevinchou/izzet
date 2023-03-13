@@ -599,6 +599,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
 	imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
 	imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
+	imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
+	imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
+	imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
+	imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
+	imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
 	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize, renderContext)
 	// panels.BuildPrefabs(r.world.Prefabs(), r.world, renderContext)
@@ -608,7 +613,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 		r.world.Prefabs(),
 	)
 
-	imgui.PopStyleColorV(15)
+	imgui.PopStyleColorV(20)
 	imgui.PopStyleVarV(7)
 	var open bool
 	imgui.ShowDemoWindow(&open)

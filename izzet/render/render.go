@@ -245,10 +245,27 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
+		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
+			panels.DBG.DebugTexture = finalRenderTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
+			panels.DBG.DebugTexture = r.colorPickingTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionHDR {
+			panels.DBG.DebugTexture = r.mainColorTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
+			panels.DBG.DebugTexture = upsampleTexture
+		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
+		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
+			panels.DBG.DebugTexture = finalRenderTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
+			panels.DBG.DebugTexture = r.colorPickingTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionHDR {
+			panels.DBG.DebugTexture = 0
+		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
+			panels.DBG.DebugTexture = 0
+		}
 	}
-	panels.DBG.DebugTexture = r.colorPickingTexture
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))

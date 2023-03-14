@@ -14,8 +14,8 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	height := rect.Y * 0.5
 
 	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionOnce, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionOnce)
+	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionFirstUseEver, imgui.Vec2{})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
 
 	imgui.BeginV("Fixed Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
 
@@ -30,8 +30,8 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.End()
 
 	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y + rect.Y*0.5}, imgui.ConditionOnce, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionOnce)
+	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y + rect.Y*0.5}, imgui.ConditionFirstUseEver, imgui.Vec2{})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
 	imgui.BeginV("Free Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoCollapse)
 
 	if imgui.BeginTabBar("Main") {

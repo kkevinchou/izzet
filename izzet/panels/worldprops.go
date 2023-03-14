@@ -6,9 +6,27 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
+type ComboOption string
+
+const (
+	ComboOptionFinalRender  ComboOption = "FINALRENDER"
+	ComboOptionColorPicking ComboOption = "COLORPICKING"
+	ComboOptionHDR          ComboOption = "HDR (bloom only)"
+	ComboOptionBloom        ComboOption = "BLOOMTEXTURE (bloom only)"
+
+	tableColumn0Width float32          = 250
+	tableFlags        imgui.TableFlags = imgui.TableFlagsBordersInnerV
+)
+
+var SelectedComboOption ComboOption = ComboOptionFinalRender
+var (
+	comboOptions []ComboOption = []ComboOption{ComboOptionFinalRender, ComboOptionColorPicking, ComboOptionHDR, ComboOptionBloom}
+)
+
 func worldProps(renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.BeginTableV("Lights", 2, imgui.TableFlagsBordersInnerV, imgui.Vec2{}, 0)
+		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
+		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) })
 		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &DBG.PointLightBias, 0, 1) })
 		setupRow("Point Light Intensity", func() { imgui.InputInt("", &DBG.PointLightIntensity) })
@@ -20,7 +38,8 @@ func worldProps(renderContext RenderContext) {
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.BeginTableV("Bloom Table", 2, imgui.TableFlagsBordersInnerV, imgui.Vec2{}, 0)
+		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
+		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Enable Bloom", func() { imgui.Checkbox("", &DBG.Bloom) })
 		setupRow("Bloom Intensity", func() { imgui.SliderFloat("", &DBG.BloomIntensity, 0, 1) })
 		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &DBG.BloomThresholdPasses, 0, 3) })
@@ -30,7 +49,8 @@ func worldProps(renderContext RenderContext) {
 	}
 
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Bloom Table", 2, imgui.TableFlagsBordersInnerV, imgui.Vec2{}, 0)
+		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
+		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })
 		setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })
@@ -40,17 +60,30 @@ func worldProps(renderContext RenderContext) {
 	}
 
 	if imgui.CollapsingHeaderV("RenderStats", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Bloom Table", 2, imgui.TableFlagsBordersInnerV, imgui.Vec2{}, 0)
+		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
+		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%f", DBG.RenderTime)) })
+		setupRow("Texture", func() {
+			if imgui.BeginCombo("", string(SelectedComboOption)) {
+				for _, option := range comboOptions {
+					if imgui.Selectable(string(option)) {
+						SelectedComboOption = option
+					}
+				}
+				imgui.EndCombo()
+			}
+		})
+		setupRow("Texture Viewer", func() {
+			if DBG.DebugTexture != 0 {
+				var imageWidth float32 = 500
+				texture := createUserSpaceTextureHandle(DBG.DebugTexture)
+				size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+				// invert the Y axis since opengl vs texture coordinate systems differ
+				// https://learnopengl.com/Getting-started/Textures
+				imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+			}
+		})
 		imgui.EndTable()
-		var imageWidth float32 = 500
-		if DBG.DebugTexture != 0 {
-			texture := createUserSpaceTextureHandle(DBG.DebugTexture)
-			size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
-			// invert the Y axis since opengl vs texture coordinate systems differ
-			// https://learnopengl.com/Getting-started/Textures
-			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-		}
 	}
 }
 
@@ -64,11 +97,13 @@ func createUserSpaceTextureHandle(texture uint32) imgui.TextureID {
 func setupRow(label string, item func()) {
 	imgui.TableNextRow()
 	imgui.TableNextColumn()
+	// imgui.PushItemWidth(150)
 	imgui.Text(label)
+	// imgui.PopItemWidth()
 	imgui.TableNextColumn()
-	imgui.PushItemWidth(300)
+	// imgui.PushItemWidth(300)
 	imgui.PushID(label)
 	item()
 	imgui.PopID()
-	imgui.PopItemWidth()
+	// imgui.PopItemWidth()
 }

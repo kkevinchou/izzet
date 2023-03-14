@@ -17,7 +17,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionOnce, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionOnce)
 
-	imgui.BeginV("Top Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
+	imgui.BeginV("Fixed Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
 
 	if imgui.BeginTabBar("Scene") {
 		if imgui.BeginTabItem("Scene Hierarchy") {
@@ -32,7 +32,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.SetNextWindowBgAlpha(0.8)
 	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y + rect.Y*0.5}, imgui.ConditionOnce, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionOnce)
-	imgui.BeginV("Bottom Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoCollapse)
+	imgui.BeginV("Free Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoCollapse)
 
 	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("World Properties") {
@@ -45,6 +45,15 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 		}
 		if imgui.BeginTabItem("Prefabs") {
 			prefabsUI(ps)
+			imgui.EndTabItem()
+		}
+		if imgui.BeginTabItem("Animation") {
+			entity := SelectedEntity()
+			if entity != nil && entity.AnimationPlayer != nil {
+				animationUI(world, entity)
+			} else {
+				imgui.Text("<select an entity with animations>")
+			}
 			imgui.EndTabItem()
 		}
 		imgui.EndTabBar()

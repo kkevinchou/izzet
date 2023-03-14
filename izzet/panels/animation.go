@@ -22,13 +22,13 @@ var JointHover *int
 
 var JointsToRender []int
 
-func BuildAnimation(world World, entity *entities.Entity) {
-	imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
+func animationUI(world World, entity *entities.Entity) {
+	// imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
+	// imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
 	fullAnimationLength := entity.AnimationPlayer.Length()
 
-	imgui.BeginV("animation window", &open, imgui.WindowFlagsNone)
+	// imgui.BeginV("animation window", &open, imgui.WindowFlagsNone)
 
 	var anims []string
 	for name, _ := range entity.Animations {
@@ -68,7 +68,7 @@ func BuildAnimation(world World, entity *entities.Entity) {
 		JointsToRender = append(JointsToRender, *JointHover)
 	}
 
-	imgui.End()
+	// imgui.End()
 }
 
 func drawJointTree(world World, parent *entities.Entity, joint *modelspec.JointSpec) {

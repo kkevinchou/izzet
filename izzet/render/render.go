@@ -618,13 +618,6 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	var open bool
 	imgui.ShowDemoWindow(&open)
 
-	e := panels.SelectedEntity()
-	if e != nil {
-		if e.AnimationPlayer != nil {
-			panels.BuildAnimation(r.world, e)
-		}
-	}
-
 	imgui.Render()
 	r.imguiRenderer.Render(r.world.Platform().DisplaySize(), r.world.Platform().FramebufferSize(), imgui.RenderedDrawData())
 }

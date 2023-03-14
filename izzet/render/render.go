@@ -610,6 +610,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	panels.BuildTabs(
 		r.world,
 		renderContext,
+		menuBarSize,
 		r.world.Prefabs(),
 	)
 

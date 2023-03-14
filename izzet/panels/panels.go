@@ -1,6 +1,7 @@
 package panels
 
 import (
+	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
@@ -32,4 +33,16 @@ func SelectEntity(entity *entities.Entity) bool {
 
 func SelectedEntity() *entities.Entity {
 	return selectedEntity
+}
+
+func setupRow(label string, item func()) {
+	imgui.TableNextRow()
+	imgui.TableNextColumn()
+	imgui.Text(label)
+	imgui.TableNextColumn()
+	imgui.PushItemWidth(300)
+	imgui.PushID(label)
+	item()
+	imgui.PopID()
+	imgui.PopItemWidth()
 }

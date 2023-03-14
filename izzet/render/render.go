@@ -580,7 +580,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
 	// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
 	imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
-	imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 5)
+	imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
 	// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
@@ -605,12 +605,12 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
 	imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
-	panels.BuildExplorer(r.world.Entities(), r.world, menuBarSize, renderContext)
-	// panels.BuildPrefabs(r.world.Prefabs(), r.world, renderContext)
-	panels.BuildTabs(
+	panels.BuildTabsSet(
 		r.world,
 		renderContext,
+		menuBarSize,
 		r.world.Prefabs(),
+		r.world.Entities(),
 	)
 
 	imgui.PopStyleColorV(20)

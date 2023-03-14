@@ -10,15 +10,32 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
+func sceneUI(es []*entities.Entity, world World) {
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
+
+	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	sceneHierarchy(es, world)
+	imgui.EndChild()
+
+	if imgui.BeginDragDropTarget() {
+		if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
+			prefabID, err := strconv.Atoi(string(payload))
+
+			if err != nil {
+				panic(err)
+			}
+
+			prefab := world.GetPrefabByID(prefabID)
+			entity := entities.InstantiateFromPrefab(prefab)
+			world.AddEntity(entity)
+			SelectEntity(entity)
+		}
+		imgui.EndDragDropTarget()
+	}
+	imgui.PopStyleVar()
+}
+
 func sceneHierarchy(es []*entities.Entity, world World) {
-	regionSize := imgui.ContentRegionAvail()
-	windowSize := imgui.Vec2{X: regionSize.X, Y: regionSize.Y * 0.5}
-	imgui.BeginChildV("sceneHierarchy", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
-
-	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
-	imgui.Text("Scene Hierarchy")
-	imgui.PopStyleColor()
-
 	entityPopup := false
 	for _, entity := range es {
 		if entity.Parent == nil {
@@ -26,8 +43,6 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 			entityPopup = entityPopup || popup
 		}
 	}
-
-	imgui.EndChild()
 
 	if !entityPopup {
 		imgui.PushID("sceneHierarchy")

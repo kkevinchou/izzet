@@ -244,11 +244,11 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	if panels.DBG.Bloom {
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
-		panels.DBG.DebugTexture = upsampleTexture
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 	} else {
 		finalRenderTexture = r.mainColorTexture
 	}
+	panels.DBG.DebugTexture = r.colorPickingTexture
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
@@ -491,6 +491,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					gl.BindVertexArray(vao)
 					shader.SetUniformVec3("color", panels.DBG.Color)
 					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
+					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
 					gl.DrawArrays(gl.TRIANGLES, 0, 48)
 				}
 			}

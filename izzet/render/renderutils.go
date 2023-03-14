@@ -38,44 +38,6 @@ func idToPickingColor(id int) mgl32.Vec3 {
 	return mgl32.Vec3{r, g, b}
 }
 
-func drawModelWIthID(viewerContext ViewerContext,
-	shader *shaders.ShaderProgram,
-	assetManager *assets.AssetManager,
-	model *model.Model,
-	animationPlayer *animation.AnimationPlayer,
-	modelMatrix mgl64.Mat4,
-	id int,
-) {
-	m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-
-	shader.Use()
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformVec3("pickingColor", idToPickingColor(id))
-
-	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
-		animationTransforms := animationPlayer.AnimationTransforms()
-		// if animationTransforms is nil, the shader will execute reading into invalid memory
-		// so, we need to explicitly guard for this
-		if animationTransforms == nil {
-			panic("animationTransforms not found")
-		}
-		for i := 0; i < len(animationTransforms); i++ {
-			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-		}
-	}
-
-	for _, renderData := range model.RenderData() {
-		ctx := model.CollectionContext()
-		mesh := model.Collection().Meshes[renderData.MeshID]
-		shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
-
-		gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
-		gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
-	}
-}
-
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3) {
 	var vertices []float32

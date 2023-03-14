@@ -15,6 +15,7 @@ const (
 	ComboOptionBloom        ComboOption = "BLOOMTEXTURE (bloom only)"
 
 	tableColumn0Width float32          = 250
+	tableColumn1Width float32          = 400
 	tableFlags        imgui.TableFlags = imgui.TableFlagsBordersInnerV
 )
 
@@ -26,7 +27,7 @@ var (
 func worldProps(renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
-		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+		initColumns()
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) })
 		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &DBG.PointLightBias, 0, 1) })
 		setupRow("Point Light Intensity", func() { imgui.InputInt("", &DBG.PointLightIntensity) })
@@ -39,7 +40,7 @@ func worldProps(renderContext RenderContext) {
 	}
 	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
-		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+		initColumns()
 		setupRow("Enable Bloom", func() { imgui.Checkbox("", &DBG.Bloom) })
 		setupRow("Bloom Intensity", func() { imgui.SliderFloat("", &DBG.BloomIntensity, 0, 1) })
 		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &DBG.BloomThresholdPasses, 0, 3) })
@@ -50,7 +51,7 @@ func worldProps(renderContext RenderContext) {
 
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
-		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+		initColumns()
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })
 		setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })
@@ -61,9 +62,10 @@ func worldProps(renderContext RenderContext) {
 
 	if imgui.CollapsingHeaderV("RenderStats", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
-		imgui.TableSetupColumnV("", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%f", DBG.RenderTime)) })
 		setupRow("Texture", func() {
+			imgui.PushItemWidth(tableColumn1Width)
 			if imgui.BeginCombo("", string(SelectedComboOption)) {
 				for _, option := range comboOptions {
 					if imgui.Selectable(string(option)) {
@@ -72,6 +74,7 @@ func worldProps(renderContext RenderContext) {
 				}
 				imgui.EndCombo()
 			}
+			imgui.PopItemWidth()
 		})
 		setupRow("Texture Viewer", func() {
 			if DBG.DebugTexture != 0 {
@@ -97,13 +100,16 @@ func createUserSpaceTextureHandle(texture uint32) imgui.TextureID {
 func setupRow(label string, item func()) {
 	imgui.TableNextRow()
 	imgui.TableNextColumn()
-	// imgui.PushItemWidth(150)
 	imgui.Text(label)
-	// imgui.PopItemWidth()
 	imgui.TableNextColumn()
-	// imgui.PushItemWidth(300)
 	imgui.PushID(label)
+	imgui.PushItemWidth(-1)
 	item()
+	imgui.PopItemWidth()
 	imgui.PopID()
-	// imgui.PopItemWidth()
+}
+
+func initColumns() {
+	imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+	imgui.TableSetupColumnV("1", imgui.TableColumnFlagsWidthFixed, tableColumn1Width, 0)
 }

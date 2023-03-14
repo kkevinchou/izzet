@@ -36,7 +36,7 @@ func animationUI(world World, entity *entities.Entity) {
 	}
 	sort.Strings(anims)
 
-	imgui.LabelText("", entity.NameID())
+	imgui.Text(entity.NameID())
 	if imgui.ListBox("animations", &currentItem, anims) {
 		entity.AnimationPlayer.PlayAnimation(anims[currentItem])
 		entity.AnimationPlayer.UpdateTo(0)

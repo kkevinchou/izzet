@@ -13,9 +13,7 @@ import (
 func sceneUI(es []*entities.Entity, world World) {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
-	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	sceneHierarchy(es, world)
-	imgui.EndChild()
 
 	if imgui.BeginDragDropTarget() {
 		if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
@@ -37,12 +35,14 @@ func sceneUI(es []*entities.Entity, world World) {
 
 func sceneHierarchy(es []*entities.Entity, world World) {
 	entityPopup := false
+	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range es {
 		if entity.Parent == nil {
 			popup := drawEntity(entity, world)
 			entityPopup = entityPopup || popup
 		}
 	}
+	imgui.EndChild()
 
 	if !entityPopup {
 		imgui.PushID("sceneHierarchy")

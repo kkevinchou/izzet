@@ -448,7 +448,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
 
 					var jointLines [][]mgl64.Vec3
-					model := r.world.AssetManager().GetModel(entity.Prefab.Name)
+					model := entity.Model
 					animationTransforms := entity.AnimationPlayer.AnimationTransforms()
 
 					for _, jid := range panels.JointsToRender {
@@ -458,7 +458,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 						for _, line := range lines {
 							points := line
 							for i := 0; i < len(points); i++ {
-								bindTransform := model.JointMap[jid].FullBindTransform
+								bindTransform := model.JointMap()[jid].FullBindTransform
 								points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
 							}
 						}

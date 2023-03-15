@@ -24,7 +24,7 @@ func sceneUI(es []*entities.Entity, world World) {
 			}
 
 			prefab := world.GetPrefabByID(prefabID)
-			entity := entities.InstantiateFromPrefab(prefab)
+			entity := entities.InstantiateFromPrefab(prefab)[0]
 			world.AddEntity(entity)
 			SelectEntity(entity)
 		}

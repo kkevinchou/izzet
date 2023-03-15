@@ -1,11 +1,11 @@
 #version 330 core
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 PickingColor;
+layout (location = 1) out uint PickingColor;
 
 in vec2 FragPos;
 float iTime = 7;
-uniform vec3 pickingColor;
+uint maxUint = floatBitsToUint(uintBitsToFloat(0xFFFFFFFFu));
 
 vec3 calc(float x, vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -46,5 +46,5 @@ void main()
     vec3 col = calc(uv.y, a, b, c, d);
     fragColor = vec4(col, 1.);
     FragColor = fragColor;
-    PickingColor = vec4(1, 1, 1, 1);
+    PickingColor = maxUint;
 }

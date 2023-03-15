@@ -35,20 +35,28 @@ func (g *Izzet) GetEntityByID(id int) *entities.Entity {
 	return g.entities[id]
 }
 
+var sortFrame int
+var sortedEntities []*entities.Entity
+
 func (g *Izzet) Entities() []*entities.Entity {
-	var ids []int
-	for id, _ := range g.entities {
-		ids = append(ids, id)
+	if sortFrame != g.CommandFrame() {
+		sortFrame = g.CommandFrame()
+
+		var ids []int
+		for id, _ := range g.entities {
+			ids = append(ids, id)
+		}
+
+		sort.Ints(ids)
+
+		entities := []*entities.Entity{}
+		for _, id := range ids {
+			entities = append(entities, g.entities[id])
+		}
+		sortedEntities = entities
 	}
 
-	sort.Ints(ids)
-
-	entities := []*entities.Entity{}
-	for _, id := range ids {
-		entities = append(entities, g.entities[id])
-	}
-
-	return entities
+	return sortedEntities
 }
 
 func (g *Izzet) Prefabs() []*prefabs.Prefab {

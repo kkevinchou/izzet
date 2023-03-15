@@ -31,13 +31,6 @@ func genLineKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
-func idToPickingColor(id int) mgl32.Vec3 {
-	var r float32 = float32((id&0x000000FF)>>0) / 255
-	var g float32 = float32((id&0x0000FF00)>>8) / 255
-	var b float32 = float32((id&0x00FF0000)>>16) / 255
-	return mgl32.Vec3{r, g, b}
-}
-
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3) {
 	var vertices []float32
@@ -100,7 +93,6 @@ func drawModel(
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", float32(shadowMap.ShadowDistance()))
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	shader.SetUniformVec3("pickingColor", idToPickingColor(entityID))
 	shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
@@ -539,18 +531,20 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internal int32) (uint32, uint32) {
-	fbo, textures := r.initFrameBuffer(width, height, internal, 1)
+func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internalFormat int32, format uint32) (uint32, uint32) {
+	fbo, textures := r.initFrameBuffer(width, height, []int32{internalFormat}, []uint32{format})
 	return fbo, textures[0]
 }
 
-func (r *Renderer) initFrameBuffer(width int, height int, internal int32, colorBufferCount int) (uint32, []uint32) {
+func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
 	var textures []uint32
 	var drawBuffers []uint32
+
+	colorBufferCount := len(internalFormat)
 
 	for i := 0; i < colorBufferCount; i++ {
 		var texture uint32
@@ -560,8 +554,9 @@ func (r *Renderer) initFrameBuffer(width int, height int, internal int32, colorB
 		gl.BindTexture(gl.TEXTURE_2D, texture)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, internal,
-			int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+
+		gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat[i],
+			int32(width), int32(height), 0, format[i], gl.UNSIGNED_BYTE, nil)
 
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
 
@@ -633,13 +628,8 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(height)-int32(pixelPosition[1]), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(height)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
-	// discard the alpha channel data
-	data[3] = 0
-
-	// NOTE(kevin) actually not sure why, but this works
-	// i would've expected to need to multiply by 255, but apparently it's handled somehow
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {
 		return nil

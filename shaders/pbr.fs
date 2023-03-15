@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 PickingColor;
+layout (location = 1) out uint PickingColor;
 
 // material parameters
 uniform vec3  albedo;
@@ -49,7 +49,8 @@ uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
 uniform vec4 pbrBaseColorFactor;
 uniform float bias;
-uniform vec3 pickingColor;
+
+uniform uint entityID;
 
 uniform int applyToneMapping;
 
@@ -265,5 +266,5 @@ void main()
     }
 
     FragColor = vec4(color, 1.0);
-    PickingColor = vec4(pickingColor, 1);
+    PickingColor = entityID;
 }

@@ -13,6 +13,7 @@ const (
 	ComboOptionColorPicking ComboOption = "COLORPICKING"
 	ComboOptionHDR          ComboOption = "HDR (bloom only)"
 	ComboOptionBloom        ComboOption = "BLOOMTEXTURE (bloom only)"
+	ComboOptionDepthMap     ComboOption = "DEPTH MAP"
 
 	tableColumn0Width float32          = 250
 	tableColumn1Width float32          = 400
@@ -21,7 +22,13 @@ const (
 
 var SelectedComboOption ComboOption = ComboOptionFinalRender
 var (
-	comboOptions []ComboOption = []ComboOption{ComboOptionFinalRender, ComboOptionColorPicking, ComboOptionHDR, ComboOptionBloom}
+	comboOptions []ComboOption = []ComboOption{
+		ComboOptionFinalRender,
+		ComboOptionColorPicking,
+		ComboOptionHDR,
+		ComboOptionBloom,
+		ComboOptionDepthMap,
+	}
 )
 
 func worldProps(renderContext RenderContext) {

@@ -131,7 +131,8 @@ func (s *Serializer) Entities() []*entities.Entity {
 	for _, e := range s.serializedWorld.Entities {
 		var dsEntity *entities.Entity
 		if e.PrefabID != nil {
-			dsEntity = entities.InstantiateFromPrefabStaticID(e.ID, s.world.GetPrefabByID(*e.PrefabID))
+			prefab := s.world.GetPrefabByID(*e.PrefabID)
+			dsEntity = entities.InstantiateFromPrefabStaticID(e.ID, prefab.ModelRefs[0].Model, prefab)
 		} else {
 			dsEntity = entities.InstantiateBaseEntity(e.Name, e.ID)
 		}

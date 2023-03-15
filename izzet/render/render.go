@@ -124,10 +124,10 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 
 	// circles for the rotation gizmo
 
-	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
-	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA)
+	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
+	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
+	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
+	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -156,7 +156,7 @@ func (r *Renderer) Resized(width, height int) {
 }
 
 func (r *Renderer) initMainRenderFBO(width, height int) {
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, gl.R11F_G11F_B10F, 2)
+	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{gl.R11F_G11F_B10F, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.colorPickingTexture = colorTextures[1]
@@ -253,6 +253,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = r.mainColorTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
 			panels.DBG.DebugTexture = upsampleTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
+			panels.DBG.DebugTexture = r.shadowMap.depthTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -264,6 +266,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = 0
 		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
 			panels.DBG.DebugTexture = 0
+		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
+			panels.DBG.DebugTexture = r.shadowMap.depthTexture
 		}
 	}
 
@@ -311,7 +315,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 				shader.SetUniformInt("isAnimated", 0)
 			}
 
-			model := entity.Prefab.ModelRefs[0].Model
+			model := entity.Model
 			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
@@ -365,7 +369,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 	for _, entity := range r.world.Entities() {
 		if entity.Prefab != nil {
 			modelMatrix := entities.ComputeTransformMatrix(entity)
-			model := entity.Prefab.ModelRefs[0].Model
+			model := entity.Model
 			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
@@ -408,10 +412,11 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 	for _, entity := range r.world.Entities() {
 		modelMatrix := entities.ComputeTransformMatrix(entity)
 
-		if entity.Prefab != nil {
+		if entity.Model != nil {
 			shaderName := "modelpbr"
 			shader := shaderManager.GetShaderProgram(shaderName)
 			shader.Use()
+			shader.SetUniformUInt("entityID", uint32(entity.ID))
 
 			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 				shader.SetUniformInt("isAnimated", 1)
@@ -432,7 +437,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				r.shadowMap,
 				shader,
 				r.world.AssetManager(),
-				entity.Prefab.ModelRefs[0].Model,
+				entity.Model,
 				entity.AnimationPlayer,
 				modelMatrix,
 				r.depthCubeMapTexture,
@@ -477,21 +482,22 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			}
 		}
 
-		if entity.BoundingBox() != nil {
-			bb := entity.BoundingBox()
-			drawAABB(
-				viewerContext,
-				shaderManager.GetShaderProgram("flat"),
-				mgl64.Vec3{.2, 0, .7},
-				bb,
-				0.5,
-			)
-		}
+		// if entity.BoundingBox() != nil {
+		// 	bb := entity.BoundingBox()
+		// 	drawAABB(
+		// 		viewerContext,
+		// 		shaderManager.GetShaderProgram("flat"),
+		// 		mgl64.Vec3{.2, 0, .7},
+		// 		bb,
+		// 		0.5,
+		// 	)
+		// }
 
 		if len(entity.ShapeData) > 0 {
 			shader := shaderManager.GetShaderProgram("flat")
 			shader.Use()
 
+			shader.SetUniformUInt("entityID", uint32(entity.ID))
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -508,7 +514,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					gl.BindVertexArray(vao)
 					shader.SetUniformVec3("color", panels.DBG.Color)
 					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
-					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
 					gl.DrawArrays(gl.TRIANGLES, 0, 48)
 				}
 			}
@@ -525,10 +530,10 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				if entity.Billboard != nil {
 					shader := shaderManager.GetShaderProgram("basic_quad_world")
 					shader.Use()
+					shader.SetUniformUInt("entityID", uint32(entity.ID))
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					shader.SetUniformVec3("pickingColor", idToPickingColor(entity.ID))
 
 					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
 				}

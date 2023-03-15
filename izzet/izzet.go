@@ -161,24 +161,26 @@ func (g *Izzet) loadPrefabs() {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
-			// for i := 0; i < 1872; i++ {
-			m := model.NewModelFromCollectionAll(ctx, modelConfig)
-			pf := prefabs.CreatePrefab(name, []*model.Model{m})
+			// m := model.NewModelFromCollectionAll(ctx, modelConfig)
+			// pf := prefabs.CreatePrefab(name, []*model.Model{m})
+			// g.prefabs[pf.ID] = pf
+
+			models := model.NewModelsFromCollection(ctx, modelConfig)
+			pf := prefabs.CreatePrefab(name, models)
 			g.prefabs[pf.ID] = pf
-			// }
 		} else if name == "lootbox" {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
 			for i := 0; i < 2; i++ {
-				m := model.NewModelFromCollection(ctx, i, modelConfig)
+				m := model.NewModelsFromCollection(ctx, modelConfig)[0]
 				pf := prefabs.CreatePrefab(fmt.Sprintf("%s-%d", name, i), []*model.Model{m})
 				g.prefabs[pf.ID] = pf
 			}
 		} else {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
-			m := model.NewModelFromCollection(ctx, 0, modelConfig)
+			m := model.NewModelsFromCollection(ctx, modelConfig)[0]
 			pf = prefabs.CreatePrefab(name, []*model.Model{m})
 			g.prefabs[pf.ID] = pf
 		}
@@ -247,9 +249,16 @@ func (g *Izzet) loadEntities() {
 			// entity.ParentJoint = joint
 			// g.BuildRelation(parent, entity)
 		} else if pf.Name == "demo_scene_dungeon" {
-			entity := entities.InstantiateFromPrefab(pf)
-			entity.Scale = mgl64.Vec3{10, 10, 10}
-			g.entities[entity.ID] = entity
+			parent := entities.CreateDummy("scene_dummy")
+			g.AddEntity(parent)
+			parent.Scale = mgl64.Vec3{10, 10, 10}
+
+			for _, entity := range entities.InstantiateFromPrefab(pf) {
+				// entity := entities.InstantiateFromPrefab(pf)
+				// entity.Scale = entity.Scale.Mul(2)
+				g.AddEntity(entity)
+				g.BuildRelation(parent, entity)
+			}
 		}
 	}
 }

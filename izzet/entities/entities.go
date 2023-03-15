@@ -99,13 +99,35 @@ func (e *Entity) WorldRotation() mgl64.Quat {
 	return r
 }
 
-func SetNextID(nextID int) {
-	id = nextID
+func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
+	var es []*Entity
+	count := 0
+	for _, modelRef := range prefab.ModelRefs {
+		model := modelRef.Model
+		e := InstantiateFromPrefabStaticID(id, model, prefab)
+		es = append(es, e)
+		id += 1
+		count++
+	}
+	return es
 }
 
-func InstantiateFromPrefab(prefab *prefabs.Prefab) *Entity {
-	e := InstantiateFromPrefabStaticID(id, prefab)
-	id += 1
+func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.Prefab) *Entity {
+	e := InstantiateBaseEntity(model.Name(), id)
+	e.Prefab = prefab
+	e.Model = model
+	e.boundingBox = collider.BoundingBoxFromModel(e.Model)
+
+	e.LocalPosition = utils.Vec3F32ToF64(model.Translation())
+	e.LocalRotation = utils.QuatF32ToF64(model.Rotation())
+	e.Scale = utils.Vec3F32ToF64(model.Scale())
+
+	// animation setup
+	e.Animations = model.Animations()
+	if len(e.Animations) > 0 {
+		e.AnimationPlayer = animation.NewAnimationPlayer(model)
+	}
+
 	return e
 }
 
@@ -120,22 +142,6 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 		LocalRotation: mgl64.QuatIdent(),
 		Scale:         mgl64.Vec3{1, 1, 1},
 	}
-}
-
-func InstantiateFromPrefabStaticID(id int, prefab *prefabs.Prefab) *Entity {
-	e := InstantiateBaseEntity(prefab.Name, id)
-	e.Prefab = prefab
-	// TODO: this will break when we have prefabs supporting multiple models
-	e.Model = prefab.ModelRefs[0].Model
-	e.boundingBox = collider.BoundingBoxFromModel(e.Model)
-
-	// animation setup
-	e.Animations = prefab.ModelRefs[0].Model.Animations()
-	if len(e.Animations) > 0 {
-		e.AnimationPlayer = animation.NewAnimationPlayer(prefab.ModelRefs[0].Model)
-	}
-
-	return e
 }
 
 func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
@@ -159,6 +165,12 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 
 }
 
+func CreateDummy(name string) *Entity {
+	entity := InstantiateBaseEntity("dummy", id)
+	id += 1
+	return entity
+}
+
 // ComputeTransformMatrix computes a transform matrix that represents all
 // transformations applied to it based on the following factors:
 // 1. transformations from model space transformations
@@ -173,4 +185,8 @@ func ComputeTransformMatrix(entity *Entity) mgl64.Mat4 {
 	modelMatrix := translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 	return parentAndJointTransformMatrix.Mul4(modelMatrix)
+}
+
+func SetNextID(nextID int) {
+	id = nextID
 }

@@ -57,7 +57,7 @@ func main() {
 	}
 
 	go func() {
-		// runtime.SetCPUProfileRate(500)
+		runtime.SetCPUProfileRate(500)
 		http.ListenAndServe(":6868", nil)
 	}()
 

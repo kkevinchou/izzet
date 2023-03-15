@@ -13,7 +13,6 @@ import (
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -33,26 +32,25 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.handleInputCommands(frameInput)
 
-	var sEntities []spatialpartition.Entity
-	for _, entity := range g.Entities() {
-		if entity.BoundingBox() == nil {
-			continue
-		}
+	// var sEntities []spatialpartition.Entity
+	// for _, entity := range g.Entities() {
+	// 	if entity.BoundingBox() == nil {
+	// 		continue
+	// 	}
 
-		sEntities = append(sEntities, entity)
-	}
+	// 	sEntities = append(sEntities, entity)
+	// }
+	// g.spatialPartition.FrameSetup(sEntities)
 
-	selectedEntity := panels.SelectedEntity()
-	if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
-		// fmt.Println("CHECKING WITH", selectedEntity.GetID())
-		bb := selectedEntity.BoundingBox()
-		for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
-			_ = entity
-			// fmt.Println(entity.GetID())
-		}
-	}
-
-	g.spatialPartition.FrameSetup(sEntities)
+	// selectedEntity := panels.SelectedEntity()
+	// if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
+	// 	// fmt.Println("CHECKING WITH", selectedEntity.GetID())
+	// 	bb := selectedEntity.BoundingBox()
+	// 	for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
+	// 		_ = entity
+	// 		// fmt.Println(entity.GetID())
+	// 	}
+	// }
 
 	for _, entity := range g.Entities() {
 		// animation system

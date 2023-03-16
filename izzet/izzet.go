@@ -75,7 +75,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{0, -12, 806},
+		Position:    mgl64.Vec3{0, 0, 0},
 		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
 	}
 
@@ -193,7 +193,7 @@ func (g *Izzet) loadEntities() {
 		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)
-	directionalLight.LocalPosition = mgl64.Vec3{0, 0, 0}
+	directionalLight.LocalPosition = mgl64.Vec3{0, 100, 0}
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
@@ -250,6 +250,16 @@ func (g *Izzet) loadEntities() {
 				g.AddEntity(entity)
 				g.BuildRelation(parent, entity)
 			}
+		} else if pf.Name == "vehicle" {
+			// prefab := g.GetPrefabByID(pf.ID)
+			// parent := entities.CreateDummy(prefab.Name)
+			// g.AddEntity(parent)
+			// for _, entity := range entities.InstantiateFromPrefab(prefab) {
+			// 	g.AddEntity(entity)
+			// 	g.BuildRelation(parent, entity)
+			// }
+			// parent.Scale = parent.Scale.Mul(15)
+			// panels.SelectEntity(parent)
 		}
 	}
 }

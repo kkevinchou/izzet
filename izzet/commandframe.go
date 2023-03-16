@@ -600,7 +600,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			gizmo.T.TranslationDir = minAxis
 			gizmo.T.MotionPivot = motionPivot.Sub(position)
 			gizmo.T.HoverIndex = closestAxisIndex
-			gizmo.T.ActivationPosition = position
+			gizmo.T.ActivationPosition = selectedEntity.LocalPosition
 		}
 
 		if !gizmo.T.Active {
@@ -614,7 +614,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	}
 
 	if gizmo.T.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		if gizmo.T.ActivationPosition != position {
+		if gizmo.T.ActivationPosition != selectedEntity.LocalPosition {
 			g.AppendEdit(
 				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.LocalPosition, selectedEntity),
 			)

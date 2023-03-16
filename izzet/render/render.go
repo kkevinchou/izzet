@@ -234,6 +234,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderSkybox(renderContext)
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
+
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
 
 	if panels.DBG.RenderSpatialPartition {
@@ -293,45 +294,46 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 	}
 
 	shaderManager := r.shaderManager
+	shader := shaderManager.GetShaderProgram("modelpbr")
+	shader.Use()
+
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+
 	for _, entity := range r.world.Entities() {
+		if entity.Model == nil {
+			continue
+		}
+
+		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+			shader.SetUniformInt("isAnimated", 1)
+			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+			// if animationTransforms is nil, the shader will execute reading into invalid memory
+			// so, we need to explicitly guard for this
+			if animationTransforms == nil {
+				panic("animationTransforms not found")
+			}
+			for i := 0; i < len(animationTransforms); i++ {
+				shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
+			}
+		} else {
+			shader.SetUniformInt("isAnimated", 0)
+		}
+
 		modelMatrix := entities.ComputeTransformMatrix(entity)
+		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		if entity.Prefab != nil {
-			shader := shaderManager.GetShaderProgram("modelpbr")
-			shader.Use()
+		model := entity.Model
+		for _, renderData := range model.RenderData() {
+			ctx := model.CollectionContext()
+			mesh := model.Collection().Meshes[renderData.MeshID]
+			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
-			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-				shader.SetUniformInt("isAnimated", 1)
-				animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-				// if animationTransforms is nil, the shader will execute reading into invalid memory
-				// so, we need to explicitly guard for this
-				if animationTransforms == nil {
-					panic("animationTransforms not found")
-				}
-				for i := 0; i < len(animationTransforms); i++ {
-					shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-				}
-			} else {
-				shader.SetUniformInt("isAnimated", 0)
-			}
-
-			model := entity.Model
-			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-
-			for _, renderData := range model.RenderData() {
-				ctx := model.CollectionContext()
-				mesh := model.Collection().Meshes[renderData.MeshID]
-				shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
-
-				gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
-				gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
-			}
+			gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+			gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
 		}
 	}
 }
@@ -367,35 +369,37 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 	shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
 	for _, entity := range r.world.Entities() {
-		if entity.Prefab != nil {
-			modelMatrix := entities.ComputeTransformMatrix(entity)
-			model := entity.Model
-			m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
+		if entity.Model == nil {
+			continue
+		}
 
-			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-				shader.SetUniformInt("isAnimated", 1)
-				animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-				// if animationTransforms is nil, the shader will execute reading into invalid memory
-				// so, we need to explicitly guard for this
-				if animationTransforms == nil {
-					panic("animationTransforms not found")
-				}
-				for i := 0; i < len(animationTransforms); i++ {
-					shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-				}
-			} else {
-				shader.SetUniformInt("isAnimated", 0)
+		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+			shader.SetUniformInt("isAnimated", 1)
+			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+			// if animationTransforms is nil, the shader will execute reading into invalid memory
+			// so, we need to explicitly guard for this
+			if animationTransforms == nil {
+				panic("animationTransforms not found")
 			}
-
-			for _, renderData := range model.RenderData() {
-				ctx := model.CollectionContext()
-				mesh := model.Collection().Meshes[renderData.MeshID]
-				shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
-				// shader.SetUniformMat4("model", renderData.Transform)
-
-				gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
-				gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
+			for i := 0; i < len(animationTransforms); i++ {
+				shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
 			}
+		} else {
+			shader.SetUniformInt("isAnimated", 0)
+		}
+
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
+
+		model := entity.Model
+		for _, renderData := range model.RenderData() {
+			ctx := model.CollectionContext()
+			mesh := model.Collection().Meshes[renderData.MeshID]
+			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
+			// shader.SetUniformMat4("model", renderData.Transform)
+
+			gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+			gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
 		}
 	}
 }
@@ -410,77 +414,11 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 	shaderManager := r.shaderManager
 
 	for _, entity := range r.world.Entities() {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
-
 		if entity.Model != nil {
-			shaderName := "modelpbr"
-			shader := shaderManager.GetShaderProgram(shaderName)
-			shader.Use()
-			shader.SetUniformUInt("entityID", uint32(entity.ID))
-
-			if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-				shader.SetUniformInt("isAnimated", 1)
-			} else {
-				shader.SetUniformInt("isAnimated", 0)
-			}
-			if !panels.DBG.Bloom {
-				// only tone map if we're not applying bloom, otherwise
-				// we want to keep the HDR values and tone map later
-				shader.SetUniformInt("applyToneMapping", 1)
-			} else {
-				shader.SetUniformInt("applyToneMapping", 0)
-			}
-
-			drawModel(
-				viewerContext,
-				lightContext,
-				r.shadowMap,
-				shader,
-				r.world.AssetManager(),
-				entity.Model,
-				entity.AnimationPlayer,
-				modelMatrix,
-				r.depthCubeMapTexture,
-				entity.ID,
-			)
-
-			// joint rendering for the selected entity
-			selectedEntity := panels.SelectedEntity()
-			if selectedEntity != nil && selectedEntity.ID == entity.ID {
-				// TODO: optimize this - can probably cache some of these computations
-				if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-					jointShader := shaderManager.GetShaderProgram("flat")
-					color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
-
-					var jointLines [][]mgl64.Vec3
-					model := entity.Model
-					animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-
-					for _, jid := range panels.JointsToRender {
-						jointTransform := animationTransforms[jid]
-						lines := cubeLines(15)
-						jt := utils.Mat4F32ToF64(jointTransform)
-						for _, line := range lines {
-							points := line
-							for i := 0; i < len(points); i++ {
-								bindTransform := model.JointMap()[jid].FullBindTransform
-								points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
-							}
-						}
-						jointLines = append(jointLines, lines...)
-					}
-
-					for _, line := range jointLines {
-						points := line
-						for i := 0; i < len(points); i++ {
-							points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
-						}
-					}
-
-					drawLines(viewerContext, jointShader, jointLines, 0.5, color)
-				}
-			}
+			continue
 		}
+
+		modelMatrix := entities.ComputeTransformMatrix(entity)
 
 		// if entity.BoundingBox() != nil {
 		// 	bb := entity.BoundingBox()
@@ -586,6 +524,109 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				billboardModelMatrix,
 			)
 		}
+	}
+
+	r.renderModels(viewerContext, lightContext, renderContext)
+
+	// joint rendering for the selected entity
+	entity := panels.SelectedEntity()
+	if entity != nil {
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+		// TODO: optimize this - can probably cache some of these computations
+		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+			jointShader := shaderManager.GetShaderProgram("flat")
+			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+
+			var jointLines [][]mgl64.Vec3
+			model := entity.Model
+			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+
+			for _, jid := range panels.JointsToRender {
+				jointTransform := animationTransforms[jid]
+				lines := cubeLines(15)
+				jt := utils.Mat4F32ToF64(jointTransform)
+				for _, line := range lines {
+					points := line
+					for i := 0; i < len(points); i++ {
+						bindTransform := model.JointMap()[jid].FullBindTransform
+						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+					}
+				}
+				jointLines = append(jointLines, lines...)
+			}
+
+			for _, line := range jointLines {
+				points := line
+				for i := 0; i < len(points); i++ {
+					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+				}
+			}
+
+			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
+		}
+	}
+}
+
+func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+	shaderManager := r.shaderManager
+
+	shaderName := "modelpbr"
+	shader := shaderManager.GetShaderProgram(shaderName)
+	shader.Use()
+
+	if !panels.DBG.Bloom {
+		// only tone map if we're not applying bloom, otherwise
+		// we want to keep the HDR values and tone map later
+		shader.SetUniformInt("applyToneMapping", 1)
+	} else {
+		shader.SetUniformInt("applyToneMapping", 0)
+	}
+
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
+	shader.SetUniformInt("shadowMap", 31)
+	shader.SetUniformInt("depthCubeMap", 30)
+	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+
+	setupLightingUniforms(shader, lightContext.Lights)
+
+	gl.ActiveTexture(gl.TEXTURE30)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+
+	gl.ActiveTexture(gl.TEXTURE31)
+	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+
+	for _, entity := range r.world.Entities() {
+		if entity.Model == nil {
+			continue
+		}
+
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+		shader.SetUniformUInt("entityID", uint32(entity.ID))
+		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+			shader.SetUniformInt("isAnimated", 1)
+		} else {
+			shader.SetUniformInt("isAnimated", 0)
+		}
+
+		drawModel(
+			viewerContext,
+			lightContext,
+			r.shadowMap,
+			shader,
+			r.world.AssetManager(),
+			entity.Model,
+			entity.AnimationPlayer,
+			modelMatrix,
+			r.depthCubeMapTexture,
+			entity.ID,
+		)
+
 	}
 }
 

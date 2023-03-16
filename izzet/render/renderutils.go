@@ -88,17 +88,6 @@ func drawModel(
 	pointLightDepthCubeMap uint32,
 	entityID int,
 ) {
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", float32(shadowMap.ShadowDistance()))
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
-	shader.SetUniformInt("shadowMap", 31)
-	shader.SetUniformInt("depthCubeMap", 30)
-
-	setupLightingUniforms(shader, lightContext.Lights)
-
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		animationTransforms := animationPlayer.AnimationTransforms()
 		// if animationTransforms is nil, the shader will execute reading into invalid memory
@@ -110,18 +99,6 @@ func drawModel(
 			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
 		}
 	}
-
-	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
-	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-
-	gl.ActiveTexture(gl.TEXTURE30)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, pointLightDepthCubeMap)
-
-	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, shadowMap.DepthTexture())
-
-	rd := model.RenderData()
-	_ = rd
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
@@ -160,11 +137,7 @@ func drawModel(
 		textureID = texture.ID
 		gl.BindTexture(gl.TEXTURE_2D, textureID)
 
-		// if i == 0 {
-		// 	fmt.Println(renderData.Transform)
-		// }
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(renderData.Transform)
-		// modelMat := utils.Mat4F64ToF32(modelMatrix)
 		shader.SetUniformMat4("model", modelMat)
 
 		ctx := model.CollectionContext()

@@ -166,7 +166,7 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 }
 
 func CreateDummy(name string) *Entity {
-	entity := InstantiateBaseEntity("dummy", id)
+	entity := InstantiateBaseEntity(name, id)
 	id += 1
 	return entity
 }

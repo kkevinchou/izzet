@@ -153,11 +153,11 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat"}
+	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
-		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" {
+		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" || name == "lootbox" {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
@@ -168,15 +168,6 @@ func (g *Izzet) loadPrefabs() {
 			models := model.NewModelsFromCollection(ctx, modelConfig)
 			pf := prefabs.CreatePrefab(name, models)
 			g.prefabs[pf.ID] = pf
-		} else if name == "lootbox" {
-			collection := g.assetManager.GetCollection(name)
-			ctx := model.CreateContext(collection)
-
-			for i := 0; i < 2; i++ {
-				m := model.NewModelsFromCollection(ctx, modelConfig)[0]
-				pf := prefabs.CreatePrefab(fmt.Sprintf("%s-%d", name, i), []*model.Model{m})
-				g.prefabs[pf.ID] = pf
-			}
 		} else {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)

@@ -326,8 +326,8 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		}
 
 		// draw bounding box
-		if entity.BoundingBox() != nil {
-			bb := entity.BoundingBox()
+		bb := entity.BoundingBox()
+		if bb != nil {
 			drawAABB(
 				viewerContext,
 				shaderManager.GetShaderProgram("flat"),

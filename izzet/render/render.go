@@ -236,6 +236,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToCubeDepthMap(lightContext)
 
 	r.renderScene(cameraViewerContext, lightContext, renderContext)
+	r.renderAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	if panels.DBG.RenderSpatialPartition {
 		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
@@ -280,6 +281,63 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.renderGizmos(cameraViewerContext, renderContext)
 	r.renderImgui(renderContext)
+}
+
+func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+	shaderManager := r.shaderManager
+
+	// joint rendering for the selected entity
+	entity := panels.SelectedEntity()
+	if entity != nil {
+		modelMatrix := entities.ComputeTransformMatrix(entity)
+		// TODO: optimize this - can probably cache some of these computations
+
+		// draw joint
+		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+			jointShader := shaderManager.GetShaderProgram("flat")
+			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+
+			var jointLines [][]mgl64.Vec3
+			model := entity.Model
+			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+
+			for _, jid := range panels.JointsToRender {
+				jointTransform := animationTransforms[jid]
+				lines := cubeLines(15)
+				jt := utils.Mat4F32ToF64(jointTransform)
+				for _, line := range lines {
+					points := line
+					for i := 0; i < len(points); i++ {
+						bindTransform := model.JointMap()[jid].FullBindTransform
+						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+					}
+				}
+				jointLines = append(jointLines, lines...)
+			}
+
+			for _, line := range jointLines {
+				points := line
+				for i := 0; i < len(points); i++ {
+					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+				}
+			}
+
+			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
+		}
+
+		// draw bounding box
+		if entity.BoundingBox() != nil {
+			bb := entity.BoundingBox()
+			drawAABB(
+				viewerContext,
+				shaderManager.GetShaderProgram("flat"),
+				mgl64.Vec3{.2, 0, .7},
+				bb,
+				0.5,
+			)
+		}
+	}
+
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
@@ -420,17 +478,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 		modelMatrix := entities.ComputeTransformMatrix(entity)
 
-		// if entity.BoundingBox() != nil {
-		// 	bb := entity.BoundingBox()
-		// 	drawAABB(
-		// 		viewerContext,
-		// 		shaderManager.GetShaderProgram("flat"),
-		// 		mgl64.Vec3{.2, 0, .7},
-		// 		bb,
-		// 		0.5,
-		// 	)
-		// }
-
 		if len(entity.ShapeData) > 0 {
 			shader := shaderManager.GetShaderProgram("flat")
 			shader.Use()
@@ -528,43 +575,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 	r.renderModels(viewerContext, lightContext, renderContext)
 
-	// joint rendering for the selected entity
-	entity := panels.SelectedEntity()
-	if entity != nil {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
-		// TODO: optimize this - can probably cache some of these computations
-		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-			jointShader := shaderManager.GetShaderProgram("flat")
-			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
-
-			var jointLines [][]mgl64.Vec3
-			model := entity.Model
-			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-
-			for _, jid := range panels.JointsToRender {
-				jointTransform := animationTransforms[jid]
-				lines := cubeLines(15)
-				jt := utils.Mat4F32ToF64(jointTransform)
-				for _, line := range lines {
-					points := line
-					for i := 0; i < len(points); i++ {
-						bindTransform := model.JointMap()[jid].FullBindTransform
-						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
-					}
-				}
-				jointLines = append(jointLines, lines...)
-			}
-
-			for _, line := range jointLines {
-				points := line
-				for i := 0; i < len(points); i++ {
-					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
-				}
-			}
-
-			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
-		}
-	}
 }
 
 func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {

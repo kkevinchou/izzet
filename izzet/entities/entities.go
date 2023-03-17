@@ -86,11 +86,12 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 		return nil
 	}
 	modelMatrix := ComputeTransformMatrix(e)
-	t, _, s := utils.DecomposeF64(modelMatrix)
-	translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
-	scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
+	// t, r, s := utils.DecomposeF64(modelMatrix)
+	// translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
+	// scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
 
-	return e.boundingBox.Transform(translation.Mul4(scale))
+	// return e.boundingBox.Transform(translation.Mul4(r.Mat4()).Mul4(scale))
+	return e.boundingBox.Transform(modelMatrix)
 }
 
 func (e *Entity) WorldRotation() mgl64.Quat {

@@ -684,7 +684,6 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 		renderContext,
 		menuBarSize,
 		r.world.Prefabs(),
-		r.world.Entities(),
 	)
 
 	imgui.PopStyleColorV(20)

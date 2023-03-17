@@ -70,7 +70,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		}
 	}
 
-	g.physicsStep(delta)
+	// g.physicsStep(delta)
 
 	var viewRotation mgl64.Vec2
 	var controlVector mgl64.Vec3

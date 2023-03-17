@@ -2,13 +2,12 @@ package panels
 
 import (
 	"github.com/inkyblackness/imgui-go/v4"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
 
 var open bool
 
-func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab, es []*entities.Entity) {
+func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
 	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 	width := rect.X * 0.20
 	height := rect.Y * 0.5
@@ -20,7 +19,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 
 	if imgui.BeginTabBar("Scene") {
 		if imgui.BeginTabItem("Scene Hierarchy") {
-			sceneUI(es, world)
+			sceneUI(world)
 			imgui.EndTabItem()
 		}
 		imgui.EndTabBar()

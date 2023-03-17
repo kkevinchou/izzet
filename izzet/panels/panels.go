@@ -24,10 +24,8 @@ type World interface {
 	Entities() []*entities.Entity
 }
 
-func SelectEntity(entity *entities.Entity) bool {
-	newSelection := entity != selectedEntity
+func SelectEntity(entity *entities.Entity) {
 	selectedEntity = entity
-	return newSelection
 }
 
 func SelectedEntity() *entities.Entity {

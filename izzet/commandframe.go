@@ -32,6 +32,8 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.handleInputCommands(frameInput)
 
+	g.spatialPartition.FrameSetup(nil)
+
 	// var sEntities []spatialpartition.Entity
 	// for _, entity := range g.Entities() {
 	// 	if entity.BoundingBox() == nil {
@@ -147,8 +149,19 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		if newSelection := g.selectEntity(frameInput, g.height); newSelection {
+		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+		if entityID == nil {
+			panels.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
+		} else {
+			clickedEntity := g.GetEntityByID(*entityID)
+			currentSelection := panels.SelectedEntity()
+
+			if currentSelection != nil && currentSelection.ID != clickedEntity.ID {
+				gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
+			}
+
+			panels.SelectEntity(clickedEntity)
 		}
 	}
 }
@@ -207,26 +220,6 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 			panels.ShowDebug = !panels.ShowDebug
 		}
 	}
-}
-
-func (g *Izzet) selectEntity(frameInput input.Input, height int) bool {
-	mouseInput := frameInput.MouseInput
-
-	var newSelection bool
-	// select the entity in the hierarchy
-	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, height)
-	if entityID == nil {
-		newSelection = panels.SelectEntity(nil)
-		gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
-	} else {
-		for _, e := range g.Entities() {
-			if e.ID == *entityID {
-				newSelection = panels.SelectEntity(e)
-			}
-		}
-	}
-
-	return newSelection
 }
 
 func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, controlVector mgl64.Vec3, delta time.Duration) {

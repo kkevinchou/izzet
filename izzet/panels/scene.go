@@ -75,7 +75,10 @@ func sceneHierarchy(es []*entities.Entity, world World) {
 
 func drawEntity(entity *entities.Entity, world World) bool {
 	popup := false
-	nodeFlags := imgui.TreeNodeFlagsNone | imgui.TreeNodeFlagsLeaf
+	nodeFlags := imgui.TreeNodeFlagsNone
+	if len(entity.Children) == 0 {
+		nodeFlags |= imgui.TreeNodeFlagsLeaf
+	}
 	if SelectedEntity() != nil && entity.ID == SelectedEntity().ID {
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}

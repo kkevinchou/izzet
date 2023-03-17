@@ -10,10 +10,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
-func sceneUI(es []*entities.Entity, world World) {
+func sceneUI(world World) {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
-	sceneHierarchy(es, world)
+	sceneHierarchy(world)
 
 	if imgui.BeginDragDropTarget() {
 		if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
@@ -37,10 +37,10 @@ func sceneUI(es []*entities.Entity, world World) {
 	imgui.PopStyleVar()
 }
 
-func sceneHierarchy(es []*entities.Entity, world World) {
+func sceneHierarchy(world World) {
 	entityPopup := false
 	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
-	for _, entity := range es {
+	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
 			popup := drawEntity(entity, world)
 			entityPopup = entityPopup || popup

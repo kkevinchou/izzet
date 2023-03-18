@@ -44,18 +44,25 @@ func Scale(entity *Entity) mgl64.Vec3 {
 }
 
 func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
-	entity.dirtyTransformFlag = true
+	setDirtyFlag(entity)
 	entity.localPosition = position
 }
 
 func SetLocalRotation(entity *Entity, rotation mgl64.Quat) {
-	entity.dirtyTransformFlag = true
+	setDirtyFlag(entity)
 	entity.localRotation = rotation
 }
 
 func SetScale(entity *Entity, scale mgl64.Vec3) {
-	entity.dirtyTransformFlag = true
+	setDirtyFlag(entity)
 	entity.scale = scale
+}
+
+func setDirtyFlag(entity *Entity) {
+	entity.dirtyTransformFlag = true
+	for _, child := range entity.Children {
+		setDirtyFlag(child)
+	}
 }
 
 func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {

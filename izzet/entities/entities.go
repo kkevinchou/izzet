@@ -18,6 +18,10 @@ type Entity struct {
 	ID   int
 	Name string
 
+	// dirty flag caching world transform
+	dirtyTransformFlag   bool
+	cachedWorldTransform mgl64.Mat4
+
 	// each Entity has their own transforms and animation player
 	localPosition mgl64.Vec3
 	localRotation mgl64.Quat
@@ -102,6 +106,7 @@ func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.P
 	e := InstantiateBaseEntity(model.Name(), id)
 	e.Prefab = prefab
 	e.Model = model
+	e.dirtyTransformFlag = true
 	e.boundingBox = collider.BoundingBoxFromModel(e.Model)
 
 	SetLocalPosition(e, utils.Vec3F32ToF64(model.Translation()))

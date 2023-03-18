@@ -23,8 +23,14 @@ func (g *Izzet) DeleteEntity(entity *entities.Entity) {
 	if entity == nil {
 		return
 	}
-	delete(g.entities, entity.ID)
+
+	for _, child := range entity.Children {
+		g.RemoveParent(child)
+		g.DeleteEntity(child)
+	}
+
 	g.RemoveParent(entity)
+	delete(g.entities, entity.ID)
 }
 
 func (g *Izzet) GetPrefabByID(id int) *prefabs.Prefab {

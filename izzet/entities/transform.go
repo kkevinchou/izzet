@@ -59,10 +59,12 @@ func SetScale(entity *Entity, scale mgl64.Vec3) {
 }
 
 func setDirtyFlag(entity *Entity) {
-	entity.dirtyTransformFlag = true
+	// note - this can potentially be optimized by not setting
+	// the dirty flag on children if we were already marked dirty
 	for _, child := range entity.Children {
 		setDirtyFlag(child)
 	}
+	entity.dirtyTransformFlag = true
 }
 
 func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {

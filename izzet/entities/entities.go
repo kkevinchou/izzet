@@ -72,6 +72,10 @@ func (e *Entity) GetID() int {
 	return e.ID
 }
 
+func (e *Entity) Dirty() bool {
+	return e.dirtyTransformFlag
+}
+
 func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
 }

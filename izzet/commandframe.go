@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -31,28 +32,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	keyboardInput := frameInput.KeyboardInput
 
 	g.handleInputCommands(frameInput)
-
-	g.spatialPartition.FrameSetup(nil)
-
-	// var sEntities []spatialpartition.Entity
-	// for _, entity := range g.Entities() {
-	// 	if entity.BoundingBox() == nil {
-	// 		continue
-	// 	}
-
-	// 	sEntities = append(sEntities, entity)
-	// }
-	// g.spatialPartition.FrameSetup(sEntities)
-
-	// selectedEntity := panels.SelectedEntity()
-	// if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
-	// 	// fmt.Println("CHECKING WITH", selectedEntity.GetID())
-	// 	bb := selectedEntity.BoundingBox()
-	// 	for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
-	// 		_ = entity
-	// 		// fmt.Println(entity.GetID())
-	// 	}
-	// }
 
 	for _, entity := range g.Entities() {
 		// animation system
@@ -164,6 +143,42 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			}
 
 			panels.SelectEntity(clickedEntity)
+		}
+	}
+
+	// g.spatialPartition.FrameSetup(sEntities)
+
+	// selectedEntity := panels.SelectedEntity()
+	// if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
+	// 	// fmt.Println("CHECKING WITH", selectedEntity.GetID())
+	// 	bb := selectedEntity.BoundingBox()
+	// 	for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
+	// 		_ = entity
+	// 		// fmt.Println(entity.GetID())
+	// 	}
+	// }
+
+	var spatialEntities []spatialpartition.Entity
+	for _, entity := range g.Entities() {
+		if !entity.Dirty() {
+			continue
+		}
+		if entity.BoundingBox() == nil {
+			continue
+		}
+		spatialEntities = append(spatialEntities, entity)
+	}
+
+	g.spatialPartition.IndexEntities(spatialEntities)
+
+	selectedEntity := panels.SelectedEntity()
+	if selectedEntity != nil {
+		boundingBox := selectedEntity.BoundingBox()
+		if boundingBox != nil {
+			// partitions := g.spatialPartition.IntersectingPartitions(*boundingBox)
+			// entities := g.spatialPartition.QueryEntities(*boundingBox)
+			// fmt.Println(entities)
+			// fmt.Println(partitions)
 		}
 	}
 }

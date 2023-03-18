@@ -20,11 +20,11 @@ func NewPositionEdit(lastPosition, currentPosition mgl64.Vec3, entity *entities.
 }
 
 func (e *PositionEdit) Undo() {
-	e.Entity.LocalPosition = e.LastPosition
+	entities.SetLocalPosition(e.Entity, e.LastPosition)
 }
 
 func (e *PositionEdit) Redo() {
-	e.Entity.LocalPosition = e.CurrentPosition
+	entities.SetLocalPosition(e.Entity, e.CurrentPosition)
 }
 
 type RotationEdit struct {
@@ -42,11 +42,11 @@ func NewRotationEdit(lastRotation, currentRotation mgl64.Quat, entity *entities.
 }
 
 func (e *RotationEdit) Undo() {
-	e.Entity.LocalRotation = e.LastRotation
+	entities.SetLocalRotation(e.Entity, e.LastRotation)
 }
 
 func (e *RotationEdit) Redo() {
-	e.Entity.LocalRotation = e.CurrentRotation
+	entities.SetLocalRotation(e.Entity, e.CurrentRotation)
 }
 
 type ScaleEdit struct {
@@ -64,9 +64,9 @@ func NewScaleEdit(lastScale, currentScale mgl64.Vec3, entity *entities.Entity) *
 }
 
 func (e *ScaleEdit) Undo() {
-	e.Entity.Scale = e.LastScale
+	entities.SetScale(e.Entity, e.LastScale)
 }
 
 func (e *ScaleEdit) Redo() {
-	e.Entity.Scale = e.CurrentScale
+	entities.SetScale(e.Entity, e.CurrentScale)
 }

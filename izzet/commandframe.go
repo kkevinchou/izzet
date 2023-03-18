@@ -118,9 +118,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 				// take the new world position and convert it to local space
 				newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(newPosition.Vec4(1)).Vec3()
 
-				entity.LocalPosition = newPositionInLocalSpace
+				entities.SetLocalPosition(entity, newPositionInLocalSpace)
 			} else {
-				entity.LocalPosition = *newPosition
+				entities.SetLocalPosition(entity, *newPosition)
 			}
 		}
 		gizmoHovered = hoverIndex != -1
@@ -133,9 +133,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 				worldToLocalMatrix := transformMatrix.Inv()
 				_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
 				computedRotation := r.Mul(*newEntityRotation)
-				entity.LocalRotation = computedRotation
+				entities.SetLocalRotation(entity, computedRotation)
 			} else {
-				entity.LocalRotation = *newEntityRotation
+				entities.SetLocalRotation(entity, *newEntityRotation)
 			}
 		}
 		gizmoHovered = hoverIndex != -1
@@ -143,7 +143,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		scaleDelta, hovered := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
 		if scaleDelta != nil {
 			entity := panels.SelectedEntity()
-			entity.Scale = entity.Scale.Add(*scaleDelta)
+			scale := entities.Scale(entity)
+
+			entities.SetScale(entity, scale.Add(*scaleDelta))
 		}
 		gizmoHovered = hovered
 	}
@@ -439,7 +441,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		gizmo.S.Active = true
 		gizmo.S.MotionPivot = mouseInput.Position
 		gizmo.S.HoveredAxisType = closestAxisType
-		gizmo.S.ActivationScale = selectedEntity.Scale
+		gizmo.S.ActivationScale = entities.Scale(selectedEntity)
 	}
 
 	// reset if our gizmo isn't active
@@ -451,9 +453,10 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 
 	// if the gizmo was active and we receive a mouse up event, set it as inactive
 	if gizmo.S.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		if gizmo.S.ActivationScale != selectedEntity.Scale {
+		scale := entities.Scale(selectedEntity)
+		if gizmo.S.ActivationScale != scale {
 			g.AppendEdit(
-				edithistory.NewScaleEdit(gizmo.S.ActivationScale, selectedEntity.Scale, selectedEntity),
+				edithistory.NewScaleEdit(gizmo.S.ActivationScale, scale, selectedEntity),
 			)
 		}
 		gizmo.S.Reset()
@@ -593,7 +596,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 			gizmo.T.TranslationDir = minAxis
 			gizmo.T.MotionPivot = motionPivot.Sub(position)
 			gizmo.T.HoverIndex = closestAxisIndex
-			gizmo.T.ActivationPosition = selectedEntity.LocalPosition
+			gizmo.T.ActivationPosition = entities.LocalPosition(selectedEntity)
 		}
 
 		if !gizmo.T.Active {
@@ -607,9 +610,10 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	}
 
 	if gizmo.T.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		if gizmo.T.ActivationPosition != selectedEntity.LocalPosition {
+		localPosition := entities.LocalPosition(selectedEntity)
+		if gizmo.T.ActivationPosition != localPosition {
 			g.AppendEdit(
-				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, selectedEntity.LocalPosition, selectedEntity),
+				edithistory.NewPositionEdit(gizmo.T.ActivationPosition, localPosition, selectedEntity),
 			)
 		}
 		gizmo.T.Reset()

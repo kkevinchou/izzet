@@ -184,7 +184,7 @@ func (g *Izzet) loadEntities() {
 		Type:    1,
 	}
 	pointLight := entities.CreateLight(lightInfo2)
-	pointLight.LocalPosition = mgl64.Vec3{0, -12, 806}
+	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, -12, 806})
 	g.AddEntity(pointLight)
 
 	lightDir := panels.DBG.DirectionalLightDir
@@ -193,7 +193,7 @@ func (g *Izzet) loadEntities() {
 		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)
-	directionalLight.LocalPosition = mgl64.Vec3{0, 100, 0}
+	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 100, 0})
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
@@ -242,7 +242,7 @@ func (g *Izzet) loadEntities() {
 		} else if pf.Name == "demo_scene_dungeon" {
 			parent := entities.CreateDummy("scene_dummy")
 			g.AddEntity(parent)
-			parent.Scale = mgl64.Vec3{10, 10, 10}
+			entities.SetScale(parent, mgl64.Vec3{10, 10, 10})
 
 			for _, entity := range entities.InstantiateFromPrefab(pf) {
 				// entity := entities.InstantiateFromPrefab(pf)

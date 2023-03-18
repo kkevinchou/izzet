@@ -20,7 +20,7 @@ func entityProps(entity *entities.Entity) {
 		// imgui.PopStyleColor()
 
 		if entity != nil {
-			position := entity.LocalPosition
+			position := entities.LocalPosition(entity)
 			positionStr := fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
 			text := &positionStr
 
@@ -29,11 +29,14 @@ func entityProps(entity *entities.Entity) {
 			if uiTableInputRow("Local Position", text, nil) {
 				uiTableInputPosition(entity, text)
 			}
-			euler := QuatToEuler(entity.LocalRotation)
-			uiTableRow("Local Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
-			uiTableRow("Local Quat", fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", entity.LocalRotation.X(), entity.LocalRotation.Y(), entity.LocalRotation.Z(), entity.LocalRotation.W))
 
-			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", entity.Scale.X(), entity.Scale.Y(), entity.Scale.Z()))
+			rotation := entities.LocalRotation(entity)
+			euler := QuatToEuler(rotation)
+			uiTableRow("Local Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
+			uiTableRow("Local Quat", fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", rotation.X(), rotation.Y(), rotation.Z(), rotation.W))
+
+			scale := entities.Scale(entity)
+			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", scale.X(), scale.Y(), scale.Z()))
 
 			position = entity.WorldPosition()
 			positionStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
@@ -90,7 +93,7 @@ func uiTableInputPosition(entity *entities.Entity, text *string) {
 		}
 
 		if !parseErr {
-			entity.LocalPosition = newPosition
+			entities.SetLocalPosition(entity, newPosition)
 		}
 	}
 }

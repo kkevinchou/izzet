@@ -289,7 +289,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 	// joint rendering for the selected entity
 	entity := panels.SelectedEntity()
 	if entity != nil {
-		modelMatrix := entities.ComputeTransformMatrix(entity)
+		modelMatrix := entities.WorldTransform(entity)
 		// TODO: optimize this - can probably cache some of these computations
 
 		// draw joint
@@ -381,7 +381,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 			shader.SetUniformInt("isAnimated", 0)
 		}
 
-		modelMatrix := entities.ComputeTransformMatrix(entity)
+		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
 		model := entity.Model
@@ -446,7 +446,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 			shader.SetUniformInt("isAnimated", 0)
 		}
 
-		modelMatrix := entities.ComputeTransformMatrix(entity)
+		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
 		model := entity.Model
@@ -476,7 +476,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			continue
 		}
 
-		modelMatrix := entities.ComputeTransformMatrix(entity)
+		modelMatrix := entities.WorldTransform(entity)
 
 		if len(entity.ShapeData) > 0 {
 			shader := shaderManager.GetShaderProgram("flat")
@@ -556,9 +556,10 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 		collider := entity.Collider
 		if collider != nil {
-			translation := mgl64.Translate3D(entity.LocalPosition.X(), entity.LocalPosition.Y(), entity.LocalPosition.Z())
+			localPosition := entities.LocalPosition(entity)
+			translation := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
 			// lots of hacky rendering stuff to get the rectangle to billboard
-			center := mgl64.Vec3{entity.LocalPosition.X(), 0, entity.LocalPosition.Z()}
+			center := mgl64.Vec3{localPosition.X(), 0, localPosition.Z()}
 			viewerArtificialCenter := mgl64.Vec3{viewerContext.Position.X(), 0, viewerContext.Position.Z()}
 			vecToViewer := viewerArtificialCenter.Sub(center).Normalize()
 			billboardModelMatrix := translation.Mul4(mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, 1}, vecToViewer).Mat4())
@@ -616,7 +617,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			continue
 		}
 
-		modelMatrix := entities.ComputeTransformMatrix(entity)
+		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)

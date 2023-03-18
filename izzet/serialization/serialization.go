@@ -51,9 +51,9 @@ func (s *Serializer) WriteOut(filepath string) {
 		sEntity := SerializedEntity{
 			Name:     entity.Name,
 			ID:       entity.ID,
-			Position: entity.LocalPosition,
-			Rotation: entity.LocalRotation,
-			Scale:    entity.Scale,
+			Position: entities.LocalPosition(entity),
+			Rotation: entities.LocalRotation(entity),
+			Scale:    entities.Scale(entity),
 
 			ImageInfo: entity.ImageInfo,
 			LightInfo: entity.LightInfo,
@@ -142,11 +142,13 @@ func (s *Serializer) Entities() []*entities.Entity {
 		dsEntity.ImageInfo = e.ImageInfo
 		dsEntity.ShapeData = e.ShapeData
 
-		dsEntity.LocalPosition = e.Position
-		dsEntity.LocalRotation = e.Rotation
-		dsEntity.Scale = e.Scale
-		if dsEntity.Scale.X() == 0 && dsEntity.Scale.Y() == 0 && dsEntity.Scale.Z() == 0 {
-			dsEntity.Scale = mgl64.Vec3{1, 1, 1}
+		entities.SetLocalPosition(dsEntity, e.Position)
+		entities.SetLocalRotation(dsEntity, e.Rotation)
+		entities.SetScale(dsEntity, e.Scale)
+
+		scale := entities.Scale(dsEntity)
+		if scale.X() == 0 && scale.Y() == 0 && scale.Z() == 0 {
+			scale = mgl64.Vec3{1, 1, 1}
 		}
 
 		entityMap[dsEntity.ID] = dsEntity

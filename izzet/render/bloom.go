@@ -119,7 +119,7 @@ func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 			shader.SetUniformInt("bloomThresholdEnabled", 0)
 		}
 		shader.SetUniformFloat("bloomThreshold", panels.DBG.BloomThreshold)
-		gl.DrawArrays(gl.TRIANGLES, 0, 6)
+		iztDrawArrays(0, 6)
 		srcTexture = r.downSampleTextures[i]
 	}
 }
@@ -156,7 +156,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 		gl.DrawBuffers(1, &drawBuffers[0])
 
 		gl.BindVertexArray(r.xyTextureVAO)
-		gl.DrawArrays(gl.TRIANGLES, 0, 6)
+		iztDrawArrays(0, 6)
 
 		r.blend(width, height, r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
 		upSampleSource = blendTargetMip
@@ -178,7 +178,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 	gl.DrawBuffers(1, &drawBuffers[0])
 
 	gl.BindVertexArray(r.xyTextureVAO)
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	iztDrawArrays(0, 6)
 
 	return blendTargetMip
 }
@@ -202,7 +202,7 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	iztDrawArrays(0, 6)
 }
 
 func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) uint32 {
@@ -226,7 +226,7 @@ func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uin
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	iztDrawArrays(0, 6)
 
 	return r.compositeTexture
 }

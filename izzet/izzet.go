@@ -98,6 +98,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 func (g *Izzet) Start() {
 	var accumulator float64
 	var renderAccumulator float64
+	var oneSecondAccumulator float64
 
 	msPerFrame := float64(1000) / float64(settings.FPS)
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
@@ -108,6 +109,9 @@ func (g *Izzet) Start() {
 		panic(err)
 	}
 
+	var renderTime float64
+	var renderTimeSamples int
+
 	frameCount := 0
 	for !g.gameOver {
 		now := float64(time.Now().UnixNano()) / 1000000
@@ -116,6 +120,7 @@ func (g *Izzet) Start() {
 
 		accumulator += delta
 		renderAccumulator += delta
+		oneSecondAccumulator += delta
 
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			input := g.platform.PollInput()
@@ -131,6 +136,19 @@ func (g *Izzet) Start() {
 			time.Sleep(5 * time.Millisecond)
 		}
 
+		if oneSecondAccumulator >= 1000 {
+			fps := float64(frameCount) / oneSecondAccumulator * 1000
+			panels.DBG.FPS = fps
+			frameCount = 0
+
+			avgRenderTime := renderTime / float64(renderTimeSamples)
+			renderTime = 0
+			renderTimeSamples = 0
+			panels.DBG.RenderTime = avgRenderTime
+
+			oneSecondAccumulator = 0
+		}
+
 		if renderAccumulator >= msPerFrame {
 			start := time.Now()
 			frameCount++
@@ -140,7 +158,9 @@ func (g *Izzet) Start() {
 			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame
-			panels.DBG.RenderTime = float64(time.Since(start).Microseconds()) / 1000
+
+			renderTime += float64(time.Since(start).Microseconds()) / 1000
+			renderTimeSamples += 1
 		}
 	}
 }

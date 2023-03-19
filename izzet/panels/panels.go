@@ -19,8 +19,6 @@ type World interface {
 	AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab
 	GetEntityByID(id int) *entities.Entity
-	BuildRelation(parent *entities.Entity, child *entities.Entity)
-	RemoveParent(child *entities.Entity)
 	Entities() []*entities.Entity
 }
 

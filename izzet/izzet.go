@@ -76,12 +76,14 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	g.camera = &camera.Camera{
 		Position:    mgl64.Vec3{0, 0, 0},
-		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
+		Orientation: mgl64.QuatIdent(),
+		// Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
 	}
 
 	w, h := g.window.GetSize()
 	g.width, g.height = int(w), int(h)
 	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
+	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 10)
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
@@ -89,7 +91,6 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
-	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 10)
 
 	return g
 }
@@ -245,10 +246,8 @@ func (g *Izzet) loadEntities() {
 			entities.SetScale(parent, mgl64.Vec3{10, 10, 10})
 
 			for _, entity := range entities.InstantiateFromPrefab(pf) {
-				// entity := entities.InstantiateFromPrefab(pf)
-				// entity.Scale = entity.Scale.Mul(2)
+				entities.BuildRelation(parent, entity)
 				g.AddEntity(entity)
-				g.BuildRelation(parent, entity)
 			}
 		} else if pf.Name == "vehicle" {
 			// prefab := g.GetPrefabByID(pf.ID)

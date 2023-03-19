@@ -18,6 +18,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
@@ -31,8 +32,6 @@ type World interface {
 	Entities() []*entities.Entity
 	Lights() []*entities.Entity
 	GetEntityByID(id int) *entities.Entity
-	BuildRelation(parent *entities.Entity, child *entities.Entity)
-	RemoveParent(child *entities.Entity)
 	SpatialPartition() *spatialpartition.SpatialPartition
 
 	// for panels
@@ -185,8 +184,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), settings.Near, settings.Far),
 	}
 
-	// configure light viewer context
-	modelSpaceFrustumPoints := CalculateFrustumPoints(position, orientation, settings.Near, settings.Far, renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), settings.ShadowMapDistanceFactor)
+	lightFrustumPoints := calculateFrustumPoints(position, orientation, settings.Near, settings.Far, renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), settings.ShadowMapDistanceFactor)
 
 	// find the directional light if there is one
 	lights := r.world.Lights()
@@ -210,7 +208,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	}
 
 	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), modelSpaceFrustumPoints, settings.ShadowmapZOffset)
+	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), lightFrustumPoints, settings.ShadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
 
 	lightViewerContext := ViewerContext{
@@ -235,7 +233,16 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 
-	r.renderScene(cameraViewerContext, lightContext, renderContext)
+	frustumPoints := calculateFrustumPoints(position, orientation, settings.Near, settings.Far, renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
+	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
+	spatialPartition := r.world.SpatialPartition()
+	entities := spatialPartition.QueryEntities(frustumBoundingBox)
+	frustumEntities := map[int]any{}
+	for _, entity := range entities {
+		frustumEntities[entity.GetID()] = true
+	}
+
+	r.renderScene(cameraViewerContext, lightContext, renderContext, frustumEntities)
 	r.renderAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	if panels.DBG.RenderSpatialPartition {
@@ -463,7 +470,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 }
 
 // renderScene renders a scene from the perspective of a viewer
-func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
@@ -574,11 +581,10 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 	}
 
-	r.renderModels(viewerContext, lightContext, renderContext)
-
+	r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
 }
 
-func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {
 	shaderManager := r.shaderManager
 
 	shaderName := "modelpbr"
@@ -614,6 +620,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 	for _, entity := range r.world.Entities() {
 		if entity.Model == nil {
+			continue
+		}
+
+		if _, ok := frustumEntities[entity.GetID()]; !ok {
 			continue
 		}
 

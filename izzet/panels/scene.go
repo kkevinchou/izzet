@@ -28,7 +28,7 @@ func sceneUI(world World) {
 			world.AddEntity(parent)
 			for _, entity := range entities.InstantiateFromPrefab(prefab) {
 				world.AddEntity(entity)
-				world.BuildRelation(parent, entity)
+				entities.BuildRelation(parent, entity)
 			}
 			SelectEntity(parent)
 		}
@@ -94,13 +94,13 @@ func drawEntity(entity *entities.Entity, world World) bool {
 			if imgui.Button("Add Cube") {
 				child := entities.CreateCube(25)
 				world.AddEntity(child)
-				world.BuildRelation(entity, child)
+				entities.BuildRelation(entity, child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()
 			}
 			if entity.Parent != nil {
 				if imgui.Button("Remove Parent") {
-					world.RemoveParent(entity)
+					entities.RemoveParent(entity)
 					imgui.CloseCurrentPopup()
 				}
 			}
@@ -121,7 +121,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 				}
 				child := world.GetEntityByID(childID)
 				parent := world.GetEntityByID(entity.ID)
-				world.BuildRelation(parent, child)
+				entities.BuildRelation(parent, child)
 			}
 			imgui.EndDragDropTarget()
 		}

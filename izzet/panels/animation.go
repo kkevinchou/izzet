@@ -102,7 +102,7 @@ func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec)
 		if imgui.Button("Create Socket") {
 			socket := entities.CreateSocket()
 			world.AddEntity(socket)
-			world.BuildRelation(SelectedEntity(), socket)
+			entities.BuildRelation(SelectedEntity(), socket)
 			socket.ParentJoint = joint
 			imgui.CloseCurrentPopup()
 		}
@@ -117,10 +117,10 @@ func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec)
 					if imgui.MenuItemV(entity.NameID(), "", isParented, true) {
 						// toggle parented status
 						if isParented {
-							world.RemoveParent(entity)
+							entities.RemoveParent(entity)
 							entity.ParentJoint = nil
 						} else {
-							world.BuildRelation(parent, entity)
+							entities.BuildRelation(parent, entity)
 							entity.ParentJoint = joint
 						}
 					}

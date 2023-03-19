@@ -110,7 +110,6 @@ func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.P
 	e := InstantiateBaseEntity(model.Name(), id)
 	e.Prefab = prefab
 	e.Model = model
-	e.dirtyTransformFlag = true
 	e.boundingBox = collider.BoundingBoxFromModel(e.Model)
 
 	SetLocalPosition(e, utils.Vec3F32ToF64(model.Translation()))
@@ -133,9 +132,10 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 
 		Children: map[int]*Entity{},
 
-		localPosition: mgl64.Vec3{0, 0, 0},
-		localRotation: mgl64.QuatIdent(),
-		scale:         mgl64.Vec3{1, 1, 1},
+		dirtyTransformFlag: true,
+		localPosition:      mgl64.Vec3{0, 0, 0},
+		localRotation:      mgl64.QuatIdent(),
+		scale:              mgl64.Vec3{1, 1, 1},
 	}
 }
 
@@ -147,4 +147,18 @@ func CreateDummy(name string) *Entity {
 
 func SetNextID(nextID int) {
 	id = nextID
+}
+
+func BuildRelation(parent *Entity, child *Entity) {
+	RemoveParent(child)
+	parent.Children[child.ID] = child
+	child.Parent = parent
+	SetDirty(child)
+}
+
+func RemoveParent(child *Entity) {
+	if parent := child.Parent; parent != nil {
+		delete(parent.Children, child.ID)
+		child.Parent = nil
+	}
 }

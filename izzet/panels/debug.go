@@ -37,7 +37,7 @@ var DBG DebugSettings = DebugSettings{
 	DirectionalLightIntensity: 10,
 	PointLightBias:            1,
 	MaterialOverride:          false,
-	EnableShadowMapping:       true,
+	EnableShadowMapping:       false,
 	BloomIntensity:            0.04,
 	Exposure:                  1.0,
 	AmbientFactor:             0.001,

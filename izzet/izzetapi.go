@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -157,4 +158,8 @@ func (g *Izzet) Lights() []*entities.Entity {
 
 func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
+}
+
+func (g *Izzet) NavMesh() *navmesh.NavigationMesh {
+	return g.navigationMesh
 }

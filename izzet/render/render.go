@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/menus"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -33,6 +34,7 @@ type World interface {
 	Lights() []*entities.Entity
 	GetEntityByID(id int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
+	NavMesh() *navmesh.NavigationMesh
 
 	// for panels
 	AddEntity(entity *entities.Entity)
@@ -346,6 +348,16 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 			)
 		}
 	}
+
+	// draw bounding box
+	volume := r.world.NavMesh().Volume
+	drawAABB(
+		viewerContext,
+		shaderManager.GetShaderProgram("flat"),
+		mgl64.Vec3{100.0 / 99, 63.0 / 255, 0.0 / 255},
+		&volume,
+		0.5,
+	)
 
 }
 

@@ -158,6 +158,8 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	// 	}
 	// }
 
+	g.navigationMesh.BakeNavMesh()
+
 	var spatialEntities []spatialpartition.Entity
 	for _, entity := range g.Entities() {
 		if !entity.Dirty() {

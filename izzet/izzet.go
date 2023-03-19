@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -45,6 +46,8 @@ type Izzet struct {
 	spatialPartition    *spatialpartition.SpatialPartition
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
+
+	navigationMesh *navmesh.NavigationMesh
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -91,6 +94,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
+	g.navigationMesh = navmesh.New(g)
 
 	return g
 }

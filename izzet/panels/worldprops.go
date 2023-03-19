@@ -71,8 +71,8 @@ func worldProps(renderContext RenderContext) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%f", DBG.RenderTime)) })
-		setupRow("Triangle Draw Count", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.TriangleDrawCount)) })
-		setupRow("Draw Count", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.DrawCount)) })
+		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(DBG.TriangleDrawCount)) })
+		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(DBG.DrawCount)) })
 		setupRow("Texture", func() {
 			imgui.PushItemWidth(tableColumn1Width)
 			if imgui.BeginCombo("", string(SelectedComboOption)) {
@@ -97,6 +97,28 @@ func worldProps(renderContext RenderContext) {
 		})
 		imgui.EndTable()
 	}
+}
+
+func formatNumber(number int) string {
+	s := fmt.Sprintf("%d", number)
+
+	var fmtStr string
+	runCount := len(s) / 3
+
+	for i := 0; i < runCount; i++ {
+		index := len(s) - ((i + 1) * 3)
+		fmtStr = "," + s[index:index+3] + fmtStr
+	}
+
+	remainder := len(s) - 3*runCount
+	if remainder > 0 {
+		fmtStr = s[:remainder] + fmtStr
+	} else {
+		// trim leading separator
+		fmtStr = fmtStr[1:]
+	}
+
+	return fmtStr
 }
 
 // createUserSpaceTextureHandle creates a handle to a user space texture

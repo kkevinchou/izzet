@@ -71,6 +71,8 @@ func worldProps(renderContext RenderContext) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%f", DBG.RenderTime)) })
+		setupRow("Triangle Draw Count", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.TriangleDrawCount)) })
+		setupRow("Draw Count", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.DrawCount)) })
 		setupRow("Texture", func() {
 			imgui.PushItemWidth(tableColumn1Width)
 			if imgui.BeginCombo("", string(SelectedComboOption)) {

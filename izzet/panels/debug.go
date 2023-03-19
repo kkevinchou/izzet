@@ -23,6 +23,9 @@ type DebugSettings struct {
 	RenderSpatialPartition bool
 
 	RenderTime float64
+
+	TriangleDrawCount int
+	DrawCount         int
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -44,4 +47,7 @@ var DBG DebugSettings = DebugSettings{
 	Color:                     [3]float32{1, 1, 1},
 	ColorIntensity:            1.0,
 	RenderSpatialPartition:    false,
+
+	TriangleDrawCount: 0,
+	DrawCount:         0,
 }

@@ -50,7 +50,7 @@ func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+	iztDrawArrays(0, int32(len(vertices)))
 }
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain
@@ -150,7 +150,7 @@ func drawModel(
 			// order is clockwise.
 			gl.FrontFace(gl.CW)
 		}
-		gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
+		iztDrawElements(int32(len(mesh.Vertices)))
 		if modelMat.Det() < 0 {
 			gl.FrontFace(gl.CCW)
 		}
@@ -328,7 +328,7 @@ func drawWithNDC(shaderManager *shaders.ShaderManager) {
 
 	shader := shaderManager.GetShaderProgram("skybox")
 	shader.Use()
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+	iztDrawArrays(0, int32(len(vertices)))
 }
 
 func drawBillboardTexture(
@@ -369,7 +369,7 @@ func drawBillboardTexture(
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	iztDrawArrays(0, 6)
 }
 
 var dtqVao, dtqVbo uint32
@@ -436,7 +436,7 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 		numVertices *= 2
 	}
 
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(numVertices))
+	iztDrawArrays(0, int32(numVertices))
 }
 
 func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {
@@ -465,7 +465,7 @@ func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {
 	shader.Use()
 	shader.SetUniformVec4("color", utils.Vec4F64To4F32(color))
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	iztDrawArrays(0, 6)
 }
 
 // drawHUDTextureToQuad does a shitty perspective based rendering of a flat texture
@@ -504,7 +504,7 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	shader.SetUniformMat4("view", mgl32.Ident4())
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	iztDrawArrays(0, 6)
 }
 
 func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internalFormat int32, format uint32) (uint32, uint32) {
@@ -646,7 +646,7 @@ func drawCapsuleCollider(viewerContext ViewerContext, lightContext LightContext,
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)))
+	iztDrawArrays(0, int32(len(vertices)))
 }
 
 var (
@@ -832,7 +832,7 @@ func initCubeVAO(length int) uint32 {
 	// gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices))/3)
+	iztDrawArrays(0, int32(len(vertices))/3)
 
 	return vao
 }
@@ -861,4 +861,16 @@ func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, f
 	}
 
 	return verts
+}
+
+func iztDrawArrays(first, count int32) {
+	panels.DBG.TriangleDrawCount += int(count / 3)
+	panels.DBG.DrawCount += 1
+	gl.DrawArrays(gl.TRIANGLES, first, count)
+}
+
+func iztDrawElements(count int32) {
+	panels.DBG.TriangleDrawCount += int(count / 3)
+	panels.DBG.DrawCount += 1
+	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }

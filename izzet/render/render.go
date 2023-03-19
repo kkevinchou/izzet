@@ -168,6 +168,8 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 
 func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	initOpenGLRenderSettings()
+	panels.DBG.TriangleDrawCount = 0
+	panels.DBG.DrawCount = 0
 
 	// configure camera viewer context
 	position := r.world.Camera().Position
@@ -398,7 +400,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
-			gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
+			iztDrawElements(int32(len(mesh.Vertices)))
 		}
 	}
 }
@@ -464,7 +466,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 			// shader.SetUniformMat4("model", renderData.Transform)
 
 			gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
-			gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Vertices)), gl.UNSIGNED_INT, nil)
+			iztDrawElements(int32(len(mesh.Vertices)))
 		}
 	}
 }
@@ -506,7 +508,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					gl.BindVertexArray(vao)
 					shader.SetUniformVec3("color", panels.DBG.Color)
 					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
-					gl.DrawArrays(gl.TRIANGLES, 0, 48)
+					iztDrawArrays(0, 48)
 				}
 			}
 		}

@@ -836,3 +836,29 @@ func initCubeVAO(length int) uint32 {
 
 	return vao
 }
+
+func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, farPlaneScaleFactor float64) []mgl64.Vec3 {
+	viewerViewMatrix := orientation.Mat4()
+
+	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+	viewMatrix := viewTranslationMatrix.Mul4(viewerViewMatrix)
+
+	halfY := math.Tan(mgl64.DegToRad(fovY / 2))
+	halfX := math.Tan(mgl64.DegToRad(fovX / 2))
+
+	var verts []mgl64.Vec3
+
+	corners := []float64{-1, 1}
+	nearFar := []float64{near, far * farPlaneScaleFactor}
+
+	for _, distance := range nearFar {
+		for _, i := range corners {
+			for _, j := range corners {
+				vert := viewMatrix.Mul4x1(mgl64.Vec3{i * halfX * distance, j * halfY * distance, -distance}.Vec4(1)).Vec3()
+				verts = append(verts, vert)
+			}
+		}
+	}
+
+	return verts
+}

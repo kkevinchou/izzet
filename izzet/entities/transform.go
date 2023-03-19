@@ -44,25 +44,25 @@ func Scale(entity *Entity) mgl64.Vec3 {
 }
 
 func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
-	setDirtyFlag(entity)
+	SetDirty(entity)
 	entity.localPosition = position
 }
 
 func SetLocalRotation(entity *Entity, rotation mgl64.Quat) {
-	setDirtyFlag(entity)
+	SetDirty(entity)
 	entity.localRotation = rotation
 }
 
 func SetScale(entity *Entity, scale mgl64.Vec3) {
-	setDirtyFlag(entity)
+	SetDirty(entity)
 	entity.scale = scale
 }
 
-func setDirtyFlag(entity *Entity) {
+func SetDirty(entity *Entity) {
 	// note - this can potentially be optimized by not setting
 	// the dirty flag on children if we were already marked dirty
 	for _, child := range entity.Children {
-		setDirtyFlag(child)
+		SetDirty(child)
 	}
 	entity.dirtyTransformFlag = true
 }

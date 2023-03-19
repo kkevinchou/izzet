@@ -17,6 +17,9 @@ import (
 
 func (g *Izzet) AddEntity(entity *entities.Entity) {
 	g.entities[entity.ID] = entity
+	if entity.BoundingBox() != nil {
+		g.spatialPartition.IndexEntities([]spatialpartition.Entity{entity})
+	}
 }
 
 func (g *Izzet) DeleteEntity(entity *entities.Entity) {
@@ -25,11 +28,11 @@ func (g *Izzet) DeleteEntity(entity *entities.Entity) {
 	}
 
 	for _, child := range entity.Children {
-		g.RemoveParent(child)
+		entities.RemoveParent(child)
 		g.DeleteEntity(child)
 	}
 
-	g.RemoveParent(entity)
+	entities.RemoveParent(entity)
 	delete(g.entities, entity.ID)
 }
 
@@ -135,19 +138,6 @@ func (g *Izzet) Redo() {
 
 func (g *Izzet) Undo() {
 	g.editHistory.Undo()
-}
-
-func (g *Izzet) BuildRelation(parent *entities.Entity, child *entities.Entity) {
-	g.RemoveParent(child)
-	parent.Children[child.ID] = child
-	child.Parent = parent
-}
-
-func (g *Izzet) RemoveParent(child *entities.Entity) {
-	if parent := child.Parent; parent != nil {
-		delete(parent.Children, child.ID)
-		child.Parent = nil
-	}
 }
 
 func (g *Izzet) CommandFrame() int {

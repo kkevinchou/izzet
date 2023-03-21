@@ -354,11 +354,43 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 	drawAABB(
 		viewerContext,
 		shaderManager.GetShaderProgram("flat"),
-		mgl64.Vec3{100.0 / 99, 63.0 / 255, 0.0 / 255},
+		mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
 		&volume,
 		0.5,
 	)
 
+	verts := r.world.NavMesh().Vertices()
+	if len(verts) > 0 {
+		color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
+		shader := shaderManager.GetShaderProgram("flat")
+		shader.SetUniformFloat("intensity", 1.0)
+		// color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
+		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+		drawTris(viewerContext, verts)
+	}
+
+	// num := rand.Intn(256)
+
+	// verts, clusterIDs := r.world.NavMesh().RenderData()
+	// for i := 0; i < len(verts); i += 3 {
+	// clusterID := clusterIDs[i/3]
+	// red := (clusterID * 40) % 256
+	// green := (clusterID * 40) % 256
+	// blue := (clusterID * 40) % 256
+
+	// if clusterID%2 == 0 {
+	// 	num = 255
+	// } else {
+	// 	num = 0
+	// }
+
+	// color := mgl64.Vec3{float64(red) / 255, float64(green) / 255, float64(blue) / 255}
+	// drawTris(viewerContext, verts[i:i+3])
+	// }
+
+	// navmeshVerts := r.world.NavMesh().Vertices
+	// if len(navmeshVerts) > 0 {
+	// }
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {

@@ -71,12 +71,6 @@ func (n *NavigationMesh) Voxelize() {
 	var entities []*entities.Entity
 	boundingBoxes := map[int]collider.BoundingBox{}
 	entityTriCount := map[int]int{}
-	// for _, entity := range entities {
-	// 	for _, rd := range entity.Model.RenderData() {
-	// 		_ = rd
-	// 		triCountWork <- (verts / 3)
-	// 		break
-	// 	}
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())

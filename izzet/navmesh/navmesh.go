@@ -3,7 +3,6 @@ package navmesh
 import (
 	"fmt"
 	"math"
-	"strings"
 	"sync"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -74,9 +73,9 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
-		if !strings.Contains(e.Name, "Tile") {
-			continue
-		}
+		// if !strings.Contains(e.Name, "Tile") {
+		// 	continue
+		// }
 
 		entities = append(entities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()

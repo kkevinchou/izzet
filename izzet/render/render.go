@@ -366,7 +366,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		shader.SetUniformFloat("intensity", 1.0)
 		// color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-		drawTris(viewerContext, verts)
+		drawNavMeshTris(viewerContext, verts)
 	}
 
 	// num := rand.Intn(256)

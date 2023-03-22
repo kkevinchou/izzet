@@ -78,9 +78,9 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{0, 0, 0},
-		Orientation: mgl64.QuatIdent(),
-		// Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
+		Position: mgl64.Vec3{0, 75, 0},
+		// Orientation: mgl64.QuatIdent(),
+		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
 	}
 
 	w, h := g.window.GetSize()

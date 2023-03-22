@@ -3,13 +3,13 @@ package navmesh
 import (
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/geometry"
 	"github.com/kkevinchou/kitolib/pathing"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -74,9 +74,9 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
-		// if !strings.Contains(e.Name, "Tile") {
-		// 	continue
-		// }
+		if !strings.Contains(e.Name, "Tile") {
+			continue
+		}
 
 		entities = append(entities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()
@@ -112,10 +112,15 @@ func (n *NavigationMesh) Voxelize() {
 					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
 				}
 
+				// found := false
 				for _, entity := range entities {
 					bb := boundingBoxes[entity.GetID()]
 					if collision.CheckOverlapAABBAABB(voxel, &bb) {
 						outputWork <- *voxel
+
+						// if a voxel is output, we don't need to check the rest of the entities
+						// found = true
+						break
 					}
 				}
 			}
@@ -147,13 +152,26 @@ func (n *NavigationMesh) Voxelize() {
 		}
 	}
 	close(inputWork)
+
+	totalTricount := 0
+	for _, count := range entityTriCount {
+		totalTricount += count
+	}
+	fmt.Println("nav mesh entity tri count", totalTricount)
+}
+
+func (n *NavigationMesh) BakeNavMesh() {
+	if n.constructed {
+		return
+	}
+	n.Voxelize()
 }
 
 func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {
-	// top
 	min := bb.MinVertex
 	max := bb.MaxVertex
 	delta := max.Sub(min)
+
 	verts := []mgl64.Vec3{
 		min.Add(mgl64.Vec3{0, delta[1], 0}),
 		max,
@@ -174,118 +192,42 @@ type Triangle struct {
 	V1, V2, V3 mgl64.Vec3
 }
 
-func AABBIntersectsTriangle(aabb collider.BoundingBox, tri []mgl64.Vec3) bool {
-	// Calculate the center point of the AABB
-	aabbCenter := aabb.MinVertex.Add(aabb.MaxVertex).Mul(0.5)
+func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
+	// Translate AABB and triangle so that the AABB is centered at the origin.
+	center := aabb.Min.Add(aabb.Max).Mul(0.5)
+	extents := aabb.Max.Sub(center)
 
-	// Calculate the half-lengths of the AABB's sides
-	aabbHalfLengths := aabb.MaxVertex.Sub(aabbCenter)
+	v1 := tri.V1.Sub(center)
+	v2 := tri.V2.Sub(center)
+	v3 := tri.V3.Sub(center)
 
-	// Test the AABB against each triangle edge's axis
-	edges := []mgl64.Vec3{tri[1].Sub(tri[0]), tri[2].Sub(tri[1]), tri[0].Sub(tri[2])}
-	normals := []mgl64.Vec3{edges[0].Cross(edges[1]), edges[1].Cross(edges[2]), edges[2].Cross(edges[0])}
+	// Compute edge vectors for triangle.
+	e1 := v2.Sub(v1)
+	e2 := v3.Sub(v2)
+	e3 := v1.Sub(v3)
 
-	for _, normal := range normals {
-		// Project the AABB center onto the axis
-		projection := aabbCenter.Dot(normal)
-
-		// Project each triangle vertex onto the axis
-		v1 := tri[0].Dot(normal)
-		v2 := tri[1].Dot(normal)
-		v3 := tri[2].Dot(normal)
-
-		// Check if the AABB and the triangle overlap on this axis
-		if (v1 > projection+aabbHalfLengths.Dot(normal)) || (v2 > projection+aabbHalfLengths.Dot(normal)) || (v3 > projection+aabbHalfLengths.Dot(normal)) ||
-			(v1 < projection-aabbHalfLengths.Dot(normal)) || (v2 < projection-aabbHalfLengths.Dot(normal)) || (v3 < projection-aabbHalfLengths.Dot(normal)) {
-			return false
-		}
+	// Test against axes that are parallel to the AABB's coordinate axes.
+	if math.Abs(v1[0]) > extents[0] && math.Abs(v2[0]) > extents[0] && math.Abs(v3[0]) > extents[0] {
+		return false
+	}
+	if math.Abs(v1[1]) > extents[1] && math.Abs(v2[1]) > extents[1] && math.Abs(v3[1]) > extents[1] {
+		return false
+	}
+	if math.Abs(v1[2]) > extents[2] && math.Abs(v2[2]) > extents[2] && math.Abs(v3[2]) > extents[2] {
+		return false
 	}
 
-	// The AABB and the triangle overlap on all three axes, so they intersect
+	// Test against the plane of each face of the AABB.
+	if math.Abs(v1[1]*e1[2]-v1[2]*e1[1]) > extents[1]*math.Abs(e1[2])+extents[2]*math.Abs(e1[1]) ||
+		math.Abs(v2[1]*e2[2]-v2[2]*e2[1]) > extents[1]*math.Abs(e2[2])+extents[2]*math.Abs(e2[1]) ||
+		math.Abs(v3[1]*e3[2]-v3[2]*e3[1]) > extents[1]*math.Abs(e3[2])+extents[2]*math.Abs(e3[1]) {
+		return false
+	}
+	if math.Abs(v1[2]*e1[0]-v1[0]*e1[2]) > extents[0]*math.Abs(e1[2])+extents[2]*math.Abs(e1[0]) ||
+		math.Abs(v2[2]*e2[0]-v2[0]*e2[2]) > extents[0]*math.Abs(e2[2])+extents[2]*math.Abs(e2[0]) ||
+		math.Abs(v3[2]*e3[0]-v3[0]*e3[2]) > extents[0]*math.Abs(e3[2])+extents[2]*math.Abs(e3[0]) {
+		return false
+	}
+
 	return true
-}
-
-func (n *NavigationMesh) BakeNavMesh() {
-	if n.constructed {
-		return
-	}
-
-	n.Voxelize()
-
-	// spatialPartition := n.world.SpatialPartition()
-	// entities := spatialPartition.QueryEntities(n.Volume)
-
-	// n.Vertices = nil
-
-	// var polys []*geometry.Polygon
-	// tileCount := 0
-	// for _, entity := range entities {
-	// 	e := n.world.GetEntityByID(entity.GetID())
-	// 	if !strings.Contains(e.Name, "Tile") {
-	// 		continue
-	// 	}
-
-	// 	tileCount++
-
-	// 	bb := e.BoundingBox()
-	// 	if bb == nil {
-	// 		continue
-	// 	}
-
-	// 	vertices := topFaceFromBoundingBox(*bb)
-	// 	polys = append(polys, trianglePolygons(vertices)...)
-	// 	n.Vertices = append(n.Vertices, vertices...)
-	// }
-
-	// if len(polys) > 0 {
-	// 	n.navmesh, n.clusterIDs = pathing.ConstructNavMesh(polys)
-	// 	n.constructed = true
-	// 	clusterSet := map[int]bool{}
-	// 	for _, id := range n.clusterIDs {
-	// 		clusterSet[id] = true
-	// 	}
-
-	// 	fmt.Println("NUM POLYS", len(polys))
-	// 	fmt.Println("NUM CLUSTERS", len(clusterSet))
-	// }
-
-	// fmt.Println(n.navmesh.PortalToPolygons())
-	// fmt.Println("a")
-}
-
-func trianglePolygons(vertices []mgl64.Vec3) []*geometry.Polygon {
-	var polys []*geometry.Polygon
-	for i := 0; i < len(vertices); i += 3 {
-		var points []geometry.Point
-		verts := vertices[i : i+3]
-		for _, v := range verts {
-
-			v[0] = math.Floor(v[0])
-			v[1] = math.Floor(v[1])
-			v[2] = math.Floor(v[2])
-			points = append(points, geometry.Point(v))
-		}
-
-		polys = append(polys, geometry.NewPolygon(points))
-
-	}
-	return polys
-}
-
-func topFaceFromBoundingBox(bb collider.BoundingBox) []mgl64.Vec3 {
-	delta := bb.MaxVertex.Sub(bb.MinVertex)
-
-	var yOffset float64 = 5
-
-	verts := []mgl64.Vec3{
-		bb.MaxVertex.Add(mgl64.Vec3{0, yOffset, 0}),
-		bb.MinVertex.Add(mgl64.Vec3{delta[0], delta[1] + yOffset, 0}),
-		bb.MinVertex.Add(mgl64.Vec3{0, delta[1] + yOffset, 0}),
-
-		bb.MinVertex.Add(mgl64.Vec3{0, delta[1] + yOffset, 0}),
-		bb.MaxVertex.Add(mgl64.Vec3{-delta[0], yOffset, 0}),
-		bb.MaxVertex.Add(mgl64.Vec3{0, float64(yOffset), 0}),
-	}
-
-	return verts
 }

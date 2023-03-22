@@ -173,13 +173,9 @@ func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {
 	delta := max.Sub(min)
 
 	verts := []mgl64.Vec3{
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		max,
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-		max,
+		// top
+		min.Add(mgl64.Vec3{0, delta[1], 0}), max, min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+		min.Add(mgl64.Vec3{0, delta[1], 0}), min.Add(mgl64.Vec3{0, delta[1], delta[2]}), max,
 	}
 	return verts
 }

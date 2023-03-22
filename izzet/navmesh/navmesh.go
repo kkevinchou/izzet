@@ -3,7 +3,6 @@ package navmesh
 import (
 	"fmt"
 	"math"
-	"strings"
 	"sync"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -81,9 +80,9 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
-		if !strings.Contains(e.Name, "Tile") {
-			continue
-		}
+		// if !strings.Contains(e.Name, "Tile") {
+		// 	continue
+		// }
 
 		entities = append(entities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()
@@ -95,75 +94,65 @@ func (n *NavigationMesh) Voxelize() {
 		}
 	}
 
-	// triCountWork := make(chan int)
-	// var wg sync.WaitGroup
-
-	work := make(chan collider.BoundingBox)
+	outputWork := make(chan collider.BoundingBox)
 	voxelDimension := 1.0
 	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
 
-	for i := 0; i < runs[0]; i++ {
-		// wg.Add(1)
-		go func(index int) {
-			// defer wg.Done()
-			for j := 0; j < runs[1]; j++ {
-				for k := 0; k < runs[2]; k++ {
-					voxel := &collider.BoundingBox{
-						MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(index), float64(j), float64(k)}.Mul(voxelDimension)),
-						MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(index + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
-					}
+	inputWorkCount := runs[0] * runs[1] * runs[2]
+	inputWork := make(chan [3]int, inputWorkCount)
+	workerCount := 12
 
-					for _, entity := range entities {
-						bb := boundingBoxes[entity.GetID()]
-						if collision.CheckOverlapAABBAABB(voxel, &bb) {
-							work <- *voxel
-							// triCountWork <- entityTriCount[entity.GetID()]
-						}
+	doneWorkerCount := 0
+	var doneWorkerMutex sync.Mutex
+
+	for wi := 0; wi < workerCount; wi++ {
+		go func() {
+			for input := range inputWork {
+				i := input[0]
+				j := input[1]
+				k := input[2]
+
+				voxel := &collider.BoundingBox{
+					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
+					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
+				}
+
+				for _, entity := range entities {
+					bb := boundingBoxes[entity.GetID()]
+					if collision.CheckOverlapAABBAABB(voxel, &bb) {
+						outputWork <- *voxel
 					}
 				}
 			}
-		}(i)
+
+			doneWorkerMutex.Lock()
+			doneWorkerCount++
+			if doneWorkerCount == workerCount {
+				close(outputWork)
+			}
+			doneWorkerMutex.Unlock()
+		}()
 	}
 
-	// done := make(chan bool)
 	go func() {
-		for voxel := range work {
+		for voxel := range outputWork {
 			n.voxels = append(n.voxels, voxel)
 			n.mutex.Lock()
 			n.vertices = append(n.vertices, bbVerts(voxel)...)
 			n.mutex.Unlock()
 		}
-		// fmt.Println("DONE1")
-		// done <- true
+		fmt.Printf("generated %d voxels\n", len(n.voxels))
 	}()
 
-	// triCount := 0
-	// go func() {
-	// 	for count := range triCountWork {
-	// 		triCount += count
-	// 	}
-	// 	fmt.Println("DONE2")
-	// 	done <- true
-	// }()
-
-	// fmt.Println("WG START")
-	// wg.Wait()
-	// fmt.Println("WG DONE")
-	// close(work)
-	// close(triCountWork)
-
-	// <-done
-	// <-done
-
-	// candidateEntityTriCount := 0
-	// for _, count := range entityTriCount {
-	// 	candidateEntityTriCount += count
-	// }
-
-	// fmt.Println("voxel count:", len(n.voxels))
-	// fmt.Println("vertex count:", len(n.vertices))
-	// fmt.Println("candidate entity tri count", candidateEntityTriCount)
+	for i := 0; i < runs[0]; i++ {
+		for j := 0; j < runs[1]; j++ {
+			for k := 0; k < runs[2]; k++ {
+				inputWork <- [3]int{i, j, k}
+			}
+		}
+	}
+	close(inputWork)
 }
 
 func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {

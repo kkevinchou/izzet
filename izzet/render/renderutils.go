@@ -59,7 +59,7 @@ var navMeshVertCount int
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3) {
-	if len(points) != navMeshVertCount {
+	if len(points)%300 == 0 {
 		vaos := []uint32{navMeshTrisVAO}
 		gl.DeleteVertexArrays(1, &vaos[0])
 		vbos := []uint32{navMeshVBO}

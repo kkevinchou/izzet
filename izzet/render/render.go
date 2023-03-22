@@ -361,11 +361,18 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 
 	verts := r.world.NavMesh().Vertices()
 	if len(verts) > 0 {
+		// var directionalLightDir mgl32.Vec3
+		// for _, light := range lightContext.Lights {
+		// 	if light.LightInfo.Type == 0 {
+		// 		directionalLightDir = utils.Vec3F64ToF32(light.LightInfo.Direction)
+		// 	}
+		// }
 		color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
+
 		shader := shaderManager.GetShaderProgram("flat")
 		shader.SetUniformFloat("intensity", 1.0)
-		// color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
 		drawNavMeshTris(viewerContext, verts)
 	}
 

@@ -33,6 +33,7 @@ type NavigationMesh struct {
 	vertices []mgl64.Vec3
 
 	voxels []collider.BoundingBox
+	mutex  sync.Mutex
 }
 
 func New(world World) *NavigationMesh {
@@ -53,6 +54,8 @@ func (n *NavigationMesh) Voxels() []collider.BoundingBox {
 	return n.voxels
 }
 func (n *NavigationMesh) Vertices() []mgl64.Vec3 {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
 	return n.vertices
 }
 
@@ -68,6 +71,13 @@ func (n *NavigationMesh) Voxelize() {
 	n.constructed = true
 	var entities []*entities.Entity
 	boundingBoxes := map[int]collider.BoundingBox{}
+	entityTriCount := map[int]int{}
+	// for _, entity := range entities {
+	// 	for _, rd := range entity.Model.RenderData() {
+	// 		_ = rd
+	// 		triCountWork <- (verts / 3)
+	// 		break
+	// 	}
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
@@ -77,21 +87,26 @@ func (n *NavigationMesh) Voxelize() {
 
 		entities = append(entities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()
+
+		for _, rd := range e.Model.RenderData() {
+			meshID := rd.MeshID
+			numVerts := len(e.Model.Collection().Meshes[meshID].Vertices)
+			entityTriCount[e.GetID()] = numVerts / 3
+		}
 	}
 
-	voxelDimension := 1.0
-
-	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
+	// triCountWork := make(chan int)
+	// var wg sync.WaitGroup
 
 	work := make(chan collider.BoundingBox)
-	var wg sync.WaitGroup
-
+	voxelDimension := 1.0
+	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
 
 	for i := 0; i < runs[0]; i++ {
-		wg.Add(1)
+		// wg.Add(1)
 		go func(index int) {
-			defer wg.Done()
+			// defer wg.Done()
 			for j := 0; j < runs[1]; j++ {
 				for k := 0; k < runs[2]; k++ {
 					voxel := &collider.BoundingBox{
@@ -103,6 +118,7 @@ func (n *NavigationMesh) Voxelize() {
 						bb := boundingBoxes[entity.GetID()]
 						if collision.CheckOverlapAABBAABB(voxel, &bb) {
 							work <- *voxel
+							// triCountWork <- entityTriCount[entity.GetID()]
 						}
 					}
 				}
@@ -110,22 +126,44 @@ func (n *NavigationMesh) Voxelize() {
 		}(i)
 	}
 
-	done := make(chan bool)
+	// done := make(chan bool)
 	go func() {
 		for voxel := range work {
 			n.voxels = append(n.voxels, voxel)
+			n.mutex.Lock()
 			n.vertices = append(n.vertices, bbVerts(voxel)...)
+			n.mutex.Unlock()
 		}
-		done <- true
+		// fmt.Println("DONE1")
+		// done <- true
 	}()
 
-	wg.Wait()
-	close(work)
+	// triCount := 0
+	// go func() {
+	// 	for count := range triCountWork {
+	// 		triCount += count
+	// 	}
+	// 	fmt.Println("DONE2")
+	// 	done <- true
+	// }()
 
-	<-done
+	// fmt.Println("WG START")
+	// wg.Wait()
+	// fmt.Println("WG DONE")
+	// close(work)
+	// close(triCountWork)
 
-	fmt.Println("voxel count:", len(n.voxels))
-	fmt.Println("vertex count:", len(n.vertices))
+	// <-done
+	// <-done
+
+	// candidateEntityTriCount := 0
+	// for _, count := range entityTriCount {
+	// 	candidateEntityTriCount += count
+	// }
+
+	// fmt.Println("voxel count:", len(n.voxels))
+	// fmt.Println("vertex count:", len(n.vertices))
+	// fmt.Println("candidate entity tri count", candidateEntityTriCount)
 }
 
 func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {
@@ -143,66 +181,45 @@ func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {
 		max,
 	}
 	return verts
+}
 
-	// var ht float32 = 1.0
-	// var i float64 = 0
-	// var b float64 = ((float64(i)/4) < 1.0)*1 + ((float64(i)/4) >= 1.0)*1
-	// vertices := []float32{
-	// 	// front
-	// 	-ht, -ht, ht,
-	// 	ht, -ht, ht,
-	// 	ht, ht, ht,
+type AABB struct {
+	Min, Max mgl64.Vec3
+}
 
-	// 	ht, ht, ht,
-	// 	-ht, ht, ht,
-	// 	-ht, -ht, ht,
+type Triangle struct {
+	V1, V2, V3 mgl64.Vec3
+}
 
-	// 	// back
-	// 	ht, ht, -ht,
-	// 	ht, -ht, -ht,
-	// 	-ht, -ht, -ht,
+func AABBIntersectsTriangle(aabb collider.BoundingBox, tri []mgl64.Vec3) bool {
+	// Calculate the center point of the AABB
+	aabbCenter := aabb.MinVertex.Add(aabb.MaxVertex).Mul(0.5)
 
-	// 	-ht, -ht, -ht,
-	// 	-ht, ht, -ht,
-	// 	ht, ht, -ht,
+	// Calculate the half-lengths of the AABB's sides
+	aabbHalfLengths := aabb.MaxVertex.Sub(aabbCenter)
 
-	// 	// right
-	// 	ht, -ht, ht,
-	// 	ht, -ht, -ht,
-	// 	ht, ht, -ht,
+	// Test the AABB against each triangle edge's axis
+	edges := []mgl64.Vec3{tri[1].Sub(tri[0]), tri[2].Sub(tri[1]), tri[0].Sub(tri[2])}
+	normals := []mgl64.Vec3{edges[0].Cross(edges[1]), edges[1].Cross(edges[2]), edges[2].Cross(edges[0])}
 
-	// 	ht, ht, -ht,
-	// 	ht, ht, ht,
-	// 	ht, -ht, ht,
+	for _, normal := range normals {
+		// Project the AABB center onto the axis
+		projection := aabbCenter.Dot(normal)
 
-	// 	// left
-	// 	-ht, ht, -ht,
-	// 	-ht, -ht, -ht,
-	// 	-ht, -ht, ht,
+		// Project each triangle vertex onto the axis
+		v1 := tri[0].Dot(normal)
+		v2 := tri[1].Dot(normal)
+		v3 := tri[2].Dot(normal)
 
-	// 	-ht, -ht, ht,
-	// 	-ht, ht, ht,
-	// 	-ht, ht, -ht,
+		// Check if the AABB and the triangle overlap on this axis
+		if (v1 > projection+aabbHalfLengths.Dot(normal)) || (v2 > projection+aabbHalfLengths.Dot(normal)) || (v3 > projection+aabbHalfLengths.Dot(normal)) ||
+			(v1 < projection-aabbHalfLengths.Dot(normal)) || (v2 < projection-aabbHalfLengths.Dot(normal)) || (v3 < projection-aabbHalfLengths.Dot(normal)) {
+			return false
+		}
+	}
 
-	// 	// top
-	// 	ht, ht, ht,
-	// 	ht, ht, -ht,
-	// 	-ht, ht, ht,
-
-	// 	-ht, ht, ht,
-	// 	ht, ht, -ht,
-	// 	-ht, ht, -ht,
-
-	// 	// bottom
-	// 	-ht, -ht, ht,
-	// 	ht, -ht, -ht,
-	// 	ht, -ht, ht,
-
-	// 	-ht, -ht, -ht,
-	// 	ht, -ht, -ht,
-	// 	-ht, -ht, ht,
-	// }
-
+	// The AABB and the triangle overlap on all three axes, so they intersect
+	return true
 }
 
 func (n *NavigationMesh) BakeNavMesh() {

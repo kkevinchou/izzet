@@ -12,6 +12,7 @@ uniform uint entityID;
 
 void main()
 {
-    FragColor = vec4(color * intensity, 1);
+    // FragColor = vec4(color * intensity, 1);
+    FragColor = vec4(normalize(FragPos), 1);
     PickingColor = entityID;
 }

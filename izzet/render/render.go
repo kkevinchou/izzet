@@ -372,6 +372,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		shader := shaderManager.GetShaderProgram("flat")
 		shader.SetUniformFloat("intensity", 1.0)
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+		shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
 		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
 		drawNavMeshTris(viewerContext, verts)
 	}

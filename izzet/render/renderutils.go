@@ -83,7 +83,6 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 		navMeshTrisVAO = vao
 		navMeshVBO = vbo
 		lastRenderCount = len(points)
-		fmt.Println("rendering", len(points), "navmesh vertices")
 	}
 
 	gl.BindVertexArray(navMeshTrisVAO)

@@ -651,7 +651,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 	}
 
-	r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
+	// r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
 }
 
 func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {

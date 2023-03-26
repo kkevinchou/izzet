@@ -274,14 +274,14 @@ func (g *Izzet) loadEntities() {
 				g.AddEntity(entity)
 			}
 		} else if pf.Name == "vehicle" {
-			// prefab := g.GetPrefabByID(pf.ID)
-			// parent := entities.CreateDummy(prefab.Name)
+			// parent := entities.CreateDummy("vehicle")
 			// g.AddEntity(parent)
-			// for _, entity := range entities.InstantiateFromPrefab(prefab) {
+			// entities.SetScale(parent, mgl64.Vec3{15, 15, 15})
+
+			// for _, entity := range entities.InstantiateFromPrefab(pf) {
 			// 	g.AddEntity(entity)
-			// 	g.BuildRelation(parent, entity)
+			// 	entities.BuildRelation(parent, entity)
 			// }
-			// parent.Scale = parent.Scale.Mul(15)
 			// panels.SelectEntity(parent)
 		}
 	}
@@ -289,7 +289,11 @@ func (g *Izzet) loadEntities() {
 	cube := entities.CreateCube(25)
 	g.AddEntity(cube)
 
-	triangle := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
+	triangle := entities.CreateTriangle(
+		mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
+		mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
+		mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
+	)
 	g.AddEntity(triangle)
 	panels.SelectEntity(triangle)
 }

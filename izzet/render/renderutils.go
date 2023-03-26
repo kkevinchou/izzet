@@ -874,6 +874,34 @@ func initCubeVAO(length int) uint32 {
 	return vao
 }
 
+func initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
+	vertices := []float32{
+		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
+		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
+		float32(v3.X()), float32(v3.Y()), float32(v3.Z()),
+
+		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
+		float32(v3.X()), float32(v3.Y()), float32(v3.Z()),
+		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+	iztDrawArrays(0, int32(len(vertices))/3)
+
+	return vao
+}
+
 func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, farPlaneScaleFactor float64) []mgl64.Vec3 {
 	viewerViewMatrix := orientation.Mat4()
 

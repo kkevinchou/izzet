@@ -27,6 +27,8 @@ type DebugSettings struct {
 
 	TriangleDrawCount int
 	DrawCount         int
+
+	TriangleHIT bool
 }
 
 var DBG DebugSettings = DebugSettings{

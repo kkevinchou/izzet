@@ -285,6 +285,13 @@ func (g *Izzet) loadEntities() {
 			// panels.SelectEntity(parent)
 		}
 	}
+
+	cube := entities.CreateCube(25)
+	g.AddEntity(cube)
+
+	triangle := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
+	g.AddEntity(triangle)
+	panels.SelectEntity(triangle)
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

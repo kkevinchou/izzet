@@ -91,7 +91,8 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs map[int]uint32
+	cubeVAOs     map[int]uint32
+	triangleVAOs map[string]uint32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -120,6 +121,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[int]uint32{}
+	r.triangleVAOs = map[string]uint32{}
 
 	r.initMainRenderFBO(width, height)
 
@@ -562,6 +564,20 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
 					iztDrawArrays(0, 48)
 				}
+
+				if shapeData.Triangle != nil {
+					var ok bool
+					var vao uint32
+					if vao, ok = r.triangleVAOs[triangleVAOKey(*shapeData.Triangle)]; !ok {
+						vao = initTriangleVAO(shapeData.Triangle.V1, shapeData.Triangle.V2, shapeData.Triangle.V3)
+						r.triangleVAOs[triangleVAOKey(*shapeData.Triangle)] = vao
+					}
+
+					gl.BindVertexArray(vao)
+					shader.SetUniformVec3("color", mgl32.Vec3{0, 0, 1})
+					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
+					iztDrawArrays(0, 6)
+				}
 			}
 		}
 
@@ -781,4 +797,9 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
 		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	}
+}
+
+func triangleVAOKey(triangle entities.Triangle) string {
+	return fmt.Sprintf("%v_%v_%v", triangle.V1, triangle.V2, triangle.V3)
+
 }

@@ -59,6 +59,8 @@ func worldProps(renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
+		setupRow("Triangle HIT", func() { imgui.Checkbox("TriangleHIT", &DBG.TriangleHIT) })
+		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })
 		setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })

@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -158,7 +159,26 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	// 	}
 	// }
 
-	g.navigationMesh.BakeNavMesh()
+	// g.navigationMesh.BakeNavMesh()
+
+	cube := g.GetEntityByID(3379)
+	tri := g.GetEntityByID(3380)
+	if cube != nil && tri != nil {
+		length := cube.ShapeData[0].Cube.Length
+		ht := float64(length) / 2
+		aabb := navmesh.AABB{
+			Min: mgl64.Vec3{-ht, -ht, -ht},
+			Max: mgl64.Vec3{ht, ht, ht},
+		}
+
+		triangle := navmesh.Triangle(*tri.ShapeData[0].Triangle)
+		transform := entities.WorldTransform(tri)
+		triangle.V1 = transform.Mul4x1(triangle.V1.Vec4(1)).Vec3()
+		triangle.V2 = transform.Mul4x1(triangle.V2.Vec4(1)).Vec3()
+		triangle.V3 = transform.Mul4x1(triangle.V3.Vec4(1)).Vec3()
+
+		panels.DBG.TriangleHIT = navmesh.IntersectAABBTriangle(aabb, triangle)
+	}
 
 	var spatialEntities []spatialpartition.Entity
 	for _, entity := range g.Entities() {

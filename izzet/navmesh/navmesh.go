@@ -78,8 +78,7 @@ func (n *NavigationMesh) Voxelize() {
 			continue
 		}
 
-		// TEMP
-		if e.GetID() != 6 {
+		if entity.GetID() != 16 {
 			continue
 		}
 

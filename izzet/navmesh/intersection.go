@@ -6,6 +6,13 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
+func triMax(a, b, c float64) float64 {
+	return math.Max(a, math.Max(b, c))
+}
+func triMin(a, b, c float64) float64 {
+	return math.Min(a, math.Min(b, c))
+}
+
 // IntersectAABBTriangle implements the algorithm from Real Time Collision Detection - "Testing AABB Against Triangle"
 func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	// Translate the AABB is centered at the origin.
@@ -31,6 +38,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p2 = v2[2]*(v1[1]-v0[1]) - v2[2]*(v1[2]-v0[2])
 	r = extents[1]*math.Abs(f0[2]) + extents[2]*math.Abs(f0[1])
 	if math.Max(-math.Max(p0, p2), math.Min(p0, p2)) > r {
+		a00 := mgl64.Vec3{0, -f0[2], f0[1]}
+		p0 = v0.Dot(a00)
+		p1 = v1.Dot(a00)
+		p2 = v2.Dot(a00)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a00")
+		}
 		return false
 	}
 
@@ -39,6 +54,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p1 = -v1[1]*v2[2] + v1[2]*v2[1]
 	r = extents[1]*math.Abs(f1[2]) + extents[2]*math.Abs(f1[1])
 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > r {
+		a01 := mgl64.Vec3{0, -f1[2], f1[1]}
+		p0 = v0.Dot(a01)
+		p1 = v1.Dot(a01)
+		p2 = v2.Dot(a01)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a01")
+		}
 		return false
 	}
 
@@ -47,6 +70,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p1 = -v1[1]*(v0[2]-v2[2]) + v1[2]*(v0[1]-v2[1])
 	r = extents[1]*math.Abs(f2[2]) + extents[2]*math.Abs(f2[1])
 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > r {
+		a02 := mgl64.Vec3{0, -f2[2], f2[1]}
+		p0 = v0.Dot(a02)
+		p1 = v1.Dot(a02)
+		p2 = v2.Dot(a02)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a02")
+		}
 		return false
 	}
 
@@ -57,6 +88,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p2 = v2[0]*(v1[2]-v0[2]) - v2[2]*(v1[0]-v0[0])
 	r = extents[0]*math.Abs(f0[2]) + extents[2]*math.Abs(f0[0])
 	if math.Max(-math.Max(p0, p2), math.Min(p0, p2)) > r {
+		a10 := mgl64.Vec3{f0[2], 0, -f0[0]}
+		p0 = v0.Dot(a10)
+		p1 = v1.Dot(a10)
+		p2 = v2.Dot(a10)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a10")
+		}
 		return false
 	}
 
@@ -66,6 +105,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p1 = v1[0]*v2[2] - v1[2]*v2[0]
 	r = extents[0]*math.Abs(f1[2]) + extents[2]*math.Abs(f1[0])
 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > r {
+		a11 := mgl64.Vec3{f1[2], 0, -f1[0]}
+		p0 = v0.Dot(a11)
+		p1 = v1.Dot(a11)
+		p2 = v2.Dot(a11)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a11")
+		}
 		return false
 	}
 
@@ -75,6 +122,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p1 = v1[0]*(v0[2]-v2[2]) - v1[2]*(v0[0]-v2[0])
 	r = extents[0]*math.Abs(f2[2]) + extents[2]*math.Abs(f2[0])
 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > r {
+		a12 := mgl64.Vec3{f2[2], 0, -f2[0]}
+		p0 = v0.Dot(a12)
+		p1 = v1.Dot(a12)
+		p2 = v2.Dot(a12)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a12")
+		}
 		return false
 	}
 
@@ -86,6 +141,14 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p2 = -v2[0]*(v1[1]-v0[1]) + v2[1]*(v1[0]-v0[0])
 	r = extents[0]*math.Abs(f0[1]) + extents[1]*math.Abs(f0[0])
 	if math.Max(-math.Max(p0, p2), math.Min(p0, p2)) > r {
+		a20 := mgl64.Vec3{-f0[1], f0[0], 0}
+		p0 = v0.Dot(a20)
+		p1 = v1.Dot(a20)
+		p2 = v2.Dot(a20)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a20")
+		}
 		return false
 	}
 
@@ -93,13 +156,29 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	p1 = -v1[0]*v2[1] + v1[1]*v2[0]
 	r = extents[0]*math.Abs(f1[1]) + extents[1]*math.Abs(f1[0])
 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > r {
+		a12 := mgl64.Vec3{-f1[1], f1[0], 0}
+		p0 = v0.Dot(a12)
+		p1 = v1.Dot(a12)
+		p2 = v2.Dot(a12)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a21")
+		}
 		return false
 	}
 
 	p0 = v0[0]*v2[1] - v0[1]*v2[0]
-	p1 = -v1[0]*(v0[1]*v2[1]) + v1[1]*(v0[0]-v2[0])
+	p1 = -v1[0]*(v0[1]-v2[1]) + v1[1]*(v0[0]-v2[0])
 	r = extents[0]*math.Abs(f2[1]) + extents[1]*math.Abs(f2[0])
 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > r {
+		a22 := mgl64.Vec3{-f2[1], f2[0], 0}
+		p0 = v0.Dot(a22)
+		p1 = v1.Dot(a22)
+		p2 = v2.Dot(a22)
+		check := math.Max(-triMax(p0, p1, p2), triMin(p0, p1, p2)) > r
+		if !check {
+			panic("a22")
+		}
 		return false
 	}
 
@@ -107,13 +186,13 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 
 	// test against each AABB face normal
 
-	if math.Max(v0[0], math.Max(v1[0], v2[0])) < -extents[0] || math.Min(v0[0], math.Min(v1[0], v2[0])) > extents[0] {
+	if triMax(v0[0], v1[0], v2[0]) < -extents[0] || triMin(v0[0], v1[0], v2[0]) > extents[0] {
 		return false
 	}
-	if math.Max(v0[1], math.Max(v1[1], v2[1])) < -extents[1] || math.Min(v0[1], math.Min(v1[1], v2[1])) > extents[1] {
+	if triMax(v0[1], v1[1], v2[1]) < -extents[1] || triMin(v0[1], v1[1], v2[1]) > extents[1] {
 		return false
 	}
-	if math.Max(v0[2], math.Max(v1[2], v2[2])) < -extents[2] || math.Min(v0[2], math.Min(v1[2], v2[2])) > extents[2] {
+	if triMax(v0[2], v1[2], v2[2]) < -extents[2] || triMin(v0[2], v1[2], v2[2]) > extents[2] {
 		return false
 	}
 

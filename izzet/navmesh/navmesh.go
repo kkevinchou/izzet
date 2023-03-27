@@ -2,7 +2,6 @@ package navmesh
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -74,9 +73,9 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
-		if !strings.Contains(e.Name, "Tile") {
-			continue
-		}
+		// if !strings.Contains(e.Name, "Tile") {
+		// 	continue
+		// }
 
 		// if entity.GetID() != 16 {
 		// 	continue

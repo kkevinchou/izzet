@@ -5,7 +5,7 @@ import (
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
-func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {
+func genVertexRenderData(bb collider.BoundingBox) ([]mgl64.Vec3, []mgl64.Vec3) {
 	min := bb.MinVertex
 	max := bb.MaxVertex
 	delta := max.Sub(min)
@@ -65,5 +65,50 @@ func bbVerts(bb collider.BoundingBox) []mgl64.Vec3 {
 		min.Add(mgl64.Vec3{0, delta[1], 0}),
 		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
 	}
-	return verts
+
+	normals := []mgl64.Vec3{
+		// top
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		// bottom
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		// left
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		// right
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		// front
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		// back
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+	}
+	return verts, normals
 }

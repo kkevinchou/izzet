@@ -6,7 +6,8 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-var epsilon float64 = 0.000001
+// var epsilon float64 = 0.000000001
+var epsilon float64 = 0.00001
 
 func triMax(a, b, c float64) float64 {
 	return math.Max(a, math.Max(b, c))
@@ -51,7 +52,10 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 				panic("a00")
 			}
 			return false
+		} else {
+			return false
 		}
+
 	}
 
 	// a01, p1 == p2
@@ -68,6 +72,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 			if !check {
 				panic("a01")
 			}
+			return false
+		} else {
 			return false
 		}
 	}
@@ -87,7 +93,10 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 				panic("a02")
 			}
 			return false
+		} else {
+			return false
 		}
+
 	}
 
 	//////////////////////////////////////////////////
@@ -106,6 +115,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 			if !check {
 				panic("a10")
 			}
+			return false
+		} else {
 			return false
 		}
 	}
@@ -126,6 +137,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 				panic("a11")
 			}
 			return false
+		} else {
+			return false
 		}
 	}
 
@@ -144,6 +157,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 			if !check {
 				panic("a12")
 			}
+			return false
+		} else {
 			return false
 		}
 	}
@@ -166,6 +181,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 				panic("a20")
 			}
 			return false
+		} else {
+			return false
 		}
 	}
 
@@ -184,6 +201,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 			if !check {
 				panic("a21")
 			}
+			return false
+		} else {
 			return false
 		}
 	}
@@ -204,6 +223,8 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 				panic("a22")
 			}
 			return false
+		} else {
+			return false
 		}
 	}
 
@@ -223,34 +244,18 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 
 	// test separating axis corresponding to triangle normal
 
-	var plane Plane
-	plane.n = f0.Cross(f1)
-	plane.d = plane.n.Dot(v0)
-	// plane.d = math.Abs(plane.n.Dot(v0))
-	return TestAABBPlane(aabb, plane, v0)
+	planeNormal := f0.Cross(f1)
+	r = extents[0]*math.Abs(planeNormal[0]) + extents[1]*math.Abs(planeNormal[1]) + extents[2]*math.Abs(planeNormal[2])
+	var planeDistance float64 = planeNormal.Dot(v0)
 
-}
-func TestAABBPlane(aabb AABB, plane Plane, someVert mgl64.Vec3) bool {
-	// Translate the AABB is centered at the origin.
-	center := aabb.Min.Add(aabb.Max).Mul(0.5)
-	extents := aabb.Max.Sub(center)
-
-	var r float64 = extents[0]*math.Abs(plane.n[0]) + extents[1]*math.Abs(plane.n[1]) + extents[2]*math.Abs(plane.n[2])
-	// var s float64 = plane.n.Dot(center) - plane.d
-	// return math.Abs(s) <= r
-
-	var s float64 = plane.n.Dot(someVert)
-
-	if s > r {
+	if planeDistance > r {
 		return false
 	}
+
 	return true
 
-}
-
-type Plane struct {
-	n mgl64.Vec3
-	d float64
+	// plane.d = math.Abs(plane.n.Dot(v0))
+	// return TestAABBPlane(aabb, plane, v0)
 }
 
 type AABB struct {

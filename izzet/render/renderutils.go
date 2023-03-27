@@ -58,7 +58,7 @@ var navMeshVBO uint32
 var lastRenderCount = 0
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3) {
+func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals []mgl64.Vec3) {
 	if len(points) != lastRenderCount {
 		vaos := []uint32{navMeshTrisVAO}
 		gl.DeleteVertexArrays(1, &vaos[0])
@@ -66,8 +66,10 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 		gl.DeleteBuffers(1, &vbos[0])
 
 		var vertices []float32
-		for _, point := range points {
-			vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
+		for i := range points {
+			point := points[i]
+			normal := normals[i]
+			vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
 		}
 
 		var vbo, vao uint32
@@ -78,8 +80,12 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, nil)
 		gl.EnableVertexAttribArray(0)
+
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+		gl.EnableVertexAttribArray(1)
+
 		navMeshTrisVAO = vao
 		navMeshVBO = vbo
 		lastRenderCount = len(points)
@@ -87,7 +93,6 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 
 	gl.BindVertexArray(navMeshTrisVAO)
 	iztDrawArrays(0, int32(len(points)))
-	// fmt.Println("DRAW", len(points))
 }
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain

@@ -361,7 +361,10 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		0.5,
 	)
 
-	verts := r.world.NavMesh().Vertices()
+	nm := r.world.NavMesh()
+	verts := nm.Vertices()
+	normals := nm.Normals()
+
 	if len(verts) > 0 {
 		// var directionalLightDir mgl32.Vec3
 		// for _, light := range lightContext.Lights {
@@ -371,12 +374,22 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		// }
 		color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
 
-		shader := shaderManager.GetShaderProgram("flat")
+		shader := shaderManager.GetShaderProgram("flat_with_light")
+		shader.Use()
 		shader.SetUniformFloat("intensity", 1.0)
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 		shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
-		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
-		drawNavMeshTris(viewerContext, verts)
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("model", mgl32.Ident4())
+
+		var directionalLightDir mgl32.Vec3
+		directionalLightDir[0] = panels.DBG.DirectionalLightDir[0]
+		directionalLightDir[1] = panels.DBG.DirectionalLightDir[1]
+		directionalLightDir[2] = panels.DBG.DirectionalLightDir[2]
+
+		shader.SetUniformVec3("directionalLightDir", directionalLightDir)
+		drawNavMeshTris(viewerContext, verts, normals)
 	}
 
 	// num := rand.Intn(256)

@@ -23,14 +23,12 @@ type NavigationMesh struct {
 	Volume collider.BoundingBox
 	world  World
 
-	// navmesh     *pathing.NavMesh
-	clusterIDs  []int
 	constructed bool
 
 	vertices []mgl64.Vec3
+	normals  []mgl64.Vec3
 
-	voxels []collider.BoundingBox
-	mutex  sync.Mutex
+	mutex sync.Mutex
 }
 
 func New(world World) *NavigationMesh {
@@ -40,20 +38,16 @@ func New(world World) *NavigationMesh {
 	}
 }
 
-type RenderData struct {
-}
-
-func (n *NavigationMesh) RenderData() ([]mgl64.Vec3, []int) {
-	return n.vertices, n.clusterIDs
-}
-
-func (n *NavigationMesh) Voxels() []collider.BoundingBox {
-	return n.voxels
-}
 func (n *NavigationMesh) Vertices() []mgl64.Vec3 {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 	return n.vertices
+}
+
+func (n *NavigationMesh) Normals() []mgl64.Vec3 {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+	return n.normals
 }
 
 func (n *NavigationMesh) Voxelize() {
@@ -73,13 +67,6 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
-		// if !strings.Contains(e.Name, "Tile") {
-		// 	continue
-		// }
-
-		// if entity.GetID() != 16 {
-		// 	continue
-		// }
 
 		candidateEntities = append(candidateEntities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()
@@ -135,24 +122,6 @@ func (n *NavigationMesh) Voxelize() {
 						continue
 					}
 
-					// // 149 and 150 both overlap
-					// if i != 150 {
-					// 	break
-					// }
-
-					// if j != 150 {
-					// 	break
-					// }
-
-					// if k != 250 {
-					// 	break
-					// }
-
-					// fmt.Println(voxelAABB)
-					// fmt.Println(i, j, k)
-
-					// outputWork <- *voxel
-
 					for _, rd := range entity.Model.RenderData() {
 						for _, tri := range meshTriangles[rd.MeshID] {
 							if IntersectAABBTriangle(voxelAABB, tri) {
@@ -185,13 +154,16 @@ func (n *NavigationMesh) Voxelize() {
 	}
 
 	go func() {
+		voxelCount := 0
 		for voxel := range outputWork {
-			n.voxels = append(n.voxels, voxel)
+			voxelCount++
 			n.mutex.Lock()
-			n.vertices = append(n.vertices, bbVerts(voxel)...)
+			vertices, normals := genVertexRenderData(voxel)
+			n.vertices = append(n.vertices, vertices...)
+			n.normals = append(n.normals, normals...)
 			n.mutex.Unlock()
 		}
-		fmt.Printf("generated %d voxels\n", len(n.voxels))
+		fmt.Printf("generated %d voxels\n", voxelCount)
 	}()
 
 	// NOTE - with each entity's bounding box, i should be able to only create input work that overlaps with

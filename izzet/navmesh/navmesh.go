@@ -2,6 +2,7 @@ package navmesh
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -73,13 +74,13 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
-		// if !strings.Contains(e.Name, "Tile") {
-		// 	continue
-		// }
-
-		if entity.GetID() != 16 {
+		if !strings.Contains(e.Name, "Tile") {
 			continue
 		}
+
+		// if entity.GetID() != 16 {
+		// 	continue
+		// }
 
 		candidateEntities = append(candidateEntities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()
@@ -96,7 +97,6 @@ func (n *NavigationMesh) Voxelize() {
 						V3: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+2].Position.Vec4(1)).Vec3()),
 					},
 				)
-				break
 			}
 			numVerts := len(mesh.Vertices)
 			entityTriCount[e.GetID()] = numVerts / 3
@@ -122,10 +122,6 @@ func (n *NavigationMesh) Voxelize() {
 				j := input[1]
 				k := input[2]
 
-				// if k > 256 {
-				// 	break
-				// }
-
 				voxel := &collider.BoundingBox{
 					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
 					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
@@ -140,31 +136,28 @@ func (n *NavigationMesh) Voxelize() {
 						continue
 					}
 
-					// 149 and 150 both overlap
-					if i != 150 {
-						break
-					}
+					// // 149 and 150 both overlap
+					// if i != 150 {
+					// 	break
+					// }
 
-					if j != 150 {
-						break
-					}
+					// if j != 150 {
+					// 	break
+					// }
 
-					if k != 250 {
-						break
-					}
+					// if k != 250 {
+					// 	break
+					// }
 
-					fmt.Println(voxelAABB)
+					// fmt.Println(voxelAABB)
+					// fmt.Println(i, j, k)
 
-					fmt.Println(i, j, k)
-					outputWork <- *voxel
+					// outputWork <- *voxel
 
 					for _, rd := range entity.Model.RenderData() {
-						for triIndex, tri := range meshTriangles[rd.MeshID] {
-							if triIndex == 0 {
-								fmt.Println(tri)
-							}
+						for _, tri := range meshTriangles[rd.MeshID] {
 							if IntersectAABBTriangle(voxelAABB, tri) {
-								// outputWork <- *voxel
+								outputWork <- *voxel
 
 								// if a voxel is output, we don't need to check the rest of the entities
 								found = true

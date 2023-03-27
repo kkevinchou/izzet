@@ -226,18 +226,26 @@ func IntersectAABBTriangle(aabb AABB, tri Triangle) bool {
 	var plane Plane
 	plane.n = f0.Cross(f1)
 	plane.d = plane.n.Dot(v0)
-	return TestAABBPlane(aabb, plane)
+	// plane.d = math.Abs(plane.n.Dot(v0))
+	return TestAABBPlane(aabb, plane, v0)
 
 }
-func TestAABBPlane(aabb AABB, plane Plane) bool {
+func TestAABBPlane(aabb AABB, plane Plane, someVert mgl64.Vec3) bool {
 	// Translate the AABB is centered at the origin.
 	center := aabb.Min.Add(aabb.Max).Mul(0.5)
 	extents := aabb.Max.Sub(center)
 
 	var r float64 = extents[0]*math.Abs(plane.n[0]) + extents[1]*math.Abs(plane.n[1]) + extents[2]*math.Abs(plane.n[2])
-	var s float64 = plane.n.Dot(center) - plane.d
+	// var s float64 = plane.n.Dot(center) - plane.d
+	// return math.Abs(s) <= r
 
-	return math.Abs(s) <= r
+	var s float64 = plane.n.Dot(someVert)
+
+	if s > r {
+		return false
+	}
+	return true
+
 }
 
 type Plane struct {

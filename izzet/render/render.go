@@ -574,7 +574,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					}
 
 					gl.BindVertexArray(vao)
-					shader.SetUniformVec3("color", mgl32.Vec3{0, 0, 1})
+					shader.SetUniformVec3("color", mgl32.Vec3{0, 1, 1})
 					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
 					iztDrawArrays(0, 6)
 				}
@@ -651,7 +651,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 	}
 
-	// r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
+	r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
 }
 
 func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {
@@ -697,9 +697,9 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			continue
 		}
 
-		if entity.GetID() != 16 {
-			continue
-		}
+		// if entity.GetID() != 16 {
+		// 	continue
+		// }
 
 		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))

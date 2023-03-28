@@ -34,6 +34,9 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("modelpbr", "model", "pbr", ""); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("color_pbr", "flat_pbr", "pbr", ""); err != nil {
+		panic(err)
+	}
 	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
 		panic(err)
 	}
@@ -48,9 +51,6 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("flat", "flat", "flat", ""); err != nil {
-		panic(err)
-	}
-	if err := shaderManager.CompileShaderProgram("flat_with_light", "flat_with_light", "flat_with_light", ""); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc", ""); err != nil {

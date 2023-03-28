@@ -98,7 +98,7 @@ func (n *NavigationMesh) Voxelize() {
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
 
 	inputWorkCount := runs[0] * runs[1] * runs[2]
-	inputWork := make(chan [3]float64, inputWorkCount)
+	inputWork := make(chan [3]int, inputWorkCount)
 	workerCount := 12
 
 	doneWorkerCount := 0
@@ -112,9 +112,14 @@ func (n *NavigationMesh) Voxelize() {
 				k := input[2]
 
 				voxel := &collider.BoundingBox{
-					MinVertex: mgl64.Vec3{i, j, k},
-					MaxVertex: mgl64.Vec3{i + voxelDimension, j + voxelDimension, k + voxelDimension},
+					MinVertex: mgl64.Vec3{float64(i), float64(j), float64(k)},
+					MaxVertex: mgl64.Vec3{float64(i) + voxelDimension, float64(j) + voxelDimension, float64(k) + voxelDimension},
 				}
+
+				// voxel := &collider.BoundingBox{
+				// 	MinVertex: mgl64.Vec3{i, j, k},
+				// 	MaxVertex: mgl64.Vec3{i + voxelDimension, j + voxelDimension, k + voxelDimension},
+				// }
 
 				// voxel := &collider.BoundingBox{
 				// 	MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
@@ -185,6 +190,7 @@ func (n *NavigationMesh) Voxelize() {
 	// 	}
 	// }
 
+	seen := map[[3]int]bool{}
 	aabb2 := n.Volume
 	for _, entity := range candidateEntities {
 		aabb1 := boundingBoxes[entity.GetID()]
@@ -203,31 +209,46 @@ func (n *NavigationMesh) Voxelize() {
 			continue
 		}
 
-		minX := math.Max(aabb1.MinVertex.X(), aabb2.MinVertex.X())
-		maxX := math.Min(aabb1.MaxVertex.X(), aabb2.MaxVertex.X())
+		minX := int(math.Max(aabb1.MinVertex.X(), aabb2.MinVertex.X()) - voxelDimension)
+		maxX := int(math.Min(aabb1.MaxVertex.X(), aabb2.MaxVertex.X()) + voxelDimension)
 
-		minY := math.Max(aabb1.MinVertex.Y(), aabb2.MinVertex.Y())
-		maxY := math.Min(aabb1.MaxVertex.Y(), aabb2.MaxVertex.Y())
+		minY := int(math.Max(aabb1.MinVertex.Y(), aabb2.MinVertex.Y()) - voxelDimension)
+		maxY := int(math.Min(aabb1.MaxVertex.Y(), aabb2.MaxVertex.Y()) + voxelDimension)
 
-		minZ := math.Max(aabb1.MinVertex.Z(), aabb2.MinVertex.Z())
-		maxZ := math.Min(aabb1.MaxVertex.Z(), aabb2.MaxVertex.Z())
+		minZ := int(math.Max(aabb1.MinVertex.Z(), aabb2.MinVertex.Z()) - voxelDimension)
+		maxZ := int(math.Min(aabb1.MaxVertex.Z(), aabb2.MaxVertex.Z()) + voxelDimension)
 
-		x := minX
-		y := minY
-		z := minZ
+		for i := minX; i < maxX; i++ {
+			for j := minY; j < maxY; j++ {
+				for k := minZ; k < maxZ; k++ {
+					if _, ok := seen[[3]int{i, j, k}]; ok {
+						continue
+					}
 
-		for x < maxX+voxelDimension {
-			y = minY
-			for y < maxY+voxelDimension {
-				z = minZ
-				for z < maxZ+voxelDimension {
-					inputWork <- [3]float64{x, y, z}
-					z += voxelDimension
+					seen[[3]int{i, j, k}] = true
+					inputWork <- [3]int{i, j, k}
 				}
-				y += voxelDimension
 			}
-			x += voxelDimension
 		}
+
+		// x := minX
+		// y := minY
+		// z := minZ
+
+		// for x < maxX+voxelDimension {
+		// 	y = minY
+		// 	for y < maxY+voxelDimension {
+		// 		z = minZ
+		// 		for z < maxZ+voxelDimension {
+		// 			if _, ok := seen[[3]int{int(x), int(y), int(z)}]; !ok {
+		// 				inputWork <- [3]float64{x, y, z}
+		// 			}
+		// 			z += voxelDimension
+		// 		}
+		// 		y += voxelDimension
+		// 	}
+		// 	x += voxelDimension
+		// }
 
 		// if !collision.CheckOverlapAABBAABB(voxel, &bb) {
 		// 	continue

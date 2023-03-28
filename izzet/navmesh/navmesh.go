@@ -116,7 +116,6 @@ func (n *NavigationMesh) Voxelize() {
 				}
 
 				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
-				found := false
 
 				for _, entity := range candidateEntities {
 					bb := boundingBoxes[entity.GetID()]
@@ -129,20 +128,11 @@ func (n *NavigationMesh) Voxelize() {
 							if IntersectAABBTriangle(voxelAABB, tri) {
 								outputWork <- *voxel
 
-								// if a voxel is output, we don't need to check the rest of the entities
-								found = true
-							}
-							if found {
-								break
+								goto Done
 							}
 						}
-						if found {
-							break
-						}
 					}
-					if found {
-						break
-					}
+				Done:
 				}
 			}
 
@@ -169,8 +159,6 @@ func (n *NavigationMesh) Voxelize() {
 		fmt.Printf("generated %d voxels\n", voxelCount)
 	}()
 
-	// NOTE - with each entity's bounding box, i should be able to only create input work that overlaps with
-	// the voxels i care about, rather than going through each voxel and doing bounding box checks against each entity
 	for i := 0; i < runs[0]; i++ {
 		for j := 0; j < runs[1]; j++ {
 			for k := 0; k < runs[2]; k++ {

@@ -2,7 +2,9 @@ package navmesh
 
 import (
 	"fmt"
+	"math"
 	"sync"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -51,6 +53,7 @@ func (n *NavigationMesh) Normals() []mgl64.Vec3 {
 }
 
 func (n *NavigationMesh) Voxelize() {
+	start := time.Now()
 	spatialPartition := n.world.SpatialPartition()
 	sEntities := spatialPartition.QueryEntities(n.Volume)
 
@@ -95,7 +98,7 @@ func (n *NavigationMesh) Voxelize() {
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
 
 	inputWorkCount := runs[0] * runs[1] * runs[2]
-	inputWork := make(chan [3]int, inputWorkCount)
+	inputWork := make(chan [3]float64, inputWorkCount)
 	workerCount := 12
 
 	doneWorkerCount := 0
@@ -109,9 +112,14 @@ func (n *NavigationMesh) Voxelize() {
 				k := input[2]
 
 				voxel := &collider.BoundingBox{
-					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
-					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
+					MinVertex: mgl64.Vec3{i, j, k},
+					MaxVertex: mgl64.Vec3{i + voxelDimension, j + voxelDimension, k + voxelDimension},
 				}
+
+				// voxel := &collider.BoundingBox{
+				// 	MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
+				// 	MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
+				// }
 
 				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
 				found := false
@@ -147,6 +155,7 @@ func (n *NavigationMesh) Voxelize() {
 			doneWorkerMutex.Lock()
 			doneWorkerCount++
 			if doneWorkerCount == workerCount {
+				fmt.Println("finished work in", time.Since(start).Seconds())
 				close(outputWork)
 			}
 			doneWorkerMutex.Unlock()
@@ -166,14 +175,63 @@ func (n *NavigationMesh) Voxelize() {
 		fmt.Printf("generated %d voxels\n", voxelCount)
 	}()
 
-	// NOTE - with each entity's bounding box, i should be able to only create input work that overlaps with
-	// the voxels i care about, rather than going through each voxel and doing bounding box checks against each entity
-	for i := 0; i < runs[0]; i++ {
-		for j := 0; j < runs[1]; j++ {
-			for k := 0; k < runs[2]; k++ {
-				inputWork <- [3]int{i, j, k}
-			}
+	// // NOTE - with each entity's bounding box, i should be able to only create input work that overlaps with
+	// // the voxels i care about, rather than going through each voxel and doing bounding box checks against each entity
+	// for i := 0; i < runs[0]; i++ {
+	// 	for j := 0; j < runs[1]; j++ {
+	// 		for k := 0; k < runs[2]; k++ {
+	// 			inputWork <- [3]int{i, j, k}
+	// 		}
+	// 	}
+	// }
+
+	aabb2 := n.Volume
+	for _, entity := range candidateEntities {
+		aabb1 := boundingBoxes[entity.GetID()]
+
+		// var i, j, k int
+
+		if aabb1.MaxVertex.X() < aabb2.MinVertex.X() || aabb1.MinVertex.X() > aabb2.MaxVertex.X() {
+			continue
 		}
+
+		if aabb1.MaxVertex.Y() < aabb2.MinVertex.Y() || aabb1.MinVertex.Y() > aabb2.MaxVertex.Y() {
+			continue
+		}
+
+		if aabb1.MaxVertex.Z() < aabb2.MinVertex.Z() || aabb1.MinVertex.Z() > aabb2.MaxVertex.Z() {
+			continue
+		}
+
+		minX := math.Max(aabb1.MinVertex.X(), aabb2.MinVertex.X())
+		maxX := math.Min(aabb1.MaxVertex.X(), aabb2.MaxVertex.X())
+
+		minY := math.Max(aabb1.MinVertex.Y(), aabb2.MinVertex.Y())
+		maxY := math.Min(aabb1.MaxVertex.Y(), aabb2.MaxVertex.Y())
+
+		minZ := math.Max(aabb1.MinVertex.Z(), aabb2.MinVertex.Z())
+		maxZ := math.Min(aabb1.MaxVertex.Z(), aabb2.MaxVertex.Z())
+
+		x := minX
+		y := minY
+		z := minZ
+
+		for x < maxX+voxelDimension {
+			y = minY
+			for y < maxY+voxelDimension {
+				z = minZ
+				for z < maxZ+voxelDimension {
+					inputWork <- [3]float64{x, y, z}
+					z += voxelDimension
+				}
+				y += voxelDimension
+			}
+			x += voxelDimension
+		}
+
+		// if !collision.CheckOverlapAABBAABB(voxel, &bb) {
+		// 	continue
+		// }
 	}
 	close(inputWork)
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -32,7 +33,7 @@ func genLineKey(thickness, length float64) string {
 }
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3) {
+func drawTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
@@ -51,6 +52,53 @@ func drawTris(viewerContext ViewerContext, points []mgl64.Vec3, color mgl64.Vec3
 
 	gl.BindVertexArray(vao)
 	iztDrawArrays(0, int32(len(vertices)))
+}
+
+var navMeshTrisVAO uint32
+var navMeshVBO uint32
+var lastRenderCount = 0
+
+var lastMeshUpdate time.Time = time.Now()
+
+// drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
+func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals []mgl64.Vec3) {
+	if len(points) != lastRenderCount {
+		if time.Since(lastMeshUpdate) > 5*time.Second {
+			vaos := []uint32{navMeshTrisVAO}
+			gl.DeleteVertexArrays(1, &vaos[0])
+			vbos := []uint32{navMeshVBO}
+			gl.DeleteBuffers(1, &vbos[0])
+
+			var vertices []float32
+			for i := range points {
+				point := points[i]
+				normal := normals[i]
+				vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
+			}
+
+			var vbo, vao uint32
+			gl.GenBuffers(1, &vbo)
+			gl.GenVertexArrays(1, &vao)
+
+			gl.BindVertexArray(vao)
+			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, nil)
+			gl.EnableVertexAttribArray(0)
+
+			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+			gl.EnableVertexAttribArray(1)
+
+			navMeshTrisVAO = vao
+			navMeshVBO = vbo
+			lastRenderCount = len(points)
+			lastMeshUpdate = time.Now()
+		}
+	}
+
+	gl.BindVertexArray(navMeshTrisVAO)
+	iztDrawArrays(0, int32(len(points)))
 }
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain
@@ -182,7 +230,7 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("intensity", 1.0)
-	drawTris(viewerContext, points, color)
+	drawTris(viewerContext, points)
 }
 
 func cubeLines(length float64) [][]mgl64.Vec3 {
@@ -830,6 +878,34 @@ func initCubeVAO(length int) uint32 {
 
 	// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, nil)
 	// gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+	iztDrawArrays(0, int32(len(vertices))/3)
+
+	return vao
+}
+
+func initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
+	vertices := []float32{
+		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
+		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
+		float32(v3.X()), float32(v3.Y()), float32(v3.Z()),
+
+		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
+		float32(v3.X()), float32(v3.Y()), float32(v3.Z()),
+		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
+	}
+
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
 	iztDrawArrays(0, int32(len(vertices))/3)

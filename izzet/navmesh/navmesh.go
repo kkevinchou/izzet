@@ -61,6 +61,9 @@ func (n *NavigationMesh) Voxelize() {
 
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
+		if e == nil {
+			continue
+		}
 
 		candidateEntities = append(candidateEntities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()

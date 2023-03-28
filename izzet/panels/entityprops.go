@@ -21,7 +21,7 @@ func entityProps(entity *entities.Entity) {
 
 		if entity != nil {
 			position := entities.LocalPosition(entity)
-			positionStr := fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
+			positionStr := fmt.Sprintf("{%.1f, %.1f, %.1f}", position.X(), position.Y(), position.Z())
 			text := &positionStr
 
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)

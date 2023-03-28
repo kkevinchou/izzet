@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -45,6 +46,8 @@ type Izzet struct {
 	spatialPartition    *spatialpartition.SpatialPartition
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
+
+	navigationMesh *navmesh.NavigationMesh
 }
 
 func New(assetsDirectory, shaderDirectory string) *Izzet {
@@ -75,9 +78,9 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{0, 0, 0},
-		Orientation: mgl64.QuatIdent(),
-		// Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}).Mul(mgl64.QuatRotate(mgl64.DegToRad(-30), mgl64.Vec3{1, 0, 0})),
+		Position: mgl64.Vec3{0, 150, 0},
+		// Orientation: mgl64.QuatIdent(),
+		Orientation: mgl64.QuatRotate(mgl64.DegToRad(-90), mgl64.Vec3{1, 0, 0}),
 	}
 
 	w, h := g.window.GetSize()
@@ -91,6 +94,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
+	g.navigationMesh = navmesh.New(g)
 
 	return g
 }
@@ -214,7 +218,7 @@ func (g *Izzet) loadEntities() {
 		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)
-	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 100, 0})
+	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 300, 0})
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
@@ -270,17 +274,28 @@ func (g *Izzet) loadEntities() {
 				g.AddEntity(entity)
 			}
 		} else if pf.Name == "vehicle" {
-			// prefab := g.GetPrefabByID(pf.ID)
-			// parent := entities.CreateDummy(prefab.Name)
+			// parent := entities.CreateDummy("vehicle")
 			// g.AddEntity(parent)
-			// for _, entity := range entities.InstantiateFromPrefab(prefab) {
+			// entities.SetScale(parent, mgl64.Vec3{15, 15, 15})
+
+			// for _, entity := range entities.InstantiateFromPrefab(pf) {
 			// 	g.AddEntity(entity)
-			// 	g.BuildRelation(parent, entity)
+			// 	entities.BuildRelation(parent, entity)
 			// }
-			// parent.Scale = parent.Scale.Mul(15)
 			// panels.SelectEntity(parent)
 		}
 	}
+
+	// cube := entities.CreateCube(25)
+	// g.AddEntity(cube)
+
+	// triangle := entities.CreateTriangle(
+	// 	mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
+	// 	mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
+	// 	mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
+	// )
+	// g.AddEntity(triangle)
+	// panels.SelectEntity(triangle)
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

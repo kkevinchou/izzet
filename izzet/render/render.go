@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/menus"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -33,6 +34,7 @@ type World interface {
 	Lights() []*entities.Entity
 	GetEntityByID(id int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
+	NavMesh() *navmesh.NavigationMesh
 
 	// for panels
 	AddEntity(entity *entities.Entity)
@@ -89,7 +91,8 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs map[int]uint32
+	cubeVAOs     map[int]uint32
+	triangleVAOs map[string]uint32
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
@@ -118,6 +121,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[int]uint32{}
+	r.triangleVAOs = map[string]uint32{}
 
 	r.initMainRenderFBO(width, height)
 
@@ -347,6 +351,96 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		}
 	}
 
+	// draw bounding box
+	volume := r.world.NavMesh().Volume
+	drawAABB(
+		viewerContext,
+		shaderManager.GetShaderProgram("flat"),
+		mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+		&volume,
+		0.5,
+	)
+
+	nm := r.world.NavMesh()
+	verts := nm.Vertices()
+	normals := nm.Normals()
+
+	if len(verts) > 0 {
+		// var directionalLightDir mgl32.Vec3
+		// for _, light := range lightContext.Lights {
+		// 	if light.LightInfo.Type == 0 {
+		// 		directionalLightDir = utils.Vec3F64ToF32(light.LightInfo.Direction)
+		// 	}
+		// }
+
+		shader := shaderManager.GetShaderProgram("color_pbr")
+		shader.Use()
+		// shader.SetUniformFloat("intensity", 1.0)
+		// shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+		// shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
+		// shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		// shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+
+		shader.SetUniformMat4("model", mgl32.Ident4())
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		shader.SetUniformInt("isAnimated", 0)
+
+		color := mgl32.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
+		shader.SetUniformVec3("albedo", color)
+		shader.SetUniformInt("hasPBRMaterial", 1)
+		shader.SetUniformFloat("ao", 1.0)
+		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+		shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+
+		setupLightingUniforms(shader, lightContext.Lights)
+
+		gl.ActiveTexture(gl.TEXTURE30)
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+
+		gl.ActiveTexture(gl.TEXTURE31)
+		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+
+		// var directionalLightDir mgl32.Vec3
+		// directionalLightDir[0] = panels.DBG.DirectionalLightDir[0]
+		// directionalLightDir[1] = panels.DBG.DirectionalLightDir[1]
+		// directionalLightDir[2] = panels.DBG.DirectionalLightDir[2]
+		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
+
+		drawNavMeshTris(viewerContext, verts, normals)
+	}
+
+	// num := rand.Intn(256)
+
+	// verts, clusterIDs := r.world.NavMesh().RenderData()
+	// for i := 0; i < len(verts); i += 3 {
+	// clusterID := clusterIDs[i/3]
+	// red := (clusterID * 40) % 256
+	// green := (clusterID * 40) % 256
+	// blue := (clusterID * 40) % 256
+
+	// if clusterID%2 == 0 {
+	// 	num = 255
+	// } else {
+	// 	num = 0
+	// }
+
+	// color := mgl64.Vec3{float64(red) / 255, float64(green) / 255, float64(blue) / 255}
+	// drawTris(viewerContext, verts[i:i+3])
+	// }
+
+	// navmeshVerts := r.world.NavMesh().Vertices
+	// if len(navmeshVerts) > 0 {
+	// }
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
@@ -510,6 +604,20 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
 					iztDrawArrays(0, 48)
 				}
+
+				if shapeData.Triangle != nil {
+					var ok bool
+					var vao uint32
+					if vao, ok = r.triangleVAOs[triangleVAOKey(*shapeData.Triangle)]; !ok {
+						vao = initTriangleVAO(shapeData.Triangle.V1, shapeData.Triangle.V2, shapeData.Triangle.V3)
+						r.triangleVAOs[triangleVAOKey(*shapeData.Triangle)] = vao
+					}
+
+					gl.BindVertexArray(vao)
+					shader.SetUniformVec3("color", mgl32.Vec3{0, 1, 1})
+					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
+					iztDrawArrays(0, 6)
+				}
 			}
 		}
 
@@ -629,6 +737,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			continue
 		}
 
+		// if entity.GetID() != 16 {
+		// 	continue
+		// }
+
 		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
@@ -725,4 +837,9 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
 		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	}
+}
+
+func triangleVAOKey(triangle entities.Triangle) string {
+	return fmt.Sprintf("%v_%v_%v", triangle.V1, triangle.V2, triangle.V3)
+
 }

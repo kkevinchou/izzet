@@ -57,6 +57,12 @@ func sceneHierarchy(world World) {
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()
 			}
+			if imgui.Button("Add Triangle") {
+				child := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
+				world.AddEntity(child)
+				SelectEntity(child)
+				imgui.CloseCurrentPopup()
+			}
 			if imgui.Button("Add Point Light") {
 				lightInfo := &entities.LightInfo{
 					Type:    1,

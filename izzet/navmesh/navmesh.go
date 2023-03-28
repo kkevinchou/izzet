@@ -24,8 +24,6 @@ type NavigationMesh struct {
 	Volume collider.BoundingBox
 	world  World
 
-	constructed bool
-
 	vertices []mgl64.Vec3
 	normals  []mgl64.Vec3
 

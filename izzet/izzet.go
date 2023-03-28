@@ -222,26 +222,6 @@ func (g *Izzet) loadEntities() {
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
-	// cube := entities.CreateCube()
-	// cube.LocalPosition = mgl64.Vec3{150, 150, 0}
-	// cube.Physics = &entities.PhysicsComponent{Velocity: mgl64.Vec3{0, -10, 0}}
-
-	// capsule := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
-	// cube.Collider = &entities.ColliderComponent{
-	// 	CapsuleCollider: &capsule,
-	// }
-	// g.AddEntity(cube)
-
-	// cube2 := entities.CreateCube()
-	// cube2.LocalPosition = mgl64.Vec3{150, 0, 0}
-	// cube2.Physics = &entities.PhysicsComponent{}
-
-	// capsule2 := collider.NewCapsule(mgl64.Vec3{0, 10, 0}, mgl64.Vec3{0, 5, 0}, 5)
-	// cube2.Collider = &entities.ColliderComponent{
-	// 	CapsuleCollider: &capsule2,
-	// }
-	// g.AddEntity(cube2)
-
 	for _, pf := range g.Prefabs() {
 		if pf.Name == "alpha" {
 			// entity := entities.InstantiateFromPrefab(pf)
@@ -285,17 +265,6 @@ func (g *Izzet) loadEntities() {
 			// panels.SelectEntity(parent)
 		}
 	}
-
-	// cube := entities.CreateCube(25)
-	// g.AddEntity(cube)
-
-	// triangle := entities.CreateTriangle(
-	// 	mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
-	// 	mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
-	// 	mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
-	// )
-	// g.AddEntity(triangle)
-	// panels.SelectEntity(triangle)
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

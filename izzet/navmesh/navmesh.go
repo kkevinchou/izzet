@@ -3,6 +3,7 @@ package navmesh
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -51,6 +52,7 @@ func (n *NavigationMesh) Normals() []mgl64.Vec3 {
 }
 
 func (n *NavigationMesh) Voxelize() {
+	start := time.Now()
 	spatialPartition := n.world.SpatialPartition()
 	sEntities := spatialPartition.QueryEntities(n.Volume)
 
@@ -147,6 +149,7 @@ func (n *NavigationMesh) Voxelize() {
 			doneWorkerMutex.Lock()
 			doneWorkerCount++
 			if doneWorkerCount == workerCount {
+				fmt.Println("generation time seconds", time.Since(start).Seconds())
 				close(outputWork)
 			}
 			doneWorkerMutex.Unlock()

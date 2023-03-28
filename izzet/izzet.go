@@ -126,6 +126,7 @@ func (g *Izzet) Start() {
 		renderAccumulator += delta
 		oneSecondAccumulator += delta
 
+		currentLoopCommandFrames := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			input := g.platform.PollInput()
 			g.HandleInput(input)
@@ -133,6 +134,10 @@ func (g *Izzet) Start() {
 			g.commandFrameCount++
 
 			accumulator -= float64(settings.MSPerCommandFrame)
+			currentLoopCommandFrames++
+			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
+				accumulator = 0
+			}
 		}
 
 		// prevents lighting my CPU on fire

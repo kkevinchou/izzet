@@ -2,6 +2,7 @@ package navmesh
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -62,6 +63,10 @@ func (n *NavigationMesh) Voxelize() {
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
 		if e == nil {
+			continue
+		}
+
+		if !strings.Contains(e.Model.Name(), "Tile") && !strings.Contains(e.Model.Name(), "Stair") {
 			continue
 		}
 

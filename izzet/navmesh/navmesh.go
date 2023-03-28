@@ -2,7 +2,6 @@ package navmesh
 
 import (
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -112,12 +111,11 @@ func (n *NavigationMesh) Voxelize() {
 				k := input[2]
 
 				voxel := &collider.BoundingBox{
-					MinVertex: mgl64.Vec3{float64(i), float64(j), float64(k)},
-					MaxVertex: mgl64.Vec3{float64(i) + voxelDimension, float64(j) + voxelDimension, float64(k) + voxelDimension},
+					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
+					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
 				}
 
 				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
-				found := false
 
 				for _, entity := range candidateEntities {
 					bb := boundingBoxes[entity.GetID()]
@@ -130,27 +128,18 @@ func (n *NavigationMesh) Voxelize() {
 							if IntersectAABBTriangle(voxelAABB, tri) {
 								outputWork <- *voxel
 
-								// if a voxel is output, we don't need to check the rest of the entities
-								found = true
-							}
-							if found {
-								break
+								goto Done
 							}
 						}
-						if found {
-							break
-						}
 					}
-					if found {
-						break
-					}
+				Done:
 				}
 			}
 
 			doneWorkerMutex.Lock()
 			doneWorkerCount++
 			if doneWorkerCount == workerCount {
-				fmt.Println("finished work in", time.Since(start).Seconds())
+				fmt.Println("generation time seconds", time.Since(start).Seconds())
 				close(outputWork)
 			}
 			doneWorkerMutex.Unlock()
@@ -170,67 +159,12 @@ func (n *NavigationMesh) Voxelize() {
 		fmt.Printf("generated %d voxels\n", voxelCount)
 	}()
 
-	seen := map[[3]int]bool{}
-	aabb2 := n.Volume
-	for _, entity := range candidateEntities {
-		aabb1 := boundingBoxes[entity.GetID()]
-
-		if aabb1.MaxVertex.X() < aabb2.MinVertex.X() || aabb1.MinVertex.X() > aabb2.MaxVertex.X() {
-			continue
-		}
-
-		if aabb1.MaxVertex.Y() < aabb2.MinVertex.Y() || aabb1.MinVertex.Y() > aabb2.MaxVertex.Y() {
-			continue
-		}
-
-		if aabb1.MaxVertex.Z() < aabb2.MinVertex.Z() || aabb1.MinVertex.Z() > aabb2.MaxVertex.Z() {
-			continue
-		}
-
-		minX := int(math.Max(aabb1.MinVertex.X(), aabb2.MinVertex.X()) - voxelDimension)
-		maxX := int(math.Min(aabb1.MaxVertex.X(), aabb2.MaxVertex.X()) + voxelDimension)
-
-		minY := int(math.Max(aabb1.MinVertex.Y(), aabb2.MinVertex.Y()) - voxelDimension)
-		maxY := int(math.Min(aabb1.MaxVertex.Y(), aabb2.MaxVertex.Y()) + voxelDimension)
-
-		minZ := int(math.Max(aabb1.MinVertex.Z(), aabb2.MinVertex.Z()) - voxelDimension)
-		maxZ := int(math.Min(aabb1.MaxVertex.Z(), aabb2.MaxVertex.Z()) + voxelDimension)
-
-		for i := minX; i < maxX; i++ {
-			for j := minY; j < maxY; j++ {
-				for k := minZ; k < maxZ; k++ {
-					if _, ok := seen[[3]int{i, j, k}]; ok {
-						continue
-					}
-
-					seen[[3]int{i, j, k}] = true
-					inputWork <- [3]int{i, j, k}
-				}
+	for i := 0; i < runs[0]; i++ {
+		for j := 0; j < runs[1]; j++ {
+			for k := 0; k < runs[2]; k++ {
+				inputWork <- [3]int{i, j, k}
 			}
 		}
-
-		// x := minX
-		// y := minY
-		// z := minZ
-
-		// for x < maxX+voxelDimension {
-		// 	y = minY
-		// 	for y < maxY+voxelDimension {
-		// 		z = minZ
-		// 		for z < maxZ+voxelDimension {
-		// 			if _, ok := seen[[3]int{int(x), int(y), int(z)}]; !ok {
-		// 				inputWork <- [3]float64{x, y, z}
-		// 			}
-		// 			z += voxelDimension
-		// 		}
-		// 		y += voxelDimension
-		// 	}
-		// 	x += voxelDimension
-		// }
-
-		// if !collision.CheckOverlapAABBAABB(voxel, &bb) {
-		// 	continue
-		// }
 	}
 	close(inputWork)
 

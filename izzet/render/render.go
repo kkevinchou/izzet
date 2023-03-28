@@ -372,23 +372,50 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		// 		directionalLightDir = utils.Vec3F64ToF32(light.LightInfo.Direction)
 		// 	}
 		// }
-		color := mgl64.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
 
-		shader := shaderManager.GetShaderProgram("flat_with_light")
+		shader := shaderManager.GetShaderProgram("color_pbr")
 		shader.Use()
-		shader.SetUniformFloat("intensity", 1.0)
-		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-		shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		// shader.SetUniformFloat("intensity", 1.0)
+		// shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+		// shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
+		// shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		// shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+
 		shader.SetUniformMat4("model", mgl32.Ident4())
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		shader.SetUniformInt("isAnimated", 0)
 
-		var directionalLightDir mgl32.Vec3
-		directionalLightDir[0] = panels.DBG.DirectionalLightDir[0]
-		directionalLightDir[1] = panels.DBG.DirectionalLightDir[1]
-		directionalLightDir[2] = panels.DBG.DirectionalLightDir[2]
+		color := mgl32.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
+		shader.SetUniformVec3("albedo", color)
+		shader.SetUniformInt("hasPBRMaterial", 1)
+		shader.SetUniformFloat("ao", 1.0)
+		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+		shader.SetUniformFloat("metallic", panels.DBG.Metallic)
 
-		shader.SetUniformVec3("directionalLightDir", directionalLightDir)
+		setupLightingUniforms(shader, lightContext.Lights)
+
+		gl.ActiveTexture(gl.TEXTURE30)
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+
+		gl.ActiveTexture(gl.TEXTURE31)
+		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+
+		// var directionalLightDir mgl32.Vec3
+		// directionalLightDir[0] = panels.DBG.DirectionalLightDir[0]
+		// directionalLightDir[1] = panels.DBG.DirectionalLightDir[1]
+		// directionalLightDir[2] = panels.DBG.DirectionalLightDir[2]
+		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
+
 		drawNavMeshTris(viewerContext, verts, normals)
 	}
 

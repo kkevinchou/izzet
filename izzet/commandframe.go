@@ -158,8 +158,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	// 	}
 	// }
 
-	g.navigationMesh.BakeNavMesh()
-
 	// cube := g.GetEntityByID(3379)
 	// tri := g.GetEntityByID(3380)
 	// if cube != nil && tri != nil {

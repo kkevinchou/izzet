@@ -30,7 +30,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.SetNextWindowBgAlpha(0.8)
 	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y + rect.Y*0.5}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
-	imgui.BeginV("Free Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoCollapse)
+	imgui.BeginV("Properties", &open, imgui.WindowFlagsNone)
 
 	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("World Properties") {

@@ -56,12 +56,6 @@ func (n *NavigationMesh) Voxelize() {
 	spatialPartition := n.world.SpatialPartition()
 	sEntities := spatialPartition.QueryEntities(n.Volume)
 
-	if len(sEntities) == 0 {
-		fmt.Println("not constructed")
-		return
-	}
-
-	n.constructed = true
 	var candidateEntities []*entities.Entity
 	boundingBoxes := map[int]collider.BoundingBox{}
 	meshTriangles := map[int][]Triangle{}
@@ -176,8 +170,5 @@ func (n *NavigationMesh) Voxelize() {
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
-	if n.constructed {
-		return
-	}
 	n.Voxelize()
 }

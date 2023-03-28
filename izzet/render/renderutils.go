@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -57,38 +58,43 @@ var navMeshTrisVAO uint32
 var navMeshVBO uint32
 var lastRenderCount = 0
 
+var lastMeshUpdate time.Time = time.Now()
+
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals []mgl64.Vec3) {
 	if len(points) != lastRenderCount {
-		vaos := []uint32{navMeshTrisVAO}
-		gl.DeleteVertexArrays(1, &vaos[0])
-		vbos := []uint32{navMeshVBO}
-		gl.DeleteBuffers(1, &vbos[0])
+		if time.Since(lastMeshUpdate) > 5*time.Second {
+			vaos := []uint32{navMeshTrisVAO}
+			gl.DeleteVertexArrays(1, &vaos[0])
+			vbos := []uint32{navMeshVBO}
+			gl.DeleteBuffers(1, &vbos[0])
 
-		var vertices []float32
-		for i := range points {
-			point := points[i]
-			normal := normals[i]
-			vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
+			var vertices []float32
+			for i := range points {
+				point := points[i]
+				normal := normals[i]
+				vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
+			}
+
+			var vbo, vao uint32
+			gl.GenBuffers(1, &vbo)
+			gl.GenVertexArrays(1, &vao)
+
+			gl.BindVertexArray(vao)
+			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, nil)
+			gl.EnableVertexAttribArray(0)
+
+			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+			gl.EnableVertexAttribArray(1)
+
+			navMeshTrisVAO = vao
+			navMeshVBO = vbo
+			lastRenderCount = len(points)
+			lastMeshUpdate = time.Now()
 		}
-
-		var vbo, vao uint32
-		gl.GenBuffers(1, &vbo)
-		gl.GenVertexArrays(1, &vao)
-
-		gl.BindVertexArray(vao)
-		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, nil)
-		gl.EnableVertexAttribArray(0)
-
-		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
-		gl.EnableVertexAttribArray(1)
-
-		navMeshTrisVAO = vao
-		navMeshVBO = vbo
-		lastRenderCount = len(points)
 	}
 
 	gl.BindVertexArray(navMeshTrisVAO)

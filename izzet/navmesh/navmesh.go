@@ -116,16 +116,6 @@ func (n *NavigationMesh) Voxelize() {
 					MaxVertex: mgl64.Vec3{float64(i) + voxelDimension, float64(j) + voxelDimension, float64(k) + voxelDimension},
 				}
 
-				// voxel := &collider.BoundingBox{
-				// 	MinVertex: mgl64.Vec3{i, j, k},
-				// 	MaxVertex: mgl64.Vec3{i + voxelDimension, j + voxelDimension, k + voxelDimension},
-				// }
-
-				// voxel := &collider.BoundingBox{
-				// 	MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
-				// 	MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
-				// }
-
 				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
 				found := false
 
@@ -180,22 +170,10 @@ func (n *NavigationMesh) Voxelize() {
 		fmt.Printf("generated %d voxels\n", voxelCount)
 	}()
 
-	// // NOTE - with each entity's bounding box, i should be able to only create input work that overlaps with
-	// // the voxels i care about, rather than going through each voxel and doing bounding box checks against each entity
-	// for i := 0; i < runs[0]; i++ {
-	// 	for j := 0; j < runs[1]; j++ {
-	// 		for k := 0; k < runs[2]; k++ {
-	// 			inputWork <- [3]int{i, j, k}
-	// 		}
-	// 	}
-	// }
-
 	seen := map[[3]int]bool{}
 	aabb2 := n.Volume
 	for _, entity := range candidateEntities {
 		aabb1 := boundingBoxes[entity.GetID()]
-
-		// var i, j, k int
 
 		if aabb1.MaxVertex.X() < aabb2.MinVertex.X() || aabb1.MinVertex.X() > aabb2.MaxVertex.X() {
 			continue

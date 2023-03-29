@@ -394,7 +394,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 		shader.SetUniformInt("isAnimated", 0)
 
-		color := mgl32.Vec3{93.0 / 255, 18.0 / 255, 7.0 / 255}
+		color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
 		shader.SetUniformVec3("albedo", color)
 		shader.SetUniformInt("hasPBRMaterial", 1)
 		shader.SetUniformFloat("ao", 1.0)

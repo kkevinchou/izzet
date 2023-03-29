@@ -33,7 +33,7 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	return &NavigationMesh{
-		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -150, -150}, MaxVertex: mgl64.Vec3{150, 150, 150}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -50, -50}, MaxVertex: mgl64.Vec3{50, 50, 50}},
 		world:  world,
 	}
 }
@@ -50,7 +50,7 @@ func (n *NavigationMesh) Normals() []mgl64.Vec3 {
 	return n.normals
 }
 
-func (n *NavigationMesh) Voxelize() {
+func (n *NavigationMesh) voxelize() [][][]Voxel {
 	start := time.Now()
 	spatialPartition := n.world.SpatialPartition()
 	sEntities := spatialPartition.QueryEntities(n.Volume)
@@ -91,7 +91,7 @@ func (n *NavigationMesh) Voxelize() {
 		}
 	}
 
-	outputWork := make(chan collider.BoundingBox)
+	outputWork := make(chan OutputWork)
 	voxelDimension := 1.0
 	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
@@ -114,7 +114,6 @@ func (n *NavigationMesh) Voxelize() {
 					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
 					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
 				}
-
 				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
 
 				for _, entity := range candidateEntities {
@@ -126,7 +125,12 @@ func (n *NavigationMesh) Voxelize() {
 					for _, rd := range entity.Model.RenderData() {
 						for _, tri := range meshTriangles[rd.MeshID] {
 							if IntersectAABBTriangle(voxelAABB, tri) {
-								outputWork <- *voxel
+								outputWork <- OutputWork{
+									x:           i,
+									y:           j,
+									z:           k,
+									boundingBox: *voxel,
+								}
 
 								goto Done
 							}
@@ -146,15 +150,32 @@ func (n *NavigationMesh) Voxelize() {
 		}()
 	}
 
+	var voxelField [][][]Voxel
+	voxelField = make([][][]Voxel, runs[0])
+	for i := range voxelField {
+		voxelField[i] = make([][]Voxel, runs[1])
+		for j := range voxelField[i] {
+			voxelField[i][j] = make([]Voxel, runs[2])
+		}
+	}
+
 	go func() {
 		voxelCount := 0
-		for voxel := range outputWork {
+		for work := range outputWork {
 			voxelCount++
 			n.mutex.Lock()
-			vertices, normals := genVertexRenderData(voxel)
+			vertices, normals := genVertexRenderData(work.boundingBox)
 			n.vertices = append(n.vertices, vertices...)
 			n.normals = append(n.normals, normals...)
 			n.mutex.Unlock()
+
+			x, y, z := work.x, work.y, work.z
+			voxelField[x][y][z] = Voxel{
+				Filled: true,
+				X:      x,
+				Y:      y,
+				Z:      z,
+			}
 		}
 		fmt.Printf("generated %d voxels\n", voxelCount)
 	}()
@@ -173,8 +194,25 @@ func (n *NavigationMesh) Voxelize() {
 		totalTricount += count
 	}
 	fmt.Println("nav mesh entity tri count", totalTricount)
+	return voxelField
+}
+
+func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) {
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
-	n.Voxelize()
+	go func() {
+		voxelField := n.voxelize()
+		n.computeDistanceTransform(voxelField)
+	}()
+}
+
+type Voxel struct {
+	Filled  bool
+	X, Y, Z int
+}
+
+type OutputWork struct {
+	x, y, z     int
+	boundingBox collider.BoundingBox
 }

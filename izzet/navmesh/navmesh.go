@@ -32,7 +32,7 @@ type NavigationMesh struct {
 	voxelField     [][][]Voxel
 	voxelDimension float64
 
-	mutex sync.Mutex
+	// mutex sync.Mutex
 }
 
 func New(world World) *NavigationMesh {
@@ -174,9 +174,9 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 
 	// go func() {
 	for work := range outputWork {
-		n.mutex.Lock()
+		// n.mutex.Lock()
 		n.voxelCount++
-		n.mutex.Unlock()
+		// n.mutex.Unlock()
 
 		x, y, z := work.x, work.y, work.z
 		n.voxelField[x][y][z] = NewVoxel(x, y, z)
@@ -247,12 +247,12 @@ func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) [][][]
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
-	go func() {
-		n.voxelField = n.voxelize()
-		n.voxelField = n.buildNavigableArea(n.voxelField)
-		distanceTransform := n.computeDistanceTransform(n.voxelField)
-		_ = distanceTransform
-	}()
+	// go func() {
+	n.voxelField = n.voxelize()
+	n.voxelField = n.buildNavigableArea(n.voxelField)
+	distanceTransform := n.computeDistanceTransform(n.voxelField)
+	_ = distanceTransform
+	// }()
 }
 
 type Voxel struct {

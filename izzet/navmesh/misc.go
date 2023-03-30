@@ -9,7 +9,7 @@ func (n *NavigationMesh) VoxelField() [][][]Voxel {
 }
 
 func (n *NavigationMesh) VoxelCount() int {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
+	// n.mutex.Lock()
+	// defer n.mutex.Unlock()
 	return n.voxelCount
 }

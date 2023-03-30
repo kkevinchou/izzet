@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
@@ -56,13 +57,14 @@ func drawTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 
 var navMeshTrisVAO uint32
 var navMeshVBO uint32
-var lastRenderCount = 0
+var lastVoxelCount = 0
+var lastVertexCount = 0
 
 var lastMeshUpdate time.Time = time.Now()
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals []mgl64.Vec3) {
-	if len(points) != lastRenderCount {
+func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
+	if navmesh.VoxelCount() != lastVoxelCount {
 		if time.Since(lastMeshUpdate) > 5*time.Second {
 			vaos := []uint32{navMeshTrisVAO}
 			gl.DeleteVertexArrays(1, &vaos[0])
@@ -70,11 +72,12 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals [
 			gl.DeleteBuffers(1, &vbos[0])
 
 			var vertices []float32
-			for i := range points {
-				point := points[i]
-				normal := normals[i]
-				vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
-			}
+			// for i := range points {
+			// 	point := points[i]
+			// 	normal := normals[i]
+			// 	vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
+			// }
+			vertices = generateNavMeshRenderData(navmesh)
 
 			var vbo, vao uint32
 			gl.GenBuffers(1, &vbo)
@@ -92,13 +95,173 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals [
 
 			navMeshTrisVAO = vao
 			navMeshVBO = vbo
-			lastRenderCount = len(points)
+			lastVoxelCount = navmesh.VoxelCount()
+			lastVertexCount = len(vertices) / 6
 			lastMeshUpdate = time.Now()
 		}
 	}
 
 	gl.BindVertexArray(navMeshTrisVAO)
-	iztDrawArrays(0, int32(len(points)))
+	iztDrawArrays(0, int32(lastVertexCount))
+}
+
+func generateNavMeshRenderData(navmesh *navmesh.NavigationMesh) []float32 {
+	delta := navmesh.Volume.MaxVertex.Sub(navmesh.Volume.MinVertex)
+	voxelDimension := navmesh.VoxelDimension()
+	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
+
+	// var vertices []mgl64.Vec3
+	// var normals []mgl64.Vec3
+
+	voxelField := navmesh.VoxelField()
+	var vertexAttributes []float32
+
+	for i := 0; i < runs[0]; i++ {
+		for j := 0; j < runs[1]; j++ {
+			for k := 0; k < runs[2]; k++ {
+				voxel := voxelField[i][j][k]
+				if !voxel.Filled {
+					continue
+				}
+
+				bb := collider.BoundingBox{
+					MinVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
+					MaxVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
+				}
+				vertexAttributes = append(vertexAttributes, generateVoxelVertexAttributes(voxel, bb)...)
+
+				// vertices = append(vertices, vs...)
+				// normals = append(normals, ns...)
+			}
+		}
+	}
+	return vertexAttributes
+
+	// n.mutex.Lock()
+	// n.vertices = append(n.vertices, vertices...)
+	// n.normals = append(n.normals, normals...)
+	// n.mutex.Unlock()
+}
+
+func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox) []float32 {
+	min := bb.MinVertex
+	max := bb.MaxVertex
+	delta := max.Sub(min)
+	var vertexAttributes []float32
+
+	verts := []mgl64.Vec3{
+		// top
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		max,
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+		max,
+
+		// bottom
+		min,
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+
+		min,
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+
+		// left
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		min,
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+
+		min,
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+
+		// right
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+
+		// front
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+
+		// back
+		min,
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+
+		min,
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+	}
+
+	normals := []mgl64.Vec3{
+		// top
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		mgl64.Vec3{0, 1, 0},
+		// bottom
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		mgl64.Vec3{0, -1, 0},
+		// left
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		mgl64.Vec3{-1, 0, 0},
+		// right
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		mgl64.Vec3{1, 0, 0},
+		// front
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		mgl64.Vec3{0, 0, 1},
+		// back
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+		mgl64.Vec3{0, 0, -1},
+	}
+
+	for i := 0; i < len(verts); i++ {
+		vertexAttributes = append(vertexAttributes,
+			float32(verts[i].X()),
+			float32(verts[i].Y()),
+			float32(verts[i].Z()),
+			float32(normals[i].X()),
+			float32(normals[i].Y()),
+			float32(normals[i].Z()),
+		)
+	}
+
+	return vertexAttributes
 }
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain

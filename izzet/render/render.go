@@ -406,8 +406,6 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		gl.ActiveTexture(gl.TEXTURE31)
 		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-		// verts := nm.Vertices()
-		// normals := nm.Normals()
 		drawNavMeshTris(viewerContext, nm)
 	}
 }

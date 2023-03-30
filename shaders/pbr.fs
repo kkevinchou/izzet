@@ -66,6 +66,19 @@ in VS_OUT {
     vec2 TexCoord;
 } fs_in;
 
+const float A = 2.51;
+const float B = 0.03;
+const float C = 2.43;
+const float D = 0.59;
+const float E = 0.14;
+
+// ACES tone mapping function
+vec3 acesToneMapping(vec3 color)
+{
+    color = (color * (A * color + B)) / (color * (C * color + D) + E);
+    return clamp(color, 0.0, 1.0);
+}
+
 float PointLightShadowCalculation(vec3 fragPos, vec3 lightPos)
 {
     // get vector between fragment position and light position
@@ -249,7 +262,9 @@ void main()
 	
     if (applyToneMapping == 1) {
         // HDR tone mapping
-        color = color / (color + vec3(1.0));
+        // color = color / (color + vec3(1.0));
+
+        color = acesToneMapping(color);
 
         // Gamma correction
         // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally

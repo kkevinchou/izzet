@@ -71,7 +71,7 @@ func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMes
 			vbos := []uint32{navMeshVBO}
 			gl.DeleteBuffers(1, &vbos[0])
 
-			vertices := generateNavMeshRenderData(navmesh)
+			vertices := generateNavMeshVertexAttributes(navmesh)
 
 			var vbo, vao uint32
 			gl.GenBuffers(1, &vbo)
@@ -81,16 +81,21 @@ func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMes
 			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, nil)
+			var stride int32 = 9
+
+			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, stride*4, nil)
 			gl.EnableVertexAttribArray(0)
 
-			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, stride*4, gl.PtrOffset(3*4))
 			gl.EnableVertexAttribArray(1)
+
+			gl.VertexAttribPointer(2, 3, gl.FLOAT, false, stride*4, gl.PtrOffset(6*4))
+			gl.EnableVertexAttribArray(2)
 
 			navMeshTrisVAO = vao
 			navMeshVBO = vbo
 			lastVoxelCount = navmesh.VoxelCount()
-			lastVertexCount = len(vertices) / 6
+			lastVertexCount = len(vertices) / int(stride)
 			lastMeshUpdate = time.Now()
 		}
 	}
@@ -99,7 +104,7 @@ func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMes
 	iztDrawArrays(0, int32(lastVertexCount))
 }
 
-func generateNavMeshRenderData(navmesh *navmesh.NavigationMesh) []float32 {
+func generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 {
 	delta := navmesh.Volume.MaxVertex.Sub(navmesh.Volume.MinVertex)
 	voxelDimension := navmesh.VoxelDimension()
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
@@ -233,6 +238,10 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 		mgl64.Vec3{0, 0, -1},
 	}
 
+	color := []float32{3.0 / 255, 185.0 / 255, 5.0 / 255}
+	if (voxel.X+voxel.Z)%2 == 0 {
+		color = []float32{0.8, 0, 0}
+	}
 	for i := 0; i < len(verts); i++ {
 		vertexAttributes = append(vertexAttributes,
 			float32(verts[i].X()),
@@ -241,6 +250,9 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 			float32(normals[i].X()),
 			float32(normals[i].Y()),
 			float32(normals[i].Z()),
+			color[0],
+			color[1],
+			color[2],
 		)
 	}
 

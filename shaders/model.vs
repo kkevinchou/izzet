@@ -27,6 +27,8 @@ uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
 
+const vec3 errorColor = vec3(255.0 / 255, 28.0 / 255, 217.0 / 121.0);
+
 void main() {
     vec4 totalPos = vec4(0.0);
 	vec4 totalNormal = vec4(0.0);
@@ -66,6 +68,7 @@ void main() {
         vs_out.TexCoord = aTexCoord1;
     }
 
+    vs_out.ColorOverride = errorColor;
     vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     gl_Position = (projection * (view * (model * totalPos)));
 }

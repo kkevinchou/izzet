@@ -14,8 +14,6 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-// var NavMesh *NavigationMesh = New()
-
 type World interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetEntityByID(id int) *entities.Entity
@@ -25,14 +23,9 @@ type NavigationMesh struct {
 	Volume collider.BoundingBox
 	world  World
 
-	// vertices []mgl64.Vec3
-	// normals  []mgl64.Vec3
-
 	voxelCount     int
 	voxelField     [][][]Voxel
 	voxelDimension float64
-
-	// mutex sync.Mutex
 }
 
 func New(world World) *NavigationMesh {
@@ -42,18 +35,6 @@ func New(world World) *NavigationMesh {
 		world:          world,
 	}
 }
-
-// func (n *NavigationMesh) Vertices() []mgl64.Vec3 {
-// 	n.mutex.Lock()
-// 	defer n.mutex.Unlock()
-// 	return n.vertices
-// }
-
-// func (n *NavigationMesh) Normals() []mgl64.Vec3 {
-// 	n.mutex.Lock()
-// 	defer n.mutex.Unlock()
-// 	return n.normals
-// }
 
 func (n *NavigationMesh) voxelize() [][][]Voxel {
 	start := time.Now()
@@ -154,7 +135,6 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		}()
 	}
 
-	// var voxelField [][][]Voxel
 	n.voxelField = make([][][]Voxel, runs[0])
 	for i := range n.voxelField {
 		n.voxelField[i] = make([][]Voxel, runs[1])
@@ -172,18 +152,14 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	}
 	close(inputWork)
 
-	// go func() {
 	for work := range outputWork {
-		// n.mutex.Lock()
 		n.voxelCount++
-		// n.mutex.Unlock()
 
 		x, y, z := work.x, work.y, work.z
 		n.voxelField[x][y][z] = NewVoxel(x, y, z)
 		n.voxelField[x][y][z].Filled = true
 	}
 	fmt.Printf("generated %d voxels\n", n.voxelCount)
-	// }()
 
 	totalTricount := 0
 	for _, count := range entityTriCount {
@@ -247,12 +223,10 @@ func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) [][][]
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
-	// go func() {
 	n.voxelField = n.voxelize()
 	n.voxelField = n.buildNavigableArea(n.voxelField)
 	distanceTransform := n.computeDistanceTransform(n.voxelField)
 	_ = distanceTransform
-	// }()
 }
 
 type Voxel struct {

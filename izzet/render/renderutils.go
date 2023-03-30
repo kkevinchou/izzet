@@ -71,13 +71,7 @@ func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMes
 			vbos := []uint32{navMeshVBO}
 			gl.DeleteBuffers(1, &vbos[0])
 
-			var vertices []float32
-			// for i := range points {
-			// 	point := points[i]
-			// 	normal := normals[i]
-			// 	vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
-			// }
-			vertices = generateNavMeshRenderData(navmesh)
+			vertices := generateNavMeshRenderData(navmesh)
 
 			var vbo, vao uint32
 			gl.GenBuffers(1, &vbo)
@@ -110,9 +104,6 @@ func generateNavMeshRenderData(navmesh *navmesh.NavigationMesh) []float32 {
 	voxelDimension := navmesh.VoxelDimension()
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
 
-	// var vertices []mgl64.Vec3
-	// var normals []mgl64.Vec3
-
 	voxelField := navmesh.VoxelField()
 	var vertexAttributes []float32
 
@@ -129,18 +120,10 @@ func generateNavMeshRenderData(navmesh *navmesh.NavigationMesh) []float32 {
 					MaxVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
 				}
 				vertexAttributes = append(vertexAttributes, generateVoxelVertexAttributes(voxel, bb)...)
-
-				// vertices = append(vertices, vs...)
-				// normals = append(normals, ns...)
 			}
 		}
 	}
 	return vertexAttributes
-
-	// n.mutex.Lock()
-	// n.vertices = append(n.vertices, vertices...)
-	// n.normals = append(n.normals, normals...)
-	// n.mutex.Unlock()
 }
 
 func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox) []float32 {

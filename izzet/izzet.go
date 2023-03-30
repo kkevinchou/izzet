@@ -219,7 +219,7 @@ func (g *Izzet) loadEntities() {
 
 	lightDir := panels.DBG.DirectionalLightDir
 	lightInfo := &entities.LightInfo{
-		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
+		Diffuse:   mgl64.Vec4{1, 1, 1, 1},
 		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(lightInfo)

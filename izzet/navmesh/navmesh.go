@@ -197,13 +197,20 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	return voxelField
 }
 
-func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) {
+func (n *NavigationMesh) buildNavigableArea(voxelField [][][]Voxel) [][][]Voxel {
+	return voxelField
+}
+
+func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) [][][]int {
+	return nil
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
 	go func() {
 		voxelField := n.voxelize()
-		n.computeDistanceTransform(voxelField)
+		voxelField = n.buildNavigableArea(voxelField)
+		distanceTransform := n.computeDistanceTransform(voxelField)
+		_ = distanceTransform
 	}()
 }
 

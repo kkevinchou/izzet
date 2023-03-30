@@ -361,25 +361,11 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		0.5,
 	)
 
+	// draw navmesh
 	nm := r.world.NavMesh()
-	verts := nm.Vertices()
-	normals := nm.Normals()
-
-	if len(verts) > 0 {
-		// var directionalLightDir mgl32.Vec3
-		// for _, light := range lightContext.Lights {
-		// 	if light.LightInfo.Type == 0 {
-		// 		directionalLightDir = utils.Vec3F64ToF32(light.LightInfo.Direction)
-		// 	}
-		// }
-
+	if nm.VoxelCount() > 0 {
 		shader := shaderManager.GetShaderProgram("color_pbr")
 		shader.Use()
-		// shader.SetUniformFloat("intensity", 1.0)
-		// shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-		// shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
-		// shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		// shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 
 		if !panels.DBG.Bloom {
 			// only tone map if we're not applying bloom, otherwise
@@ -420,37 +406,10 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		gl.ActiveTexture(gl.TEXTURE31)
 		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-		// var directionalLightDir mgl32.Vec3
-		// directionalLightDir[0] = panels.DBG.DirectionalLightDir[0]
-		// directionalLightDir[1] = panels.DBG.DirectionalLightDir[1]
-		// directionalLightDir[2] = panels.DBG.DirectionalLightDir[2]
-		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
-
-		drawNavMeshTris(viewerContext, verts, normals)
+		// verts := nm.Vertices()
+		// normals := nm.Normals()
+		drawNavMeshTris(viewerContext, nm)
 	}
-
-	// num := rand.Intn(256)
-
-	// verts, clusterIDs := r.world.NavMesh().RenderData()
-	// for i := 0; i < len(verts); i += 3 {
-	// clusterID := clusterIDs[i/3]
-	// red := (clusterID * 40) % 256
-	// green := (clusterID * 40) % 256
-	// blue := (clusterID * 40) % 256
-
-	// if clusterID%2 == 0 {
-	// 	num = 255
-	// } else {
-	// 	num = 0
-	// }
-
-	// color := mgl64.Vec3{float64(red) / 255, float64(green) / 255, float64(blue) / 255}
-	// drawTris(viewerContext, verts[i:i+3])
-	// }
-
-	// navmeshVerts := r.world.NavMesh().Vertices
-	// if len(navmeshVerts) > 0 {
-	// }
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {

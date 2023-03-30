@@ -15,6 +15,7 @@ out VS_OUT {
     vec4 FragPosLightSpace;
     mat4 View;
     vec2 TexCoord;
+    vec3 ColorOverride;
 } vs_out;
 
 uniform mat4 model;

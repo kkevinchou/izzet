@@ -53,9 +53,12 @@ uniform uint entityID;
 
 uniform int applyToneMapping;
 
+uniform int hasColorOverride;
+
 const float PI = 3.14159265359;
 
 const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
+
 
 in VS_OUT {
     vec3 FragPos;
@@ -63,6 +66,7 @@ in VS_OUT {
     vec4 FragPosLightSpace;
     mat4 View;
     vec2 TexCoord;
+    vec3 ColorOverride;
 } fs_in;
 
 const float A = 2.51;
@@ -248,6 +252,10 @@ void main()
     vec3 in_albedo = albedo;
     if (hasPBRBaseColorTexture == 1) {
         in_albedo = in_albedo * texture(modelTexture, fs_in.TexCoord).xyz;
+    }
+
+    if (hasColorOverride == 1) {
+        in_albedo = fs_in.ColorOverride;
     }
 
     // failsafe for when we pass in too many lights, i hope you like hot pink

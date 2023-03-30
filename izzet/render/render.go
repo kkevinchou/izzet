@@ -387,6 +387,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
 		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 		shader.SetUniformInt("isAnimated", 0)
+		shader.SetUniformInt("hasColorOverride", 1)
 
 		// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
 		color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
@@ -686,6 +687,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("depthCubeMap", 30)
 	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	shader.SetUniformInt("hasColorOverride", 0)
 
 	setupLightingUniforms(shader, lightContext.Lights)
 

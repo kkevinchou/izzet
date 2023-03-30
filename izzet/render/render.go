@@ -381,7 +381,14 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		// shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		// shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 
-		shader.SetUniformInt("applyToneMapping", 1)
+		if !panels.DBG.Bloom {
+			// only tone map if we're not applying bloom, otherwise
+			// we want to keep the HDR values and tone map later
+			shader.SetUniformInt("applyToneMapping", 1)
+		} else {
+			shader.SetUniformInt("applyToneMapping", 0)
+		}
+
 		shader.SetUniformMat4("model", mgl32.Ident4())
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -397,6 +404,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 
 		// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
 		color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
+		// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
 		shader.SetUniformVec3("albedo", color)
 		shader.SetUniformInt("hasPBRMaterial", 1)
 		shader.SetUniformFloat("ao", 1.0)

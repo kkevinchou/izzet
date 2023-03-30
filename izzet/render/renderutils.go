@@ -196,60 +196,31 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 	normals := []mgl64.Vec3{
 		// top
 		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
 		// bottom
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
 		mgl64.Vec3{0, -1, 0},
 		// left
 		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
 		// right
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
 		mgl64.Vec3{1, 0, 0},
 		// front
 		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
 		// back
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
 		mgl64.Vec3{0, 0, -1},
 	}
 
 	color := []float32{3.0 / 255, 185.0 / 255, 5.0 / 255}
-	if (voxel.X+voxel.Z)%2 == 0 {
+	if voxel.DistanceField == 0 {
 		color = []float32{0.8, 0, 0}
 	}
+
 	for i := 0; i < len(verts); i++ {
 		vertexAttributes = append(vertexAttributes,
 			float32(verts[i].X()),
 			float32(verts[i].Y()),
 			float32(verts[i].Z()),
-			float32(normals[i].X()),
-			float32(normals[i].Y()),
-			float32(normals[i].Z()),
+			float32(normals[i/6].X()),
+			float32(normals[i/6].Y()),
+			float32(normals[i/6].Z()),
 			color[0],
 			color[1],
 			color[2],

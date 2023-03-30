@@ -214,6 +214,17 @@ func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) [][][]
 	// compute distance transform from the bottom up
 	for y := 0; y < runs[1]; y++ {
 		for x := 0; x < runs[0]; x++ {
+			voxelField[x][y][0].DistanceField = 0
+			voxelField[x][y][runs[2]-1].DistanceField = 0
+		}
+		for z := 0; z < runs[2]; z++ {
+			voxelField[0][y][z].DistanceField = 0
+			voxelField[runs[0]-1][y][z].DistanceField = 0
+		}
+	}
+
+	for y := 0; y < runs[1]; y++ {
+		for x := 0; x < runs[0]; x++ {
 			for z := 0; z < runs[2]; z++ {
 			}
 		}

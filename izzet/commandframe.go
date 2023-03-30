@@ -19,6 +19,7 @@ import (
 
 var (
 	maxCameraSpeed float64 = 400 // units per second
+	slowSpeed      float64 = 100 // units per second
 )
 
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
@@ -324,6 +325,21 @@ func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, 
 	}
 
 	g.camera.Position = g.camera.Position.Add(movementDelta).Add(g.camera.Drift)
+
+	keyboardInput := frameInput.KeyboardInput
+	if key, ok := keyboardInput[input.KeyboardKeyUp]; ok && key.Event == input.KeyboardEventDown {
+		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+	}
+	if key, ok := keyboardInput[input.KeyboardKeyDown]; ok && key.Event == input.KeyboardEventDown {
+		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(-slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+	}
+	if key, ok := keyboardInput[input.KeyboardKeyLeft]; ok && key.Event == input.KeyboardEventDown {
+		g.camera.Position = g.camera.Position.Add(rightVector.Mul(-slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+	}
+	if key, ok := keyboardInput[input.KeyboardKeyRight]; ok && key.Event == input.KeyboardEventDown {
+		g.camera.Position = g.camera.Position.Add(rightVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+	}
+
 	g.camera.LastFrameMovementVector = movementVector
 }
 

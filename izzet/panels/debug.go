@@ -35,7 +35,7 @@ var DBG DebugSettings = DebugSettings{
 	DirectionalLightDir:       [3]float32{0, -1, -1},
 	Roughness:                 0.55,
 	Metallic:                  1.0,
-	PointLightIntensity:       100,
+	PointLightIntensity:       1000000,
 	DirectionalLightIntensity: 10,
 	PointLightBias:            1,
 	MaterialOverride:          false,

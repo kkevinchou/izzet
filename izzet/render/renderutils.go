@@ -208,10 +208,20 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 		mgl64.Vec3{0, 0, -1},
 	}
 
-	color := []float32{3.0 / 255, 185.0 / 255, 5.0 / 255}
-	if voxel.DistanceField == 0 {
-		color = []float32{0.8, 0, 0}
+	// color := []float32{3.0 / 255, 185.0 / 255, 5.0 / 255}
+	// if voxel.DistanceField == 0 {
+	// 	color = []float32{0.8, 0, 0}
+	// }
+
+	color := []float32{0.2, 0.2, 0.2}
+	if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
+		colorVal := float32(voxel.DistanceField) / 100
+		color = []float32{colorVal, colorVal, colorVal}
 	}
+	// if voxel.DistanceField == 0 {
+	// 	colorVal := float32(1)
+	// 	color = []float32{colorVal, colorVal, colorVal}
+	// }
 
 	for i := 0; i < len(verts); i++ {
 		vertexAttributes = append(vertexAttributes,

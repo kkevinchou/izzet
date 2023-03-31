@@ -59,7 +59,6 @@ const float PI = 3.14159265359;
 
 const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
 
-
 in VS_OUT {
     vec3 FragPos;
     vec3 Normal;

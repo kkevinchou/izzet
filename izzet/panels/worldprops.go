@@ -69,6 +69,11 @@ func worldProps(world World, renderContext RenderContext) {
 				world.ResetNavMeshVAO()
 			}
 		})
+		setupRow("HSV Offset", func() {
+			if imgui.InputInt("", &DBG.HSVOffset) {
+				world.ResetNavMeshVAO()
+			}
+		})
 		setupRow("Triangle HIT", func() { imgui.Checkbox("TriangleHIT", &DBG.TriangleHIT) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })

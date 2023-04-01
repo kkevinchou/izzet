@@ -455,23 +455,8 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 		z := voxel.Z
 
 		var nearestNeighbor *Voxel
-		for _, dir := range neighborDirs {
-			if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
-				continue
-			}
-
-			var neighbor *Voxel
-			reachNeighbor := &reachField[x+dir[0]][y][z+dir[1]]
-			if reachNeighbor.sourceVoxel != nil {
-				neighbor = reachNeighbor.sourceVoxel
-			} else if voxelField[x+dir[0]][y][z+dir[1]].Filled {
-				neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
-			}
-
-			if neighbor == nil {
-				continue
-			}
-
+		neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
+		for _, neighbor := range neighbors {
 			if nearestNeighbor == nil {
 				nearestNeighbor = neighbor
 			} else if neighbor.DistanceField > nearestNeighbor.DistanceField {
@@ -517,6 +502,39 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 		}
 	}
 	fmt.Println("DONE")
+}
+
+func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
+	var neighbors []*Voxel
+
+	for _, dir := range neighborDirs {
+		if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+			continue
+		}
+
+		var neighbor *Voxel
+		reachNeighbor := &reachField[x+dir[0]][y][z+dir[1]]
+		if reachNeighbor.sourceVoxel != nil {
+			neighbor = reachNeighbor.sourceVoxel
+		} else if voxelField[x+dir[0]][y][z+dir[1]].Filled {
+			neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
+		}
+
+		if neighbor != nil {
+			neighbors = append(neighbors, neighbor)
+		}
+	}
+
+	return neighbors
+}
+
+func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+	for x := 0; x < dimensions[0]; x++ {
+		for y := 0; y < dimensions[1]; y++ {
+			for z := 0; z < dimensions[2]; z++ {
+			}
+		}
+	}
 }
 
 func (n *NavigationMesh) BakeNavMesh() {

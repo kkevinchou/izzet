@@ -31,6 +31,7 @@ type DebugSettings struct {
 	TriangleHIT              bool
 	NavMeshHSV               bool
 	NavMeshRegionIDThreshold int32
+	HSVOffset                int32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -59,4 +60,5 @@ var DBG DebugSettings = DebugSettings{
 
 	NavMeshHSV:               true,
 	NavMeshRegionIDThreshold: 1,
+	HSVOffset:                7,
 }

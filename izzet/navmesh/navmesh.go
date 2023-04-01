@@ -248,14 +248,15 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 			for y := 0; y < dimensions[1]; y++ {
 				xNeighbor := voxelField[x-1][y][z]
 				zNeighbor := voxelField[x][y][z-1]
+				xzNeighbor := voxelField[x-1][y][z-1]
+
 				xReach := reachField[x-1][y][z]
 				zReach := reachField[x][y][z-1]
-				// voxel := voxelField[x][y][z]
+				xzReach := reachField[x-1][y][z-1]
 
 				var minDistanceFieldValue int
 
-				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) {
-					// if false {
+				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNeighbor.Filled && !xzReach.hasSource) {
 					minDistanceFieldValue = 0
 				} else {
 					var distanceFieldXValue int
@@ -274,9 +275,20 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
 					}
 
+					var distanceFieldXZValue int
+					if zNeighbor.Filled {
+						distanceFieldXZValue = zNeighbor.DistanceField
+					} else if zReach.hasSource {
+						source := zReach.source
+						distanceFieldXZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+					}
+
 					minDistanceFieldValue = distanceFieldXValue
 					if distanceFieldZValue < minDistanceFieldValue {
 						minDistanceFieldValue = distanceFieldZValue
+					}
+					if distanceFieldXZValue < minDistanceFieldValue {
+						minDistanceFieldValue = distanceFieldXZValue
 					}
 
 					if minDistanceFieldValue != MaxDistanceFieldValue {
@@ -296,13 +308,15 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 			for y := 0; y < dimensions[1]; y++ {
 				xNeighbor := voxelField[x+1][y][z]
 				zNeighbor := voxelField[x][y][z+1]
+				xzNeighbor := voxelField[x+1][y][z+1]
+
 				xReach := reachField[x+1][y][z]
 				zReach := reachField[x][y][z+1]
+				xzReach := reachField[x+1][y][z+1]
 
 				var minDistanceFieldValue int
 
-				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) {
-					// if false {
+				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNeighbor.Filled && !xzReach.hasSource) {
 					minDistanceFieldValue = 0
 				} else {
 					var distanceFieldXValue int
@@ -321,9 +335,20 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
 					}
 
+					var distanceFieldXZValue int
+					if zNeighbor.Filled {
+						distanceFieldXZValue = zNeighbor.DistanceField
+					} else if zReach.hasSource {
+						source := zReach.source
+						distanceFieldXZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+					}
+
 					minDistanceFieldValue = distanceFieldXValue
 					if distanceFieldZValue < minDistanceFieldValue {
 						minDistanceFieldValue = distanceFieldZValue
+					}
+					if distanceFieldXZValue < minDistanceFieldValue {
+						minDistanceFieldValue = distanceFieldXZValue
 					}
 
 					if minDistanceFieldValue != MaxDistanceFieldValue {

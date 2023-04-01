@@ -31,7 +31,7 @@ var (
 	}
 )
 
-func worldProps(renderContext RenderContext) {
+func worldProps(world World, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
@@ -59,6 +59,11 @@ func worldProps(renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
+		setupRow("NavMeshHSV", func() {
+			if imgui.Checkbox("NavMeshHSV", &DBG.NavMeshHSV) {
+				world.ResetNavMeshVAO()
+			}
+		})
 		setupRow("Triangle HIT", func() { imgui.Checkbox("TriangleHIT", &DBG.TriangleHIT) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })

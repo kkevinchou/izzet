@@ -59,13 +59,15 @@ var navMeshTrisVAO uint32
 var navMeshVBO uint32
 var lastVoxelCount = 0
 var lastVertexCount = 0
+var ResetNavMeshVAO bool = false
 
 var lastMeshUpdate time.Time = time.Now()
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
-	if navmesh.VoxelCount() != lastVoxelCount {
-		if time.Since(lastMeshUpdate) > 5*time.Second {
+	if navmesh.VoxelCount() != lastVoxelCount || ResetNavMeshVAO {
+		if time.Since(lastMeshUpdate) > 5*time.Second || ResetNavMeshVAO {
+			ResetNavMeshVAO = false
 			vaos := []uint32{navMeshTrisVAO}
 			gl.DeleteVertexArrays(1, &vaos[0])
 			vbos := []uint32{navMeshVBO}
@@ -221,10 +223,17 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 	if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
 		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
 		color = HSVtoRGB(hsv)
-	}
 
-	if voxel.DistanceField == 0 {
-		color = mgl32.Vec3{0, 0, 1}
+		if voxel.DistanceField == 0 {
+			color = mgl32.Vec3{0, 0, 1}
+		}
+
+		if voxel.Seed {
+			color = mgl32.Vec3{1, 0, 1}
+		} else if panels.DBG.NavMeshHSV {
+			hsv = mgl32.Vec3{float32(voxel.RegionID % 255), .8, .8}
+			color = HSVtoRGB(hsv)
+		}
 	}
 
 	// if voxel.DistanceField == 0 {

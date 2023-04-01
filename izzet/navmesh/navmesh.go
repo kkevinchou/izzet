@@ -484,6 +484,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
 				regionIDCounter++
 				voxel.RegionID = regionIDCounter
+				fmt.Println(regionIDCounter, "SEED -", voxel.X, voxel.Y, voxel.Z, voxel.DistanceField)
 			} else {
 				voxel.RegionID = nearestNeighbor.RegionID
 			}
@@ -491,6 +492,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			// isolated voxel, so it's its own region, though we'll probably discard it
 			regionIDCounter++
 			voxel.RegionID = regionIDCounter
+			fmt.Println(regionIDCounter, "SEED -", voxel.X, voxel.Y, voxel.Z, voxel.DistanceField)
 		}
 
 		// fmt.Println(voxel.X, voxel.Y, voxel.Z)

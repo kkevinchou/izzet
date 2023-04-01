@@ -33,7 +33,7 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
-		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{0, 150, 0}},
+		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
@@ -250,41 +250,41 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 				xzNegativeReach := reachField[x-1][y][z-1]
 				xzPositiveReach := reachField[x+1][y][z-1]
 
-				var minDistanceFieldValue int
+				var minDistanceFieldValue float64
 
 				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
 					minDistanceFieldValue = 0
 				} else {
-					var distanceFieldXValue int
+					var distanceFieldXValue float64
 					if xNeighbor.Filled {
-						distanceFieldXValue = xNeighbor.DistanceField
+						distanceFieldXValue = xNeighbor.DistanceField + 1
 					} else if xReach.hasSource {
 						source := xReach.source
-						distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
 					}
 
-					var distanceFieldZValue int
+					var distanceFieldZValue float64
 					if zNeighbor.Filled {
-						distanceFieldZValue = zNeighbor.DistanceField
+						distanceFieldZValue = zNeighbor.DistanceField + 1
 					} else if zReach.hasSource {
 						source := zReach.source
-						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
 					}
 
-					var distanceFieldXZNegativeValue int
+					var distanceFieldXZNegativeValue float64
 					if xzNegativeNeighbor.Filled {
-						distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField
+						distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField + 1.4
 					} else if xzNegativeReach.hasSource {
 						source := xzNegativeReach.source
-						distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
 					}
 
-					var distanceFieldXZPositiveValue int
+					var distanceFieldXZPositiveValue float64
 					if xzPositiveNeighbor.Filled {
-						distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField
+						distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField + 1.4
 					} else if xzPositiveReach.hasSource {
 						source := xzPositiveReach.source
-						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
 					}
 
 					minDistanceFieldValue = distanceFieldXValue
@@ -296,10 +296,6 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 					}
 					if distanceFieldXZPositiveValue < minDistanceFieldValue {
 						minDistanceFieldValue = distanceFieldXZPositiveValue
-					}
-
-					if minDistanceFieldValue != MaxDistanceFieldValue {
-						minDistanceFieldValue += 1
 					}
 				}
 
@@ -323,41 +319,41 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 				xzNegativeReach := reachField[x+1][y][z+1]
 				xzPositiveReach := reachField[x-1][y][z+1]
 
-				var minDistanceFieldValue int
+				var minDistanceFieldValue float64
 
 				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
 					minDistanceFieldValue = 0
 				} else {
-					var distanceFieldXValue int
+					var distanceFieldXValue float64
 					if xNeighbor.Filled {
-						distanceFieldXValue = xNeighbor.DistanceField
+						distanceFieldXValue = xNeighbor.DistanceField + 1
 					} else if xReach.hasSource {
 						source := xReach.source
-						distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
 					}
 
-					var distanceFieldZValue int
+					var distanceFieldZValue float64
 					if zNeighbor.Filled {
-						distanceFieldZValue = zNeighbor.DistanceField
+						distanceFieldZValue = zNeighbor.DistanceField + 1
 					} else if zReach.hasSource {
 						source := zReach.source
-						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
 					}
 
-					var distanceFieldXZNegativeValue int
+					var distanceFieldXZNegativeValue float64
 					if xzNegativeNeighbor.Filled {
-						distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField
+						distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField + 1.4
 					} else if xzNegativeReach.hasSource {
 						source := xzNegativeReach.source
-						distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
 					}
 
-					var distanceFieldXZPositiveValue int
+					var distanceFieldXZPositiveValue float64
 					if xzPositiveNeighbor.Filled {
-						distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField
+						distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField + 1.4
 					} else if xzPositiveReach.hasSource {
 						source := xzPositiveReach.source
-						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
 					}
 
 					minDistanceFieldValue = distanceFieldXValue
@@ -369,10 +365,6 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 					}
 					if distanceFieldXZPositiveValue < minDistanceFieldValue {
 						minDistanceFieldValue = distanceFieldXZPositiveValue
-					}
-
-					if minDistanceFieldValue != MaxDistanceFieldValue {
-						minDistanceFieldValue += 1
 					}
 				}
 
@@ -457,7 +449,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 type Voxel struct {
 	Filled        bool
 	X, Y, Z       int
-	DistanceField int
+	DistanceField float64
 
 	// Neighbors [][3]int
 }
@@ -477,4 +469,4 @@ func NewVoxel(x, y, z int) Voxel {
 	}
 }
 
-const MaxDistanceFieldValue int = 999999999999999999
+const MaxDistanceFieldValue float64 = 999999999999999

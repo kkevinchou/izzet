@@ -223,6 +223,10 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 		color = HSVtoRGB(hsv)
 	}
 
+	if voxel.DistanceField == 0 {
+		color = mgl32.Vec3{0, 0, 1}
+	}
+
 	// if voxel.DistanceField == 0 {
 	// 	colorVal := float32(1)
 	// 	color = []float32{colorVal, colorVal, colorVal}

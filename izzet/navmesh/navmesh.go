@@ -14,7 +14,8 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-const agentHeight int = 4
+const stepHeight int = 4
+const agentHeight int = 8
 
 type World interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
@@ -32,11 +33,14 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
-		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -50, -50}, MaxVertex: mgl64.Vec3{50, 50, 50}},
+		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{0, 150, 0}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
 	nm.BakeNavMesh()
+	// move the scene out of the way
+	entity := world.GetEntityByID(3)
+	entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
 	return nm
 }
 
@@ -229,21 +233,29 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 			voxelField[dimensions[0]-1][y][z].DistanceField = 0
 		}
 	}
+	for y := 0; y < dimensions[1]; y++ {
+		for x := 1; x < dimensions[0]-1; x++ {
+			for z := 1; z < dimensions[2]-1; z++ {
+			}
+		}
+	}
 
 	// compute distance transform from the bottom up
 	// we can skip over the boundary voxels since they're initialized above
 
-	for y := 0; y < dimensions[1]; y++ {
-		for x := 1; x < dimensions[0]-1; x++ {
-			for z := 1; z < dimensions[2]-1; z++ {
+	for x := 1; x < dimensions[0]-1; x++ {
+		for z := 1; z < dimensions[2]-1; z++ {
+			for y := 0; y < dimensions[1]; y++ {
 				xNeighbor := voxelField[x-1][y][z]
 				zNeighbor := voxelField[x][y][z-1]
 				xReach := reachField[x-1][y][z]
 				zReach := reachField[x][y][z-1]
+				// voxel := voxelField[x][y][z]
 
 				var minDistanceFieldValue int
 
 				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) {
+					// if false {
 					minDistanceFieldValue = 0
 				} else {
 					var distanceFieldXValue int
@@ -279,9 +291,9 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 		}
 	}
 
-	for y := 0; y < dimensions[1]; y++ {
-		for x := dimensions[0] - 2; x > 0; x-- {
-			for z := dimensions[2] - 2; z > 0; z-- {
+	for x := dimensions[0] - 2; x > 0; x-- {
+		for z := dimensions[2] - 2; z > 0; z-- {
+			for y := 0; y < dimensions[1]; y++ {
 				xNeighbor := voxelField[x+1][y][z]
 				zNeighbor := voxelField[x][y][z+1]
 				xReach := reachField[x+1][y][z]
@@ -290,6 +302,7 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 				var minDistanceFieldValue int
 
 				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) {
+					// if false {
 					minDistanceFieldValue = 0
 				} else {
 					var distanceFieldXValue int
@@ -324,12 +337,63 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 			}
 		}
 	}
+
+	// for y := 0; y < dimensions[1]; y++ {
+	// 	for x := dimensions[0] - 2; x > 0; x-- {
+	// 		for z := dimensions[2] - 2; z > 0; z-- {
+	// 			xNeighbor := voxelField[x+1][y][z]
+	// 			zNeighbor := voxelField[x][y][z+1]
+	// 			xReach := reachField[x+1][y][z]
+	// 			zReach := reachField[x][y][z+1]
+
+	// 			var minDistanceFieldValue int
+
+	// 			if ((!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource)) && len(voxelField[x][y][z].Neighbors) < 4 {
+	// 				// if false {
+	// 				minDistanceFieldValue = 0
+	// 			} else {
+	// 				var distanceFieldXValue int
+	// 				if xNeighbor.Filled {
+	// 					distanceFieldXValue = xNeighbor.DistanceField
+	// 				} else if xReach.hasSource {
+	// 					source := xReach.source
+	// 					distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+	// 				} else {
+	// 					// fmt.Println("NANI")
+	// 				}
+
+	// 				var distanceFieldZValue int
+	// 				if zNeighbor.Filled {
+	// 					distanceFieldZValue = zNeighbor.DistanceField
+	// 				} else if zReach.hasSource {
+	// 					source := zReach.source
+	// 					distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField
+	// 				}
+
+	// 				minDistanceFieldValue = distanceFieldXValue
+	// 				if distanceFieldZValue < minDistanceFieldValue {
+	// 					minDistanceFieldValue = distanceFieldZValue
+	// 				}
+
+	// 				if minDistanceFieldValue != MaxDistanceFieldValue {
+	// 					minDistanceFieldValue += 1
+	// 				}
+	// 			}
+
+	// 			if minDistanceFieldValue < voxelField[x][y][z].DistanceField {
+	// 				voxelField[x][y][z].DistanceField = minDistanceFieldValue
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 type ReachInfo struct {
 	source    [3]int
 	hasSource bool
 }
+
+var neighborDirs [][2]int = [][2]int{[2]int{-1, -1}, [2]int{1, -1}, [2]int{1, 1}, [2]int{-1, 1}}
 
 func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInfo {
 	reachField := make([][][]ReachInfo, dimensions[0])
@@ -340,20 +404,61 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 		}
 	}
 
-	for y := 0; y < dimensions[1]-agentHeight; y++ {
+	for y := 0; y < dimensions[1]-stepHeight; y++ {
 		for x := 0; x < dimensions[0]; x++ {
 			for z := 0; z < dimensions[2]; z++ {
 				if !voxelField[x][y][z].Filled {
 					continue
 				}
 
-				for i := 1; i < agentHeight+1; i++ {
-					reachField[x][y+i][z].hasSource = true
-					reachField[x][y+i][z].source = [3]int{x, y, z}
+				// for _, dir := range neighborDirs {
+				// 	if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+				// 		continue
+				// 	}
+
+				// 	if voxelField[x+dir[0]][y][z+dir[1]].Filled {
+				// 		voxelField[x][y][z].Neighbors = append(voxelField[x][y][z].Neighbors, [3]int{x + dir[0], y, z + dir[1]})
+				// 	}
+				// }
+
+				for i := 1; i < stepHeight+1; i++ {
+					if y+i < dimensions[1] {
+						reachField[x][y+i][z].hasSource = true
+						reachField[x][y+i][z].source = [3]int{x, y, z}
+					}
+
+					if y-i >= 0 {
+						reachField[x][y-i][z].hasSource = true
+						reachField[x][y-i][z].source = [3]int{x, y, z}
+					}
+
+					// for _, dir := range neighborDirs {
+					// 	if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+					// 		continue
+					// 	}
+
+					// 	if voxelField[x+dir[0]][y+i][z+dir[1]].Filled {
+					// 		voxelField[x][y][z].Neighbors = append(voxelField[x][y][z].Neighbors, [3]int{x + dir[0], y + i, z + dir[1]})
+					// 	}
+					// }
+				}
+
+				for i := 1; i < stepHeight+1; i++ {
+
+					// for _, dir := range neighborDirs {
+					// 	if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+					// 		continue
+					// 	}
+
+					// 	if voxelField[x+dir[0]][y+i][z+dir[1]].Filled {
+					// 		voxelField[x][y][z].Neighbors = append(voxelField[x][y][z].Neighbors, [3]int{x + dir[0], y + i, z + dir[1]})
+					// 	}
+					// }
 				}
 			}
 		}
 	}
+
 	return reachField
 }
 
@@ -370,6 +475,8 @@ type Voxel struct {
 	Filled        bool
 	X, Y, Z       int
 	DistanceField int
+
+	// Neighbors [][3]int
 }
 
 type OutputWork struct {

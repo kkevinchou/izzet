@@ -213,11 +213,16 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 	// 	color = []float32{0.8, 0, 0}
 	// }
 
-	color := []float32{0.2, 0.2, 0.2}
+	color := mgl32.Vec3{1.0, 0, 0}
+
+	// if len(voxel.Neighbors) == 4 {
+	// 	color = mgl32.Vec3{0, 1, 0}
+	// } else if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
 	if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
-		colorVal := float32(voxel.DistanceField) / 100
-		color = []float32{colorVal, colorVal, colorVal}
+		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
+		color = HSVtoRGB(hsv)
 	}
+
 	// if voxel.DistanceField == 0 {
 	// 	colorVal := float32(1)
 	// 	color = []float32{colorVal, colorVal, colorVal}
@@ -238,6 +243,93 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 	}
 
 	return vertexAttributes
+}
+
+func RGBtoHSV(rgb mgl32.Vec3) mgl32.Vec3 {
+	// Normalize RGB values to be between 0 and 1
+	r := rgb.X()
+	g := rgb.Y()
+	b := rgb.Z()
+
+	// Determine maximum and minimum values among R, G, and B
+	maxVal := float32(math.Max(math.Max(float64(r), float64(g)), float64(b)))
+	minVal := float32(math.Min(math.Min(float64(r), float64(g)), float64(b)))
+
+	// Calculate value (V) as maximum of R, G, and B
+	v := maxVal
+
+	// Calculate saturation (S)
+	var s float32
+	if maxVal == 0 {
+		s = 0
+	} else {
+		s = (maxVal - minVal) / maxVal
+	}
+
+	// Calculate hue (H)
+	var h float32
+	if maxVal == minVal {
+		h = 0
+	} else if maxVal == r && g >= b {
+		h = 60 * (g - b) / (maxVal - minVal)
+	} else if maxVal == r && g < b {
+		h = 60*(g-b)/(maxVal-minVal) + 360
+	} else if maxVal == g {
+		h = 60*(b-r)/(maxVal-minVal) + 120
+	} else { // maxVal == B
+		h = 60*(r-g)/(maxVal-minVal) + 240
+	}
+
+	// Return HSV values as an mgl32.Vec3
+	return mgl32.Vec3{h, s, v}
+}
+
+func HSVtoRGB(hsv mgl32.Vec3) mgl32.Vec3 {
+	// Extract H, S, and V values from input Vec3
+	h := hsv.X()
+	s := hsv.Y()
+	v := hsv.Z()
+
+	// Calculate chroma (C)
+	c := v * s
+
+	// Calculate h' (hPrime)
+	hPrime := h / 60
+
+	// Calculate x
+	x := c * float32(1-math.Abs(float64(math.Mod(float64(hPrime), 2)-1)))
+
+	// Calculate m
+	m := v - c
+
+	// Initialize RGB values to m
+	r := m
+	g := m
+	b := m
+
+	// Determine which sector of the color wheel h' falls in and set RGB values accordingly
+	if hPrime < 1 {
+		r += c
+		g += x
+	} else if hPrime < 2 {
+		r += x
+		g += c
+	} else if hPrime < 3 {
+		g += c
+		b += x
+	} else if hPrime < 4 {
+		g += x
+		b += c
+	} else if hPrime < 5 {
+		r += x
+		b += c
+	} else {
+		r += c
+		b += x
+	}
+
+	// Create and return RGB Vec3
+	return mgl32.Vec3{r, g, b}
 }
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain

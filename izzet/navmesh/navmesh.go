@@ -469,7 +469,6 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
 				regionIDCounter++
 				voxel.RegionID = regionIDCounter
-				fmt.Println(regionIDCounter, "SEED -", voxel.X, voxel.Y, voxel.Z, voxel.DistanceField)
 			} else {
 				voxel.RegionID = nearestNeighbor.RegionID
 			}
@@ -477,7 +476,6 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			// isolated voxel, so it's its own region, though we'll probably discard it
 			regionIDCounter++
 			voxel.RegionID = regionIDCounter
-			fmt.Println(regionIDCounter, "SEED -", voxel.X, voxel.Y, voxel.Z, voxel.DistanceField)
 		}
 
 		// fmt.Println(voxel.X, voxel.Y, voxel.Z)
@@ -501,7 +499,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			}
 		}
 	}
-	fmt.Println("DONE")
+	fmt.Printf("generated %d regions\n", len(regionCount))
 }
 
 func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
@@ -520,18 +518,70 @@ func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInf
 			neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
 		}
 
-		if neighbor != nil {
-			neighbors = append(neighbors, neighbor)
+		if neighbor == nil {
+			continue
 		}
+
+		neighbors = append(neighbors, neighbor)
 	}
 
 	return neighbors
 }
 
+//	var neighborDirs [][2]int = [][2]int{
+//		[2]int{-1, -1}, [2]int{0, -1}, [2]int{1, -1},
+//		[2]int{-1, 0} /* current voxel */, [2]int{1, 0},
+//		[2]int{-1, 1}, [2]int{0, 1}, [2]int{1, 1},
+//	}
+
+var blurWeights []float64 = []float64{
+	1, 2, 1,
+	2, 4, 2,
+	1, 2, 1,
+}
+
 func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+	blurredDistance := make([][][]float64, dimensions[0])
+	for i := range voxelField {
+		blurredDistance[i] = make([][]float64, dimensions[1])
+		for j := range voxelField[i] {
+			blurredDistance[i][j] = make([]float64, dimensions[2])
+		}
+	}
+
 	for x := 0; x < dimensions[0]; x++ {
 		for y := 0; y < dimensions[1]; y++ {
 			for z := 0; z < dimensions[2]; z++ {
+				var totalWeight float64
+				for i, dir := range neighborDirs {
+					if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+						continue
+					}
+
+					var neighbor *Voxel
+					reachNeighbor := &reachField[x+dir[0]][y][z+dir[1]]
+					if reachNeighbor.sourceVoxel != nil {
+						neighbor = reachNeighbor.sourceVoxel
+					} else if voxelField[x+dir[0]][y][z+dir[1]].Filled {
+						neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
+					}
+
+					if neighbor == nil {
+						continue
+					}
+
+					totalWeight += blurWeights[i] * neighbor.DistanceField
+				}
+				totalWeight /= 16
+				blurredDistance[x][y][z] = totalWeight
+			}
+		}
+	}
+
+	for x := 0; x < dimensions[0]; x++ {
+		for y := 0; y < dimensions[1]; y++ {
+			for z := 0; z < dimensions[2]; z++ {
+				voxelField[x][y][z].DistanceField = blurredDistance[x][y][z]
 			}
 		}
 	}
@@ -544,6 +594,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 	n.voxelField = n.voxelize()
 	buildNavigableArea(n.voxelField, dimensions)
 	reachField := computeDistanceTransform(n.voxelField, dimensions)
+	blurDistanceField(n.voxelField, reachField, dimensions)
 	watershed(n.voxelField, reachField, dimensions)
 }
 

@@ -20,6 +20,7 @@ type World interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	GetEntityByID(id int) *entities.Entity
 	Entities() []*entities.Entity
+	ResetNavMeshVAO()
 }
 
 func SelectEntity(entity *entities.Entity) {

@@ -35,6 +35,7 @@ type World interface {
 	GetEntityByID(id int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 	NavMesh() *navmesh.NavigationMesh
+	ResetNavMeshVAO()
 
 	// for panels
 	AddEntity(entity *entities.Entity)

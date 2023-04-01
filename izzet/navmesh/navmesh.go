@@ -1,6 +1,7 @@
 package navmesh
 
 import (
+	"container/heap"
 	"fmt"
 	"strings"
 	"sync"
@@ -33,7 +34,7 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
-		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
+		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{0, 150, 0}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
@@ -219,7 +220,7 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 	wg.Wait()
 }
 
-func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
+func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInfo {
 	reachField := computeReachField(voxelField, dimensions)
 
 	// boundaries have a distance field of 0
@@ -374,14 +375,15 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) {
 			}
 		}
 	}
+
+	return reachField
 }
 
 type ReachInfo struct {
-	source    [3]int
-	hasSource bool
+	sourceVoxel *Voxel
+	source      [3]int
+	hasSource   bool
 }
-
-var neighborDirs [][2]int = [][2]int{[2]int{-1, -1}, [2]int{1, -1}, [2]int{1, 1}, [2]int{-1, 1}}
 
 func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInfo {
 	reachField := make([][][]ReachInfo, dimensions[0])
@@ -413,11 +415,13 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 					if y+i < dimensions[1] {
 						reachField[x][y+i][z].hasSource = true
 						reachField[x][y+i][z].source = [3]int{x, y, z}
+						reachField[x][y+i][z].sourceVoxel = &voxelField[x][y][z]
 					}
 
 					if y-i >= 0 {
 						reachField[x][y-i][z].hasSource = true
 						reachField[x][y-i][z].source = [3]int{x, y, z}
+						reachField[x][y-i][z].sourceVoxel = &voxelField[x][y][z]
 					}
 
 					// for _, dir := range neighborDirs {
@@ -437,19 +441,121 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 	return reachField
 }
 
+var neighborDirs [][2]int = [][2]int{[2]int{-1, -1}, [2]int{1, -1}, [2]int{1, 1}, [2]int{-1, 1}}
+var regionIDCounter int = 69
+
+func setSeedVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+	pq := PriorityQueue{}
+
+	var max float64
+	for x := 0; x < dimensions[0]; x++ {
+		for y := 0; y < dimensions[1]; y++ {
+			for z := 0; z < dimensions[2]; z++ {
+				if !voxelField[x][y][z].Filled {
+					continue
+				}
+
+				voxel := &voxelField[x][y][z]
+				if voxel.DistanceField > max {
+					max = voxel.DistanceField
+				}
+				pq = append(pq, &Item{value: voxel, priority: voxel.DistanceField})
+			}
+		}
+	}
+	heap.Init(&pq)
+
+	// runCount := 0
+	for pq.Len() > 0 {
+		item := heap.Pop(&pq).(*Item)
+		voxel := item.value
+
+		x := voxel.X
+		y := voxel.Y
+		z := voxel.Z
+
+		var nearestNeighbor *Voxel
+		for _, dir := range neighborDirs {
+			if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+				continue
+			}
+
+			var neighbor *Voxel
+			reachNeighbor := &reachField[x+dir[0]][y][z+dir[1]]
+			if reachNeighbor.sourceVoxel != nil {
+				neighbor = reachNeighbor.sourceVoxel
+			} else if voxelField[x+dir[0]][y][z+dir[1]].Filled {
+				neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
+			}
+
+			if neighbor == nil {
+				continue
+			}
+
+			if nearestNeighbor == nil {
+				nearestNeighbor = neighbor
+			} else if neighbor.DistanceField > nearestNeighbor.DistanceField {
+				nearestNeighbor = neighbor
+			}
+		}
+
+		if nearestNeighbor != nil {
+			// seed point since the distance is larger than any neighbor
+			if voxel.DistanceField > nearestNeighbor.DistanceField {
+				regionIDCounter++
+				voxel.RegionID = regionIDCounter
+			} else {
+				voxel.RegionID = nearestNeighbor.RegionID
+			}
+		} else {
+			// isolated voxel, so it's its own region, though we'll probably discard it
+			regionIDCounter++
+			voxel.RegionID = regionIDCounter
+		}
+
+		// voxel.Seed = true
+		// runCount++
+		// if runCount >= 10 {
+		// 	break
+		// }
+	}
+
+	regionCount := map[int]int{}
+	for x := 0; x < dimensions[0]; x++ {
+		for y := 0; y < dimensions[1]; y++ {
+			for z := 0; z < dimensions[2]; z++ {
+				if !voxelField[x][y][z].Filled {
+					continue
+				}
+
+				voxel := &voxelField[x][y][z]
+				regionCount[voxel.RegionID]++
+				// if voxel.DistanceField > max {
+				// 	max = voxel.DistanceField
+				// }
+				// pq = append(pq, &Item{value: voxel, priority: voxel.DistanceField})
+			}
+		}
+	}
+	fmt.Println("DONE")
+}
+
 func (n *NavigationMesh) BakeNavMesh() {
 	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
 
 	n.voxelField = n.voxelize()
 	buildNavigableArea(n.voxelField, dimensions)
-	computeDistanceTransform(n.voxelField, dimensions)
+	reachField := computeDistanceTransform(n.voxelField, dimensions)
+	setSeedVoxels(n.voxelField, reachField, dimensions)
 }
 
 type Voxel struct {
 	Filled        bool
 	X, Y, Z       int
 	DistanceField float64
+	Seed          bool
+	RegionID      int
 
 	// Neighbors [][3]int
 }

@@ -32,7 +32,7 @@ var (
 )
 
 func worldProps(world World, renderContext RenderContext) {
-	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) })
@@ -45,7 +45,7 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &DBG.EnableShadowMapping) })
 		imgui.EndTable()
 	}
-	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Enable Bloom", func() { imgui.Checkbox("", &DBG.Bloom) })
@@ -56,11 +56,16 @@ func worldProps(world World, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("NavMeshHSV", func() {
 			if imgui.Checkbox("NavMeshHSV", &DBG.NavMeshHSV) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("NavMesh Region Threshold", func() {
+			if imgui.InputInt("", &DBG.NavMeshRegionIDThreshold) {
 				world.ResetNavMeshVAO()
 			}
 		})

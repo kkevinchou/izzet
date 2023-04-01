@@ -16,7 +16,7 @@ import (
 )
 
 const stepHeight int = 4
-const agentHeight int = 8
+const agentHeight int = 30
 
 type World interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
@@ -401,16 +401,6 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 					continue
 				}
 
-				// for _, dir := range neighborDirs {
-				// 	if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
-				// 		continue
-				// 	}
-
-				// 	if voxelField[x+dir[0]][y][z+dir[1]].Filled {
-				// 		voxelField[x][y][z].Neighbors = append(voxelField[x][y][z].Neighbors, [3]int{x + dir[0], y, z + dir[1]})
-				// 	}
-				// }
-
 				for i := 1; i < stepHeight+1; i++ {
 					if y+i < dimensions[1] {
 						reachField[x][y+i][z].hasSource = true
@@ -423,16 +413,6 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 						reachField[x][y-i][z].source = [3]int{x, y, z}
 						reachField[x][y-i][z].sourceVoxel = &voxelField[x][y][z]
 					}
-
-					// for _, dir := range neighborDirs {
-					// 	if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
-					// 		continue
-					// 	}
-
-					// 	if voxelField[x+dir[0]][y+i][z+dir[1]].Filled {
-					// 		voxelField[x][y][z].Neighbors = append(voxelField[x][y][z].Neighbors, [3]int{x + dir[0], y + i, z + dir[1]})
-					// 	}
-					// }
 				}
 			}
 		}
@@ -441,13 +421,16 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 	return reachField
 }
 
-var neighborDirs [][2]int = [][2]int{[2]int{-1, -1}, [2]int{1, -1}, [2]int{1, 1}, [2]int{-1, 1}}
-var regionIDCounter int = 69
+var neighborDirs [][2]int = [][2]int{
+	[2]int{-1, -1}, [2]int{0, -1}, [2]int{1, -1},
+	[2]int{-1, 0} /* current voxel */, [2]int{1, 0},
+	[2]int{-1, 1}, [2]int{0, 1}, [2]int{1, 1},
+}
+var regionIDCounter int
 
-func setSeedVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
 	pq := PriorityQueue{}
 
-	var max float64
 	for x := 0; x < dimensions[0]; x++ {
 		for y := 0; y < dimensions[1]; y++ {
 			for z := 0; z < dimensions[2]; z++ {
@@ -456,9 +439,6 @@ func setSeedVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimension
 				}
 
 				voxel := &voxelField[x][y][z]
-				if voxel.DistanceField > max {
-					max = voxel.DistanceField
-				}
 				pq = append(pq, &Item{value: voxel, priority: voxel.DistanceField})
 			}
 		}
@@ -501,7 +481,7 @@ func setSeedVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimension
 
 		if nearestNeighbor != nil {
 			// seed point since the distance is larger than any neighbor
-			if voxel.DistanceField > nearestNeighbor.DistanceField {
+			if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
 				regionIDCounter++
 				voxel.RegionID = regionIDCounter
 			} else {
@@ -513,9 +493,10 @@ func setSeedVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimension
 			voxel.RegionID = regionIDCounter
 		}
 
-		// voxel.Seed = true
+		// fmt.Println(voxel.X, voxel.Y, voxel.Z)
+
 		// runCount++
-		// if runCount >= 10 {
+		// if runCount >= 7 {
 		// 	break
 		// }
 	}
@@ -530,10 +511,6 @@ func setSeedVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimension
 
 				voxel := &voxelField[x][y][z]
 				regionCount[voxel.RegionID]++
-				// if voxel.DistanceField > max {
-				// 	max = voxel.DistanceField
-				// }
-				// pq = append(pq, &Item{value: voxel, priority: voxel.DistanceField})
 			}
 		}
 	}
@@ -547,7 +524,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 	n.voxelField = n.voxelize()
 	buildNavigableArea(n.voxelField, dimensions)
 	reachField := computeDistanceTransform(n.voxelField, dimensions)
-	setSeedVoxels(n.voxelField, reachField, dimensions)
+	watershed(n.voxelField, reachField, dimensions)
 }
 
 type Voxel struct {
@@ -572,6 +549,7 @@ func NewVoxel(x, y, z int) Voxel {
 		Y:             y,
 		Z:             z,
 		DistanceField: MaxDistanceFieldValue,
+		RegionID:      -1,
 	}
 }
 

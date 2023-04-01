@@ -28,8 +28,9 @@ type DebugSettings struct {
 	TriangleDrawCount int
 	DrawCount         int
 
-	TriangleHIT bool
-	NavMeshHSV  bool
+	TriangleHIT              bool
+	NavMeshHSV               bool
+	NavMeshRegionIDThreshold int32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -56,5 +57,6 @@ var DBG DebugSettings = DebugSettings{
 	TriangleDrawCount: 0,
 	DrawCount:         0,
 
-	NavMeshHSV: false,
+	NavMeshHSV:               true,
+	NavMeshRegionIDThreshold: 1,
 }

@@ -3,6 +3,7 @@ package navmesh
 import (
 	"container/heap"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -34,7 +35,7 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
-		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{0, 150, 0}},
+		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
@@ -428,7 +429,7 @@ var neighborDirs [][2]int = [][2]int{
 }
 var regionIDCounter int
 
-func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][][3]int {
 	pq := PriorityQueue{}
 
 	for x := 0; x < dimensions[0]; x++ {
@@ -444,6 +445,8 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 		}
 	}
 	heap.Init(&pq)
+
+	regionMap := map[int][][3]int{}
 
 	// runCount := 0
 	for pq.Len() > 0 {
@@ -469,6 +472,8 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
 				regionIDCounter++
 				voxel.RegionID = regionIDCounter
+				voxel.Seed = true
+				// fmt.Println("SEED - ", voxel.X, voxel.Y, voxel.Z, voxel.DistanceField)
 			} else {
 				voxel.RegionID = nearestNeighbor.RegionID
 			}
@@ -477,6 +482,8 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			regionIDCounter++
 			voxel.RegionID = regionIDCounter
 		}
+
+		regionMap[voxel.RegionID] = append(regionMap[voxel.RegionID], [3]int{x, y, z})
 
 		// fmt.Println(voxel.X, voxel.Y, voxel.Z)
 
@@ -500,6 +507,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 		}
 	}
 	fmt.Printf("generated %d regions\n", len(regionCount))
+	return regionMap
 }
 
 func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
@@ -587,6 +595,134 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 	}
 }
 
+func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
+	// seedNeighbors := map[[3]int][][3]int{}
+
+	// for x := 0; x < dimensions[0]; x++ {
+	// 	for y := 0; y < dimensions[1]; y++ {
+	// 		for z := 0; z < dimensions[2]; z++ {
+	// 			if !voxelField[x][y][z].Filled || !voxelField[x][y][z].Seed {
+	// 				continue
+	// 			}
+
+	// 			neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
+	// 			var minNeighborRegion int = -1
+	// 			for _, neighbor := range neighbors {
+	// 				if !neighbor.Seed {
+	// 					continue
+	// 				}
+
+	// 				seedNeighbors[[3]int{x, y, z}] = append(seedNeighbors[[3]int{x, y, z}], [3]int{neighbor.X, neighbor.Y, neighbor.Z})
+	// 				seedNeighbors[[3]int{neighbor.X, neighbor.Y, neighbor.Z}] = append(seedNeighbors[[3]int{x, y, z}], [3]int{x, y, z})
+
+	// 				if minNeighborRegion == -1 {
+	// 					minNeighborRegion = neighbor.RegionID
+	// 				} else {
+	// 					if neighbor.RegionID < minNeighborRegion {
+	// 						minNeighborRegion = neighbor.RegionID
+	// 					}
+	// 				}
+	// 			}
+
+	// 			if minNeighborRegion != -1 && minNeighborRegion < voxelField[x][y][z].RegionID {
+	// 				for _, coords := range regionMap[voxelField[x][y][z].RegionID] {
+	// 					x := coords[0]
+	// 					y := coords[1]
+	// 					z := coords[2]
+	// 					voxelField[x][y][z].RegionID = minNeighborRegion
+	// 					regionMap[minNeighborRegion] = append(regionMap[minNeighborRegion], [3]int{x, y, z})
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	processedRegions := map[int]bool{}
+	regionConversion := map[int]int{}
+
+	var regionIDs []int
+	for id := range regionMap {
+		regionIDs = append(regionIDs, id)
+	}
+	sort.Ints(regionIDs)
+	for _, regionID := range regionIDs {
+		if _, ok := processedRegions[regionID]; ok {
+			continue
+		}
+
+		// the first coordinates always belongs to the seed voxel
+		coords := regionMap[regionID][0]
+		x := coords[0]
+		y := coords[1]
+		z := coords[2]
+
+		var search []*Voxel
+		search = append(search, &voxelField[x][y][z])
+
+		for len(search) > 0 {
+			voxel := search[0]
+			processedRegions[voxel.RegionID] = true
+			search = search[1:]
+			regionConversion[voxel.RegionID] = regionID
+			neighbors := getNeighbors(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions)
+			for _, neighbor := range neighbors {
+				if _, ok := processedRegions[neighbor.RegionID]; ok {
+					continue
+				}
+				search = append(search, neighbor)
+			}
+		}
+		// for _, neighbor := range neighbors {
+		// 	if !neighbor.Seed {
+		// 		continue
+		// 	}
+
+		// 	if minRegionID == -1 {
+		// 		minRegionID = neighbor.RegionID
+		// 	} else if neighbor.RegionID < minRegionID {
+		// 		minRegionID = neighbor.RegionID
+		// 	}
+		// }
+
+		// voxel := voxelField[x][y][z]
+		// if minRegionID != -1 && voxel.RegionID > minRegionID {
+		// 	regionConversion[voxel.RegionID] = minRegionID
+		// }
+	}
+
+	for _, regionID := range regionIDs {
+		// newRegionID := regionID
+		// var ok bool = true
+
+		// for ok {
+		// 	var nextID int
+		// 	if nextID, ok = regionConversion[newRegionID]; ok {
+		// 		newRegionID = nextID
+		// 	}
+		// }
+
+		// if regionID == newRegionID {
+		// 	continue
+		// }
+		if _, ok := regionConversion[regionID]; !ok {
+			continue
+		}
+
+		nextRegionID := regionConversion[regionID]
+		if regionID == nextRegionID {
+			continue
+		}
+
+		coords := regionMap[regionID]
+		for _, coord := range coords {
+			x := coord[0]
+			y := coord[1]
+			z := coord[2]
+			voxelField[x][y][z].RegionID = nextRegionID
+		}
+	}
+}
+
 func (n *NavigationMesh) BakeNavMesh() {
 	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
@@ -595,7 +731,9 @@ func (n *NavigationMesh) BakeNavMesh() {
 	buildNavigableArea(n.voxelField, dimensions)
 	reachField := computeDistanceTransform(n.voxelField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
-	watershed(n.voxelField, reachField, dimensions)
+	regionMap := watershed(n.voxelField, reachField, dimensions)
+	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
+
 }
 
 type Voxel struct {

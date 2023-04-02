@@ -480,6 +480,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 		} else {
 			// isolated voxel, so it's its own region, though we'll probably discard it
 			regionIDCounter++
+			voxel.Seed = true
 			voxel.RegionID = regionIDCounter
 		}
 
@@ -596,47 +597,6 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 }
 
 func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
-	// seedNeighbors := map[[3]int][][3]int{}
-
-	// for x := 0; x < dimensions[0]; x++ {
-	// 	for y := 0; y < dimensions[1]; y++ {
-	// 		for z := 0; z < dimensions[2]; z++ {
-	// 			if !voxelField[x][y][z].Filled || !voxelField[x][y][z].Seed {
-	// 				continue
-	// 			}
-
-	// 			neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
-	// 			var minNeighborRegion int = -1
-	// 			for _, neighbor := range neighbors {
-	// 				if !neighbor.Seed {
-	// 					continue
-	// 				}
-
-	// 				seedNeighbors[[3]int{x, y, z}] = append(seedNeighbors[[3]int{x, y, z}], [3]int{neighbor.X, neighbor.Y, neighbor.Z})
-	// 				seedNeighbors[[3]int{neighbor.X, neighbor.Y, neighbor.Z}] = append(seedNeighbors[[3]int{x, y, z}], [3]int{x, y, z})
-
-	// 				if minNeighborRegion == -1 {
-	// 					minNeighborRegion = neighbor.RegionID
-	// 				} else {
-	// 					if neighbor.RegionID < minNeighborRegion {
-	// 						minNeighborRegion = neighbor.RegionID
-	// 					}
-	// 				}
-	// 			}
-
-	// 			if minNeighborRegion != -1 && minNeighborRegion < voxelField[x][y][z].RegionID {
-	// 				for _, coords := range regionMap[voxelField[x][y][z].RegionID] {
-	// 					x := coords[0]
-	// 					y := coords[1]
-	// 					z := coords[2]
-	// 					voxelField[x][y][z].RegionID = minNeighborRegion
-	// 					regionMap[minNeighborRegion] = append(regionMap[minNeighborRegion], [3]int{x, y, z})
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-
 	processedRegions := map[int]bool{}
 	regionConversion := map[int]int{}
 
@@ -669,41 +629,15 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 				if _, ok := processedRegions[neighbor.RegionID]; ok {
 					continue
 				}
+				if !neighbor.Seed {
+					continue
+				}
 				search = append(search, neighbor)
 			}
 		}
-		// for _, neighbor := range neighbors {
-		// 	if !neighbor.Seed {
-		// 		continue
-		// 	}
-
-		// 	if minRegionID == -1 {
-		// 		minRegionID = neighbor.RegionID
-		// 	} else if neighbor.RegionID < minRegionID {
-		// 		minRegionID = neighbor.RegionID
-		// 	}
-		// }
-
-		// voxel := voxelField[x][y][z]
-		// if minRegionID != -1 && voxel.RegionID > minRegionID {
-		// 	regionConversion[voxel.RegionID] = minRegionID
-		// }
 	}
 
 	for _, regionID := range regionIDs {
-		// newRegionID := regionID
-		// var ok bool = true
-
-		// for ok {
-		// 	var nextID int
-		// 	if nextID, ok = regionConversion[newRegionID]; ok {
-		// 		newRegionID = nextID
-		// 	}
-		// }
-
-		// if regionID == newRegionID {
-		// 	continue
-		// }
 		if _, ok := regionConversion[regionID]; !ok {
 			continue
 		}

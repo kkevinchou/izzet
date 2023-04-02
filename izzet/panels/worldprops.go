@@ -69,6 +69,11 @@ func worldProps(world World, renderContext RenderContext) {
 				world.ResetNavMeshVAO()
 			}
 		})
+		setupRow("NavMesh Distance Field Threshold", func() {
+			if imgui.DragFloat("", &DBG.NavMeshDistanceFieldThreshold) {
+				world.ResetNavMeshVAO()
+			}
+		})
 		setupRow("HSV Offset", func() {
 			if imgui.InputInt("", &DBG.HSVOffset) {
 				world.ResetNavMeshVAO()

@@ -70,7 +70,7 @@ func worldProps(world World, renderContext RenderContext) {
 			}
 		})
 		setupRow("NavMesh Distance Field Threshold", func() {
-			if imgui.DragFloat("", &DBG.NavMeshDistanceFieldThreshold) {
+			if imgui.InputInt("", &DBG.NavMeshDistanceFieldThreshold) {
 				world.ResetNavMeshVAO()
 			}
 		})

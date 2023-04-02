@@ -31,7 +31,7 @@ type DebugSettings struct {
 	TriangleHIT                   bool
 	NavMeshHSV                    bool
 	NavMeshRegionIDThreshold      int32
-	NavMeshDistanceFieldThreshold float32
+	NavMeshDistanceFieldThreshold int32
 	HSVOffset                     int32
 }
 

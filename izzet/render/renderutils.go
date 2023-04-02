@@ -229,9 +229,16 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 		}
 
 		if voxel.Seed {
-			color = mgl32.Vec3{1, 0, 1}
+			if voxel.RegionID == 45 {
+				fmt.Println(voxel)
+			}
+			if voxel.X == 177 && voxel.Y == 26 && voxel.Z == 122 {
+				color = mgl32.Vec3{1, 0, 0}
+			} else {
+				color = mgl32.Vec3{1, 0, 1}
+			}
 		} else if panels.DBG.NavMeshHSV {
-			if voxel.RegionID != -1 && voxel.RegionID <= int(panels.DBG.NavMeshRegionIDThreshold) {
+			if voxel.RegionID != -1 && voxel.RegionID <= int(panels.DBG.NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(panels.DBG.NavMeshDistanceFieldThreshold) {
 				// if voxel.RegionID != -1 {
 				hsv = mgl32.Vec3{float32((voxel.RegionID * int(panels.DBG.HSVOffset)) % 255), 1, 1}
 				color = HSVtoRGB(hsv)

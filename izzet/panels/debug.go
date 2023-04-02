@@ -33,6 +33,9 @@ type DebugSettings struct {
 	NavMeshRegionIDThreshold      int32
 	NavMeshDistanceFieldThreshold int32
 	HSVOffset                     int32
+	VoxelHighlightX               int32
+	VoxelHighlightY               int32
+	VoxelHighlightZ               int32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -63,4 +66,7 @@ var DBG DebugSettings = DebugSettings{
 	NavMeshRegionIDThreshold:      1000,
 	NavMeshDistanceFieldThreshold: 23,
 	HSVOffset:                     11,
+	VoxelHighlightX:               0,
+	VoxelHighlightY:               0,
+	VoxelHighlightZ:               0,
 }

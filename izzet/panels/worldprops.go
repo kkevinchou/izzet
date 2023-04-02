@@ -79,6 +79,21 @@ func worldProps(world World, renderContext RenderContext) {
 				world.ResetNavMeshVAO()
 			}
 		})
+		setupRow("Voxel Highlight X", func() {
+			if imgui.InputInt("Voxel Highlight X", &DBG.VoxelHighlightX) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("Voxel Highlight Y", func() {
+			if imgui.InputInt("Voxel Highlight Y", &DBG.VoxelHighlightY) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("Voxel Highlight Z", func() {
+			if imgui.InputInt("Voxel Highlight Z", &DBG.VoxelHighlightZ) {
+				world.ResetNavMeshVAO()
+			}
+		})
 		setupRow("Triangle HIT", func() { imgui.Checkbox("TriangleHIT", &DBG.TriangleHIT) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })

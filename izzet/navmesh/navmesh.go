@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
@@ -429,6 +430,19 @@ var neighborDirs [][2]int = [][2]int{
 }
 var regionIDCounter int
 
+func isDiagonal(a, b *Voxel) bool {
+	return a.X != b.X && a.Z != b.Z
+}
+
+func neighborDist(voxel, neighbor *Voxel) float64 {
+	dist := neighbor.DistanceField + 1
+	if isDiagonal(voxel, neighbor) {
+		// diagonals are slightly further
+		dist += 0.4
+	}
+	return dist
+}
+
 func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][][3]int {
 	pq := PriorityQueue{}
 
@@ -447,29 +461,45 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	heap.Init(&pq)
 
 	regionMap := map[int][][3]int{}
+	priorityMap := map[float64]int{}
 
 	// runCount := 0
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*Item)
 		voxel := item.value
+		priorityMap[item.priority]++
 
 		x := voxel.X
 		y := voxel.Y
 		z := voxel.Z
 
+		isSeed := true
 		var nearestNeighbor *Voxel
+		// var nearestDistance float64
 		neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
 		for _, neighbor := range neighbors {
+			if neighbor.RegionID == -1 {
+				continue
+			}
+			if mgl32.FloatEqualThreshold(float32(voxel.DistanceField), float32(neighbor.DistanceField), 0.00000001) {
+				// voxel is from the same pass, don't consider neighbors that happened to be processed at the same time
+				continue
+			}
+
 			if nearestNeighbor == nil {
 				nearestNeighbor = neighbor
-			} else if neighbor.DistanceField > nearestNeighbor.DistanceField {
+			} else if neighborDist(voxel, neighbor) < neighborDist(voxel, nearestNeighbor) {
 				nearestNeighbor = neighbor
+			}
+			if neighbor.DistanceField > voxel.DistanceField {
+				isSeed = false
 			}
 		}
 
 		if nearestNeighbor != nil {
 			// seed point since the distance is larger than any neighbor
-			if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
+			// if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
+			if isSeed {
 				regionIDCounter++
 				voxel.RegionID = regionIDCounter
 				voxel.Seed = true
@@ -666,6 +696,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 	reachField := computeDistanceTransform(n.voxelField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
+	// _ = regionMap
 	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
 
 }
@@ -676,6 +707,7 @@ type Voxel struct {
 	DistanceField float64
 	Seed          bool
 	RegionID      int
+	DEBUGCOLOR    *mgl32.Vec3
 
 	// Neighbors [][3]int
 }

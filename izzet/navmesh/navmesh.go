@@ -17,6 +17,12 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+// GENERAL IMPLEMENTATION NOTES
+// due to the resolution of the voxels there are degenerate cases where holes
+// can be present in the generated mesh regions. for example, holes in meshes
+// with a size of 1 or 2 tend to be ignored. however, larger holes will be properly
+// processed
+
 const stepHeight int = 4
 const agentHeight int = 30
 

@@ -223,9 +223,7 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 	wg.Wait()
 }
 
-func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInfo {
-	reachField := computeReachField(voxelField, dimensions)
-
+func computeDistanceTransform(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) [][][]ReachInfo {
 	// boundaries have a distance field of 0
 	for y := 0; y < dimensions[1]; y++ {
 		for x := 0; x < dimensions[0]; x++ {
@@ -244,70 +242,7 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]R
 	for x := 1; x < dimensions[0]-1; x++ {
 		for z := 1; z < dimensions[2]-1; z++ {
 			for y := 0; y < dimensions[1]; y++ {
-				xNeighbor := voxelField[x-1][y][z]
-				zNeighbor := voxelField[x][y][z-1]
-				xzNegativeNeighbor := voxelField[x-1][y][z-1]
-				xzPositiveNeighbor := voxelField[x+1][y][z-1]
-
-				xReach := reachField[x-1][y][z]
-				zReach := reachField[x][y][z-1]
-				xzNegativeReach := reachField[x-1][y][z-1]
-				xzPositiveReach := reachField[x+1][y][z-1]
-
-				var minDistanceFieldValue float64 = MaxDistanceFieldValue
-
-				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
-					minDistanceFieldValue = 0
-				} else {
-					var distanceFieldXValue float64
-					if xNeighbor.Filled {
-						distanceFieldXValue = xNeighbor.DistanceField + 1
-					} else if xReach.hasSource {
-						source := xReach.source
-						distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
-					}
-
-					var distanceFieldZValue float64
-					if zNeighbor.Filled {
-						distanceFieldZValue = zNeighbor.DistanceField + 1
-					} else if zReach.hasSource {
-						source := zReach.source
-						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
-					}
-
-					var distanceFieldXZNegativeValue float64
-					if xzNegativeNeighbor.Filled {
-						distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField + 1.4
-					} else if xzNegativeReach.hasSource {
-						source := xzNegativeReach.source
-						distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
-					}
-
-					var distanceFieldXZPositiveValue float64
-					if xzPositiveNeighbor.Filled {
-						distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField + 1.4
-					} else if xzPositiveReach.hasSource {
-						source := xzPositiveReach.source
-						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
-					}
-
-					if distanceFieldXValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldXValue
-					}
-					if distanceFieldZValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldZValue
-					}
-					if distanceFieldXZNegativeValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldXZNegativeValue
-					}
-					if distanceFieldXZPositiveValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldXZPositiveValue
-					}
-				}
-
-				if minDistanceFieldValue < voxelField[x][y][z].DistanceField {
-					voxelField[x][y][z].DistanceField = minDistanceFieldValue
-				}
+				computeVoxelDistanceTransform(x, y, z, voxelField, reachField, dimensions, -1)
 			}
 		}
 	}
@@ -315,75 +250,79 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]R
 	for x := dimensions[0] - 2; x > 0; x-- {
 		for z := dimensions[2] - 2; z > 0; z-- {
 			for y := 0; y < dimensions[1]; y++ {
-				xNeighbor := voxelField[x+1][y][z]
-				zNeighbor := voxelField[x][y][z+1]
-				xzNegativeNeighbor := voxelField[x-1][y][z+1]
-				xzPositiveNeighbor := voxelField[x+1][y][z+1]
-
-				xReach := reachField[x+1][y][z]
-				zReach := reachField[x][y][z+1]
-				xzNegativeReach := reachField[x-1][y][z+1]
-				xzPositiveReach := reachField[x+1][y][z+1]
-
-				var minDistanceFieldValue float64 = MaxDistanceFieldValue
-
-				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
-					minDistanceFieldValue = 0
-				} else {
-					var distanceFieldXValue float64
-					if xNeighbor.Filled {
-						distanceFieldXValue = xNeighbor.DistanceField + 1
-					} else if xReach.hasSource {
-						source := xReach.source
-						distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
-					}
-
-					var distanceFieldZValue float64
-					if zNeighbor.Filled {
-						distanceFieldZValue = zNeighbor.DistanceField + 1
-					} else if zReach.hasSource {
-						source := zReach.source
-						distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
-					}
-
-					var distanceFieldXZNegativeValue float64
-					if xzNegativeNeighbor.Filled {
-						distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField + 1.4
-					} else if xzNegativeReach.hasSource {
-						source := xzNegativeReach.source
-						distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
-					}
-
-					var distanceFieldXZPositiveValue float64
-					if xzPositiveNeighbor.Filled {
-						distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField + 1.4
-					} else if xzPositiveReach.hasSource {
-						source := xzPositiveReach.source
-						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
-					}
-
-					if distanceFieldXValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldXValue
-					}
-					if distanceFieldZValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldZValue
-					}
-					if distanceFieldXZNegativeValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldXZNegativeValue
-					}
-					if distanceFieldXZPositiveValue < minDistanceFieldValue {
-						minDistanceFieldValue = distanceFieldXZPositiveValue
-					}
-				}
-
-				if minDistanceFieldValue < voxelField[x][y][z].DistanceField {
-					voxelField[x][y][z].DistanceField = minDistanceFieldValue
-				}
+				computeVoxelDistanceTransform(x, y, z, voxelField, reachField, dimensions, 1)
 			}
 		}
 	}
 
 	return reachField
+}
+
+func computeVoxelDistanceTransform(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, sweepDir int) {
+	xNeighbor := voxelField[x+sweepDir][y][z]
+	zNeighbor := voxelField[x][y][z+sweepDir]
+	xzNegativeNeighbor := voxelField[x-1][y][z+sweepDir]
+	xzPositiveNeighbor := voxelField[x+1][y][z+sweepDir]
+
+	xReach := reachField[x+sweepDir][y][z]
+	zReach := reachField[x][y][z+sweepDir]
+	xzNegativeReach := reachField[x-1][y][z+sweepDir]
+	xzPositiveReach := reachField[x+1][y][z+sweepDir]
+
+	var minDistanceFieldValue float64 = MaxDistanceFieldValue
+
+	if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
+		minDistanceFieldValue = 0
+	} else {
+		var distanceFieldXValue float64
+		if xNeighbor.Filled {
+			distanceFieldXValue = xNeighbor.DistanceField + 1
+		} else if xReach.hasSource {
+			source := xReach.source
+			distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
+		}
+
+		var distanceFieldZValue float64
+		if zNeighbor.Filled {
+			distanceFieldZValue = zNeighbor.DistanceField + 1
+		} else if zReach.hasSource {
+			source := zReach.source
+			distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
+		}
+
+		var distanceFieldXZNegativeValue float64
+		if xzNegativeNeighbor.Filled {
+			distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField + 1.4
+		} else if xzNegativeReach.hasSource {
+			source := xzNegativeReach.source
+			distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
+		}
+
+		var distanceFieldXZPositiveValue float64
+		if xzPositiveNeighbor.Filled {
+			distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField + 1.4
+		} else if xzPositiveReach.hasSource {
+			source := xzPositiveReach.source
+			distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
+		}
+
+		if distanceFieldXValue < minDistanceFieldValue {
+			minDistanceFieldValue = distanceFieldXValue
+		}
+		if distanceFieldZValue < minDistanceFieldValue {
+			minDistanceFieldValue = distanceFieldZValue
+		}
+		if distanceFieldXZNegativeValue < minDistanceFieldValue {
+			minDistanceFieldValue = distanceFieldXZNegativeValue
+		}
+		if distanceFieldXZPositiveValue < minDistanceFieldValue {
+			minDistanceFieldValue = distanceFieldXZPositiveValue
+		}
+	}
+
+	if minDistanceFieldValue < voxelField[x][y][z].DistanceField {
+		voxelField[x][y][z].DistanceField = minDistanceFieldValue
+	}
 }
 
 type ReachInfo struct {
@@ -729,8 +668,9 @@ func (n *NavigationMesh) BakeNavMesh() {
 
 	n.voxelField = n.voxelize()
 	buildNavigableArea(n.voxelField, dimensions)
-	reachField := computeDistanceTransform(n.voxelField, dimensions)
-	blurDistanceField(n.voxelField, reachField, dimensions)
+	reachField := computeReachField(n.voxelField, dimensions)
+	computeDistanceTransform(n.voxelField, reachField, dimensions)
+	// blurDistanceField(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
 	_ = regionMap
 	mergeRegions(n.voxelField, reachField, dimensions, regionMap)

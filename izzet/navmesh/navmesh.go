@@ -254,7 +254,7 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]R
 				xzNegativeReach := reachField[x-1][y][z-1]
 				xzPositiveReach := reachField[x+1][y][z-1]
 
-				var minDistanceFieldValue float64
+				var minDistanceFieldValue float64 = MaxDistanceFieldValue
 
 				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
 					minDistanceFieldValue = 0
@@ -291,7 +291,9 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]R
 						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
 					}
 
-					minDistanceFieldValue = distanceFieldXValue
+					if distanceFieldXValue < minDistanceFieldValue {
+						minDistanceFieldValue = distanceFieldXValue
+					}
 					if distanceFieldZValue < minDistanceFieldValue {
 						minDistanceFieldValue = distanceFieldZValue
 					}
@@ -315,15 +317,15 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]R
 			for y := 0; y < dimensions[1]; y++ {
 				xNeighbor := voxelField[x+1][y][z]
 				zNeighbor := voxelField[x][y][z+1]
-				xzNegativeNeighbor := voxelField[x+1][y][z+1]
-				xzPositiveNeighbor := voxelField[x-1][y][z+1]
+				xzNegativeNeighbor := voxelField[x-1][y][z+1]
+				xzPositiveNeighbor := voxelField[x+1][y][z+1]
 
 				xReach := reachField[x+1][y][z]
 				zReach := reachField[x][y][z+1]
-				xzNegativeReach := reachField[x+1][y][z+1]
-				xzPositiveReach := reachField[x-1][y][z+1]
+				xzNegativeReach := reachField[x-1][y][z+1]
+				xzPositiveReach := reachField[x+1][y][z+1]
 
-				var minDistanceFieldValue float64
+				var minDistanceFieldValue float64 = MaxDistanceFieldValue
 
 				if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
 					minDistanceFieldValue = 0
@@ -360,7 +362,9 @@ func computeDistanceTransform(voxelField [][][]Voxel, dimensions [3]int) [][][]R
 						distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
 					}
 
-					minDistanceFieldValue = distanceFieldXValue
+					if distanceFieldXValue < minDistanceFieldValue {
+						minDistanceFieldValue = distanceFieldXValue
+					}
 					if distanceFieldZValue < minDistanceFieldValue {
 						minDistanceFieldValue = distanceFieldZValue
 					}
@@ -575,9 +579,12 @@ func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInf
 //	}
 
 var blurWeights []float64 = []float64{
-	1, 2, 1,
-	2, 4, 2,
-	1, 2, 1,
+	// 1, 2, 1,
+	// 2, 4, 2,
+	// 1, 2, 1,
+	1, 1, 1,
+	1, 1, 1,
+	1, 1, 1,
 }
 
 func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
@@ -592,6 +599,15 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 	for x := 0; x < dimensions[0]; x++ {
 		for y := 0; y < dimensions[1]; y++ {
 			for z := 0; z < dimensions[2]; z++ {
+
+				if x == 205 && y == 25 && z == 244 {
+					fmt.Println("A")
+				} else if x == 204 && y == 25 && z == 243 {
+					fmt.Println("B")
+				}
+
+				var totalDistance float64
+
 				var totalWeight float64
 				for i, dir := range neighborDirs {
 					if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
@@ -610,10 +626,16 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 						continue
 					}
 
-					totalWeight += blurWeights[i] * neighbor.DistanceField
+					totalWeight += blurWeights[i]
+					totalDistance += blurWeights[i] * neighbor.DistanceField
 				}
-				totalWeight /= 16
-				blurredDistance[x][y][z] = totalWeight
+				totalWeight += blurWeights[4]
+				totalDistance += blurWeights[4] * voxelField[x][y][z].DistanceField
+
+				// totalWeight /= 16
+				// totalWeight /= 9
+				totalDistance /= float64(totalWeight)
+				blurredDistance[x][y][z] = totalDistance
 			}
 		}
 	}
@@ -636,6 +658,7 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 		regionIDs = append(regionIDs, id)
 	}
 	sort.Ints(regionIDs)
+
 	for _, regionID := range regionIDs {
 		if _, ok := processedRegions[regionID]; ok {
 			continue
@@ -649,20 +672,32 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 
 		var search []*Voxel
 		search = append(search, &voxelField[x][y][z])
+		seen := map[[3]int]bool{}
 
 		for len(search) > 0 {
 			voxel := search[0]
-			processedRegions[voxel.RegionID] = true
 			search = search[1:]
+
+			if seen[[3]int{voxel.X, voxel.Y, voxel.Z}] {
+				continue
+			}
+
+			seen[[3]int{voxel.X, voxel.Y, voxel.Z}] = true
+			processedRegions[voxel.RegionID] = true
 			regionConversion[voxel.RegionID] = regionID
+
 			neighbors := getNeighbors(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions)
 			for _, neighbor := range neighbors {
-				if _, ok := processedRegions[neighbor.RegionID]; ok {
-					continue
-				}
 				if !neighbor.Seed {
 					continue
 				}
+				if _, ok := processedRegions[neighbor.RegionID]; ok {
+					continue
+				}
+				if seen[[3]int{neighbor.X, neighbor.Y, neighbor.Z}] {
+					continue
+				}
+
 				search = append(search, neighbor)
 			}
 		}
@@ -697,9 +732,8 @@ func (n *NavigationMesh) BakeNavMesh() {
 	reachField := computeDistanceTransform(n.voxelField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
-	// _ = regionMap
+	_ = regionMap
 	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
-
 }
 
 type Voxel struct {

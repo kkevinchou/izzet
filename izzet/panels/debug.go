@@ -63,7 +63,7 @@ var DBG DebugSettings = DebugSettings{
 	DrawCount:         0,
 
 	NavMeshHSV:                    true,
-	NavMeshRegionIDThreshold:      1000,
+	NavMeshRegionIDThreshold:      3000,
 	NavMeshDistanceFieldThreshold: 23,
 	HSVOffset:                     11,
 	VoxelHighlightX:               0,

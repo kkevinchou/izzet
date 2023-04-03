@@ -36,6 +36,7 @@ type DebugSettings struct {
 	VoxelHighlightX               int32
 	VoxelHighlightY               int32
 	VoxelHighlightZ               int32
+	VoxelHighlightDistanceField   float32
 }
 
 var DBG DebugSettings = DebugSettings{
@@ -69,4 +70,5 @@ var DBG DebugSettings = DebugSettings{
 	VoxelHighlightX:               0,
 	VoxelHighlightY:               0,
 	VoxelHighlightZ:               0,
+	VoxelHighlightDistanceField:   -1,
 }

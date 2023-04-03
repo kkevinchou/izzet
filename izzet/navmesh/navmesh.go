@@ -36,7 +36,8 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
-		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
+		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
+		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 150}},
 		voxelDimension: 1.0,
 		world:          world,
 	}

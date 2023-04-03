@@ -323,7 +323,15 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 					points := line
 					for i := 0; i < len(points); i++ {
 						bindTransform := model.JointMap()[jid].FullBindTransform
+						// The calculated joint transforms apply to joints in bind space
+						// 		i.e. the calculated transforms are computed as:
+						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
+						//
+						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
+						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
+						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
 					}
 				}
 				jointLines = append(jointLines, lines...)

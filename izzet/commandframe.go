@@ -252,6 +252,32 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
+	// move highlight
+	if event, ok := keyboardInput[input.KeyboardKeyI]; ok {
+		if event.Event == input.KeyboardEventUp {
+			panels.DBG.VoxelHighlightZ--
+			g.ResetNavMeshVAO()
+		}
+	}
+	if event, ok := keyboardInput[input.KeyboardKeyK]; ok {
+		if event.Event == input.KeyboardEventUp {
+			panels.DBG.VoxelHighlightZ++
+			g.ResetNavMeshVAO()
+		}
+	}
+	if event, ok := keyboardInput[input.KeyboardKeyJ]; ok {
+		if event.Event == input.KeyboardEventUp {
+			panels.DBG.VoxelHighlightX--
+			g.ResetNavMeshVAO()
+		}
+	}
+	if event, ok := keyboardInput[input.KeyboardKeyL]; ok {
+		if event.Event == input.KeyboardEventUp {
+			panels.DBG.VoxelHighlightX++
+			g.ResetNavMeshVAO()
+		}
+	}
+
 	if event, ok := keyboardInput[input.KeyboardKeyF1]; ok {
 		if event.Event == input.KeyboardEventUp {
 			panels.ShowDebug = !panels.ShowDebug

@@ -36,8 +36,9 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
-		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
-		Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
+		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
@@ -195,10 +196,6 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 			for w := range work {
 				for y := dimensions[1] - 1; y >= 0; y-- {
 					x, z := w[0], w[1]
-					// if voxelField[x][y][z].Filled && voxelField[x][y+1][z].Filled {
-					// 	voxelField[x][y][z].Filled = false
-					// }
-
 					if voxelField[x][y][z].Filled {
 						for i := 1; i < agentHeight+1; i++ {
 							if y-i < 0 {
@@ -223,7 +220,7 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 	wg.Wait()
 }
 
-func computeDistanceTransform(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) [][][]ReachInfo {
+func computeDistanceTransform(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
 	// boundaries have a distance field of 0
 	for y := 0; y < dimensions[1]; y++ {
 		for x := 0; x < dimensions[0]; x++ {
@@ -236,26 +233,21 @@ func computeDistanceTransform(voxelField [][][]Voxel, reachField [][][]ReachInfo
 		}
 	}
 
-	// compute distance transform from the bottom up
-	// we can skip over the boundary voxels since they're initialized above
-
-	for x := 1; x < dimensions[0]-1; x++ {
-		for z := 1; z < dimensions[2]-1; z++ {
+	for z := 1; z < dimensions[2]-1; z++ {
+		for x := 1; x < dimensions[0]-1; x++ {
 			for y := 0; y < dimensions[1]; y++ {
 				computeVoxelDistanceTransform(x, y, z, voxelField, reachField, dimensions, -1)
 			}
 		}
 	}
 
-	for x := dimensions[0] - 2; x > 0; x-- {
-		for z := dimensions[2] - 2; z > 0; z-- {
+	for z := dimensions[2] - 2; z > 0; z-- {
+		for x := dimensions[0] - 2; x > 0; x-- {
 			for y := 0; y < dimensions[1]; y++ {
 				computeVoxelDistanceTransform(x, y, z, voxelField, reachField, dimensions, 1)
 			}
 		}
 	}
-
-	return reachField
 }
 
 func computeVoxelDistanceTransform(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, sweepDir int) {
@@ -386,6 +378,46 @@ func neighborDist(voxel, neighbor *Voxel) float64 {
 	}
 	return dist
 }
+func findSeeds(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+	// printRegionMin := mgl32.Vec3{50, 25, 135}
+	// printRegionMax := mgl32.Vec3{61, 25, 147}
+
+	for y := 0; y < dimensions[1]; y++ {
+		for z := 0; z < dimensions[2]; z++ {
+			for x := 0; x < dimensions[0]; x++ {
+				voxel := &voxelField[x][y][z]
+				// if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
+				// 	if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
+				// 		if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
+				// 			if voxel.Filled {
+				// 				fmt.Printf("[%5.3f] ", voxel.DistanceField)
+				// 			} else {
+				// 				fmt.Printf("[-----] ")
+				// 			}
+				// 			if voxel.X == int(printRegionMax.X()) {
+				// 				fmt.Printf("\n")
+				// 			}
+				// 		}
+				// 	}
+				// }
+				if !voxel.Filled {
+					continue
+				}
+
+				isSeed := true
+				neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
+				for _, neighbor := range neighbors {
+					if neighbor.DistanceField > voxel.DistanceField {
+						isSeed = false
+					}
+				}
+				if isSeed {
+					voxel.Seed = true
+				}
+			}
+		}
+	}
+}
 
 func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][][3]int {
 	pq := PriorityQueue{}
@@ -485,6 +517,29 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	return regionMap
 }
 
+func getDebugNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
+	var neighbors []*Voxel
+
+	for _, dir := range neighborDirs {
+		if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+			neighbors = append(neighbors, nil)
+			continue
+		}
+
+		var neighbor *Voxel
+		reachNeighbor := &reachField[x+dir[0]][y][z+dir[1]]
+		if reachNeighbor.sourceVoxel != nil {
+			neighbor = reachNeighbor.sourceVoxel
+		} else if voxelField[x+dir[0]][y][z+dir[1]].Filled {
+			neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
+		}
+
+		neighbors = append(neighbors, neighbor)
+	}
+
+	return neighbors
+}
+
 func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
 	var neighbors []*Voxel
 
@@ -535,18 +590,36 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 		}
 	}
 
+	// fmt.Println("PRE BLUR ======================================")
+	// printRegionMin := mgl32.Vec3{99, 25, 134}
+	// printRegionMax := mgl32.Vec3{108, 25, 146}
+	// for y := 0; y < dimensions[1]; y++ {
+	// 	for z := 0; z < dimensions[2]; z++ {
+	// 		for x := 0; x < dimensions[0]; x++ {
+	// 			voxel := &voxelField[x][y][z]
+	// 			if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
+	// 				if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
+	// 					if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
+	// 						if voxel.Filled {
+	// 							fmt.Printf("[%5.3f] ", voxel.DistanceField)
+	// 						} else {
+	// 							fmt.Printf("[-----] ")
+	// 						}
+	// 						if voxel.X == int(printRegionMax.X()) {
+	// 							fmt.Printf("\n")
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	for x := 0; x < dimensions[0]; x++ {
 		for y := 0; y < dimensions[1]; y++ {
 			for z := 0; z < dimensions[2]; z++ {
 
-				if x == 205 && y == 25 && z == 244 {
-					fmt.Println("A")
-				} else if x == 204 && y == 25 && z == 243 {
-					fmt.Println("B")
-				}
-
 				var totalDistance float64
-
 				var totalWeight float64
 				for i, dir := range neighborDirs {
 					if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
@@ -571,8 +644,6 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 				totalWeight += blurWeights[4]
 				totalDistance += blurWeights[4] * voxelField[x][y][z].DistanceField
 
-				// totalWeight /= 16
-				// totalWeight /= 9
 				totalDistance /= float64(totalWeight)
 				blurredDistance[x][y][z] = totalDistance
 			}
@@ -586,6 +657,76 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 			}
 		}
 	}
+
+	// fmt.Println("POST BLUR ======================================")
+	// for y := 0; y < dimensions[1]; y++ {
+	// 	for z := 0; z < dimensions[2]; z++ {
+	// 		for x := 0; x < dimensions[0]; x++ {
+	// 			voxel := &voxelField[x][y][z]
+	// 			if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
+	// 				if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
+	// 					if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
+	// 						if voxel.Filled {
+	// 							fmt.Printf("[%5.3f] ", voxel.DistanceField)
+	// 						} else {
+	// 							fmt.Printf("[-----] ")
+	// 						}
+	// 						if voxel.X == int(printRegionMax.X()) {
+	// 							fmt.Printf("\n")
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// arrows := []string{
+	// 	"🡔", "🡑", "🡕",
+	// 	"←" /* center */, "🡒",
+	// 	"🡗", "🡓", "🡖",
+	// }
+	// fmt.Println("POST BLUR ARROWS ======================================")
+	// for y := 0; y < dimensions[1]; y++ {
+	// 	for z := 0; z < dimensions[2]; z++ {
+	// 		for x := 0; x < dimensions[0]; x++ {
+	// 			voxel := &voxelField[x][y][z]
+	// 			if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
+	// 				if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
+	// 					if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
+	// 						if voxel.Filled {
+	// 							neighbors := getDebugNeighbors(x, y, z, voxelField, reachField, dimensions)
+	// 							var maxNeighbor *Voxel
+
+	// 							var arrow string
+	// 							for index, neighbor := range neighbors {
+	// 								if neighbor == nil {
+	// 									continue
+	// 								}
+	// 								if maxNeighbor == nil {
+	// 									maxNeighbor = neighbor
+	// 									arrow = arrows[index]
+	// 								} else {
+	// 									if neighbor.DistanceField > maxNeighbor.DistanceField {
+	// 										arrow = arrows[index]
+	// 										maxNeighbor = neighbor
+	// 									}
+	// 								}
+	// 							}
+	// 							fmt.Printf("[%s] ", arrow)
+	// 						} else {
+	// 							fmt.Printf("[-] ")
+	// 						}
+	// 						if voxel.X == int(printRegionMax.X()) {
+	// 							fmt.Printf("\n")
+	// 						}
+
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
@@ -670,7 +811,8 @@ func (n *NavigationMesh) BakeNavMesh() {
 	buildNavigableArea(n.voxelField, dimensions)
 	reachField := computeReachField(n.voxelField, dimensions)
 	computeDistanceTransform(n.voxelField, reachField, dimensions)
-	// blurDistanceField(n.voxelField, reachField, dimensions)
+	blurDistanceField(n.voxelField, reachField, dimensions)
+	// findSeeds(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
 	_ = regionMap
 	mergeRegions(n.voxelField, reachField, dimensions, regionMap)

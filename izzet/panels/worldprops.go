@@ -94,7 +94,9 @@ func worldProps(world World, renderContext RenderContext) {
 				world.ResetNavMeshVAO()
 			}
 		})
-		setupRow("Triangle HIT", func() { imgui.Checkbox("TriangleHIT", &DBG.TriangleHIT) })
+		setupRow("Highlight DistanceField", func() {
+			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", DBG.VoxelHighlightDistanceField))
+		})
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })

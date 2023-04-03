@@ -126,14 +126,14 @@ func generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 
 					MinVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
 					MaxVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
 				}
-				vertexAttributes = append(vertexAttributes, generateVoxelVertexAttributes(voxel, bb)...)
+				vertexAttributes = append(vertexAttributes, generateVoxelVertexAttributes(voxel, voxelField, bb)...)
 			}
 		}
 	}
 	return vertexAttributes
 }
 
-func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox) []float32 {
+func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh.Voxel, bb collider.BoundingBox) []float32 {
 	min := bb.MinVertex
 	max := bb.MaxVertex
 	delta := max.Sub(min)
@@ -231,13 +231,10 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 		if voxel.DEBUGCOLOR != nil {
 			color = *voxel.DEBUGCOLOR
 		} else if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Y == int(panels.DBG.VoxelHighlightY) && voxel.Z == int(panels.DBG.VoxelHighlightZ) {
+			panels.DBG.VoxelHighlightDistanceField = float32(voxel.DistanceField)
 			color = mgl32.Vec3{10, 10, 10}
 		} else if voxel.Seed {
-			if voxel.X == 177 && voxel.Y == 26 && voxel.Z == 122 {
-				color = mgl32.Vec3{1, 0, 0}
-			} else {
-				color = mgl32.Vec3{1, 0, 1}
-			}
+			color = mgl32.Vec3{1, 0, 1}
 		} else if panels.DBG.NavMeshHSV {
 			if voxel.RegionID != -1 && voxel.RegionID <= int(panels.DBG.NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(panels.DBG.NavMeshDistanceFieldThreshold) {
 				// if voxel.RegionID != -1 {

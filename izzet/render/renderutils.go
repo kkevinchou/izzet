@@ -233,9 +233,6 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, bb collider.BoundingBox)
 		} else if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Y == int(panels.DBG.VoxelHighlightY) && voxel.Z == int(panels.DBG.VoxelHighlightZ) {
 			color = mgl32.Vec3{10, 10, 10}
 		} else if voxel.Seed {
-			if voxel.RegionID == 45 {
-				fmt.Println(voxel)
-			}
 			if voxel.X == 177 && voxel.Y == 26 && voxel.Z == 122 {
 				color = mgl32.Vec3{1, 0, 0}
 			} else {

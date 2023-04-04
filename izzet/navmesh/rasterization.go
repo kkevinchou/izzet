@@ -85,7 +85,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
 
 	inputWorkCount := dimensions[0] * dimensions[1] * dimensions[2]
-	inputWork := make(chan [3]int, inputWorkCount)
+	inputWork := make(chan VoxelPosition, inputWorkCount)
 	workerCount := 12
 
 	doneWorkerCount := 0
@@ -156,7 +156,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	for i := 0; i < dimensions[0]; i++ {
 		for j := 0; j < dimensions[1]; j++ {
 			for k := 0; k < dimensions[2]; k++ {
-				inputWork <- [3]int{i, j, k}
+				inputWork <- VoxelPosition{i, j, k}
 			}
 		}
 	}

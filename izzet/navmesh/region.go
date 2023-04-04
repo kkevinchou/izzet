@@ -89,6 +89,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	return regionMap
 }
 
+// TODO - update this to use half edges to collect voxels?
 func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
 	processedRegions := map[int]bool{}
 	regionConversion := map[int]int{}
@@ -161,6 +162,11 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 			voxelField[x][y][z].RegionID = nextRegionID
 		}
 	}
+}
+
+func filterRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
+	// filter regions that are too small and isolated
+	// might require region definition first
 }
 
 func neighborDist(voxel, neighbor *Voxel) float64 {

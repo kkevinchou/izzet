@@ -249,5 +249,6 @@ type AABB struct {
 }
 
 type Triangle struct {
+	MinX       float64
 	V1, V2, V3 mgl64.Vec3
 }

@@ -36,8 +36,8 @@ func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
-		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
-		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		voxelDimension: 1.0,
 		world:          world,

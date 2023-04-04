@@ -125,7 +125,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 								goto Done
 							}
 							if voxelAABB.Max.X() < tri.MinX {
-								goto Done
+								continue
 							}
 						}
 					}

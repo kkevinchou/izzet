@@ -49,6 +49,20 @@ func New(world World) *NavigationMesh {
 	return nm
 }
 
+func (n *NavigationMesh) BakeNavMesh() {
+	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
+	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
+
+	n.voxelField = n.voxelize()
+	buildNavigableArea(n.voxelField, dimensions)
+	reachField := computeReachField(n.voxelField, dimensions)
+	computeDistanceTransform(n.voxelField, reachField, dimensions)
+	blurDistanceField(n.voxelField, reachField, dimensions)
+	regionMap := watershed(n.voxelField, reachField, dimensions)
+	_ = regionMap
+	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
+}
+
 type ReachInfo struct {
 	sourceVoxel *Voxel
 	source      [3]int
@@ -96,20 +110,6 @@ var neighborDirs [][2]int = [][2]int{
 	[2]int{-1, 0} /* current voxel */, [2]int{1, 0},
 	[2]int{-1, 1}, [2]int{0, 1}, [2]int{1, 1},
 }
-var regionIDCounter int
-
-func isDiagonal(a, b *Voxel) bool {
-	return a.X != b.X && a.Z != b.Z
-}
-
-func neighborDist(voxel, neighbor *Voxel) float64 {
-	dist := neighbor.DistanceField + 1
-	if isDiagonal(voxel, neighbor) {
-		// diagonals are slightly further
-		dist += 0.4
-	}
-	return dist
-}
 
 func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
 	var neighbors []*Voxel
@@ -136,43 +136,3 @@ func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInf
 
 	return neighbors
 }
-
-func (n *NavigationMesh) BakeNavMesh() {
-	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
-	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
-
-	n.voxelField = n.voxelize()
-	buildNavigableArea(n.voxelField, dimensions)
-	reachField := computeReachField(n.voxelField, dimensions)
-	computeDistanceTransform(n.voxelField, reachField, dimensions)
-	blurDistanceField(n.voxelField, reachField, dimensions)
-	regionMap := watershed(n.voxelField, reachField, dimensions)
-	_ = regionMap
-	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
-}
-
-type Voxel struct {
-	Filled        bool
-	X, Y, Z       int
-	DistanceField float64
-	Seed          bool
-	RegionID      int
-}
-
-type OutputWork struct {
-	x, y, z     int
-	boundingBox collider.BoundingBox
-}
-
-func NewVoxel(x, y, z int) Voxel {
-	return Voxel{
-		Filled:        false,
-		X:             x,
-		Y:             y,
-		Z:             z,
-		DistanceField: MaxDistanceFieldValue,
-		RegionID:      -1,
-	}
-}
-
-const MaxDistanceFieldValue float64 = 999999999999999

@@ -18,6 +18,8 @@ import (
 )
 
 // GENERAL IMPLEMENTATION NOTES
+
+// in general the generated regions in a nav mesh should be free of holes.
 // due to the resolution of the voxels there are degenerate cases where holes
 // can be present in the generated mesh regions. for example, holes in meshes
 // with a size of 1 or 2 tend to be ignored. however, larger holes will be properly
@@ -42,6 +44,8 @@ type NavigationMesh struct {
 
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
 		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
@@ -126,9 +130,19 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 						continue
 					}
 
+					// 1330 is a tile polygon with almost no y thickness
+					id := entity.GetID()
+					if id == 1330 {
+						// fmt.Println("A")
+					}
+
 					for _, rd := range entity.Model.RenderData() {
 						for _, tri := range meshTriangles[rd.MeshID] {
 							if IntersectAABBTriangle(voxelAABB, tri) {
+								id := entity.GetID()
+								if id == 1330 {
+									// fmt.Println("B")
+								}
 								outputWork <- OutputWork{
 									x:           i,
 									y:           j,

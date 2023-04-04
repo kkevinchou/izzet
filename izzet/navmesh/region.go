@@ -8,6 +8,8 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+var initialBorderCell map[int]*Voxel
+
 func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][][3]int {
 	pq := PriorityQueue{}
 
@@ -119,11 +121,11 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 			voxel := search[0]
 			search = search[1:]
 
-			if seen[[3]int{voxel.X, voxel.Y, voxel.Z}] {
+			if seen[voxelPos(voxel)] {
 				continue
 			}
 
-			seen[[3]int{voxel.X, voxel.Y, voxel.Z}] = true
+			seen[voxelPos(voxel)] = true
 			processedRegions[voxel.RegionID] = true
 			regionConversion[voxel.RegionID] = regionID
 
@@ -135,7 +137,7 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 				if _, ok := processedRegions[neighbor.RegionID]; ok {
 					continue
 				}
-				if seen[[3]int{neighbor.X, neighbor.Y, neighbor.Z}] {
+				if seen[voxelPos(neighbor)] {
 					continue
 				}
 

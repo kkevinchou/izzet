@@ -65,8 +65,6 @@ func (n *NavigationMesh) BakeNavMesh() {
 
 type ReachInfo struct {
 	sourceVoxel *Voxel
-	source      [3]int
-	hasSource   bool
 }
 
 func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInfo {
@@ -87,14 +85,10 @@ func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInf
 
 				for i := 1; i < stepHeight+1; i++ {
 					if y+i < dimensions[1] {
-						reachField[x][y+i][z].hasSource = true
-						reachField[x][y+i][z].source = [3]int{x, y, z}
 						reachField[x][y+i][z].sourceVoxel = &voxelField[x][y][z]
 					}
 
 					if y-i >= 0 {
-						reachField[x][y-i][z].hasSource = true
-						reachField[x][y-i][z].source = [3]int{x, y, z}
 						reachField[x][y-i][z].sourceVoxel = &voxelField[x][y][z]
 					}
 				}

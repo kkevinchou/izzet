@@ -398,46 +398,6 @@ func neighborDist(voxel, neighbor *Voxel) float64 {
 	}
 	return dist
 }
-func findSeeds(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
-	// printRegionMin := mgl32.Vec3{50, 25, 135}
-	// printRegionMax := mgl32.Vec3{61, 25, 147}
-
-	for y := 0; y < dimensions[1]; y++ {
-		for z := 0; z < dimensions[2]; z++ {
-			for x := 0; x < dimensions[0]; x++ {
-				voxel := &voxelField[x][y][z]
-				// if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
-				// 	if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
-				// 		if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
-				// 			if voxel.Filled {
-				// 				fmt.Printf("[%5.3f] ", voxel.DistanceField)
-				// 			} else {
-				// 				fmt.Printf("[-----] ")
-				// 			}
-				// 			if voxel.X == int(printRegionMax.X()) {
-				// 				fmt.Printf("\n")
-				// 			}
-				// 		}
-				// 	}
-				// }
-				if !voxel.Filled {
-					continue
-				}
-
-				isSeed := true
-				neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
-				for _, neighbor := range neighbors {
-					if neighbor.DistanceField > voxel.DistanceField {
-						isSeed = false
-					}
-				}
-				if isSeed {
-					voxel.Seed = true
-				}
-			}
-		}
-	}
-}
 
 func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][][3]int {
 	pq := PriorityQueue{}
@@ -832,7 +792,6 @@ func (n *NavigationMesh) BakeNavMesh() {
 	reachField := computeReachField(n.voxelField, dimensions)
 	computeDistanceTransform(n.voxelField, reachField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
-	// findSeeds(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
 	_ = regionMap
 	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
@@ -844,9 +803,6 @@ type Voxel struct {
 	DistanceField float64
 	Seed          bool
 	RegionID      int
-	DEBUGCOLOR    *mgl32.Vec3
-
-	// Neighbors [][3]int
 }
 
 type OutputWork struct {

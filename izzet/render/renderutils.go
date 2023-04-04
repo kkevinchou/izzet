@@ -228,9 +228,7 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh
 			color = mgl32.Vec3{0, 0, 1}
 		}
 
-		if voxel.DEBUGCOLOR != nil {
-			color = *voxel.DEBUGCOLOR
-		} else if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Y == int(panels.DBG.VoxelHighlightY) && voxel.Z == int(panels.DBG.VoxelHighlightZ) {
+		if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Y == int(panels.DBG.VoxelHighlightY) && voxel.Z == int(panels.DBG.VoxelHighlightZ) {
 			panels.DBG.VoxelHighlightDistanceField = float32(voxel.DistanceField)
 			color = mgl32.Vec3{10, 10, 10}
 		} else if voxel.Seed {

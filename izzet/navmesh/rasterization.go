@@ -54,10 +54,6 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 
 		for _, rd := range e.Model.RenderData() {
 			meshID := rd.MeshID
-			if _, ok := meshTriangles[meshID]; ok {
-				// we've already processed this mesh
-				continue
-			}
 			mesh := e.Model.Collection().Meshes[meshID]
 			for i := 0; i < len(mesh.Vertices); i += 3 {
 				t := Triangle{

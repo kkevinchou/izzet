@@ -45,39 +45,36 @@ func computeVoxelDistanceTransform(x, y, z int, voxelField [][][]Voxel, reachFie
 
 	var minDistanceFieldValue float64 = MaxDistanceFieldValue
 
-	if (!xNeighbor.Filled && !xReach.hasSource) || (!zNeighbor.Filled && !zReach.hasSource) || (!xzNegativeNeighbor.Filled && !xzNegativeReach.hasSource) || (!xzPositiveNeighbor.Filled && !xzPositiveReach.hasSource) {
+	if (!xNeighbor.Filled && xReach.sourceVoxel == nil) || (!zNeighbor.Filled && zReach.sourceVoxel == nil) ||
+		(!xzNegativeNeighbor.Filled && xzNegativeReach.sourceVoxel == nil) || (!xzPositiveNeighbor.Filled && xzPositiveReach.sourceVoxel == nil) {
 		minDistanceFieldValue = 0
 	} else {
 		var distanceFieldXValue float64
 		if xNeighbor.Filled {
 			distanceFieldXValue = xNeighbor.DistanceField + 1
-		} else if xReach.hasSource {
-			source := xReach.source
-			distanceFieldXValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
+		} else if xReach.sourceVoxel != nil {
+			distanceFieldXValue = xReach.sourceVoxel.DistanceField + 1
 		}
 
 		var distanceFieldZValue float64
 		if zNeighbor.Filled {
 			distanceFieldZValue = zNeighbor.DistanceField + 1
-		} else if zReach.hasSource {
-			source := zReach.source
-			distanceFieldZValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1
+		} else if zReach.sourceVoxel != nil {
+			distanceFieldZValue = zReach.sourceVoxel.DistanceField + 1
 		}
 
 		var distanceFieldXZNegativeValue float64
 		if xzNegativeNeighbor.Filled {
 			distanceFieldXZNegativeValue = xzNegativeNeighbor.DistanceField + 1.4
-		} else if xzNegativeReach.hasSource {
-			source := xzNegativeReach.source
-			distanceFieldXZNegativeValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
+		} else if xzNegativeReach.sourceVoxel != nil {
+			distanceFieldXZNegativeValue = xzNegativeReach.sourceVoxel.DistanceField + 1.4
 		}
 
 		var distanceFieldXZPositiveValue float64
 		if xzPositiveNeighbor.Filled {
 			distanceFieldXZPositiveValue = xzPositiveNeighbor.DistanceField + 1.4
-		} else if xzPositiveReach.hasSource {
-			source := xzPositiveReach.source
-			distanceFieldXZPositiveValue = voxelField[source[0]][source[1]][source[2]].DistanceField + 1.4
+		} else if xzPositiveReach.sourceVoxel != nil {
+			distanceFieldXZPositiveValue = xzPositiveReach.sourceVoxel.DistanceField + 1.4
 		}
 
 		if distanceFieldXValue < minDistanceFieldValue {

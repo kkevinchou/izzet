@@ -69,6 +69,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	meshTriangles := map[int][]Triangle{}
 	entityTriCount := map[int]int{}
 
+	// collect candidate entities for voxelization
 	for _, entity := range sEntities {
 		e := n.world.GetEntityByID(entity.GetID())
 		if e == nil {
@@ -111,16 +112,15 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	doneWorkerCount := 0
 	var doneWorkerMutex sync.Mutex
 
-	for wi := 0; wi < workerCount; wi++ {
+	// set up workers perform voxelization at a specific 3d coordinate
+	for i := 0; i < workerCount; i++ {
 		go func() {
 			for input := range inputWork {
-				i := input[0]
-				j := input[1]
-				k := input[2]
+				x, y, z := input[0], input[1], input[2]
 
 				voxel := &collider.BoundingBox{
-					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(n.voxelDimension)),
-					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(n.voxelDimension)),
+					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(x), float64(y), float64(z)}.Mul(n.voxelDimension)),
+					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(x + 1), float64(y + 1), float64(z + 1)}.Mul(n.voxelDimension)),
 				}
 				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
 
@@ -130,23 +130,13 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 						continue
 					}
 
-					// 1330 is a tile polygon with almost no y thickness
-					id := entity.GetID()
-					if id == 1330 {
-						// fmt.Println("A")
-					}
-
 					for _, rd := range entity.Model.RenderData() {
 						for _, tri := range meshTriangles[rd.MeshID] {
 							if IntersectAABBTriangle(voxelAABB, tri) {
-								id := entity.GetID()
-								if id == 1330 {
-									// fmt.Println("B")
-								}
 								outputWork <- OutputWork{
-									x:           i,
-									y:           j,
-									z:           k,
+									x:           x,
+									y:           y,
+									z:           z,
 									boundingBox: *voxel,
 								}
 
@@ -168,6 +158,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		}()
 	}
 
+	// initialize the voxel field
 	voxelField := make([][][]Voxel, dimensions[0])
 	for i := range voxelField {
 		voxelField[i] = make([][]Voxel, dimensions[1])
@@ -176,6 +167,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		}
 	}
 
+	// create a work item for each voxel location
 	for i := 0; i < dimensions[0]; i++ {
 		for j := 0; j < dimensions[1]; j++ {
 			for k := 0; k < dimensions[2]; k++ {
@@ -185,6 +177,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	}
 	close(inputWork)
 
+	// assemble voxels into the voxel field
 	for work := range outputWork {
 		n.voxelCount++
 
@@ -431,7 +424,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 
 		isSeed := true
 		var nearestNeighbor *Voxel
-		// var nearestDistance float64
+
 		neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
 		for _, neighbor := range neighbors {
 			if neighbor.RegionID == -1 {
@@ -452,32 +445,15 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			}
 		}
 
-		if nearestNeighbor != nil {
-			// seed point since the distance is larger than any neighbor
-			// if voxel.DistanceField > nearestNeighbor.DistanceField || mgl64.FloatEqualThreshold(voxel.DistanceField, nearestNeighbor.DistanceField, 0.00001) {
-			if isSeed {
-				regionIDCounter++
-				voxel.RegionID = regionIDCounter
-				voxel.Seed = true
-				// fmt.Println("SEED - ", voxel.X, voxel.Y, voxel.Z, voxel.DistanceField)
-			} else {
-				voxel.RegionID = nearestNeighbor.RegionID
-			}
-		} else {
-			// isolated voxel, so it's its own region, though we'll probably discard it
+		if isSeed {
 			regionIDCounter++
-			voxel.Seed = true
 			voxel.RegionID = regionIDCounter
+			voxel.Seed = true
+		} else if nearestNeighbor != nil {
+			voxel.RegionID = nearestNeighbor.RegionID
 		}
 
 		regionMap[voxel.RegionID] = append(regionMap[voxel.RegionID], [3]int{x, y, z})
-
-		// fmt.Println(voxel.X, voxel.Y, voxel.Z)
-
-		// runCount++
-		// if runCount >= 7 {
-		// 	break
-		// }
 	}
 
 	regionCount := map[int]int{}
@@ -546,12 +522,6 @@ func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInf
 	return neighbors
 }
 
-//	var neighborDirs [][2]int = [][2]int{
-//		[2]int{-1, -1}, [2]int{0, -1}, [2]int{1, -1},
-//		[2]int{-1, 0} /* current voxel */, [2]int{1, 0},
-//		[2]int{-1, 1}, [2]int{0, 1}, [2]int{1, 1},
-//	}
-
 var blurWeights []float64 = []float64{
 	// 1, 2, 1,
 	// 2, 4, 2,
@@ -569,31 +539,6 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 			blurredDistance[i][j] = make([]float64, dimensions[2])
 		}
 	}
-
-	// fmt.Println("PRE BLUR ======================================")
-	// printRegionMin := mgl32.Vec3{99, 25, 134}
-	// printRegionMax := mgl32.Vec3{108, 25, 146}
-	// for y := 0; y < dimensions[1]; y++ {
-	// 	for z := 0; z < dimensions[2]; z++ {
-	// 		for x := 0; x < dimensions[0]; x++ {
-	// 			voxel := &voxelField[x][y][z]
-	// 			if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
-	// 				if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
-	// 					if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
-	// 						if voxel.Filled {
-	// 							fmt.Printf("[%5.3f] ", voxel.DistanceField)
-	// 						} else {
-	// 							fmt.Printf("[-----] ")
-	// 						}
-	// 						if voxel.X == int(printRegionMax.X()) {
-	// 							fmt.Printf("\n")
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	for x := 0; x < dimensions[0]; x++ {
 		for y := 0; y < dimensions[1]; y++ {
@@ -637,76 +582,6 @@ func blurDistanceField(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimen
 			}
 		}
 	}
-
-	// fmt.Println("POST BLUR ======================================")
-	// for y := 0; y < dimensions[1]; y++ {
-	// 	for z := 0; z < dimensions[2]; z++ {
-	// 		for x := 0; x < dimensions[0]; x++ {
-	// 			voxel := &voxelField[x][y][z]
-	// 			if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
-	// 				if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
-	// 					if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
-	// 						if voxel.Filled {
-	// 							fmt.Printf("[%5.3f] ", voxel.DistanceField)
-	// 						} else {
-	// 							fmt.Printf("[-----] ")
-	// 						}
-	// 						if voxel.X == int(printRegionMax.X()) {
-	// 							fmt.Printf("\n")
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// arrows := []string{
-	// 	"🡔", "🡑", "🡕",
-	// 	"←" /* center */, "🡒",
-	// 	"🡗", "🡓", "🡖",
-	// }
-	// fmt.Println("POST BLUR ARROWS ======================================")
-	// for y := 0; y < dimensions[1]; y++ {
-	// 	for z := 0; z < dimensions[2]; z++ {
-	// 		for x := 0; x < dimensions[0]; x++ {
-	// 			voxel := &voxelField[x][y][z]
-	// 			if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
-	// 				if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
-	// 					if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
-	// 						if voxel.Filled {
-	// 							neighbors := getDebugNeighbors(x, y, z, voxelField, reachField, dimensions)
-	// 							var maxNeighbor *Voxel
-
-	// 							var arrow string
-	// 							for index, neighbor := range neighbors {
-	// 								if neighbor == nil {
-	// 									continue
-	// 								}
-	// 								if maxNeighbor == nil {
-	// 									maxNeighbor = neighbor
-	// 									arrow = arrows[index]
-	// 								} else {
-	// 									if neighbor.DistanceField > maxNeighbor.DistanceField {
-	// 										arrow = arrows[index]
-	// 										maxNeighbor = neighbor
-	// 									}
-	// 								}
-	// 							}
-	// 							fmt.Printf("[%s] ", arrow)
-	// 						} else {
-	// 							fmt.Printf("[-] ")
-	// 						}
-	// 						if voxel.X == int(printRegionMax.X()) {
-	// 							fmt.Printf("\n")
-	// 						}
-
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 }
 
 func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {

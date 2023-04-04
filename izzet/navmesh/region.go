@@ -162,3 +162,18 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 		}
 	}
 }
+
+func neighborDist(voxel, neighbor *Voxel) float64 {
+	dist := neighbor.DistanceField + 1
+	if isDiagonal(voxel, neighbor) {
+		// diagonals are slightly further
+		dist += 0.4
+	}
+	return dist
+}
+
+func isDiagonal(a, b *Voxel) bool {
+	return a.X != b.X && a.Z != b.Z
+}
+
+var regionIDCounter int

@@ -186,3 +186,27 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 	close(work)
 	wg.Wait()
 }
+
+type Voxel struct {
+	Filled        bool
+	X, Y, Z       int
+	DistanceField float64
+	Seed          bool
+	RegionID      int
+}
+
+type OutputWork struct {
+	x, y, z     int
+	boundingBox collider.BoundingBox
+}
+
+func NewVoxel(x, y, z int) Voxel {
+	return Voxel{
+		Filled:        false,
+		X:             x,
+		Y:             y,
+		Z:             z,
+		DistanceField: MaxDistanceFieldValue,
+		RegionID:      -1,
+	}
+}

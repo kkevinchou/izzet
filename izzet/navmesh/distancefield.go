@@ -1,5 +1,7 @@
 package navmesh
 
+const MaxDistanceFieldValue float64 = 999999999999999
+
 func computeDistanceTransform(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
 	// boundaries have a distance field of 0
 	for y := 0; y < dimensions[1]; y++ {

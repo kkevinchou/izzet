@@ -2,6 +2,8 @@ package navmesh
 
 import (
 	"fmt"
+	"math"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +14,18 @@ import (
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/utils"
 )
+
+type MinXTriangles []Triangle
+
+func (u MinXTriangles) Len() int {
+	return len(u)
+}
+func (u MinXTriangles) Swap(i, j int) {
+	u[i], u[j] = u[j], u[i]
+}
+func (u MinXTriangles) Less(i, j int) bool {
+	return u[i].MinX < u[j].MinX
+}
 
 func (n *NavigationMesh) voxelize() [][][]Voxel {
 	start := time.Now()
@@ -40,19 +54,30 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 
 		for _, rd := range e.Model.RenderData() {
 			meshID := rd.MeshID
+			if _, ok := meshTriangles[meshID]; ok {
+				// we've already processed this mesh
+				continue
+			}
 			mesh := e.Model.Collection().Meshes[meshID]
 			for i := 0; i < len(mesh.Vertices); i += 3 {
-				meshTriangles[meshID] = append(meshTriangles[meshID],
-					Triangle{
-						V1: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i].Position.Vec4(1)).Vec3()),
-						V2: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+1].Position.Vec4(1)).Vec3()),
-						V3: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+2].Position.Vec4(1)).Vec3()),
-					},
-				)
+				t := Triangle{
+					V1: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i].Position.Vec4(1)).Vec3()),
+					V2: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+1].Position.Vec4(1)).Vec3()),
+					V3: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+2].Position.Vec4(1)).Vec3()),
+				}
+				t.MinX = math.Min(t.V1.X(), math.Min(t.V2.X(), t.V3.X()))
+				meshTriangles[meshID] = append(meshTriangles[meshID], t)
 			}
 			numVerts := len(mesh.Vertices)
 			entityTriCount[e.GetID()] = numVerts / 3
 		}
+	}
+
+	// for more complex geometry it may be worth actually creating an
+	// oct tree for the mesh. realistically we shouldn't be using
+	// very complicated geometry for generating nav meshes
+	for _, triangles := range meshTriangles {
+		sort.Sort(MinXTriangles(triangles))
 	}
 
 	outputWork := make(chan OutputWork)
@@ -86,6 +111,9 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 
 					for _, rd := range entity.Model.RenderData() {
 						for _, tri := range meshTriangles[rd.MeshID] {
+							// NOTE - rather than doing an expensive AABB/Triangle intersection
+							// Recast clips the triangle against the voxels in the heighfield.
+							// that implementation is likely a lot more performant
 							if IntersectAABBTriangle(voxelAABB, tri) {
 								outputWork <- OutputWork{
 									x:           x,
@@ -94,6 +122,9 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 									boundingBox: *voxel,
 								}
 
+								goto Done
+							}
+							if voxelAABB.Max.X() < tri.MinX {
 								goto Done
 							}
 						}

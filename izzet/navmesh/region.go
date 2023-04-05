@@ -28,13 +28,11 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	heap.Init(&pq)
 
 	regionMap := map[int][][3]int{}
-	priorityMap := map[float64]int{}
 
 	// runCount := 0
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*Item)
 		voxel := item.value
-		priorityMap[item.priority]++
 
 		x := voxel.X
 		y := voxel.Y
@@ -89,6 +87,9 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	}
 	fmt.Printf("generated %d regions\n", len(regionCount))
 	return regionMap
+}
+
+func traceRegionContours(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
 }
 
 // TODO - update this to use half edges to collect voxels?
@@ -162,7 +163,9 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 			y := coord[1]
 			z := coord[2]
 			voxelField[x][y][z].RegionID = nextRegionID
+			regionMap[nextRegionID] = append(regionMap[nextRegionID], voxelPos(&voxelField[x][y][z]))
 		}
+		delete(regionMap, regionID)
 	}
 }
 

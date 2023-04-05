@@ -416,10 +416,6 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		gl.ActiveTexture(gl.TEXTURE31)
 		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-		voxelField := nm.VoxelField()
-		highLightedVoxel := voxelField[panels.DBG.VoxelHighlightX][panels.DBG.VoxelHighlightY][panels.DBG.VoxelHighlightZ]
-		_ = highLightedVoxel
-
 		drawNavMeshTris(viewerContext, nm)
 	}
 }

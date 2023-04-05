@@ -37,7 +37,8 @@ func New(world World) *NavigationMesh {
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
-		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		voxelDimension: 1.0,
 		world:          world,
@@ -59,9 +60,10 @@ func (n *NavigationMesh) BakeNavMesh() {
 	computeDistanceTransform(n.voxelField, reachField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
-	_ = regionMap
 	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
 	filterRegions(n.voxelField, reachField, dimensions, regionMap)
+	initialBorderVoxel := markBorderVoxels(n.voxelField, reachField, dimensions, regionMap)
+	traceRegionContours(n.voxelField, reachField, dimensions, regionMap, initialBorderVoxel)
 }
 
 type ReachInfo struct {
@@ -113,9 +115,13 @@ func voxelPos(voxel *Voxel) VoxelPosition {
 }
 
 func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
+	return getNeighborsOrdered(x, y, z, voxelField, reachField, dimensions, neighborDirs)
+}
+
+func getNeighborsOrdered(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, dirs [][2]int) []*Voxel {
 	var neighbors []*Voxel
 
-	for _, dir := range neighborDirs {
+	for _, dir := range dirs {
 		if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
 			continue
 		}

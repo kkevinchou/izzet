@@ -34,13 +34,13 @@ type DebugSettings struct {
 	NavMeshDistanceFieldThreshold int32
 	HSVOffset                     int32
 	VoxelHighlightX               int32
-	VoxelHighlightY               int32
 	VoxelHighlightZ               int32
 	VoxelHighlightDistanceField   float32
+	VoxelHighlightRegionID        int
 }
 
 var DBG DebugSettings = DebugSettings{
-	DirectionalLightDir:       [3]float32{0, -1, -1},
+	DirectionalLightDir:       [3]float32{-1, -1, -1},
 	Roughness:                 0.55,
 	Metallic:                  1.0,
 	PointLightIntensity:       100,
@@ -68,7 +68,7 @@ var DBG DebugSettings = DebugSettings{
 	NavMeshDistanceFieldThreshold: 23,
 	HSVOffset:                     11,
 	VoxelHighlightX:               0,
-	VoxelHighlightY:               0,
 	VoxelHighlightZ:               0,
 	VoxelHighlightDistanceField:   -1,
+	VoxelHighlightRegionID:        -1,
 }

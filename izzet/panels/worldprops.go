@@ -84,18 +84,16 @@ func worldProps(world World, renderContext RenderContext) {
 				world.ResetNavMeshVAO()
 			}
 		})
-		setupRow("Voxel Highlight Y", func() {
-			if imgui.InputInt("Voxel Highlight Y", &DBG.VoxelHighlightY) {
-				world.ResetNavMeshVAO()
-			}
-		})
 		setupRow("Voxel Highlight Z", func() {
 			if imgui.InputInt("Voxel Highlight Z", &DBG.VoxelHighlightZ) {
 				world.ResetNavMeshVAO()
 			}
 		})
-		setupRow("Highlight DistanceField", func() {
+		setupRow("Highlight Distance Field", func() {
 			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", DBG.VoxelHighlightDistanceField))
+		})
+		setupRow("Highlight Region ID", func() {
+			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", DBG.VoxelHighlightRegionID))
 		})
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })

@@ -183,11 +183,11 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox"}
+	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox", "scene"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
-		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" || name == "lootbox" {
+		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" || name == "lootbox" || name == "scene" {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
@@ -248,8 +248,14 @@ func (g *Izzet) loadEntities() {
 			// 	entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
 			// }
 		} else if pf.Name == "scene" {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// g.AddEntity(entity)
+			// parent := entities.CreateDummy("scene")
+			// g.AddEntity(parent)
+
+			// for _, entity := range entities.InstantiateFromPrefab(pf) {
+			// 	g.AddEntity(entity)
+			// 	entities.BuildRelation(parent, entity)
+			// }
+			// panels.SelectEntity(parent)
 		} else if pf.Name == "lootbox" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity

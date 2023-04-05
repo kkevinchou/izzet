@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
@@ -216,13 +215,14 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 }
 
 type Voxel struct {
-	Filled        bool
-	X, Y, Z       int
-	DistanceField float64
-	Seed          bool
-	RegionID      int
-	DEBUGCOLOR    *mgl32.Vec3
-	Border        bool
+	Filled           bool
+	X, Y, Z          int
+	DistanceField    float64
+	Seed             bool
+	RegionID         int
+	DEBUGCOLORFACTOR *float32
+	Border           bool
+	ContourCorner    bool
 }
 
 type OutputWork struct {

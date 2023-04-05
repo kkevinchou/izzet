@@ -10,7 +10,7 @@ import (
 
 var initialBorderCell map[int]*Voxel
 
-func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][][3]int {
+func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) map[int][]VoxelPosition {
 	pq := PriorityQueue{}
 
 	for x := 0; x < dimensions[0]; x++ {
@@ -27,7 +27,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	}
 	heap.Init(&pq)
 
-	regionMap := map[int][][3]int{}
+	regionMap := map[int][]VoxelPosition{}
 
 	// runCount := 0
 	for pq.Len() > 0 {
@@ -69,7 +69,7 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 			voxel.RegionID = nearestNeighbor.RegionID
 		}
 
-		regionMap[voxel.RegionID] = append(regionMap[voxel.RegionID], [3]int{x, y, z})
+		regionMap[voxel.RegionID] = append(regionMap[voxel.RegionID], VoxelPosition{x, y, z})
 	}
 
 	regionCount := map[int]int{}
@@ -89,11 +89,106 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	return regionMap
 }
 
-func traceRegionContours(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
+func traceRegionContours(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, initialBorderVoxel map[int]*Voxel) {
+	for _, voxel := range initialBorderVoxel {
+		traceRegionContour(voxelField, reachField, dimensions, regionMap, voxel)
+	}
 }
 
-// TODO - update this to use half edges to collect voxels?
-func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
+type Contour struct {
+}
+
+var movementRight [2]int = [2]int{1, 0}
+var movementLeft [2]int = [2]int{-1, 0}
+var movementUp [2]int = [2]int{0, -1}
+var movementDown [2]int = [2]int{0, 1}
+
+var movementRightUp [2]int = [2]int{1, -1}
+var movementRightDown [2]int = [2]int{1, 1}
+var movementLeftUp [2]int = [2]int{-1, -1}
+var movementLeftDown [2]int = [2]int{-1, 1}
+
+// prefer up/down/left/right over diagonals when navigating contours
+var traceNeighborDirs [][2]int = [][2]int{
+	[2]int{0, -1}, [2]int{0, 1}, [2]int{-1, 0}, [2]int{1, 0},
+	[2]int{-1, -1}, [2]int{1, -1}, [2]int{-1, 1}, [2]int{1, 1},
+}
+
+// TODO - gonna need to decide on how I want to handle holes
+func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, startVoxel *Voxel) Contour {
+	var next *Voxel
+	seen := map[VoxelPosition]bool{}
+
+	// initialization
+	neighbors := getNeighborsOrdered(startVoxel.X, startVoxel.Y, startVoxel.Z, voxelField, reachField, dimensions, traceNeighborDirs)
+	for _, neighbor := range neighbors {
+		if !neighbor.Border {
+			continue
+		}
+
+		if neighbor.RegionID == startVoxel.RegionID {
+			next = neighbor
+		}
+	}
+
+	if next == nil {
+		return Contour{}
+	}
+	firstNextVoxel := next
+
+	secondMovement := [2]int{next.X - startVoxel.X, next.Z - startVoxel.Z}
+	var firstMovement [2]int
+
+	for next != nil {
+		voxel := next
+		next = nil
+		seen[voxelPos(voxel)] = true
+
+		if startVoxel.RegionID == 1 && voxel.X == 46 && voxel.Z == 40 {
+			fmt.Println(*voxel)
+		}
+
+		if startVoxel.RegionID == 1 {
+			fmt.Println(*voxel)
+		}
+
+		neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, traceNeighborDirs)
+		for _, neighbor := range neighbors {
+			if !neighbor.Border || seen[voxelPos(neighbor)] {
+				continue
+			}
+
+			if neighbor.RegionID == voxel.RegionID {
+				next = neighbor
+				break
+			}
+		}
+
+		if next != nil {
+			firstMovement = secondMovement
+			secondMovement = [2]int{next.X - voxel.X, next.Z - voxel.Z}
+			if firstMovement != secondMovement {
+				voxel.ContourCorner = true
+				// var c float32 = 0.5
+				// voxel.DEBUGCOLORFACTOR = &c
+			}
+		}
+	}
+
+	// handle the edge case where the start voxel is a corner voxel
+	firstMovement = secondMovement
+	secondMovement = [2]int{firstNextVoxel.X - startVoxel.X, firstNextVoxel.Z - startVoxel.Z}
+	if firstMovement != secondMovement {
+		startVoxel.ContourCorner = true
+		var c float32 = 0.5
+		startVoxel.DEBUGCOLORFACTOR = &c
+	}
+
+	return Contour{}
+}
+
+// TODO - update this to use half edges to collect voxels
+func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition) {
 	processedRegions := map[int]bool{}
 	regionConversion := map[int]int{}
 
@@ -169,7 +264,38 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 	}
 }
 
-func filterRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][][3]int) {
+func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition) map[int]*Voxel {
+	borderVoxel := map[int]*Voxel{}
+	for x := 0; x < dimensions[0]; x++ {
+		for y := 0; y < dimensions[1]; y++ {
+			for z := 0; z < dimensions[2]; z++ {
+				voxel := &voxelField[x][y][z]
+				if voxel.RegionID == 1 && x == 46 && z == 40 {
+					fmt.Println("HI")
+				}
+				neighbors := getNeighbors(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions)
+				if len(neighbors) != 8 {
+					voxel.Border = true
+				} else {
+					for _, neighbor := range neighbors {
+						if voxel.RegionID != neighbor.RegionID {
+							voxel.Border = true
+							break
+						}
+					}
+				}
+				if voxel.Border {
+					borderVoxel[voxel.RegionID] = voxel
+					var c float32 = 0.5
+					voxel.DEBUGCOLORFACTOR = &c
+				}
+			}
+		}
+	}
+	return borderVoxel
+}
+
+func filterRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition) {
 	// filter regions that are too small and isolated
 	// might require region definition first
 }

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
@@ -220,6 +221,8 @@ type Voxel struct {
 	DistanceField float64
 	Seed          bool
 	RegionID      int
+	DEBUGCOLOR    *mgl32.Vec3
+	Border        bool
 }
 
 type OutputWork struct {

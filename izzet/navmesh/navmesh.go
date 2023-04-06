@@ -18,6 +18,11 @@ import (
 const stepHeight int = 4
 const agentHeight int = 30
 
+// we can get some degenerate regions when we have very tiny holes in the navmesh
+// realistically speaking pathing around very tiny holes isn't something we're too
+// interested in anyway, so any holes that are smaller than this size will be filled
+const minimumHoleDimension int = 5
+
 type World interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetEntityByID(id int) *entities.Entity
@@ -35,11 +40,11 @@ type NavigationMesh struct {
 func New(world World) *NavigationMesh {
 	nm := &NavigationMesh{
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
-		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
-		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
-		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
-		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, -150}, MaxVertex: mgl64.Vec3{100, 100, 0}},
+		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
@@ -56,6 +61,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 
 	n.voxelField = n.voxelize()
 	buildNavigableArea(n.voxelField, dimensions)
+	fillHoles(n.voxelField, dimensions)
 	reachField := computeReachField(n.voxelField, dimensions)
 	computeDistanceTransform(n.voxelField, reachField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
@@ -142,4 +148,32 @@ func getNeighborsOrdered(x, y, z int, voxelField [][][]Voxel, reachField [][][]R
 	}
 
 	return neighbors
+}
+
+func isConnected(a, b *Voxel, voxelField [][][]Voxel, reachField [][][]ReachInfo) bool {
+	x := b.X - a.X
+	y := b.Y - a.Y
+	z := b.Z - a.Z
+
+	if x > 1 || x < -1 || y > stepHeight || y < -stepHeight || z > 1 || z < -1 {
+		return false
+	}
+
+	bValid := false
+	if reachField[b.X][b.Y][b.Z].sourceVoxel != nil {
+		bValid = true
+	} else if voxelField[b.X][b.Y][b.Z].Filled {
+		bValid = true
+	}
+
+	if !bValid {
+		return false
+	}
+
+	if reachField[a.X][a.Y][a.Z].sourceVoxel != nil {
+		return true
+	} else if voxelField[a.X][a.Y][a.Z].Filled {
+		return true
+	}
+	return false
 }

@@ -376,12 +376,12 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		shader := shaderManager.GetShaderProgram("color_pbr")
 		shader.Use()
 
-		if !panels.DBG.Bloom {
+		if panels.DBG.Bloom {
+			shader.SetUniformInt("applyToneMapping", 0)
+		} else {
 			// only tone map if we're not applying bloom, otherwise
 			// we want to keep the HDR values and tone map later
 			shader.SetUniformInt("applyToneMapping", 1)
-		} else {
-			shader.SetUniformInt("applyToneMapping", 0)
 		}
 
 		shader.SetUniformMat4("model", mgl32.Ident4())

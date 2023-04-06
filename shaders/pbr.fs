@@ -307,6 +307,7 @@ void main()
         // color = color / (color + vec3(1.0));
 
         color = acesToneMapping(color);
+        // color = color / (color + vec3(1.0));
 
         // Gamma correction
         // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally

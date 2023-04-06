@@ -183,7 +183,8 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
 
-	// remove voxels that have another voxel directly above it
+	// remove voxels that are too low - i.e. there is a voxel from above that
+	// would interfere with the agent height
 	for wc := 0; wc < workerCount; wc++ {
 		go func() {
 			defer wg.Done()
@@ -212,6 +213,20 @@ func buildNavigableArea(voxelField [][][]Voxel, dimensions [3]int) {
 
 	close(work)
 	wg.Wait()
+}
+
+func fillHoles(voxelField [][][]Voxel, dimensions [3]int) {
+	for y := 0; y < dimensions[1]; y++ {
+		for z := 0; z < dimensions[2]; z++ {
+			for x := 0; x < dimensions[0]; x++ {
+				if voxelField[x][y][z].Filled {
+					continue
+				}
+
+				// voxel := &voxelField[x][y][z]
+			}
+		}
+	}
 }
 
 type Voxel struct {

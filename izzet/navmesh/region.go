@@ -144,13 +144,12 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 		next = nil
 		seen[voxelPos(voxel)] = true
 
-		if startVoxel.RegionID == 1 && voxel.X == 46 && voxel.Z == 40 {
-			fmt.Println(*voxel)
-		}
-
-		if startVoxel.RegionID == 1 {
-			fmt.Println(*voxel)
-		}
+		// if startVoxel.RegionID == 1 && voxel.X == 46 && voxel.Z == 40 {
+		// 	fmt.Println(*voxel)
+		// }
+		// if startVoxel.RegionID == 1 {
+		// 	fmt.Println(*voxel)
+		// }
 
 		neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, traceNeighborDirs)
 		for _, neighbor := range neighbors {
@@ -169,7 +168,7 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 			secondMovement = [2]int{next.X - voxel.X, next.Z - voxel.Z}
 			if firstMovement != secondMovement {
 				voxel.ContourCorner = true
-				// var c float32 = 0.5
+				// var c float32 = 4
 				// voxel.DEBUGCOLORFACTOR = &c
 			}
 		}
@@ -180,8 +179,8 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	secondMovement = [2]int{firstNextVoxel.X - startVoxel.X, firstNextVoxel.Z - startVoxel.Z}
 	if firstMovement != secondMovement {
 		startVoxel.ContourCorner = true
-		var c float32 = 0.5
-		startVoxel.DEBUGCOLORFACTOR = &c
+		// var c float32 = 0.5
+		// startVoxel.DEBUGCOLORFACTOR = &c
 	}
 
 	return Contour{}
@@ -264,6 +263,13 @@ func mergeRegions(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions
 	}
 }
 
+var borderNeighborDirs [][2]int = [][2]int{
+	[2]int{-1, -1}, [2]int{0, -1}, [2]int{1, -1},
+	[2]int{1, 0},
+	[2]int{1, 1}, [2]int{0, 1}, [2]int{-1, 1},
+	[2]int{-1, 0},
+}
+
 func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition) map[int]*Voxel {
 	borderVoxel := map[int]*Voxel{}
 	for x := 0; x < dimensions[0]; x++ {
@@ -273,12 +279,23 @@ func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimens
 				if voxel.RegionID == 1 && x == 46 && z == 40 {
 					fmt.Println("HI")
 				}
-				neighbors := getNeighbors(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions)
+				neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, borderNeighborDirs)
 				if len(neighbors) != 8 {
 					voxel.Border = true
 				} else {
-					for _, neighbor := range neighbors {
-						if voxel.RegionID != neighbor.RegionID {
+					if voxel.X == 52 && voxel.Y == 76 && voxel.Z == 6 {
+						fmt.Println(*voxel)
+					}
+					// there is an edge case where a voxel is surrounded by voxels of the same region but is still a border voxel.
+					// this happens when one the neighbor voxels is not reachable by one of it's neighboring voxels (e.g. left or right).
+					// in that scenario, our current voxel is a border voxel since we would need to travel through this voxel to connect
+					// those two neighboring voxels
+					for i := 0; i < len(neighbors); i++ {
+						if voxel.RegionID != neighbors[i].RegionID {
+							voxel.Border = true
+							break
+						}
+						if !isConnected(neighbors[i], neighbors[(i+1)%len(neighbors)], voxelField, reachField) {
 							voxel.Border = true
 							break
 						}
@@ -286,8 +303,8 @@ func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimens
 				}
 				if voxel.Border {
 					borderVoxel[voxel.RegionID] = voxel
-					var c float32 = 0.5
-					voxel.DEBUGCOLORFACTOR = &c
+					// var c float32 = 0.5
+					// voxel.DEBUGCOLORFACTOR = &c
 				}
 			}
 		}

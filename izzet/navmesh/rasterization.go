@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -44,9 +43,9 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 			continue
 		}
 
-		if !strings.Contains(e.Model.Name(), "Tile") && !strings.Contains(e.Model.Name(), "Stair") {
-			continue
-		}
+		// if !strings.Contains(e.Model.Name(), "Tile") && !strings.Contains(e.Model.Name(), "Stair") {
+		// 	continue
+		// }
 
 		candidateEntities = append(candidateEntities, e)
 		boundingBoxes[e.GetID()] = *e.BoundingBox()
@@ -168,6 +167,12 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 	}
 	fmt.Printf("generated %d voxels\n", n.voxelCount)
 
+	lineStart := mgl64.Vec3{0, 0, 0}
+	lineEnd := mgl64.Vec3{0, 50, 50}
+
+	n.voxelCount = 100
+	RasterizeLine(lineStart, lineEnd, voxelField)
+
 	totalTricount := 0
 	for _, count := range entityTriCount {
 		totalTricount += count
@@ -253,5 +258,110 @@ func NewVoxel(x, y, z int) Voxel {
 		Z:             z,
 		DistanceField: MaxDistanceFieldValue,
 		RegionID:      -1,
+	}
+}
+
+func RasterizeLine(start, end mgl64.Vec3, voxelGrid [][][]Voxel) {
+	direction := end.Sub(start)
+	dx, dy, dz := int(direction.X()), int(direction.Y()), int(direction.Z())
+
+	// Determine the signs of dx, dy, and dz
+	sx, sy, sz := sign(dx), sign(dy), sign(dz)
+
+	// Determine which of the three dimensions has the greatest absolute difference
+	adx, ady, adz := abs(dx), abs(dy), abs(dz)
+
+	if adx >= ady && adx >= adz {
+		// The X dimension is the major axis
+		yd := ady - adx/2
+		zd := adz - adx/2
+
+		y, z := int(start.Y()), int(start.Z())
+		for x := int(start.X()); x != int(end.X()); x += sx {
+			setVoxel(x, y, z, voxelGrid)
+
+			yd += ady
+			if yd >= adx {
+				y += sy
+				yd -= adx
+			}
+
+			zd += adz
+			if zd >= adx {
+				z += sz
+				zd -= adx
+			}
+		}
+
+	} else if ady >= adx && ady >= adz {
+		// The Y dimension is the major axis
+		xd := adx - ady/2
+		zd := adz - ady/2
+
+		x, z := int(start.X()), int(start.Z())
+		for y := int(start.Y()); y != int(end.Y()); y += sy {
+			setVoxel(x, y, z, voxelGrid)
+
+			xd += adx
+			if xd >= ady {
+				x += sx
+				xd -= ady
+			}
+
+			zd += adz
+			if zd >= ady {
+				z += sz
+				zd -= ady
+			}
+		}
+
+	} else {
+		// The Z dimension is the major axis
+		xd := adx - adz/2
+		yd := ady - adz/2
+
+		x, y := int(start.X()), int(start.Y())
+		for z := int(start.Z()); z != int(end.Z()); z += sz {
+			setVoxel(x, y, z, voxelGrid)
+
+			xd += adx
+			if xd >= adz {
+				x += sx
+				xd -= adz
+			}
+
+			yd += ady
+			if yd >= adz {
+				y += sy
+				yd -= adz
+			}
+		}
+	}
+}
+
+func setVoxel(x, y, z int, voxelGrid [][][]Voxel) {
+	fmt.Println("SET", x, y, z)
+	voxelGrid[x][y][z].Filled = true
+	voxelGrid[x][y][z].RegionID = 69
+	voxelGrid[x][y][z].X = x
+	voxelGrid[x][y][z].Y = y
+	voxelGrid[x][y][z].Z = z
+}
+
+func sign(x int) int {
+	if x > 0 {
+		return 1
+	} else if x < 0 {
+		return -1
+	} else {
+		return 0
+	}
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	} else {
+		return x
 	}
 }

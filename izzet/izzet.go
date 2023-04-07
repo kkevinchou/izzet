@@ -183,7 +183,7 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox", "scene"}
+	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox", "scene", "simple_plane"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
@@ -256,6 +256,9 @@ func (g *Izzet) loadEntities() {
 			// 	entities.BuildRelation(parent, entity)
 			// }
 			// panels.SelectEntity(parent)
+		} else if pf.Name == "simple_plane" {
+			entity := entities.InstantiateFromPrefab(pf)
+			g.AddEntity(entity[0])
 		} else if pf.Name == "lootbox" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity
@@ -264,14 +267,14 @@ func (g *Izzet) loadEntities() {
 			// entity.ParentJoint = joint
 			// g.BuildRelation(parent, entity)
 		} else if pf.Name == "demo_scene_dungeon" {
-			parent := entities.CreateDummy("scene_dummy")
-			g.AddEntity(parent)
-			entities.SetScale(parent, mgl64.Vec3{10, 10, 10})
+			// parent := entities.CreateDummy("scene_dummy")
+			// g.AddEntity(parent)
+			// entities.SetScale(parent, mgl64.Vec3{10, 10, 10})
 
-			for _, entity := range entities.InstantiateFromPrefab(pf) {
-				entities.BuildRelation(parent, entity)
-				g.AddEntity(entity)
-			}
+			// for _, entity := range entities.InstantiateFromPrefab(pf) {
+			// 	entities.BuildRelation(parent, entity)
+			// 	g.AddEntity(entity)
+			// }
 		} else if pf.Name == "vehicle" {
 			// parent := entities.CreateDummy("vehicle")
 			// g.AddEntity(parent)

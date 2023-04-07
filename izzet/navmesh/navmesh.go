@@ -42,34 +42,34 @@ func New(world World) *NavigationMesh {
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
-		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
-		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, -150}, MaxVertex: mgl64.Vec3{100, 100, 0}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, -100}, MaxVertex: mgl64.Vec3{50, 50, 100}},
 		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
 	nm.BakeNavMesh()
-	// move the scene out of the way
-	entity := world.GetEntityByID(3)
-	entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
+	// // move the scene out of the way
+	// entity := world.GetEntityByID(3)
+	// entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
 	return nm
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
-	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
-	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
+	// delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
+	// var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
 
 	n.voxelField = n.voxelize()
-	buildNavigableArea(n.voxelField, dimensions)
-	fillHoles(n.voxelField, dimensions)
-	reachField := computeReachField(n.voxelField, dimensions)
-	computeDistanceTransform(n.voxelField, reachField, dimensions)
-	blurDistanceField(n.voxelField, reachField, dimensions)
-	regionMap := watershed(n.voxelField, reachField, dimensions)
-	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
-	filterRegions(n.voxelField, reachField, dimensions, regionMap)
-	initialBorderVoxel := markBorderVoxels(n.voxelField, reachField, dimensions, regionMap)
-	traceRegionContours(n.voxelField, reachField, dimensions, regionMap, initialBorderVoxel)
+	// buildNavigableArea(n.voxelField, dimensions)
+	// fillHoles(n.voxelField, dimensions)
+	// reachField := computeReachField(n.voxelField, dimensions)
+	// computeDistanceTransform(n.voxelField, reachField, dimensions)
+	// blurDistanceField(n.voxelField, reachField, dimensions)
+	// regionMap := watershed(n.voxelField, reachField, dimensions)
+	// mergeRegions(n.voxelField, reachField, dimensions, regionMap)
+	// filterRegions(n.voxelField, reachField, dimensions, regionMap)
+	// initialBorderVoxel := markBorderVoxels(n.voxelField, reachField, dimensions, regionMap)
+	// traceRegionContours(n.voxelField, reachField, dimensions, regionMap, initialBorderVoxel)
 }
 
 type ReachInfo struct {

@@ -44,14 +44,14 @@ func New(world World) *NavigationMesh {
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
 		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, -150}, MaxVertex: mgl64.Vec3{100, 100, 0}},
-		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, 0}, MaxVertex: mgl64.Vec3{100, 100, 150}},
+		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -50, -75}, MaxVertex: mgl64.Vec3{50, 50, 75}},
 		voxelDimension: 1.0,
 		world:          world,
 	}
 	nm.BakeNavMesh()
 	// move the scene out of the way
-	entity := world.GetEntityByID(3)
-	entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
+	// entity := world.GetEntityByID(3)
+	// entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
 	return nm
 }
 

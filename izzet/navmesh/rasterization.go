@@ -157,42 +157,6 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		fmt.Printf("\n")
 	}
 
-	// ray0 = xSortedVerts[2].Sub(xSortedVerts[0]).Normalize()
-	// ray1 = xSortedVerts[2].Sub(xSortedVerts[1]).Normalize()
-	// var xFloat float64 = xSortedVerts[2].X()
-
-	// for x := int(xSortedVerts[2].X()); x >= int(xSortedVerts[0].X()); x-- {
-	// 	if int(xSortedVerts[1].X()) == int(xFloat) {
-	// 		ray1 = xSortedVerts[1].Sub(xSortedVerts[0]).Normalize()
-	// 	}
-	// 	delta0 := xFloat - xSortedVerts[0].X()
-	// 	clippedVertex0 := xSortedVerts[0].Add(ray0.Mul(delta0 / ray0.Z()))
-	// 	clippedVoxel0 := convertPointToVoxelFieldPosition(clippedVertex0, n.Volume, n.voxelDimension)
-
-	// 	delta1 := xFloat - xSortedVerts[1].X()
-	// 	clippedVertex1 := xSortedVerts[1].Add(ray1.Mul(delta1 / ray1.Z()))
-	// 	clippedVoxel1 := convertPointToVoxelFieldPosition(clippedVertex1, n.Volume, n.voxelDimension)
-
-	// 	if clippedVoxel0[0] < clippedVoxel1[0] {
-	// 		yzField[clippedVoxel0[1]][int(xFloat)].Valid = true
-	// 		yzField[clippedVoxel0[1]][int(xFloat)].Min = clippedVoxel0[0]
-	// 	} else {
-	// 		yzField[clippedVoxel0[1]][int(xFloat)].Valid = true
-	// 		yzField[clippedVoxel0[1]][int(xFloat)].Max = clippedVoxel1[0]
-	// 	}
-
-	// 	xFloat -= 1
-	// }
-
-	// for y := int(ySortedVerts[2].Y()); y >= int(ySortedVerts[0].Y()); y-- {
-	// 	yDelta := y - int(xSortedVerts[1].Y())
-	// 	clippedVertex1 := xSortedVerts[1].Add(leftRay.Mul(float64(yDelta) / leftRay.Y()))
-	// 	clippedVoxel1 := convertPointToVoxelFieldPosition(clippedVertex1, n.Volume, n.voxelDimension)
-	// 	clippedVertex2 := xSortedVerts[1].Add(rightRay.Mul(float64(yDelta) / rightRay.Y()))
-	// 	clippedVoxel2 := convertPointToVoxelFieldPosition(clippedVertex2, n.Volume, n.voxelDimension)
-	// 	RasterizeLine(clippedVoxel1, clippedVoxel2, voxelField)
-	// }
-
 	for id, triangles := range meshTriangles {
 		if id != 69 {
 			continue

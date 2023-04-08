@@ -2,32 +2,23 @@ package navmesh
 
 import (
 	"fmt"
-	"math"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/collision"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-type MinXTriangles []Triangle
-
-func (u MinXTriangles) Len() int {
-	return len(u)
-}
-func (u MinXTriangles) Swap(i, j int) {
-	u[i], u[j] = u[j], u[i]
-}
-func (u MinXTriangles) Less(i, j int) bool {
-	return u[i].MinX < u[j].MinX
+type Span struct {
+	Min   int
+	Max   int
+	Valid bool
 }
 
 func (n *NavigationMesh) voxelize() [][][]Voxel {
-	start := time.Now()
+	// start := time.Now()
 	spatialPartition := n.world.SpatialPartition()
 	sEntities := spatialPartition.QueryEntities(n.Volume)
 
@@ -55,12 +46,15 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 			meshID := rd.MeshID
 			mesh := e.Model.Collection().Meshes[meshID]
 			for i := 0; i < len(mesh.Vertices); i += 3 {
+				worldSpaceV1 := utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i].Position.Vec4(1)).Vec3())
+				worldSpaceV2 := utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+1].Position.Vec4(1)).Vec3())
+				worldSpaceV3 := utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+2].Position.Vec4(1)).Vec3())
+
 				t := Triangle{
-					V1: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i].Position.Vec4(1)).Vec3()),
-					V2: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+1].Position.Vec4(1)).Vec3()),
-					V3: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+2].Position.Vec4(1)).Vec3()),
+					V1: convertPointToVoxelFieldPosition(worldSpaceV1, n.Volume, n.voxelDimension),
+					V2: convertPointToVoxelFieldPosition(worldSpaceV2, n.Volume, n.voxelDimension),
+					V3: convertPointToVoxelFieldPosition(worldSpaceV3, n.Volume, n.voxelDimension),
 				}
-				t.MinX = math.Min(t.V1.X(), math.Min(t.V2.X(), t.V3.X()))
 				meshTriangles[meshID] = append(meshTriangles[meshID], t)
 			}
 			numVerts := len(mesh.Vertices)
@@ -68,75 +62,8 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		}
 	}
 
-	// for more complex geometry it may be worth actually creating an
-	// oct tree for the mesh. realistically we shouldn't be using
-	// very complicated geometry for generating nav meshes
-	for _, triangles := range meshTriangles {
-		sort.Sort(MinXTriangles(triangles))
-	}
-
-	outputWork := make(chan OutputWork)
 	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
-
-	inputWorkCount := dimensions[0] * dimensions[1] * dimensions[2]
-	inputWork := make(chan VoxelPosition, inputWorkCount)
-	workerCount := 12
-
-	doneWorkerCount := 0
-	var doneWorkerMutex sync.Mutex
-
-	// set up workers perform voxelization at a specific 3d coordinate
-	for i := 0; i < workerCount; i++ {
-		go func() {
-			for input := range inputWork {
-				x, y, z := input[0], input[1], input[2]
-
-				voxel := &collider.BoundingBox{
-					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(x), float64(y), float64(z)}.Mul(n.voxelDimension)),
-					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(x + 1), float64(y + 1), float64(z + 1)}.Mul(n.voxelDimension)),
-				}
-				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
-
-				for _, entity := range candidateEntities {
-					bb := boundingBoxes[entity.GetID()]
-					if !collision.CheckOverlapAABBAABB(voxel, &bb) {
-						continue
-					}
-
-					for _, rd := range entity.Model.RenderData() {
-						for _, tri := range meshTriangles[rd.MeshID] {
-							// NOTE - rather than doing an expensive AABB/Triangle intersection
-							// Recast clips the triangle against the voxels in the heighfield.
-							// that implementation is likely a lot more performant
-							if IntersectAABBTriangle(voxelAABB, tri) {
-								outputWork <- OutputWork{
-									x:           x,
-									y:           y,
-									z:           z,
-									boundingBox: *voxel,
-								}
-
-								goto Done
-							}
-							if voxelAABB.Max.X() < tri.MinX {
-								continue
-							}
-						}
-					}
-				Done:
-				}
-			}
-
-			doneWorkerMutex.Lock()
-			doneWorkerCount++
-			if doneWorkerCount == workerCount {
-				fmt.Println("generation time seconds", time.Since(start).Seconds())
-				close(outputWork)
-			}
-			doneWorkerMutex.Unlock()
-		}()
-	}
 
 	// initialize the voxel field
 	voxelField := make([][][]Voxel, dimensions[0])
@@ -147,31 +74,138 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		}
 	}
 
-	// create a work item for each voxel location
-	for i := 0; i < dimensions[0]; i++ {
-		for j := 0; j < dimensions[1]; j++ {
-			for k := 0; k < dimensions[2]; k++ {
-				inputWork <- VoxelPosition{i, j, k}
+	tri := Triangle{
+		A1: mgl64.Vec3{0, 5, 0},
+		A2: mgl64.Vec3{25, 35, -25},
+		A3: mgl64.Vec3{-5, 45, 25},
+	}
+	tri.V1 = convertPointToVoxelFieldPosition(tri.A1, n.Volume, n.voxelDimension)
+	tri.V2 = convertPointToVoxelFieldPosition(tri.A2, n.Volume, n.voxelDimension)
+	tri.V3 = convertPointToVoxelFieldPosition(tri.A3, n.Volume, n.voxelDimension)
+
+	xSortedVerts := []mgl64.Vec3{tri.A1, tri.A2, tri.A3}
+	sort.Slice(xSortedVerts, func(i, j int) bool {
+		return xSortedVerts[i].X() < xSortedVerts[j].X()
+	})
+	tri.XSortedVerts = xSortedVerts
+
+	zSortedVerts := []mgl64.Vec3{tri.A1, tri.A2, tri.A3}
+	sort.Slice(zSortedVerts, func(i, j int) bool {
+		return zSortedVerts[i].Z() < zSortedVerts[j].Z()
+	})
+	tri.ZSortedVerts = zSortedVerts
+
+	ySortedVerts := []mgl64.Vec3{tri.A1, tri.A2, tri.A3}
+	sort.Slice(ySortedVerts, func(i, j int) bool {
+		return ySortedVerts[i].Y() < ySortedVerts[j].Y()
+	})
+	tri.YSortedVerts = ySortedVerts
+
+	meshTriangles[69] = append(meshTriangles[69], tri)
+
+	// leftRay := xSortedVerts[0].Sub(xSortedVerts[1]).Normalize()
+	// rightRay := xSortedVerts[2].Sub(xSortedVerts[1]).Normalize()
+
+	ray0 := zSortedVerts[2].Sub(zSortedVerts[0]).Normalize()
+	ray1 := zSortedVerts[2].Sub(zSortedVerts[1]).Normalize()
+	var zFloat float64 = zSortedVerts[2].Z()
+
+	yzField := [100][100]Span{}
+
+	vertRef0 := zSortedVerts[0]
+	vertRef1 := zSortedVerts[1]
+
+	for z := int(zSortedVerts[2].Z()); z >= int(zSortedVerts[0].Z()); z-- {
+		if int(zSortedVerts[1].Z()) == int(zFloat) {
+			ray1 = zSortedVerts[1].Sub(zSortedVerts[0]).Normalize()
+			vertRef1 = vertRef0
+		}
+		delta0 := zFloat - vertRef0.Z()
+		clippedVertex0 := vertRef0.Add(ray0.Mul(delta0 / ray0.Z()))
+		clippedVoxel0 := convertPointToVoxelFieldPosition(clippedVertex0, n.Volume, n.voxelDimension)
+
+		delta1 := zFloat - vertRef1.Z()
+		clippedVertex1 := vertRef1.Add(ray1.Mul(delta1 / ray1.Z()))
+		clippedVoxel1 := convertPointToVoxelFieldPosition(clippedVertex1, n.Volume, n.voxelDimension)
+
+		if clippedVoxel0[0] < clippedVoxel1[0] {
+			yzField[clippedVoxel0[1]][int(zFloat-n.Volume.MinVertex.Z())].Valid = true
+			yzField[clippedVoxel0[1]][int(zFloat-n.Volume.MinVertex.Z())].Min = clippedVoxel0[0]
+
+			yzField[clippedVoxel1[1]][int(zFloat-n.Volume.MinVertex.Z())].Valid = true
+			yzField[clippedVoxel1[1]][int(zFloat-n.Volume.MinVertex.Z())].Max = clippedVoxel1[0]
+		} else {
+			yzField[clippedVoxel1[1]][int(zFloat-n.Volume.MinVertex.Z())].Valid = true
+			yzField[clippedVoxel1[1]][int(zFloat-n.Volume.MinVertex.Z())].Min = clippedVoxel1[0]
+
+			yzField[clippedVoxel0[1]][int(zFloat-n.Volume.MinVertex.Z())].Valid = true
+			yzField[clippedVoxel0[1]][int(zFloat-n.Volume.MinVertex.Z())].Max = clippedVoxel0[0]
+		}
+
+		zFloat -= 1
+	}
+
+	for i := len(yzField) - 1; i >= 0; i-- {
+		row := yzField[i]
+		for _, val := range row {
+			if val.Valid {
+				fmt.Printf("x")
+			} else {
+				fmt.Printf("-")
 			}
 		}
+		fmt.Printf("\n")
 	}
-	close(inputWork)
 
-	// assemble voxels into the voxel field
-	for work := range outputWork {
-		n.voxelCount++
+	// ray0 = xSortedVerts[2].Sub(xSortedVerts[0]).Normalize()
+	// ray1 = xSortedVerts[2].Sub(xSortedVerts[1]).Normalize()
+	// var xFloat float64 = xSortedVerts[2].X()
 
-		x, y, z := work.x, work.y, work.z
-		voxelField[x][y][z] = NewVoxel(x, y, z)
-		voxelField[x][y][z].Filled = true
+	// for x := int(xSortedVerts[2].X()); x >= int(xSortedVerts[0].X()); x-- {
+	// 	if int(xSortedVerts[1].X()) == int(xFloat) {
+	// 		ray1 = xSortedVerts[1].Sub(xSortedVerts[0]).Normalize()
+	// 	}
+	// 	delta0 := xFloat - xSortedVerts[0].X()
+	// 	clippedVertex0 := xSortedVerts[0].Add(ray0.Mul(delta0 / ray0.Z()))
+	// 	clippedVoxel0 := convertPointToVoxelFieldPosition(clippedVertex0, n.Volume, n.voxelDimension)
+
+	// 	delta1 := xFloat - xSortedVerts[1].X()
+	// 	clippedVertex1 := xSortedVerts[1].Add(ray1.Mul(delta1 / ray1.Z()))
+	// 	clippedVoxel1 := convertPointToVoxelFieldPosition(clippedVertex1, n.Volume, n.voxelDimension)
+
+	// 	if clippedVoxel0[0] < clippedVoxel1[0] {
+	// 		yzField[clippedVoxel0[1]][int(xFloat)].Valid = true
+	// 		yzField[clippedVoxel0[1]][int(xFloat)].Min = clippedVoxel0[0]
+	// 	} else {
+	// 		yzField[clippedVoxel0[1]][int(xFloat)].Valid = true
+	// 		yzField[clippedVoxel0[1]][int(xFloat)].Max = clippedVoxel1[0]
+	// 	}
+
+	// 	xFloat -= 1
+	// }
+
+	// for y := int(ySortedVerts[2].Y()); y >= int(ySortedVerts[0].Y()); y-- {
+	// 	yDelta := y - int(xSortedVerts[1].Y())
+	// 	clippedVertex1 := xSortedVerts[1].Add(leftRay.Mul(float64(yDelta) / leftRay.Y()))
+	// 	clippedVoxel1 := convertPointToVoxelFieldPosition(clippedVertex1, n.Volume, n.voxelDimension)
+	// 	clippedVertex2 := xSortedVerts[1].Add(rightRay.Mul(float64(yDelta) / rightRay.Y()))
+	// 	clippedVoxel2 := convertPointToVoxelFieldPosition(clippedVertex2, n.Volume, n.voxelDimension)
+	// 	RasterizeLine(clippedVoxel1, clippedVoxel2, voxelField)
+	// }
+
+	for id, triangles := range meshTriangles {
+		if id != 69 {
+			continue
+		}
+		for _, triangle := range triangles {
+			// minXVertex, maxXVertex := triangle.V1, triangle.V1
+
+			n.voxelCount += RasterizeLine(triangle.V1, triangle.V2, voxelField)
+			n.voxelCount += RasterizeLine(triangle.V2, triangle.V3, voxelField)
+			n.voxelCount += RasterizeLine(triangle.V3, triangle.V1, voxelField)
+		}
 	}
-	fmt.Printf("generated %d voxels\n", n.voxelCount)
-
-	lineStart := mgl64.Vec3{0, 0, 0}
-	lineEnd := mgl64.Vec3{0, 50, 50}
-
-	n.voxelCount = 100
-	RasterizeLine(lineStart, lineEnd, voxelField)
+	n.voxelCount = 69
 
 	totalTricount := 0
 	for _, count := range entityTriCount {
@@ -261,9 +295,10 @@ func NewVoxel(x, y, z int) Voxel {
 	}
 }
 
-func RasterizeLine(start, end mgl64.Vec3, voxelGrid [][][]Voxel) {
-	direction := end.Sub(start)
-	dx, dy, dz := int(direction.X()), int(direction.Y()), int(direction.Z())
+func RasterizeLine(start, end [3]int, voxelGrid [][][]Voxel) int {
+	var voxelCount int
+	direction := [3]int{end[0] - start[0], end[1] - start[1], end[2] - start[2]}
+	dx, dy, dz := direction[0], direction[1], direction[2]
 
 	// Determine the signs of dx, dy, and dz
 	sx, sy, sz := sign(dx), sign(dy), sign(dz)
@@ -276,9 +311,9 @@ func RasterizeLine(start, end mgl64.Vec3, voxelGrid [][][]Voxel) {
 		yd := ady - adx/2
 		zd := adz - adx/2
 
-		y, z := int(start.Y()), int(start.Z())
-		for x := int(start.X()); x != int(end.X()); x += sx {
-			setVoxel(x, y, z, voxelGrid)
+		y, z := start[1], start[2]
+		for x := start[0]; x != end[0]; x += sx {
+			voxelCount += setVoxel(x, y, z, voxelGrid)
 
 			yd += ady
 			if yd >= adx {
@@ -298,9 +333,9 @@ func RasterizeLine(start, end mgl64.Vec3, voxelGrid [][][]Voxel) {
 		xd := adx - ady/2
 		zd := adz - ady/2
 
-		x, z := int(start.X()), int(start.Z())
-		for y := int(start.Y()); y != int(end.Y()); y += sy {
-			setVoxel(x, y, z, voxelGrid)
+		x, z := start[0], start[2]
+		for y := start[1]; y != end[1]; y += sy {
+			voxelCount += setVoxel(x, y, z, voxelGrid)
 
 			xd += adx
 			if xd >= ady {
@@ -320,9 +355,9 @@ func RasterizeLine(start, end mgl64.Vec3, voxelGrid [][][]Voxel) {
 		xd := adx - adz/2
 		yd := ady - adz/2
 
-		x, y := int(start.X()), int(start.Y())
-		for z := int(start.Z()); z != int(end.Z()); z += sz {
-			setVoxel(x, y, z, voxelGrid)
+		x, y := start[0], start[1]
+		for z := start[2]; z != end[2]; z += sz {
+			voxelCount += setVoxel(x, y, z, voxelGrid)
 
 			xd += adx
 			if xd >= adz {
@@ -337,15 +372,14 @@ func RasterizeLine(start, end mgl64.Vec3, voxelGrid [][][]Voxel) {
 			}
 		}
 	}
+	return voxelCount
 }
 
-func setVoxel(x, y, z int, voxelGrid [][][]Voxel) {
-	fmt.Println("SET", x, y, z)
+func setVoxel(x, y, z int, voxelGrid [][][]Voxel) int {
+	voxelGrid[x][y][z] = NewVoxel(x, y, z)
 	voxelGrid[x][y][z].Filled = true
 	voxelGrid[x][y][z].RegionID = 69
-	voxelGrid[x][y][z].X = x
-	voxelGrid[x][y][z].Y = y
-	voxelGrid[x][y][z].Z = z
+	return 1
 }
 
 func sign(x int) int {
@@ -365,3 +399,23 @@ func abs(x int) int {
 		return x
 	}
 }
+
+func convertPointToVoxelFieldPosition(point mgl64.Vec3, volume collider.BoundingBox, voxelDimension float64) VoxelPosition {
+	x := point.X() / voxelDimension
+	y := point.Y() / voxelDimension
+	z := point.Z() / voxelDimension
+
+	return VoxelPosition{int(x - volume.MinVertex.X()), int(y - volume.MinVertex.Y()), int(z - volume.MinVertex.Z())}
+}
+
+// type MinXTriangles []Triangle
+
+// func (u MinXTriangles) Len() int {
+// 	return len(u)
+// }
+// func (u MinXTriangles) Swap(i, j int) {
+// 	u[i], u[j] = u[j], u[i]
+// }
+// func (u MinXTriangles) Less(i, j int) bool {
+// 	return u[i].MinX < u[j].MinX
+// }

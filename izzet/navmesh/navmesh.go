@@ -48,7 +48,7 @@ func New(world World) *NavigationMesh {
 		voxelDimension: 1.0,
 		world:          world,
 	}
-	nm.BakeNavMesh()
+	// nm.BakeNavMesh()
 	// move the scene out of the way
 	// entity := world.GetEntityByID(3)
 	// entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
@@ -66,7 +66,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 	computeDistanceTransform(n.voxelField, reachField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
-	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
+	// mergeRegions(n.voxelField, reachField, dimensions, regionMap)
 	filterRegions(n.voxelField, reachField, dimensions, regionMap)
 	initialBorderVoxel := markBorderVoxels(n.voxelField, reachField, dimensions, regionMap)
 	traceRegionContours(n.voxelField, reachField, dimensions, regionMap, initialBorderVoxel)
@@ -121,13 +121,14 @@ func voxelPos(voxel *Voxel) VoxelPosition {
 }
 
 func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
-	return getNeighborsOrdered(x, y, z, voxelField, reachField, dimensions, neighborDirs)
+	return getNeighborsOrdered(x, y, z, voxelField, reachField, dimensions, neighborDirs, 0)
 }
 
-func getNeighborsOrdered(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, dirs [][2]int) []*Voxel {
+func getNeighborsOrdered(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, dirs [][2]int, start int) []*Voxel {
 	var neighbors []*Voxel
 
-	for _, dir := range dirs {
+	for i := range dirs {
+		dir := dirs[(i+start)%len(dirs)]
 		if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
 			continue
 		}

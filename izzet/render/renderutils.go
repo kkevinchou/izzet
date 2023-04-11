@@ -230,8 +230,6 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh
 			color = mgl32.Vec3{10, 10, 10}
 		} else if voxel.Seed {
 			color = mgl32.Vec3{1, 0, 1}
-		} else if voxel.DistanceField == 0 {
-			color = mgl32.Vec3{0, 0, 1}
 		} else if panels.DBG.NavMeshHSV {
 			if voxel.RegionID != -1 && voxel.RegionID <= int(panels.DBG.NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(panels.DBG.NavMeshDistanceFieldThreshold) {
 				// if voxel.RegionID != -1 {

@@ -44,7 +44,15 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 			continue
 		}
 
-		if !strings.Contains(e.Model.Name(), "Tile") && !strings.Contains(e.Model.Name(), "Stair") {
+		var shouldProcessEntity bool
+
+		if strings.Contains(e.Model.Name(), "Tile") || strings.Contains(e.Model.Name(), "Stair") {
+			shouldProcessEntity = true
+		} else if e.Parent != nil && strings.Contains(e.Parent.Name, "simple_plane") {
+			shouldProcessEntity = true
+		}
+
+		if !shouldProcessEntity {
 			continue
 		}
 

@@ -109,9 +109,29 @@ var movementLeftUp [2]int = [2]int{-1, -1}
 var movementLeftDown [2]int = [2]int{-1, 1}
 
 // prefer up/down/left/right over diagonals when navigating contours
-var traceNeighborDirs [][2]int = [][2]int{
-	[2]int{0, -1}, [2]int{0, 1}, [2]int{-1, 0}, [2]int{1, 0},
-	[2]int{-1, -1}, [2]int{1, -1}, [2]int{-1, 1}, [2]int{1, 1},
+var traceNeighborDirs [][2]int
+var movementToNeighborDir map[[2]int]int
+
+func init() {
+	traceNeighborDirs = [][2]int{
+		// [2]int{0, -1}, [2]int{0, 1}, [2]int{-1, 0}, [2]int{1, 0},
+		// [2]int{-1, -1}, [2]int{1, -1}, [2]int{-1, 1}, [2]int{1, 1},
+
+		// start with up
+		[2]int{0, -1},
+		// [2]int{-1, -1},
+		[2]int{-1, 0},
+		// [2]int{-1, 1},
+		[2]int{0, 1},
+		// [2]int{1, 1},
+		[2]int{1, 0},
+		// [2]int{1, -1},
+	}
+
+	movementToNeighborDir = map[[2]int]int{}
+	for i, dir := range traceNeighborDirs {
+		movementToNeighborDir[dir] = i
+	}
 }
 
 // TODO - gonna need to decide on how I want to handle holes
@@ -120,7 +140,7 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	seen := map[VoxelPosition]bool{}
 
 	// initialization
-	neighbors := getNeighborsOrdered(startVoxel.X, startVoxel.Y, startVoxel.Z, voxelField, reachField, dimensions, traceNeighborDirs)
+	neighbors := getNeighborsOrdered(startVoxel.X, startVoxel.Y, startVoxel.Z, voxelField, reachField, dimensions, traceNeighborDirs, 0)
 	for _, neighbor := range neighbors {
 		if !neighbor.Border {
 			continue
@@ -144,14 +164,11 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 		next = nil
 		seen[voxelPos(voxel)] = true
 
-		// if startVoxel.RegionID == 1 && voxel.X == 46 && voxel.Z == 40 {
-		// 	fmt.Println(*voxel)
-		// }
-		// if startVoxel.RegionID == 1 {
-		// 	fmt.Println(*voxel)
-		// }
+		if startVoxel.RegionID == 1 && voxel.X == 94 && voxel.Z == 118 {
+			fmt.Println(*voxel)
+		}
 
-		neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, traceNeighborDirs)
+		neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, traceNeighborDirs, movementToNeighborDir[secondMovement])
 		for _, neighbor := range neighbors {
 			if !neighbor.Border || seen[voxelPos(neighbor)] {
 				continue
@@ -168,8 +185,8 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 			secondMovement = [2]int{next.X - voxel.X, next.Z - voxel.Z}
 			if firstMovement != secondMovement {
 				voxel.ContourCorner = true
-				// var c float32 = 4
-				// voxel.DEBUGCOLORFACTOR = &c
+				var c float32 = 4
+				voxel.DEBUGCOLORFACTOR = &c
 			}
 		}
 	}
@@ -179,8 +196,8 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	secondMovement = [2]int{firstNextVoxel.X - startVoxel.X, firstNextVoxel.Z - startVoxel.Z}
 	if firstMovement != secondMovement {
 		startVoxel.ContourCorner = true
-		// var c float32 = 0.5
-		// startVoxel.DEBUGCOLORFACTOR = &c
+		var c float32 = 4
+		startVoxel.DEBUGCOLORFACTOR = &c
 	}
 
 	return Contour{}
@@ -279,7 +296,7 @@ func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimens
 				if voxel.RegionID == 1 && x == 46 && z == 40 {
 					fmt.Println("HI")
 				}
-				neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, borderNeighborDirs)
+				neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, borderNeighborDirs, 0)
 				if len(neighbors) != 8 {
 					voxel.Border = true
 				} else {
@@ -302,7 +319,17 @@ func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimens
 					}
 				}
 				if voxel.Border {
-					borderVoxel[voxel.RegionID] = voxel
+					if prev, ok := borderVoxel[voxel.RegionID]; ok {
+						if voxel.X > prev.X {
+							borderVoxel[voxel.RegionID] = voxel
+						} else if voxel.X == prev.X {
+							if voxel.Z > prev.Z {
+								borderVoxel[voxel.RegionID] = voxel
+							}
+						}
+					} else {
+						borderVoxel[voxel.RegionID] = voxel
+					}
 					// var c float32 = 0.5
 					// voxel.DEBUGCOLORFACTOR = &c
 				}

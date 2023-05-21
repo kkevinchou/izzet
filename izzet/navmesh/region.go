@@ -117,15 +117,10 @@ func init() {
 		// [2]int{0, -1}, [2]int{0, 1}, [2]int{-1, 0}, [2]int{1, 0},
 		// [2]int{-1, -1}, [2]int{1, -1}, [2]int{-1, 1}, [2]int{1, 1},
 
-		// start with up
-		[2]int{0, -1},
-		// [2]int{-1, -1},
-		[2]int{-1, 0},
-		// [2]int{-1, 1},
-		[2]int{0, 1},
-		// [2]int{1, 1},
 		[2]int{1, 0},
-		// [2]int{1, -1},
+		[2]int{0, -1},
+		[2]int{-1, 0},
+		[2]int{0, 1},
 	}
 
 	movementToNeighborDir = map[[2]int]int{}
@@ -139,6 +134,10 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	var next *Voxel
 	seen := map[VoxelPosition]bool{}
 
+	if startVoxel.RegionID == 1 {
+		fmt.Println("HI")
+	}
+
 	// initialization
 	neighbors := getNeighborsOrdered(startVoxel.X, startVoxel.Y, startVoxel.Z, voxelField, reachField, dimensions, traceNeighborDirs, 0)
 	for _, neighbor := range neighbors {
@@ -148,6 +147,7 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 
 		if neighbor.RegionID == startVoxel.RegionID {
 			next = neighbor
+			break
 		}
 	}
 
@@ -164,11 +164,19 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 		next = nil
 		seen[voxelPos(voxel)] = true
 
-		if startVoxel.RegionID == 1 && voxel.X == 94 && voxel.Z == 118 {
-			fmt.Println(*voxel)
+		if voxel.RegionID == 1 {
+			// fmt.Println(voxel.X, voxel.Y, voxel.Z)
 		}
 
-		neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, traceNeighborDirs, movementToNeighborDir[secondMovement])
+		if voxel.RegionID == 1 && voxel.X == 89 && voxel.Y == 25 && voxel.Z == 49 {
+			// fmt.Println(*voxel)
+		}
+
+		startNeighborOffset := movementToNeighborDir[secondMovement] - 1
+		if startNeighborOffset < 0 {
+			startNeighborOffset += len(movementToNeighborDir)
+		}
+		neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, traceNeighborDirs, startNeighborOffset)
 		for _, neighbor := range neighbors {
 			if !neighbor.Border || seen[voxelPos(neighbor)] {
 				continue
@@ -181,6 +189,9 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 		}
 
 		if next != nil {
+			if voxel.RegionID == 1 && next.X == 89 && next.Y == 25 && next.Z == 49 {
+				// fmt.Println(*voxel)
+			}
 			firstMovement = secondMovement
 			secondMovement = [2]int{next.X - voxel.X, next.Z - voxel.Z}
 			if firstMovement != secondMovement {
@@ -201,6 +212,16 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	}
 
 	return Contour{}
+}
+
+func getNextContourCell(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, startVoxel *Voxel) {
+	// order : right, forward, left, back
+	// check based on current direction
+
+	// if right cell is open, move to it
+	// if forward is open, move to it
+	// i
+
 }
 
 // TODO - update this to use half edges to collect voxels

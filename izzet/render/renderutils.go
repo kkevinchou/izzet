@@ -224,7 +224,7 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh
 		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
 		color = HSVtoRGB(hsv)
 
-		if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Z == int(panels.DBG.VoxelHighlightZ) {
+		if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Z == int(panels.DBG.VoxelHighlightZ) && voxel.Y < 50 {
 			panels.DBG.VoxelHighlightDistanceField = float32(voxel.DistanceField)
 			panels.DBG.VoxelHighlightRegionID = voxel.RegionID
 			color = mgl32.Vec3{10, 10, 10}

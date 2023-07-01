@@ -89,8 +89,8 @@ func watershed(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3
 	return regionMap
 }
 
-func traceRegionContours(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, initialBorderVoxel map[int]*Voxel) {
-	for _, voxel := range initialBorderVoxel {
+func traceRegionContours(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, initialBorderVoxels map[int]*Voxel) {
+	for _, voxel := range initialBorderVoxels {
 		traceRegionContour(voxelField, reachField, dimensions, regionMap, voxel)
 	}
 }

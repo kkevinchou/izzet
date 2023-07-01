@@ -214,7 +214,7 @@ func (g *Izzet) loadEntities() {
 		Type:    1,
 	}
 	pointLight0 := entities.CreateLight(pointLightInfo0)
-	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 60, -800})
+	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 8, 765})
 	g.AddEntity(pointLight0)
 
 	pointLightInfo1 := &entities.LightInfo{

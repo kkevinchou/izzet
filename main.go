@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"runtime"
 
-	_ "net/http/pprof"
+	// _ "net/http/pprof"
 
 	"github.com/kkevinchou/izzet/izzet"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -56,10 +55,10 @@ func main() {
 		loadConfig(configSettings)
 	}
 
-	go func() {
-		runtime.SetCPUProfileRate(500)
-		http.ListenAndServe(":6868", nil)
-	}()
+	// go func() {
+	// 	runtime.SetCPUProfileRate(500)
+	// 	http.ListenAndServe(":6868", nil)
+	// }()
 
 	app := izzet.New("_assets", "shaders")
 	app.Start()

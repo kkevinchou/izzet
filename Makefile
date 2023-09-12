@@ -4,6 +4,10 @@ COMPONENTS_PROTO_DIR = "izzet/components/proto"
 PLAYERCOMMAND_PROTO_DIR = "izzet/playercommand/proto"
 PROTOC_PATH = ~/protoc-21.7-win64/bin/protoc.exe
 
+.PHONY: run
+run:
+	go run main.go
+
 # profile fetched from http://localhost:6868/debug/pprof/profile
 .PHONY: pprof
 pprof:

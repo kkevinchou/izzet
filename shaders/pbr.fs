@@ -177,8 +177,10 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, in_albedo, metallic);
 
-    // calculate per-light radiance
     vec3 H = normalize(fragToCam + fragToLight);
+
+    float NdotL = max(dot(normal, fragToLight), 0.00001);
+    float NdotV = max(dot(normal, fragToCam), 0.00001);
 
     // float attenuation = 1.0 / (1 + 0.01 * lightDistance + 0.001 * (lightDistance * lightDistance));
     float attenuation = 1.0 / (lightDistance * lightDistance);
@@ -186,24 +188,28 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
         attenuation = 1.0;
     }
 
+    // incoming light energy
     vec3 radiance = lightColor * attenuation; 
     
-    // cook-torrance brdf
-    float NDF = DistributionGGX(normal, H, roughness); // what proportion of microfacts are aligned with the bisecting vector, causing light to bounce towards the camera
+    // cook-torrance brdf - used for specular calculation
+    float D = DistributionGGX(normal, H, roughness); // what proportion of microfacts are aligned with the bisecting vector, causing light to bounce towards the camera
     float G = GeometrySmith(normal, fragToCam, fragToLight, roughness); // how much of the microfacets are self shadowing
     vec3 F = fresnelSchlick(max(dot(H, fragToCam), 0.0), F0); // how much energy is reflected in a specular fashion
     
-    vec3 numerator = NDF * G * F;
-    float denominator = 4.0 * max(dot(normal, fragToCam), 0.0) * max(dot(normal, fragToLight), 0.0) + 0.0001;
-    vec3 specular = numerator / denominator;  
+    vec3 spec_numerator = D * G * F;
+    float spec_denominator = 4.0 * NdotV * NdotL;
+    vec3 specular = spec_numerator / spec_denominator;  
 
-    vec3 kD = vec3(1.0) - F;
+    // kS + kD sum to 1 to conserve energy
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+
+    // only non-metals (or partial metals) have diffuse lighting
     kD *= 1.0 - metallic;
         
-    // add to outgoing radiance Lo
-    float NdotL = max(dot(normal, fragToLight), 0.0);
+    vec3 diffuse = kD * in_albedo / PI;
 
-    return (kD * in_albedo / PI + specular) * radiance * NdotL;
+    return (diffuse + specular) * radiance * NdotL;
 }
 
 void main()

@@ -66,7 +66,7 @@ func (n *NavigationMesh) BakeNavMesh() {
 	computeDistanceTransform(n.voxelField, reachField, dimensions)
 	blurDistanceField(n.voxelField, reachField, dimensions)
 	regionMap := watershed(n.voxelField, reachField, dimensions)
-	// mergeRegions(n.voxelField, reachField, dimensions, regionMap)
+	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
 	filterRegions(n.voxelField, reachField, dimensions, regionMap)
 	initialBorderVoxels := markBorderVoxels(n.voxelField, reachField, dimensions, regionMap)
 	traceRegionContours(n.voxelField, reachField, dimensions, regionMap, initialBorderVoxels)

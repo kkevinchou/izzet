@@ -7,7 +7,8 @@ import (
 )
 
 // var epsilon float64 = 0.000000001
-var epsilon float64 = 0.00001
+// var epsilon float64 = 0.00001
+var epsilon float64 = 0
 
 func triMax(a, b, c float64) float64 {
 	return math.Max(a, math.Max(b, c))
@@ -249,5 +250,6 @@ type AABB struct {
 }
 
 type Triangle struct {
+	MinX       float64
 	V1, V2, V3 mgl64.Vec3
 }

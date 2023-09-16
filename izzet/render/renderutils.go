@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
@@ -56,25 +57,23 @@ func drawTris(viewerContext ViewerContext, points []mgl64.Vec3) {
 
 var navMeshTrisVAO uint32
 var navMeshVBO uint32
-var lastRenderCount = 0
+var lastVoxelCount = 0
+var lastVertexCount = 0
+var ResetNavMeshVAO bool = false
 
 var lastMeshUpdate time.Time = time.Now()
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals []mgl64.Vec3) {
-	if len(points) != lastRenderCount {
-		if time.Since(lastMeshUpdate) > 5*time.Second {
+func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
+	if navmesh.VoxelCount() != lastVoxelCount || ResetNavMeshVAO {
+		if time.Since(lastMeshUpdate) > 5*time.Second || ResetNavMeshVAO {
+			ResetNavMeshVAO = false
 			vaos := []uint32{navMeshTrisVAO}
 			gl.DeleteVertexArrays(1, &vaos[0])
 			vbos := []uint32{navMeshVBO}
 			gl.DeleteBuffers(1, &vbos[0])
 
-			var vertices []float32
-			for i := range points {
-				point := points[i]
-				normal := normals[i]
-				vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()), float32(normal.X()), float32(normal.Y()), float32(normal.Z()))
-			}
+			vertices := generateNavMeshVertexAttributes(navmesh)
 
 			var vbo, vao uint32
 			gl.GenBuffers(1, &vbo)
@@ -84,21 +83,273 @@ func drawNavMeshTris(viewerContext ViewerContext, points []mgl64.Vec3, normals [
 			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4, nil)
+			var stride int32 = 9
+
+			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, stride*4, nil)
 			gl.EnableVertexAttribArray(0)
 
-			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, stride*4, gl.PtrOffset(3*4))
 			gl.EnableVertexAttribArray(1)
+
+			gl.VertexAttribPointer(2, 3, gl.FLOAT, false, stride*4, gl.PtrOffset(6*4))
+			gl.EnableVertexAttribArray(2)
 
 			navMeshTrisVAO = vao
 			navMeshVBO = vbo
-			lastRenderCount = len(points)
+			lastVoxelCount = navmesh.VoxelCount()
+			lastVertexCount = len(vertices) / int(stride)
 			lastMeshUpdate = time.Now()
 		}
 	}
 
 	gl.BindVertexArray(navMeshTrisVAO)
-	iztDrawArrays(0, int32(len(points)))
+	iztDrawArrays(0, int32(lastVertexCount))
+}
+
+func generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 {
+	delta := navmesh.Volume.MaxVertex.Sub(navmesh.Volume.MinVertex)
+	voxelDimension := navmesh.VoxelDimension()
+	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
+
+	voxelField := navmesh.VoxelField()
+	var vertexAttributes []float32
+
+	for i := 0; i < runs[0]; i++ {
+		for j := 0; j < runs[1]; j++ {
+			for k := 0; k < runs[2]; k++ {
+				voxel := voxelField[i][j][k]
+				if !voxel.Filled {
+					continue
+				}
+
+				bb := collider.BoundingBox{
+					MinVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
+					MaxVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
+				}
+				vertexAttributes = append(vertexAttributes, generateVoxelVertexAttributes(voxel, voxelField, bb)...)
+			}
+		}
+	}
+	return vertexAttributes
+}
+
+func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh.Voxel, bb collider.BoundingBox) []float32 {
+	min := bb.MinVertex
+	max := bb.MaxVertex
+	delta := max.Sub(min)
+	var vertexAttributes []float32
+
+	verts := []mgl64.Vec3{
+		// top
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		max,
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+		max,
+
+		// bottom
+		min,
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+
+		min,
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+
+		// left
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		min,
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+
+		min,
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+
+		// right
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+
+		// front
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+
+		min.Add(mgl64.Vec3{0, 0, delta[2]}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
+		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
+
+		// back
+		min,
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+		min.Add(mgl64.Vec3{delta[0], 0, 0}),
+
+		min,
+		min.Add(mgl64.Vec3{0, delta[1], 0}),
+		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+	}
+
+	normals := []mgl64.Vec3{
+		// top
+		mgl64.Vec3{0, 1, 0},
+		// bottom
+		mgl64.Vec3{0, -1, 0},
+		// left
+		mgl64.Vec3{-1, 0, 0},
+		// right
+		mgl64.Vec3{1, 0, 0},
+		// front
+		mgl64.Vec3{0, 0, 1},
+		// back
+		mgl64.Vec3{0, 0, -1},
+	}
+
+	// color := []float32{3.0 / 255, 185.0 / 255, 5.0 / 255}
+	// if voxel.DistanceField == 0 {
+	// 	color = []float32{0.8, 0, 0}
+	// }
+
+	color := mgl32.Vec3{1.0, 0, 0}
+
+	// if len(voxel.Neighbors) == 4 {
+	// 	color = mgl32.Vec3{0, 1, 0}
+	// } else if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
+	if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
+		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
+		color = HSVtoRGB(hsv)
+
+		if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Z == int(panels.DBG.VoxelHighlightZ) && voxel.Y < 50 {
+			panels.DBG.VoxelHighlightDistanceField = float32(voxel.DistanceField)
+			panels.DBG.VoxelHighlightRegionID = voxel.RegionID
+			color = mgl32.Vec3{10, 10, 10}
+		} else if voxel.Seed {
+			color = mgl32.Vec3{1, 0, 1}
+		} else if panels.DBG.NavMeshHSV {
+			if voxel.RegionID != -1 && voxel.RegionID <= int(panels.DBG.NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(panels.DBG.NavMeshDistanceFieldThreshold) {
+				// if voxel.RegionID != -1 {
+				hsv = mgl32.Vec3{float32((voxel.RegionID * int(panels.DBG.HSVOffset)) % 255), 1, 1}
+				color = HSVtoRGB(hsv)
+			}
+		}
+
+		if voxel.DEBUGCOLORFACTOR != nil {
+			color = color.Mul(*voxel.DEBUGCOLORFACTOR)
+		}
+	}
+
+	// if voxel.DistanceField == 0 {
+	// 	colorVal := float32(1)
+	// 	color = []float32{colorVal, colorVal, colorVal}
+	// }
+
+	for i := 0; i < len(verts); i++ {
+		vertexAttributes = append(vertexAttributes,
+			float32(verts[i].X()),
+			float32(verts[i].Y()),
+			float32(verts[i].Z()),
+			float32(normals[i/6].X()),
+			float32(normals[i/6].Y()),
+			float32(normals[i/6].Z()),
+			color[0],
+			color[1],
+			color[2],
+		)
+	}
+
+	return vertexAttributes
+}
+
+func RGBtoHSV(rgb mgl32.Vec3) mgl32.Vec3 {
+	// Normalize RGB values to be between 0 and 1
+	r := rgb.X()
+	g := rgb.Y()
+	b := rgb.Z()
+
+	// Determine maximum and minimum values among R, G, and B
+	maxVal := float32(math.Max(math.Max(float64(r), float64(g)), float64(b)))
+	minVal := float32(math.Min(math.Min(float64(r), float64(g)), float64(b)))
+
+	// Calculate value (V) as maximum of R, G, and B
+	v := maxVal
+
+	// Calculate saturation (S)
+	var s float32
+	if maxVal == 0 {
+		s = 0
+	} else {
+		s = (maxVal - minVal) / maxVal
+	}
+
+	// Calculate hue (H)
+	var h float32
+	if maxVal == minVal {
+		h = 0
+	} else if maxVal == r && g >= b {
+		h = 60 * (g - b) / (maxVal - minVal)
+	} else if maxVal == r && g < b {
+		h = 60*(g-b)/(maxVal-minVal) + 360
+	} else if maxVal == g {
+		h = 60*(b-r)/(maxVal-minVal) + 120
+	} else { // maxVal == B
+		h = 60*(r-g)/(maxVal-minVal) + 240
+	}
+
+	// Return HSV values as an mgl32.Vec3
+	return mgl32.Vec3{h, s, v}
+}
+
+func HSVtoRGB(hsv mgl32.Vec3) mgl32.Vec3 {
+	// Extract H, S, and V values from input Vec3
+	h := hsv.X()
+	s := hsv.Y()
+	v := hsv.Z()
+
+	// Calculate chroma (C)
+	c := v * s
+
+	// Calculate h' (hPrime)
+	hPrime := h / 60
+
+	// Calculate x
+	x := c * float32(1-math.Abs(float64(math.Mod(float64(hPrime), 2)-1)))
+
+	// Calculate m
+	m := v - c
+
+	// Initialize RGB values to m
+	r := m
+	g := m
+	b := m
+
+	// Determine which sector of the color wheel h' falls in and set RGB values accordingly
+	if hPrime < 1 {
+		r += c
+		g += x
+	} else if hPrime < 2 {
+		r += x
+		g += c
+	} else if hPrime < 3 {
+		g += c
+		b += x
+	} else if hPrime < 4 {
+		g += x
+		b += c
+	} else if hPrime < 5 {
+		r += x
+		b += c
+	} else {
+		r += c
+		b += x
+	}
+
+	// Create and return RGB Vec3
+	return mgl32.Vec3{r, g, b}
 }
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain

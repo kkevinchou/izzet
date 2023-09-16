@@ -35,6 +35,7 @@ type World interface {
 	GetEntityByID(id int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 	NavMesh() *navmesh.NavigationMesh
+	ResetNavMeshVAO()
 
 	// for panels
 	AddEntity(entity *entities.Entity)
@@ -322,7 +323,15 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 					points := line
 					for i := 0; i < len(points); i++ {
 						bindTransform := model.JointMap()[jid].FullBindTransform
+						// The calculated joint transforms apply to joints in bind space
+						// 		i.e. the calculated transforms are computed as:
+						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
+						//
+						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
+						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
+						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
 					}
 				}
 				jointLines = append(jointLines, lines...)
@@ -351,96 +360,67 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 		}
 	}
 
-	// draw bounding box
-	volume := r.world.NavMesh().Volume
-	drawAABB(
-		viewerContext,
-		shaderManager.GetShaderProgram("flat"),
-		mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-		&volume,
-		0.5,
-	)
-
 	nm := r.world.NavMesh()
-	verts := nm.Vertices()
-	normals := nm.Normals()
 
-	if len(verts) > 0 {
-		// var directionalLightDir mgl32.Vec3
-		// for _, light := range lightContext.Lights {
-		// 	if light.LightInfo.Type == 0 {
-		// 		directionalLightDir = utils.Vec3F64ToF32(light.LightInfo.Direction)
-		// 	}
-		// }
+	if nm != nil {
+		// draw bounding box
+		volume := nm.Volume
+		drawAABB(
+			viewerContext,
+			shaderManager.GetShaderProgram("flat"),
+			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+			&volume,
+			0.5,
+		)
 
-		shader := shaderManager.GetShaderProgram("color_pbr")
-		shader.Use()
-		// shader.SetUniformFloat("intensity", 1.0)
-		// shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-		// shader.SetUniformUInt("entityID", settings.EmptyColorPickingID)
-		// shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		// shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		// draw navmesh
+		if nm.VoxelCount() > 0 {
+			shader := shaderManager.GetShaderProgram("color_pbr")
+			shader.Use()
 
-		shader.SetUniformMat4("model", mgl32.Ident4())
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
-		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-		shader.SetUniformInt("isAnimated", 0)
+			if panels.DBG.Bloom {
+				shader.SetUniformInt("applyToneMapping", 0)
+			} else {
+				// only tone map if we're not applying bloom, otherwise
+				// we want to keep the HDR values and tone map later
+				shader.SetUniformInt("applyToneMapping", 1)
+			}
 
-		color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
-		shader.SetUniformVec3("albedo", color)
-		shader.SetUniformInt("hasPBRMaterial", 1)
-		shader.SetUniformFloat("ao", 1.0)
-		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-		shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-		shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+			shader.SetUniformMat4("model", mgl32.Ident4())
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+			shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
+			shader.SetUniformInt("shadowMap", 31)
+			shader.SetUniformInt("depthCubeMap", 30)
+			shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+			shader.SetUniformInt("isAnimated", 0)
+			shader.SetUniformInt("hasColorOverride", 1)
 
-		setupLightingUniforms(shader, lightContext.Lights)
+			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
+			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
+			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
+			shader.SetUniformVec3("albedo", color)
+			shader.SetUniformInt("hasPBRMaterial", 1)
+			shader.SetUniformFloat("ao", 1.0)
+			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+			shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+			shader.SetUniformFloat("metallic", panels.DBG.Metallic)
 
-		gl.ActiveTexture(gl.TEXTURE30)
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+			setupLightingUniforms(shader, lightContext.Lights)
 
-		gl.ActiveTexture(gl.TEXTURE31)
-		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+			gl.ActiveTexture(gl.TEXTURE30)
+			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
 
-		// var directionalLightDir mgl32.Vec3
-		// directionalLightDir[0] = panels.DBG.DirectionalLightDir[0]
-		// directionalLightDir[1] = panels.DBG.DirectionalLightDir[1]
-		// directionalLightDir[2] = panels.DBG.DirectionalLightDir[2]
-		// shader.SetUniformVec3("directionalLightDir", directionalLightDir)
+			gl.ActiveTexture(gl.TEXTURE31)
+			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-		drawNavMeshTris(viewerContext, verts, normals)
+			drawNavMeshTris(viewerContext, nm)
+		}
 	}
-
-	// num := rand.Intn(256)
-
-	// verts, clusterIDs := r.world.NavMesh().RenderData()
-	// for i := 0; i < len(verts); i += 3 {
-	// clusterID := clusterIDs[i/3]
-	// red := (clusterID * 40) % 256
-	// green := (clusterID * 40) % 256
-	// blue := (clusterID * 40) % 256
-
-	// if clusterID%2 == 0 {
-	// 	num = 255
-	// } else {
-	// 	num = 0
-	// }
-
-	// color := mgl64.Vec3{float64(red) / 255, float64(green) / 255, float64(blue) / 255}
-	// drawTris(viewerContext, verts[i:i+3])
-	// }
-
-	// navmeshVerts := r.world.NavMesh().Vertices
-	// if len(navmeshVerts) > 0 {
-	// }
 }
 
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
@@ -719,6 +699,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("depthCubeMap", 30)
 	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	shader.SetUniformInt("hasColorOverride", 0)
 
 	setupLightingUniforms(shader, lightContext.Lights)
 

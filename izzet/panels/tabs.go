@@ -34,7 +34,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 
 	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("World Properties") {
-			worldProps(renderContext)
+			worldProps(world, renderContext)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Entity Properties") {

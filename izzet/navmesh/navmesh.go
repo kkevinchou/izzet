@@ -1,20 +1,27 @@
 package navmesh
 
 import (
-	"fmt"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/collision"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/spatialpartition"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
-// var NavMesh *NavigationMesh = New()
+// GENERAL IMPLEMENTATION NOTES
+
+// in general the generated regions in a nav mesh should be free of holes.
+// due to the resolution of the voxels there are degenerate cases where holes
+// can be present in the generated mesh regions. for example, holes in meshes
+// with a size of 1 or 2 tend to be ignored. however, larger holes will be properly
+// processed
+
+const stepHeight int = 4
+const agentHeight int = 30
+
+// we can get some degenerate regions when we have very tiny holes in the navmesh
+// realistically speaking pathing around very tiny holes isn't something we're too
+// interested in anyway, so any holes that are smaller than this size will be filled
+const minimumHoleDimension int = 5
 
 type World interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
@@ -25,194 +32,149 @@ type NavigationMesh struct {
 	Volume collider.BoundingBox
 	world  World
 
-	vertices []mgl64.Vec3
-	normals  []mgl64.Vec3
-
-	mutex sync.Mutex
+	voxelCount     int
+	voxelField     [][][]Voxel
+	voxelDimension float64
 }
 
 func New(world World) *NavigationMesh {
-	return &NavigationMesh{
-		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -50, -50}, MaxVertex: mgl64.Vec3{50, 50, 50}},
-		world:  world,
+	nm := &NavigationMesh{
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
+		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -50, -350}, MaxVertex: mgl64.Vec3{350, 150, 150}},
+		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, -150}, MaxVertex: mgl64.Vec3{100, 100}},
+		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -50, -75}, MaxVertex: mgl64.Vec3{50, 50, 75}},
+		voxelDimension: 1.0,
+		world:          world,
 	}
-}
-
-func (n *NavigationMesh) Vertices() []mgl64.Vec3 {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-	return n.vertices
-}
-
-func (n *NavigationMesh) Normals() []mgl64.Vec3 {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-	return n.normals
-}
-
-func (n *NavigationMesh) voxelize() [][][]Voxel {
-	start := time.Now()
-	spatialPartition := n.world.SpatialPartition()
-	sEntities := spatialPartition.QueryEntities(n.Volume)
-
-	var candidateEntities []*entities.Entity
-	boundingBoxes := map[int]collider.BoundingBox{}
-	meshTriangles := map[int][]Triangle{}
-	entityTriCount := map[int]int{}
-
-	for _, entity := range sEntities {
-		e := n.world.GetEntityByID(entity.GetID())
-		if e == nil {
-			continue
-		}
-
-		if !strings.Contains(e.Model.Name(), "Tile") && !strings.Contains(e.Model.Name(), "Stair") {
-			continue
-		}
-
-		candidateEntities = append(candidateEntities, e)
-		boundingBoxes[e.GetID()] = *e.BoundingBox()
-		transform := utils.Mat4F64ToF32(entities.WorldTransform(e))
-
-		for _, rd := range e.Model.RenderData() {
-			meshID := rd.MeshID
-			mesh := e.Model.Collection().Meshes[meshID]
-			for i := 0; i < len(mesh.Vertices); i += 3 {
-				meshTriangles[meshID] = append(meshTriangles[meshID],
-					Triangle{
-						V1: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i].Position.Vec4(1)).Vec3()),
-						V2: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+1].Position.Vec4(1)).Vec3()),
-						V3: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i+2].Position.Vec4(1)).Vec3()),
-					},
-				)
-			}
-			numVerts := len(mesh.Vertices)
-			entityTriCount[e.GetID()] = numVerts / 3
-		}
-	}
-
-	outputWork := make(chan OutputWork)
-	voxelDimension := 1.0
-	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
-	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
-
-	inputWorkCount := runs[0] * runs[1] * runs[2]
-	inputWork := make(chan [3]int, inputWorkCount)
-	workerCount := 12
-
-	doneWorkerCount := 0
-	var doneWorkerMutex sync.Mutex
-
-	for wi := 0; wi < workerCount; wi++ {
-		go func() {
-			for input := range inputWork {
-				i := input[0]
-				j := input[1]
-				k := input[2]
-
-				voxel := &collider.BoundingBox{
-					MinVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
-					MaxVertex: n.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
-				}
-				voxelAABB := AABB{Min: voxel.MinVertex, Max: voxel.MaxVertex}
-
-				for _, entity := range candidateEntities {
-					bb := boundingBoxes[entity.GetID()]
-					if !collision.CheckOverlapAABBAABB(voxel, &bb) {
-						continue
-					}
-
-					for _, rd := range entity.Model.RenderData() {
-						for _, tri := range meshTriangles[rd.MeshID] {
-							if IntersectAABBTriangle(voxelAABB, tri) {
-								outputWork <- OutputWork{
-									x:           i,
-									y:           j,
-									z:           k,
-									boundingBox: *voxel,
-								}
-
-								goto Done
-							}
-						}
-					}
-				Done:
-				}
-			}
-
-			doneWorkerMutex.Lock()
-			doneWorkerCount++
-			if doneWorkerCount == workerCount {
-				fmt.Println("generation time seconds", time.Since(start).Seconds())
-				close(outputWork)
-			}
-			doneWorkerMutex.Unlock()
-		}()
-	}
-
-	var voxelField [][][]Voxel
-	voxelField = make([][][]Voxel, runs[0])
-	for i := range voxelField {
-		voxelField[i] = make([][]Voxel, runs[1])
-		for j := range voxelField[i] {
-			voxelField[i][j] = make([]Voxel, runs[2])
-		}
-	}
-
-	go func() {
-		voxelCount := 0
-		for work := range outputWork {
-			voxelCount++
-			n.mutex.Lock()
-			vertices, normals := genVertexRenderData(work.boundingBox)
-			n.vertices = append(n.vertices, vertices...)
-			n.normals = append(n.normals, normals...)
-			n.mutex.Unlock()
-
-			x, y, z := work.x, work.y, work.z
-			voxelField[x][y][z] = Voxel{
-				Filled: true,
-				X:      x,
-				Y:      y,
-				Z:      z,
-			}
-		}
-		fmt.Printf("generated %d voxels\n", voxelCount)
-	}()
-
-	for i := 0; i < runs[0]; i++ {
-		for j := 0; j < runs[1]; j++ {
-			for k := 0; k < runs[2]; k++ {
-				inputWork <- [3]int{i, j, k}
-			}
-		}
-	}
-	close(inputWork)
-
-	totalTricount := 0
-	for _, count := range entityTriCount {
-		totalTricount += count
-	}
-	fmt.Println("nav mesh entity tri count", totalTricount)
-	return voxelField
-}
-
-func (n *NavigationMesh) computeDistanceTransform(voxelField [][][]Voxel) {
+	nm.BakeNavMesh()
+	// move the scene out of the way
+	// entity := world.GetEntityByID(3)
+	// entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
+	return nm
 }
 
 func (n *NavigationMesh) BakeNavMesh() {
-	go func() {
-		voxelField := n.voxelize()
-		n.computeDistanceTransform(voxelField)
-	}()
+	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
+	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
+
+	n.voxelField = n.voxelize()
+	buildNavigableArea(n.voxelField, dimensions)
+	fillHoles(n.voxelField, dimensions)
+	reachField := computeReachField(n.voxelField, dimensions)
+	computeDistanceTransform(n.voxelField, reachField, dimensions)
+	blurDistanceField(n.voxelField, reachField, dimensions)
+	regionMap := watershed(n.voxelField, reachField, dimensions)
+	mergeRegions(n.voxelField, reachField, dimensions, regionMap)
+	filterRegions(n.voxelField, reachField, dimensions, regionMap)
+	initialBorderVoxels := markBorderVoxels(n.voxelField, reachField, dimensions, regionMap)
+	traceRegionContours(n.voxelField, reachField, dimensions, regionMap, initialBorderVoxels)
 }
 
-type Voxel struct {
-	Filled  bool
-	X, Y, Z int
+type ReachInfo struct {
+	sourceVoxel *Voxel
 }
 
-type OutputWork struct {
-	x, y, z     int
-	boundingBox collider.BoundingBox
+func computeReachField(voxelField [][][]Voxel, dimensions [3]int) [][][]ReachInfo {
+	reachField := make([][][]ReachInfo, dimensions[0])
+	for i := range reachField {
+		reachField[i] = make([][]ReachInfo, dimensions[1])
+		for j := range reachField[i] {
+			reachField[i][j] = make([]ReachInfo, dimensions[2])
+		}
+	}
+
+	for y := 0; y < dimensions[1]-stepHeight; y++ {
+		for x := 0; x < dimensions[0]; x++ {
+			for z := 0; z < dimensions[2]; z++ {
+				if !voxelField[x][y][z].Filled {
+					continue
+				}
+
+				for i := 1; i < stepHeight+1; i++ {
+					if y+i < dimensions[1] {
+						reachField[x][y+i][z].sourceVoxel = &voxelField[x][y][z]
+					}
+
+					if y-i >= 0 {
+						reachField[x][y-i][z].sourceVoxel = &voxelField[x][y][z]
+					}
+				}
+			}
+		}
+	}
+
+	return reachField
+}
+
+var neighborDirs [][2]int = [][2]int{
+	[2]int{-1, -1}, [2]int{0, -1}, [2]int{1, -1},
+	[2]int{-1, 0} /* current voxel */, [2]int{1, 0},
+	[2]int{-1, 1}, [2]int{0, 1}, [2]int{1, 1},
+}
+
+type VoxelPosition [3]int
+
+func voxelPos(voxel *Voxel) VoxelPosition {
+	return VoxelPosition{voxel.X, voxel.Y, voxel.Z}
+}
+
+func getNeighbors(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) []*Voxel {
+	return getNeighborsOrdered(x, y, z, voxelField, reachField, dimensions, neighborDirs, 0)
+}
+
+func getNeighborsOrdered(x, y, z int, voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, dirs [][2]int, start int) []*Voxel {
+	var neighbors []*Voxel
+
+	for i := range dirs {
+		dir := dirs[(i+start)%len(dirs)]
+		if x+dir[0] < 0 || z+dir[1] < 0 || x+dir[0] >= dimensions[0] || z+dir[1] >= dimensions[2] {
+			continue
+		}
+
+		var neighbor *Voxel
+		reachNeighbor := &reachField[x+dir[0]][y][z+dir[1]]
+		if reachNeighbor.sourceVoxel != nil {
+			neighbor = reachNeighbor.sourceVoxel
+		} else if voxelField[x+dir[0]][y][z+dir[1]].Filled {
+			neighbor = &voxelField[x+dir[0]][y][z+dir[1]]
+		}
+
+		if neighbor == nil {
+			continue
+		}
+
+		neighbors = append(neighbors, neighbor)
+	}
+
+	return neighbors
+}
+
+func isConnected(a, b *Voxel, voxelField [][][]Voxel, reachField [][][]ReachInfo) bool {
+	x := b.X - a.X
+	y := b.Y - a.Y
+	z := b.Z - a.Z
+
+	if x > 1 || x < -1 || y > stepHeight || y < -stepHeight || z > 1 || z < -1 {
+		return false
+	}
+
+	bValid := false
+	if reachField[b.X][b.Y][b.Z].sourceVoxel != nil {
+		bValid = true
+	} else if voxelField[b.X][b.Y][b.Z].Filled {
+		bValid = true
+	}
+
+	if !bValid {
+		return false
+	}
+
+	if reachField[a.X][a.Y][a.Z].sourceVoxel != nil {
+		return true
+	} else if voxelField[a.X][a.Y][a.Z].Filled {
+		return true
+	}
+	return false
 }

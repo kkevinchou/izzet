@@ -1,114 +1,54 @@
 package navmesh
 
-import (
-	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/collision/collider"
-)
+func (n *NavigationMesh) VoxelDimension() float64 {
+	return n.voxelDimension
+}
 
-func genVertexRenderData(bb collider.BoundingBox) ([]mgl64.Vec3, []mgl64.Vec3) {
-	min := bb.MinVertex
-	max := bb.MaxVertex
-	delta := max.Sub(min)
+func (n *NavigationMesh) VoxelField() [][][]Voxel {
+	return n.voxelField
+}
 
-	verts := []mgl64.Vec3{
-		// top
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		max,
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+func (n *NavigationMesh) VoxelCount() int {
+	return n.voxelCount
+}
 
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-		max,
+func findSeeds(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int) {
+	// printRegionMin := mgl32.Vec3{50, 25, 135}
+	// printRegionMax := mgl32.Vec3{61, 25, 147}
 
-		// bottom
-		min,
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
+	for y := 0; y < dimensions[1]; y++ {
+		for z := 0; z < dimensions[2]; z++ {
+			for x := 0; x < dimensions[0]; x++ {
+				voxel := &voxelField[x][y][z]
+				// if x >= int(printRegionMin.X()) && x <= int(printRegionMax.X()) {
+				// 	if y >= int(printRegionMin.Y()) && y <= int(printRegionMax.Y()) {
+				// 		if z >= int(printRegionMin.Z()) && z <= int(printRegionMax.Z()) {
+				// 			if voxel.Filled {
+				// 				fmt.Printf("[%5.3f] ", voxel.DistanceField)
+				// 			} else {
+				// 				fmt.Printf("[-----] ")
+				// 			}
+				// 			if voxel.X == int(printRegionMax.X()) {
+				// 				fmt.Printf("\n")
+				// 			}
+				// 		}
+				// 	}
+				// }
+				if !voxel.Filled {
+					continue
+				}
 
-		min,
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-
-		// left
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min,
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-
-		min,
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-
-		// right
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-
-		// front
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-
-		// back
-		min,
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-
-		min,
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
+				isSeed := true
+				neighbors := getNeighbors(x, y, z, voxelField, reachField, dimensions)
+				for _, neighbor := range neighbors {
+					if neighbor.DistanceField > voxel.DistanceField {
+						isSeed = false
+					}
+				}
+				if isSeed {
+					voxel.Seed = true
+				}
+			}
+		}
 	}
-
-	normals := []mgl64.Vec3{
-		// top
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		mgl64.Vec3{0, 1, 0},
-		// bottom
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		mgl64.Vec3{0, -1, 0},
-		// left
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		mgl64.Vec3{-1, 0, 0},
-		// right
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		mgl64.Vec3{1, 0, 0},
-		// front
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		mgl64.Vec3{0, 0, 1},
-		// back
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-		mgl64.Vec3{0, 0, -1},
-	}
-	return verts, normals
 }

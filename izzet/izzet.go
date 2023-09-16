@@ -80,7 +80,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.camera = &camera.Camera{
 		Position: mgl64.Vec3{0, 150, 0},
 		// Orientation: mgl64.QuatIdent(),
-		Orientation: mgl64.QuatRotate(mgl64.DegToRad(-90), mgl64.Vec3{1, 0, 0}),
+		Orientation: mgl64.QuatRotate(mgl64.DegToRad(-20), mgl64.Vec3{1, 0, 0}),
 	}
 
 	w, h := g.window.GetSize()
@@ -183,11 +183,11 @@ func initSeed() {
 func (g *Izzet) loadPrefabs() {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox"}
+	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox", "scene", "simple_plane"}
 
 	for _, name := range names {
 		var pf *prefabs.Prefab
-		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" || name == "lootbox" {
+		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" || name == "lootbox" || name == "scene" {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
@@ -209,20 +209,28 @@ func (g *Izzet) loadPrefabs() {
 }
 
 func (g *Izzet) loadEntities() {
-	lightInfo2 := &entities.LightInfo{
+	pointLightInfo0 := &entities.LightInfo{
 		Diffuse: mgl64.Vec4{1, 1, 1, 8},
 		Type:    1,
 	}
-	pointLight := entities.CreateLight(lightInfo2)
-	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, -12, 806})
-	g.AddEntity(pointLight)
+	pointLight0 := entities.CreateLight(pointLightInfo0)
+	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 8, 765})
+	g.AddEntity(pointLight0)
+
+	pointLightInfo1 := &entities.LightInfo{
+		Diffuse: mgl64.Vec4{1, 1, 1, 8},
+		Type:    1,
+	}
+	pointLight1 := entities.CreateLight(pointLightInfo1)
+	entities.SetLocalPosition(pointLight1, mgl64.Vec3{0, 60, 0})
+	g.AddEntity(pointLight1)
 
 	lightDir := panels.DBG.DirectionalLightDir
-	lightInfo := &entities.LightInfo{
-		Diffuse:   mgl64.Vec4{1, 1, 1, 5},
+	dirLightInfo := &entities.LightInfo{
+		Diffuse:   mgl64.Vec4{1, 1, 1, 1},
 		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
-	directionalLight := entities.CreateLight(lightInfo)
+	directionalLight := entities.CreateLight(dirLightInfo)
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 300, 0})
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
@@ -240,8 +248,17 @@ func (g *Izzet) loadEntities() {
 			// 	entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
 			// }
 		} else if pf.Name == "scene" {
+			// parent := entities.CreateDummy("scene")
+			// g.AddEntity(parent)
+
+			// for _, entity := range entities.InstantiateFromPrefab(pf) {
+			// 	g.AddEntity(entity)
+			// 	entities.BuildRelation(parent, entity)
+			// }
+			// panels.SelectEntity(parent)
+		} else if pf.Name == "simple_plane" {
 			// entity := entities.InstantiateFromPrefab(pf)
-			// g.AddEntity(entity)
+			// g.AddEntity(entity[0])
 		} else if pf.Name == "lootbox" {
 			// entity := entities.InstantiateFromPrefab(pf)
 			// g.entities[entity.ID] = entity

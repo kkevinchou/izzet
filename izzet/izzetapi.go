@@ -10,6 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -162,4 +163,8 @@ func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
 
 func (g *Izzet) NavMesh() *navmesh.NavigationMesh {
 	return g.navigationMesh
+}
+
+func (g *Izzet) ResetNavMeshVAO() {
+	render.ResetNavMeshVAO = true
 }

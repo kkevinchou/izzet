@@ -31,8 +31,8 @@ var (
 	}
 )
 
-func worldProps(renderContext RenderContext) {
-	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
+func worldProps(world World, renderContext RenderContext) {
+	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) })
@@ -45,7 +45,7 @@ func worldProps(renderContext RenderContext) {
 		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &DBG.EnableShadowMapping) })
 		imgui.EndTable()
 	}
-	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Enable Bloom", func() { imgui.Checkbox("", &DBG.Bloom) })
@@ -56,10 +56,45 @@ func worldProps(renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Triangle HIT", func() { imgui.Checkbox("TriangleHIT", &DBG.TriangleHIT) })
+		setupRow("NavMeshHSV", func() {
+			if imgui.Checkbox("NavMeshHSV", &DBG.NavMeshHSV) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("NavMesh Region Threshold", func() {
+			if imgui.InputInt("", &DBG.NavMeshRegionIDThreshold) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("NavMesh Distance Field Threshold", func() {
+			if imgui.InputInt("", &DBG.NavMeshDistanceFieldThreshold) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("HSV Offset", func() {
+			if imgui.InputInt("", &DBG.HSVOffset) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("Voxel Highlight X", func() {
+			if imgui.InputInt("Voxel Highlight X", &DBG.VoxelHighlightX) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("Voxel Highlight Z", func() {
+			if imgui.InputInt("Voxel Highlight Z", &DBG.VoxelHighlightZ) {
+				world.ResetNavMeshVAO()
+			}
+		})
+		setupRow("Highlight Distance Field", func() {
+			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", DBG.VoxelHighlightDistanceField))
+		})
+		setupRow("Highlight Region ID", func() {
+			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", DBG.VoxelHighlightRegionID))
+		})
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
 		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })

@@ -2,6 +2,8 @@
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec3 aColor;
+
 
 out VS_OUT {
     vec3 FragPos;
@@ -9,6 +11,7 @@ out VS_OUT {
     vec4 FragPosLightSpace;
     mat4 View;
     vec2 TexCoord;
+    vec3 ColorOverride;
 } vs_out;
 
 uniform mat4 model;
@@ -24,6 +27,8 @@ void main() {
     vs_out.Normal = vec3(transpose(inverse(model)) * totalNormal);
     vs_out.FragPos = vec3(model * totalPos);
     vs_out.View = view;
+
+    vs_out.ColorOverride = aColor;
 
     vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     gl_Position = (projection * (view * (model * totalPos)));

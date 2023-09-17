@@ -191,10 +191,6 @@ func (g *Izzet) loadPrefabs() {
 			collection := g.assetManager.GetCollection(name)
 			ctx := model.CreateContext(collection)
 
-			// m := model.NewModelFromCollectionAll(ctx, modelConfig)
-			// pf := prefabs.CreatePrefab(name, []*model.Model{m})
-			// g.prefabs[pf.ID] = pf
-
 			models := model.NewModelsFromCollection(ctx, modelConfig)
 			pf := prefabs.CreatePrefab(name, models)
 			g.prefabs[pf.ID] = pf

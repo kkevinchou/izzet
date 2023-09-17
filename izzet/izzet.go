@@ -94,7 +94,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
-	g.navigationMesh = navmesh.New(g)
+	// g.navigationMesh = navmesh.New(g)
 
 	return g
 }

@@ -388,7 +388,9 @@ func drawModel(
 	entityID int,
 ) {
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
+		shader.SetUniformInt("isAnimated", 1)
 		animationTransforms := animationPlayer.AnimationTransforms()
+
 		// if animationTransforms is nil, the shader will execute reading into invalid memory
 		// so, we need to explicitly guard for this
 		if animationTransforms == nil {
@@ -397,6 +399,8 @@ func drawModel(
 		for i := 0; i < len(animationTransforms); i++ {
 			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
 		}
+	} else {
+		shader.SetUniformInt("isAnimated", 0)
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE

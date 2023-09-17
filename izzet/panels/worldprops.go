@@ -32,7 +32,7 @@ var (
 )
 
 func worldProps(world World, renderContext RenderContext) {
-	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) })
@@ -56,7 +56,7 @@ func worldProps(world World, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("NavMeshHSV", func() {
@@ -101,38 +101,6 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })
 		setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) })
-		imgui.EndTable()
-	}
-
-	if imgui.CollapsingHeaderV("RenderStats", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
-		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
-		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.RenderTime)) })
-		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.FPS)) })
-		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(DBG.TriangleDrawCount)) })
-		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(DBG.DrawCount)) })
-		setupRow("Texture", func() {
-			imgui.PushItemWidth(tableColumn1Width)
-			if imgui.BeginCombo("", string(SelectedComboOption)) {
-				for _, option := range comboOptions {
-					if imgui.Selectable(string(option)) {
-						SelectedComboOption = option
-					}
-				}
-				imgui.EndCombo()
-			}
-			imgui.PopItemWidth()
-		})
-		setupRow("Texture Viewer", func() {
-			if DBG.DebugTexture != 0 {
-				var imageWidth float32 = 500
-				texture := createUserSpaceTextureHandle(DBG.DebugTexture)
-				size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
-				// invert the Y axis since opengl vs texture coordinate systems differ
-				// https://learnopengl.com/Getting-started/Textures
-				imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-			}
-		})
 		imgui.EndTable()
 	}
 }

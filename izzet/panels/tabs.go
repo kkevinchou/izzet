@@ -54,6 +54,10 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 			}
 			imgui.EndTabItem()
 		}
+		if imgui.BeginTabItem("Stats") {
+			stats(world, renderContext)
+			imgui.EndTabItem()
+		}
 		imgui.EndTabBar()
 	}
 

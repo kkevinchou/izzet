@@ -724,11 +724,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
-		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-			shader.SetUniformInt("isAnimated", 1)
-		} else {
-			shader.SetUniformInt("isAnimated", 0)
-		}
 
 		drawModel(
 			viewerContext,

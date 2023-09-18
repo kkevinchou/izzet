@@ -19,49 +19,67 @@ func entityProps(entity *entities.Entity) {
 		// imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
 		// imgui.PopStyleColor()
 
-		if entity != nil {
-			position := entities.LocalPosition(entity)
-			positionStr := fmt.Sprintf("{%.1f, %.1f, %.1f}", position.X(), position.Y(), position.Z())
-			text := &positionStr
+		entityNameStr := ""
+		positionStr := ""
+		localRotationStr := ""
+		localQuaternionStr := ""
+		scaleStr := ""
+		worldPositionStr := ""
+		eulerRotationStr := ""
+		parentStr := ""
+		parentJointStr := ""
 
-			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			uiTableRow("Entity Name", entity.NameID())
-			if uiTableInputRow("Local Position", text, nil) {
-				uiTableInputPosition(entity, text)
-			}
+		if entity != nil {
+			entityNameStr = entity.NameID()
+			position := entities.LocalPosition(entity)
+			positionStr = fmt.Sprintf("{%.1f, %.1f, %.1f}", position.X(), position.Y(), position.Z())
 
 			rotation := entities.LocalRotation(entity)
 			euler := QuatToEuler(rotation)
-			uiTableRow("Local Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
-			uiTableRow("Local Quat", fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", rotation.X(), rotation.Y(), rotation.Z(), rotation.W))
+			localRotationStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z())
+			localQuaternionStr = fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", rotation.X(), rotation.Y(), rotation.Z(), rotation.W)
 
 			scale := entities.Scale(entity)
-			uiTableRow("Scale", fmt.Sprintf("{%.0f, %.0f, %.0f}", scale.X(), scale.Y(), scale.Z()))
+			scaleStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", scale.X(), scale.Y(), scale.Z())
 
-			position = entity.WorldPosition()
-			positionStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", position.X(), position.Y(), position.Z())
-			uiTableRow("World Position", positionStr)
+			worldPosition := entity.WorldPosition()
+			worldPositionStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", worldPosition.X(), worldPosition.Y(), worldPosition.Z())
 
 			euler = QuatToEuler(entity.WorldRotation())
-			uiTableRow("World Rotation", fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z()))
+			eulerRotationStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z())
 
-			parentStr := "nil"
 			if entity.Parent != nil {
 				parentStr = fmt.Sprintf("%s", entity.Parent.Name)
+			} else {
+				parentStr = "nil"
 			}
-			uiTableRow("Parent", parentStr)
 
-			parentJointStr := "nil"
 			if entity.ParentJoint != nil {
 				parentJointStr = entity.ParentJoint.Name
+			} else {
+				parentJointStr = "nil"
 			}
-			uiTableRow("Parent Joint", parentJointStr)
-
-			imgui.EndTable()
 		}
-	}
-	// imgui.EndChild()
 
+		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+		uiTableRow("Entity Name", entityNameStr)
+
+		// if entity != nil {
+		// 	// if uiTableInputRow("Local Position", &positionStr, nil) {
+		// 	// 	uiTableInputPosition(entity, &positionStr)
+		// 	// }
+		// }
+		uiTableRow("Local Position", positionStr)
+
+		uiTableRow("Local Rotation", localRotationStr)
+		uiTableRow("Local Quat", localQuaternionStr)
+		uiTableRow("Scale", scaleStr)
+		uiTableRow("World Position", worldPositionStr)
+		uiTableRow("World Rotation", eulerRotationStr)
+		uiTableRow("Parent", parentStr)
+		uiTableRow("Parent Joint", parentJointStr)
+		imgui.EndTable()
+	}
 }
 
 func uiTableInputPosition(entity *entities.Entity, text *string) {
@@ -104,9 +122,10 @@ func uiTableInputRow(label string, text *string, cb imgui.InputTextCallback) boo
 	imgui.Text(label)
 	imgui.TableSetColumnIndex(1)
 
-	imgui.PushItemWidth(imgui.WindowWidth())
+	// imgui.PushItemWidth(imgui.WindowWidth())
 	v := imgui.InputTextV("", text, imgui.ImGuiInputTextFlagsCallbackEdit|imgui.InputTextFlagsEnterReturnsTrue, cb)
-	imgui.PopItemWidth()
+	// v := imgui.InputTextV("", text, imgui.InputTextFlagsNone, cb)
+	// imgui.PopItemWidth()
 	return v
 }
 

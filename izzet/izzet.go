@@ -86,7 +86,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	w, h := g.window.GetSize()
 	g.width, g.height = int(w), int(h)
 	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
-	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 10)
+	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 100)
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
@@ -163,7 +163,7 @@ func (g *Izzet) Start() {
 			frameCount++
 			// g.renderer.PreRenderImgui()
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			renderContext := render.NewRenderContext(g.width, g.height, settings.FovX)
+			renderContext := render.NewRenderContext(g.width, g.height, float64(panels.DBG.FovX))
 			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
 			renderAccumulator -= msPerFrame

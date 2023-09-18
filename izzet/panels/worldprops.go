@@ -55,6 +55,13 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Upsampling Scale", func() { imgui.SliderFloat("", &DBG.BloomUpsamplingScale, 0, 5.0) })
 		imgui.EndTable()
 	}
+	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsNone) {
+		imgui.BeginTableV("Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
+		initColumns()
+		setupRow("Far", func() { imgui.SliderFloat("", &DBG.Far, 0, 100000) })
+		setupRow("FovX", func() { imgui.SliderFloat("", &DBG.FovX, 0, 170) })
+		imgui.EndTable()
+	}
 
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)

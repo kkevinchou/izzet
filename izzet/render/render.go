@@ -114,7 +114,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
 	settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 
-	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, settings.Far)
+	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
@@ -188,10 +188,10 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		Orientation: orientation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), settings.Near, settings.Far),
+		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(panels.DBG.Near), float64(panels.DBG.Far)),
 	}
 
-	lightFrustumPoints := calculateFrustumPoints(position, orientation, settings.Near, settings.Far, renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), settings.ShadowMapDistanceFactor)
+	lightFrustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), settings.ShadowMapDistanceFactor)
 
 	// find the directional light if there is one
 	lights := r.world.Lights()
@@ -240,7 +240,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 
-	frustumPoints := calculateFrustumPoints(position, orientation, settings.Near, settings.Far, renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
+	frustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
 	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
 	spatialPartition := r.world.SpatialPartition()
 	entities := spatialPartition.QueryEntities(frustumBoundingBox)

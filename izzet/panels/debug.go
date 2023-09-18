@@ -25,6 +25,10 @@ type DebugSettings struct {
 	RenderTime float64
 	FPS        float64
 
+	FovX float32
+	Near float32
+	Far  float32
+
 	TriangleDrawCount int
 	DrawCount         int
 
@@ -59,6 +63,10 @@ var DBG DebugSettings = DebugSettings{
 	ColorIntensity:            1.0,
 	RenderSpatialPartition:    false,
 	FPS:                       0,
+
+	Near: 1,
+	Far:  3000,
+	FovX: 105,
 
 	TriangleDrawCount: 0,
 	DrawCount:         0,

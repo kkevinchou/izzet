@@ -48,9 +48,11 @@ type Izzet struct {
 	relativeMouseActive bool
 
 	navigationMesh *navmesh.NavigationMesh
+
+	data *Data
 }
 
-func New(assetsDirectory, shaderDirectory string) *Izzet {
+func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	initSeed()
 	g := &Izzet{}
 	window, err := initializeOpenGL()
@@ -76,6 +78,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
+	data := loadData(dataFilePath)
 
 	g.camera = &camera.Camera{
 		Position: mgl64.Vec3{0, 150, 0},
@@ -90,7 +93,7 @@ func New(assetsDirectory, shaderDirectory string) *Izzet {
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
-	g.loadPrefabs()
+	g.loadPrefabs(data)
 	g.loadEntities()
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
@@ -180,27 +183,23 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Izzet) loadPrefabs() {
+func (g *Izzet) loadPrefabs(data *Data) {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
-	names := []string{"vehicle", "alpha", "demo_scene_west", "demo_scene_dungeon", "broken_tree_mat", "lootbox", "scene", "simple_plane"}
-
-	for _, name := range names {
+	for _, entityAsset := range data.EntityAssets {
+		name := entityAsset.Name
+		// multipart := entityAsset.Multipart
 		var pf *prefabs.Prefab
-		if name == "demo_scene_west" || name == "demo_scene_dungeon" || name == "demo_scene" || name == "lootbox" || name == "scene" {
-			collection := g.assetManager.GetCollection(name)
-			ctx := model.CreateContext(collection)
 
-			models := model.NewModelsFromCollection(ctx, modelConfig)
-			pf := prefabs.CreatePrefab(name, models)
-			g.prefabs[pf.ID] = pf
-		} else {
-			collection := g.assetManager.GetCollection(name)
-			ctx := model.CreateContext(collection)
-			m := model.NewModelsFromCollection(ctx, modelConfig)[0]
-			pf = prefabs.CreatePrefab(name, []*model.Model{m})
-			g.prefabs[pf.ID] = pf
-		}
+		collection := g.assetManager.GetCollection(name)
+		ctx := model.CreateContext(collection)
+
+		models := model.NewModelsFromCollection(ctx, modelConfig)
+		// if !multipart {
+		// 	models = []*model.Model{models[0]}
+		// }
+		pf = prefabs.CreatePrefab(name, models)
+		g.prefabs[pf.ID] = pf
 	}
 }
 
@@ -210,6 +209,7 @@ func (g *Izzet) loadEntities() {
 		Type:    1,
 	}
 	pointLight0 := entities.CreateLight(pointLightInfo0)
+	pointLight0.Name = "point_light"
 	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 8, 765})
 	g.AddEntity(pointLight0)
 
@@ -218,6 +218,7 @@ func (g *Izzet) loadEntities() {
 		Type:    1,
 	}
 	pointLight1 := entities.CreateLight(pointLightInfo1)
+	pointLight1.Name = "point_light"
 	entities.SetLocalPosition(pointLight1, mgl64.Vec3{0, 60, 0})
 	g.AddEntity(pointLight1)
 
@@ -227,6 +228,7 @@ func (g *Izzet) loadEntities() {
 		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(dirLightInfo)
+	directionalLight.Name = "directional_light"
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 300, 0})
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)

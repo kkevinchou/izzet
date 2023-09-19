@@ -63,7 +63,7 @@ func main() {
 		}()
 	}
 
-	app := izzet.New("_assets", "shaders")
+	app := izzet.New("_assets", "shaders", "izzet_data.json")
 	app.Start()
 	sdl.Quit()
 }

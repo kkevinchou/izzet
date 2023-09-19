@@ -1,5 +1,10 @@
 # TODO
-## Collision
+
+# Lighting
+* Screen Space Ambient Occlusion
+* Distance fog
+
+# Collision
 * Performance optimizations
   * Bounding volumes for triangular meshes
   * Spatial partitioning
@@ -9,7 +14,3 @@
 
 # Geometry
 * Experiment with using half edges
-
-## Endgame
-* Make the boss
-* 

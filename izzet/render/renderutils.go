@@ -403,6 +403,9 @@ func drawModel(
 		shader.SetUniformInt("isAnimated", 0)
 	}
 
+	c := len(model.RenderData())
+	_ = c
+
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
 		mesh := model.Collection().Meshes[renderData.MeshID]

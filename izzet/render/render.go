@@ -469,11 +469,10 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 
 		model := entity.Model
 		for _, renderData := range model.RenderData() {
-			ctx := model.CollectionContext()
-			mesh := model.Collection().Meshes[renderData.MeshID]
+			mesh := renderData.Mesh
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
-			gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+			gl.BindVertexArray(renderData.VAO)
 			iztDrawElements(int32(len(mesh.Vertices)))
 		}
 	}
@@ -534,12 +533,11 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 		model := entity.Model
 		for _, renderData := range model.RenderData() {
-			ctx := model.CollectionContext()
-			mesh := model.Collection().Meshes[renderData.MeshID]
+			mesh := renderData.Mesh
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 			// shader.SetUniformMat4("model", renderData.Transform)
 
-			gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+			gl.BindVertexArray(renderData.VAO)
 			iztDrawElements(int32(len(mesh.Vertices)))
 		}
 	}

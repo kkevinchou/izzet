@@ -191,10 +191,9 @@ func (g *Izzet) loadPrefabs(data *Data) {
 		// multipart := entityAsset.Multipart
 		var pf *prefabs.Prefab
 
-		collection := g.assetManager.GetCollection(name)
-		ctx := model.CreateContext(collection)
+		modelGroup := g.assetManager.GetModelGroup(name)
 
-		models := model.NewModelsFromCollection(ctx, modelConfig)
+		models := model.NewModelsFromCollection(modelGroup, modelConfig)
 		// if !multipart {
 		// 	models = []*model.Model{models[0]}
 		// }

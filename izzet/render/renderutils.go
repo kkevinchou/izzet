@@ -408,7 +408,7 @@ func drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
-		mesh := model.Collection().Meshes[renderData.MeshID]
+		mesh := renderData.Mesh
 		if pbr := mesh.PBRMaterial; pbr != nil {
 			shader.SetUniformInt("hasPBRMaterial", 1)
 			shader.SetUniformVec4("pbrBaseColorFactor", pbr.PBRMetallicRoughness.BaseColorFactor)
@@ -446,8 +446,7 @@ func drawModel(
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(renderData.Transform)
 		shader.SetUniformMat4("model", modelMat)
 
-		ctx := model.CollectionContext()
-		gl.BindVertexArray(ctx.VAOS[renderData.MeshID])
+		gl.BindVertexArray(renderData.VAO)
 		if modelMat.Det() < 0 {
 			// from the gltf spec:
 			// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),

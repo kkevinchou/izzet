@@ -62,7 +62,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 
 		for _, rd := range e.Model.RenderData() {
 			meshID := rd.MeshID
-			mesh := e.Model.Collection().Meshes[meshID]
+			mesh := rd.Mesh
 			for i := 0; i < len(mesh.Vertices); i += 3 {
 				t := Triangle{
 					V1: utils.Vec3F32ToF64(transform.Mul4x1(mesh.Vertices[i].Position.Vec4(1)).Vec3()),

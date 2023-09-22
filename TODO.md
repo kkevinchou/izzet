@@ -13,4 +13,4 @@
 
 # Other
 * parent scale transforms should not affect the translation of its children
-* current gltf loading library fails to load Sponza.gltf, the textures list is empty. side note: how do i handle multiple textures for a single model?
+* current gltf loading library fails to load Sponza.gltf

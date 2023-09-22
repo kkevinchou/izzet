@@ -15,3 +15,4 @@
 # Other
 * parent scale transforms should not affect the translation of its children
 * refactor MeshSpecification to instead refer to primitives. VAOs are at the primitive level (one material/texture, one set of positions) rather than at the mesh level
+* pretty sure either the depth texture (from the light view) or shadow mapping logic is broken

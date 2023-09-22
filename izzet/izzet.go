@@ -237,7 +237,7 @@ func (g *Izzet) loadEntities() {
 		pfMap[pf.Name] = pf
 	}
 
-	dungeonPF := pfMap["dmeo_scene_dungeon"]
+	dungeonPF := pfMap["demo_scene_dungeon"]
 	parent := entities.CreateDummy("scene_dummy")
 	g.AddEntity(parent)
 	entities.SetScale(parent, mgl64.Vec3{10, 10, 10})

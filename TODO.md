@@ -13,4 +13,4 @@
 
 # Other
 * parent scale transforms should not affect the translation of its children
-* current gltf loading library fails to load Sponza.gltf
+* refactor MeshSpecification to instead refer to primitives. VAOs are at the primitive level (one material/texture, one set of positions) rather than at the mesh level

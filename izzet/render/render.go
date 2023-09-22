@@ -77,7 +77,6 @@ type Renderer struct {
 	colorPickingAttachment uint32
 
 	downSampleFBO      uint32
-	xyTextureVAO       uint32
 	downSampleTextures []uint32
 
 	upSampleFBO         uint32
@@ -120,7 +119,6 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	}
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
-	r.xyTextureVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[int]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 

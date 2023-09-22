@@ -192,8 +192,7 @@ func (g *Izzet) loadPrefabs(data *Data) {
 		var pf *prefabs.Prefab
 
 		modelGroup := g.assetManager.GetModelGroup(name)
-
-		models := model.NewModelsFromCollection(modelGroup, modelConfig)
+		models := model.CreateModelsFromModelGroup(modelGroup, modelConfig)
 		// if !multipart {
 		// 	models = []*model.Model{models[0]}
 		// }
@@ -232,57 +231,20 @@ func (g *Izzet) loadEntities() {
 	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
+	pfMap := map[string]*prefabs.Prefab{}
+
 	for _, pf := range g.Prefabs() {
-		if pf.Name == "alpha" {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// entity.AnimationPlayer.PlayAnimation("Cast2")
-			// entity.AnimationPlayer.UpdateTo(0)
-			// g.AddEntity(entity)
+		pfMap[pf.Name] = pf
+	}
 
-			// entity2 := entities.InstantiateFromPrefab(pf)
-			// g.entities[entity2.ID] = entity2
-			// if pf.Name == modelName {
-			// 	entity2.LocalPosition = mgl64.Vec3{50, 0, 0}
-			// }
-		} else if pf.Name == "scene" {
-			// parent := entities.CreateDummy("scene")
-			// g.AddEntity(parent)
+	dungeonPF := pfMap["dmeo_scene_dungeon"]
+	parent := entities.CreateDummy("scene_dummy")
+	g.AddEntity(parent)
+	entities.SetScale(parent, mgl64.Vec3{10, 10, 10})
 
-			// for _, entity := range entities.InstantiateFromPrefab(pf) {
-			// 	g.AddEntity(entity)
-			// 	entities.BuildRelation(parent, entity)
-			// }
-			// panels.SelectEntity(parent)
-		} else if pf.Name == "simple_plane" {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// g.AddEntity(entity[0])
-		} else if pf.Name == "lootbox" {
-			// entity := entities.InstantiateFromPrefab(pf)
-			// g.entities[entity.ID] = entity
-			// parent := g.GetEntityByID(0)
-			// joint := parent.Model.ModelSpecification().JointMap[0]
-			// entity.ParentJoint = joint
-			// g.BuildRelation(parent, entity)
-		} else if pf.Name == "demo_scene_dungeon" {
-			parent := entities.CreateDummy("scene_dummy")
-			g.AddEntity(parent)
-			entities.SetScale(parent, mgl64.Vec3{10, 10, 10})
-
-			for _, entity := range entities.InstantiateFromPrefab(pf) {
-				entities.BuildRelation(parent, entity)
-				g.AddEntity(entity)
-			}
-		} else if pf.Name == "vehicle" {
-			// parent := entities.CreateDummy("vehicle")
-			// g.AddEntity(parent)
-			// entities.SetScale(parent, mgl64.Vec3{15, 15, 15})
-
-			// for _, entity := range entities.InstantiateFromPrefab(pf) {
-			// 	g.AddEntity(entity)
-			// 	entities.BuildRelation(parent, entity)
-			// }
-			// panels.SelectEntity(parent)
-		}
+	for _, entity := range entities.InstantiateFromPrefab(dungeonPF) {
+		entities.BuildRelation(parent, entity)
+		g.AddEntity(entity)
 	}
 }
 

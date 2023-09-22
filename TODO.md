@@ -1,8 +1,9 @@
 # TODO
 
 # Lighting
-* Screen Space Ambient Occlusion
 * Distance fog
+* Distance blur
+* Screen Space Ambient Occlusion
 
 # Water
 * realistic water rendering like sea of thieves
@@ -12,4 +13,4 @@
 
 # Other
 * parent scale transforms should not affect the translation of its children
-* distance fog
+* current gltf loading library fails to load Sponza.gltf, the textures list is empty. side note: how do i handle multiple textures for a single model?

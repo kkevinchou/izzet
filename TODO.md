@@ -4,6 +4,7 @@
 * Distance fog
 * Distance blur
 * Screen Space Ambient Occlusion
+* Create directional light from menu
 
 # Water
 * realistic water rendering like sea of thieves

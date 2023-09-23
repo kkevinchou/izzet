@@ -129,7 +129,13 @@ func init() {
 	}
 }
 
-// TODO - gonna need to decide on how I want to handle holes
+/*
+	 TODO: this is where I left off before taking a break from this implementation. this method should trace and simplify the contours of each region.
+		the final datastructure should be a set of points that outline the region, possibly with some connectivity info of which vertices connect
+		one region to another (Step 4 of the Mikko Mononen implementation slides). the regions are not convex at this point and need to be triangulated
+		to form the actual traversible geometry for pathfinding
+	 TODO: decide how we want to handle holes in regions (if any)
+*/
 func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, startVoxel *Voxel) Contour {
 	var next *Voxel
 	seen := map[VoxelPosition]bool{}

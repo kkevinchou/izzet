@@ -27,6 +27,14 @@ func (u MinXTriangles) Less(i, j int) bool {
 	return u[i].MinX < u[j].MinX
 }
 
+// TODO: this method is fairly brute force and could be improved a lot, Recast does this more efficiently.
+// the current implementation considers all voxel positions in a region and does an intersection test with
+// geometry. This is quite wasteful as a lot of geometry will not be intersecting with the voxel but we will
+// consider it anyway. Spatial partitioning helps reduce the number of checks but still isn't ideal. This is
+// akin to raytracing in graphical rendering. Instead we should take the rasterization approach (ironically what
+// this file is named), which in starts with taking the geometry and finding all voxels that it intersects with.
+// Starting from the geometry allows us to quickly fill in a large amount of voxels with minimal intersection
+// checks which is the expensive part of voxelization.
 func (n *NavigationMesh) voxelize() [][][]Voxel {
 	start := time.Now()
 	spatialPartition := n.world.SpatialPartition()
@@ -156,7 +164,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 		}
 	}
 
-	// create a work item for each voxel location
+	// create a work item for each voxel location. this is the brute force approach which is not very efficient
 	for i := 0; i < dimensions[0]; i++ {
 		for j := 0; j < dimensions[1]; j++ {
 			for k := 0; k < dimensions[2]; k++ {

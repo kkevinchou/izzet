@@ -110,7 +110,7 @@ func ComputeDirectionalLightProps(lightOrientationMatrix mgl64.Mat4, frustumPoin
 			maxZ = point.Z()
 		}
 	}
-	maxZ += settings.ShadowmapZOffset
+	maxZ += shadowMapZOffset
 
 	halfX := (maxX - minX) / 2
 	halfY := (maxY - minY) / 2

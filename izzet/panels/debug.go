@@ -56,11 +56,11 @@ var DBG DebugSettings = DebugSettings{
 	Exposure:                  1.0,
 	AmbientFactor:             0.1,
 	Bloom:                     true,
-	BloomThresholdPasses:      0,
+	BloomThresholdPasses:      1,
 	BloomThreshold:            0.8,
 	BloomUpsamplingScale:      1.0,
 	Color:                     [3]float32{1, 1, 1},
-	ColorIntensity:            1.0,
+	ColorIntensity:            20.0,
 	RenderSpatialPartition:    false,
 	FPS:                       0,
 

@@ -89,7 +89,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	w, h := g.window.GetSize()
 	g.width, g.height = int(w), int(h)
 	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
-	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 100)
+	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 25)
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}

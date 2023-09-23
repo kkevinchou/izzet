@@ -38,7 +38,6 @@ float KarisAverage(vec3 col)
 
 void main()
 {
-    // vec2 srcTexelSize = 1.0 / srcResolution;
     vec2 srcTexelSize = 1.0 / vec2(textureSize(srcTexture, 0));
     float x = srcTexelSize.x;
     float y = srcTexelSize.y;
@@ -68,37 +67,11 @@ void main()
     vec3 l = texture(srcTexture, vec2(texCoord.x - x, texCoord.y - y)).rgb;
     vec3 m = texture(srcTexture, vec2(texCoord.x + x, texCoord.y - y)).rgb;
 
-    // Apply weighted distribution:
-    // 0.5 + 0.125 + 0.125 + 0.125 + 0.125 = 1
-    // a,b,d,e * 0.125
-    // b,c,e,f * 0.125
-    // d,e,g,h * 0.125
-    // e,f,h,i * 0.125
-    // j,k,l,m * 0.5
-    // This shows 5 square areas that are being sampled. But some of them overlap,
-    // so to have an energy preserving downsample we need to make some adjustments.
-    // The weights are the distributed, so that the sum of j,k,l,m (e.g.)
-    // contribute 0.5 to the final color output. The code below is written
-    // to effectively yield this sum. We get:
-    // 0.125*5 + 0.03125*4 + 0.0625*4 = 1
-
     vec3 v;
     v = e*0.125;
     v += (a+c+g+i)*0.03125;
     v += (b+d+f+h)*0.0625;
     v += (j+k+l+m)*0.125;
-
-    // testing
-    // b = texture(srcTexture, vec2(texCoord.x,       texCoord.y + 1*y)).rgb;
-    // d = texture(srcTexture, vec2(texCoord.x - 1*x, texCoord.y)).rgb;
-    // f = texture(srcTexture, vec2(texCoord.x + 1*x, texCoord.y)).rgb;
-    // h = texture(srcTexture, vec2(texCoord.x,       texCoord.y - 1*y)).rgb;
-    // v = (e * 0.1) + 0.1875 * (b + d + f + h);
-    // v = f;
-
-    // downsample = vec4(1, 1, 1, 1);
-    // downsample = texture(srcTexture, texCoord).xyzw;
-    downsample = vec4(v, 1);
 
     if (karis == 1) {
         vec3 groups[5];

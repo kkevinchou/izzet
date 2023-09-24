@@ -3,7 +3,6 @@ package entities
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type LightType int
@@ -12,18 +11,25 @@ const LightTypeDirection LightType = 0
 const LightTypePoint LightType = 1
 
 type LightInfo struct {
-	Diffuse   mgl64.Vec4 // W component is the intensity
-	Direction mgl64.Vec3
-	Type      LightType
-	Diffuse3F [3]float32
-	Intensity float32
+	Direction          mgl64.Vec3
+	Type               LightType
+	Diffuse3F          [3]float32
+	PreScaledIntensity float32
 }
 
-func (l *LightInfo) DiffuseVec4() mgl32.Vec4 {
+func (l *LightInfo) IntensifiedDiffuse() mgl32.Vec3 {
+	return mgl32.Vec3{l.Diffuse3F[0], l.Diffuse3F[1], l.Diffuse3F[2]}.Mul(l.Intensity())
+}
+
+// we scale the intensity value for point lights so that it's more user friendly to manage
+// the sliders in the UI are in a small range (< 100) rather than in the hundreds of thousands.
+// this is still a little confusing so I'll probably revisit this at some point
+func (l *LightInfo) Intensity() float32 {
+	intensityScale := 1
 	if l.Type == LightTypePoint {
-		return mgl32.Vec4{l.Diffuse3F[0], l.Diffuse3F[1], l.Diffuse3F[2], float32(l.Intensity) * 100000}
+		intensityScale = 100000
 	}
-	return utils.Vec4F64ToF32(l.Diffuse)
+	return l.PreScaledIntensity * float32(intensityScale)
 }
 
 // func (l *LightInfo) DiffuseVec3() mgl32.Vec3 {

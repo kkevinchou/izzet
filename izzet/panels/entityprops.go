@@ -93,7 +93,7 @@ func entityProps(entity *entities.Entity) {
 			setupRow("Color", func() {
 				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			})
-			setupRow("Color Intensity", func() { imgui.SliderFloat("", &entity.LightInfo.Intensity, 1, 20) })
+			setupRow("Color Intensity", func() { imgui.SliderFloat("", &entity.LightInfo.PreScaledIntensity, 1, 20) })
 			imgui.EndTable()
 		}
 	}

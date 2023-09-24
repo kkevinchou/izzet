@@ -25,6 +25,8 @@ struct Light {
 
     // positional
     vec3 position;
+
+    float range;
 };
 
 uniform int lightCount;
@@ -249,6 +251,9 @@ void main()
             shadow = DirectionalLightShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
             do_attenuation = 0;
         } else if (light.type == 1) {
+            if (distance > light.range) {
+                continue;
+            }
             fragToLight = normalize(light.position - fs_in.FragPos);
             // we only support shadows for the first point light for now
             if (firstPointLight) {

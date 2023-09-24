@@ -28,9 +28,6 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("depthDebug", "basictexture", "depthvalue", ""); err != nil {
 		panic(err)
 	}
@@ -40,13 +37,16 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("basic_quad", "basic_quad", "basic_quad", ""); err != nil {
-		panic(err)
-	}
-	if err := shaderManager.CompileShaderProgram("basic_quad_world", "basic_quad_world", "basic_quad", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("unit_circle", "unit_circle", "unit_circle", ""); err != nil {
+		panic(err)
+	}
+
+	// Quad rendering
+
+	if err := shaderManager.CompileShaderProgram("screen_space_quad", "screen_space_quad", "textured_picking", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("world_space_quad", "world_space_quad", "textured_picking", ""); err != nil {
 		panic(err)
 	}
 

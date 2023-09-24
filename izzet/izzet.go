@@ -49,7 +49,8 @@ type Izzet struct {
 
 	navigationMesh *navmesh.NavigationMesh
 
-	data *Data
+	data          *Data
+	showImguiDemo bool
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {

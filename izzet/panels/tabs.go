@@ -28,21 +28,22 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.End()
 
 	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y + rect.Y*0.5}, imgui.ConditionFirstUseEver, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
-	imgui.BeginV("Properties", &open, imgui.WindowFlagsNone)
+	var propertiesWidth float32 = 450
+	imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
+	imgui.BeginV("Right Window", &open, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
 
-	if imgui.BeginTabBar("Main") {
-		if imgui.BeginTabItem("World Properties") {
+	if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
+		if imgui.BeginTabItem("World") {
 			worldProps(world, renderContext)
 			imgui.EndTabItem()
 		}
-		if imgui.BeginTabItem("Entity Properties") {
+		if imgui.BeginTabItem("Details") {
 			entityProps(SelectedEntity())
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Prefabs") {
-			prefabsUI(ps)
+			prefabsUI(world, ps)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Animation") {

@@ -10,6 +10,8 @@ import (
 type World interface {
 	SaveWorld()
 	LoadWorld()
+	SetShowImguiDemo(bool)
+	ShowImguiDemo() bool
 	NavMesh() *navmesh.NavigationMesh
 	AddEntity(entity *entities.Entity)
 }
@@ -27,6 +29,11 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		if imgui.MenuItem("Show Debug") {
 			panels.ShowDebug = !panels.ShowDebug
 		}
+
+		val := world.ShowImguiDemo()
+		imgui.Checkbox("ShowImguiDemoCheckbox", &val)
+		world.SetShowImguiDemo(val)
+
 		if imgui.MenuItem("Bake Navigation Mesh") {
 			world.NavMesh().BakeNavMesh()
 		}

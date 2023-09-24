@@ -106,6 +106,7 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })
 		setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })
 		setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
+		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &DBG.EnableSpatialPartition) })
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) })
 		imgui.EndTable()
 	}

@@ -294,7 +294,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, 1, float32(renderContext.aspectRatio), nil, false)
+	drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false)
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.renderGizmos(cameraViewerContext, renderContext)
@@ -613,7 +613,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				cameraRight := viewerContext.Orientation.Mat4().Mul4x1(b).Vec3()
 
 				if entity.Billboard != nil {
-					shader := shaderManager.GetShaderProgram("basic_quad_world")
+					shader := shaderManager.GetShaderProgram("world_space_quad")
 					shader.Use()
 					shader.SetUniformUInt("entityID", uint32(entity.ID))
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
@@ -650,7 +650,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			texture := r.world.AssetManager().GetTexture("light").ID
 			for _, particle := range particles.GetActiveParticles() {
 				particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-				drawTexturedQuad(&viewerContext, r.shaderManager, texture, 1, float32(renderContext.AspectRatio()), &particleModelMatrix, true)
+				drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true)
 			}
 		}
 

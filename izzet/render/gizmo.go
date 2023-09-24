@@ -90,7 +90,7 @@ func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position 
 		if i == gizmo.R.HoverIndex {
 			texture = r.yellowCircleTexture
 		}
-		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, 1, float32(renderContext.AspectRatio()), &modelMatrix, true)
+		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true)
 	}
 }
 

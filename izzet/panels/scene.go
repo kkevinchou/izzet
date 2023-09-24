@@ -65,9 +65,9 @@ func sceneHierarchy(world World) {
 			}
 			if imgui.Button("Add Point Light") {
 				lightInfo := &entities.LightInfo{
-					Intensity: 1,
-					Diffuse3F: [3]float32{1, 1, 1},
-					Type:      entities.LightTypePoint,
+					PreScaledIntensity: 1,
+					Diffuse3F:          [3]float32{1, 1, 1},
+					Type:               entities.LightTypePoint,
 				}
 
 				light := entities.CreateLight(lightInfo)

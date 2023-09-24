@@ -18,7 +18,7 @@ struct Light {
     int type;
 
     // general props
-    vec4 diffuse;
+    vec3 diffuse;
 
     // directional
     vec3 dir;
@@ -260,13 +260,11 @@ void main()
             return;
         }
 
-        vec3 lightColor = vec3(light.diffuse) * light.diffuse.w; // multiply color by intensity
-
         // in gltf 2.0 if we have both the base color factor and base color texture defined
         // the base color factor is a linear multiple of the texture values
         // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
 
-        Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, lightColor, in_albedo, do_attenuation);
+        Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, light.diffuse, in_albedo, do_attenuation);
     }
   
     vec3 ambient = vec3(ambientFactor) * in_albedo * ao;

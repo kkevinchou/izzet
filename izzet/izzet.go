@@ -204,33 +204,25 @@ func (g *Izzet) loadPrefabs(data *Data) {
 
 func (g *Izzet) loadEntities() {
 	pointLightInfo0 := &entities.LightInfo{
-		Intensity: 1,
-		Diffuse3F: [3]float32{1, 1, 1},
-		Type:      entities.LightTypePoint,
+		PreScaledIntensity: 1,
+		Diffuse3F:          [3]float32{1, 1, 1},
+		Type:               entities.LightTypePoint,
 	}
 	pointLight0 := entities.CreateLight(pointLightInfo0)
 	pointLight0.Name = "point_light"
 	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 100, 0})
 	g.AddEntity(pointLight0)
 
-	// pointLightInfo1 := &entities.LightInfo{
-	// 	Diffuse: mgl64.Vec4{1, 1, 1, 8},
-	// 	Type:    1,
-	// }
-	// pointLight1 := entities.CreateLight(pointLightInfo1)
-	// pointLight1.Name = "point_light"
-	// entities.SetLocalPosition(pointLight1, mgl64.Vec3{0, 60, 0})
-	// g.AddEntity(pointLight1)
-
 	lightDir := panels.DBG.DirectionalLightDir
 	dirLightInfo := &entities.LightInfo{
-		Diffuse:   mgl64.Vec4{1, 1, 1, 1},
-		Direction: mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
+		PreScaledIntensity: 1,
+		Diffuse3F:          [3]float32{1, 1, 1},
+		Type:               entities.LightTypeDirection,
+		Direction:          mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	directionalLight := entities.CreateLight(dirLightInfo)
 	directionalLight.Name = "directional_light"
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 300, 0})
-	// directionalLight.Particles = entities.NewParticleGenerator(100)
 	g.AddEntity(directionalLight)
 
 	pfMap := map[string]*prefabs.Prefab{}

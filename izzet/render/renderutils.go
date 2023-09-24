@@ -362,16 +362,12 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 	shader.SetUniformInt("lightCount", int32(len(lights)))
 	for i, light := range lights {
 		lightInfo := light.LightInfo
-		diffuse := lightInfo.DiffuseVec4()
 
-		if lightInfo.Type == entities.LightTypePoint {
-			// diffuse[3] = float32(panels.DBG.PointLightIntensity)
-		} else if lightInfo.Type == entities.LightTypeDirection {
-			diffuse[3] = float32(panels.DBG.DirectionalLightIntensity)
-		}
+		diffuse := lightInfo.IntensifiedDiffuse()
+
 		shader.SetUniformInt(fmt.Sprintf("lights[%d].type", i), int32(lightInfo.Type))
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].dir", i), utils.Vec3F64ToF32(lightInfo.Direction))
-		shader.SetUniformVec4(fmt.Sprintf("lights[%d].diffuse", i), diffuse)
+		shader.SetUniformVec3(fmt.Sprintf("lights[%d].diffuse", i), diffuse)
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.WorldPosition()))
 	}
 }

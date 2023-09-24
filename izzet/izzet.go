@@ -189,14 +189,10 @@ func (g *Izzet) loadPrefabs(data *Data) {
 
 	for _, entityAsset := range data.EntityAssets {
 		name := entityAsset.Name
-		// multipart := entityAsset.Multipart
 		var pf *prefabs.Prefab
 
 		modelGroup := g.assetManager.GetModelGroup(name)
 		models := model.CreateModelsFromModelGroup(modelGroup, modelConfig)
-		// if !multipart {
-		// 	models = []*model.Model{models[0]}
-		// }
 		pf = prefabs.CreatePrefab(name, models)
 		g.prefabs[pf.ID] = pf
 	}

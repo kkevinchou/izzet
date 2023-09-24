@@ -204,8 +204,9 @@ func (g *Izzet) loadPrefabs(data *Data) {
 
 func (g *Izzet) loadEntities() {
 	pointLightInfo0 := &entities.LightInfo{
-		Diffuse: mgl64.Vec4{1, 1, 1, 8},
-		Type:    1,
+		Intensity: 1,
+		Diffuse3F: [3]float32{1, 1, 1},
+		Type:      entities.LightTypePoint,
 	}
 	pointLight0 := entities.CreateLight(pointLightInfo0)
 	pointLight0.Name = "point_light"

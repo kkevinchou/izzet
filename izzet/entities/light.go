@@ -39,7 +39,6 @@ func CreateDirectionalLight() *Entity {
 		Diffuse3F:          [3]float32{1, 1, 1},
 		Type:               LightTypeDirection,
 		Direction3F:        [3]float32{-1, -1, -1},
-		// Direction:          mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
 	}
 	entity := InstantiateBaseEntity("directional-light", id)
 	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
@@ -55,6 +54,7 @@ func CreatePointLight() *Entity {
 		PreScaledIntensity: 1,
 		Diffuse3F:          [3]float32{1, 1, 1},
 		Type:               LightTypePoint,
+		Range:              800,
 	}
 
 	entity := InstantiateBaseEntity("point-light", id)

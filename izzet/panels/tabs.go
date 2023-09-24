@@ -5,7 +5,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
 
-var open bool
+// var open bool
 
 func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
 	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
@@ -15,7 +15,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.SetNextWindowBgAlpha(0.8)
 	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
-	imgui.BeginV("Fixed Tab Set", &open, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
+	imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
 
 	if imgui.BeginTabBar("Scene") {
 		if imgui.BeginTabItem("Scene Hierarchy") {
@@ -31,7 +31,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	var propertiesWidth float32 = 450
 	imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
-	imgui.BeginV("Right Window", &open, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
+	imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
 
 	if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("World") {

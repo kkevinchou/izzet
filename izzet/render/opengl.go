@@ -16,18 +16,6 @@ func initOpenGLRenderSettings() {
 }
 
 func compileShaders(shaderManager *shaders.ShaderManager) {
-	if err := shaderManager.CompileShaderProgram("blend", "composite", "blend", ""); err != nil {
-		panic(err)
-	}
-	if err := shaderManager.CompileShaderProgram("composite", "composite", "composite", ""); err != nil {
-		panic(err)
-	}
-	if err := shaderManager.CompileShaderProgram("bloom_downsample", "bloom", "bloom_downsample", ""); err != nil {
-		panic(err)
-	}
-	if err := shaderManager.CompileShaderProgram("bloom_upsample", "bloom", "bloom_upsample", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("skybox", "skybox", "skybox", ""); err != nil {
 		panic(err)
 	}
@@ -38,10 +26,6 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
-		panic(err)
-	}
-	// shader for rendering the depth cubemap for point shadows
-	if err := shaderManager.CompileShaderProgram("point_shadow", "point_shadow", "point_shadow", "point_shadow"); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
@@ -63,6 +47,26 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("unit_circle", "unit_circle", "unit_circle", ""); err != nil {
+		panic(err)
+	}
+
+	// Bloom Shaders
+
+	if err := shaderManager.CompileShaderProgram("blend", "composite", "blend", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("composite", "composite", "composite", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("bloom_downsample", "bloom", "bloom_downsample", ""); err != nil {
+		panic(err)
+	}
+	if err := shaderManager.CompileShaderProgram("bloom_upsample", "bloom", "bloom_upsample", ""); err != nil {
+		panic(err)
+	}
+
+	// shader for rendering the depth cubemap for point shadows
+	if err := shaderManager.CompileShaderProgram("point_shadow", "point_shadow", "point_shadow", "point_shadow"); err != nil {
 		panic(err)
 	}
 }

@@ -8,9 +8,9 @@ uniform uint entityID;
 
 void main() {
     vec4 t = texture(basictexture, TexCoords);
-    // if (t.a < 0.01) {
-    //     discard;
-    // }
+    if (t.a < 1) {
+        discard;
+    }
 
     FragColor = t;
     PickingColor = entityID;

@@ -32,10 +32,6 @@ func (l *LightInfo) Intensity() float32 {
 	return l.PreScaledIntensity * float32(intensityScale)
 }
 
-// func (l *LightInfo) DiffuseVec3() mgl32.Vec3 {
-// 	return utils.Vec4F64ToF32(l.Diffuse)
-// }
-
 func CreateLight(lightInfo *LightInfo) *Entity {
 	entity := InstantiateBaseEntity("light", id)
 	entity.ImageInfo = &ImageInfo{ImageName: "light.png"}

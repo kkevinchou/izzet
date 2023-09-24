@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/model"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -113,7 +113,7 @@ func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.P
 	e := InstantiateBaseEntity(model.Name(), id)
 	e.Prefab = prefab
 	e.Model = model
-	e.boundingBox = collider.BoundingBoxFromModel(e.Model)
+	// e.boundingBox = collider.BoundingBoxFromModel(e.Model)
 
 	SetLocalPosition(e, utils.Vec3F32ToF64(model.Translation()))
 	SetLocalRotation(e, utils.QuatF32ToF64(model.Rotation()))

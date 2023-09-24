@@ -203,13 +203,17 @@ func (g *Izzet) loadPrefabs(data *Data) {
 }
 
 func (g *Izzet) loadEntities() {
-	pointLight0 := entities.CreatePointLight()
-	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 100, 0})
-	g.AddEntity(pointLight0)
+	pointLight := entities.CreatePointLight()
+	pointLight.Movement = &entities.MovementComponent{
+		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
+		Speed:        100,
+	}
+	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
+	g.AddEntity(pointLight)
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
-	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 300, 0})
+	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.AddEntity(directionalLight)
 
 	pfMap := map[string]*prefabs.Prefab{}

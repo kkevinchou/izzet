@@ -34,6 +34,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.handleInputCommands(frameInput)
 
+	// system loop
 	for _, entity := range g.Entities() {
 		// animation system
 		if entity.AnimationPlayer != nil {
@@ -46,7 +47,20 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		if entity.Particles != nil {
 			entity.Particles.SetPosition(entity.WorldPosition())
 			entity.Particles.Update(delta)
-			// fmt.Println(len(entity.Particles.GetCurrentParticles()))
+		}
+
+		// movement system
+		if entity.Movement != nil {
+			mc := entity.Movement
+			target := mc.PatrolConfig.Points[mc.PatrolConfig.Index]
+			startPosition := entity.Position()
+			if startPosition.Sub(target).Len() < 5 {
+				mc.PatrolConfig.Index = (mc.PatrolConfig.Index + 1) % len(mc.PatrolConfig.Points)
+				target = mc.PatrolConfig.Points[mc.PatrolConfig.Index]
+			}
+			movementDirection := target.Sub(startPosition).Normalize()
+			newPosition := startPosition.Add(movementDirection.Mul(mc.Speed / 1000 * float64(delta.Milliseconds())))
+			entities.SetLocalPosition(entity, newPosition)
 		}
 	}
 

@@ -379,7 +379,7 @@ func drawModel(
 	shadowMap *ShadowMap,
 	shader *shaders.ShaderProgram,
 	assetManager *assets.AssetManager,
-	model *model.Model,
+	model model.RenderModel,
 	animationPlayer *animation.AnimationPlayer,
 	modelMatrix mgl64.Mat4,
 	pointLightDepthCubeMap uint32,

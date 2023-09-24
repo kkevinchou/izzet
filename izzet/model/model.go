@@ -9,6 +9,10 @@ import (
 )
 
 type RenderModel interface {
+	RenderData() []RenderData
+	JointMap() map[int]*modelspec.JointSpec
+	RootJoint() *modelspec.JointSpec
+	Name() string
 }
 
 type ModelConfig struct {

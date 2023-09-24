@@ -34,7 +34,7 @@ type Entity struct {
 	Prefab *prefabs.Prefab
 
 	// model
-	Model       *model.Model
+	Model       model.RenderModel
 	boundingBox *collider.BoundingBox
 
 	// socket

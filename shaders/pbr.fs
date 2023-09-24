@@ -222,7 +222,13 @@ void main()
     vec3 Lo = vec3(0.0);
     vec3 in_albedo = albedo;
     if (hasPBRBaseColorTexture == 1) {
-        in_albedo = in_albedo * texture(modelTexture, fs_in.TexCoord).xyz;
+        vec4 texture_value = texture(modelTexture, fs_in.TexCoord);
+        // for some reason this harms render performance, possibly due to preventing early z testing?
+        // if (texture_value.w < 1) {
+        //     discard;
+        //     return;
+        // }
+        in_albedo = in_albedo * texture_value.xyz;
     }
 
     if (hasColorOverride == 1) {

@@ -22,6 +22,7 @@ type DebugSettings struct {
 	ShowDebugTexture bool
 	DebugTexture     uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 
+	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
 	RenderTime float64
@@ -64,6 +65,7 @@ var DBG DebugSettings = DebugSettings{
 	Color:                     [3]float32{1, 1, 1},
 	ColorIntensity:            20.0,
 	RenderSpatialPartition:    false,
+	EnableSpatialPartition:    true,
 	FPS:                       0,
 
 	Near: 1,

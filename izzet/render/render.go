@@ -242,17 +242,24 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	frustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
 	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
-	spatialPartition := r.world.SpatialPartition()
-	entities := spatialPartition.QueryEntities(frustumBoundingBox)
-	frustumEntities := map[int]any{}
-	for _, entity := range entities {
-		frustumEntities[entity.GetID()] = true
+
+	renderEntities := map[int]any{}
+	if panels.DBG.EnableSpatialPartition {
+		spatialPartition := r.world.SpatialPartition()
+		frustumEntities := spatialPartition.QueryEntities(frustumBoundingBox)
+		for _, entity := range frustumEntities {
+			renderEntities[entity.GetID()] = true
+		}
+	} else {
+		for _, entity := range r.world.Entities() {
+			renderEntities[entity.GetID()] = true
+		}
 	}
 
-	r.renderScene(cameraViewerContext, lightContext, renderContext, frustumEntities)
+	r.renderScene(cameraViewerContext, lightContext, renderContext, renderEntities)
 	r.renderAnnotations(cameraViewerContext, lightContext, renderContext)
 
-	if panels.DBG.RenderSpatialPartition {
+	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
 		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
 	}
 

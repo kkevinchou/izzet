@@ -66,6 +66,9 @@ type Entity struct {
 
 	// collision
 	Collider *ColliderComponent
+
+	// movement
+	Movement *MovementComponent
 }
 
 func (e *Entity) GetID() int {

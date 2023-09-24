@@ -9,7 +9,6 @@ type DebugSettings struct {
 	PointLightBias            float32
 	MaterialOverride          bool
 	EnableShadowMapping       bool
-	DebugTexture              uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 	BloomIntensity            float32
 	Exposure                  float32
 	AmbientFactor             float32
@@ -19,6 +18,9 @@ type DebugSettings struct {
 	BloomUpsamplingScale      float32
 	Color                     [3]float32
 	ColorIntensity            float32
+
+	ShowDebugTexture bool
+	DebugTexture     uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 
 	RenderSpatialPartition bool
 

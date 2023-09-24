@@ -24,7 +24,6 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 		}
 		imgui.EndTabBar()
 	}
-
 	imgui.End()
 
 	imgui.SetNextWindowBgAlpha(0.8)

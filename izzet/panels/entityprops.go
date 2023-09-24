@@ -12,13 +12,7 @@ import (
 )
 
 func entityProps(entity *entities.Entity) {
-	// parentWindowSize := imgui.WindowSize()
-	// windowSize := imgui.Vec2{X: parentWindowSize.X, Y: parentWindowSize.Y * 0.5}
-	// imgui.BeginChildV("entityProps", windowSize, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
-		// imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: .95, Y: .91, Z: 0.81, W: 1})
-		// imgui.PopStyleColor()
-
 		entityNameStr := ""
 		positionStr := ""
 		localRotationStr := ""
@@ -79,6 +73,29 @@ func entityProps(entity *entities.Entity) {
 		uiTableRow("Parent", parentStr)
 		uiTableRow("Parent Joint", parentJointStr)
 		imgui.EndTable()
+	}
+
+	if entity == nil {
+		return
+	}
+
+	if entity.LightInfo != nil {
+		if imgui.CollapsingHeaderV("Light Properties", imgui.TreeNodeFlagsDefaultOpen) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+
+			lightTypeStr := "?"
+			if entity.LightInfo.Type == entities.LightTypePoint {
+				lightTypeStr = "Point Light"
+			} else if entity.LightInfo.Type == entities.LightTypeDirection {
+				lightTypeStr = "Directional Light"
+			}
+			uiTableRow("Light Type", lightTypeStr)
+			setupRow("Color", func() {
+				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+			})
+			setupRow("Color Intensity", func() { imgui.SliderFloat("", &entity.LightInfo.Intensity, 1, 20) })
+			imgui.EndTable()
+		}
 	}
 }
 

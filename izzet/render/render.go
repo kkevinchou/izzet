@@ -792,8 +792,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.PopStyleVarV(7)
 
 	if r.world.ShowImguiDemo() {
-		var open bool
-		imgui.ShowDemoWindow(&open)
+		imgui.ShowDemoWindow(nil)
 	}
 
 	imgui.Render()

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/model"
+	"github.com/kkevinchou/izzet/izzet/model"
 )
 
 // if we update the prefab, instances should be updated as well

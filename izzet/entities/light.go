@@ -37,7 +37,7 @@ func CreateLight(lightInfo *LightInfo) *Entity {
 	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
 	entity.LightInfo = lightInfo
 	entity.Billboard = &BillboardInfo{}
-	SetScale(entity, mgl64.Vec3{10, 10, 10})
+	SetScale(entity, mgl64.Vec3{15, 15, 15})
 	// entity.ShapeData = []*ShapeData{
 	// 	&ShapeData{
 	// 		Cube: &CubeData{

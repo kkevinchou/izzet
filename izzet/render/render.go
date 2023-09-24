@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -603,7 +604,8 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 
 		if entity.ImageInfo != nil {
-			texture := r.world.AssetManager().GetTexture("light")
+			textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
+			texture := r.world.AssetManager().GetTexture(textureName)
 			if texture != nil {
 				a := mgl64.Vec4{0, 1, 0, 1}
 				b := mgl64.Vec4{1, 0, 0, 1}

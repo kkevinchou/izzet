@@ -34,7 +34,7 @@ func (l *LightInfo) Intensity() float32 {
 
 func CreateLight(lightInfo *LightInfo) *Entity {
 	entity := InstantiateBaseEntity("light", id)
-	entity.ImageInfo = &ImageInfo{ImageName: "light.png"}
+	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
 	entity.LightInfo = lightInfo
 	entity.Billboard = &BillboardInfo{}
 	SetScale(entity, mgl64.Vec3{10, 10, 10})

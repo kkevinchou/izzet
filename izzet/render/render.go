@@ -209,13 +209,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	var directionalLightX, directionalLightY, directionalLightZ float64 = 0, -1, 0
 	if directionalLight != nil {
-		directionalLight.LightInfo.Direction[0] = float64(panels.DBG.DirectionalLightDir[0])
-		directionalLight.LightInfo.Direction[1] = float64(panels.DBG.DirectionalLightDir[1])
-		directionalLight.LightInfo.Direction[2] = float64(panels.DBG.DirectionalLightDir[2])
-
-		directionalLightX = directionalLight.LightInfo.Direction.X()
-		directionalLightY = directionalLight.LightInfo.Direction.Y()
-		directionalLightZ = directionalLight.LightInfo.Direction.Z()
+		directionalLightX = float64(directionalLight.LightInfo.Direction3F[0])
+		directionalLightY = float64(directionalLight.LightInfo.Direction3F[1])
+		directionalLightZ = float64(directionalLight.LightInfo.Direction3F[2])
 	}
 
 	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
@@ -633,7 +629,8 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				shader := shaderManager.GetShaderProgram("flat")
 				color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
 
-				dir := lightInfo.Direction.Normalize().Mul(50)
+				direction3F := lightInfo.Direction3F
+				dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
 				// directional light arrow
 				lines := [][]mgl64.Vec3{
 					[]mgl64.Vec3{

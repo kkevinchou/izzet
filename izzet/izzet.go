@@ -203,24 +203,11 @@ func (g *Izzet) loadPrefabs(data *Data) {
 }
 
 func (g *Izzet) loadEntities() {
-	pointLightInfo0 := &entities.LightInfo{
-		PreScaledIntensity: 1,
-		Diffuse3F:          [3]float32{1, 1, 1},
-		Type:               entities.LightTypePoint,
-	}
-	pointLight0 := entities.CreateLight(pointLightInfo0)
-	pointLight0.Name = "point_light"
+	pointLight0 := entities.CreatePointLight()
 	entities.SetLocalPosition(pointLight0, mgl64.Vec3{0, 100, 0})
 	g.AddEntity(pointLight0)
 
-	lightDir := panels.DBG.DirectionalLightDir
-	dirLightInfo := &entities.LightInfo{
-		PreScaledIntensity: 1,
-		Diffuse3F:          [3]float32{1, 1, 1},
-		Type:               entities.LightTypeDirection,
-		Direction:          mgl64.Vec3{float64(lightDir[0]), float64(lightDir[1]), float64(lightDir[2])}.Normalize(),
-	}
-	directionalLight := entities.CreateLight(dirLightInfo)
+	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 300, 0})
 	g.AddEntity(directionalLight)

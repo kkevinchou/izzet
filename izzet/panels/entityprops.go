@@ -94,6 +94,10 @@ func entityProps(entity *entities.Entity) {
 				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			})
 			setupRow("Color Intensity", func() { imgui.SliderFloat("", &entity.LightInfo.PreScaledIntensity, 1, 20) })
+
+			if entity.LightInfo.Type == entities.LightTypeDirection {
+				setupRow("Directional Light DIrection", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) })
+			}
 			imgui.EndTable()
 		}
 	}

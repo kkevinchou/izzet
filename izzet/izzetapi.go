@@ -168,3 +168,11 @@ func (g *Izzet) NavMesh() *navmesh.NavigationMesh {
 func (g *Izzet) ResetNavMeshVAO() {
 	render.ResetNavMeshVAO = true
 }
+
+func (g *Izzet) SetShowImguiDemo(value bool) {
+	g.showImguiDemo = value
+}
+
+func (g *Izzet) ShowImguiDemo() bool {
+	return g.showImguiDemo
+}

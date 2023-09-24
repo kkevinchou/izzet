@@ -15,8 +15,8 @@ const (
 	ComboOptionBloom        ComboOption = "BLOOMTEXTURE (bloom only)"
 	ComboOptionDepthMap     ComboOption = "DEPTH MAP"
 
-	tableColumn0Width float32          = 250
-	tableColumn1Width float32          = 400
+	tableColumn0Width float32          = 200
+	tableColumn1Width float32          = 250
 	tableFlags        imgui.TableFlags = imgui.TableFlagsBordersInnerV
 )
 

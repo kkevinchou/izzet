@@ -11,7 +11,6 @@ var (
 	Fullscreen bool = false
 	Profile    bool = false
 
-	ShowImguiDemoWindow   = false
 	RuntimeMaxTextureSize int
 )
 

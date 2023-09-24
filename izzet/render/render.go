@@ -42,6 +42,9 @@ type World interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	Platform() *input.SDLPlatform
 
+	SetShowImguiDemo(bool)
+	ShowImguiDemo() bool
+
 	Serializer() *serialization.Serializer
 	LoadWorld()
 	SaveWorld()
@@ -747,7 +750,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 
 	menuBarSize := menus.SetupMenuBar(r.world)
 
-	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
 	// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
@@ -787,8 +790,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 
 	imgui.PopStyleColorV(20)
 	imgui.PopStyleVarV(7)
-	var open bool
-	imgui.ShowDemoWindow(&open)
+
+	if r.world.ShowImguiDemo() {
+		var open bool
+		imgui.ShowDemoWindow(&open)
+	}
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.world.Platform().DisplaySize(), r.world.Platform().FramebufferSize(), imgui.RenderedDrawData())

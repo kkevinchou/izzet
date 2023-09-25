@@ -29,7 +29,6 @@ var (
 		ComboOptionHDR,
 		ComboOptionBloom,
 		ComboOptionDepthMap,
-		ComboOptionCubeDepthMap,
 	}
 )
 

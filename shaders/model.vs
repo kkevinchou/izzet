@@ -34,12 +34,6 @@ void main() {
 	vec4 totalNormal = vec4(0.0);
 
     if (isAnimated == 1) {
-        // note: the total position post transformation does not necessarily have W == 1
-        // i.e.
-        // a = totalPos
-        // b = vec4(totalPos.xyz, 1)
-        // a does not equal b here.
-
         for(int i = 0; i < MAX_WEIGHTS; i++){
             int jointIndex = jointIndices[i];
 
@@ -51,6 +45,8 @@ void main() {
             totalNormal += worldNormal * jointWeights[i];
         }
 
+        // after animations we need to make sure we normalize w to 1;
+        totalPos = totalPos / totalPos.w;
     } else {
         totalPos = vec4(aPos, 1);
         totalNormal = vec4(aNormal, 1.0);

@@ -278,6 +278,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = upsampleTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
 			panels.DBG.DebugTexture = r.shadowMap.depthTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionCubeDepthMap {
+			panels.DBG.DebugTexture = r.depthCubeMapTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -291,6 +293,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = 0
 		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
 			panels.DBG.DebugTexture = r.shadowMap.depthTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionCubeDepthMap {
+			panels.DBG.DebugTexture = r.depthCubeMapTexture
 		}
 	}
 
@@ -542,7 +546,6 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 		for _, renderData := range model.RenderData() {
 			mesh := renderData.Mesh
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
-			// shader.SetUniformMat4("model", renderData.Transform)
 
 			gl.BindVertexArray(renderData.VAO)
 			iztDrawElements(int32(len(mesh.Vertices)))

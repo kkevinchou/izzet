@@ -65,7 +65,7 @@ var DBG DebugSettings = DebugSettings{
 	Color:                     [3]float32{1, 1, 1},
 	ColorIntensity:            20.0,
 	RenderSpatialPartition:    false,
-	EnableSpatialPartition:    false,
+	EnableSpatialPartition:    true,
 	FPS:                       0,
 
 	Near: 1,

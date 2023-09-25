@@ -102,6 +102,7 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
 	for _, modelRef := range prefab.ModelRefs {
 		model := modelRef.Model
 		e := InstantiateFromPrefabStaticID(id, model, prefab)
+		e.Name = modelRef.Name
 		es = append(es, e)
 		id += 1
 		count++
@@ -113,7 +114,7 @@ func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.P
 	e := InstantiateBaseEntity(model.Name(), id)
 	e.Prefab = prefab
 	e.Model = model
-	// e.boundingBox = collider.BoundingBoxFromModel(e.Model)
+	e.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(model.Vertices()))
 
 	SetLocalPosition(e, utils.Vec3F32ToF64(model.Translation()))
 	SetLocalRotation(e, utils.QuatF32ToF64(model.Rotation()))
@@ -140,6 +141,11 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 		localRotation:      mgl64.QuatIdent(),
 		scale:              mgl64.Vec3{1, 1, 1},
 	}
+}
+
+// boundingBoxFromModel creates a bounding box from a model's vertices
+func boundingBoxFromModel(m *model.Model) *collider.BoundingBox {
+	return collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(m.Vertices()))
 }
 
 func CreateDummy(name string) *Entity {

@@ -192,29 +192,30 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	// 	panels.DBG.TriangleHIT = navmesh.IntersectAABBTriangle(aabb, triangle)
 	// }
 
-	var spatialEntities []spatialpartition.Entity
-	for _, entity := range g.Entities() {
-		if !entity.Dirty() {
-			continue
+	if panels.DBG.EnableSpatialPartition {
+		var spatialEntities []spatialpartition.Entity
+		for _, entity := range g.Entities() {
+			if !entity.Dirty() {
+				continue
+			}
+			if entity.BoundingBox() == nil {
+				continue
+			}
+			spatialEntities = append(spatialEntities, entity)
 		}
-		if entity.BoundingBox() == nil {
-			continue
-		}
-		spatialEntities = append(spatialEntities, entity)
+		g.spatialPartition.IndexEntities(spatialEntities)
 	}
 
-	g.spatialPartition.IndexEntities(spatialEntities)
-
-	selectedEntity := panels.SelectedEntity()
-	if selectedEntity != nil {
-		boundingBox := selectedEntity.BoundingBox()
-		if boundingBox != nil {
-			// partitions := g.spatialPartition.IntersectingPartitions(*boundingBox)
-			// entities := g.spatialPartition.QueryEntities(*boundingBox)
-			// fmt.Println(entities)
-			// fmt.Println(partitions)
-		}
-	}
+	// selectedEntity := panels.SelectedEntity()
+	// if selectedEntity != nil {
+	// 	boundingBox := selectedEntity.BoundingBox()
+	// 	if boundingBox != nil {
+	// 		partitions := g.spatialPartition.IntersectingPartitions(*boundingBox)
+	// 		entities := g.spatialPartition.QueryEntities(*boundingBox)
+	// 		fmt.Println(entities)
+	// 		fmt.Println(partitions)
+	// 	}
+	// }
 }
 
 func (g *Izzet) handleInputCommands(frameInput input.Input) {

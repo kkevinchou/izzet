@@ -14,6 +14,7 @@ const (
 	ComboOptionHDR          ComboOption = "HDR (bloom only)"
 	ComboOptionBloom        ComboOption = "BLOOMTEXTURE (bloom only)"
 	ComboOptionDepthMap     ComboOption = "DEPTH MAP"
+	ComboOptionCubeDepthMap ComboOption = "CUBE DEPTH MAP"
 
 	tableColumn0Width float32          = 200
 	tableColumn1Width float32          = 250
@@ -28,6 +29,7 @@ var (
 		ComboOptionHDR,
 		ComboOptionBloom,
 		ComboOptionDepthMap,
+		ComboOptionCubeDepthMap,
 	}
 )
 

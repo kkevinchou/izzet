@@ -278,8 +278,6 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = upsampleTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
 			panels.DBG.DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionCubeDepthMap {
-			panels.DBG.DebugTexture = r.depthCubeMapTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -293,8 +291,6 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = 0
 		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
 			panels.DBG.DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionCubeDepthMap {
-			panels.DBG.DebugTexture = r.depthCubeMapTexture
 		}
 	}
 
@@ -445,8 +441,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 		return
 	}
 
-	shaderManager := r.shaderManager
-	shader := shaderManager.GetShaderProgram("modelpbr")
+	shader := r.shaderManager.GetShaderProgram("modelpbr")
 	shader.Use()
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))

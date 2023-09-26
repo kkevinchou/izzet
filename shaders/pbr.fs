@@ -48,7 +48,6 @@ uniform float ambientFactor;
 // pbr materials
 uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
-uniform vec4 pbrBaseColorFactor;
 uniform float bias;
 
 uniform uint entityID;

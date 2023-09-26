@@ -22,7 +22,6 @@ uniform float shadowDistance;
 // pbr materials
 uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
-uniform vec4 pbrBaseColorFactor;
 
 const float PI = 3.14159265359;
 

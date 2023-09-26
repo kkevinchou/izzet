@@ -44,6 +44,10 @@ type ShapeData struct {
 func CreateCube(length int) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
 	entity.Model = model.NewCube()
+	entity.Material = &MaterialComponent{
+		Roughness: 0.85,
+		Metallic:  0,
+	}
 	id += 1
 	return entity
 }

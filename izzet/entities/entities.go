@@ -50,6 +50,7 @@ type Entity struct {
 	LightInfo *LightInfo
 	ImageInfo *ImageInfo
 	ShapeData []*ShapeData
+	Material  *MaterialComponent
 }
 
 func (e *Entity) GetID() int {

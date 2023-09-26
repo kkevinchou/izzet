@@ -105,6 +105,23 @@ func entityProps(entity *entities.Entity) {
 			imgui.EndTable()
 		}
 	}
+
+	if entity.Material != nil {
+		if imgui.CollapsingHeaderV("Material Properties", imgui.TreeNodeFlagsDefaultOpen) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+
+			setupRow("Diffuse", func() {
+				imgui.ColorEdit3V("", &entity.Material.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+			})
+			setupRow("Diffuse Intensity", func() {
+				imgui.SliderFloatV("", &entity.Material.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+			})
+
+			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) })
+			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) })
+			imgui.EndTable()
+		}
+	}
 }
 
 func uiTableInputPosition(entity *entities.Entity, text *string) {

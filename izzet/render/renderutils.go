@@ -407,7 +407,6 @@ func drawModel(
 		if pbr := mesh.PBRMaterial; pbr != nil {
 			material := pbr.PBRMetallicRoughness
 			shader.SetUniformInt("hasPBRMaterial", 1)
-			shader.SetUniformVec4("pbrBaseColorFactor", material.BaseColorFactor)
 			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
 
 			if material.BaseColorTextureIndex != nil {

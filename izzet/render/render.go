@@ -455,6 +455,10 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 			continue
 		}
 
+		if entity.Name == "cube" {
+			continue
+		}
+
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
@@ -475,11 +479,10 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 
 		model := entity.Model
 		for _, renderData := range model.RenderData() {
-			mesh := renderData.Mesh
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.VAO)
-			iztDrawElements(int32(len(mesh.Vertices)))
+			iztDrawElements(int32(renderData.VertexCount))
 		}
 	}
 }
@@ -519,6 +522,10 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 			continue
 		}
 
+		if entity.Name == "cube" {
+			continue
+		}
+
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
@@ -539,11 +546,10 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 		model := entity.Model
 		for _, renderData := range model.RenderData() {
-			mesh := renderData.Mesh
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.VAO)
-			iztDrawElements(int32(len(mesh.Vertices)))
+			iztDrawElements(int32(renderData.VertexCount))
 		}
 	}
 }
@@ -574,19 +580,19 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 			for _, shapeData := range entity.ShapeData {
-				if shapeData.Cube != nil {
-					var ok bool
-					var vao uint32
-					if vao, ok = r.cubeVAOs[shapeData.Cube.Length]; !ok {
-						vao = initCubeVAO(int(shapeData.Cube.Length))
-						r.cubeVAOs[shapeData.Cube.Length] = vao
-					}
+				// if shapeData.Cube != nil {
+				// 	var ok bool
+				// 	var vao uint32
+				// 	if vao, ok = r.cubeVAOs[shapeData.Cube.Length]; !ok {
+				// 		vao = initCubeVAO(int(shapeData.Cube.Length))
+				// 		r.cubeVAOs[shapeData.Cube.Length] = vao
+				// 	}
 
-					gl.BindVertexArray(vao)
-					shader.SetUniformVec3("color", panels.DBG.Color)
-					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
-					iztDrawArrays(0, 48)
-				}
+				// 	gl.BindVertexArray(vao)
+				// 	shader.SetUniformVec3("color", panels.DBG.Color)
+				// 	shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
+				// 	iztDrawArrays(0, 48)
+				// }
 
 				if shapeData.Triangle != nil {
 					var ok bool
@@ -673,6 +679,28 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 				collider.CapsuleCollider,
 				billboardModelMatrix,
 			)
+		}
+	}
+
+	for _, entity := range r.world.Entities() {
+		if entity.Name != "cube" {
+			continue
+		}
+
+		modelMatrix := entities.WorldTransform(entity)
+		shader := shaderManager.GetShaderProgram("flat")
+		shader.Use()
+
+		shader.SetUniformUInt("entityID", uint32(entity.ID))
+		shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+		for _, rd := range entity.Model.RenderData() {
+			gl.BindVertexArray(rd.VAO)
+			shader.SetUniformVec3("color", panels.DBG.Color)
+			shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
+			iztDrawArrays(0, int32(rd.VertexCount))
 		}
 	}
 

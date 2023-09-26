@@ -451,7 +451,7 @@ func drawModel(
 			// order is clockwise.
 			gl.FrontFace(gl.CW)
 		}
-		iztDrawElements(int32(len(mesh.Vertices)))
+		iztDrawElements(int32(renderData.VertexCount))
 		if modelMat.Det() < 0 {
 			gl.FrontFace(gl.CCW)
 		}

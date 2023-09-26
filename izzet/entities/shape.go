@@ -2,6 +2,7 @@ package entities
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/model"
 )
 
 type ShapeType string
@@ -47,13 +48,14 @@ type ShapeData struct {
 // take an int so that we don't explode the number of VAOs we create
 func CreateCube(length int) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
-	entity.ShapeData = []*ShapeData{
-		&ShapeData{
-			Cube: &CubeData{
-				Length: length,
-			},
-		},
-	}
+	entity.Model = model.NewCube()
+	// entity.ShapeData = []*ShapeData{
+	// 	&ShapeData{
+	// 		Cube: &CubeData{
+	// 			Length: length,
+	// 		},
+	// 	},
+	// }
 	id += 1
 	return entity
 }

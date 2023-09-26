@@ -27,48 +27,29 @@ type Entity struct {
 	localRotation mgl64.Quat
 	scale         mgl64.Vec3
 
-	// shape component
-	ShapeData []*ShapeData
-
-	// prefabs
-	Prefab *prefabs.Prefab
-
 	// model
+	Prefab      *prefabs.Prefab
 	Model       model.RenderModel
 	boundingBox *collider.BoundingBox
-
-	// socket
-	IsSocket bool
-
-	// light
-	LightInfo *LightInfo
-
-	// image
-	ImageInfo *ImageInfo
-
-	// misc
-	Billboard *BillboardInfo
 
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity
 	ParentJoint *modelspec.JointSpec
 
-	// particles
-	Particles *ParticleGenerator
-
 	// animation
 	Animations      map[string]*modelspec.AnimationSpec
 	AnimationPlayer *animation.AnimationPlayer
 
-	// physics
-	Physics *PhysicsComponent
-
-	// collision
-	Collider *ColliderComponent
-
-	// movement
-	Movement *MovementComponent
+	Physics   *PhysicsComponent
+	Collider  *ColliderComponent
+	Movement  *MovementComponent
+	Particles *ParticleGenerator
+	Billboard *BillboardInfo
+	IsSocket  bool
+	LightInfo *LightInfo
+	ImageInfo *ImageInfo
+	ShapeData []*ShapeData
 }
 
 func (e *Entity) GetID() int {

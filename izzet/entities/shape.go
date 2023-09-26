@@ -13,10 +13,6 @@ var (
 	LineShapeType   ShapeType = "LINE"
 )
 
-type CubeData struct {
-	Length int
-}
-
 type SphereData struct {
 	Radius float64
 }
@@ -38,7 +34,6 @@ type Triangle struct {
 
 type ShapeData struct {
 	Type     ShapeType
-	Cube     *CubeData
 	Sphere   *SphereData
 	Capsule  *CapsuleData
 	Line     *LineData
@@ -49,13 +44,6 @@ type ShapeData struct {
 func CreateCube(length int) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
 	entity.Model = model.NewCube()
-	// entity.ShapeData = []*ShapeData{
-	// 	&ShapeData{
-	// 		Cube: &CubeData{
-	// 			Length: length,
-	// 		},
-	// 	},
-	// }
 	id += 1
 	return entity
 }

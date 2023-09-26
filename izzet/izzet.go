@@ -82,8 +82,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	data := loadData(dataFilePath)
 
 	g.camera = &camera.Camera{
-		Position: mgl64.Vec3{200, 200, 0},
-		// Orientation: mgl64.QuatIdent(),
+		Position:    mgl64.Vec3{200, 200, -25},
 		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}),
 	}
 
@@ -204,8 +203,13 @@ func (g *Izzet) loadEntities() {
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
 		Speed:        100,
 	}
+	pointLight.LightInfo.Diffuse3F = [3]float32{1, 0.47, 0}
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.AddEntity(pointLight)
+
+	cube := entities.CreateCube(50)
+	entities.SetLocalPosition(cube, mgl64.Vec3{-75, 126, -22})
+	g.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
@@ -213,7 +217,6 @@ func (g *Izzet) loadEntities() {
 	g.AddEntity(directionalLight)
 
 	pfMap := map[string]*prefabs.Prefab{}
-
 	for _, pf := range g.Prefabs() {
 		pfMap[pf.Name] = pf
 	}

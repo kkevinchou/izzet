@@ -20,11 +20,12 @@ type ModelConfig struct {
 }
 
 type RenderData struct {
-	Name      string
-	MeshID    int
-	Mesh      *modelspec.MeshSpecification
-	Transform mgl32.Mat4
-	VAO       uint32
+	Name        string
+	MeshID      int
+	Mesh        *modelspec.MeshSpecification
+	Transform   mgl32.Mat4
+	VAO         uint32
+	VertexCount int
 }
 
 type Model struct {
@@ -84,11 +85,12 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 	for _, meshID := range node.MeshIDs {
 		data = append(
 			data, RenderData{
-				Name:      node.Name,
-				MeshID:    meshID,
-				Mesh:      meshes[meshID],
-				Transform: transform,
-				VAO:       vaos[meshID],
+				Name:        node.Name,
+				MeshID:      meshID,
+				Mesh:        meshes[meshID],
+				Transform:   transform,
+				VAO:         vaos[meshID],
+				VertexCount: len(meshes[meshID].Vertices),
 			},
 		)
 	}
@@ -135,6 +137,10 @@ func (m *Model) Rotation() mgl32.Quat {
 func (m *Model) Scale() mgl32.Vec3 {
 	return m.scale
 }
+
+// func (m *Model) VertexCount() int {
+// 	return len(m.mesh.vertices)
+// }
 
 // TODO: create the ability to create a singular vao that has all the mesh data merged into one
 // also, when we merged everything into one vao, we need to first apply any node transformations

@@ -40,14 +40,18 @@ func createMeshSpec() *modelspec.MeshSpecification {
 	}
 
 	uniqueVertices := []modelspec.Vertex{}
-	for i := 0; i < len(vertices); i += 3 {
+	for i := 0; i < len(vertices); i += 6 {
 		x := vertices[i]
 		y := vertices[i+1]
 		z := vertices[i+2]
 
+		nx := vertices[i+3]
+		ny := vertices[i+4]
+		nz := vertices[i+5]
+
 		uniqueVertices = append(uniqueVertices, modelspec.Vertex{
 			Position:       mgl32.Vec3{x, y, z},
-			Normal:         mgl32.Vec3{0, 1, 1},
+			Normal:         mgl32.Vec3{nx, ny, nz},
 			Texture0Coords: mgl32.Vec2{},
 			Texture1Coords: mgl32.Vec2{},
 		})
@@ -58,8 +62,8 @@ func createMeshSpec() *modelspec.MeshSpecification {
 			BaseColorTextureIndex: nil,
 			BaseColorTextureName:  "",
 			BaseColorFactor:       mgl32.Vec4{1, 1, 1, 1},
-			MetalicFactor:         0.1,
-			RoughnessFactor:       0.1,
+			MetalicFactor:         0.0,
+			RoughnessFactor:       0.85,
 		},
 	}
 
@@ -88,57 +92,57 @@ func cubeVertexFloatsByLength(length int) []float32 {
 
 	return []float32{
 		// front
-		-ht, -ht, ht,
-		ht, -ht, ht,
-		ht, ht, ht,
+		-ht, -ht, ht, 0, 0, 1,
+		ht, -ht, ht, 0, 0, 1,
+		ht, ht, ht, 0, 0, 1,
 
-		ht, ht, ht,
-		-ht, ht, ht,
-		-ht, -ht, ht,
+		ht, ht, ht, 0, 0, 1,
+		-ht, ht, ht, 0, 0, 1,
+		-ht, -ht, ht, 0, 0, 1,
 
 		// back
-		ht, ht, -ht,
-		ht, -ht, -ht,
-		-ht, -ht, -ht,
+		ht, ht, -ht, 0, 0, -1,
+		ht, -ht, -ht, 0, 0, -1,
+		-ht, -ht, -ht, 0, 0, -1,
 
-		-ht, -ht, -ht,
-		-ht, ht, -ht,
-		ht, ht, -ht,
+		-ht, -ht, -ht, 0, 0, -1,
+		-ht, ht, -ht, 0, 0, -1,
+		ht, ht, -ht, 0, 0, -1,
 
 		// right
-		ht, -ht, ht,
-		ht, -ht, -ht,
-		ht, ht, -ht,
+		ht, -ht, ht, 1, 0, 0,
+		ht, -ht, -ht, 1, 0, 0,
+		ht, ht, -ht, 1, 0, 0,
 
-		ht, ht, -ht,
-		ht, ht, ht,
-		ht, -ht, ht,
+		ht, ht, -ht, 1, 0, 0,
+		ht, ht, ht, 1, 0, 0,
+		ht, -ht, ht, 1, 0, 0,
 
 		// left
-		-ht, ht, -ht,
-		-ht, -ht, -ht,
-		-ht, -ht, ht,
+		-ht, ht, -ht, -1, 0, 0,
+		-ht, -ht, -ht, -1, 0, 0,
+		-ht, -ht, ht, -1, 0, 0,
 
-		-ht, -ht, ht,
-		-ht, ht, ht,
-		-ht, ht, -ht,
+		-ht, -ht, ht, -1, 0, 0,
+		-ht, ht, ht, -1, 0, 0,
+		-ht, ht, -ht, -1, 0, 0,
 
 		// top
-		ht, ht, ht,
-		ht, ht, -ht,
-		-ht, ht, ht,
+		ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, ht, 0, 1, 0,
 
-		-ht, ht, ht,
-		ht, ht, -ht,
-		-ht, ht, -ht,
+		-ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, -ht, 0, 1, 0,
 
 		// bottom
-		-ht, -ht, ht,
-		ht, -ht, -ht,
-		ht, -ht, ht,
+		-ht, -ht, ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, ht, 0, -1, 0,
 
-		-ht, -ht, -ht,
-		ht, -ht, -ht,
-		-ht, -ht, ht,
+		-ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		-ht, -ht, ht, 0, -1, 0,
 	}
 }

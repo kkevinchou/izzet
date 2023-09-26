@@ -455,10 +455,6 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 			continue
 		}
 
-		if entity.Name == "cube" {
-			continue
-		}
-
 		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
@@ -519,10 +515,6 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 
 	for _, entity := range r.world.Entities() {
 		if entity.Model == nil {
-			continue
-		}
-
-		if entity.Name == "cube" {
 			continue
 		}
 
@@ -681,28 +673,6 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			)
 		}
 	}
-
-	// for _, entity := range r.world.Entities() {
-	// 	if entity.Name != "cube" {
-	// 		continue
-	// 	}
-
-	// 	modelMatrix := entities.WorldTransform(entity)
-	// 	shader := shaderManager.GetShaderProgram("flat")
-	// 	shader.Use()
-
-	// 	shader.SetUniformUInt("entityID", uint32(entity.ID))
-	// 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-	// 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	// 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-	// 	for _, rd := range entity.Model.RenderData() {
-	// 		gl.BindVertexArray(rd.VAO)
-	// 		shader.SetUniformVec3("color", panels.DBG.Color)
-	// 		shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
-	// 		iztDrawArrays(0, int32(rd.VertexCount))
-	// 	}
-	// }
 
 	r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
 }

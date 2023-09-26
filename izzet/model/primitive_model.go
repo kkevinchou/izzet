@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -11,13 +11,16 @@ type PrimitiveModel struct {
 }
 
 func NewCube() *PrimitiveModel {
+	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	m := &PrimitiveModel{}
 
-	vao := initCubeVAO(50)
+	meshSpec := createMeshSpec()
+	vao := createVAOs(modelConfig, []*modelspec.MeshSpecification{meshSpec})[0]
+
 	renderData := RenderData{
 		Name:        "primitive",
 		MeshID:      0,
-		Mesh:        createMeshSpec(),
+		Mesh:        meshSpec,
 		Transform:   mgl32.Ident4(),
 		VAO:         vao,
 		VertexCount: 48, // 3 verts per triangle * 2 triangles per face * 8 faces = 48
@@ -29,6 +32,27 @@ func NewCube() *PrimitiveModel {
 }
 
 func createMeshSpec() *modelspec.MeshSpecification {
+	vertices := cubeVertexFloatsByLength(50)
+
+	vertexIndices := []uint32{}
+	for i := 0; i < 48; i++ {
+		vertexIndices = append(vertexIndices, uint32(i))
+	}
+
+	uniqueVertices := []modelspec.Vertex{}
+	for i := 0; i < len(vertices); i += 3 {
+		x := vertices[i]
+		y := vertices[i+1]
+		z := vertices[i+2]
+
+		uniqueVertices = append(uniqueVertices, modelspec.Vertex{
+			Position:       mgl32.Vec3{x, y, z},
+			Normal:         mgl32.Vec3{0, 1, 1},
+			Texture0Coords: mgl32.Vec2{},
+			Texture1Coords: mgl32.Vec2{},
+		})
+	}
+
 	pbr := &modelspec.PBRMaterial{
 		PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
 			BaseColorTextureIndex: nil,
@@ -40,7 +64,9 @@ func createMeshSpec() *modelspec.MeshSpecification {
 	}
 
 	return &modelspec.MeshSpecification{
-		PBRMaterial: pbr,
+		VertexIndices:  vertexIndices,
+		UniqueVertices: uniqueVertices,
+		PBRMaterial:    pbr,
 	}
 }
 
@@ -57,10 +83,10 @@ func (m *PrimitiveModel) Name() string {
 	return "primitive"
 }
 
-func initCubeVAO(length int) uint32 {
+func cubeVertexFloatsByLength(length int) []float32 {
 	ht := float32(length) / 2
 
-	vertices := []float32{
+	return []float32{
 		// front
 		-ht, -ht, ht,
 		ht, -ht, ht,
@@ -115,25 +141,4 @@ func initCubeVAO(length int) uint32 {
 		ht, -ht, -ht,
 		-ht, -ht, ht,
 	}
-
-	// createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
-
-	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, nil)
-	// gl.EnableVertexAttribArray(0)
-
-	// gl.BindVertexArray(vao)
-	// iztDrawArrays(0, int32(len(vertices))/3)
-
-	return vao
 }

@@ -384,6 +384,7 @@ func drawModel(
 	modelMatrix mgl64.Mat4,
 	pointLightDepthCubeMap uint32,
 	entityID int,
+	material *entities.MaterialComponent,
 ) {
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		shader.SetUniformInt("isAnimated", 1)
@@ -404,39 +405,45 @@ func drawModel(
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
 		mesh := renderData.Mesh
-		if pbr := mesh.PBRMaterial; pbr != nil {
-			material := pbr.PBRMetallicRoughness
-			shader.SetUniformInt("hasPBRMaterial", 1)
-			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
+		if material == nil {
+			if pbr := mesh.PBRMaterial; pbr != nil {
+				meshMaterial := pbr.PBRMetallicRoughness
+				shader.SetUniformInt("colorTextureCoordIndex", int32(meshMaterial.BaseColorTextureCoordsIndex))
 
-			if material.BaseColorTextureIndex != nil {
-				shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-			} else {
-				shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-			}
+				if meshMaterial.BaseColorTextureIndex != nil {
+					shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+				} else {
+					shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+				}
 
-			shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
-			if panels.DBG.MaterialOverride {
-				shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-				shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+				shader.SetUniformVec3("albedo", meshMaterial.BaseColorFactor.Vec3())
+				if panels.DBG.MaterialOverride {
+					shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+					shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+				} else {
+					shader.SetUniformFloat("roughness", meshMaterial.RoughnessFactor)
+					shader.SetUniformFloat("metallic", meshMaterial.MetalicFactor)
+				}
 			} else {
-				shader.SetUniformFloat("roughness", material.RoughnessFactor)
-				shader.SetUniformFloat("metallic", material.MetalicFactor)
+				shader.SetUniformInt("hasPBRMaterial", 0)
 			}
-			shader.SetUniformFloat("ao", 1.0)
+			gl.ActiveTexture(gl.TEXTURE0)
+			var textureID uint32
+			textureName := settings.DefaultTexture
+			if mesh.TextureName() != "" {
+				textureName = mesh.TextureName()
+			}
+			texture := assetManager.GetTexture(textureName)
+			textureID = texture.ID
+			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		} else {
-			shader.SetUniformInt("hasPBRMaterial", 0)
+			var color mgl32.Vec3 = material.PBR.Diffuse
+			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+			shader.SetUniformVec3("albedo", color.Mul(material.PBR.DiffuseIntensity))
+			shader.SetUniformFloat("roughness", material.PBR.Roughness)
+			shader.SetUniformFloat("metallic", material.PBR.Metallic)
 		}
-
-		gl.ActiveTexture(gl.TEXTURE0)
-		var textureID uint32
-		textureName := settings.DefaultTexture
-		if mesh.TextureName() != "" {
-			textureName = mesh.TextureName()
-		}
-		texture := assetManager.GetTexture(textureName)
-		textureID = texture.ID
-		gl.BindTexture(gl.TEXTURE_2D, textureID)
+		shader.SetUniformFloat("ao", 1.0)
 
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(renderData.Transform)
 		shader.SetUniformMat4("model", modelMat)

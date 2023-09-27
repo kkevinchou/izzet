@@ -1,0 +1,16 @@
+{
+    "entity_assets": [
+        {"name": "alpha"},
+        {"name": "alpha2"},
+        {"name": "human"},
+        {"name": "mutant"},
+        {"name": "lootbox"},
+        {"name": "scene"},
+        {"name": "simple_plane"},
+        {"name": "demo_scene_west", "multipart": true},
+        {"name": "demo_scene_dungeon", "multipart": true},
+        {"name": "demo_scene_battleroyale", "multipart": true},
+        {"name": "demo_scene_shop", "multipart": true},
+        {"name": "Sponza", "multipart": true}
+    ]
+}

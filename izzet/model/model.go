@@ -54,9 +54,11 @@ func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *M
 			renderData: parseRenderData(root, mgl32.Ident4(), true, vaos, modelGroup.Meshes),
 		}
 
-		for _, renderData := range m.renderData {
+		for i := range m.renderData {
+			renderData := &m.renderData[i]
 			meshID := renderData.MeshID
-			vertices := m.modelGroup.Meshes[meshID].UniqueVertices
+			mesh := m.modelGroup.Meshes[meshID]
+			vertices := mesh.UniqueVertices
 			for _, v := range vertices {
 				m.vertices = append(m.vertices, v)
 			}

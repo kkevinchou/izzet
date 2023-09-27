@@ -406,27 +406,24 @@ func drawModel(
 	for _, renderData := range model.RenderData() {
 		mesh := renderData.Mesh
 		if material == nil {
-			if pbr := mesh.PBRMaterial; pbr != nil {
-				meshMaterial := pbr.PBRMetallicRoughness
-				shader.SetUniformInt("colorTextureCoordIndex", int32(meshMaterial.BaseColorTextureCoordsIndex))
+			meshMaterial := mesh.PBRMaterial.PBRMetallicRoughness
+			shader.SetUniformInt("colorTextureCoordIndex", int32(meshMaterial.BaseColorTextureCoordsIndex))
 
-				if meshMaterial.BaseColorTextureIndex != nil {
-					shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-				} else {
-					shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-				}
-
-				shader.SetUniformVec3("albedo", meshMaterial.BaseColorFactor.Vec3())
-				if panels.DBG.MaterialOverride {
-					shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-					shader.SetUniformFloat("metallic", panels.DBG.Metallic)
-				} else {
-					shader.SetUniformFloat("roughness", meshMaterial.RoughnessFactor)
-					shader.SetUniformFloat("metallic", meshMaterial.MetalicFactor)
-				}
+			if meshMaterial.BaseColorTextureIndex != nil {
+				shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 			} else {
-				shader.SetUniformInt("hasPBRMaterial", 0)
+				shader.SetUniformInt("hasPBRBaseColorTexture", 0)
 			}
+
+			shader.SetUniformVec3("albedo", meshMaterial.BaseColorFactor.Vec3())
+			if panels.DBG.MaterialOverride {
+				shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+				shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+			} else {
+				shader.SetUniformFloat("roughness", meshMaterial.RoughnessFactor)
+				shader.SetUniformFloat("metallic", meshMaterial.MetalicFactor)
+			}
+
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
 			textureName := settings.DefaultTexture

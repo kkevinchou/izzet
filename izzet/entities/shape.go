@@ -52,6 +52,13 @@ func CreateCube(length int) *Entity {
 			DiffuseIntensity: 1,
 		},
 	}
+	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
+	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
+	entity.Movement = &MovementComponent{
+		RotationConfig: &RotationConfig{
+			Quat: rotation,
+		},
+	}
 	id += 1
 	return entity
 }

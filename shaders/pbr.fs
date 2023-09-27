@@ -46,7 +46,6 @@ uniform float far_plane;
 uniform float ambientFactor;
 
 // pbr materials
-uniform int hasPBRMaterial;
 uniform int hasPBRBaseColorTexture;
 uniform float bias;
 

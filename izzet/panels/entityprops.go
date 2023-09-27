@@ -111,14 +111,14 @@ func entityProps(entity *entities.Entity) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 
 			setupRow("Diffuse", func() {
-				imgui.ColorEdit3V("", &entity.Material.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+				imgui.ColorEdit3V("", &entity.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			})
 			setupRow("Diffuse Intensity", func() {
-				imgui.SliderFloatV("", &entity.Material.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+				imgui.SliderFloatV("", &entity.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
 			})
 
-			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) })
-			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) })
+			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) })
+			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) })
 			imgui.EndTable()
 		}
 	}

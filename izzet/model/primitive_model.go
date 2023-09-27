@@ -7,7 +7,7 @@ import (
 )
 
 type PrimitiveModel struct {
-	renderData []RenderData
+	vao uint32
 }
 
 func NewCube() *PrimitiveModel {
@@ -15,18 +15,7 @@ func NewCube() *PrimitiveModel {
 	m := &PrimitiveModel{}
 
 	meshSpec := createMeshSpec()
-	vao := createVAOs(modelConfig, []*modelspec.MeshSpecification{meshSpec})[0]
-
-	renderData := RenderData{
-		Name:        "primitive",
-		MeshID:      0,
-		Mesh:        meshSpec,
-		Transform:   mgl32.Ident4(),
-		VAO:         vao,
-		VertexCount: 48, // 3 verts per triangle * 2 triangles per face * 8 faces = 48
-	}
-
-	m.renderData = []RenderData{renderData}
+	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{meshSpec})[0]
 
 	return m
 }
@@ -57,25 +46,22 @@ func createMeshSpec() *modelspec.MeshSpecification {
 		})
 	}
 
-	pbr := &modelspec.PBRMaterial{
-		PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
-			BaseColorTextureIndex: nil,
-			BaseColorTextureName:  "",
-			BaseColorFactor:       mgl32.Vec4{1, 1, 1, 1},
-			MetalicFactor:         0.0,
-			RoughnessFactor:       0.85,
-		},
-	}
-
 	return &modelspec.MeshSpecification{
 		VertexIndices:  vertexIndices,
 		UniqueVertices: uniqueVertices,
-		PBRMaterial:    pbr,
 	}
 }
 
 func (m *PrimitiveModel) RenderData() []RenderData {
-	return m.renderData
+	renderData := RenderData{
+		Name:        "primitive",
+		MeshID:      0,
+		Transform:   mgl32.Ident4(),
+		VAO:         m.vao,
+		VertexCount: 48, // 3 verts per triangle * 2 triangles per face * 8 faces = 48
+	}
+
+	return []RenderData{renderData}
 }
 func (m *PrimitiveModel) JointMap() map[int]*modelspec.JointSpec {
 	return nil

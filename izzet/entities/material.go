@@ -1,8 +1,7 @@
 package entities
 
+import "github.com/kkevinchou/izzet/izzet/types"
+
 type MaterialComponent struct {
-	Roughness        float32
-	Metallic         float32
-	Diffuse          [3]float32
-	DiffuseIntensity float32
+	PBR types.PBR
 }

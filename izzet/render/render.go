@@ -739,6 +739,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			modelMatrix,
 			r.depthCubeMapTexture,
 			entity.ID,
+			entity.Material,
 		)
 
 	}

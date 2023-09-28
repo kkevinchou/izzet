@@ -635,41 +635,40 @@ func drawWithNDC(shaderManager *shaders.ShaderManager) {
 	iztDrawArrays(0, int32(len(vertices)))
 }
 
+var singleSidedQuadVAO uint32
+
 func drawBillboardTexture(
 	texture uint32,
-	cameraUp mgl64.Vec3,
-	cameraRight mgl64.Vec3,
+	length float32,
 ) {
-	topLeft := utils.Vec3F64ToF32(cameraRight.Mul(-1).Add(cameraUp))
-	bottomLeft := utils.Vec3F64ToF32(cameraRight.Mul(-1).Add(cameraUp.Mul(-1)))
-	topRight := utils.Vec3F64ToF32(cameraRight.Mul(1).Add(cameraUp))
-	bottomRight := utils.Vec3F64ToF32(cameraRight.Mul(1).Add(cameraUp.Mul(-1)))
+	if singleSidedQuadVAO == 0 {
+		vertices := []float32{
+			-1 * length, -1 * length, 0, 0.0, 0.0,
+			1 * length, -1 * length, 0, 1.0, 0.0,
+			1 * length, 1 * length, 0, 1.0, 1.0,
+			1 * length, 1 * length, 0, 1.0, 1.0,
+			-1 * length, 1 * length, 0, 0.0, 1.0,
+			-1 * length, -1 * length, 0, 0.0, 0.0,
+		}
 
-	var vertices []float32 = []float32{
-		bottomLeft.X(), bottomLeft.Y(), bottomLeft.Z(), 0.0, 0.0,
-		bottomRight.X(), bottomRight.Y(), bottomRight.Z(), 1.0, 0.0,
-		topRight.X(), topRight.Y(), topRight.Z(), 1.0, 1.0,
+		var vbo, vao uint32
+		gl.GenBuffers(1, &vbo)
+		gl.GenVertexArrays(1, &vao)
 
-		topRight.X(), topRight.Y(), topRight.Z(), 1.0, 1.0,
-		topLeft.X(), topLeft.Y(), topLeft.Z(), 0.0, 1.0,
-		bottomLeft.X(), bottomLeft.Y(), bottomLeft.Z(), 0.0, 0.0,
+		gl.BindVertexArray(vao)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+		gl.EnableVertexAttribArray(0)
+
+		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+		gl.EnableVertexAttribArray(1)
+
+		singleSidedQuadVAO = vao
 	}
 
-	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
-	gl.EnableVertexAttribArray(1)
-
-	gl.BindVertexArray(vao)
+	gl.BindVertexArray(singleSidedQuadVAO)
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 

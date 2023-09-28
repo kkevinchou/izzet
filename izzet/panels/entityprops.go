@@ -9,7 +9,21 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
+
+type ComponentComboOption string
+
+var MaterialComboOption ComponentComboOption = "Material Component"
+var MovementComboOption ComponentComboOption = "Movement Component"
+var TestComboOption ComponentComboOption = "Test Component"
+var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
+
+var componentComboOptions []ComponentComboOption = []ComponentComboOption{
+	MaterialComboOption,
+	MovementComboOption,
+	TestComboOption,
+}
 
 func entityProps(entity *entities.Entity) {
 	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
@@ -120,6 +134,32 @@ func entityProps(entity *entities.Entity) {
 			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) })
 			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) })
 			imgui.EndTable()
+		}
+	}
+
+	imgui.PushID("Component Combo")
+	if imgui.BeginCombo("", string(SelectedComponentComboOption)) {
+		for _, option := range componentComboOptions {
+			if imgui.Selectable(string(option)) {
+				SelectedComponentComboOption = option
+			}
+		}
+		imgui.EndCombo()
+	}
+	imgui.PopID()
+	if imgui.Button("Add Component") {
+		if SelectedComponentComboOption == MaterialComboOption {
+			entity := SelectedEntity()
+			if entity != nil {
+				entity.Material = &entities.MaterialComponent{
+					PBR: types.PBR{
+						Roughness:        0.85,
+						Metallic:         0,
+						Diffuse:          [3]float32{1, 1, 1},
+						DiffuseIntensity: 1,
+					},
+				}
+			}
 		}
 	}
 }

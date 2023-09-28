@@ -10,6 +10,8 @@
         {"name": "demo_scene_west", "multipart": true},
         {"name": "demo_scene_dungeon", "multipart": true},
         {"name": "demo_scene_battleroyale", "multipart": true},
+        {"name": "demo_scene_adventure", "multipart": true},
+        {"name": "demo_scene_scificity", "multipart": true},
         {"name": "demo_scene_shop", "multipart": true},
         {"name": "Sponza", "multipart": true}
     ]

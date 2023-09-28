@@ -23,6 +23,14 @@ profileheap:
 	curl http://localhost:6868/debug/pprof/heap?seconds=300 -o heap
 	go tool pprof -http=localhost:6969 heap
 
+.PHONY: heapsnapshot
+heapsnapshot:
+	curl -s http://localhost:6868/debug/pprof/heap > heap_snapshot
+
+.PHONY: inuse_repl
+inuse_repl:
+	go tool pprof --inuse_objects http://localhost:6868/debug/pprof/heap
+
 .PHONY: test
 test:
 	go test ./...

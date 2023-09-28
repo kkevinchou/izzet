@@ -606,20 +606,16 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 			textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
 			texture := r.world.AssetManager().GetTexture(textureName)
 			if texture != nil {
-				a := mgl64.Vec4{0, 1, 0, 1}
-				b := mgl64.Vec4{1, 0, 0, 1}
-				cameraUp := viewerContext.Orientation.Mat4().Mul4x1(a).Vec3()
-				cameraRight := viewerContext.Orientation.Mat4().Mul4x1(b).Vec3()
-
 				if entity.Billboard != nil {
 					shader := shaderManager.GetShaderProgram("world_space_quad")
 					shader.Use()
+
 					shader.SetUniformUInt("entityID", uint32(entity.ID))
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.world.Camera().Orientation.Mat4())))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-					drawBillboardTexture(texture.ID, cameraUp, cameraRight)
+					drawBillboardTexture(texture.ID, 1)
 				}
 			} else {
 				fmt.Println("couldn't find texture", "light")

@@ -41,6 +41,12 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 		panic(err)
 	}
 
+	// Geometry only shader - does not calculate lighting, useful for depth map calculations
+
+	if err := shaderManager.CompileShaderProgram("modelgeo", "modelgeo", "modelgeo", ""); err != nil {
+		panic(err)
+	}
+
 	// Quad rendering
 
 	if err := shaderManager.CompileShaderProgram("screen_space_quad", "screen_space_quad", "textured_picking", ""); err != nil {

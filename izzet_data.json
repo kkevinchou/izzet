@@ -13,6 +13,12 @@
         {"name": "demo_scene_adventure", "multipart": true},
         {"name": "demo_scene_scificity", "multipart": true},
         {"name": "demo_scene_shop", "multipart": true},
+        {"name": "demo_scene_western", "multipart": true},
+        {"name": "demo_scene_vikings", "multipart": true},
+        {"name": "demo_scene_samurai", "multipart": true},
+        {"name": "demo_scene_heist", "multipart": true},
+        {"name": "demo_scene_knights", "multipart": true},
+        {"name": "demo_scene_city", "multipart": true},
         {"name": "Sponza", "multipart": true}
     ]
 }

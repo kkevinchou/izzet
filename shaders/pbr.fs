@@ -39,6 +39,9 @@ uniform sampler2D modelTexture;
 uniform sampler2D shadowMap;
 uniform float shadowDistance;
 
+// depth map
+uniform sampler2D cameraDepthMap;
+
 // point light shadows
 uniform samplerCube depthCubeMap;
 uniform float far_plane;
@@ -73,6 +76,16 @@ const float B = 0.03;
 const float C = 2.43;
 const float D = 0.59;
 const float E = 0.14;
+
+uniform int fog;
+uniform int fogMin;
+uniform int fogMax;
+uniform float fogDensity;
+
+uniform int width;
+uniform int height;
+uniform float far;
+uniform float near;
 
 // ACES tone mapping function
 vec3 acesToneMapping(vec3 color)
@@ -212,6 +225,26 @@ vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float ligh
     return (diffuse + specular) * radiance * NdotL;
 }
 
+// OpenGL does not use linear scaling of depth values. Close objects have very noticeable affect
+// on depth values while objects further away quickly approach 1.0
+float depthValueToLinearDistance(float depth) {
+    float ndc = depth * 2.0 - 1.0;
+    float linearDepth = (2.0 * near * far) / (far + near - ndc * (far - near));
+    return linearDepth;
+}
+
+float linearFog(float dist) {
+    return 1 - (fogMax - dist) / (fogMax - fogMin);
+}
+
+float exponentialFog(float dist, float density) {
+    return 1 - pow(2, -dist * density);
+}
+
+float exponentialSquaredFog(float dist, float density) {
+    return 1 - pow(2, -pow(dist * density, 2));
+}
+
 void main()
 {		
     vec3 normal = normalize(fs_in.Normal);
@@ -296,6 +329,19 @@ void main()
         color = pow(color, vec3(1.0/2.2));
     }
 
+
     FragColor = vec4(color, 1.0);
+
+    if (fog == 1) {
+        vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
+        float depth = texture(cameraDepthMap, textureCoords).r;
+        float dist = depthValueToLinearDistance(depth);
+
+        float fogFactor = exponentialSquaredFog(dist, fogDensity);
+        fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+        FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);
+    }
+
     PickingColor = entityID;
 }

@@ -64,6 +64,9 @@ type Renderer struct {
 	depthCubeMapTexture uint32
 	depthCubeMapFBO     uint32
 
+	cameraDepthMapFBO  uint32
+	cameraDepthTexture uint32
+
 	redCircleFB         uint32
 	redCircleTexture    uint32
 	greenCircleFB       uint32
@@ -98,10 +101,12 @@ type Renderer struct {
 
 	cubeVAOs     map[int]uint32
 	triangleVAOs map[string]uint32
+
+	width, height int
 }
 
 func New(world World, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{world: world}
+	r := &Renderer{world: world, width: width, height: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -129,6 +134,7 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	r.triangleVAOs = map[string]uint32{}
 
 	r.initMainRenderFBO(width, height)
+	r.initDepthMapFBO(width, height)
 
 	// circles for the rotation gizmo
 
@@ -159,8 +165,40 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 }
 
 func (r *Renderer) Resized(width, height int) {
+	r.width, r.height = width, height
 	r.initMainRenderFBO(width, height)
 	r.initCompositeFBO(width, height)
+	r.initDepthMapFBO(width, height)
+}
+
+func (r *Renderer) initDepthMapFBO(width, height int) {
+	var storedFBO int32
+	gl.GetIntegerv(gl.FRAMEBUFFER_BINDING, &storedFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(storedFBO))
+
+	var depthMapFBO uint32
+	gl.GenFramebuffers(1, &depthMapFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT,
+		int32(width), int32(height), 0, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0)
+	gl.DrawBuffer(gl.NONE)
+	gl.ReadBuffer(gl.NONE)
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic("failed to initialize shadow map frame buffer - in the past this was due to an overly large shadow map dimension configuration")
+	}
+
+	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
 }
 
 func (r *Renderer) initMainRenderFBO(width, height int) {
@@ -237,6 +275,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.clearMainFrameBuffer(renderContext)
 
 	r.renderSkybox(renderContext)
+	r.renderToCameraDepthMap(cameraViewerContext, lightContext)
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
 
@@ -276,8 +315,10 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = r.mainColorTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
 			panels.DBG.DebugTexture = upsampleTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
+		} else if panels.SelectedComboOption == panels.ComboOptionShadowDepthMap {
 			panels.DBG.DebugTexture = r.shadowMap.depthTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionCameraDepthMap {
+			panels.DBG.DebugTexture = r.cameraDepthTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -289,8 +330,10 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 			panels.DBG.DebugTexture = 0
 		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
 			panels.DBG.DebugTexture = 0
-		} else if panels.SelectedComboOption == panels.ComboOptionDepthMap {
+		} else if panels.SelectedComboOption == panels.ComboOptionShadowDepthMap {
 			panels.DBG.DebugTexture = r.shadowMap.depthTexture
+		} else if panels.SelectedComboOption == panels.ComboOptionCameraDepthMap {
+			panels.DBG.DebugTexture = r.cameraDepthTexture
 		}
 	}
 
@@ -430,6 +473,59 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 	}
 }
 
+func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+	defer resetGLRenderSettings(r.renderFBO)
+
+	gl.Viewport(0, 0, int32(r.width), int32(r.height))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+
+	shader := r.shaderManager.GetShaderProgram("modelpbr")
+	shader.Use()
+
+	shader.SetUniformInt("fog", 0)
+	shader.SetUniformInt("width", int32(r.width))
+	shader.SetUniformInt("height", int32(r.height))
+
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+
+	for _, entity := range r.world.Entities() {
+		if entity.Model == nil {
+			continue
+		}
+
+		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+			shader.SetUniformInt("isAnimated", 1)
+			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+			// if animationTransforms is nil, the shader will execute reading into invalid memory
+			// so, we need to explicitly guard for this
+			if animationTransforms == nil {
+				panic("animationTransforms not found")
+			}
+			for i := 0; i < len(animationTransforms); i++ {
+				shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
+			}
+		} else {
+			shader.SetUniformInt("isAnimated", 0)
+		}
+
+		modelMatrix := entities.WorldTransform(entity)
+		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
+
+		model := entity.Model
+		for _, renderData := range model.RenderData() {
+			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
+
+			gl.BindVertexArray(renderData.VAO)
+			iztDrawElements(int32(renderData.VertexCount))
+		}
+	}
+}
+
 func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 	r.shadowMap.Prepare()
@@ -443,6 +539,8 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 
 	shader := r.shaderManager.GetShaderProgram("modelpbr")
 	shader.Use()
+
+	shader.SetUniformInt("fog", 0)
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -676,8 +774,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {
 	shaderManager := r.shaderManager
 
-	shaderName := "modelpbr"
-	shader := shaderManager.GetShaderProgram(shaderName)
+	shader := shaderManager.GetShaderProgram("modelpbr")
 	shader.Use()
 
 	if !panels.DBG.Bloom {
@@ -688,6 +785,9 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		shader.SetUniformInt("applyToneMapping", 0)
 	}
 
+	shader.SetUniformInt("fog", 1)
+	shader.SetUniformFloat("fogDensity", panels.DBG.FogDensity)
+
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -696,11 +796,20 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
+	shader.SetUniformInt("cameraDepthMap", 29)
+
+	shader.SetUniformFloat("near", panels.DBG.Near)
+	shader.SetUniformFloat("far", panels.DBG.Far)
+	shader.SetUniformInt("fogMin", panels.DBG.FogMin)
+	shader.SetUniformInt("fogMax", panels.DBG.FogMax)
 	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 	shader.SetUniformInt("hasColorOverride", 0)
 
 	setupLightingUniforms(shader, lightContext.Lights)
+
+	gl.ActiveTexture(gl.TEXTURE29)
+	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
 
 	gl.ActiveTexture(gl.TEXTURE30)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)

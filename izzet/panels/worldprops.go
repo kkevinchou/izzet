@@ -111,8 +111,9 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &DBG.EnableSpatialPartition) })
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) })
-		setupRow("Fog Min", func() { imgui.SliderInt("", &DBG.FogMin, 100, 10000) })
-		setupRow("Fog Max", func() { imgui.SliderInt("", &DBG.FogMax, 500, 10000) })
+		setupRow("Distance Fog Enabled", func() { imgui.Checkbox("", &DBG.FogEnabled) })
+		setupRow("Fog Start", func() { imgui.SliderInt("", &DBG.FogStart, 100, 10000) })
+		setupRow("Fog End", func() { imgui.SliderInt("", &DBG.FogEnd, 500, 10000) })
 		setupRow("Fog Density", func() { imgui.SliderFloatV("", &DBG.FogDensity, 0, 0.001, "%.5f", imgui.SliderFlagsNone) })
 		imgui.EndTable()
 	}

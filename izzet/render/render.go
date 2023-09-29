@@ -785,7 +785,11 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		shader.SetUniformInt("applyToneMapping", 0)
 	}
 
-	shader.SetUniformInt("fog", 1)
+	if panels.DBG.FogEnabled {
+		shader.SetUniformInt("fog", 1)
+	} else {
+		shader.SetUniformInt("fog", 0)
+	}
 	shader.SetUniformFloat("fogDensity", panels.DBG.FogDensity)
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
@@ -800,8 +804,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 	shader.SetUniformFloat("near", panels.DBG.Near)
 	shader.SetUniformFloat("far", panels.DBG.Far)
-	shader.SetUniformInt("fogMin", panels.DBG.FogMin)
-	shader.SetUniformInt("fogMax", panels.DBG.FogMax)
+	shader.SetUniformInt("fogStart", panels.DBG.FogStart)
+	shader.SetUniformInt("fogEnd", panels.DBG.FogEnd)
 	shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 	shader.SetUniformInt("hasColorOverride", 0)

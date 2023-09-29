@@ -78,8 +78,8 @@ const float D = 0.59;
 const float E = 0.14;
 
 uniform int fog;
-uniform int fogMin;
-uniform int fogMax;
+uniform int fogStart;
+uniform int fogEnd;
 uniform float fogDensity;
 
 uniform int width;
@@ -234,7 +234,7 @@ float depthValueToLinearDistance(float depth) {
 }
 
 float linearFog(float dist) {
-    return 1 - (fogMax - dist) / (fogMax - fogMin);
+    return 1 - (fogEnd - dist) / (fogEnd - fogStart);
 }
 
 float exponentialFog(float dist, float density) {

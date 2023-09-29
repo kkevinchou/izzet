@@ -424,6 +424,7 @@ func drawModel(
 				shader.SetUniformFloat("metallic", meshMaterial.MetalicFactor)
 			}
 
+			// main diffuse texture
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
 			textureName := settings.DefaultTexture

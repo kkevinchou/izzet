@@ -9,12 +9,13 @@ import (
 type ComboOption string
 
 const (
-	ComboOptionFinalRender  ComboOption = "FINALRENDER"
-	ComboOptionColorPicking ComboOption = "COLORPICKING"
-	ComboOptionHDR          ComboOption = "HDR (bloom only)"
-	ComboOptionBloom        ComboOption = "BLOOMTEXTURE (bloom only)"
-	ComboOptionDepthMap     ComboOption = "DEPTH MAP"
-	ComboOptionCubeDepthMap ComboOption = "CUBE DEPTH MAP"
+	ComboOptionFinalRender    ComboOption = "FINALRENDER"
+	ComboOptionColorPicking   ComboOption = "COLORPICKING"
+	ComboOptionHDR            ComboOption = "HDR (bloom only)"
+	ComboOptionBloom          ComboOption = "BLOOMTEXTURE (bloom only)"
+	ComboOptionShadowDepthMap ComboOption = "SHADOW DEPTH MAP"
+	ComboOptionCameraDepthMap ComboOption = "CAMERA DEPTH MAP"
+	ComboOptionCubeDepthMap   ComboOption = "CUBE DEPTH MAP"
 
 	tableColumn0Width float32          = 200
 	tableColumn1Width float32          = 250
@@ -28,7 +29,8 @@ var (
 		ComboOptionColorPicking,
 		ComboOptionHDR,
 		ComboOptionBloom,
-		ComboOptionDepthMap,
+		ComboOptionShadowDepthMap,
+		ComboOptionCameraDepthMap,
 	}
 )
 
@@ -109,6 +111,9 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &DBG.EnableSpatialPartition) })
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) })
+		setupRow("Fog Min", func() { imgui.SliderInt("", &DBG.FogMin, 100, 10000) })
+		setupRow("Fog Max", func() { imgui.SliderInt("", &DBG.FogMax, 500, 10000) })
+		setupRow("Fog Density", func() { imgui.SliderFloatV("", &DBG.FogDensity, 0, 0.001, "%.5f", imgui.SliderFlagsNone) })
 		imgui.EndTable()
 	}
 }

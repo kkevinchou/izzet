@@ -38,7 +38,7 @@ type RenderData struct {
 
 type Model struct {
 	name        string
-	modelGroup  *modelspec.ModelGroup
+	scene       *modelspec.Scene
 	modelConfig *ModelConfig
 	renderData  []RenderData
 	vertices    []modelspec.Vertex
@@ -48,25 +48,25 @@ type Model struct {
 	scale       mgl32.Vec3
 }
 
-func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *ModelConfig) []*Model {
+func CreateModelsFromScene(scene *modelspec.Scene, modelConfig *ModelConfig) []*Model {
 	var models []*Model
-	vaos := createVAOs(modelConfig, modelGroup.Meshes)
-	geometryVAOs := createGeometryVAOs(modelConfig, modelGroup.Meshes)
+	vaos := createVAOs(modelConfig, scene.Meshes)
+	geometryVAOs := createGeometryVAOs(modelConfig, scene.Meshes)
 
-	for _, root := range modelGroup.Scenes[0].Nodes {
+	for _, node := range scene.Scenes[0].Nodes {
 		m := &Model{
-			name:        root.Name,
-			modelGroup:  modelGroup,
+			name:        node.Name,
+			scene:       scene,
 			modelConfig: modelConfig,
 
 			// ignores the transform from the root, this is applied to the model directly
-			renderData: parseRenderData(root, mgl32.Ident4(), true, vaos, geometryVAOs, modelGroup.Meshes),
+			renderData: parseRenderData(node, mgl32.Ident4(), true, vaos, geometryVAOs, scene.Meshes),
 		}
 
 		for i := range m.renderData {
 			renderData := &m.renderData[i]
 			meshID := renderData.MeshID
-			mesh := m.modelGroup.Meshes[meshID]
+			mesh := m.scene.Meshes[meshID]
 			vertices := mesh.UniqueVertices
 			for _, v := range vertices {
 				m.vertices = append(m.vertices, v)
@@ -76,9 +76,9 @@ func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *M
 		models = append(models, m)
 
 		// apply transformations directly
-		m.translation = root.Translation
-		m.rotation = root.Rotation
-		m.scale = root.Scale
+		m.translation = node.Translation
+		m.rotation = node.Rotation
+		m.scale = node.Scale
 	}
 
 	return models
@@ -119,15 +119,15 @@ func (m *Model) Name() string {
 }
 
 func (m *Model) RootJoint() *modelspec.JointSpec {
-	return m.modelGroup.RootJoint
+	return m.scene.RootJoint
 }
 
 func (m *Model) Animations() map[string]*modelspec.AnimationSpec {
-	return m.modelGroup.Animations
+	return m.scene.Animations
 }
 
 func (m *Model) JointMap() map[int]*modelspec.JointSpec {
-	return m.modelGroup.JointMap
+	return m.scene.JointMap
 }
 
 func (m *Model) RenderData() []RenderData {

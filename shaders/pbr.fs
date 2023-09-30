@@ -78,9 +78,7 @@ const float D = 0.59;
 const float E = 0.14;
 
 uniform int fog;
-uniform int fogStart;
-uniform int fogEnd;
-uniform float fogDensity;
+uniform int fogDensity;
 
 uniform int width;
 uniform int height;
@@ -233,13 +231,13 @@ float depthValueToLinearDistance(float depth) {
     return linearDepth;
 }
 
-float linearFog(float dist) {
-    return 1 - (fogEnd - dist) / (fogEnd - fogStart);
-}
+// float linearFog(float dist) {
+//     return 1 - (fogEnd - dist) / (fogEnd - fogStart);
+// }
 
-float exponentialFog(float dist, float density) {
-    return 1 - pow(2, -dist * density);
-}
+// float exponentialFog(float dist, float density) {
+//     return 1 - pow(2, -dist * density);
+// }
 
 float exponentialSquaredFog(float dist, float density) {
     return 1 - pow(2, -pow(dist * density, 2));
@@ -337,7 +335,7 @@ void main()
         float depth = texture(cameraDepthMap, textureCoords).r;
         float dist = depthValueToLinearDistance(depth);
 
-        float fogFactor = exponentialSquaredFog(dist, fogDensity);
+        float fogFactor = exponentialSquaredFog(dist, float(fogDensity) / 50000);
         fogFactor = clamp(fogFactor, 0.0, 1.0);
 
         FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);

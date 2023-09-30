@@ -34,7 +34,7 @@ type DebugSettings struct {
 
 	FogStart   int32
 	FogEnd     int32
-	FogDensity float32
+	FogDensity int32
 	FogEnabled bool
 
 	TriangleDrawCount int
@@ -79,7 +79,7 @@ var DBG DebugSettings = DebugSettings{
 
 	FogStart:   200,
 	FogEnd:     1000,
-	FogDensity: 0.001,
+	FogDensity: 1,
 	FogEnabled: true,
 
 	TriangleDrawCount: 0,

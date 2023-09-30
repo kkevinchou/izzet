@@ -81,7 +81,7 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
 	var es []*Entity
 	count := 0
-	for _, modelRef := range prefab.ModelRefs {
+	for _, modelRef := range prefab.ModelRefs() {
 		model := modelRef.Model
 		e := InstantiateFromPrefabStaticID(id, model, prefab)
 		e.Name = modelRef.Name

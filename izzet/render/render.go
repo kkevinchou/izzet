@@ -520,7 +520,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	for _, entity := range renderableEntities {
-		if entity.Model == nil {
+		if entity == nil || entity.Model == nil {
 			continue
 		}
 
@@ -583,7 +583,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 	shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
 	for _, entity := range renderableEntities {
-		if entity.Model == nil {
+		if entity == nil || entity.Model == nil {
 			continue
 		}
 
@@ -800,7 +800,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
 	for _, entity := range renderableEntities {
-		if entity.Model == nil {
+		if entity == nil || entity.Model == nil {
 			continue
 		}
 

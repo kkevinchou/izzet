@@ -622,9 +622,12 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
+	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
+
 	shaderManager := r.shaderManager
 
-	for _, entity := range renderableEntities {
+	// render non-models
+	for _, entity := range r.world.Entities() {
 		if entity.Model != nil {
 			continue
 		}
@@ -738,8 +741,6 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 			)
 		}
 	}
-
-	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
 }
 
 func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {

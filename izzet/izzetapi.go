@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -175,4 +176,8 @@ func (g *Izzet) SetShowImguiDemo(value bool) {
 
 func (g *Izzet) ShowImguiDemo() bool {
 	return g.showImguiDemo
+}
+
+func (g *Izzet) MetricsRegistry() *metrics.MetricsRegistry {
+	return g.metricsRegistry
 }

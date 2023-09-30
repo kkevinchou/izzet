@@ -25,8 +25,9 @@ type DebugSettings struct {
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
-	RenderTime float64
-	FPS        float64
+	RenderTime       float64
+	FPS              float64
+	CommandFrameTime float64
 
 	FovX float32
 	Near float32

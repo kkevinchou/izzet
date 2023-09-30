@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -47,7 +48,8 @@ type Izzet struct {
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
 
-	navigationMesh *navmesh.NavigationMesh
+	navigationMesh  *navmesh.NavigationMesh
+	metricsRegistry *metrics.MetricsRegistry
 
 	data          *Data
 	showImguiDemo bool
@@ -98,6 +100,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
 	// g.navigationMesh = navmesh.New(g)
+	g.metricsRegistry = metrics.New()
 
 	return g
 }
@@ -105,7 +108,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 func (g *Izzet) Start() {
 	var accumulator float64
 	var renderAccumulator float64
-	var oneSecondAccumulator float64
+	// var oneSecondAccumulator float64
 
 	msPerFrame := float64(1000) / float64(settings.FPS)
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
@@ -116,9 +119,6 @@ func (g *Izzet) Start() {
 		panic(err)
 	}
 
-	var renderTime float64
-	var renderTimeSamples int
-
 	frameCount := 0
 	for !g.gameOver {
 		now := float64(time.Now().UnixNano()) / 1000000
@@ -127,13 +127,15 @@ func (g *Izzet) Start() {
 
 		accumulator += delta
 		renderAccumulator += delta
-		oneSecondAccumulator += delta
 
 		currentLoopCommandFrames := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			input := g.platform.PollInput()
 			g.HandleInput(input)
+			start := time.Now()
 			g.runCommandFrame(input, time.Duration(settings.MSPerCommandFrame)*time.Millisecond)
+			commandFrameNanos := time.Since(start).Nanoseconds()
+			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
 			g.commandFrameCount++
 
 			accumulator -= float64(settings.MSPerCommandFrame)
@@ -143,36 +145,27 @@ func (g *Izzet) Start() {
 			}
 		}
 
-		// prevents lighting my CPU on fire
-		if accumulator < float64(settings.MSPerCommandFrame)-10 {
-			time.Sleep(5 * time.Millisecond)
-		}
-
-		if oneSecondAccumulator >= 1000 {
-			fps := float64(frameCount) / oneSecondAccumulator * 1000
-			panels.DBG.FPS = fps
-			frameCount = 0
-
-			avgRenderTime := renderTime / float64(renderTimeSamples)
-			renderTime = 0
-			renderTimeSamples = 0
-			panels.DBG.RenderTime = avgRenderTime
-
-			oneSecondAccumulator = 0
-		}
-
 		if renderAccumulator >= msPerFrame {
+			g.MetricsRegistry().Inc("fps", 1)
+
+			panels.DBG.FPS = g.MetricsRegistry().GetOneSecondSum("fps")
+			panels.DBG.CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
+			panels.DBG.RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
+
 			start := time.Now()
 			frameCount++
-			// g.renderer.PreRenderImgui()
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 			renderContext := render.NewRenderContext(g.width, g.height, float64(panels.DBG.FovX))
 			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
-			renderAccumulator -= msPerFrame
+			renderTime := time.Since(start).Milliseconds()
+			g.MetricsRegistry().Inc("render_time", float64(renderTime))
 
-			renderTime += float64(time.Since(start).Microseconds()) / 1000
-			renderTimeSamples += 1
+			// don't try to accumulate time to point where we render back to loop iterations.
+			// it's unlikely the game state has changed much from one step to the next.
+			for renderAccumulator > msPerFrame {
+				renderAccumulator -= msPerFrame
+			}
 		}
 	}
 }

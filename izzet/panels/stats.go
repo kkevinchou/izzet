@@ -11,6 +11,7 @@ func stats(world World, renderContext RenderContext) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.RenderTime)) })
+		setupRow("Command Frame Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.CommandFrameTime)) })
 		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.FPS)) })
 		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(DBG.TriangleDrawCount)) })
 		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(DBG.DrawCount)) })

@@ -274,29 +274,15 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	r.clearMainFrameBuffer(renderContext)
 
-	r.renderSkybox(renderContext)
-	r.renderToShadowDepthMap(lightViewerContext)
-	r.renderToCubeDepthMap(lightContext)
-	r.renderToCameraDepthMap(cameraViewerContext)
+	renderEntities := r.fetchRenderableEntities(position, orientation, renderContext)
 
-	frustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
-	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
+	r.drawSkybox(renderContext)
+	r.drawToShadowDepthMap(lightViewerContext)
+	r.drawToCubeDepthMap(lightContext)
+	r.drawToCameraDepthMap(cameraViewerContext)
 
-	renderEntities := map[int]any{}
-	if panels.DBG.EnableSpatialPartition {
-		spatialPartition := r.world.SpatialPartition()
-		frustumEntities := spatialPartition.QueryEntities(frustumBoundingBox)
-		for _, entity := range frustumEntities {
-			renderEntities[entity.GetID()] = true
-		}
-	} else {
-		for _, entity := range r.world.Entities() {
-			renderEntities[entity.GetID()] = true
-		}
-	}
-
-	r.renderScene(cameraViewerContext, lightContext, renderContext, renderEntities)
-	r.renderAnnotations(cameraViewerContext, lightContext, renderContext)
+	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
+	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
 		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
@@ -349,7 +335,34 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderImgui(renderContext)
 }
 
-func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+	frustumPoints := calculateFrustumPoints(
+		cameraPosition,
+		orientation,
+		float64(panels.DBG.Near),
+		float64(panels.DBG.Far),
+		renderContext.FovX(),
+		renderContext.FovY(),
+		renderContext.AspectRatio(),
+		1,
+	)
+	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
+
+	var renderEntities []*entities.Entity
+	if panels.DBG.EnableSpatialPartition {
+		spatialPartition := r.world.SpatialPartition()
+		frustumEntities := spatialPartition.QueryEntities(frustumBoundingBox)
+		for _, entity := range frustumEntities {
+			renderEntities = append(renderEntities, r.world.GetEntityByID(entity.GetID()))
+		}
+	} else {
+		renderEntities = r.world.Entities()
+	}
+
+	return renderEntities
+}
+
+func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
 	// joint rendering for the selected entity
@@ -475,7 +488,7 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 	}
 }
 
-func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext) {
+func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.Viewport(0, 0, int32(r.width), int32(r.height))
@@ -485,7 +498,7 @@ func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext) {
 	r.renderGeometryWithoutColor(viewerContext)
 }
 
-func (r *Renderer) renderToShadowDepthMap(viewerContext ViewerContext) {
+func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 	r.shadowMap.Prepare()
 
@@ -539,7 +552,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext) {
 	}
 }
 
-func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
+func (r *Renderer) drawToCubeDepthMap(lightContext LightContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	// we only support cube depth maps for one point light atm
@@ -602,8 +615,8 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 	}
 }
 
-// renderScene renders a scene from the perspective of a viewer
-func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {
+// drawToMainColorBuffer renders a scene from the perspective of a viewer
+func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
@@ -611,7 +624,7 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 
 	shaderManager := r.shaderManager
 
-	for _, entity := range r.world.Entities() {
+	for _, entity := range renderableEntities {
 		if entity.Model != nil {
 			continue
 		}
@@ -726,10 +739,10 @@ func (r *Renderer) renderScene(viewerContext ViewerContext, lightContext LightCo
 		}
 	}
 
-	r.renderModels(viewerContext, lightContext, renderContext, frustumEntities)
+	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
 }
 
-func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, frustumEntities map[int]any) {
+func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	shaderManager := r.shaderManager
 
 	shader := shaderManager.GetShaderProgram("modelpbr")
@@ -785,12 +798,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-	for _, entity := range r.world.Entities() {
+	for _, entity := range renderableEntities {
 		if entity.Model == nil {
-			continue
-		}
-
-		if _, ok := frustumEntities[entity.GetID()]; !ok {
 			continue
 		}
 

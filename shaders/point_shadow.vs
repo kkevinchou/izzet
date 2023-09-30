@@ -4,11 +4,8 @@ const int MAX_JOINTS = 100;
 const int MAX_WEIGHTS = 4;
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoord0;
-layout (location = 3) in vec2 aTexCoord1;
-layout (location = 4) in ivec3 jointIndices;
-layout (location = 5) in vec3 jointWeights;
+layout (location = 1) in ivec3 jointIndices;
+layout (location = 2) in vec3 jointWeights;
 
 uniform mat4 model;
 

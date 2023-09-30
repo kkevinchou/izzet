@@ -77,9 +77,9 @@ var DBG DebugSettings = DebugSettings{
 	Far:  3000,
 	FovX: 105,
 
-	FogStart:   1000,
-	FogEnd:     2000,
-	FogDensity: 0.0001,
+	FogStart:   200,
+	FogEnd:     1000,
+	FogDensity: 0.001,
 	FogEnabled: true,
 
 	TriangleDrawCount: 0,

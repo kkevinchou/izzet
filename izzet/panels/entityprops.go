@@ -27,6 +27,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 
 func entityProps(entity *entities.Entity) {
 	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
+		entityIDStr := ""
 		entityNameStr := ""
 		positionStr := ""
 		localRotationStr := ""
@@ -38,6 +39,7 @@ func entityProps(entity *entities.Entity) {
 		parentJointStr := ""
 
 		if entity != nil {
+			entityIDStr = fmt.Sprintf("%d", entity.ID)
 			entityNameStr = entity.NameID()
 			position := entities.LocalPosition(entity)
 			positionStr = fmt.Sprintf("{%.1f, %.1f, %.1f}", position.X(), position.Y(), position.Z())
@@ -70,7 +72,8 @@ func entityProps(entity *entities.Entity) {
 		}
 
 		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-		uiTableRow("Entity Name", entityNameStr)
+		uiTableRow("ID", entityIDStr)
+		uiTableRow("Name", entityNameStr)
 
 		// if entity != nil {
 		// 	// if uiTableInputRow("Local Position", &positionStr, nil) {

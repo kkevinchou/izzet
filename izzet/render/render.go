@@ -337,6 +337,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		}
 	}
 
+	// r.ReadAllPixels()
+
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

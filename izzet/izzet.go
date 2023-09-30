@@ -120,6 +120,7 @@ func (g *Izzet) Start() {
 	}
 
 	frameCount := 0
+	commandFrameCountBeforeRender := 0
 	for !g.gameOver {
 		now := float64(time.Now().UnixNano()) / 1000000
 		delta := now - previousTimeStamp
@@ -137,6 +138,7 @@ func (g *Izzet) Start() {
 			commandFrameNanos := time.Since(start).Nanoseconds()
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
 			g.commandFrameCount++
+			commandFrameCountBeforeRender += 1
 
 			accumulator -= float64(settings.MSPerCommandFrame)
 			currentLoopCommandFrames++
@@ -151,6 +153,8 @@ func (g *Izzet) Start() {
 			panels.DBG.FPS = g.MetricsRegistry().GetOneSecondSum("fps")
 			panels.DBG.CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
 			panels.DBG.RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
+			panels.DBG.CommandFramesPerRender = commandFrameCountBeforeRender
+			commandFrameCountBeforeRender = 0
 
 			start := time.Now()
 			frameCount++
@@ -249,6 +253,8 @@ func initializeOpenGL() (*sdl.Window, error) {
 		settings.Width = int(dm.W)
 		settings.Height = int(dm.H)
 		windowFlags |= sdl.WINDOW_MAXIMIZED
+		// windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
+		// windowFlags |= sdl.WINDOW_FULLSCREEN
 	}
 
 	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(settings.Width), int32(settings.Height), uint32(windowFlags))

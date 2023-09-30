@@ -852,6 +852,62 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int
 	return &id
 }
 
+func (r *Renderer) ReadAllPixels() {
+	// start := time.Now()
+
+	// Specify the texture target
+	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
+
+	// Allocate memory to store the pixel data
+	// var internalFormat uint32 = gl.RGBA    // The format of the texture data (e.g., gl.RGBA)
+	// var dataType uint32 = gl.UNSIGNED_BYTE // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
+
+	var internalFormat uint32 = gl.DEPTH_COMPONENT // The format of the texture data (e.g., gl.RGBA)
+	var dataType uint32 = gl.FLOAT                 // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
+
+	// Calculate the size of the buffer
+	bufferSize := int(r.width * r.height * 4) // Assuming 4 components per pixel (RGBA)
+
+	// Allocate memory for the pixel data
+	pixelData := make([]byte, bufferSize)
+
+	// Read the texture data into the pixelData slice
+	gl.GetTexImage(gl.TEXTURE_2D, 0, internalFormat, dataType, gl.Ptr(pixelData))
+
+	// Now, pixelData contains the pixel data of the texture.
+	// You can process it or save it as needed.
+
+	start := time.Now()
+	// Print a few pixels as an example
+	for i := 0; i < r.width*r.height*4-4; i++ {
+		r := pixelData[i]
+		g := pixelData[i+1]
+		b := pixelData[i+2]
+		a := pixelData[i+3]
+
+		if r != 0 {
+			a := 5
+			_ = a
+		}
+		if g != 0 {
+			a := 5
+			_ = a
+		}
+		if b != 0 {
+			a := 5
+			_ = a
+		}
+		if a != 0 {
+			a := 5
+			_ = a
+		}
+		// fmt.Printf("Pixel %d: R=%d, G=%d, B=%d, A=%d\n", i/4, r, g, b, a)
+	}
+	fmt.Println(time.Since(start))
+
+	// fmt.Println(time.Since(start))
+}
+
 func drawCapsuleCollider(viewerContext ViewerContext, lightContext LightContext, shader *shaders.ShaderProgram, color mgl64.Vec3, capsuleCollider *collider.Capsule, billboardModelMatrix mgl64.Mat4) {
 	radius := float32(capsuleCollider.Radius)
 	top := float32(capsuleCollider.Top.Y()) + radius

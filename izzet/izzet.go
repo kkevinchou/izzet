@@ -11,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -88,19 +87,27 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}),
 	}
 
+	start := time.Now()
+
 	w, h := g.window.GetSize()
 	g.width, g.height = int(w), int(h)
 	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
 	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 25)
 
+	fmt.Println(time.Since(start), "spatial partition done")
+
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
-	g.loadPrefabs(data)
-	g.loadEntities()
+	g.setupInitialPrefabs(data)
+	fmt.Println(time.Since(start), "prefabs done")
+	g.setupInitialEntities()
+	fmt.Println(time.Since(start), "entities done")
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
 	// g.navigationMesh = navmesh.New(g)
 	g.metricsRegistry = metrics.New()
+
+	fmt.Println(time.Since(start), "to start up systems")
 
 	return g
 }
@@ -180,21 +187,17 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Izzet) loadPrefabs(data *Data) {
-	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-
+func (g *Izzet) setupInitialPrefabs(data *Data) {
 	for _, entityAsset := range data.EntityAssets {
 		name := entityAsset.Name
-		var pf *prefabs.Prefab
 
 		scene := g.assetManager.GetScene(name)
-		models := model.CreateModelsFromScene(scene, modelConfig)
-		pf = prefabs.CreatePrefab(name, models)
+		pf := prefabs.CreatePrefab(name, scene)
 		g.prefabs[pf.ID] = pf
 	}
 }
 
-func (g *Izzet) loadEntities() {
+func (g *Izzet) setupInitialEntities() {
 	pointLight := entities.CreatePointLight()
 	pointLight.Movement = &entities.MovementComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},

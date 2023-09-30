@@ -3,6 +3,8 @@ package prefabs
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/model"
+	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 // if we update the prefab, instances should be updated as well
@@ -22,10 +24,31 @@ type ModelRef struct {
 type Prefab struct {
 	ID        int
 	Name      string
-	ModelRefs []*ModelRef
+	modelRefs []*ModelRef
+
+	loaded bool
+	scene  *modelspec.Scene
 }
 
-func CreatePrefab(name string, models []*model.Model) *Prefab {
+func CreatePrefab(name string, scene *modelspec.Scene) *Prefab {
+	pf := &Prefab{
+		ID:    id,
+		Name:  name,
+		scene: scene,
+	}
+
+	id += 1
+
+	return pf
+}
+
+func (p *Prefab) Load() {
+	if p.loaded {
+		return
+	}
+
+	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	models := model.CreateModelsFromScene(p.scene, modelConfig)
 	modelRefs := []*ModelRef{}
 	for _, model := range models {
 		modelRef := &ModelRef{
@@ -39,14 +62,11 @@ func CreatePrefab(name string, models []*model.Model) *Prefab {
 
 		modelRefs = append(modelRefs, modelRef)
 	}
+	p.modelRefs = modelRefs
+	p.loaded = true
+}
 
-	pf := &Prefab{
-		ID:        id,
-		Name:      name,
-		ModelRefs: modelRefs,
-	}
-
-	id += 1
-
-	return pf
+func (p *Prefab) ModelRefs() []*ModelRef {
+	p.Load()
+	return p.modelRefs
 }

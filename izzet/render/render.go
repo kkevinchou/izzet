@@ -277,9 +277,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	renderEntities := r.fetchRenderableEntities(position, orientation, renderContext)
 
 	r.drawSkybox(renderContext)
-	r.drawToShadowDepthMap(lightViewerContext)
-	r.drawToCubeDepthMap(lightContext)
-	r.drawToCameraDepthMap(cameraViewerContext)
+	r.drawToShadowDepthMap(lightViewerContext, renderEntities)
+	r.drawToCubeDepthMap(lightContext, renderEntities)
+	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
@@ -488,17 +488,17 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	}
 }
 
-func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext) {
+func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.Viewport(0, 0, int32(r.width), int32(r.height))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	r.renderGeometryWithoutColor(viewerContext)
+	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
 }
 
-func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext) {
+func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)
 	r.shadowMap.Prepare()
 
@@ -509,17 +509,17 @@ func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext) {
 		return
 	}
 
-	r.renderGeometryWithoutColor(viewerContext)
+	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
 }
 
-func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext) {
+func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
 	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for _, entity := range r.world.Entities() {
+	for _, entity := range renderableEntities {
 		if entity.Model == nil {
 			continue
 		}
@@ -552,7 +552,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext) {
 	}
 }
 
-func (r *Renderer) drawToCubeDepthMap(lightContext LightContext) {
+func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	// we only support cube depth maps for one point light atm
@@ -582,7 +582,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext) {
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 	shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
-	for _, entity := range r.world.Entities() {
+	for _, entity := range renderableEntities {
 		if entity.Model == nil {
 			continue
 		}

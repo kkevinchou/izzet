@@ -125,11 +125,6 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 	}
 }
 
-// boundingBoxFromModel creates a bounding box from a model's vertices
-func boundingBoxFromModel(m *model.Model) *collider.BoundingBox {
-	return collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(m.Vertices()))
-}
-
 func CreateDummy(name string) *Entity {
 	entity := InstantiateBaseEntity(name, id)
 	id += 1

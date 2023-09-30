@@ -9,15 +9,21 @@ import (
 type PrimitiveModel struct {
 	vao         uint32
 	geometryVAO uint32
+	vertices    []modelspec.Vertex
 }
 
 func NewCube() *PrimitiveModel {
 	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	m := &PrimitiveModel{}
 
-	meshSpec := createMeshSpec()
-	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{meshSpec})[0]
-	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{meshSpec})[0]
+	mesh := createMeshSpec()
+	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0]
+	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0]
+
+	vertices := mesh.UniqueVertices
+	for _, v := range vertices {
+		m.vertices = append(m.vertices, v)
+	}
 
 	return m
 }
@@ -74,6 +80,9 @@ func (m *PrimitiveModel) RootJoint() *modelspec.JointSpec {
 }
 func (m *PrimitiveModel) Name() string {
 	return "primitive"
+}
+func (m *PrimitiveModel) Vertices() []modelspec.Vertex {
+	return m.vertices
 }
 
 func cubeVertexFloatsByLength(length int) []float32 {

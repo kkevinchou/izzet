@@ -15,12 +15,14 @@ import (
 type ComponentComboOption string
 
 var MaterialComboOption ComponentComboOption = "Material Component"
+var LightComboOption ComponentComboOption = "Light Component"
 var MovementComboOption ComponentComboOption = "Movement Component"
 var TestComboOption ComponentComboOption = "Test Component"
 var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
 var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	MaterialComboOption,
+	LightComboOption,
 	MovementComboOption,
 	TestComboOption,
 }
@@ -151,9 +153,9 @@ func entityProps(entity *entities.Entity) {
 	}
 	imgui.PopID()
 	if imgui.Button("Add Component") {
-		if SelectedComponentComboOption == MaterialComboOption {
-			entity := SelectedEntity()
-			if entity != nil {
+		entity := SelectedEntity()
+		if entity != nil {
+			if SelectedComponentComboOption == MaterialComboOption {
 				entity.Material = &entities.MaterialComponent{
 					PBR: types.PBR{
 						Roughness:        0.85,
@@ -161,6 +163,13 @@ func entityProps(entity *entities.Entity) {
 						Diffuse:          [3]float32{1, 1, 1},
 						DiffuseIntensity: 1,
 					},
+				}
+			} else if SelectedComponentComboOption == LightComboOption {
+				entity.LightInfo = &entities.LightInfo{
+					PreScaledIntensity: 3,
+					Diffuse3F:          [3]float32{1, 1, 1},
+					Type:               entities.LightTypePoint,
+					Range:              800,
 				}
 			}
 		}

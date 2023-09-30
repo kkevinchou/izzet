@@ -83,7 +83,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	data := loadData(dataFilePath)
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{200, 200, -25},
+		Position:    mgl64.Vec3{150, 200, -25},
 		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}),
 	}
 

@@ -275,9 +275,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.clearMainFrameBuffer(renderContext)
 
 	r.renderSkybox(renderContext)
-	r.renderToSquareDepthMap(lightViewerContext, lightContext)
+	r.renderToShadowDepthMap(lightViewerContext)
 	r.renderToCubeDepthMap(lightContext)
-	r.renderToCameraDepthMap(cameraViewerContext, lightContext)
+	r.renderToCameraDepthMap(cameraViewerContext)
 
 	frustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
 	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
@@ -473,53 +473,17 @@ func (r *Renderer) renderAnnotations(viewerContext ViewerContext, lightContext L
 	}
 }
 
-func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.Viewport(0, 0, int32(r.width), int32(r.height))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	shader := r.shaderManager.GetShaderProgram("modelgeo")
-	shader.Use()
-
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-	for _, entity := range r.world.Entities() {
-		if entity.Model == nil {
-			continue
-		}
-
-		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-			// if animationTransforms is nil, the shader will execute reading into invalid memory
-			// so, we need to explicitly guard for this
-			if animationTransforms == nil {
-				panic("animationTransforms not found")
-			}
-			for i := 0; i < len(animationTransforms); i++ {
-				shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-			}
-		} else {
-			shader.SetUniformInt("isAnimated", 0)
-		}
-
-		modelMatrix := entities.WorldTransform(entity)
-		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-
-		model := entity.Model
-		for _, renderData := range model.RenderData() {
-			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
-
-			gl.BindVertexArray(renderData.GeometryVAO)
-			iztDrawElements(int32(renderData.VertexCount))
-		}
-	}
+	r.renderGeometryWithoutColor(viewerContext)
 }
 
-func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightContext LightContext) {
+func (r *Renderer) renderToShadowDepthMap(viewerContext ViewerContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 	r.shadowMap.Prepare()
 
@@ -530,14 +494,15 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 		return
 	}
 
+	r.renderGeometryWithoutColor(viewerContext)
+}
+
+func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext) {
 	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 
 	for _, entity := range r.world.Entities() {
 		if entity.Model == nil {

@@ -20,11 +20,19 @@ type ModelConfig struct {
 }
 
 type RenderData struct {
-	Name        string
-	MeshID      int
-	Mesh        *modelspec.MeshSpecification
-	Transform   mgl32.Mat4
-	VAO         uint32
+	Name      string
+	MeshID    int
+	Mesh      *modelspec.MeshSpecification
+	Transform mgl32.Mat4
+
+	// vao that contains all vertex attributes
+	// position, normals, texture coords, joint indices/weights, etc
+	VAO uint32
+
+	// vao that only contains geometry related vertex attributes
+	// i.e. vertex positions and joint indices / weights
+	// but not normals, texture coords
+	GeometryVAO uint32
 	VertexCount int
 }
 
@@ -43,6 +51,7 @@ type Model struct {
 func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *ModelConfig) []*Model {
 	var models []*Model
 	vaos := createVAOs(modelConfig, modelGroup.Meshes)
+	geometryVAOs := createGeometryVAOs(modelConfig, modelGroup.Meshes)
 
 	for _, root := range modelGroup.Scenes[0].Nodes {
 		m := &Model{
@@ -51,7 +60,7 @@ func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *M
 			modelConfig: modelConfig,
 
 			// ignores the transform from the root, this is applied to the model directly
-			renderData: parseRenderData(root, mgl32.Ident4(), true, vaos, modelGroup.Meshes),
+			renderData: parseRenderData(root, mgl32.Ident4(), true, vaos, geometryVAOs, modelGroup.Meshes),
 		}
 
 		for i := range m.renderData {
@@ -75,7 +84,7 @@ func CreateModelsFromModelGroup(modelGroup *modelspec.ModelGroup, modelConfig *M
 	return models
 }
 
-func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool, vaos map[int]uint32, meshes []*modelspec.MeshSpecification) []RenderData {
+func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool, vaos map[int]uint32, geometryVAOs map[int]uint32, meshes []*modelspec.MeshSpecification) []RenderData {
 	var data []RenderData
 
 	transform := node.Transform
@@ -92,13 +101,14 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 				Mesh:        meshes[meshID],
 				Transform:   transform,
 				VAO:         vaos[meshID],
+				GeometryVAO: geometryVAOs[meshID],
 				VertexCount: len(meshes[meshID].Vertices),
 			},
 		)
 	}
 
 	for _, childNode := range node.Children {
-		data = append(data, parseRenderData(childNode, transform, false, vaos, meshes)...)
+		data = append(data, parseRenderData(childNode, transform, false, vaos, geometryVAOs, meshes)...)
 	}
 
 	return data
@@ -232,6 +242,79 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 		gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
 		gl.VertexAttribPointer(5, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
 		gl.EnableVertexAttribArray(5)
+
+		// set up the EBO, each triplet of indices point to three vertices
+		// that form a triangle.
+		var ebo uint32
+		gl.GenBuffers(1, &ebo)
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(m.VertexIndices)*4, gl.Ptr(m.VertexIndices), gl.STATIC_DRAW)
+	}
+
+	return vaos
+}
+
+func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) map[int]uint32 {
+	vaos := map[int]uint32{}
+	for i, m := range meshes {
+		// initialize the VAO
+		var vao uint32
+		gl.GenVertexArrays(1, &vao)
+		gl.BindVertexArray(vao)
+		vaos[i] = vao
+
+		var vertexAttributes []float32
+		var jointIDsAttribute []int32
+		var jointWeightsAttribute []float32
+
+		// set up the source data for the VBOs
+		for _, vertex := range m.UniqueVertices {
+			position := vertex.Position
+			jointIDs := vertex.JointIDs
+			jointWeights := vertex.JointWeights
+
+			vertexAttributes = append(vertexAttributes,
+				position.X(), position.Y(), position.Z(),
+			)
+
+			ids, weights := fillWeights(jointIDs, jointWeights, modelConfig.MaxAnimationJointWeights)
+			for _, id := range ids {
+				jointIDsAttribute = append(jointIDsAttribute, int32(id))
+			}
+			jointWeightsAttribute = append(jointWeightsAttribute, weights...)
+		}
+
+		totalAttributeSize := len(vertexAttributes) / len(m.UniqueVertices)
+
+		// lay out the position, normal, texture (index 0 and 1) coords in a VBO
+		var vbo uint32
+		gl.GenBuffers(1, &vbo)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
+
+		ptrOffset := 0
+
+		// position
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(totalAttributeSize)*4, nil)
+		gl.EnableVertexAttribArray(0)
+
+		ptrOffset += 3
+
+		// lay out the joint IDs in a VBO
+		var vboJointIDs uint32
+		gl.GenBuffers(1, &vboJointIDs)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
+		gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
+		gl.VertexAttribIPointer(1, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+		gl.EnableVertexAttribArray(1)
+
+		// lay out the joint weights in a VBO
+		var vboJointWeights uint32
+		gl.GenBuffers(1, &vboJointWeights)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
+		gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
+		gl.VertexAttribPointer(2, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+		gl.EnableVertexAttribArray(2)
 
 		// set up the EBO, each triplet of indices point to three vertices
 		// that form a triangle.

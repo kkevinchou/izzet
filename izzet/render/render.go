@@ -275,9 +275,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.clearMainFrameBuffer(renderContext)
 
 	r.renderSkybox(renderContext)
-	r.renderToCameraDepthMap(cameraViewerContext, lightContext)
 	r.renderToSquareDepthMap(lightViewerContext, lightContext)
 	r.renderToCubeDepthMap(lightContext)
+	r.renderToCameraDepthMap(cameraViewerContext, lightContext)
 
 	frustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), 1)
 	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
@@ -480,18 +480,11 @@ func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext, lightCont
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	shader := r.shaderManager.GetShaderProgram("modelpbr")
+	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
-
-	shader.SetUniformInt("fog", 0)
-	shader.SetUniformInt("width", int32(r.width))
-	shader.SetUniformInt("height", int32(r.height))
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 
 	for _, entity := range r.world.Entities() {
 		if entity.Model == nil {
@@ -520,7 +513,7 @@ func (r *Renderer) renderToCameraDepthMap(viewerContext ViewerContext, lightCont
 		for _, renderData := range model.RenderData() {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
-			gl.BindVertexArray(renderData.VAO)
+			gl.BindVertexArray(renderData.GeometryVAO)
 			iztDrawElements(int32(renderData.VertexCount))
 		}
 	}
@@ -537,10 +530,8 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 		return
 	}
 
-	shader := r.shaderManager.GetShaderProgram("modelpbr")
+	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
-
-	shader.SetUniformInt("fog", 0)
 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -575,7 +566,7 @@ func (r *Renderer) renderToSquareDepthMap(viewerContext ViewerContext, lightCont
 		for _, renderData := range model.RenderData() {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
-			gl.BindVertexArray(renderData.VAO)
+			gl.BindVertexArray(renderData.GeometryVAO)
 			iztDrawElements(int32(renderData.VertexCount))
 		}
 	}
@@ -638,7 +629,7 @@ func (r *Renderer) renderToCubeDepthMap(lightContext LightContext) {
 		for _, renderData := range model.RenderData() {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
-			gl.BindVertexArray(renderData.VAO)
+			gl.BindVertexArray(renderData.GeometryVAO)
 			iztDrawElements(int32(renderData.VertexCount))
 		}
 	}
@@ -792,6 +783,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 	shader.SetUniformFloat("fogDensity", panels.DBG.FogDensity)
 
+	shader.SetUniformInt("width", int32(r.width))
+	shader.SetUniformInt("height", int32(r.height))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -829,10 +822,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		if _, ok := frustumEntities[entity.GetID()]; !ok {
 			continue
 		}
-
-		// if entity.GetID() != 16 {
-		// 	continue
-		// }
 
 		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))

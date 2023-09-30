@@ -25,9 +25,10 @@ type DebugSettings struct {
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
-	RenderTime       float64
-	FPS              float64
-	CommandFrameTime float64
+	RenderTime             float64
+	FPS                    float64
+	CommandFrameTime       float64
+	CommandFramesPerRender int
 
 	FovX float32
 	Near float32
@@ -71,7 +72,7 @@ var DBG DebugSettings = DebugSettings{
 	Color:                     [3]float32{1, 1, 1},
 	ColorIntensity:            20.0,
 	RenderSpatialPartition:    false,
-	EnableSpatialPartition:    false,
+	EnableSpatialPartition:    true,
 	FPS:                       0,
 
 	Near: 1,

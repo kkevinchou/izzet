@@ -10,6 +10,7 @@ func stats(world World, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+		setupRow("Command Frames Before Render", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.CommandFramesPerRender)) })
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.RenderTime)) })
 		setupRow("Command Frame Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.CommandFrameTime)) })
 		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.FPS)) })

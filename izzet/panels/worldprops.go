@@ -45,6 +45,7 @@ func worldProps(world World, renderContext RenderContext) {
 		// setupRow("Color", func() { imgui.ColorEdit3V("", &DBG.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel) })
 		// setupRow("Color Intensity", func() { imgui.SliderFloat("", &DBG.ColorIntensity, 0, 50) })
 		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &DBG.EnableShadowMapping) })
+		setupRow("Fog Density", func() { imgui.SliderInt("", &DBG.FogDensity, 0, 100) })
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsNone) {
@@ -64,9 +65,8 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("FovX", func() { imgui.SliderFloat("", &DBG.FovX, 0, 170) })
 		imgui.EndTable()
 	}
-
-	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
+	if imgui.CollapsingHeaderV("NavMesh", imgui.TreeNodeFlagsNone) {
+		imgui.BeginTableV("NavMesh Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("NavMeshHSV", func() {
 			if imgui.Checkbox("NavMeshHSV", &DBG.NavMeshHSV) {
@@ -104,17 +104,19 @@ func worldProps(world World, renderContext RenderContext) {
 		setupRow("Highlight Region ID", func() {
 			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", DBG.VoxelHighlightRegionID))
 		})
-		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
-		setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
-		setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })
-		setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })
-		setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
+		imgui.EndTable()
+	}
+
+	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
+		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
+		initColumns()
+		// setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
+		// setupRow("Roughness", func() { imgui.SliderFloat("", &DBG.Roughness, 0, 1) })
+		// setupRow("Metallic", func() { imgui.SliderFloat("", &DBG.Metallic, 0, 1) })
+		// setupRow("Exposure", func() { imgui.SliderFloat("", &DBG.Exposure, 0, 1) })
+		// setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &DBG.EnableSpatialPartition) })
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) })
-		setupRow("Distance Fog Enabled", func() { imgui.Checkbox("", &DBG.FogEnabled) })
-		setupRow("Fog Start", func() { imgui.SliderInt("", &DBG.FogStart, 100, 10000) })
-		setupRow("Fog End", func() { imgui.SliderInt("", &DBG.FogEnd, 500, 10000) })
-		setupRow("Fog Density", func() { imgui.SliderFloatV("", &DBG.FogDensity, 0, 0.001, "%.5f", imgui.SliderFlagsNone) })
 		imgui.EndTable()
 	}
 }

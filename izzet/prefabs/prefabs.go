@@ -1,8 +1,6 @@
 package prefabs
 
 import (
-	"fmt"
-
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/model"
 )
@@ -29,9 +27,9 @@ type Prefab struct {
 
 func CreatePrefab(name string, models []*model.Model) *Prefab {
 	modelRefs := []*ModelRef{}
-	for i, model := range models {
+	for _, model := range models {
 		modelRef := &ModelRef{
-			Name:  fmt.Sprintf("%s-mesh-%d", name, i),
+			Name:  model.Name(),
 			Model: model,
 
 			Position: mgl64.Vec3{},

@@ -38,7 +38,7 @@ type RenderData struct {
 
 type Model struct {
 	name        string
-	scene       *modelspec.Scene
+	document    *modelspec.Document
 	modelConfig *ModelConfig
 	renderData  []RenderData
 	vertices    []modelspec.Vertex
@@ -48,25 +48,27 @@ type Model struct {
 	scale       mgl32.Vec3
 }
 
-func CreateModelsFromScene(scene *modelspec.Scene, modelConfig *ModelConfig) []*Model {
+func CreateModelsFromScene(document *modelspec.Document, modelConfig *ModelConfig) []*Model {
 	var models []*Model
-	vaos := createVAOs(modelConfig, scene.Meshes)
-	geometryVAOs := createGeometryVAOs(modelConfig, scene.Meshes)
+	vaos := createVAOs(modelConfig, document.Meshes)
+	geometryVAOs := createGeometryVAOs(modelConfig, document.Meshes)
 
-	for _, node := range scene.Scenes[0].Nodes {
+	scene := document.Scenes[0]
+
+	for _, node := range scene.Nodes {
 		m := &Model{
 			name:        node.Name,
-			scene:       scene,
+			document:    document,
 			modelConfig: modelConfig,
 
 			// ignores the transform from the root, this is applied to the model directly
-			renderData: parseRenderData(node, mgl32.Ident4(), true, vaos, geometryVAOs, scene.Meshes),
+			renderData: parseRenderData(node, mgl32.Ident4(), true, vaos, geometryVAOs, document.Meshes),
 		}
 
 		for i := range m.renderData {
 			renderData := &m.renderData[i]
 			meshID := renderData.MeshID
-			mesh := m.scene.Meshes[meshID]
+			mesh := document.Meshes[meshID]
 			vertices := mesh.UniqueVertices
 			for _, v := range vertices {
 				m.vertices = append(m.vertices, v)
@@ -119,15 +121,15 @@ func (m *Model) Name() string {
 }
 
 func (m *Model) RootJoint() *modelspec.JointSpec {
-	return m.scene.RootJoint
+	return m.document.RootJoint
 }
 
 func (m *Model) Animations() map[string]*modelspec.AnimationSpec {
-	return m.scene.Animations
+	return m.document.Animations
 }
 
 func (m *Model) JointMap() map[int]*modelspec.JointSpec {
-	return m.scene.JointMap
+	return m.document.JointMap
 }
 
 func (m *Model) RenderData() []RenderData {

@@ -27,8 +27,12 @@ type Entity struct {
 	localRotation mgl64.Quat
 	scale         mgl64.Vec3
 
+	// prefab info for serialization
+	Prefab            *prefabs.Prefab
+	PrefabEntityIndex int
+
 	// model
-	Prefab      *prefabs.Prefab
+
 	Model       model.RenderModel
 	boundingBox *collider.BoundingBox
 
@@ -81,9 +85,9 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
 	var es []*Entity
 	count := 0
-	for _, modelRef := range prefab.ModelRefs() {
+	for prefabEntityIndex, modelRef := range prefab.ModelRefs() {
 		model := modelRef.Model
-		e := InstantiateFromPrefabStaticID(id, model, prefab)
+		e := InstantiateFromPrefabStaticID(id, model, prefab, prefabEntityIndex)
 		e.Name = modelRef.Name
 		es = append(es, e)
 		id += 1
@@ -92,9 +96,10 @@ func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
 	return es
 }
 
-func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.Prefab) *Entity {
+func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.Prefab, prefabEntityIndex int) *Entity {
 	e := InstantiateBaseEntity(model.Name(), id)
 	e.Prefab = prefab
+	e.PrefabEntityIndex = prefabEntityIndex
 	e.Model = model
 	e.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(model.Vertices()))
 

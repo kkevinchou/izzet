@@ -500,6 +500,7 @@ func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableE
 
 func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)
+
 	r.shadowMap.Prepare()
 
 	if !panels.DBG.EnableShadowMapping {

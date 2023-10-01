@@ -2,7 +2,7 @@ package serialization
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -20,9 +20,12 @@ type SerializedWorld struct {
 }
 
 type SerializedEntity struct {
-	Name     string
-	ID       int
-	PrefabID *int
+	Name string
+	ID   int
+
+	PrefabID          *int
+	PrefabEntityIndex int
+
 	// Position []float64
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
@@ -71,6 +74,7 @@ func (s *Serializer) WriteOut(filepath string) {
 		if entity.Prefab != nil {
 			id := entity.Prefab.ID
 			sEntity.PrefabID = &id
+			sEntity.PrefabEntityIndex = entity.PrefabEntityIndex
 		}
 
 		serializedEntities = append(
@@ -109,7 +113,7 @@ func (s *Serializer) ReadIn(filepath string) error {
 
 	defer f.Close()
 
-	bytes, err := ioutil.ReadAll(f)
+	bytes, err := io.ReadAll(f)
 	if err != nil {
 		return err
 	}
@@ -130,9 +134,10 @@ func (s *Serializer) Entities() []*entities.Entity {
 	dsEntities := []*entities.Entity{}
 	for _, e := range s.serializedWorld.Entities {
 		var dsEntity *entities.Entity
+
 		if e.PrefabID != nil {
 			prefab := s.world.GetPrefabByID(*e.PrefabID)
-			dsEntity = entities.InstantiateFromPrefabStaticID(e.ID, prefab.ModelRefs()[0].Model, prefab)
+			dsEntity = entities.InstantiateFromPrefabStaticID(e.ID, prefab.ModelRefs()[e.PrefabEntityIndex].Model, prefab, e.PrefabEntityIndex)
 		} else {
 			dsEntity = entities.InstantiateBaseEntity(e.Name, e.ID)
 		}

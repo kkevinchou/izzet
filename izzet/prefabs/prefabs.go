@@ -26,15 +26,15 @@ type Prefab struct {
 	Name      string
 	modelRefs []*ModelRef
 
-	loaded bool
-	scene  *modelspec.Scene
+	loaded   bool
+	document *modelspec.Document
 }
 
-func CreatePrefab(name string, scene *modelspec.Scene) *Prefab {
+func CreatePrefab(name string, document *modelspec.Document) *Prefab {
 	pf := &Prefab{
-		ID:    id,
-		Name:  name,
-		scene: scene,
+		ID:       id,
+		Name:     name,
+		document: document,
 	}
 
 	id += 1
@@ -48,7 +48,7 @@ func (p *Prefab) Load() {
 	}
 
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	models := model.CreateModelsFromScene(p.scene, modelConfig)
+	models := model.CreateModelsFromScene(p.document, modelConfig)
 	modelRefs := []*ModelRef{}
 	for _, model := range models {
 		modelRef := &ModelRef{

@@ -191,8 +191,8 @@ func (g *Izzet) setupPrefabs(data *Data) {
 	for _, entityAsset := range data.EntityAssets {
 		name := entityAsset.Name
 
-		scene := g.assetManager.GetScene(name)
-		pf := prefabs.CreatePrefab(name, scene)
+		document := g.assetManager.GetDocument(name)
+		pf := prefabs.CreatePrefab(name, document)
 		g.prefabs[pf.ID] = pf
 	}
 }

@@ -83,8 +83,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	data := loadData(dataFilePath)
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{150, 200, -25},
-		Orientation: mgl64.QuatRotate(mgl64.DegToRad(90), mgl64.Vec3{0, 1, 0}),
+		Position:    mgl64.Vec3{-82, 230, 95},
+		Orientation: mgl64.QuatIdent(),
 	}
 
 	start := time.Now()
@@ -98,9 +98,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
-	g.setupInitialPrefabs(data)
+	g.setupPrefabs(data)
 	fmt.Println(time.Since(start), "prefabs done")
-	g.setupInitialEntities()
+	g.setupEntities()
 	fmt.Println(time.Since(start), "entities done")
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
@@ -187,7 +187,7 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Izzet) setupInitialPrefabs(data *Data) {
+func (g *Izzet) setupPrefabs(data *Data) {
 	for _, entityAsset := range data.EntityAssets {
 		name := entityAsset.Name
 
@@ -197,22 +197,24 @@ func (g *Izzet) setupInitialPrefabs(data *Data) {
 	}
 }
 
-func (g *Izzet) setupInitialEntities() {
+func (g *Izzet) setupEntities() {
 	pointLight := entities.CreatePointLight()
 	pointLight.Movement = &entities.MovementComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
 		Speed:        100,
 	}
-	pointLight.LightInfo.Diffuse3F = [3]float32{1, 0.47, 0}
+	pointLight.LightInfo.PreScaledIntensity = 6
+	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.AddEntity(pointLight)
 
 	cube := entities.CreateCube(50)
-	entities.SetLocalPosition(cube, mgl64.Vec3{-75, 126, -22})
+	entities.SetLocalPosition(cube, mgl64.Vec3{154, 126, -22})
 	g.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
+	directionalLight.LightInfo.PreScaledIntensity = 8
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.AddEntity(directionalLight)
 
@@ -221,12 +223,12 @@ func (g *Izzet) setupInitialEntities() {
 		pfMap[pf.Name] = pf
 	}
 
-	dungeonPF := pfMap["demo_scene_scificity"]
+	scenePrefab := pfMap["demo_scene_samurai"]
 	parent := entities.CreateDummy("scene_dummy")
 	g.AddEntity(parent)
 	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
 
-	for _, entity := range entities.InstantiateFromPrefab(dungeonPF) {
+	for _, entity := range entities.InstantiateFromPrefab(scenePrefab) {
 		entities.BuildRelation(parent, entity)
 		g.AddEntity(entity)
 	}

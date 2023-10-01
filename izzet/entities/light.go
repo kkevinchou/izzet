@@ -52,7 +52,7 @@ func CreateDirectionalLight() *Entity {
 
 func CreatePointLight() *Entity {
 	lightInfo := &LightInfo{
-		PreScaledIntensity: 3,
+		PreScaledIntensity: 1,
 		Diffuse3F:          [3]float32{1, 1, 1},
 		Type:               LightTypePoint,
 		Range:              800,

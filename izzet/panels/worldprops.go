@@ -3,6 +3,7 @@ package panels
 import (
 	"fmt"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
@@ -35,8 +36,24 @@ var (
 )
 
 func worldProps(world World, renderContext RenderContext) {
+	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {
+		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
+		initColumns()
+
+		setupRow("Camera Position", func() {
+			imgui.LabelText("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", DBG.CameraPosition[0], DBG.CameraPosition[1], DBG.CameraPosition[2]))
+		})
+
+		setupRow("Camera Viewing Direction", func() {
+			viewDir := DBG.CameraOrientation.Rotate(mgl64.Vec3{0, 0, -1})
+			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
+		})
+
+		imgui.EndTable()
+	}
+
 	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.BeginTableV("Lights", 2, tableFlags, imgui.Vec2{}, 0)
+		imgui.BeginTableV("Lighting Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) })
 		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &DBG.PointLightBias, 0, 1) })

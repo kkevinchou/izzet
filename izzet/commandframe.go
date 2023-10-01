@@ -88,6 +88,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		viewRotation = mgl64.Vec2{xRel, yRel}
 		controlVector = getControlVector(keyboardInput)
 	}
+
 	g.cameraMovement(frameInput, viewRotation, controlVector, delta)
 
 	// set gizmo mode
@@ -201,6 +202,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	// 	panels.DBG.TriangleHIT = navmesh.IntersectAABBTriangle(aabb, triangle)
 	// }
+
+	panels.DBG.CameraPosition = g.camera.Position
+	panels.DBG.CameraOrientation = g.camera.Orientation
 
 	if panels.DBG.EnableSpatialPartition {
 		var spatialEntities []spatialpartition.Entity

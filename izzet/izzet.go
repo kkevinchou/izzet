@@ -172,7 +172,7 @@ func (g *Izzet) Start() {
 			renderTime := time.Since(start).Milliseconds()
 			g.MetricsRegistry().Inc("render_time", float64(renderTime))
 
-			// don't try to accumulate time to point where we render back to loop iterations.
+			// don't try to accumulate time to point where we render back to back loop iterations.
 			// it's unlikely the game state has changed much from one step to the next.
 			for renderAccumulator > msPerFrame {
 				renderAccumulator -= msPerFrame

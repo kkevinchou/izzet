@@ -45,6 +45,7 @@ func worldProps(world World, renderContext RenderContext) {
 		// setupRow("Color", func() { imgui.ColorEdit3V("", &DBG.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel) })
 		// setupRow("Color Intensity", func() { imgui.SliderFloat("", &DBG.ColorIntensity, 0, 50) })
 		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &DBG.EnableShadowMapping) })
+		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &DBG.ShadowFarFactor, 0, 10) })
 		setupRow("Fog Density", func() { imgui.SliderInt("", &DBG.FogDensity, 0, 100) })
 		imgui.EndTable()
 	}

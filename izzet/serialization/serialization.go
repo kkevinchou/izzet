@@ -71,11 +71,11 @@ func (s *Serializer) WriteOut(filepath string) {
 			}
 		}
 
-		if entity.Prefab != nil {
-			id := entity.Prefab.ID
-			sEntity.PrefabID = &id
-			sEntity.PrefabEntityIndex = entity.PrefabEntityIndex
-		}
+		// if entity.Prefab != nil {
+		// 	id := entity.Prefab.ID
+		// 	sEntity.PrefabID = &id
+		// 	sEntity.PrefabEntityIndex = entity.PrefabEntityIndex
+		// }
 
 		serializedEntities = append(
 			serializedEntities,

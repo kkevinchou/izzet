@@ -233,7 +233,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(panels.DBG.Near), float64(panels.DBG.Far)),
 	}
 
-	lightFrustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), settings.ShadowMapDistanceFactor)
+	lightFrustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), float64(panels.DBG.ShadowFarFactor))
 
 	// find the directional light if there is one
 	lights := r.world.Lights()

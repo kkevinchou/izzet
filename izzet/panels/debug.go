@@ -9,6 +9,7 @@ type DebugSettings struct {
 	PointLightBias            float32
 	MaterialOverride          bool
 	EnableShadowMapping       bool
+	ShadowFarFactor           float32
 	BloomIntensity            float32
 	Exposure                  float32
 	AmbientFactor             float32
@@ -62,6 +63,7 @@ var DBG DebugSettings = DebugSettings{
 	PointLightBias:            1,
 	MaterialOverride:          false,
 	EnableShadowMapping:       true,
+	ShadowFarFactor:           1,
 	BloomIntensity:            0.04,
 	Exposure:                  1.0,
 	AmbientFactor:             0.1,

@@ -23,7 +23,7 @@ const (
 	MSPerCommandFrame int = 7
 
 	// number of rendered frames per second, separate from command frames
-	FPS int = 144
+	FPS int = 300
 
 	// the maximum number of command frames to execute in a single loop to prevent the spiral of death
 	MaxCommandFramesPerLoop int = 3

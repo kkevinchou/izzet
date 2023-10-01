@@ -154,7 +154,7 @@ func (g *Izzet) Start() {
 			}
 		}
 
-		if renderAccumulator >= msPerFrame {
+		if renderAccumulator >= msPerFrame && (g.window.GetFlags()&sdl.WINDOW_MINIMIZED == 0) {
 			g.MetricsRegistry().Inc("fps", 1)
 
 			panels.DBG.FPS = g.MetricsRegistry().GetOneSecondSum("fps")

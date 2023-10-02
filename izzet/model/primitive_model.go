@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -13,17 +12,17 @@ type PrimitiveModel struct {
 }
 
 func NewCube() *PrimitiveModel {
-	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	// modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	m := &PrimitiveModel{}
 
-	mesh := createPrimitiveSpec()
-	m.vao = createVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
-	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
+	// mesh := createPrimitiveSpec()
+	// m.vao = createVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
+	// m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
 
-	vertices := mesh.UniqueVertices
-	for _, v := range vertices {
-		m.vertices = append(m.vertices, v)
-	}
+	// vertices := mesh.UniqueVertices
+	// for _, v := range vertices {
+	// 	m.vertices = append(m.vertices, v)
+	// }
 
 	return m
 }
@@ -63,7 +62,6 @@ func createPrimitiveSpec() *modelspec.PrimitiveSpecification {
 func (m *PrimitiveModel) RenderData() []RenderData {
 	renderData := RenderData{
 		Name:        "primitive",
-		MeshID:      0,
 		Transform:   mgl32.Ident4(),
 		VAO:         m.vao,
 		GeometryVAO: m.geometryVAO,

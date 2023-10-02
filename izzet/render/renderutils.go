@@ -404,7 +404,7 @@ func drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
-		mesh := renderData.Mesh
+		mesh := renderData.Primitive
 		if material == nil {
 			meshMaterial := mesh.PBRMaterial.PBRMetallicRoughness
 			shader.SetUniformInt("colorTextureCoordIndex", int32(meshMaterial.BaseColorTextureCoordsIndex))

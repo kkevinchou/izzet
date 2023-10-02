@@ -66,10 +66,11 @@ func CreateModelsFromScene(document *modelspec.Document, modelConfig *ModelConfi
 
 		for i := range m.renderData {
 			renderData := &m.renderData[i]
+			// TODO - this doesn't support parented objects well since unique
+			// vertices does not handle rotations/translations. this causes us
+			// to make incorrect bounding boxes
 			vertices := renderData.Primitive.UniqueVertices
-			for _, v := range vertices {
-				m.vertices = append(m.vertices, v)
-			}
+			m.vertices = append(m.vertices, vertices...)
 		}
 
 		models = append(models, m)

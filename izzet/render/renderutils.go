@@ -404,32 +404,32 @@ func drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	for _, renderData := range model.RenderData() {
-		mesh := renderData.Primitive
+		primitive := renderData.Primitive
 		if material == nil {
-			meshMaterial := mesh.PBRMaterial.PBRMetallicRoughness
-			shader.SetUniformInt("colorTextureCoordIndex", int32(meshMaterial.BaseColorTextureCoordsIndex))
+			primitiveMaterial := primitive.PBRMaterial.PBRMetallicRoughness
+			shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
 
-			if meshMaterial.BaseColorTextureIndex != nil {
+			if primitiveMaterial.BaseColorTextureIndex != nil {
 				shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 			} else {
 				shader.SetUniformInt("hasPBRBaseColorTexture", 0)
 			}
 
-			shader.SetUniformVec3("albedo", meshMaterial.BaseColorFactor.Vec3())
+			shader.SetUniformVec3("albedo", primitiveMaterial.BaseColorFactor.Vec3())
 			if panels.DBG.MaterialOverride {
 				shader.SetUniformFloat("roughness", panels.DBG.Roughness)
 				shader.SetUniformFloat("metallic", panels.DBG.Metallic)
 			} else {
-				shader.SetUniformFloat("roughness", meshMaterial.RoughnessFactor)
-				shader.SetUniformFloat("metallic", meshMaterial.MetalicFactor)
+				shader.SetUniformFloat("roughness", primitiveMaterial.RoughnessFactor)
+				shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
 			}
 
 			// main diffuse texture
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
 			textureName := settings.DefaultTexture
-			if mesh.TextureName() != "" {
-				textureName = mesh.TextureName()
+			if primitive.TextureName() != "" {
+				textureName = primitive.TextureName()
 			}
 			texture := assetManager.GetTexture(textureName)
 			textureID = texture.ID

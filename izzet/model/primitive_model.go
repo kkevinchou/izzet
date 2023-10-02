@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -12,17 +13,18 @@ type PrimitiveModel struct {
 }
 
 func NewCube() *PrimitiveModel {
-	// modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	m := &PrimitiveModel{}
 
-	// mesh := createPrimitiveSpec()
-	// m.vao = createVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
-	// m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
+	primitive := createPrimitiveSpec()
+	mesh := &modelspec.MeshSpecification{Primitives: []*modelspec.PrimitiveSpecification{primitive}}
+	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0][0]
+	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0][0]
 
-	// vertices := mesh.UniqueVertices
-	// for _, v := range vertices {
-	// 	m.vertices = append(m.vertices, v)
-	// }
+	vertices := primitive.UniqueVertices
+	for _, v := range vertices {
+		m.vertices = append(m.vertices, v)
+	}
 
 	return m
 }

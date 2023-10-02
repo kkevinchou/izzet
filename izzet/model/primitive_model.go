@@ -16,9 +16,9 @@ func NewCube() *PrimitiveModel {
 	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	m := &PrimitiveModel{}
 
-	mesh := createMeshSpec()
-	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0]
-	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0]
+	mesh := createPrimitiveSpec()
+	m.vao = createVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
+	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.PrimitiveSpecification{mesh})[0]
 
 	vertices := mesh.UniqueVertices
 	for _, v := range vertices {
@@ -28,7 +28,7 @@ func NewCube() *PrimitiveModel {
 	return m
 }
 
-func createMeshSpec() *modelspec.MeshSpecification {
+func createPrimitiveSpec() *modelspec.PrimitiveSpecification {
 	vertices := cubeVertexFloatsByLength(50)
 
 	vertexIndices := []uint32{}
@@ -54,7 +54,7 @@ func createMeshSpec() *modelspec.MeshSpecification {
 		})
 	}
 
-	return &modelspec.MeshSpecification{
+	return &modelspec.PrimitiveSpecification{
 		VertexIndices:  vertexIndices,
 		UniqueVertices: uniqueVertices,
 	}

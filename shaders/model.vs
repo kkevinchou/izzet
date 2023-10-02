@@ -65,6 +65,6 @@ void main() {
     }
 
     vs_out.ColorOverride = errorColor;
-    vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
+    // vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     gl_Position = (projection * (view * (model * totalPos)));
 }

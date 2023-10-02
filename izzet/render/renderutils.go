@@ -375,7 +375,6 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 
 func drawModel(
 	viewerContext ViewerContext,
-	lightContext LightContext,
 	shadowMap *ShadowMap,
 	shader *shaders.ShaderProgram,
 	assetManager *assets.AssetManager,

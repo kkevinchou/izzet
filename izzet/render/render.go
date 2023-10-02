@@ -254,19 +254,25 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), lightFrustumPoints, settings.ShadowmapZOffset)
-	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
+	_ = lightPosition
+	_ = lightProjectionMatrix
+	// lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
 
 	lightViewerContext := ViewerContext{
-		Position:          lightPosition,
-		Orientation:       lightOrientation,
-		InverseViewMatrix: lightViewMatrix,
+		// Position:          lightPosition,
+		Position:    mgl64.Vec3{0, 0, 0},
+		Orientation: lightOrientation,
+		// InverseViewMatrix: lightViewMatrix,
+		InverseViewMatrix: mgl64.Ident4(),
 		ProjectionMatrix:  lightProjectionMatrix,
+		// ProjectionMatrix:  mgl64.Ident4(),
 	}
 
 	lightContext := LightContext{
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
-		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
+		// LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
+		LightSpaceMatrix: mgl64.Ident4(),
 		Lights:           r.world.Lights(),
 	}
 
@@ -281,8 +287,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.drawToCubeDepthMap(lightContext, renderEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
-	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
-	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	r.drawToMainColorBuffer(cameraViewerContext, renderContext, renderEntities)
+	r.drawAnnotations(cameraViewerContext, renderContext)
 
 	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
 		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
@@ -362,7 +368,7 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientatio
 	return renderEntities
 }
 
-func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+func (r *Renderer) drawAnnotations(viewerContext ViewerContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
 	// joint rendering for the selected entity
@@ -425,67 +431,67 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		}
 	}
 
-	nm := r.world.NavMesh()
+	// nm := r.world.NavMesh()
 
-	if nm != nil {
-		// draw bounding box
-		volume := nm.Volume
-		drawAABB(
-			viewerContext,
-			shaderManager.GetShaderProgram("flat"),
-			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-			&volume,
-			0.5,
-		)
+	// if nm != nil {
+	// 	// draw bounding box
+	// 	volume := nm.Volume
+	// 	drawAABB(
+	// 		viewerContext,
+	// 		shaderManager.GetShaderProgram("flat"),
+	// 		mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+	// 		&volume,
+	// 		0.5,
+	// 	)
 
-		// draw navmesh
-		if nm.VoxelCount() > 0 {
-			shader := shaderManager.GetShaderProgram("color_pbr")
-			shader.Use()
+	// 	// draw navmesh
+	// 	if nm.VoxelCount() > 0 {
+	// 		shader := shaderManager.GetShaderProgram("color_pbr")
+	// 		shader.Use()
 
-			if panels.DBG.Bloom {
-				shader.SetUniformInt("applyToneMapping", 0)
-			} else {
-				// only tone map if we're not applying bloom, otherwise
-				// we want to keep the HDR values and tone map later
-				shader.SetUniformInt("applyToneMapping", 1)
-			}
+	// 		if panels.DBG.Bloom {
+	// 			shader.SetUniformInt("applyToneMapping", 0)
+	// 		} else {
+	// 			// only tone map if we're not applying bloom, otherwise
+	// 			// we want to keep the HDR values and tone map later
+	// 			shader.SetUniformInt("applyToneMapping", 1)
+	// 		}
 
-			shader.SetUniformMat4("model", mgl32.Ident4())
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-			shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
-			shader.SetUniformInt("shadowMap", 31)
-			shader.SetUniformInt("depthCubeMap", 30)
-			shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
-			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-			shader.SetUniformInt("isAnimated", 0)
-			shader.SetUniformInt("hasColorOverride", 1)
+	// 		shader.SetUniformMat4("model", mgl32.Ident4())
+	// 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	// 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	// 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	// 		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	// 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	// 		shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
+	// 		shader.SetUniformInt("shadowMap", 31)
+	// 		shader.SetUniformInt("depthCubeMap", 30)
+	// 		shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+	// 		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	// 		shader.SetUniformInt("isAnimated", 0)
+	// 		shader.SetUniformInt("hasColorOverride", 1)
 
-			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
-			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
-			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
-			shader.SetUniformVec3("albedo", color)
-			shader.SetUniformInt("hasPBRMaterial", 1)
-			shader.SetUniformFloat("ao", 1.0)
-			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-			shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-			shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+	// 		// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
+	// 		color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
+	// 		// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
+	// 		shader.SetUniformVec3("albedo", color)
+	// 		shader.SetUniformInt("hasPBRMaterial", 1)
+	// 		shader.SetUniformFloat("ao", 1.0)
+	// 		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+	// 		shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+	// 		shader.SetUniformFloat("metallic", panels.DBG.Metallic)
 
-			setupLightingUniforms(shader, lightContext.Lights)
+	// 		// setupLightingUniforms(shader, lightContext.Lights)
 
-			gl.ActiveTexture(gl.TEXTURE30)
-			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+	// 		gl.ActiveTexture(gl.TEXTURE30)
+	// 		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
 
-			gl.ActiveTexture(gl.TEXTURE31)
-			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+	// 		gl.ActiveTexture(gl.TEXTURE31)
+	// 		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-			drawNavMeshTris(viewerContext, nm)
-		}
-	}
+	// 		drawNavMeshTris(viewerContext, nm)
+	// 	}
+	// }
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
@@ -617,13 +623,13 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
-func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
-	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
+	r.renderModels(viewerContext, renderContext, renderableEntities)
 
 	shaderManager := r.shaderManager
 
@@ -723,28 +729,28 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 			}
 		}
 
-		collider := entity.Collider
-		if collider != nil {
-			localPosition := entities.LocalPosition(entity)
-			translation := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
-			// lots of hacky rendering stuff to get the rectangle to billboard
-			center := mgl64.Vec3{localPosition.X(), 0, localPosition.Z()}
-			viewerArtificialCenter := mgl64.Vec3{viewerContext.Position.X(), 0, viewerContext.Position.Z()}
-			vecToViewer := viewerArtificialCenter.Sub(center).Normalize()
-			billboardModelMatrix := translation.Mul4(mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, 1}, vecToViewer).Mat4())
-			drawCapsuleCollider(
-				viewerContext,
-				lightContext,
-				shaderManager.GetShaderProgram("flat"),
-				mgl64.Vec3{0.5, 1, 0},
-				collider.CapsuleCollider,
-				billboardModelMatrix,
-			)
-		}
+		// collider := entity.Collider
+		// if collider != nil {
+		// 	localPosition := entities.LocalPosition(entity)
+		// 	translation := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
+		// 	// lots of hacky rendering stuff to get the rectangle to billboard
+		// 	center := mgl64.Vec3{localPosition.X(), 0, localPosition.Z()}
+		// 	viewerArtificialCenter := mgl64.Vec3{viewerContext.Position.X(), 0, viewerContext.Position.Z()}
+		// 	vecToViewer := viewerArtificialCenter.Sub(center).Normalize()
+		// 	billboardModelMatrix := translation.Mul4(mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, 1}, vecToViewer).Mat4())
+		// 	drawCapsuleCollider(
+		// 		viewerContext,
+		// 		lightContext,
+		// 		shaderManager.GetShaderProgram("flat"),
+		// 		mgl64.Vec3{0.5, 1, 0},
+		// 		collider.CapsuleCollider,
+		// 		billboardModelMatrix,
+		// 	)
+		// }
 	}
 }
 
-func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *Renderer) renderModels(viewerContext ViewerContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	shaderManager := r.shaderManager
 
 	shader := shaderManager.GetShaderProgram("modelpbr")
@@ -777,7 +783,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	// shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
@@ -789,7 +795,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 	shader.SetUniformInt("hasColorOverride", 0)
 
-	setupLightingUniforms(shader, lightContext.Lights)
+	// setupLightingUniforms(shader, lightContext.Lights)
 
 	gl.ActiveTexture(gl.TEXTURE29)
 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
@@ -810,7 +816,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 		drawModel(
 			viewerContext,
-			lightContext,
 			r.shadowMap,
 			shader,
 			r.world.AssetManager(),

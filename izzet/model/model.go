@@ -32,7 +32,6 @@ type RenderData struct {
 	// i.e. vertex positions and joint indices / weights
 	// but not normals, texture coords
 	GeometryVAO uint32
-	VertexCount int
 }
 
 type Model struct {
@@ -103,7 +102,6 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 					Transform:   transform,
 					VAO:         vaos[*node.MeshID][i],
 					GeometryVAO: geometryVAOs[*node.MeshID][i],
-					VertexCount: len(primitive.Vertices),
 				},
 			)
 		}

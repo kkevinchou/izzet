@@ -547,8 +547,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		model := entity.Model
-		for _, renderData := range model.RenderData() {
+		for _, renderData := range getRenderData(r.world.ModelLibrary(), entity) {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.GeometryVAO)
@@ -610,8 +609,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		model := entity.Model
-		for _, renderData := range model.RenderData() {
+		for _, renderData := range getRenderData(r.world.ModelLibrary(), entity) {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.GeometryVAO)

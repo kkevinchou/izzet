@@ -64,16 +64,6 @@ func createPrimitiveSpec() *modelspec.PrimitiveSpecification {
 	}
 }
 
-func (m *PrimitiveModel) RenderData() []RenderData {
-	renderData := RenderData{
-		Transform:   mgl32.Ident4(),
-		VAO:         m.vao,
-		GeometryVAO: m.geometryVAO,
-		Primitive:   m.primitive,
-	}
-
-	return []RenderData{renderData}
-}
 func (m *PrimitiveModel) JointMap() map[int]*modelspec.JointSpec {
 	return nil
 }

@@ -29,7 +29,6 @@ func CreateEntitiesFromScene(document *modelspec.Document) []*entities.Entity {
 	return result
 }
 
-// func parseNode(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool) []RenderData {
 func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32.Mat4, namespace string) entities.Node {
 	transform := node.Transform
 	if ignoreTransform {

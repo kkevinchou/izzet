@@ -72,12 +72,16 @@ type ModelLibrary struct {
 }
 
 func New() *ModelLibrary {
-	return &ModelLibrary{
+	m := &ModelLibrary{
 		Meshes: map[Handle][]LibraryPrimitive{},
 	}
+
+	m.RegisterMesh("global", cube())
+
+	return m
 }
 
-func (m *ModelLibrary) Register(namespace string, mesh *modelspec.MeshSpecification) {
+func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})

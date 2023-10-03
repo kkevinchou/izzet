@@ -3,8 +3,10 @@ package entities
 import (
 	"fmt"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/model"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -27,7 +29,7 @@ type Entity struct {
 	localRotation mgl64.Quat
 	scale         mgl64.Vec3
 
-	Node Node
+	MeshComponent *MeshComponent
 
 	// model
 	// SERIALIZATION GOAL - GET RID OF MODEL
@@ -82,37 +84,7 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 }
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
-	var es []*Entity
-	count := 0
-	for prefabEntityIndex, modelRef := range prefab.ModelRefs() {
-		model := modelRef.Model
-		e := InstantiateFromPrefabStaticID(id, model, prefab, prefabEntityIndex)
-		e.Name = modelRef.Name
-		es = append(es, e)
-		id += 1
-		count++
-	}
-	return es
-}
-
-func InstantiateFromPrefabStaticID(id int, model *model.Model, prefab *prefabs.Prefab, prefabEntityIndex int) *Entity {
-	e := InstantiateBaseEntity(model.Name(), id)
-	// e.Prefab = prefab
-	// e.PrefabEntityIndex = prefabEntityIndex
-	e.Model = model
-	e.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(model.Vertices()))
-
-	SetLocalPosition(e, utils.Vec3F32ToF64(model.Translation()))
-	SetLocalRotation(e, utils.QuatF32ToF64(model.Rotation()))
-	SetScale(e, utils.Vec3F32ToF64(model.Scale()))
-
-	// animation setup
-	e.Animations = model.Animations()
-	if len(e.Animations) > 0 {
-		e.AnimationPlayer = animation.NewAnimationPlayer(model)
-	}
-
-	return e
+	return CreateEntitiesFromDocument(prefab.Document)
 }
 
 func InstantiateBaseEntity(name string, id int) *Entity {
@@ -151,4 +123,44 @@ func RemoveParent(child *Entity) {
 		delete(parent.Children, child.ID)
 		child.Parent = nil
 	}
+}
+
+func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {
+	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	var result []*Entity
+
+	for _, scene := range document.Scenes {
+		for _, node := range scene.Nodes {
+			entity := InstantiateEntity(node.Name)
+			entity.MeshComponent = &MeshComponent{Node: parseNode(node, true, mgl32.Ident4(), document.Name)}
+			SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+			SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+			SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+			result = append(result, entity)
+		}
+	}
+
+	return result
+}
+
+func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32.Mat4, namespace string) Node {
+	transform := node.Transform
+	if ignoreTransform {
+		transform = mgl32.Ident4()
+	}
+	transform = parentTransform.Mul4(transform)
+
+	eNode := Node{
+		Transform:  transform,
+		MeshHandle: modellibrary.NewHandle(namespace, *node.MeshID),
+	}
+
+	var children []Node
+	for _, childNode := range node.Children {
+		children = append(children, parseNode(childNode, false, transform, namespace))
+	}
+
+	eNode.Children = children
+	return eNode
 }

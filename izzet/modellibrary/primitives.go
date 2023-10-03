@@ -1,38 +1,16 @@
-package model
+package modellibrary
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-type PrimitiveModel struct {
-	vao         uint32
-	geometryVAO uint32
-	vertices    []modelspec.Vertex
-	primitive   *modelspec.PrimitiveSpecification
+func cube() *modelspec.MeshSpecification {
+	primitive := createCubePrimitive()
+	return &modelspec.MeshSpecification{Primitives: []*modelspec.PrimitiveSpecification{primitive}}
 }
 
-func NewCube() *PrimitiveModel {
-	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	m := &PrimitiveModel{}
-
-	primitive := createPrimitiveSpec()
-	m.primitive = primitive
-
-	mesh := &modelspec.MeshSpecification{Primitives: []*modelspec.PrimitiveSpecification{primitive}}
-	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0][0]
-	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0][0]
-
-	vertices := primitive.UniqueVertices
-	for _, v := range vertices {
-		m.vertices = append(m.vertices, v)
-	}
-
-	return m
-}
-
-func createPrimitiveSpec() *modelspec.PrimitiveSpecification {
+func createCubePrimitive() *modelspec.PrimitiveSpecification {
 	vertices := cubeVertexFloatsByLength(50)
 
 	vertexIndices := []uint32{}
@@ -62,19 +40,6 @@ func createPrimitiveSpec() *modelspec.PrimitiveSpecification {
 		VertexIndices:  vertexIndices,
 		UniqueVertices: uniqueVertices,
 	}
-}
-
-func (m *PrimitiveModel) JointMap() map[int]*modelspec.JointSpec {
-	return nil
-}
-func (m *PrimitiveModel) RootJoint() *modelspec.JointSpec {
-	return nil
-}
-func (m *PrimitiveModel) Name() string {
-	return "primitive"
-}
-func (m *PrimitiveModel) Vertices() []modelspec.Vertex {
-	return m.vertices
 }
 
 func cubeVertexFloatsByLength(length int) []float32 {

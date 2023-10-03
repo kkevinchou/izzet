@@ -383,7 +383,7 @@ type RenderData struct {
 }
 
 func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
-	q := []entities.Node{entity.Node}
+	q := []entities.Node{entity.MeshComponent.Node}
 
 	var result []RenderData
 

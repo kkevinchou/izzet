@@ -25,14 +25,14 @@ func prefabsUI(world World, ps []*prefabs.Prefab) {
 		if open {
 			// this call allows drag/drop from an expanded tree node
 			beginPrefabDragDrop(prefab.ID)
-			if imgui.TreeNodeV("meshes", imgui.TreeNodeFlagsNone) {
-				for _, mr := range prefab.ModelRefs() {
-					if imgui.TreeNodeV(mr.Name, imgui.TreeNodeFlagsLeaf) {
-						imgui.TreePop()
-					}
-				}
-				imgui.TreePop()
-			}
+			// if imgui.TreeNodeV("meshes", imgui.TreeNodeFlagsNone) {
+			// 	for _, mr := range prefab.ModelRefs() {
+			// 		if imgui.TreeNodeV(mr.Name, imgui.TreeNodeFlagsLeaf) {
+			// 			imgui.TreePop()
+			// 		}
+			// 	}
+			// 	imgui.TreePop()
+			// }
 			imgui.TreePop()
 		}
 		// this call allows drag/drop from a collapsed tree node

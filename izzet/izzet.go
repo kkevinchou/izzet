@@ -13,7 +13,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/izzet/izzet/other"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -203,7 +202,7 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 	for _, docName := range docNames {
 		doc := assetManager.GetDocument(docName)
 		for _, mesh := range doc.Meshes {
-			modelLibrary.Register(doc.Name, mesh)
+			modelLibrary.RegisterMesh(doc.Name, mesh)
 		}
 	}
 }
@@ -213,7 +212,7 @@ func (g *Izzet) setupPrefabs(data *Data) {
 		name := entityAsset.Name
 
 		document := g.assetManager.GetDocument(name)
-		pf := prefabs.CreatePrefab(name, document)
+		pf := prefabs.CreatePrefab(document)
 		g.prefabs[pf.ID] = pf
 	}
 }
@@ -245,7 +244,7 @@ func (g *Izzet) setupEntities() {
 	g.AddEntity(parent)
 	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
 
-	for _, e := range other.CreateEntitiesFromScene(doc) {
+	for _, e := range entities.CreateEntitiesFromDocument(doc) {
 		g.AddEntity(e)
 		entities.BuildRelation(parent, e)
 	}

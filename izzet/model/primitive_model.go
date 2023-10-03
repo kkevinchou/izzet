@@ -10,6 +10,7 @@ type PrimitiveModel struct {
 	vao         uint32
 	geometryVAO uint32
 	vertices    []modelspec.Vertex
+	primitive   *modelspec.PrimitiveSpecification
 }
 
 func NewCube() *PrimitiveModel {
@@ -17,6 +18,8 @@ func NewCube() *PrimitiveModel {
 	m := &PrimitiveModel{}
 
 	primitive := createPrimitiveSpec()
+	m.primitive = primitive
+
 	mesh := &modelspec.MeshSpecification{Primitives: []*modelspec.PrimitiveSpecification{primitive}}
 	m.vao = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0][0]
 	m.geometryVAO = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})[0][0]
@@ -67,7 +70,7 @@ func (m *PrimitiveModel) RenderData() []RenderData {
 		Transform:   mgl32.Ident4(),
 		VAO:         m.vao,
 		GeometryVAO: m.geometryVAO,
-		VertexCount: 48, // 3 verts per triangle * 2 triangles per face * 8 faces = 48
+		Primitive:   m.primitive,
 	}
 
 	return []RenderData{renderData}

@@ -123,7 +123,9 @@ func New(world World, shaderDirectory string, width, height int) *Renderer {
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
 	settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 
-	shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
+	// shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
+	dimension := 8640
+	shadowMap, err := NewShadowMap(dimension, dimension, float64(panels.DBG.Far))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
@@ -548,7 +550,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.GeometryVAO)
-			iztDrawElements(int32(renderData.VertexCount))
+			iztDrawElements(int32(len(renderData.Primitive.VertexIndices)))
 		}
 	}
 }
@@ -611,7 +613,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.GeometryVAO)
-			iztDrawElements(int32(renderData.VertexCount))
+			iztDrawElements(int32(len(renderData.Primitive.VertexIndices)))
 		}
 	}
 }

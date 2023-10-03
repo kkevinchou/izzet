@@ -15,8 +15,9 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.SetNextWindowBgAlpha(0.8)
 	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
-	imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
 
+	// imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
+	imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar)
 	if imgui.BeginTabBar("Scene") {
 		if imgui.BeginTabItem("Scene Hierarchy") {
 			sceneUI(world)

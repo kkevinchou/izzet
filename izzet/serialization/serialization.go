@@ -26,7 +26,6 @@ type SerializedEntity struct {
 	PrefabID          *int
 	PrefabEntityIndex int
 
-	// Position []float64
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
 	Scale    mgl64.Vec3
@@ -70,12 +69,6 @@ func (s *Serializer) WriteOut(filepath string) {
 				sEntity.ChildIDs = append(sEntity.ChildIDs, child.ID)
 			}
 		}
-
-		// if entity.Prefab != nil {
-		// 	id := entity.Prefab.ID
-		// 	sEntity.PrefabID = &id
-		// 	sEntity.PrefabEntityIndex = entity.PrefabEntityIndex
-		// }
 
 		serializedEntities = append(
 			serializedEntities,
@@ -134,13 +127,6 @@ func (s *Serializer) Entities() []*entities.Entity {
 	dsEntities := []*entities.Entity{}
 	for _, e := range s.serializedWorld.Entities {
 		var dsEntity *entities.Entity
-
-		if e.PrefabID != nil {
-			prefab := s.world.GetPrefabByID(*e.PrefabID)
-			dsEntity = entities.InstantiateFromPrefabStaticID(e.ID, prefab.ModelRefs()[e.PrefabEntityIndex].Model, prefab, e.PrefabEntityIndex)
-		} else {
-			dsEntity = entities.InstantiateBaseEntity(e.Name, e.ID)
-		}
 
 		dsEntity.LightInfo = e.LightInfo
 		dsEntity.Billboard = e.Billboard

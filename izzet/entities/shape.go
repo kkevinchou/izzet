@@ -1,11 +1,10 @@
 package entities
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/model"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type ShapeType string
@@ -45,8 +44,6 @@ type ShapeData struct {
 
 func CreateCube(length int) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
-	cube := model.NewCube()
-	entity.Model = cube
 	entity.Material = &MaterialComponent{
 		PBR: types.PBR{
 			Roughness:        0.85,
@@ -55,7 +52,14 @@ func CreateCube(length int) *Entity {
 			DiffuseIntensity: 1,
 		},
 	}
-	entity.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(cube.Vertices()))
+	entity.MeshComponent = &MeshComponent{
+		Node: Node{
+			MeshHandle: modellibrary.NewHandle("global", 0),
+			Transform:  mgl32.Ident4(),
+			Children:   nil,
+		},
+	}
+	// entity.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(cube.Vertices()))
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
 	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
 	entity.Movement = &MovementComponent{

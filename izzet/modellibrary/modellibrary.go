@@ -52,7 +52,7 @@ func NewHandle(namespace string, id int) Handle {
 // - primitives don't exist in a vacuumm and are always associated with a mesh
 // - the model library should be a mesh library using mesh handles (their nane)
 
-type LibraryPrimitive struct {
+type Primitive struct {
 	// Name      string
 	Primitive *modelspec.PrimitiveSpecification
 	Transform mgl32.Mat4
@@ -68,12 +68,12 @@ type LibraryPrimitive struct {
 }
 
 type ModelLibrary struct {
-	Meshes map[Handle][]LibraryPrimitive
+	Primitives map[Handle][]Primitive
 }
 
 func New() *ModelLibrary {
 	m := &ModelLibrary{
-		Meshes: map[Handle][]LibraryPrimitive{},
+		Primitives: map[Handle][]Primitive{},
 	}
 
 	m.RegisterMesh("global", cube())
@@ -88,7 +88,7 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 
 	handle := NewHandle(namespace, mesh.ID)
 	for i, primitive := range mesh.Primitives {
-		m.Meshes[handle] = append(m.Meshes[handle], LibraryPrimitive{
+		m.Primitives[handle] = append(m.Primitives[handle], Primitive{
 			Primitive:   primitive,
 			VAO:         vaos[0][i],
 			GeometryVAO: geometryVAOs[0][i],
@@ -96,8 +96,8 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 	}
 }
 
-func (m *ModelLibrary) Get(handle Handle) []LibraryPrimitive {
-	return m.Meshes[handle]
+func (m *ModelLibrary) GetPrimitives(handle Handle) []Primitive {
+	return m.Primitives[handle]
 }
 
 // TODO: create the ability to create a singular vao that has all the mesh data merged into one

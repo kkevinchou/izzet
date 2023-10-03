@@ -82,7 +82,7 @@ func (m *ModelLibrary) Register(namespace string, mesh *modelspec.MeshSpecificat
 	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 
-	handle := NewHandle(namespace, mesh.MeshID)
+	handle := NewHandle(namespace, mesh.ID)
 	for i, primitive := range mesh.Primitives {
 		m.Meshes[handle] = append(m.Meshes[handle], LibraryPrimitive{
 			Primitive:   primitive,

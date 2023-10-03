@@ -375,24 +375,24 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 	}
 }
 
-type RenderData2 struct {
+type RenderData struct {
 	Primitive   *modelspec.PrimitiveSpecification
 	Transform   mgl32.Mat4
 	VAO         uint32
 	GeometryVAO uint32
 }
 
-func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData2 {
+func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
 	q := []entities.Node{entity.Node}
 
-	var result []RenderData2
+	var result []RenderData
 
 	for len(q) > 0 {
 		var nextLayerNodes []entities.Node
 		for _, node := range q {
 			libraryPrimitives := modelLibrary.Get(node.MeshHandle)
 			for _, lp := range libraryPrimitives {
-				result = append(result, RenderData2{
+				result = append(result, RenderData{
 					Primitive:   lp.Primitive,
 					Transform:   node.Transform,
 					VAO:         lp.VAO,
@@ -439,7 +439,6 @@ func drawModel(
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	// for _, renderData := range model.RenderData() {
 	for _, renderData := range getRenderData(modelLibrary, entity) {
 		primitive := renderData.Primitive
 		if material == nil {

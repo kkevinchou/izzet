@@ -9,7 +9,6 @@ import (
 )
 
 type RenderModel interface {
-	RenderData() []RenderData
 	JointMap() map[int]*modelspec.JointSpec
 	RootJoint() *modelspec.JointSpec
 	Name() string
@@ -19,98 +18,15 @@ type ModelConfig struct {
 	MaxAnimationJointWeights int
 }
 
-type RenderData struct {
-	// Name      string
-	Primitive *modelspec.PrimitiveSpecification
-	Transform mgl32.Mat4
-
-	// vao that contains all vertex attributes
-	// position, normals, texture coords, joint indices/weights, etc
-	VAO uint32
-
-	// vao that only contains geometry related vertex attributes
-	// i.e. vertex positions and joint indices / weights
-	// but not normals, texture coords
-	GeometryVAO uint32
-}
-
 type Model struct {
 	name        string
 	document    *modelspec.Document
 	modelConfig *ModelConfig
-	renderData  []RenderData
 	vertices    []modelspec.Vertex
 
 	translation mgl32.Vec3
 	rotation    mgl32.Quat
 	scale       mgl32.Vec3
-}
-
-func CreateModelsFromScene(document *modelspec.Document, modelConfig *ModelConfig) []*Model {
-	var models []*Model
-	vaos := createVAOs(modelConfig, document.Meshes)
-	geometryVAOs := createGeometryVAOs(modelConfig, document.Meshes)
-
-	scene := document.Scenes[0]
-
-	for _, node := range scene.Nodes {
-		m := &Model{
-			name:        node.Name,
-			document:    document,
-			modelConfig: modelConfig,
-
-			// ignores the transform from the root, this is applied to the model directly
-			renderData: parseRenderData(node, mgl32.Ident4(), true, vaos, geometryVAOs, document.Meshes),
-		}
-
-		for i := range m.renderData {
-			renderData := &m.renderData[i]
-			// TODO - this doesn't support parented objects well since unique
-			// vertices does not handle rotations/translations. this causes us
-			// to make incorrect bounding boxes
-			vertices := renderData.Primitive.UniqueVertices
-			m.vertices = append(m.vertices, vertices...)
-		}
-
-		models = append(models, m)
-
-		// apply transformations directly
-		m.translation = node.Translation
-		m.rotation = node.Rotation
-		m.scale = node.Scale
-	}
-
-	return models
-}
-
-func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool, vaos [][]uint32, geometryVAOs [][]uint32, meshes []*modelspec.MeshSpecification) []RenderData {
-	var data []RenderData
-
-	transform := node.Transform
-	if ignoreTransform {
-		transform = mgl32.Ident4()
-	}
-	transform = parentTransform.Mul4(transform)
-
-	if node.MeshID != nil {
-		mesh := meshes[*node.MeshID]
-		for i, primitive := range mesh.Primitives {
-			data = append(
-				data, RenderData{
-					Primitive:   primitive,
-					Transform:   transform,
-					VAO:         vaos[*node.MeshID][i],
-					GeometryVAO: geometryVAOs[*node.MeshID][i],
-				},
-			)
-		}
-	}
-
-	for _, childNode := range node.Children {
-		data = append(data, parseRenderData(childNode, transform, false, vaos, geometryVAOs, meshes)...)
-	}
-
-	return data
 }
 
 func (m *Model) Name() string {
@@ -129,10 +45,6 @@ func (m *Model) JointMap() map[int]*modelspec.JointSpec {
 	return m.document.JointMap
 }
 
-func (m *Model) RenderData() []RenderData {
-	return m.renderData
-}
-
 func (m *Model) Vertices() []modelspec.Vertex {
 	return m.vertices
 }
@@ -148,10 +60,6 @@ func (m *Model) Rotation() mgl32.Quat {
 func (m *Model) Scale() mgl32.Vec3 {
 	return m.scale
 }
-
-// func (m *Model) VertexCount() int {
-// 	return len(m.mesh.vertices)
-// }
 
 // TODO: create the ability to create a singular vao that has all the mesh data merged into one
 // also, when we merged everything into one vao, we need to first apply any node transformations

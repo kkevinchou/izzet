@@ -3,7 +3,6 @@ package prefabs
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/model"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -43,27 +42,27 @@ func CreatePrefab(name string, document *modelspec.Document) *Prefab {
 }
 
 func (p *Prefab) Load() {
-	if p.loaded {
-		return
-	}
+	// if p.loaded {
+	// 	return
+	// }
 
-	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	models := model.CreateModelsFromScene(p.document, modelConfig)
-	modelRefs := []*ModelRef{}
-	for _, model := range models {
-		modelRef := &ModelRef{
-			Name:  model.Name(),
-			Model: model,
+	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	// models := model.CreateModelsFromScene(p.document, modelConfig)
+	// modelRefs := []*ModelRef{}
+	// for _, model := range models {
+	// 	modelRef := &ModelRef{
+	// 		Name:  model.Name(),
+	// 		Model: model,
 
-			Position: mgl64.Vec3{},
-			Rotation: mgl64.QuatIdent(),
-			Scale:    mgl64.Vec3{},
-		}
+	// 		Position: mgl64.Vec3{},
+	// 		Rotation: mgl64.QuatIdent(),
+	// 		Scale:    mgl64.Vec3{},
+	// 	}
 
-		modelRefs = append(modelRefs, modelRef)
-	}
-	p.modelRefs = modelRefs
-	p.loaded = true
+	// 	modelRefs = append(modelRefs, modelRef)
+	// }
+	// p.modelRefs = modelRefs
+	// p.loaded = true
 }
 
 func (p *Prefab) ModelRefs() []*ModelRef {

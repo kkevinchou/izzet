@@ -203,8 +203,14 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 	for _, mesh := range doc.Meshes {
 		modelLibrary.Register("some handle", mesh)
 	}
+
+	parent := entities.InstantiateEntity("scene_dummy")
+	g.AddEntity(parent)
+	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
+
 	for _, e := range other.CreateEntitiesFromScene(doc) {
 		g.AddEntity(e)
+		entities.BuildRelation(parent, e)
 	}
 }
 

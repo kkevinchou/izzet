@@ -390,13 +390,13 @@ func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Ent
 	for len(q) > 0 {
 		var nextLayerNodes []entities.Node
 		for _, node := range q {
-			libraryPrimitives := modelLibrary.Get(node.MeshHandle)
-			for _, lp := range libraryPrimitives {
+			primitives := modelLibrary.GetPrimitives(node.MeshHandle)
+			for _, p := range primitives {
 				result = append(result, RenderData{
-					Primitive:   lp.Primitive,
+					Primitive:   p.Primitive,
 					Transform:   node.Transform,
-					VAO:         lp.VAO,
-					GeometryVAO: lp.GeometryVAO,
+					VAO:         p.VAO,
+					GeometryVAO: p.GeometryVAO,
 				})
 			}
 			nextLayerNodes = append(nextLayerNodes, node.Children...)

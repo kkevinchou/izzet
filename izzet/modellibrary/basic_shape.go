@@ -5,9 +5,11 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
+const CubeMeshID int = 18
+
 func cube() *modelspec.MeshSpecification {
 	primitive := createCubePrimitive()
-	return &modelspec.MeshSpecification{Primitives: []*modelspec.PrimitiveSpecification{primitive}}
+	return &modelspec.MeshSpecification{ID: CubeMeshID, Primitives: []*modelspec.PrimitiveSpecification{primitive}}
 }
 
 func createCubePrimitive() *modelspec.PrimitiveSpecification {

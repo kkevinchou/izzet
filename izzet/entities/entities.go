@@ -27,13 +27,12 @@ type Entity struct {
 	localRotation mgl64.Quat
 	scale         mgl64.Vec3
 
-	// // prefab info for serialization
-	// Prefab            *prefabs.Prefab
-	// PrefabEntityIndex int
+	Node Node
 
 	// model
+	// SERIALIZATION GOAL - GET RID OF MODEL
+	Model model.RenderModel
 
-	Model       model.RenderModel
 	boundingBox *collider.BoundingBox
 
 	// relationships
@@ -130,7 +129,7 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 	}
 }
 
-func CreateDummy(name string) *Entity {
+func InstantiateEntity(name string) *Entity {
 	entity := InstantiateBaseEntity(name, id)
 	id += 1
 	return entity

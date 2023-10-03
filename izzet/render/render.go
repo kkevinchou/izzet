@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/menus"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -29,6 +30,7 @@ import (
 
 type World interface {
 	AssetManager() *assets.AssetManager
+	ModelLibrary() *modellibrary.ModelLibrary
 	Camera() *camera.Camera
 	Prefabs() []*prefabs.Prefab
 	Entities() []*entities.Entity
@@ -803,7 +805,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
 	for _, entity := range renderableEntities {
-		if entity == nil || entity.Model == nil {
+		if entity == nil {
 			continue
 		}
 
@@ -822,6 +824,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			r.depthCubeMapTexture,
 			entity.ID,
 			entity.Material,
+			r.world.ModelLibrary(),
+			entity,
 		)
 
 	}

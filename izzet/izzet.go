@@ -11,7 +11,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/other"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -32,6 +34,7 @@ type Izzet struct {
 	width, height int
 
 	assetManager *assets.AssetManager
+	modelLibrary *modellibrary.ModelLibrary
 
 	camera *camera.Camera
 
@@ -80,6 +83,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
+	g.modelLibrary = modellibrary.New()
 	data := loadData(dataFilePath)
 
 	g.camera = &camera.Camera{
@@ -98,6 +102,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
+	g.setupAssets(g.assetManager, g.modelLibrary)
 	g.setupPrefabs(data)
 	fmt.Println(time.Since(start), "prefabs done")
 	g.setupEntities()
@@ -193,6 +198,16 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
+func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary) {
+	doc := assetManager.GetDocument("demo_scene_samurai")
+	for _, mesh := range doc.Meshes {
+		modelLibrary.Register("some handle", mesh)
+	}
+	for _, e := range other.CreateEntitiesFromScene(doc) {
+		g.AddEntity(e)
+	}
+}
+
 func (g *Izzet) setupPrefabs(data *Data) {
 	for _, entityAsset := range data.EntityAssets {
 		name := entityAsset.Name
@@ -224,20 +239,20 @@ func (g *Izzet) setupEntities() {
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.AddEntity(directionalLight)
 
-	pfMap := map[string]*prefabs.Prefab{}
-	for _, pf := range g.Prefabs() {
-		pfMap[pf.Name] = pf
-	}
+	// pfMap := map[string]*prefabs.Prefab{}
+	// for _, pf := range g.Prefabs() {
+	// 	pfMap[pf.Name] = pf
+	// }
 
-	scenePrefab := pfMap["demo_scene_samurai"]
-	parent := entities.CreateDummy("scene_dummy")
-	g.AddEntity(parent)
-	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
+	// scenePrefab := pfMap["demo_scene_samurai"]
+	// parent := entities.InstantiateEntity("scene_dummy")
+	// g.AddEntity(parent)
+	// entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
 
-	for _, entity := range entities.InstantiateFromPrefab(scenePrefab) {
-		entities.BuildRelation(parent, entity)
-		g.AddEntity(entity)
-	}
+	// for _, entity := range entities.InstantiateFromPrefab(scenePrefab) {
+	// 	entities.BuildRelation(parent, entity)
+	// 	g.AddEntity(entity)
+	// }
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

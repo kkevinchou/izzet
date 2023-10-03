@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -89,6 +90,10 @@ func (g *Izzet) Prefabs() []*prefabs.Prefab {
 
 func (g *Izzet) AssetManager() *assets.AssetManager {
 	return g.assetManager
+}
+
+func (g *Izzet) ModelLibrary() *modellibrary.ModelLibrary {
+	return g.modelLibrary
 }
 
 func (g *Izzet) Camera() *camera.Camera {

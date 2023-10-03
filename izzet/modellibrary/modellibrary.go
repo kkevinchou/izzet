@@ -3,12 +3,14 @@ package modellibrary
 import (
 	"sort"
 
-	"github.com/go-gl/gl/all-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
+
+type Handle string
 
 // Interface
 // - stores models that have been loaded and builds their VAOs for later rendering
@@ -43,8 +45,8 @@ import (
 // - primitives don't exist in a vacuumm and are always associated with a mesh
 // - the model library should be a mesh library using mesh handles (their nane)
 
-type RenderData struct {
-	Name      string
+type LibraryPrimitive struct {
+	// Name      string
 	Primitive *modelspec.PrimitiveSpecification
 	Transform mgl32.Mat4
 
@@ -56,21 +58,45 @@ type RenderData struct {
 	// i.e. vertex positions and joint indices / weights
 	// but not normals, texture coords
 	GeometryVAO uint32
-	VertexCount int
 }
 
 type ModelLibrary struct {
+	Meshes         map[Handle][]LibraryPrimitive
+	MeshesByMeshID map[int][]LibraryPrimitive
 }
 
-func (m *ModelLibrary) Register(handle string, mesh *modelspec.MeshSpecification) {
+func New() *ModelLibrary {
+	return &ModelLibrary{
+		Meshes:         map[Handle][]LibraryPrimitive{},
+		MeshesByMeshID: map[int][]LibraryPrimitive{},
+	}
+}
+
+func (m *ModelLibrary) Register(handle Handle, mesh *modelspec.MeshSpecification) {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-	_, _ = vaos, geometryVAOs
+
+	for i, primitive := range mesh.Primitives {
+		m.Meshes[handle] = append(m.Meshes[handle], LibraryPrimitive{
+			Primitive:   primitive,
+			VAO:         vaos[0][i],
+			GeometryVAO: geometryVAOs[0][i],
+		})
+		m.MeshesByMeshID[mesh.MeshID] = append(m.MeshesByMeshID[mesh.MeshID], LibraryPrimitive{
+			Primitive:   primitive,
+			VAO:         vaos[0][i],
+			GeometryVAO: geometryVAOs[0][i],
+		})
+	}
 }
 
-func (m *ModelLibrary) Get(handle string) []RenderData {
-	return nil
+func (m *ModelLibrary) Get(handle Handle) []LibraryPrimitive {
+	return m.Meshes[handle]
+}
+
+func (m *ModelLibrary) GetByMeshID(meshID int) []LibraryPrimitive {
+	return m.MeshesByMeshID[meshID]
 }
 
 // func CreateModelsFromScene(document *modelspec.Document, modelConfig *ModelConfig) []*Model {
@@ -110,37 +136,37 @@ func (m *ModelLibrary) Get(handle string) []RenderData {
 // 	return models
 // }
 
-func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool, vaos [][]uint32, geometryVAOs [][]uint32, meshes []*modelspec.MeshSpecification) []RenderData {
-	var data []RenderData
+// func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool, vaos [][]uint32, geometryVAOs [][]uint32, meshes []*modelspec.MeshSpecification) []RenderData {
+// 	var data []RenderData
 
-	transform := node.Transform
-	if ignoreTransform {
-		transform = mgl32.Ident4()
-	}
-	transform = parentTransform.Mul4(transform)
+// 	transform := node.Transform
+// 	if ignoreTransform {
+// 		transform = mgl32.Ident4()
+// 	}
+// 	transform = parentTransform.Mul4(transform)
 
-	if node.MeshID != nil {
-		mesh := meshes[*node.MeshID]
-		for i, primitive := range mesh.Primitives {
-			data = append(
-				data, RenderData{
-					Name:        node.Name,
-					Primitive:   primitive,
-					Transform:   transform,
-					VAO:         vaos[*node.MeshID][i],
-					GeometryVAO: geometryVAOs[*node.MeshID][i],
-					VertexCount: len(primitive.Vertices),
-				},
-			)
-		}
-	}
+// 	if node.MeshID != nil {
+// 		mesh := meshes[*node.MeshID]
+// 		for i, primitive := range mesh.Primitives {
+// 			data = append(
+// 				data, RenderData{
+// 					Name:        node.Name,
+// 					Primitive:   primitive,
+// 					Transform:   transform,
+// 					VAO:         vaos[*node.MeshID][i],
+// 					GeometryVAO: geometryVAOs[*node.MeshID][i],
+// 					VertexCount: len(primitive.Vertices),
+// 				},
+// 			)
+// 		}
+// 	}
 
-	for _, childNode := range node.Children {
-		data = append(data, parseRenderData(childNode, transform, false, vaos, geometryVAOs, meshes)...)
-	}
+// 	for _, childNode := range node.Children {
+// 		data = append(data, parseRenderData(childNode, transform, false, vaos, geometryVAOs, meshes)...)
+// 	}
 
-	return data
-}
+// 	return data
+// }
 
 // func (m *Model) VertexCount() int {
 // 	return len(m.mesh.vertices)

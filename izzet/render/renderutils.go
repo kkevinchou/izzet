@@ -12,12 +12,14 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/model"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -373,6 +375,38 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 	}
 }
 
+type RenderData2 struct {
+	Primitive   *modelspec.PrimitiveSpecification
+	Transform   mgl32.Mat4
+	VAO         uint32
+	GeometryVAO uint32
+}
+
+func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData2 {
+	q := []entities.Node{entity.Node}
+
+	var result []RenderData2
+
+	for len(q) > 0 {
+		var nextLayerNodes []entities.Node
+		for _, node := range q {
+			libraryPrimitives := modelLibrary.GetByMeshID(node.MeshID)
+			for _, lp := range libraryPrimitives {
+				result = append(result, RenderData2{
+					Primitive:   lp.Primitive,
+					Transform:   node.Transform,
+					VAO:         lp.VAO,
+					GeometryVAO: lp.GeometryVAO,
+				})
+			}
+			nextLayerNodes = append(nextLayerNodes, node.Children...)
+		}
+		q = nextLayerNodes
+	}
+
+	return result
+}
+
 func drawModel(
 	viewerContext ViewerContext,
 	lightContext LightContext,
@@ -385,6 +419,8 @@ func drawModel(
 	pointLightDepthCubeMap uint32,
 	entityID int,
 	material *entities.MaterialComponent,
+	modelLibrary *modellibrary.ModelLibrary,
+	entity *entities.Entity,
 ) {
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		shader.SetUniformInt("isAnimated", 1)
@@ -403,7 +439,8 @@ func drawModel(
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	for _, renderData := range model.RenderData() {
+	// for _, renderData := range model.RenderData() {
+	for _, renderData := range getRenderData(modelLibrary, entity) {
 		primitive := renderData.Primitive
 		if material == nil {
 			primitiveMaterial := primitive.PBRMaterial.PBRMetallicRoughness

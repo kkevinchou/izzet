@@ -66,7 +66,6 @@ func createPrimitiveSpec() *modelspec.PrimitiveSpecification {
 
 func (m *PrimitiveModel) RenderData() []RenderData {
 	renderData := RenderData{
-		Name:        "primitive",
 		Transform:   mgl32.Ident4(),
 		VAO:         m.vao,
 		GeometryVAO: m.geometryVAO,

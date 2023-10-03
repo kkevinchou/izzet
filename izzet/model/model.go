@@ -20,7 +20,7 @@ type ModelConfig struct {
 }
 
 type RenderData struct {
-	Name      string
+	// Name      string
 	Primitive *modelspec.PrimitiveSpecification
 	Transform mgl32.Mat4
 
@@ -97,7 +97,6 @@ func parseRenderData(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTra
 		for i, primitive := range mesh.Primitives {
 			data = append(
 				data, RenderData{
-					Name:        node.Name,
 					Primitive:   primitive,
 					Transform:   transform,
 					VAO:         vaos[*node.MeshID][i],

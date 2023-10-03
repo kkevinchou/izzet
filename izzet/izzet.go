@@ -201,16 +201,7 @@ func initSeed() {
 func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary) {
 	doc := assetManager.GetDocument("demo_scene_samurai")
 	for _, mesh := range doc.Meshes {
-		modelLibrary.Register("some handle", mesh)
-	}
-
-	parent := entities.InstantiateEntity("scene_dummy")
-	g.AddEntity(parent)
-	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
-
-	for _, e := range other.CreateEntitiesFromScene(doc) {
-		g.AddEntity(e)
-		entities.BuildRelation(parent, e)
+		modelLibrary.Register(doc.Name, mesh)
 	}
 }
 
@@ -245,20 +236,16 @@ func (g *Izzet) setupEntities() {
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.AddEntity(directionalLight)
 
-	// pfMap := map[string]*prefabs.Prefab{}
-	// for _, pf := range g.Prefabs() {
-	// 	pfMap[pf.Name] = pf
-	// }
+	doc := g.assetManager.GetDocument("demo_scene_samurai")
 
-	// scenePrefab := pfMap["demo_scene_samurai"]
-	// parent := entities.InstantiateEntity("scene_dummy")
-	// g.AddEntity(parent)
-	// entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
+	parent := entities.InstantiateEntity("scene_parent")
+	g.AddEntity(parent)
+	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
 
-	// for _, entity := range entities.InstantiateFromPrefab(scenePrefab) {
-	// 	entities.BuildRelation(parent, entity)
-	// 	g.AddEntity(entity)
-	// }
+	for _, e := range other.CreateEntitiesFromScene(doc) {
+		g.AddEntity(e)
+		entities.BuildRelation(parent, e)
+	}
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

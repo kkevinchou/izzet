@@ -3,6 +3,7 @@ package other
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -16,7 +17,7 @@ func CreateEntitiesFromScene(document *modelspec.Document) []*entities.Entity {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
 			entity := entities.InstantiateEntity(node.Name)
-			entity.Node = parseNode(node, true, mgl32.Ident4())
+			entity.Node = parseNode(node, true, mgl32.Ident4(), document.Name)
 			entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 			entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 			entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
@@ -29,7 +30,7 @@ func CreateEntitiesFromScene(document *modelspec.Document) []*entities.Entity {
 }
 
 // func parseNode(node *modelspec.Node, parentTransform mgl32.Mat4, ignoreTransform bool) []RenderData {
-func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32.Mat4) entities.Node {
+func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32.Mat4, namespace string) entities.Node {
 	transform := node.Transform
 	if ignoreTransform {
 		transform = mgl32.Ident4()
@@ -39,12 +40,12 @@ func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32
 	eNode := entities.Node{
 		MeshID:     *node.MeshID,
 		Transform:  transform,
-		MeshHandle: "TODO",
+		MeshHandle: modellibrary.NewHandle(namespace, *node.MeshID),
 	}
 
 	var children []entities.Node
 	for _, childNode := range node.Children {
-		children = append(children, parseNode(childNode, false, transform))
+		children = append(children, parseNode(childNode, false, transform, namespace))
 	}
 
 	eNode.Children = children

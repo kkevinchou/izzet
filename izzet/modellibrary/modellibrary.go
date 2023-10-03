@@ -10,7 +10,14 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-type Handle string
+type Handle struct {
+	namespace string
+	id        int
+}
+
+func NewHandle(namespace string, id int) Handle {
+	return Handle{namespace: namespace, id: id}
+}
 
 // Interface
 // - stores models that have been loaded and builds their VAOs for later rendering
@@ -61,29 +68,23 @@ type LibraryPrimitive struct {
 }
 
 type ModelLibrary struct {
-	Meshes         map[Handle][]LibraryPrimitive
-	MeshesByMeshID map[int][]LibraryPrimitive
+	Meshes map[Handle][]LibraryPrimitive
 }
 
 func New() *ModelLibrary {
 	return &ModelLibrary{
-		Meshes:         map[Handle][]LibraryPrimitive{},
-		MeshesByMeshID: map[int][]LibraryPrimitive{},
+		Meshes: map[Handle][]LibraryPrimitive{},
 	}
 }
 
-func (m *ModelLibrary) Register(handle Handle, mesh *modelspec.MeshSpecification) {
+func (m *ModelLibrary) Register(namespace string, mesh *modelspec.MeshSpecification) {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 
+	handle := NewHandle(namespace, mesh.MeshID)
 	for i, primitive := range mesh.Primitives {
 		m.Meshes[handle] = append(m.Meshes[handle], LibraryPrimitive{
-			Primitive:   primitive,
-			VAO:         vaos[0][i],
-			GeometryVAO: geometryVAOs[0][i],
-		})
-		m.MeshesByMeshID[mesh.MeshID] = append(m.MeshesByMeshID[mesh.MeshID], LibraryPrimitive{
 			Primitive:   primitive,
 			VAO:         vaos[0][i],
 			GeometryVAO: geometryVAOs[0][i],
@@ -93,10 +94,6 @@ func (m *ModelLibrary) Register(handle Handle, mesh *modelspec.MeshSpecification
 
 func (m *ModelLibrary) Get(handle Handle) []LibraryPrimitive {
 	return m.Meshes[handle]
-}
-
-func (m *ModelLibrary) GetByMeshID(meshID int) []LibraryPrimitive {
-	return m.MeshesByMeshID[meshID]
 }
 
 // func CreateModelsFromScene(document *modelspec.Document, modelConfig *ModelConfig) []*Model {

@@ -52,7 +52,7 @@ func sceneHierarchy(world World) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Cube") {
-				child := entities.CreateCube(25)
+				child := entities.CreateCube(world.ModelLibrary(), 25)
 				world.AddEntity(child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()
@@ -94,7 +94,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if imgui.Button("Add Cube") {
-				child := entities.CreateCube(25)
+				child := entities.CreateCube(world.ModelLibrary(), 25)
 				world.AddEntity(child)
 				entities.BuildRelation(entity, child)
 				SelectEntity(child)

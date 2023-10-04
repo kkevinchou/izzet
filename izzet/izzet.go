@@ -228,7 +228,7 @@ func (g *Izzet) setupEntities() {
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.AddEntity(pointLight)
 
-	cube := entities.CreateCube(50)
+	cube := entities.CreateCube(g.modelLibrary, 50)
 	entities.SetLocalPosition(cube, mgl64.Vec3{154, 126, -22})
 	g.AddEntity(cube)
 

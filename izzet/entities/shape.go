@@ -52,9 +52,11 @@ func CreateCube(length int) *Entity {
 			DiffuseIntensity: 1,
 		},
 	}
+
+	handle := modellibrary.NewHandle("global", modellibrary.CubeMeshID)
 	entity.MeshComponent = &MeshComponent{
 		Node: Node{
-			MeshHandle: modellibrary.NewHandle("global", modellibrary.CubeMeshID),
+			MeshHandle: handle,
 			Transform:  mgl32.Ident4(),
 			Children:   nil,
 		},

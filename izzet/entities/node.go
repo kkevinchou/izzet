@@ -10,7 +10,7 @@ type MeshComponent struct {
 }
 
 type Node struct {
-	MeshHandle modellibrary.Handle
+	MeshHandle *modellibrary.Handle
 	Transform  mgl32.Mat4
 	Children   []Node
 }

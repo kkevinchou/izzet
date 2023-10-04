@@ -198,7 +198,7 @@ func initSeed() {
 }
 
 func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary) {
-	docNames := []string{"demo_scene_city", "demo_scene_samurai"}
+	docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha"}
 	for _, docName := range docNames {
 		doc := assetManager.GetDocument(docName)
 		for _, mesh := range doc.Meshes {

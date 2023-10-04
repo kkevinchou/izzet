@@ -15,8 +15,8 @@ type Handle struct {
 	id        int
 }
 
-func NewHandle(namespace string, id int) Handle {
-	return Handle{namespace: namespace, id: id}
+func NewHandle(namespace string, id int) *Handle {
+	return &Handle{namespace: namespace, id: id}
 }
 
 // Interface
@@ -88,12 +88,42 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 
 	handle := NewHandle(namespace, mesh.ID)
 	for i, primitive := range mesh.Primitives {
-		m.Primitives[handle] = append(m.Primitives[handle], Primitive{
+		m.Primitives[*handle] = append(m.Primitives[*handle], Primitive{
 			Primitive:   primitive,
 			VAO:         vaos[0][i],
 			GeometryVAO: geometryVAOs[0][i],
 		})
 	}
+}
+
+func (m *ModelLibrary) RegisterJoints(namespace string, mesh *modelspec.JointSpec) {
+	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	// vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+	// geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+
+	// handle := NewHandle(namespace, mesh.ID)
+	// for i, primitive := range mesh.Primitives {
+	// 	m.Primitives[handle] = append(m.Primitives[handle], Primitive{
+	// 		Primitive:   primitive,
+	// 		VAO:         vaos[0][i],
+	// 		GeometryVAO: geometryVAOs[0][i],
+	// 	})
+	// }
+}
+
+func (m *ModelLibrary) RegisterAnimation(namespace string, mesh *modelspec.AnimationSpec) {
+	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	// vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+	// geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+
+	// handle := NewHandle(namespace, mesh.ID)
+	// for i, primitive := range mesh.Primitives {
+	// 	m.Primitives[handle] = append(m.Primitives[handle], Primitive{
+	// 		Primitive:   primitive,
+	// 		VAO:         vaos[0][i],
+	// 		GeometryVAO: geometryVAOs[0][i],
+	// 	})
+	// }
 }
 
 func (m *ModelLibrary) GetPrimitives(handle Handle) []Primitive {

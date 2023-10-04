@@ -631,7 +631,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 
 	// render non-models
 	for _, entity := range r.world.Entities() {
-		if entity.Model != nil {
+		if entity.MeshComponent != nil {
 			continue
 		}
 

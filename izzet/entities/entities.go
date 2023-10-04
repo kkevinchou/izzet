@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
@@ -21,7 +22,7 @@ type Entity struct {
 
 	// dirty flag caching world transform
 	dirtyTransformFlag   bool
-	cachedWorldTransform mgl64.Mat4
+	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
 
 	// each Entity has their own transforms and animation player
 	localPosition mgl64.Vec3
@@ -30,9 +31,14 @@ type Entity struct {
 
 	MeshComponent *MeshComponent
 
+	// THINGS TO REMOVE
+	Model           model.RenderModel
+	AnimationPlayer *animation.AnimationPlayer
+	Billboard       *BillboardInfo
+
 	// model
+
 	// SERIALIZATION GOAL - GET RID OF MODEL
-	// Model model.RenderModel
 
 	boundingBox *collider.BoundingBox
 
@@ -42,14 +48,13 @@ type Entity struct {
 	ParentJoint *modelspec.JointSpec
 
 	// animation
-	Animations      map[string]*modelspec.AnimationSpec
-	AnimationPlayer *animation.AnimationPlayer
+	Animations map[string]*modelspec.AnimationSpec
+	RootJoint  *modelspec.JointSpec
 
 	Physics   *PhysicsComponent
 	Collider  *ColliderComponent
 	Movement  *MovementComponent
 	Particles *ParticleGenerator
-	Billboard *BillboardInfo
 	IsSocket  bool
 	LightInfo *LightInfo
 	ImageInfo *ImageInfo
@@ -93,10 +98,11 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 
 		Children: map[int]*Entity{},
 
-		dirtyTransformFlag: true,
-		localPosition:      mgl64.Vec3{0, 0, 0},
-		localRotation:      mgl64.QuatIdent(),
-		scale:              mgl64.Vec3{1, 1, 1},
+		dirtyTransformFlag:   true,
+		localPosition:        mgl64.Vec3{0, 0, 0},
+		localRotation:        mgl64.QuatIdent(),
+		scale:                mgl64.Vec3{1, 1, 1},
+		cachedWorldTransform: mgl64.Ident4(),
 	}
 }
 
@@ -151,8 +157,11 @@ func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32
 	transform = parentTransform.Mul4(transform)
 
 	eNode := Node{
-		Transform:  transform,
-		MeshHandle: modellibrary.NewHandle(namespace, *node.MeshID),
+		Transform: transform,
+	}
+
+	if node.MeshID != nil {
+		eNode.MeshHandle = modellibrary.NewHandle(namespace, *node.MeshID)
 	}
 
 	var children []Node

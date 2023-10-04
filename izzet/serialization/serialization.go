@@ -30,7 +30,7 @@ type SerializedEntity struct {
 	Rotation mgl64.Quat
 	Scale    mgl64.Vec3
 
-	Billboard *entities.BillboardInfo
+	Billboard bool
 	LightInfo *entities.LightInfo
 	ImageInfo *entities.ImageInfo
 	ShapeData []*entities.ShapeData

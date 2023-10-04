@@ -22,6 +22,8 @@ var (
 	slowSpeed      float64 = 100 // units per second
 )
 
+// Systems Context
+
 func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	if frameInput.WindowEvent.Resized {
 		w, h := g.window.GetSize()

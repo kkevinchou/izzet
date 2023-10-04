@@ -5,6 +5,8 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/types"
+	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type ShapeType string
@@ -42,7 +44,7 @@ type ShapeData struct {
 	Triangle *Triangle
 }
 
-func CreateCube(length int) *Entity {
+func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
 	entity.Material = &MaterialComponent{
 		PBR: types.PBR{
@@ -61,7 +63,11 @@ func CreateCube(length int) *Entity {
 			Children:   nil,
 		},
 	}
-	// entity.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(cube.Vertices()))
+
+	// cube only has a singular primitive
+	primitive := ml.GetPrimitives(*handle)
+	entity.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(primitive[0].Primitive.UniqueVertices))
+
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
 	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
 	entity.Movement = &MovementComponent{

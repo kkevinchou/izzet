@@ -7,6 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -142,13 +143,22 @@ func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
 			entity := InstantiateEntity(node.Name)
-			entity.MeshComponent = &MeshComponent{Node: parseNode(node, true, mgl32.Ident4(), document.Name)}
+
+			rootNode := parseNode(node, true, mgl32.Ident4(), document.Name)
+			entity.MeshComponent = &MeshComponent{Node: rootNode}
 
 			if len(document.Animations) > 0 {
 				entity.RootJoint = document.RootJoint
 				entity.Animations = document.Animations
 				entity.AnimationPlayer = animation.NewAnimationPlayer(entity.Animations, entity.RootJoint)
 			}
+
+			// entity.MeshComponent
+
+			// modellibrary.GetPrimitives()
+			// modellibrary.UniqueVerticesFromPrimitives()
+
+			// entity.boundingBox =
 
 			SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 			SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))

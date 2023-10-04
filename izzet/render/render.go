@@ -816,7 +816,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			r.shadowMap,
 			shader,
 			r.world.AssetManager(),
-			entity.Model,
 			entity.AnimationPlayer,
 			modelMatrix,
 			r.depthCubeMapTexture,

@@ -11,7 +11,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
@@ -413,7 +412,6 @@ func drawModel(
 	shadowMap *ShadowMap,
 	shader *shaders.ShaderProgram,
 	assetManager *assets.AssetManager,
-	model model.RenderModel,
 	animationPlayer *animation.AnimationPlayer,
 	modelMatrix mgl64.Mat4,
 	pointLightDepthCubeMap uint32,

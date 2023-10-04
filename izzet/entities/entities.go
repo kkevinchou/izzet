@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
@@ -33,7 +32,7 @@ type Entity struct {
 
 	// model
 	// SERIALIZATION GOAL - GET RID OF MODEL
-	Model model.RenderModel
+	// Model model.RenderModel
 
 	boundingBox *collider.BoundingBox
 

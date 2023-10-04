@@ -58,7 +58,7 @@ func animationUI(world World, entity *entities.Entity) {
 	imgui.LabelText("", "Joints")
 	JointHover = nil
 	JointsToRender = nil
-	drawJointTree(world, entity, entity.Model.RootJoint())
+	drawJointTree(world, entity, entity.RootJoint)
 
 	if RenderJoints {
 		for jid, _ := range entity.Model.JointMap() {

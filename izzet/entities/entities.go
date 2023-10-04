@@ -30,17 +30,14 @@ type Entity struct {
 	scale         mgl64.Vec3
 
 	MeshComponent *MeshComponent
+	boundingBox   *collider.BoundingBox
 
 	// THINGS TO REMOVE
 	Model           model.RenderModel
 	AnimationPlayer *animation.AnimationPlayer
 	Billboard       *BillboardInfo
-
-	// model
-
-	// SERIALIZATION GOAL - GET RID OF MODEL
-
-	boundingBox *collider.BoundingBox
+	Animations      map[string]*modelspec.AnimationSpec
+	RootJoint       *modelspec.JointSpec
 
 	// relationships
 	Parent      *Entity
@@ -48,8 +45,6 @@ type Entity struct {
 	ParentJoint *modelspec.JointSpec
 
 	// animation
-	Animations map[string]*modelspec.AnimationSpec
-	RootJoint  *modelspec.JointSpec
 
 	Physics   *PhysicsComponent
 	Collider  *ColliderComponent
@@ -138,6 +133,13 @@ func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {
 		for _, node := range scene.Nodes {
 			entity := InstantiateEntity(node.Name)
 			entity.MeshComponent = &MeshComponent{Node: parseNode(node, true, mgl32.Ident4(), document.Name)}
+
+			if len(document.Animations) > 0 {
+				entity.RootJoint = document.RootJoint
+				entity.Animations = document.Animations
+				entity.AnimationPlayer = animation.NewAnimationPlayer(entity.Animations, entity.RootJoint)
+			}
+
 			SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 			SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 			SetScale(entity, utils.Vec3F32ToF64(node.Scale))

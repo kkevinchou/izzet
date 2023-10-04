@@ -44,7 +44,7 @@ func CreateDirectionalLight() *Entity {
 	entity := InstantiateBaseEntity("directional-light", id)
 	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
 	entity.LightInfo = lightInfo
-	entity.Billboard = &BillboardInfo{}
+	entity.Billboard = true
 	SetScale(entity, mgl64.Vec3{15, 15, 15})
 	id += 1
 	return entity
@@ -62,7 +62,7 @@ func CreatePointLight() *Entity {
 	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
 	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
 	entity.LightInfo = lightInfo
-	entity.Billboard = &BillboardInfo{}
+	entity.Billboard = true
 	SetScale(entity, mgl64.Vec3{15, 15, 15})
 	id += 1
 	return entity

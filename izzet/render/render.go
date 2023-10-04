@@ -681,7 +681,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 			textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
 			texture := r.world.AssetManager().GetTexture(textureName)
 			if texture != nil {
-				if entity.Billboard != nil {
+				if entity.Billboard {
 					shader := shaderManager.GetShaderProgram("world_space_quad")
 					shader.Use()
 

@@ -17,8 +17,24 @@ import (
 var id int
 
 type Entity struct {
-	ID   int
-	Name string
+	// THINGS TO REMOVE
+	Model           model.RenderModel
+	AnimationPlayer *animation.AnimationPlayer
+	Animations      map[string]*modelspec.AnimationSpec
+	RootJoint       *modelspec.JointSpec
+
+	ID        int
+	Name      string
+	Billboard bool
+	Physics   *PhysicsComponent
+	Collider  *ColliderComponent
+	Movement  *MovementComponent
+	Particles *ParticleGenerator
+	IsSocket  bool
+	LightInfo *LightInfo
+	ImageInfo *ImageInfo
+	ShapeData []*ShapeData
+	Material  *MaterialComponent
 
 	// dirty flag caching world transform
 	dirtyTransformFlag   bool
@@ -32,29 +48,10 @@ type Entity struct {
 	MeshComponent *MeshComponent
 	boundingBox   *collider.BoundingBox
 
-	// THINGS TO REMOVE
-	Model           model.RenderModel
-	AnimationPlayer *animation.AnimationPlayer
-	Billboard       *BillboardInfo
-	Animations      map[string]*modelspec.AnimationSpec
-	RootJoint       *modelspec.JointSpec
-
 	// relationships
 	Parent      *Entity
 	Children    map[int]*Entity
 	ParentJoint *modelspec.JointSpec
-
-	// animation
-
-	Physics   *PhysicsComponent
-	Collider  *ColliderComponent
-	Movement  *MovementComponent
-	Particles *ParticleGenerator
-	IsSocket  bool
-	LightInfo *LightInfo
-	ImageInfo *ImageInfo
-	ShapeData []*ShapeData
-	Material  *MaterialComponent
 }
 
 func (e *Entity) GetID() int {
@@ -69,18 +66,18 @@ func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
 }
 
-func (e *Entity) BoundingBox() *collider.BoundingBox {
-	if e.boundingBox == nil {
-		return nil
-	}
-	modelMatrix := WorldTransform(e)
-	// t, r, s := utils.DecomposeF64(modelMatrix)
-	// translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
-	// scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
+// func (e *Entity) BoundingBox() *collider.BoundingBox {
+// 	if e.boundingBox == nil {
+// 		return nil
+// 	}
+// 	modelMatrix := WorldTransform(e)
+// 	// t, r, s := utils.DecomposeF64(modelMatrix)
+// 	// translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
+// 	// scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
 
-	// return e.boundingBox.Transform(translation.Mul4(r.Mat4()).Mul4(scale))
-	return e.boundingBox.Transform(modelMatrix)
-}
+// 	// return e.boundingBox.Transform(translation.Mul4(r.Mat4()).Mul4(scale))
+// 	return e.boundingBox.Transform(modelMatrix)
+// }
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
 	return CreateEntitiesFromDocument(prefab.Document)
@@ -123,6 +120,19 @@ func RemoveParent(child *Entity) {
 		delete(parent.Children, child.ID)
 		child.Parent = nil
 	}
+}
+
+func (e *Entity) BoundingBox() *collider.BoundingBox {
+	if e.boundingBox == nil {
+		return nil
+	}
+	modelMatrix := WorldTransform(e)
+	// t, r, s := utils.DecomposeF64(modelMatrix)
+	// translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
+	// scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
+
+	// return e.boundingBox.Transform(translation.Mul4(r.Mat4()).Mul4(scale))
+	return e.boundingBox.Transform(modelMatrix)
 }
 
 func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {

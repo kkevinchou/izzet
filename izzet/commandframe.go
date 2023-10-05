@@ -39,9 +39,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	// system loop
 	for _, entity := range g.Entities() {
 		// animation system
-		if entity.AnimationPlayer != nil {
+		if entity.Animation != nil {
 			if panels.LoopAnimation {
-				entity.AnimationPlayer.Update(delta)
+				entity.Animation.AnimationPlayer.Update(delta)
 			}
 		}
 
@@ -221,17 +221,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		}
 		g.spatialPartition.IndexEntities(spatialEntities)
 	}
-
-	// selectedEntity := panels.SelectedEntity()
-	// if selectedEntity != nil {
-	// 	boundingBox := selectedEntity.BoundingBox()
-	// 	if boundingBox != nil {
-	// 		partitions := g.spatialPartition.IntersectingPartitions(*boundingBox)
-	// 		entities := g.spatialPartition.QueryEntities(*boundingBox)
-	// 		fmt.Println(entities)
-	// 		fmt.Println(partitions)
-	// 	}
-	// }
 }
 
 func (g *Izzet) handleInputCommands(frameInput input.Input) {

@@ -17,11 +17,6 @@ import (
 var id int
 
 type Entity struct {
-	// Animation
-	AnimationHandle string
-	AnimationPlayer *animation.AnimationPlayer
-	RootJointID     int
-
 	ID        int
 	Name      string
 	Billboard bool
@@ -34,6 +29,7 @@ type Entity struct {
 	ImageInfo *ImageInfo
 	ShapeData []*ShapeData
 	Material  *MaterialComponent
+	Animation *AnimationComponent
 
 	// dirty flag caching world transform
 	dirtyTransformFlag   bool
@@ -145,11 +141,9 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 			entity.MeshComponent = &MeshComponent{Node: rootNode}
 
 			if len(document.Animations) > 0 {
-				entity.RootJointID = document.RootJoint.ID
-				entity.AnimationHandle = document.Name
-
 				animations, joints := ml.GetAnimations(document.Name)
-				entity.AnimationPlayer = animation.NewAnimationPlayer(animations, joints[entity.RootJointID])
+				animationPlayer := animation.NewAnimationPlayer(animations, joints[document.RootJoint.ID])
+				entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
 			}
 
 			var vertices []modelspec.Vertex

@@ -48,7 +48,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 		}
 		if imgui.BeginTabItem("Animation") {
 			entity := SelectedEntity()
-			if entity != nil && entity.AnimationPlayer != nil {
+			if entity != nil && entity.Animation != nil {
 				animationUI(world, entity)
 			} else {
 				imgui.Text("<select an entity with animations>")

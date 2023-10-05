@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/lib"
+	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
@@ -529,9 +530,9 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 			continue
 		}
 
-		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
 			// if animationTransforms is nil, the shader will execute reading into invalid memory
 			// so, we need to explicitly guard for this
 			if animationTransforms == nil {
@@ -591,9 +592,9 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 			continue
 		}
 
-		if entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
 			// if animationTransforms is nil, the shader will execute reading into invalid memory
 			// so, we need to explicitly guard for this
 			if animationTransforms == nil {
@@ -810,13 +811,18 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
 
+		var animationPlayer *animation.AnimationPlayer
+		if entity.Animation != nil {
+			animationPlayer = entity.Animation.AnimationPlayer
+		}
+
 		drawModel(
 			viewerContext,
 			lightContext,
 			r.shadowMap,
 			shader,
 			r.world.AssetManager(),
-			entity.AnimationPlayer,
+			animationPlayer,
 			modelMatrix,
 			r.depthCubeMapTexture,
 			entity.ID,

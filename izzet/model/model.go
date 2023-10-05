@@ -5,12 +5,6 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-type RenderModel interface {
-	JointMap() map[int]*modelspec.JointSpec
-	RootJoint() *modelspec.JointSpec
-	Name() string
-}
-
 type ModelConfig struct {
 	MaxAnimationJointWeights int
 }
@@ -30,17 +24,17 @@ func (m *Model) Name() string {
 	return m.name
 }
 
-func (m *Model) RootJoint() *modelspec.JointSpec {
-	return m.document.RootJoint
-}
+// func (m *Model) RootJoint() *modelspec.JointSpec {
+// 	return m.document.RootJoint
+// }
 
 func (m *Model) Animations() map[string]*modelspec.AnimationSpec {
 	return m.document.Animations
 }
 
-func (m *Model) JointMap() map[int]*modelspec.JointSpec {
-	return m.document.JointMap
-}
+// func (m *Model) JointMap() map[int]*modelspec.JointSpec {
+// 	return m.document.JointMap
+// }
 
 func (m *Model) Vertices() []modelspec.Vertex {
 	return m.vertices

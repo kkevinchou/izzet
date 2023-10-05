@@ -32,13 +32,13 @@ type Entity struct {
 	Animation *AnimationComponent
 
 	// dirty flag caching world transform
-	dirtyTransformFlag   bool
+	DirtyTransformFlag   bool
 	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
 
 	// each Entity has their own transforms and animation player
-	localPosition mgl64.Vec3
-	localRotation mgl64.Quat
-	scale         mgl64.Vec3
+	LocalPosition mgl64.Vec3
+	LocalRotation mgl64.Quat
+	LocalScale    mgl64.Vec3
 
 	MeshComponent *MeshComponent
 	boundingBox   *collider.BoundingBox
@@ -53,7 +53,7 @@ func (e *Entity) GetID() int {
 }
 
 func (e *Entity) Dirty() bool {
-	return e.dirtyTransformFlag
+	return e.DirtyTransformFlag
 }
 
 func (e *Entity) NameID() string {
@@ -84,10 +84,10 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 
 		Children: map[int]*Entity{},
 
-		dirtyTransformFlag:   true,
-		localPosition:        mgl64.Vec3{0, 0, 0},
-		localRotation:        mgl64.QuatIdent(),
-		scale:                mgl64.Vec3{1, 1, 1},
+		DirtyTransformFlag:   true,
+		LocalPosition:        mgl64.Vec3{0, 0, 0},
+		LocalRotation:        mgl64.QuatIdent(),
+		LocalScale:           mgl64.Vec3{1, 1, 1},
 		cachedWorldTransform: mgl64.Ident4(),
 	}
 }

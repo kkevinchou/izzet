@@ -14,7 +14,7 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	// TODO:
 	// animations can move obects around pretty regularly, we shouldn't cache world
 	// transforms for entities that have animations
-	if entity.dirtyTransformFlag {
+	if entity.DirtyTransformFlag {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
 
 		localPosition := GetLocalPosition(entity)
@@ -25,37 +25,37 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 		modelMatrix := translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 		entity.cachedWorldTransform = parentAndJointTransformMatrix.Mul4(modelMatrix)
-		entity.dirtyTransformFlag = false
+		entity.DirtyTransformFlag = false
 	}
 
 	return entity.cachedWorldTransform
 }
 
 func GetLocalPosition(entity *Entity) mgl64.Vec3 {
-	return entity.localPosition
+	return entity.LocalPosition
 }
 
 func GetLocalRotation(entity *Entity) mgl64.Quat {
-	return entity.localRotation
+	return entity.LocalRotation
 }
 
 func GetLocalScale(entity *Entity) mgl64.Vec3 {
-	return entity.scale
+	return entity.LocalScale
 }
 
 func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
 	SetDirty(entity)
-	entity.localPosition = position
+	entity.LocalPosition = position
 }
 
 func SetLocalRotation(entity *Entity, rotation mgl64.Quat) {
 	SetDirty(entity)
-	entity.localRotation = rotation
+	entity.LocalRotation = rotation
 }
 
 func SetScale(entity *Entity, scale mgl64.Vec3) {
 	SetDirty(entity)
-	entity.scale = scale
+	entity.LocalScale = scale
 }
 
 func SetDirty(entity *Entity) {
@@ -64,7 +64,7 @@ func SetDirty(entity *Entity) {
 	for _, child := range entity.Children {
 		SetDirty(child)
 	}
-	entity.dirtyTransformFlag = true
+	entity.DirtyTransformFlag = true
 }
 
 func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {

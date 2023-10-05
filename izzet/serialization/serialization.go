@@ -120,6 +120,9 @@ func (s *Serializer) ReadIn(filepath string) error {
 	}
 
 	s.serializedWorld = serializedWorld
+	for _, e := range s.serializedWorld.Entities {
+		e.DirtyTransformFlag = true
+	}
 	return nil
 }
 

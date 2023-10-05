@@ -17,10 +17,10 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	if entity.dirtyTransformFlag {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
 
-		localPosition := LocalPosition(entity)
+		localPosition := GetLocalPosition(entity)
 		translationMatrix := mgl64.Translate3D(localPosition[0], localPosition[1], localPosition[2])
-		rotationMatrix := LocalRotation(entity).Mat4()
-		scale := Scale(entity)
+		rotationMatrix := GetLocalRotation(entity).Mat4()
+		scale := GetLocalScale(entity)
 		scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
 		modelMatrix := translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
@@ -31,15 +31,15 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	return entity.cachedWorldTransform
 }
 
-func LocalPosition(entity *Entity) mgl64.Vec3 {
+func GetLocalPosition(entity *Entity) mgl64.Vec3 {
 	return entity.localPosition
 }
 
-func LocalRotation(entity *Entity) mgl64.Quat {
+func GetLocalRotation(entity *Entity) mgl64.Quat {
 	return entity.localRotation
 }
 
-func Scale(entity *Entity) mgl64.Vec3 {
+func GetLocalScale(entity *Entity) mgl64.Vec3 {
 	return entity.scale
 }
 

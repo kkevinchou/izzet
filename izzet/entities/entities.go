@@ -44,8 +44,8 @@ type Entity struct {
 	boundingBox   *collider.BoundingBox
 
 	// relationships
-	Parent   *Entity
-	Children map[int]*Entity
+	Parent   *Entity         `json:"-"`
+	Children map[int]*Entity `json:"-"`
 }
 
 func (e *Entity) GetID() int {

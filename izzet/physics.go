@@ -25,7 +25,7 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 			continue
 		}
 
-		entities.SetLocalPosition(entity, entities.LocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
+		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
 	}
 
 	ResolveCollisions(g)
@@ -131,10 +131,10 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 	for _, e := range entityList {
 		cc := e.Collider
 		if cc.CapsuleCollider != nil {
-			capsule := cc.CapsuleCollider.Transform(entities.LocalPosition(e))
+			capsule := cc.CapsuleCollider.Transform(entities.GetLocalPosition(e))
 			cc.TransformedCapsuleCollider = &capsule
 		} else if cc.TriMeshCollider != nil {
-			localPosition := entities.LocalPosition(e)
+			localPosition := entities.GetLocalPosition(e)
 			transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
 			triMesh := cc.TriMeshCollider.Transform(transformMatrix)
 			cc.TransformedTriMeshCollider = &triMesh
@@ -226,7 +226,7 @@ func resolveCollisions(contacts []*collision.Contact, world World) map[int]int {
 
 func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact) {
 	separatingVector := contact.SeparatingVector
-	entities.SetLocalPosition(entity, entities.LocalPosition(entity).Add(separatingVector))
+	entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(separatingVector))
 }
 
 func isCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity, *entities.Entity) {

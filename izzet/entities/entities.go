@@ -17,9 +17,10 @@ import (
 var id int
 
 type Entity struct {
+	// Animation
 	AnimationHandle string
-	RootJointID     int
 	AnimationPlayer *animation.AnimationPlayer
+	RootJointID     int
 
 	ID        int
 	Name      string
@@ -47,9 +48,8 @@ type Entity struct {
 	boundingBox   *collider.BoundingBox
 
 	// relationships
-	Parent      *Entity
-	Children    map[int]*Entity
-	ParentJoint *modelspec.JointSpec
+	Parent   *Entity
+	Children map[int]*Entity
 }
 
 func (e *Entity) GetID() int {

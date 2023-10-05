@@ -153,12 +153,10 @@ func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {
 				entity.AnimationPlayer = animation.NewAnimationPlayer(entity.Animations, entity.RootJoint)
 			}
 
-			// entity.MeshComponent
-
-			// modellibrary.GetPrimitives()
-			// modellibrary.UniqueVerticesFromPrimitives()
-
-			// entity.boundingBox =
+			var vertices []modelspec.Vertex
+			VerticesFromNode(node, document, &vertices)
+			boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+			entity.boundingBox = &boundingBox
 
 			SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 			SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
@@ -193,4 +191,17 @@ func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32
 
 	eNode.Children = children
 	return eNode
+}
+
+func VerticesFromNode(node *modelspec.Node, document *modelspec.Document, out *[]modelspec.Vertex) {
+	if node.MeshID != nil {
+		mesh := document.Meshes[*node.MeshID]
+		for _, p := range mesh.Primitives {
+			*out = append(*out, p.UniqueVertices...)
+		}
+	}
+
+	for _, childNode := range node.Children {
+		VerticesFromNode(childNode, document, out)
+	}
 }

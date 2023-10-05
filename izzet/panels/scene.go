@@ -26,7 +26,7 @@ func sceneUI(world World) {
 			prefab := world.GetPrefabByID(prefabID)
 			parent := entities.InstantiateEntity(prefab.Name)
 			world.AddEntity(parent)
-			for _, entity := range entities.InstantiateFromPrefab(prefab) {
+			for _, entity := range entities.InstantiateFromPrefab(prefab, world.ModelLibrary()) {
 				world.AddEntity(entity)
 				entities.BuildRelation(parent, entity)
 			}

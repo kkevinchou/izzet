@@ -69,11 +69,15 @@ type Primitive struct {
 type ModelLibrary struct {
 	Primitives map[Handle][]Primitive
 	Meshes     map[Handle][]modelspec.MeshSpecification
+	Animations map[string]map[string]*modelspec.AnimationSpec
+	Joints     map[string]map[int]*modelspec.JointSpec
 }
 
 func New() *ModelLibrary {
 	m := &ModelLibrary{
 		Primitives: map[Handle][]Primitive{},
+		Animations: map[string]map[string]*modelspec.AnimationSpec{},
+		Joints:     map[string]map[int]*modelspec.JointSpec{},
 	}
 
 	m.RegisterMesh("global", cube())
@@ -96,34 +100,13 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 	}
 }
 
-func (m *ModelLibrary) RegisterJoints(namespace string, mesh *modelspec.JointSpec) {
-	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	// vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-	// geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-
-	// handle := NewHandle(namespace, mesh.ID)
-	// for i, primitive := range mesh.Primitives {
-	// 	m.Primitives[handle] = append(m.Primitives[handle], Primitive{
-	// 		Primitive:   primitive,
-	// 		VAO:         vaos[0][i],
-	// 		GeometryVAO: geometryVAOs[0][i],
-	// 	})
-	// }
+func (m *ModelLibrary) RegisterAnimations(handle string, animations map[string]*modelspec.AnimationSpec, joints map[int]*modelspec.JointSpec) {
+	m.Animations[handle] = animations
+	m.Joints[handle] = joints
 }
 
-func (m *ModelLibrary) RegisterAnimation(namespace string, mesh *modelspec.AnimationSpec) {
-	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	// vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-	// geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-
-	// handle := NewHandle(namespace, mesh.ID)
-	// for i, primitive := range mesh.Primitives {
-	// 	m.Primitives[handle] = append(m.Primitives[handle], Primitive{
-	// 		Primitive:   primitive,
-	// 		VAO:         vaos[0][i],
-	// 		GeometryVAO: geometryVAOs[0][i],
-	// 	})
-	// }
+func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec) {
+	return m.Animations[handle], m.Joints[handle]
 }
 
 func (m *ModelLibrary) GetPrimitives(handle Handle) []Primitive {

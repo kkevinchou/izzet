@@ -17,10 +17,9 @@ import (
 var id int
 
 type Entity struct {
-	// THINGS TO REMOVE
+	AnimationHandle string
+	RootJointID     int
 	AnimationPlayer *animation.AnimationPlayer
-	Animations      map[string]*modelspec.AnimationSpec
-	RootJoint       *modelspec.JointSpec
 
 	ID        int
 	Name      string
@@ -78,8 +77,8 @@ func (e *Entity) NameID() string {
 // 	return e.boundingBox.Transform(modelMatrix)
 // }
 
-func InstantiateFromPrefab(prefab *prefabs.Prefab) []*Entity {
-	return CreateEntitiesFromDocument(prefab.Document)
+func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *modellibrary.ModelLibrary) []*Entity {
+	return CreateEntitiesFromDocument(prefab.Document, ml)
 }
 
 func InstantiateBaseEntity(name string, id int) *Entity {
@@ -134,7 +133,7 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 	return e.boundingBox.Transform(modelMatrix)
 }
 
-func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {
+func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary) []*Entity {
 	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	var result []*Entity
 
@@ -146,9 +145,11 @@ func CreateEntitiesFromDocument(document *modelspec.Document) []*Entity {
 			entity.MeshComponent = &MeshComponent{Node: rootNode}
 
 			if len(document.Animations) > 0 {
-				entity.RootJoint = document.RootJoint
-				entity.Animations = document.Animations
-				entity.AnimationPlayer = animation.NewAnimationPlayer(entity.Animations, entity.RootJoint)
+				entity.RootJointID = document.RootJoint.ID
+				entity.AnimationHandle = document.Name
+
+				animations, joints := ml.GetAnimations(document.Name)
+				entity.AnimationPlayer = animation.NewAnimationPlayer(animations, joints[entity.RootJointID])
 			}
 
 			var vertices []modelspec.Vertex

@@ -10,12 +10,12 @@ import (
 )
 
 type Handle struct {
-	namespace string
-	id        int
+	Namespace string
+	ID        int
 }
 
 func NewHandle(namespace string, id int) *Handle {
-	return &Handle{namespace: namespace, id: id}
+	return &Handle{Namespace: namespace, ID: id}
 }
 
 // Interface

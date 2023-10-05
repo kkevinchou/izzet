@@ -728,7 +728,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 
 		collider := entity.Collider
 		if collider != nil {
-			localPosition := entities.LocalPosition(entity)
+			localPosition := entities.GetLocalPosition(entity)
 			translation := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
 			// lots of hacky rendering stuff to get the rectangle to billboard
 			center := mgl64.Vec3{localPosition.X(), 0, localPosition.Z()}

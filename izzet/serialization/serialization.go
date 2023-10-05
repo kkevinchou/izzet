@@ -16,7 +16,8 @@ type World interface {
 }
 
 type SerializedWorld struct {
-	Entities []SerializedEntity
+	// Entities []SerializedEntity
+	Entities []*entities.Entity
 }
 
 type SerializedEntity struct {
@@ -48,36 +49,36 @@ func New(world World) *Serializer {
 }
 
 func (s *Serializer) WriteOut(filepath string) {
-	serializedEntities := []SerializedEntity{}
-	for _, entity := range s.world.Entities() {
-		sEntity := SerializedEntity{
-			Name:     entity.Name,
-			ID:       entity.ID,
-			Position: entities.LocalPosition(entity),
-			Rotation: entities.LocalRotation(entity),
-			Scale:    entities.Scale(entity),
+	// serializedEntities := []SerializedEntity{}
+	// for _, entity := range s.world.Entities() {
+	// 	sEntity := SerializedEntity{
+	// 		Name:     entity.Name,
+	// 		ID:       entity.ID,
+	// 		Position: entities.LocalPosition(entity),
+	// 		Rotation: entities.LocalRotation(entity),
+	// 		Scale:    entities.Scale(entity),
 
-			ImageInfo: entity.ImageInfo,
-			LightInfo: entity.LightInfo,
-			Billboard: entity.Billboard,
-			ShapeData: entity.ShapeData,
-			ChildIDs:  []int{},
-		}
+	// 		ImageInfo: entity.ImageInfo,
+	// 		LightInfo: entity.LightInfo,
+	// 		Billboard: entity.Billboard,
+	// 		ShapeData: entity.ShapeData,
+	// 		ChildIDs:  []int{},
+	// 	}
 
-		if entity.Children != nil {
-			for _, child := range entity.Children {
-				sEntity.ChildIDs = append(sEntity.ChildIDs, child.ID)
-			}
-		}
+	// 	if entity.Children != nil {
+	// 		for _, child := range entity.Children {
+	// 			sEntity.ChildIDs = append(sEntity.ChildIDs, child.ID)
+	// 		}
+	// 	}
 
-		serializedEntities = append(
-			serializedEntities,
-			sEntity,
-		)
-	}
+	// 	serializedEntities = append(
+	// 		serializedEntities,
+	// 		sEntity,
+	// 	)
+	// }
 
 	serializedWorld := SerializedWorld{
-		Entities: serializedEntities,
+		Entities: s.world.Entities(),
 	}
 
 	bytes, err := json.MarshalIndent(serializedWorld, "", "    ")
@@ -123,36 +124,37 @@ func (s *Serializer) ReadIn(filepath string) error {
 }
 
 func (s *Serializer) Entities() []*entities.Entity {
-	entityMap := map[int]*entities.Entity{}
-	dsEntities := []*entities.Entity{}
-	for _, e := range s.serializedWorld.Entities {
-		var dsEntity *entities.Entity
+	return s.serializedWorld.Entities
+	// 	entityMap := map[int]*entities.Entity{}
+	// 	dsEntities := []*entities.Entity{}
+	// 	for _, e := range s.serializedWorld.Entities {
+	// 		var dsEntity *entities.Entity
 
-		dsEntity.LightInfo = e.LightInfo
-		dsEntity.Billboard = e.Billboard
-		dsEntity.ImageInfo = e.ImageInfo
-		dsEntity.ShapeData = e.ShapeData
+	// 		dsEntity.LightInfo = e.LightInfo
+	// 		dsEntity.Billboard = e.Billboard
+	// 		dsEntity.ImageInfo = e.ImageInfo
+	// 		dsEntity.ShapeData = e.ShapeData
 
-		entities.SetLocalPosition(dsEntity, e.Position)
-		entities.SetLocalRotation(dsEntity, e.Rotation)
-		entities.SetScale(dsEntity, e.Scale)
+	// 		entities.SetLocalPosition(dsEntity, e.Position)
+	// 		entities.SetLocalRotation(dsEntity, e.Rotation)
+	// 		entities.SetScale(dsEntity, e.Scale)
 
-		scale := entities.Scale(dsEntity)
-		if scale.X() == 0 && scale.Y() == 0 && scale.Z() == 0 {
-			scale = mgl64.Vec3{1, 1, 1}
-		}
+	// 		scale := entities.Scale(dsEntity)
+	// 		if scale.X() == 0 && scale.Y() == 0 && scale.Z() == 0 {
+	// 			scale = mgl64.Vec3{1, 1, 1}
+	// 		}
 
-		entityMap[dsEntity.ID] = dsEntity
-		dsEntities = append(dsEntities, dsEntity)
-	}
+	// 		entityMap[dsEntity.ID] = dsEntity
+	// 		dsEntities = append(dsEntities, dsEntity)
+	// 	}
 
-	// set up parental relationship
-	for _, e := range s.serializedWorld.Entities {
-		for _, id := range e.ChildIDs {
-			entityMap[e.ID].Children[id] = entityMap[id]
-			entityMap[id].Parent = entityMap[e.ID]
-		}
-	}
+	// 	// set up parental relationship
+	// 	for _, e := range s.serializedWorld.Entities {
+	// 		for _, id := range e.ChildIDs {
+	// 			entityMap[e.ID].Children[id] = entityMap[id]
+	// 			entityMap[id].Parent = entityMap[e.ID]
+	// 		}
+	// 	}
 
-	return dsEntities
+	// return dsEntities
 }

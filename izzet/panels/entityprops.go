@@ -42,15 +42,15 @@ func entityProps(entity *entities.Entity) {
 		if entity != nil {
 			entityIDStr = fmt.Sprintf("%d", entity.ID)
 			entityNameStr = entity.NameID()
-			position := entities.LocalPosition(entity)
+			position := entities.GetLocalPosition(entity)
 			positionStr = fmt.Sprintf("{%.1f, %.1f, %.1f}", position.X(), position.Y(), position.Z())
 
-			rotation := entities.LocalRotation(entity)
+			rotation := entities.GetLocalRotation(entity)
 			euler := QuatToEuler(rotation)
 			localRotationStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z())
 			localQuaternionStr = fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", rotation.X(), rotation.Y(), rotation.Z(), rotation.W)
 
-			scale := entities.Scale(entity)
+			scale := entities.GetLocalScale(entity)
 			scaleStr = fmt.Sprintf("{%.2f, %.2f, %.2f}", scale.X(), scale.Y(), scale.Z())
 
 			worldPosition := entity.WorldPosition()

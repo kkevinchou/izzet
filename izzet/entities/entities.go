@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -19,7 +18,6 @@ var id int
 
 type Entity struct {
 	// THINGS TO REMOVE
-	Model           model.RenderModel
 	AnimationPlayer *animation.AnimationPlayer
 	Animations      map[string]*modelspec.AnimationSpec
 	RootJoint       *modelspec.JointSpec

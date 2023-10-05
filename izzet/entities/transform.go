@@ -73,15 +73,15 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 	if entity.Parent != nil {
 		parentModelMatrix = WorldTransform(entity.Parent)
 
-		parent := entity.Parent
-		parentJoint := entity.ParentJoint
-		if parentJoint != nil && parent != nil && parent.AnimationPlayer != nil && parent.AnimationPlayer.CurrentAnimation() != "" {
-			animationTransforms := parent.AnimationPlayer.AnimationTransforms()
-			jointTransform := animationTransforms[parentJoint.ID]
-			jointMap := parent.Model.JointMap()
-			bindTransform := jointMap[parentJoint.ID].FullBindTransform
-			animModelMatrix = utils.Mat4F32ToF64(jointTransform).Mul4(utils.Mat4F32ToF64(bindTransform))
-		}
+		// parent := entity.Parent
+		// parentJoint := entity.ParentJoint
+		// if parentJoint != nil && parent != nil && parent.AnimationPlayer != nil && parent.AnimationPlayer.CurrentAnimation() != "" {
+		// 	animationTransforms := parent.AnimationPlayer.AnimationTransforms()
+		// 	jointTransform := animationTransforms[parentJoint.ID]
+		// 	jointMap := parent.Model.JointMap()
+		// 	bindTransform := jointMap[parentJoint.ID].FullBindTransform
+		// 	animModelMatrix = utils.Mat4F32ToF64(jointTransform).Mul4(utils.Mat4F32ToF64(bindTransform))
+		// }
 	}
 
 	return parentModelMatrix.Mul4(animModelMatrix)

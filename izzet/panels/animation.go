@@ -61,9 +61,9 @@ func animationUI(world World, entity *entities.Entity) {
 	drawJointTree(world, entity, entity.RootJoint)
 
 	if RenderJoints {
-		for jid, _ := range entity.Model.JointMap() {
-			JointsToRender = append(JointsToRender, jid)
-		}
+		// for jid, _ := range entity.Model.JointMap() {
+		// 	JointsToRender = append(JointsToRender, jid)
+		// }
 	} else if JointHover != nil {
 		JointsToRender = append(JointsToRender, *JointHover)
 	}

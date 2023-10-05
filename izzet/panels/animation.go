@@ -102,38 +102,38 @@ func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec)
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 	if imgui.BeginPopupContextItem() {
 		if imgui.Button("Create Socket") {
-			socket := entities.CreateSocket()
-			world.AddEntity(socket)
-			entities.BuildRelation(SelectedEntity(), socket)
-			socket.ParentJoint = joint
+			// socket := entities.CreateSocket()
+			// world.AddEntity(socket)
+			// entities.BuildRelation(SelectedEntity(), socket)
+			// socket.ParentJoint = joint
 			imgui.CloseCurrentPopup()
 		}
 
 		if imgui.BeginMenu("Assign Socket") {
-			socketCount := 0
-			for _, entity := range world.Entities() {
-				if entity.IsSocket {
-					socketCount++
+			// socketCount := 0
+			// for _, entity := range world.Entities() {
+			// 	if entity.IsSocket {
+			// 		socketCount++
 
-					isParented := entity.ParentJoint != nil && entity.ParentJoint.ID == joint.ID
-					if imgui.MenuItemV(entity.NameID(), "", isParented, true) {
-						// toggle parented status
-						if isParented {
-							entities.RemoveParent(entity)
-							entity.ParentJoint = nil
-						} else {
-							entities.BuildRelation(parent, entity)
-							entity.ParentJoint = joint
-						}
-					}
-				}
-			}
+			// 		isParented := entity.ParentJoint != nil && entity.ParentJoint.ID == joint.ID
+			// 		if imgui.MenuItemV(entity.NameID(), "", isParented, true) {
+			// 			// toggle parented status
+			// 			if isParented {
+			// 				entities.RemoveParent(entity)
+			// 				entity.ParentJoint = nil
+			// 			} else {
+			// 				entities.BuildRelation(parent, entity)
+			// 				entity.ParentJoint = joint
+			// 			}
+			// 		}
+			// 	}
+			// }
 
-			if socketCount == 0 {
-				imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 0.5})
-				imgui.MenuItem("none")
-				imgui.PopStyleColor()
-			}
+			// if socketCount == 0 {
+			// 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 0.5})
+			// 	imgui.MenuItem("none")
+			// 	imgui.PopStyleColor()
+			// }
 			imgui.EndMenu()
 		}
 		imgui.EndPopup()

@@ -38,7 +38,6 @@ func entityProps(entity *entities.Entity) {
 		worldPositionStr := ""
 		eulerRotationStr := ""
 		parentStr := ""
-		parentJointStr := ""
 
 		if entity != nil {
 			entityIDStr = fmt.Sprintf("%d", entity.ID)
@@ -65,12 +64,6 @@ func entityProps(entity *entities.Entity) {
 			} else {
 				parentStr = "nil"
 			}
-
-			if entity.ParentJoint != nil {
-				parentJointStr = entity.ParentJoint.Name
-			} else {
-				parentJointStr = "nil"
-			}
 		}
 
 		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
@@ -90,7 +83,6 @@ func entityProps(entity *entities.Entity) {
 		uiTableRow("World Position", worldPositionStr)
 		uiTableRow("World Rotation", eulerRotationStr)
 		uiTableRow("Parent", parentStr)
-		uiTableRow("Parent Joint", parentJointStr)
 		imgui.EndTable()
 	}
 

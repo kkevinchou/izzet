@@ -286,7 +286,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
-	// r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
 		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
@@ -366,131 +366,131 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientatio
 	return renderEntities
 }
 
-// func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
-// 	shaderManager := r.shaderManager
+func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+	shaderManager := r.shaderManager
 
-// 	// joint rendering for the selected entity
-// 	entity := panels.SelectedEntity()
-// 	if entity != nil {
-// 		modelMatrix := entities.WorldTransform(entity)
-// 		// TODO: optimize this - can probably cache some of these computations
+	// joint rendering for the selected entity
+	entity := panels.SelectedEntity()
+	if entity != nil {
+		// modelMatrix := entities.WorldTransform(entity)
+		// TODO: optimize this - can probably cache some of these computations
 
-// 		// draw joint
-// 		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-// 			jointShader := shaderManager.GetShaderProgram("flat")
-// 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+		// 		// draw joint
+		// 		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+		// 			jointShader := shaderManager.GetShaderProgram("flat")
+		// 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
 
-// 			var jointLines [][]mgl64.Vec3
-// 			model := entity.Model
-// 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+		// 			var jointLines [][]mgl64.Vec3
+		// 			model := entity.Model
+		// 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
 
-// 			for _, jid := range panels.JointsToRender {
-// 				jointTransform := animationTransforms[jid]
-// 				lines := cubeLines(15)
-// 				jt := utils.Mat4F32ToF64(jointTransform)
-// 				for _, line := range lines {
-// 					points := line
-// 					for i := 0; i < len(points); i++ {
-// 						bindTransform := model.JointMap()[jid].FullBindTransform
-// 						// The calculated joint transforms apply to joints in bind space
-// 						// 		i.e. the calculated transforms are computed as:
-// 						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
-// 						//
-// 						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
-// 						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
-// 						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
-// 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
-// 						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
-// 					}
-// 				}
-// 				jointLines = append(jointLines, lines...)
-// 			}
+		// 			for _, jid := range panels.JointsToRender {
+		// 				jointTransform := animationTransforms[jid]
+		// 				lines := cubeLines(15)
+		// 				jt := utils.Mat4F32ToF64(jointTransform)
+		// 				for _, line := range lines {
+		// 					points := line
+		// 					for i := 0; i < len(points); i++ {
+		// 						bindTransform := model.JointMap()[jid].FullBindTransform
+		// 						// The calculated joint transforms apply to joints in bind space
+		// 						// 		i.e. the calculated transforms are computed as:
+		// 						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
+		// 						//
+		// 						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
+		// 						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
+		// 						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
+		// 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+		// 						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
+		// 					}
+		// 				}
+		// 				jointLines = append(jointLines, lines...)
+		// 			}
 
-// 			for _, line := range jointLines {
-// 				points := line
-// 				for i := 0; i < len(points); i++ {
-// 					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
-// 				}
-// 			}
+		// 			for _, line := range jointLines {
+		// 				points := line
+		// 				for i := 0; i < len(points); i++ {
+		// 					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+		// 				}
+		// 			}
 
-// 			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
-// 		}
+		// 			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
+		// 		}
 
-// 		// draw bounding box
-// 		bb := entity.BoundingBox()
-// 		if bb != nil {
-// 			drawAABB(
-// 				viewerContext,
-// 				shaderManager.GetShaderProgram("flat"),
-// 				mgl64.Vec3{.2, 0, .7},
-// 				bb,
-// 				0.5,
-// 			)
-// 		}
-// 	}
+		// draw bounding box
+		bb := entity.BoundingBox()
+		if bb != nil {
+			drawAABB(
+				viewerContext,
+				shaderManager.GetShaderProgram("flat"),
+				mgl64.Vec3{.2, 0, .7},
+				bb,
+				0.5,
+			)
+		}
+	}
 
-// 	nm := r.world.NavMesh()
+	// 	nm := r.world.NavMesh()
 
-// 	if nm != nil {
-// 		// draw bounding box
-// 		volume := nm.Volume
-// 		drawAABB(
-// 			viewerContext,
-// 			shaderManager.GetShaderProgram("flat"),
-// 			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-// 			&volume,
-// 			0.5,
-// 		)
+	// 	if nm != nil {
+	// 		// draw bounding box
+	// 		volume := nm.Volume
+	// 		drawAABB(
+	// 			viewerContext,
+	// 			shaderManager.GetShaderProgram("flat"),
+	// 			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+	// 			&volume,
+	// 			0.5,
+	// 		)
 
-// 		// draw navmesh
-// 		if nm.VoxelCount() > 0 {
-// 			shader := shaderManager.GetShaderProgram("color_pbr")
-// 			shader.Use()
+	// 		// draw navmesh
+	// 		if nm.VoxelCount() > 0 {
+	// 			shader := shaderManager.GetShaderProgram("color_pbr")
+	// 			shader.Use()
 
-// 			if panels.DBG.Bloom {
-// 				shader.SetUniformInt("applyToneMapping", 0)
-// 			} else {
-// 				// only tone map if we're not applying bloom, otherwise
-// 				// we want to keep the HDR values and tone map later
-// 				shader.SetUniformInt("applyToneMapping", 1)
-// 			}
+	// 			if panels.DBG.Bloom {
+	// 				shader.SetUniformInt("applyToneMapping", 0)
+	// 			} else {
+	// 				// only tone map if we're not applying bloom, otherwise
+	// 				// we want to keep the HDR values and tone map later
+	// 				shader.SetUniformInt("applyToneMapping", 1)
+	// 			}
 
-// 			shader.SetUniformMat4("model", mgl32.Ident4())
-// 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-// 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-// 			shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
-// 			shader.SetUniformInt("shadowMap", 31)
-// 			shader.SetUniformInt("depthCubeMap", 30)
-// 			shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
-// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-// 			shader.SetUniformInt("isAnimated", 0)
-// 			shader.SetUniformInt("hasColorOverride", 1)
+	// 			shader.SetUniformMat4("model", mgl32.Ident4())
+	// 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	// 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	// 			shader.SetUniformFloat("ambientFactor", panels.DBG.AmbientFactor)
+	// 			shader.SetUniformInt("shadowMap", 31)
+	// 			shader.SetUniformInt("depthCubeMap", 30)
+	// 			shader.SetUniformFloat("bias", panels.DBG.PointLightBias)
+	// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	// 			shader.SetUniformInt("isAnimated", 0)
+	// 			shader.SetUniformInt("hasColorOverride", 1)
 
-// 			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
-// 			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
-// 			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
-// 			shader.SetUniformVec3("albedo", color)
-// 			shader.SetUniformInt("hasPBRMaterial", 1)
-// 			shader.SetUniformFloat("ao", 1.0)
-// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-// 			shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-// 			shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+	// 			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
+	// 			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
+	// 			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
+	// 			shader.SetUniformVec3("albedo", color)
+	// 			shader.SetUniformInt("hasPBRMaterial", 1)
+	// 			shader.SetUniformFloat("ao", 1.0)
+	// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+	// 			shader.SetUniformFloat("roughness", panels.DBG.Roughness)
+	// 			shader.SetUniformFloat("metallic", panels.DBG.Metallic)
 
-// 			setupLightingUniforms(shader, lightContext.Lights)
+	// 			setupLightingUniforms(shader, lightContext.Lights)
 
-// 			gl.ActiveTexture(gl.TEXTURE30)
-// 			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+	// 			gl.ActiveTexture(gl.TEXTURE30)
+	// 			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
 
-// 			gl.ActiveTexture(gl.TEXTURE31)
-// 			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+	// 			gl.ActiveTexture(gl.TEXTURE31)
+	// 			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-// 			drawNavMeshTris(viewerContext, nm)
-// 		}
-// 	}
-// }
+	// 			drawNavMeshTris(viewerContext, nm)
+	// 		}
+	// 	}
+}
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
 	defer resetGLRenderSettings(r.renderFBO)

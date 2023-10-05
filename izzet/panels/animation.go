@@ -31,7 +31,9 @@ func animationUI(world World, entity *entities.Entity) {
 	// imgui.BeginV("animation window", &open, imgui.WindowFlagsNone)
 
 	var anims []string
-	for name, _ := range entity.Animations {
+
+	animations, joints := world.ModelLibrary().GetAnimations(entity.AnimationHandle)
+	for name, _ := range animations {
 		anims = append(anims, name)
 	}
 	sort.Strings(anims)
@@ -58,7 +60,7 @@ func animationUI(world World, entity *entities.Entity) {
 	imgui.LabelText("", "Joints")
 	JointHover = nil
 	JointsToRender = nil
-	drawJointTree(world, entity, entity.RootJoint)
+	drawJointTree(world, entity, joints[entity.RootJointID])
 
 	if RenderJoints {
 		// for jid, _ := range entity.Model.JointMap() {

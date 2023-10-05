@@ -204,6 +204,10 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 		for _, mesh := range doc.Meshes {
 			modelLibrary.RegisterMesh(doc.Name, mesh)
 		}
+		if len(doc.Animations) > 0 {
+			modelLibrary.RegisterAnimations(docName, doc.Animations, doc.JointMap)
+
+		}
 	}
 }
 
@@ -244,7 +248,7 @@ func (g *Izzet) setupEntities() {
 	g.AddEntity(parent)
 	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
 
-	for _, e := range entities.CreateEntitiesFromDocument(doc) {
+	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary) {
 		g.AddEntity(e)
 		entities.BuildRelation(parent, e)
 	}

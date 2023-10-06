@@ -18,17 +18,6 @@ func NewHandle(namespace string, id int) Handle {
 	return Handle{Namespace: namespace, ID: id}
 }
 
-// TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
-//		- ideally we have a static and typed handle that we can easily reference from anywhere in the code
-//		- this handle should be all we need to construct the mesh component
-//		- the mesh component should be all we need to render entities in renderutils
-//		- the handle should return all the primitives as well as the animations if any
-//		- we need config to be able to mark a document as a single entity that's animated
-//		- the registration API for ModelLibrary may need to be a whole document
-//		- then the config determines what handle we want to associate with each asset
-//			- Question, do I want to support selected instantiation of entities within a document?
-//			- e.g. from within demo_scene_samurai, instantiating one entity by name
-
 type Primitive struct {
 	// Name      string
 	Primitive *modelspec.PrimitiveSpecification
@@ -62,6 +51,20 @@ func New() *ModelLibrary {
 
 	return m
 }
+
+// TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
+//		- ideally we have a static and typed handle that we can easily reference from anywhere in the code
+//		- this handle should be all we need to construct the mesh component
+//		- the mesh component should be all we need to render entities in renderutils
+//		- the handle should return all the primitives as well as the animations if any
+//		- we need config to be able to mark a document as a single entity that's animated
+//		- the registration API for ModelLibrary may need to be a whole document
+//		- then the config determines what handle we want to associate with each asset
+//			- Question, do I want to support selected instantiation of entities within a document?
+//			- e.g. from within demo_scene_samurai, instantiating one entity by name
+
+// func (m *ModelLibrary) RegisterDocument(document *modelspec.Document, data *izzet.IzzetData) {
+// }
 
 func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}

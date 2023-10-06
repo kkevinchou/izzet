@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"

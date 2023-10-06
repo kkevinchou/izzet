@@ -6,12 +6,15 @@ import (
 	"os"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/kitolib/animation"
 )
 
 type World interface {
 	Entities() []*entities.Entity
 	GetPrefabByID(id int) *prefabs.Prefab
+	ModelLibrary() *modellibrary.ModelLibrary
 }
 
 type Relation struct {
@@ -60,10 +63,21 @@ func (s *Serializer) ReadIn(filepath string) error {
 	s.serializedWorld = *serializedWorld
 	entityMap := map[int]*entities.Entity{}
 	for _, e := range s.serializedWorld.Entities {
-		e.DirtyTransformFlag = true
 		entityMap[e.ID] = e
+
+		// set dirty flags
+		e.DirtyTransformFlag = true
+
+		// rebuild animation player
+		if e.Animation != nil {
+			handle := e.Animation.AnimationHandle
+			animations, joints := s.world.ModelLibrary().GetAnimations(handle)
+			e.Animation.AnimationPlayer = animation.NewAnimationPlayer()
+			e.Animation.AnimationPlayer.Initialize(animations, joints[e.Animation.RootJointID])
+		}
 	}
 
+	// rebuild relations
 	for _, relation := range s.serializedWorld.Relations {
 		parent := entityMap[relation.Parent]
 		child := entityMap[relation.Child]
@@ -73,6 +87,7 @@ func (s *Serializer) ReadIn(filepath string) error {
 		parent.Children[relation.Child] = child
 		child.Parent = parent
 	}
+
 	return nil
 }
 

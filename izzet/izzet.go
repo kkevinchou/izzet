@@ -245,11 +245,19 @@ func (g *Izzet) setupEntities() {
 	doc := g.assetManager.GetDocument("demo_scene_samurai")
 
 	parent := entities.InstantiateEntity("scene_parent")
-	g.AddEntity(parent)
 	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
+	g.AddEntity(parent)
 
+	var rootEntities []*entities.Entity
 	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary) {
+		if e.Parent == nil {
+			rootEntities = append(rootEntities, e)
+		}
 		g.AddEntity(e)
+	}
+
+	// only parent root entities
+	for _, e := range rootEntities {
 		entities.BuildRelation(parent, e)
 	}
 }

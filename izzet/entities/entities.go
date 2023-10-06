@@ -3,7 +3,6 @@ package entities
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 
@@ -130,61 +129,57 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 }
 
 func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary) []*Entity {
-	// modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	var result []*Entity
 
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
-			entity := InstantiateEntity(node.Name)
-
-			rootNode := parseNode(node, true, mgl32.Ident4(), document.Name)
-			entity.MeshComponent = &MeshComponent{Node: rootNode}
-
-			if len(document.Animations) > 0 {
-				animations, joints := ml.GetAnimations(document.Name)
-				animationPlayer := animation.NewAnimationPlayer()
-				animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
-				entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
-			}
-
-			var vertices []modelspec.Vertex
-			VerticesFromNode(node, document, &vertices)
-			boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-			entity.boundingBox = &boundingBox
-
-			SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-			SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-			SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-
-			result = append(result, entity)
+			result = append(result, parseEntities(node, nil, document.Name, document, ml)...)
 		}
 	}
 
 	return result
 }
 
-func parseNode(node *modelspec.Node, ignoreTransform bool, parentTransform mgl32.Mat4, namespace string) Node {
-	transform := node.Transform
-	if ignoreTransform {
-		transform = mgl32.Ident4()
-	}
-	transform = parentTransform.Mul4(transform)
-
-	eNode := Node{
-		Transform: transform,
-	}
+func parseEntities(node *modelspec.Node, parent *Entity, namespace string, document *modelspec.Document, ml *modellibrary.ModelLibrary) []*Entity {
+	var entity *Entity
 
 	if node.MeshID != nil {
-		eNode.MeshHandle = modellibrary.NewHandle(namespace, *node.MeshID)
+		entity = InstantiateEntity(node.Name)
+		entity.MeshComponent = &MeshComponent{MeshHandle: modellibrary.NewHandle(namespace, *node.MeshID)}
+		var vertices []modelspec.Vertex
+		VerticesFromNode(node, document, &vertices)
+		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+		entity.boundingBox = &boundingBox
+		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+		if len(document.Animations) > 0 {
+			animations, joints := ml.GetAnimations(document.Name)
+			animationPlayer := animation.NewAnimationPlayer()
+			animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
+			entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
+		}
 	}
 
-	var children []Node
+	allEntities := []*Entity{}
+	if entity != nil {
+		allEntities = append(allEntities, entity)
+	}
+
 	for _, childNode := range node.Children {
-		children = append(children, parseNode(childNode, false, transform, namespace))
+		cs := parseEntities(childNode, entity, namespace, document, ml)
+		// the first element of parseEntities is the root child node
+		if entity != nil {
+			if cs[0] != nil {
+				cs[0].Parent = entity
+				entity.Children[cs[0].ID] = cs[0]
+			}
+		}
+		allEntities = append(allEntities, cs...)
 	}
 
-	eNode.Children = children
-	return eNode
+	return allEntities
 }
 
 func VerticesFromNode(node *modelspec.Node, document *modelspec.Document, out *[]modelspec.Vertex) {

@@ -382,28 +382,18 @@ type RenderData struct {
 }
 
 func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
-	q := []entities.Node{entity.MeshComponent.Node}
-
 	var result []RenderData
 
-	for len(q) > 0 {
-		var nextLayerNodes []entities.Node
-		for _, node := range q {
-			if node.MeshHandle != nil {
-				primitives := modelLibrary.GetPrimitives(*node.MeshHandle)
-				for _, p := range primitives {
-					result = append(result, RenderData{
-						Primitive:   p.Primitive,
-						Transform:   node.Transform,
-						VAO:         p.VAO,
-						GeometryVAO: p.GeometryVAO,
-					})
-				}
-			}
-
-			nextLayerNodes = append(nextLayerNodes, node.Children...)
+	if entity.MeshComponent != nil {
+		primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
+		for _, p := range primitives {
+			result = append(result, RenderData{
+				Primitive:   p.Primitive,
+				Transform:   mgl32.Ident4(),
+				VAO:         p.VAO,
+				GeometryVAO: p.GeometryVAO,
+			})
 		}
-		q = nextLayerNodes
 	}
 
 	return result

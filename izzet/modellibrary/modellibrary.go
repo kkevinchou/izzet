@@ -14,8 +14,8 @@ type Handle struct {
 	ID        int
 }
 
-func NewHandle(namespace string, id int) *Handle {
-	return &Handle{Namespace: namespace, ID: id}
+func NewHandle(namespace string, id int) Handle {
+	return Handle{Namespace: namespace, ID: id}
 }
 
 // Interface
@@ -92,7 +92,7 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 
 	handle := NewHandle(namespace, mesh.ID)
 	for i, primitive := range mesh.Primitives {
-		m.Primitives[*handle] = append(m.Primitives[*handle], Primitive{
+		m.Primitives[handle] = append(m.Primitives[handle], Primitive{
 			Primitive:   primitive,
 			VAO:         vaos[0][i],
 			GeometryVAO: geometryVAOs[0][i],

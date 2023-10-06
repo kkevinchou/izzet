@@ -26,6 +26,7 @@ func animationUI(world World, entity *entities.Entity) {
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
+	// world.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
 	fullAnimationLength := entity.Animation.AnimationPlayer.Length()
 
 	// imgui.BeginV("animation window", &open, imgui.WindowFlagsNone)

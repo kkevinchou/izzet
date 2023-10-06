@@ -142,7 +142,8 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 
 			if len(document.Animations) > 0 {
 				animations, joints := ml.GetAnimations(document.Name)
-				animationPlayer := animation.NewAnimationPlayer(animations, joints[document.RootJoint.ID])
+				animationPlayer := animation.NewAnimationPlayer()
+				animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
 				entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
 			}
 

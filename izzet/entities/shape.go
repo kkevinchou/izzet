@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -57,15 +56,11 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 
 	handle := modellibrary.NewHandle("global", modellibrary.CubeMeshID)
 	entity.MeshComponent = &MeshComponent{
-		Node: Node{
-			MeshHandle: handle,
-			Transform:  mgl32.Ident4(),
-			Children:   nil,
-		},
+		MeshHandle: handle,
 	}
 
 	// cube only has a singular primitive
-	primitive := ml.GetPrimitives(*handle)
+	primitive := ml.GetPrimitives(handle)
 	entity.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(primitive[0].Primitive.UniqueVertices))
 
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})

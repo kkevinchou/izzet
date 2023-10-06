@@ -18,38 +18,16 @@ func NewHandle(namespace string, id int) Handle {
 	return Handle{Namespace: namespace, ID: id}
 }
 
-// Interface
-// - stores models that have been loaded and builds their VAOs for later rendering
-// - models can be referenced via string handle to fetch the associated model / vaos
-// - this is used for rendering instantiated entities as well as serialization/deserialization
-
-// Asset Manager
-// - represents the model data from disk, agnostic of rendering backend (OpenGL, Vulkan, etc)
-
-// Model Library
-// - Multiple implementations, could be backed by OpenGL, Vulkan, etc
-
-// Open Questions
-// - is what's the source of truth for mesh data? the asset manager or the model library
-// - hierarchical information related to parenting is good hinting that if we construct
-// 		the parent entity, we should construct the child entities as well.
-//			- e.g. if we construct the base of a house and the roof and walls should come
-//				with it as well (since it's parented to the base)
-//			- where should this hierarchical information be stored though?
-
-// Notes
-// - nodes
-//		- have a name
-// 		- references a single mesh
-// - meshes
-//		- have a name
-// 		- references a collection of primitives
-// - primitives
-//		- have a name (not actually useful?)
-// 		- VAOs are constructed at the primitive level
-//		- each can have their own vertex attributes, materials, etc
-// - primitives don't exist in a vacuumm and are always associated with a mesh
-// - the model library should be a mesh library using mesh handles (their nane)
+// TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
+//		- ideally we have a static and typed handle that we can easily reference from anywhere in the code
+//		- this handle should be all we need to construct the mesh component
+//		- the mesh component should be all we need to render entities in renderutils
+//		- the handle should return all the primitives as well as the animations if any
+//		- we need config to be able to mark a document as a single entity that's animated
+//		- the registration API for ModelLibrary may need to be a whole document
+//		- then the config determines what handle we want to associate with each asset
+//			- Question, do I want to support selected instantiation of entities within a document?
+//			- e.g. from within demo_scene_samurai, instantiating one entity by name
 
 type Primitive struct {
 	// Name      string

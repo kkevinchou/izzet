@@ -7,16 +7,17 @@ import (
 )
 
 type EntityAsset struct {
-	Name      string `json:"name"`
-	Multipart bool   `json:"multipart"`
+	Name         string `json:"name"`
+	Multipart    bool   `json:"multipart"`
+	SingleEntity bool   `json:"single_entity"`
 }
 
-type Data struct {
+type IzzetData struct {
 	EntityAssets []EntityAsset `json:"entity_assets"`
 }
 
-func loadData(dataFilePath string) *Data {
-	var data Data
+func loadData(dataFilePath string) *IzzetData {
+	var data IzzetData
 	dataFile, err := os.Open(dataFilePath)
 	if err != nil {
 		panic(err.Error())

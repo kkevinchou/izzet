@@ -1,6 +1,6 @@
 {
     "entity_assets": [
-        {"name": "alpha"},
+        {"name": "alpha", "Single_entity": true},
         {"name": "alpha2"},
         {"name": "human"},
         {"name": "mutant"},

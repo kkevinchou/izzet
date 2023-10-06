@@ -58,10 +58,19 @@ func prefabsBeginPopupContextItem(world World, index int, prefab *prefabs.Prefab
 		if imgui.Button("Instantiate") {
 			parent := entities.InstantiateEntity(prefab.Name)
 			world.AddEntity(parent)
+
+			var rootEntities []*entities.Entity
 			for _, entity := range entities.InstantiateFromPrefab(prefab, world.ModelLibrary()) {
+				if entity.Parent == nil {
+					rootEntities = append(rootEntities, entity)
+				}
 				world.AddEntity(entity)
+			}
+
+			for _, entity := range rootEntities {
 				entities.BuildRelation(parent, entity)
 			}
+
 			SelectEntity(parent)
 			imgui.CloseCurrentPopup()
 			prefabsSelectIndex = -1

@@ -52,7 +52,7 @@ type Izzet struct {
 	navigationMesh  *navmesh.NavigationMesh
 	metricsRegistry *metrics.MetricsRegistry
 
-	data          *Data
+	izzetData     *IzzetData
 	showImguiDemo bool
 }
 
@@ -101,7 +101,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
-	g.setupAssets(g.assetManager, g.modelLibrary)
+	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.setupPrefabs(data)
 	fmt.Println(time.Since(start), "prefabs done")
 	g.setupEntities()
@@ -197,7 +197,7 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary) {
+func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *IzzetData) {
 	docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha"}
 	for _, docName := range docNames {
 		doc := assetManager.GetDocument(docName)
@@ -206,12 +206,11 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 		}
 		if len(doc.Animations) > 0 {
 			modelLibrary.RegisterAnimations(docName, doc.Animations, doc.JointMap)
-
 		}
 	}
 }
 
-func (g *Izzet) setupPrefabs(data *Data) {
+func (g *Izzet) setupPrefabs(data *IzzetData) {
 	for _, entityAsset := range data.EntityAssets {
 		name := entityAsset.Name
 

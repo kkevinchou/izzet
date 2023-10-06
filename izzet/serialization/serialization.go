@@ -15,8 +15,8 @@ type World interface {
 }
 
 type Relation struct {
-	Parent   int
-	Children []int
+	Parent int
+	Child  int
 }
 
 type SerializedWorld struct {
@@ -34,15 +34,46 @@ func New(world World) *Serializer {
 }
 
 func (s *Serializer) WriteOut(filepath string) {
+	entities := s.world.Entities()
+
 	serializedWorld := SerializedWorld{
-		Entities: s.world.Entities(),
+		Entities: entities,
 	}
 
-	// set up relations
+	for _, e := range entities {
+		if e.Parent != nil {
+			serializedWorld.Relations = append(serializedWorld.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
+		}
+	}
 
 	if err := writeToFile(serializedWorld, filepath); err != nil {
 		panic(err)
 	}
+}
+
+func (s *Serializer) ReadIn(filepath string) error {
+	serializedWorld, err := readFile(filepath)
+	if err != nil {
+		return err
+	}
+
+	s.serializedWorld = *serializedWorld
+	entityMap := map[int]*entities.Entity{}
+	for _, e := range s.serializedWorld.Entities {
+		e.DirtyTransformFlag = true
+		entityMap[e.ID] = e
+	}
+
+	for _, relation := range s.serializedWorld.Relations {
+		parent := entityMap[relation.Parent]
+		child := entityMap[relation.Child]
+		if len(parent.Children) == 0 {
+			parent.Children = make(map[int]*entities.Entity)
+		}
+		parent.Children[relation.Child] = child
+		child.Parent = parent
+	}
+	return nil
 }
 
 func writeToFile(world SerializedWorld, filepath string) error {
@@ -63,19 +94,6 @@ func writeToFile(world SerializedWorld, filepath string) error {
 		return err
 	}
 
-	return nil
-}
-
-func (s *Serializer) ReadIn(filepath string) error {
-	serializedWorld, err := readFile(filepath)
-	if err != nil {
-		return err
-	}
-
-	s.serializedWorld = *serializedWorld
-	for _, e := range s.serializedWorld.Entities {
-		e.DirtyTransformFlag = true
-	}
 	return nil
 }
 

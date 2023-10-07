@@ -139,6 +139,9 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		// entity := InstantiateEntity(document.Name)
 		// entity.MeshComponent = &MeshC
 		for _, scene := range document.Scenes {
+			if len(scene.Nodes) > 1 {
+				panic("single entity asset loading only supports a singular root entity")
+			}
 			for _, node := range scene.Nodes {
 				entity := InstantiateEntity(document.Name)
 				entity.MeshComponent = &MeshComponent{MeshHandle: handle}

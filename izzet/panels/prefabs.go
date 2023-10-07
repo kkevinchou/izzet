@@ -56,22 +56,15 @@ func beginPrefabDragDrop(id int) {
 func prefabsBeginPopupContextItem(world World, index int, prefab *prefabs.Prefab) {
 	if imgui.BeginPopupContextItemV(prefabsContextItemID, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate") {
-			parent := entities.InstantiateEntity(prefab.Name)
-			world.AddEntity(parent)
-
-			var rootEntities []*entities.Entity
-			for _, entity := range entities.InstantiateFromPrefab(prefab, world.ModelLibrary()) {
-				if entity.Parent == nil {
-					rootEntities = append(rootEntities, entity)
-				}
+			entities := entities.InstantiateFromPrefab(prefab, world.ModelLibrary())
+			for _, entity := range entities {
 				world.AddEntity(entity)
 			}
 
-			for _, entity := range rootEntities {
-				entities.BuildRelation(parent, entity)
+			if len(entities) > 0 {
+				SelectEntity(entities[0])
 			}
 
-			SelectEntity(parent)
 			imgui.CloseCurrentPopup()
 			prefabsSelectIndex = -1
 		} else {

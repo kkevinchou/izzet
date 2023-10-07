@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
@@ -52,7 +53,7 @@ type Izzet struct {
 	navigationMesh  *navmesh.NavigationMesh
 	metricsRegistry *metrics.MetricsRegistry
 
-	izzetData     *IzzetData
+	// iztData       *izzetdata.Data
 	showImguiDemo bool
 }
 
@@ -83,7 +84,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 	g.modelLibrary = modellibrary.New()
-	data := loadData(dataFilePath)
+	data := izzetdata.LoadData(dataFilePath)
 
 	g.camera = &camera.Camera{
 		Position:    mgl64.Vec3{-82, 230, 95},
@@ -104,7 +105,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.setupPrefabs(data)
 	fmt.Println(time.Since(start), "prefabs done")
-	g.setupEntities()
+	g.setupEntities(data)
 	fmt.Println(time.Since(start), "entities done")
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
@@ -197,10 +198,13 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *IzzetData) {
+func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
 	docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha"}
 	for _, docName := range docNames {
 		doc := assetManager.GetDocument(docName)
+
+		modelLibrary.RegisterDocument(doc, data)
+
 		for _, mesh := range doc.Meshes {
 			modelLibrary.RegisterMesh(doc.Name, mesh)
 		}
@@ -210,17 +214,15 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 	}
 }
 
-func (g *Izzet) setupPrefabs(data *IzzetData) {
-	for _, entityAsset := range data.EntityAssets {
-		name := entityAsset.Name
-
+func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
+	for name, _ := range data.EntityAssets {
 		document := g.assetManager.GetDocument(name)
-		pf := prefabs.CreatePrefab(document)
+		pf := prefabs.CreatePrefab(document, data)
 		g.prefabs[pf.ID] = pf
 	}
 }
 
-func (g *Izzet) setupEntities() {
+func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	pointLight := entities.CreatePointLight()
 	pointLight.Movement = &entities.MovementComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
@@ -242,22 +244,8 @@ func (g *Izzet) setupEntities() {
 	g.AddEntity(directionalLight)
 
 	doc := g.assetManager.GetDocument("demo_scene_samurai")
-
-	parent := entities.InstantiateEntity("scene_parent")
-	entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
-	g.AddEntity(parent)
-
-	var rootEntities []*entities.Entity
-	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary) {
-		if e.Parent == nil {
-			rootEntities = append(rootEntities, e)
-		}
+	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
 		g.AddEntity(e)
-	}
-
-	// only parent root entities
-	for _, e := range rootEntities {
-		entities.BuildRelation(parent, e)
 	}
 }
 

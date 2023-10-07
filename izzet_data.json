@@ -1,24 +1,6 @@
 {
-    "entity_assets": [
-        {"name": "alpha", "Single_entity": true},
-        {"name": "alpha2"},
-        {"name": "human"},
-        {"name": "mutant"},
-        {"name": "lootbox"},
-        {"name": "scene"},
-        {"name": "simple_plane"},
-        {"name": "demo_scene_west", "multipart": true},
-        {"name": "demo_scene_dungeon", "multipart": true},
-        {"name": "demo_scene_battleroyale", "multipart": true},
-        {"name": "demo_scene_adventure", "multipart": true},
-        {"name": "demo_scene_scificity", "multipart": true},
-        {"name": "demo_scene_shop", "multipart": true},
-        {"name": "demo_scene_western", "multipart": true},
-        {"name": "demo_scene_vikings", "multipart": true},
-        {"name": "demo_scene_samurai", "multipart": true},
-        {"name": "demo_scene_heist", "multipart": true},
-        {"name": "demo_scene_knights", "multipart": true},
-        {"name": "demo_scene_city", "multipart": true},
-        {"name": "Sponza", "multipart": true}
-    ]
+    "entity_assets": {
+        "alpha": { "single_entity": true},
+        "demo_scene_samurai": { "single_entity": true}
+    }
 }

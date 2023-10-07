@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 type EntityAsset struct {
-	// Name         string `json:"name"`
-	Multipart    bool `json:"multipart"`
 	SingleEntity bool `json:"single_entity"`
-	// Handle       string
+	Translation  *mgl64.Vec3
+	Rotation     *mgl64.Quat
+	Scale        *mgl64.Vec3
 }
 
 type Data struct {

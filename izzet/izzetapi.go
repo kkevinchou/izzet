@@ -108,14 +108,15 @@ func (g *Izzet) Serializer() *serialization.Serializer {
 	return g.serializer
 }
 
-func (g *Izzet) SaveWorld() {
-	g.serializer.WriteOut("./scene.txt")
+func (g *Izzet) SaveWorld(name string) {
+	g.serializer.WriteOut(fmt.Sprintf("./%s.json", name))
 }
 
-func (g *Izzet) LoadWorld() {
-	err := g.serializer.ReadIn("./scene.txt")
+func (g *Izzet) LoadWorld(name string) {
+	err := g.serializer.ReadIn(fmt.Sprintf("./%s.json", name))
 	if err != nil {
-		panic(fmt.Sprintf("failed to load world: %s", err))
+		fmt.Println("failed to load world", name, err)
+		return
 	}
 
 	var maxID int

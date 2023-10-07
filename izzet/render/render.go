@@ -50,8 +50,8 @@ type World interface {
 	ShowImguiDemo() bool
 
 	Serializer() *serialization.Serializer
-	LoadWorld()
-	SaveWorld()
+	LoadWorld(string)
+	SaveWorld(string)
 }
 
 const mipsCount int = 6

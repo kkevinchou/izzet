@@ -15,16 +15,14 @@ import (
 type ComponentComboOption string
 
 var MaterialComboOption ComponentComboOption = "Material Component"
+var PhysicsComboOption ComponentComboOption = "Physics Component"
 var LightComboOption ComponentComboOption = "Light Component"
-var MovementComboOption ComponentComboOption = "Movement Component"
-var TestComboOption ComponentComboOption = "Test Component"
 var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
 var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	MaterialComboOption,
+	PhysicsComboOption,
 	LightComboOption,
-	MovementComboOption,
-	TestComboOption,
 }
 
 func entityProps(entity *entities.Entity) {
@@ -212,6 +210,8 @@ func entityProps(entity *entities.Entity) {
 					Type:               entities.LightTypePoint,
 					Range:              800,
 				}
+			} else if SelectedComponentComboOption == PhysicsComboOption {
+				entity.Physics = &entities.PhysicsComponent{}
 			}
 		}
 	}

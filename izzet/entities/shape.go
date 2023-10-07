@@ -61,7 +61,7 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 
 	// cube only has a singular primitive
 	primitive := ml.GetPrimitives(handle)
-	entity.boundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(primitive[0].Primitive.UniqueVertices))
+	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(primitive[0].Primitive.UniqueVertices))
 
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
 	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))

@@ -40,8 +40,8 @@ type Entity struct {
 	LocalRotation mgl64.Quat
 	LocalScale    mgl64.Vec3
 
-	MeshComponent *MeshComponent
-	boundingBox   *collider.BoundingBox
+	MeshComponent       *MeshComponent
+	InternalBoundingBox *collider.BoundingBox
 
 	// relationships
 	Parent   *Entity         `json:"-"`
@@ -117,7 +117,7 @@ func RemoveParent(child *Entity) {
 }
 
 func (e *Entity) BoundingBox() *collider.BoundingBox {
-	if e.boundingBox == nil {
+	if e.InternalBoundingBox == nil {
 		return nil
 	}
 	modelMatrix := WorldTransform(e)
@@ -126,7 +126,7 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 	// scale := mgl64.Scale3D(s.X(), s.Y(), s.Z())
 
 	// return e.boundingBox.Transform(translation.Mul4(r.Mat4()).Mul4(scale))
-	return e.boundingBox.Transform(modelMatrix)
+	return e.InternalBoundingBox.Transform(modelMatrix)
 }
 
 func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary, data *izzetdata.Data) []*Entity {
@@ -145,7 +145,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 				var vertices []modelspec.Vertex
 				VerticesFromNode(node, document, &vertices)
 				boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-				entity.boundingBox = &boundingBox
+				entity.InternalBoundingBox = &boundingBox
 				SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 				SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 				SetScale(entity, utils.Vec3F32ToF64(node.Scale))
@@ -213,7 +213,7 @@ func parseEntities(node *modelspec.Node, parent *Entity, namespace string, docum
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		entity.boundingBox = &boundingBox
+		entity.InternalBoundingBox = &boundingBox
 		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 		SetScale(entity, utils.Vec3F32ToF64(node.Scale))

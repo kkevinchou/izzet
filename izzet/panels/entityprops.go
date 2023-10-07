@@ -114,9 +114,11 @@ func entityProps(entity *entities.Entity) {
 				setupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) })
 			}
 			imgui.EndTable()
+			imgui.PushID("remove light")
 			if imgui.Button("Remove") {
 				entity.LightInfo = nil
 			}
+			imgui.PopID()
 		}
 	}
 
@@ -134,9 +136,11 @@ func entityProps(entity *entities.Entity) {
 			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) })
 			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) })
 			imgui.EndTable()
+			imgui.PushID("remove material")
 			if imgui.Button("Remove") {
 				entity.Material = nil
 			}
+			imgui.PopID()
 		}
 	}
 
@@ -170,9 +174,11 @@ func entityProps(entity *entities.Entity) {
 				imgui.PopID()
 			})
 			imgui.EndTable()
+			imgui.PushID("remove phys")
 			if imgui.Button("Remove") {
 				entity.Physics = nil
 			}
+			imgui.PopID()
 		}
 
 	}

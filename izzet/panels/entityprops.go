@@ -140,6 +140,43 @@ func entityProps(entity *entities.Entity) {
 		}
 	}
 
+	if entity.Physics != nil {
+		physicsComponent := entity.Physics
+		velocity := &physicsComponent.Velocity
+		if imgui.CollapsingHeaderV("Physics Properties", imgui.TreeNodeFlagsDefaultOpen) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+
+			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
+
+			setupRow("Velocity X", func() {
+				imgui.PushID("velocity x")
+				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
+					velocity[0] = float64(x)
+				}
+				imgui.PopID()
+			})
+			setupRow("Velocity Y", func() {
+				imgui.PushID("velocity y")
+				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
+					velocity[1] = float64(y)
+				}
+				imgui.PopID()
+			})
+			setupRow("Velocity Z", func() {
+				imgui.PushID("velocity z")
+				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
+					velocity[2] = float64(z)
+				}
+				imgui.PopID()
+			})
+			imgui.EndTable()
+			if imgui.Button("Remove") {
+				entity.Physics = nil
+			}
+		}
+
+	}
+
 	imgui.PushID("Component Combo")
 	if imgui.BeginCombo("", string(SelectedComponentComboOption)) {
 		for _, option := range componentComboOptions {

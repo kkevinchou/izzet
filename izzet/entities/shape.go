@@ -5,6 +5,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -59,9 +60,10 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 		MeshHandle: handle,
 	}
 
-	// cube only has a singular primitive
-	primitive := ml.GetPrimitives(handle)
-	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(primitive[0].Primitive.UniqueVertices))
+	// cube only has a singular primitives
+	primitives := ml.GetPrimitives(handle)
+	uniqueVertices := utils.ModelSpecVertsToVec3(primitives[0].Primitive.UniqueVertices)
+	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(uniqueVertices)
 
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
 	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
@@ -70,6 +72,13 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 			Quat: rotation,
 		},
 	}
+	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
+
+	msPrimitives := []*modelspec.PrimitiveSpecification{primitives[0].Primitive}
+	entity.Collider = &ColliderComponent{TriMeshCollider: collider.CreateTriMeshFromPrimitives(msPrimitives)}
+	// capsule := collider.NewCapsuleFromVertices(uniqueVertices)
+	// entity.Collider = &ColliderComponent{CapsuleCollider: &capsule}
+
 	id += 1
 	return entity
 }

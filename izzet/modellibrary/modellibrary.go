@@ -1,8 +1,11 @@
 package modellibrary
 
 import (
+	"fmt"
+
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
@@ -11,11 +14,19 @@ import (
 
 type Handle struct {
 	Namespace string
-	ID        int
+	ID        string
 }
 
-func NewHandle(namespace string, id int) Handle {
+func NewGlobalHandle(id string) Handle {
+	return Handle{Namespace: "global", ID: id}
+}
+
+func NewHandle(namespace string, id string) Handle {
 	return Handle{Namespace: namespace, ID: id}
+}
+
+func NewHandleFromMeshID(namespace string, meshID int) Handle {
+	return NewHandle(namespace, fmt.Sprintf("%d", meshID))
 }
 
 type Primitive struct {
@@ -63,15 +74,58 @@ func New() *ModelLibrary {
 //			- Question, do I want to support selected instantiation of entities within a document?
 //			- e.g. from within demo_scene_samurai, instantiating one entity by name
 
-// func (m *ModelLibrary) RegisterDocument(document *modelspec.Document, data *izzet.IzzetData) {
-// }
+func getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
+	q := []*modelspec.Node{node}
+
+	var result []Primitive
+
+	for len(q) > 0 {
+		var nextLayerNodes []*modelspec.Node
+		for _, node := range q {
+			if node.MeshID != nil {
+				mesh := doc.Meshes[*node.MeshID]
+
+				modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+				vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+				geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+
+				for i, primitive := range mesh.Primitives {
+					result = append(result, Primitive{
+						Primitive:   primitive,
+						VAO:         vaos[0][i],
+						GeometryVAO: geometryVAOs[0][i],
+					})
+				}
+			}
+
+			nextLayerNodes = append(nextLayerNodes, node.Children...)
+		}
+		q = nextLayerNodes
+	}
+
+	return result
+}
+
+func (m *ModelLibrary) RegisterDocument(document *modelspec.Document, data *izzetdata.Data) {
+	for _, scene := range document.Scenes {
+		for _, node := range scene.Nodes {
+			if entityAsset, ok := data.EntityAssets[document.Name]; ok {
+				if entityAsset.SingleEntity {
+					handle := NewGlobalHandle(document.Name)
+					primitives := getPrimitives(document, node)
+					m.Primitives[handle] = primitives
+				}
+			}
+		}
+	}
+}
 
 func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 
-	handle := NewHandle(namespace, mesh.ID)
+	handle := NewHandleFromMeshID(namespace, mesh.ID)
 	for i, primitive := range mesh.Primitives {
 		m.Primitives[handle] = append(m.Primitives[handle], Primitive{
 			Primitive:   primitive,

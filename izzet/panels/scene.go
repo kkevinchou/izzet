@@ -24,13 +24,14 @@ func sceneUI(world World) {
 			}
 
 			prefab := world.GetPrefabByID(prefabID)
-			parent := entities.InstantiateEntity(prefab.Name)
-			world.AddEntity(parent)
-			for _, entity := range entities.InstantiateFromPrefab(prefab, world.ModelLibrary()) {
+			entities := entities.InstantiateFromPrefab(prefab, world.ModelLibrary())
+			for _, entity := range entities {
 				world.AddEntity(entity)
-				entities.BuildRelation(parent, entity)
 			}
-			SelectEntity(parent)
+
+			if len(entities) > 0 {
+				SelectEntity(entities[0])
+			}
 		}
 		imgui.EndDragDropTarget()
 	}

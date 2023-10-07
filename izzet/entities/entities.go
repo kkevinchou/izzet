@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 
+	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/animation"
@@ -73,7 +74,7 @@ func (e *Entity) NameID() string {
 // }
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *modellibrary.ModelLibrary) []*Entity {
-	return CreateEntitiesFromDocument(prefab.Document, ml)
+	return CreateEntitiesFromDocument(prefab.Document, ml, prefab.IzzetData)
 }
 
 func InstantiateBaseEntity(name string, id int) *Entity {
@@ -128,12 +129,60 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 	return e.boundingBox.Transform(modelMatrix)
 }
 
-func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary) []*Entity {
+func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary, data *izzetdata.Data) []*Entity {
 	var result []*Entity
 
-	for _, scene := range document.Scenes {
-		for _, node := range scene.Nodes {
-			result = append(result, parseEntities(node, nil, document.Name, document, ml)...)
+	if data.EntityAssets[document.Name].SingleEntity {
+		handle := modellibrary.NewGlobalHandle(document.Name)
+		// entity := InstantiateEntity(document.Name)
+		// entity.MeshComponent = &MeshC
+		for _, scene := range document.Scenes {
+			for _, node := range scene.Nodes {
+				entity := InstantiateEntity(document.Name)
+				entity.MeshComponent = &MeshComponent{MeshHandle: handle}
+				var vertices []modelspec.Vertex
+				VerticesFromNode(node, document, &vertices)
+				boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+				entity.boundingBox = &boundingBox
+				SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+				SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+				SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+				if len(document.Animations) > 0 {
+					animations, joints := ml.GetAnimations(document.Name)
+					animationPlayer := animation.NewAnimationPlayer()
+					animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
+					entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
+				}
+				result = append(result, entity)
+			}
+		}
+	} else {
+		parent := InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
+		// entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
+		result = append(result, parent)
+
+		for _, scene := range document.Scenes {
+			for _, node := range scene.Nodes {
+				result = append(result, parseEntities(node, nil, document.Name, document, ml)...)
+			}
+		}
+
+		var rootEntities []*Entity
+		for _, e := range result {
+			if e.Parent == nil {
+				rootEntities = append(rootEntities, e)
+			}
+		}
+
+		// only parent root entities
+		for _, e := range rootEntities {
+			if e.ID == parent.ID {
+				continue
+			}
+
+			parent.Children[e.ID] = e
+			e.Parent = parent
 		}
 	}
 
@@ -145,7 +194,7 @@ func parseEntities(node *modelspec.Node, parent *Entity, namespace string, docum
 
 	if node.MeshID != nil {
 		entity = InstantiateEntity(node.Name)
-		entity.MeshComponent = &MeshComponent{MeshHandle: modellibrary.NewHandle(namespace, *node.MeshID)}
+		entity.MeshComponent = &MeshComponent{MeshHandle: modellibrary.NewHandleFromMeshID(namespace, *node.MeshID)}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))

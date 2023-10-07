@@ -161,7 +161,6 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		}
 	} else {
 		parent := InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
-		// entities.SetScale(parent, mgl64.Vec3{20, 20, 20})
 		result = append(result, parent)
 
 		for _, scene := range document.Scenes {

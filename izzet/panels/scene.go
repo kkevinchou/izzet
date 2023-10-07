@@ -53,15 +53,15 @@ func sceneHierarchy(world World) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Cube") {
-				child := entities.CreateCube(world.ModelLibrary(), 25)
-				world.AddEntity(child)
-				SelectEntity(child)
+				entity := entities.CreateCube(world.ModelLibrary(), 25)
+				world.AddEntity(entity)
+				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Triangle") {
-				child := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
-				world.AddEntity(child)
-				SelectEntity(child)
+				entity := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
+				world.AddEntity(entity)
+				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Point Light") {

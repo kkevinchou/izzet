@@ -132,7 +132,9 @@ func (e *Entity) BoundingBox() *collider.BoundingBox {
 func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary, data *izzetdata.Data) []*Entity {
 	var result []*Entity
 
-	if data.EntityAssets[document.Name].SingleEntity {
+	entityAsset := data.EntityAssets[document.Name]
+
+	if entityAsset.SingleEntity {
 		handle := modellibrary.NewGlobalHandle(document.Name)
 		// entity := InstantiateEntity(document.Name)
 		// entity.MeshComponent = &MeshC
@@ -183,6 +185,19 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 
 			parent.Children[e.ID] = e
 			e.Parent = parent
+		}
+	}
+
+	if len(result) > 0 {
+		rootEntity := result[0]
+		if entityAsset.Translation != nil {
+			SetLocalPosition(rootEntity, *entityAsset.Translation)
+		}
+		if entityAsset.Rotation != nil {
+			SetLocalRotation(rootEntity, *entityAsset.Rotation)
+		}
+		if entityAsset.Scale != nil {
+			SetScale(rootEntity, *entityAsset.Scale)
 		}
 	}
 

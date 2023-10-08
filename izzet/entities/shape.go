@@ -66,11 +66,11 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
 	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
-	entity.Movement = &MovementComponent{
-		RotationConfig: &RotationConfig{
-			Quat: rotation,
-		},
-	}
+	// entity.Movement = &MovementComponent{
+	// 	RotationConfig: &RotationConfig{
+	// 		Quat: rotation,
+	// 	},
+	// }
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
 
 	// msPrimitives := []*modelspec.PrimitiveSpecification{primitives[0].Primitive}

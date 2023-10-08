@@ -33,42 +33,49 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 		}
 	}
 
-	// ResolveCollisions(g)
+	ResolveCollisions(g)
 
-	// // reset contacts - probably want to do this later
-	// for _, entity := range allEntities {
-	// 	if entity.Collider == nil {
-	// 		continue
-	// 	}
-	// 	entity.Collider.Contacts = map[int]bool{}
-	// }
+	// reset contacts - probably want to do this later
+	for _, entity := range allEntities {
+		if entity.Collider == nil {
+			continue
+		}
+		entity.Collider.Contacts = map[int]bool{}
+	}
 }
 
 func ResolveCollisions(world World) {
-	var entityList []*entities.Entity
+	var collidableEntities []*entities.Entity
 	for _, e := range world.Entities() {
 		if e.Collider == nil {
 			continue
 		}
-		entityList = append(entityList, e)
+		collidableEntities = append(collidableEntities, e)
 	}
 
 	// pairExists stores the pairs of entities that we've already created,
 	// don't create a pair for both (e1, e2) and (e2, e1), just one of them
 	pairExists := map[int]map[int]bool{}
-	for _, e := range entityList {
+	for _, e := range collidableEntities {
 		pairExists[e.ID] = map[int]bool{}
 	}
 
+	seen := map[int]bool{}
+
 	entityPairs := [][]*entities.Entity{}
-	for _, e1 := range entityList {
-		if e1.Physics != nil && e1.Physics.Static {
+	var entityList []*entities.Entity
+	for _, e1 := range collidableEntities {
+		if e1.Physics == nil || e1.Physics.Static {
 			continue
 		}
 
 		entitiesInPartition := world.SpatialPartition().QueryEntities(e1.BoundingBox())
 		for _, spatialEntity := range entitiesInPartition {
 			e2 := world.GetEntityByID(spatialEntity.GetID())
+			if e2.Collider == nil {
+				continue
+			}
+
 			if e1.ID == e2.ID {
 				continue
 			}
@@ -81,12 +88,22 @@ func ResolveCollisions(world World) {
 				continue
 			}
 
+			if !seen[e1.ID] {
+				entityList = append(entityList, e1)
+			}
+			if !seen[e2.ID] {
+				entityList = append(entityList, e2)
+			}
+
 			entityPairs = append(entityPairs, []*entities.Entity{e1, e2})
 			pairExists[e1.ID][e2.ID] = true
 			pairExists[e2.ID][e1.ID] = true
 		}
 	}
-	// detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
+
+	if len(entityPairs) > 0 {
+		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
+	}
 }
 
 func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world World) {

@@ -1042,7 +1042,7 @@ func drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderPro
 	)
 }
 
-func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, aabb *collider.BoundingBox, thickness float64) {
+func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
 	var allLines [][]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)

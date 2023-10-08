@@ -41,7 +41,7 @@ type Entity struct {
 	LocalScale    mgl64.Vec3
 
 	MeshComponent       *MeshComponent
-	InternalBoundingBox *collider.BoundingBox
+	InternalBoundingBox collider.BoundingBox
 
 	// relationships
 	Parent   *Entity         `json:"-"`
@@ -122,10 +122,7 @@ func RemoveParent(child *Entity) {
 	}
 }
 
-func (e *Entity) BoundingBox() *collider.BoundingBox {
-	if e.InternalBoundingBox == nil {
-		return nil
-	}
+func (e *Entity) BoundingBox() collider.BoundingBox {
 	modelMatrix := WorldTransform(e)
 	// t, r, s := utils.DecomposeF64(modelMatrix)
 	// translation := mgl64.Translate3D(t.X(), t.Y(), t.Z())
@@ -159,8 +156,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		entity.MeshComponent = &MeshComponent{MeshHandle: handle}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
-		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		entity.InternalBoundingBox = &boundingBox
+		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
 		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
@@ -256,8 +252,7 @@ func parseEntities(node *modelspec.Node, parent *Entity, namespace string, docum
 		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
-		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		entity.InternalBoundingBox = &boundingBox
+		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
 		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 		SetScale(entity, utils.Vec3F32ToF64(node.Scale))

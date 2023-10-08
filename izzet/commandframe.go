@@ -215,7 +215,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			if !entity.Dirty() {
 				continue
 			}
-			if entity.BoundingBox() == nil {
+			if entity.BoundingBox() == collider.EmptyBoundingBox {
 				continue
 			}
 			spatialEntities = append(spatialEntities, entity)

@@ -351,7 +351,7 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientatio
 		renderContext.AspectRatio(),
 		1,
 	)
-	frustumBoundingBox := *collider.BoundingBoxFromVertices(frustumPoints)
+	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
 
 	var renderEntities []*entities.Entity
 	if panels.DBG.EnableSpatialPartition {
@@ -419,7 +419,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 
 		// draw bounding box
 		bb := entity.BoundingBox()
-		if bb != nil {
+		if bb != collider.EmptyBoundingBox {
 			drawAABB(
 				viewerContext,
 				shaderManager.GetShaderProgram("flat"),

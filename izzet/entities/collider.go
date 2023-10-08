@@ -2,14 +2,20 @@ package entities
 
 import "github.com/kkevinchou/kitolib/collision/collider"
 
-var ColliderGroupMap map[string]ColliderGroupFlag = map[string]ColliderGroupFlag{
-	"terrain": ColliderGroupTerrain,
+type ColliderGroup string
+
+var (
+	ColliderGroupTerrain ColliderGroup = "TERRAIN"
+)
+
+var ColliderGroupMap map[ColliderGroup]ColliderGroupFlag = map[ColliderGroup]ColliderGroupFlag{
+	ColliderGroupTerrain: ColliderGroupFlagTerrain,
 }
 
 type ColliderGroupFlag uint64
 
 const (
-	ColliderGroupTerrain ColliderGroupFlag = 1 << 0
+	ColliderGroupFlagTerrain ColliderGroupFlag = 1 << 0
 )
 
 type ColliderComponent struct {

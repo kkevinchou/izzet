@@ -31,7 +31,7 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
 	}
 
-	// ResolveCollisions(g)
+	ResolveCollisions(g)
 
 	// reset contacts - probably want to do this later
 	for _, entity := range allEntities {
@@ -60,6 +60,10 @@ func ResolveCollisions(world World) {
 
 	entityPairs := [][]*entities.Entity{}
 	for _, e1 := range entityList {
+		if e1.Physics != nil && e1.Physics.Static {
+			continue
+		}
+
 		entitiesInPartition := world.SpatialPartition().QueryEntities(*e1.BoundingBox())
 		for _, spatialEntity := range entitiesInPartition {
 			e2 := world.GetEntityByID(spatialEntity.GetID())
@@ -80,8 +84,7 @@ func ResolveCollisions(world World) {
 			pairExists[e2.ID][e1.ID] = true
 		}
 	}
-	// entityList = nil
-	detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
+	// detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
 }
 
 func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world World) {

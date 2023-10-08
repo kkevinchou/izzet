@@ -15,7 +15,7 @@ pprof:
 
 .PHONY: profilecpu
 profilecpu:
-	curl http://localhost:6868/debug/pprof/profile?seconds=120 -o cpu
+	curl http://localhost:6868/debug/pprof/profile?seconds=60 -o cpu
 	go tool pprof -http=localhost:6969 cpu
 
 .PHONY: profileheap

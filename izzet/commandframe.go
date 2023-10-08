@@ -1,6 +1,7 @@
 package izzet
 
 import (
+	"encoding/json"
 	"math"
 	"time"
 
@@ -223,6 +224,8 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 }
 
+var copiedEntity []byte
+
 func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 	// shutdown
@@ -265,14 +268,42 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	}
 
 	// delete entity
-	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
-		if event.Event == input.KeyboardEventUp {
-			g.DeleteEntity(panels.SelectedEntity())
-			panels.SelectEntity(nil)
+	if ctrlEvent, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
+		if ctrlEvent.Event == input.KeyboardEventDown {
+			if cEvent, ok := keyboardInput[input.KeyboardKeyC]; ok {
+				if cEvent.Event == input.KeyboardEventUp {
+					if entity := panels.SelectedEntity(); entity != nil {
+						var err error
+						copiedEntity, err = json.Marshal(entity)
+						if err != nil {
+							panic(err)
+						}
+					}
+				}
+			}
 		}
 	}
 
-	// move highlight
+	if ctrlEvent, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
+		if ctrlEvent.Event == input.KeyboardEventDown {
+			if vEvent, ok := keyboardInput[input.KeyboardKeyV]; ok {
+				if vEvent.Event == input.KeyboardEventUp {
+					var newEntity entities.Entity
+					err := json.Unmarshal(copiedEntity, &newEntity)
+					if err != nil {
+						panic(err)
+					}
+					id := entities.GetNextIDAndAdvance()
+					newEntity.ID = id
+
+					g.AddEntity(&newEntity)
+					panels.SelectEntity(&newEntity)
+				}
+			}
+		}
+	}
+
+	// navmesh - move highlight
 	if event, ok := keyboardInput[input.KeyboardKeyI]; ok {
 		if event.Event == input.KeyboardEventUp {
 			panels.DBG.VoxelHighlightZ--

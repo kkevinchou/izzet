@@ -19,6 +19,7 @@ type EntityAsset struct {
 }
 
 type Physics struct {
+	Static   bool
 	Velocity mgl64.Vec3
 }
 

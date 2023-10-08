@@ -24,11 +24,13 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 
 	for _, entity := range allEntities {
 		physicsComponent := entity.Physics
-		if physicsComponent == nil {
+		if physicsComponent == nil || physicsComponent.Static {
 			continue
 		}
 
-		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
+		if physicsComponent.Velocity.Len() != 0 {
+			entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
+		}
 	}
 
 	// ResolveCollisions(g)

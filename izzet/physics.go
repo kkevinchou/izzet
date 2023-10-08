@@ -31,15 +31,15 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
 	}
 
-	ResolveCollisions(g)
+	// ResolveCollisions(g)
 
-	// reset contacts - probably want to do this later
-	for _, entity := range allEntities {
-		if entity.Collider == nil {
-			continue
-		}
-		entity.Collider.Contacts = map[int]bool{}
-	}
+	// // reset contacts - probably want to do this later
+	// for _, entity := range allEntities {
+	// 	if entity.Collider == nil {
+	// 		continue
+	// 	}
+	// 	entity.Collider.Contacts = map[int]bool{}
+	// }
 }
 
 func ResolveCollisions(world World) {

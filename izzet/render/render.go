@@ -428,6 +428,23 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 				0.5,
 			)
 		}
+
+		if entity.Collider != nil {
+			capsuleCollider := entity.Collider.TransformedCapsuleCollider
+			if capsuleCollider != nil {
+				shader := shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{0.0 / 255, 0.0 / 255, 255.0 / 255}
+
+				// directional light arrow
+				lines := [][]mgl64.Vec3{
+					[]mgl64.Vec3{
+						capsuleCollider.Top,
+						capsuleCollider.Bottom,
+					},
+				}
+				drawLines(viewerContext, shader, lines, 0.5, color)
+			}
+		}
 	}
 
 	// 	nm := r.world.NavMesh()

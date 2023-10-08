@@ -72,6 +72,11 @@ func ResolveCollisions(world World) {
 		entitiesInPartition := world.SpatialPartition().QueryEntities(e1.BoundingBox())
 		for _, spatialEntity := range entitiesInPartition {
 			e2 := world.GetEntityByID(spatialEntity.GetID())
+			// todo: remove this hack, entities that are deleted should be removed
+			// from the spatial partition
+			if e2 == nil {
+				continue
+			}
 			if e2.Collider == nil {
 				continue
 			}
@@ -163,7 +168,11 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 	for _, e := range entityList {
 		cc := e.Collider
 		if cc.CapsuleCollider != nil {
-			capsule := cc.CapsuleCollider.Transform(entities.GetLocalPosition(e))
+			// transformMatrix := entities.GetLocalPosition(e)
+			// transformMatrix := entities.WorldTransform(e)
+			position := e.LocalPosition
+			transformMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+			capsule := cc.CapsuleCollider.Transform(transformMatrix)
 			cc.TransformedCapsuleCollider = &capsule
 		} else if cc.TriMeshCollider != nil {
 			localPosition := entities.GetLocalPosition(e)

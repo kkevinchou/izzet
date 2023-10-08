@@ -102,6 +102,12 @@ func SetNextID(nextID int) {
 	id = nextID
 }
 
+func GetNextIDAndAdvance() int {
+	oldID := id
+	id += 1
+	return oldID
+}
+
 func BuildRelation(parent *Entity, child *Entity) {
 	RemoveParent(child)
 	parent.Children[child.ID] = child
@@ -202,12 +208,18 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 			meshHandle := entity.MeshComponent.MeshHandle
 			primitives := ml.GetPrimitives(meshHandle)
 			if entity.Collider == nil {
-				if _, ok := ColliderGroupMap[entityAsset.Collider.ColliderGroup]; !ok {
+				if _, ok := ColliderGroupMap[ColliderGroup(entityAsset.Collider.ColliderGroup)]; !ok {
 					panic(fmt.Sprintf("unrecognized collider group %s for document %s", entityAsset.Collider.ColliderGroup, document.Name))
 				}
-				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[entityAsset.Collider.ColliderGroup]}
+				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[ColliderGroup(entityAsset.Collider.ColliderGroup)]}
 			}
 			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(mlPrimitivesTospecPrimitive(primitives))
+			if ColliderGroup(entityAsset.Collider.ColliderGroup) == ColliderGroupTerrain {
+				if entity.Physics == nil {
+					entity.Physics = &PhysicsComponent{}
+				}
+				entity.Physics.Static = true
+			}
 		}
 	}
 

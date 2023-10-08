@@ -1,7 +1,7 @@
 {
     "entity_assets": {
         "alpha": {"single_entity": true},
-        "demo_scene_samurai": {"translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
+        "demo_scene_samurai": {"physics": {"velocity": [0, 0, 0]}, "collider": {"collidergroup": "terrain", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
         "demo_scene_city": {"scale": [20, 20, 20]},
         "demo_scene_dungeon": {"scale": [20, 20, 20]},
         "demo_scene_adventure": {"scale": [20, 20, 20]},

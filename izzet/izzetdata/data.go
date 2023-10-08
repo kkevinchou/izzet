@@ -9,10 +9,22 @@ import (
 )
 
 type EntityAsset struct {
-	SingleEntity bool `json:"single_entity"`
-	Translation  *mgl64.Vec3
-	Rotation     *mgl64.Quat
-	Scale        *mgl64.Vec3
+	SingleEntity bool      `json:"single_entity"`
+	Collider     *Collider `json:"collider"`
+	Physics      *Physics  `json:"physics"`
+
+	Translation *mgl64.Vec3
+	Rotation    *mgl64.Quat
+	Scale       *mgl64.Vec3
+}
+
+type Physics struct {
+	Velocity mgl64.Vec3
+}
+
+type Collider struct {
+	ColliderGroup   string
+	TriMeshCollider bool `json:"trimeshcollider"`
 }
 
 type Data struct {

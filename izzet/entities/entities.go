@@ -138,30 +138,34 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		handle := modellibrary.NewGlobalHandle(document.Name)
 		// entity := InstantiateEntity(document.Name)
 		// entity.MeshComponent = &MeshC
-		for _, scene := range document.Scenes {
-			if len(scene.Nodes) > 1 {
-				panic("single entity asset loading only supports a singular root entity")
-			}
-			for _, node := range scene.Nodes {
-				entity := InstantiateEntity(document.Name)
-				entity.MeshComponent = &MeshComponent{MeshHandle: handle}
-				var vertices []modelspec.Vertex
-				VerticesFromNode(node, document, &vertices)
-				boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-				entity.InternalBoundingBox = &boundingBox
-				SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-				SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-				SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-
-				if len(document.Animations) > 0 {
-					animations, joints := ml.GetAnimations(document.Name)
-					animationPlayer := animation.NewAnimationPlayer()
-					animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
-					entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
-				}
-				result = append(result, entity)
-			}
+		var scene *modelspec.Scene
+		if len(document.Scenes) != 1 {
+			panic("single entity asset loading only supports a singular scene")
 		}
+		scene = document.Scenes[0]
+
+		if len(scene.Nodes) != 1 {
+			panic("single entity asset loading only supports a singular root entity")
+		}
+		node := scene.Nodes[0]
+
+		entity := InstantiateEntity(document.Name)
+		entity.MeshComponent = &MeshComponent{MeshHandle: handle}
+		var vertices []modelspec.Vertex
+		VerticesFromNode(node, document, &vertices)
+		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+		entity.InternalBoundingBox = &boundingBox
+		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+		if len(document.Animations) > 0 {
+			animations, joints := ml.GetAnimations(document.Name)
+			animationPlayer := animation.NewAnimationPlayer()
+			animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
+			entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
+		}
+		result = append(result, entity)
 	} else {
 		parent := InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
 		result = append(result, parent)
@@ -190,6 +194,23 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		}
 	}
 
+	for _, entity := range result {
+		if entityAsset.Collider != nil && entityAsset.Collider.TriMeshCollider {
+			if entity.MeshComponent == nil {
+				continue
+			}
+			meshHandle := entity.MeshComponent.MeshHandle
+			primitives := ml.GetPrimitives(meshHandle)
+			if entity.Collider == nil {
+				if _, ok := ColliderGroupMap[entityAsset.Collider.ColliderGroup]; !ok {
+					panic(fmt.Sprintf("unrecognized collider group %s for document %s", entityAsset.Collider.ColliderGroup, document.Name))
+				}
+				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[entityAsset.Collider.ColliderGroup]}
+			}
+			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(mlPrimitivesTospecPrimitive(primitives))
+		}
+	}
+
 	if len(result) > 0 {
 		rootEntity := result[0]
 		if entityAsset.Translation != nil {
@@ -206,12 +227,21 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 	return result
 }
 
+func mlPrimitivesTospecPrimitive(primitives []modellibrary.Primitive) []*modelspec.PrimitiveSpecification {
+	var result []*modelspec.PrimitiveSpecification
+	for _, p := range primitives {
+		result = append(result, p.Primitive)
+	}
+	return result
+}
+
 func parseEntities(node *modelspec.Node, parent *Entity, namespace string, document *modelspec.Document, ml *modellibrary.ModelLibrary) []*Entity {
 	var entity *Entity
 
 	if node.MeshID != nil {
 		entity = InstantiateEntity(node.Name)
-		entity.MeshComponent = &MeshComponent{MeshHandle: modellibrary.NewHandleFromMeshID(namespace, *node.MeshID)}
+		meshHandle := modellibrary.NewHandleFromMeshID(namespace, *node.MeshID)
+		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		boundingBox := *collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))

@@ -29,7 +29,6 @@ func entityProps(entity *entities.Entity) {
 	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
 		entityIDStr := ""
 		entityNameStr := ""
-		positionStr := ""
 		localRotationStr := ""
 		localQuaternionStr := ""
 		scaleStr := ""
@@ -40,8 +39,6 @@ func entityProps(entity *entities.Entity) {
 		if entity != nil {
 			entityIDStr = fmt.Sprintf("%d", entity.ID)
 			entityNameStr = entity.NameID()
-			position := entities.GetLocalPosition(entity)
-			positionStr = fmt.Sprintf("{%.1f, %.1f, %.1f}", position.X(), position.Y(), position.Z())
 
 			rotation := entities.GetLocalRotation(entity)
 			euler := QuatToEuler(rotation)
@@ -68,12 +65,45 @@ func entityProps(entity *entities.Entity) {
 		uiTableRow("ID", entityIDStr)
 		uiTableRow("Name", entityNameStr)
 
-		// if entity != nil {
-		// 	// if uiTableInputRow("Local Position", &positionStr, nil) {
-		// 	// 	uiTableInputPosition(entity, &positionStr)
-		// 	// }
-		// }
-		uiTableRow("Local Position", positionStr)
+		var position *mgl64.Vec3
+		var x, y, z int32
+		if entity != nil {
+			position = &entity.LocalPosition
+			x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
+		}
+
+		setupRow("Local Position X", func() {
+			imgui.PushID("position x")
+			if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
+				if entity != nil {
+					position[0] = float64(x)
+					entities.SetDirty(entity)
+				}
+			}
+			imgui.PopID()
+		})
+
+		setupRow("Local Position Y", func() {
+			imgui.PushID("position y")
+			if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
+				if entity != nil {
+					position[1] = float64(y)
+					entities.SetDirty(entity)
+				}
+			}
+			imgui.PopID()
+		})
+
+		setupRow("Local Position Z", func() {
+			imgui.PushID("position z")
+			if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
+				if entity != nil {
+					position[2] = float64(z)
+					entities.SetDirty(entity)
+				}
+			}
+			imgui.PopID()
+		})
 
 		uiTableRow("Local Rotation", localRotationStr)
 		uiTableRow("Local Quat", localQuaternionStr)

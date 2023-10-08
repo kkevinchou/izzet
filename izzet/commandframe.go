@@ -268,6 +268,14 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	}
 
 	// delete entity
+	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
+		if event.Event == input.KeyboardEventUp {
+			g.DeleteEntity(panels.SelectedEntity())
+			panels.SelectEntity(nil)
+		}
+	}
+
+	// copy entity
 	if ctrlEvent, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
 		if ctrlEvent.Event == input.KeyboardEventDown {
 			if cEvent, ok := keyboardInput[input.KeyboardKeyC]; ok {
@@ -284,6 +292,7 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
+	// paste entity
 	if ctrlEvent, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
 		if ctrlEvent.Event == input.KeyboardEventDown {
 			if vEvent, ok := keyboardInput[input.KeyboardKeyV]; ok {

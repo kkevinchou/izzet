@@ -5,7 +5,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -74,10 +73,11 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 	}
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
 
-	msPrimitives := []*modelspec.PrimitiveSpecification{primitives[0].Primitive}
-	entity.Collider = &ColliderComponent{TriMeshCollider: collider.CreateTriMeshFromPrimitives(msPrimitives)}
-	// capsule := collider.NewCapsuleFromVertices(uniqueVertices)
-	// entity.Collider = &ColliderComponent{CapsuleCollider: &capsule}
+	// msPrimitives := []*modelspec.PrimitiveSpecification{primitives[0].Primitive}
+	// entity.Collider = &ColliderComponent{TriMeshCollider: collider.CreateTriMeshFromPrimitives(msPrimitives)}
+
+	capsule := collider.NewCapsuleFromVertices(uniqueVertices)
+	entity.Collider = &ColliderComponent{CapsuleCollider: &capsule, CollisionMask: ColliderGroupFlagTerrain}
 
 	id += 1
 	return entity

@@ -235,6 +235,7 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 
 	cube := entities.CreateCube(g.modelLibrary, 50)
 	entities.SetLocalPosition(cube, mgl64.Vec3{154, 126, -22})
+	entities.SetLocalPosition(cube, mgl64.Vec3{})
 	g.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()

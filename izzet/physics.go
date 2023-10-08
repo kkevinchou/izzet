@@ -64,7 +64,7 @@ func ResolveCollisions(world World) {
 			continue
 		}
 
-		entitiesInPartition := world.SpatialPartition().QueryEntities(*e1.BoundingBox())
+		entitiesInPartition := world.SpatialPartition().QueryEntities(e1.BoundingBox())
 		for _, spatialEntity := range entitiesInPartition {
 			e2 := world.GetEntityByID(spatialEntity.GetID())
 			if e1.ID == e2.ID {

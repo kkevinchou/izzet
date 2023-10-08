@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
@@ -21,7 +22,7 @@ import (
 
 func (g *Izzet) AddEntity(entity *entities.Entity) {
 	g.entities[entity.ID] = entity
-	if entity.BoundingBox() != nil {
+	if entity.BoundingBox() != collider.EmptyBoundingBox {
 		g.spatialPartition.IndexEntities([]spatialpartition.Entity{entity})
 	}
 }

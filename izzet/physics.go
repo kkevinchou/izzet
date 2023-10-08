@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 var resolveCountMax = 3
@@ -15,10 +16,12 @@ var resolveCountMax = 3
 type World interface {
 	GetEntityByID(id int) *entities.Entity
 	Entities() []*entities.Entity
+	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
 func (g *Izzet) physicsStep(delta time.Duration) {
 	allEntities := g.Entities()
+
 	for _, entity := range allEntities {
 		physicsComponent := entity.Physics
 		if physicsComponent == nil {
@@ -57,8 +60,14 @@ func ResolveCollisions(world World) {
 
 	entityPairs := [][]*entities.Entity{}
 	for _, e1 := range entityList {
-		for _, e2 := range entityList {
+		entitiesInPartition := world.SpatialPartition().QueryEntities(*e1.BoundingBox())
+		for _, spatialEntity := range entitiesInPartition {
+			e2 := world.GetEntityByID(spatialEntity.GetID())
 			if e1.ID == e2.ID {
+				continue
+			}
+
+			if e1.Collider.CollisionMask&e2.Collider.ColliderGroup == 0 {
 				continue
 			}
 
@@ -71,6 +80,7 @@ func ResolveCollisions(world World) {
 			pairExists[e2.ID][e1.ID] = true
 		}
 	}
+	// entityList = nil
 	detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
 }
 

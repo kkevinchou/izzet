@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 func sceneUI(world World) {
@@ -53,8 +54,7 @@ func sceneHierarchy(world World) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Cube") {
-				entity := entities.CreateCube(world.ModelLibrary(), 25)
-				world.AddEntity(entity)
+				entity := uiCreateCube(world, true)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
@@ -76,6 +76,24 @@ func sceneHierarchy(world World) {
 	}
 }
 
+func uiCreateCube(world World, capsuleCollider bool) *entities.Entity {
+	entity := entities.CreateCube(world.ModelLibrary(), 25)
+
+	if capsuleCollider {
+		entity.Collider = &entities.ColliderComponent{
+			CapsuleCollider: &collider.Capsule{
+				Radius: 5,
+				Top:    mgl64.Vec3{0, 20, 0},
+				Bottom: mgl64.Vec3{0, -20, 0},
+			},
+			CollisionMask: entities.ColliderGroupFlagTerrain,
+		}
+	}
+
+	world.AddEntity(entity)
+	return entity
+}
+
 func drawEntity(entity *entities.Entity, world World) bool {
 	popup := false
 	nodeFlags := imgui.TreeNodeFlagsNone
@@ -95,8 +113,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if imgui.Button("Add Cube") {
-				child := entities.CreateCube(world.ModelLibrary(), 25)
-				world.AddEntity(child)
+				child := uiCreateCube(world, true)
 				entities.BuildRelation(entity, child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()

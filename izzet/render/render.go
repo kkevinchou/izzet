@@ -430,19 +430,25 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		}
 
 		if entity.Collider != nil {
-			capsuleCollider := entity.Collider.TransformedCapsuleCollider
+			// capsuleCollider := entity.Collider.TransformedCapsuleCollider
+			capsuleCollider := entity.Collider.CapsuleCollider
 			if capsuleCollider != nil {
 				shader := shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{0.0 / 255, 0.0 / 255, 255.0 / 255}
+				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
+
+				transform := entities.WorldTransform(entity)
+
+				top := transform.Mul4x1(capsuleCollider.Top.Add(mgl64.Vec3{0, capsuleCollider.Radius, 0}).Vec4(1)).Vec3()
+				bottom := transform.Mul4x1(capsuleCollider.Bottom.Add(mgl64.Vec3{0, -capsuleCollider.Radius, 0}).Vec4(1)).Vec3()
 
 				// directional light arrow
 				lines := [][]mgl64.Vec3{
 					[]mgl64.Vec3{
-						capsuleCollider.Top,
-						capsuleCollider.Bottom,
+						top,
+						bottom,
 					},
 				}
-				drawLines(viewerContext, shader, lines, 0.5, color)
+				drawLines(viewerContext, shader, lines, 3, color)
 			}
 		}
 	}

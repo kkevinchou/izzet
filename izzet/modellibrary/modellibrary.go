@@ -58,7 +58,7 @@ func New() *ModelLibrary {
 		Joints:     map[string]map[int]*modelspec.JointSpec{},
 	}
 
-	m.RegisterMesh("global", cube())
+	m.RegisterMesh("global", cubeMesh())
 
 	return m
 }

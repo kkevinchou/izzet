@@ -474,6 +474,9 @@ func drawModel(
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		} else {
+			if material.Invisible {
+				return
+			}
 			var color mgl32.Vec3 = material.PBR.Diffuse
 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
 			shader.SetUniformVec3("albedo", color.Mul(material.PBR.DiffuseIntensity))

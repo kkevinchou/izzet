@@ -157,6 +157,10 @@ func entityProps(entity *entities.Entity) {
 			setupRow("Diffuse", func() {
 				imgui.ColorEdit3V("", &entity.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			})
+			setupRow("Invisible", func() {
+				imgui.Checkbox("", &entity.Material.Invisible)
+			})
+
 			setupRow("Diffuse Intensity", func() {
 				imgui.SliderFloatV("", &entity.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
 			})

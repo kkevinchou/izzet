@@ -35,7 +35,7 @@ func genLineKey(thickness, length float64) string {
 }
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawTris(viewerContext ViewerContext, points []mgl64.Vec3) {
+func drawTris(points []mgl64.Vec3) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
@@ -529,7 +529,7 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("intensity", 1.0)
-	drawTris(viewerContext, points)
+	drawTris(points)
 }
 
 func cubeLines(length float64) [][]mgl64.Vec3 {

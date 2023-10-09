@@ -209,7 +209,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 				}
 				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[ColliderGroup(entityAsset.Collider.ColliderGroup)]}
 			}
-			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(mlPrimitivesTospecPrimitive(primitives))
+			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(MLPrimitivesTospecPrimitive(primitives))
 			if ColliderGroup(entityAsset.Collider.ColliderGroup) == ColliderGroupTerrain {
 				if entity.Physics == nil {
 					entity.Physics = &PhysicsComponent{}
@@ -235,7 +235,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 	return result
 }
 
-func mlPrimitivesTospecPrimitive(primitives []modellibrary.Primitive) []*modelspec.PrimitiveSpecification {
+func MLPrimitivesTospecPrimitive(primitives []modellibrary.Primitive) []*modelspec.PrimitiveSpecification {
 	var result []*modelspec.PrimitiveSpecification
 	for _, p := range primitives {
 		result = append(result, p.Primitive)

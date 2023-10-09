@@ -53,8 +53,13 @@ func sceneHierarchy(world World) {
 	if !entityPopup {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
-			if imgui.Button("Add Cube") {
+			if imgui.Button("Add Cube (Capsule)") {
 				entity := uiCreateCube(world, true)
+				SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Cube (Trimesh)") {
+				entity := uiCreateCube(world, false)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
@@ -86,8 +91,14 @@ func uiCreateCube(world World, capsuleCollider bool) *entities.Entity {
 				Top:    mgl64.Vec3{0, 20, 0},
 				Bottom: mgl64.Vec3{0, -20, 0},
 			},
+			ColliderGroup: entities.ColliderGroupFlagPlayer,
 			CollisionMask: entities.ColliderGroupFlagTerrain,
 		}
+	} else {
+		meshHandle := entity.MeshComponent.MeshHandle
+		primitives := world.ModelLibrary().GetPrimitives(meshHandle)
+		entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
+		entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 	}
 
 	world.AddEntity(entity)

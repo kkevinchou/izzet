@@ -212,7 +212,17 @@ func entityProps(entity *entities.Entity) {
 			}
 			imgui.PopID()
 		}
+	}
 
+	if entity.Collider != nil {
+		if imgui.CollapsingHeaderV("Collider Properties", imgui.TreeNodeFlagsDefaultOpen) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+
+			setupRow("Collider Type", func() {
+				imgui.LabelText("", string(entities.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
+			})
+			imgui.EndTable()
+		}
 	}
 
 	imgui.PushID("Component Combo")

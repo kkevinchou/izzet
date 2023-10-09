@@ -78,14 +78,6 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 
 	// capsule := collider.NewCapsuleFromVertices(uniqueVertices)
 	// entity.Collider = &ColliderComponent{CapsuleCollider: &capsule, CollisionMask: ColliderGroupFlagTerrain}
-	entity.Collider = &ColliderComponent{
-		CapsuleCollider: &collider.Capsule{
-			Radius: 5,
-			Top:    mgl64.Vec3{0, 20, 0},
-			Bottom: mgl64.Vec3{0, -20, 0},
-		},
-		CollisionMask: ColliderGroupFlagTerrain,
-	}
 
 	id += 1
 	return entity

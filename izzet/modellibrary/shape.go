@@ -7,13 +7,13 @@ import (
 
 const CubeMeshID int = 18
 
-func cube() *modelspec.MeshSpecification {
-	primitive := createCubePrimitive()
+func cubeMesh() *modelspec.MeshSpecification {
+	primitive := createCubePrimitive(50)
 	return &modelspec.MeshSpecification{ID: CubeMeshID, Primitives: []*modelspec.PrimitiveSpecification{primitive}}
 }
 
-func createCubePrimitive() *modelspec.PrimitiveSpecification {
-	vertFloats := cubeVertexFloatsByLength(50)
+func createCubePrimitive(length int) *modelspec.PrimitiveSpecification {
+	vertFloats := cubeVertexFloatsByLength(length)
 
 	vertexIndices := []uint32{}
 	for i := 0; i < 36; i++ {

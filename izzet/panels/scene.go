@@ -54,12 +54,12 @@ func sceneHierarchy(world World) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Cube (Capsule)") {
-				entity := uiCreateCube(world, true)
+				entity := uiCreateCube(world, 25, true)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube (Trimesh)") {
-				entity := uiCreateCube(world, false)
+				entity := uiCreateCube(world, 100, false)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
@@ -81,8 +81,8 @@ func sceneHierarchy(world World) {
 	}
 }
 
-func uiCreateCube(world World, capsuleCollider bool) *entities.Entity {
-	entity := entities.CreateCube(world.ModelLibrary(), 25)
+func uiCreateCube(world World, length int, capsuleCollider bool) *entities.Entity {
+	entity := entities.CreateCube(world.ModelLibrary(), length)
 
 	if capsuleCollider {
 		entity.Collider = &entities.ColliderComponent{
@@ -124,7 +124,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if imgui.Button("Add Cube") {
-				child := uiCreateCube(world, true)
+				child := uiCreateCube(world, 25, true)
 				entities.BuildRelation(entity, child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()

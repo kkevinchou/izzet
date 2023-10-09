@@ -12,6 +12,8 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+var nextGlobalID int
+
 type Handle struct {
 	Namespace string
 	ID        string
@@ -46,7 +48,6 @@ type Primitive struct {
 
 type ModelLibrary struct {
 	Primitives map[Handle][]Primitive
-	Meshes     map[Handle][]modelspec.MeshSpecification
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
 }
@@ -58,9 +59,15 @@ func New() *ModelLibrary {
 		Joints:     map[string]map[int]*modelspec.JointSpec{},
 	}
 
-	m.RegisterMesh("global", cubeMesh())
-
 	return m
+}
+
+func (m *ModelLibrary) GetOrCreateCubeMeshHandle(length int) Handle {
+	handle := NewHandle("global", fmt.Sprintf("cube-%d", length))
+	if _, ok := m.Primitives[handle]; ok {
+		return handle
+	}
+	return m.RegisterMeshWithHandle(handle, cubeMesh(length))
 }
 
 // TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
@@ -120,12 +127,17 @@ func (m *ModelLibrary) RegisterDocument(document *modelspec.Document, data *izze
 	}
 }
 
-func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) {
+func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) Handle {
+	handle := NewHandleFromMeshID(namespace, mesh.ID)
+	m.RegisterMeshWithHandle(handle, mesh)
+	return handle
+}
+
+func (m *ModelLibrary) RegisterMeshWithHandle(handle Handle, mesh *modelspec.MeshSpecification) Handle {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 
-	handle := NewHandleFromMeshID(namespace, mesh.ID)
 	for i, primitive := range mesh.Primitives {
 		m.Primitives[handle] = append(m.Primitives[handle], Primitive{
 			Primitive:   primitive,
@@ -133,6 +145,7 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 			GeometryVAO: geometryVAOs[0][i],
 		})
 	}
+	return handle
 }
 
 func (m *ModelLibrary) RegisterAnimations(handle string, animations map[string]*modelspec.AnimationSpec, joints map[int]*modelspec.JointSpec) {

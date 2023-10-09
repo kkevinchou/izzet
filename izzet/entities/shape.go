@@ -54,7 +54,7 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 		},
 	}
 
-	handle := modellibrary.NewHandleFromMeshID("global", modellibrary.CubeMeshID)
+	handle := ml.GetOrCreateCubeMeshHandle(length)
 	entity.MeshComponent = &MeshComponent{
 		MeshHandle: handle,
 	}

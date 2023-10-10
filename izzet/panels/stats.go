@@ -38,7 +38,7 @@ func stats(world World, renderContext RenderContext) {
 						regionSize := imgui.ContentRegionAvail()
 						imageWidth := regionSize.X
 
-						texture := createUserSpaceTextureHandle(DBG.DebugTexture)
+						texture := CreateUserSpaceTextureHandle(DBG.DebugTexture)
 						size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
 						// invert the Y axis since opengl vs texture coordinate systems differ
 						// https://learnopengl.com/Getting-started/Textures

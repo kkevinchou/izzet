@@ -337,12 +337,6 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 			g.ResetNavMeshVAO()
 		}
 	}
-
-	if event, ok := keyboardInput[input.KeyboardKeyF1]; ok {
-		if event.Event == input.KeyboardEventUp {
-			panels.ShowDebug = !panels.ShowDebug
-		}
-	}
 }
 
 func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, controlVector mgl64.Vec3, delta time.Duration) {

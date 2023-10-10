@@ -5,7 +5,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
 
-// var open bool
+var open bool
 
 func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
 	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
@@ -28,7 +28,6 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.End()
 
 	imgui.SetNextWindowBgAlpha(0.8)
-	var propertiesWidth float32 = 450
 	imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 	imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)

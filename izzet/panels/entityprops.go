@@ -62,6 +62,7 @@ func entityProps(entity *entities.Entity) {
 		}
 
 		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+		initColumns()
 		uiTableRow("ID", entityIDStr)
 		uiTableRow("Name", entityNameStr)
 
@@ -73,6 +74,7 @@ func entityProps(entity *entities.Entity) {
 		}
 
 		setupRow("Local Position X", func() {
+			imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
 			imgui.PushID("position x")
 			if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 				if entity != nil {
@@ -81,9 +83,7 @@ func entityProps(entity *entities.Entity) {
 				}
 			}
 			imgui.PopID()
-		})
-
-		setupRow("Local Position Y", func() {
+			imgui.SameLine()
 			imgui.PushID("position y")
 			if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 				if entity != nil {
@@ -92,9 +92,7 @@ func entityProps(entity *entities.Entity) {
 				}
 			}
 			imgui.PopID()
-		})
-
-		setupRow("Local Position Z", func() {
+			imgui.SameLine()
 			imgui.PushID("position z")
 			if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 				if entity != nil {
@@ -103,7 +101,8 @@ func entityProps(entity *entities.Entity) {
 				}
 			}
 			imgui.PopID()
-		})
+			imgui.PopItemWidth()
+		}, false)
 
 		uiTableRow("Local Rotation", localRotationStr)
 		uiTableRow("Local Quat", localQuaternionStr)
@@ -121,6 +120,7 @@ func entityProps(entity *entities.Entity) {
 	if entity.LightInfo != nil {
 		if imgui.CollapsingHeaderV("Light Properties", imgui.TreeNodeFlagsDefaultOpen) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
 
 			lightTypeStr := "?"
 			if entity.LightInfo.Type == entities.LightTypePoint {
@@ -131,15 +131,15 @@ func entityProps(entity *entities.Entity) {
 			uiTableRow("Light Type", lightTypeStr)
 			setupRow("Color", func() {
 				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
-			})
+			}, true)
 			setupRow("Color Intensity", func() {
 				imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
-			})
+			}, true)
 
 			if entity.LightInfo.Type == entities.LightTypePoint {
-				setupRow("Light Range", func() { imgui.SliderFloatV("", &entity.LightInfo.Range, 1, 1500, "%.0f", imgui.SliderFlagsNone) })
+				setupRow("Light Range", func() { imgui.SliderFloatV("", &entity.LightInfo.Range, 1, 1500, "%.0f", imgui.SliderFlagsNone) }, true)
 			} else if entity.LightInfo.Type == entities.LightTypeDirection {
-				setupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) })
+				setupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) }, true)
 			}
 			imgui.EndTable()
 			imgui.PushID("remove light")
@@ -153,20 +153,21 @@ func entityProps(entity *entities.Entity) {
 	if entity.Material != nil {
 		if imgui.CollapsingHeaderV("Material Properties", imgui.TreeNodeFlagsDefaultOpen) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
 
 			setupRow("Diffuse", func() {
 				imgui.ColorEdit3V("", &entity.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
-			})
+			}, true)
 			setupRow("Invisible", func() {
 				imgui.Checkbox("", &entity.Material.Invisible)
-			})
+			}, true)
 
 			setupRow("Diffuse Intensity", func() {
 				imgui.SliderFloatV("", &entity.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
-			})
+			}, true)
 
-			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) })
-			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) })
+			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
+			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
 			imgui.EndTable()
 			imgui.PushID("remove material")
 			if imgui.Button("Remove") {
@@ -181,6 +182,7 @@ func entityProps(entity *entities.Entity) {
 		velocity := &physicsComponent.Velocity
 		if imgui.CollapsingHeaderV("Physics Properties", imgui.TreeNodeFlagsDefaultOpen) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
 
 			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
 
@@ -190,21 +192,21 @@ func entityProps(entity *entities.Entity) {
 					velocity[0] = float64(x)
 				}
 				imgui.PopID()
-			})
+			}, true)
 			setupRow("Velocity Y", func() {
 				imgui.PushID("velocity y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[1] = float64(y)
 				}
 				imgui.PopID()
-			})
+			}, true)
 			setupRow("Velocity Z", func() {
 				imgui.PushID("velocity z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[2] = float64(z)
 				}
 				imgui.PopID()
-			})
+			}, true)
 			imgui.EndTable()
 			imgui.PushID("remove phys")
 			if imgui.Button("Remove") {
@@ -220,7 +222,7 @@ func entityProps(entity *entities.Entity) {
 
 			setupRow("Collider Type", func() {
 				imgui.LabelText("", string(entities.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
-			})
+			}, true)
 			imgui.EndTable()
 		}
 	}

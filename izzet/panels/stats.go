@@ -10,13 +10,13 @@ func stats(world World, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
-		setupRow("Command Frames Before Render", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.CommandFramesPerRender)) })
-		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.RenderTime)) })
-		setupRow("Command Frame Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.CommandFrameTime)) })
-		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.FPS)) })
-		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &DBG.ShadowFarFactor, 0, 10) })
-		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(DBG.TriangleDrawCount)) })
-		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(DBG.DrawCount)) })
+		setupRow("Command Frames Before Render", func() { imgui.LabelText("", fmt.Sprintf("%d", DBG.CommandFramesPerRender)) }, true)
+		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.RenderTime)) }, true)
+		setupRow("Command Frame Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.CommandFrameTime)) }, true)
+		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", DBG.FPS)) }, true)
+		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &DBG.ShadowFarFactor, 0, 10) }, true)
+		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(DBG.TriangleDrawCount)) }, true)
+		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(DBG.DrawCount)) }, true)
 		setupRow("Texture Viewer Table Row", func() {
 			if DBG.DebugTexture != 0 {
 				if imgui.Button("Toggle Texture Window") {
@@ -47,7 +47,7 @@ func stats(world World, renderContext RenderContext) {
 					imgui.End()
 				}
 			}
-		})
+		}, true)
 		imgui.EndTable()
 	}
 }

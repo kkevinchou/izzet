@@ -75,6 +75,12 @@ func sceneHierarchy(world World) {
 				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
+			if imgui.Button("Add Directional Light") {
+				light := entities.CreateDirectionalLight()
+				world.AddEntity(light)
+				SelectEntity(light)
+				imgui.CloseCurrentPopup()
+			}
 			imgui.EndPopup()
 		}
 		imgui.PopID()

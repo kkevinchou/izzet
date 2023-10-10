@@ -8,6 +8,8 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/kitolib/assets"
 )
 
 type World interface {
@@ -17,6 +19,7 @@ type World interface {
 	ShowImguiDemo() bool
 	NavMesh() *navmesh.NavigationMesh
 	AddEntity(entity *entities.Entity)
+	AssetManager() *assets.AssetManager
 }
 
 var worldName string = "scene"
@@ -73,8 +76,19 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		}
 
 		val := world.ShowImguiDemo()
-		imgui.Checkbox("ShowImguiDemoCheckbox", &val)
-		world.SetShowImguiDemo(val)
+		showImguiLabel := "ShowImguiDemo"
+		if val {
+			texture := panels.CreateUserSpaceTextureHandle(world.AssetManager().GetTexture("check-mark").ID)
+			size := imgui.Vec2{X: 15, Y: 15}
+			// invert the Y axis since opengl vs texture coordinate systems differ
+			// https://learnopengl.com/Getting-started/Textures
+			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+			imgui.SameLine()
+		}
+
+		if imgui.MenuItem(showImguiLabel) {
+			world.SetShowImguiDemo(!val)
+		}
 
 		if imgui.MenuItem("Bake Navigation Mesh") {
 			world.NavMesh().BakeNavMesh()

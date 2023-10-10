@@ -14,13 +14,24 @@ import (
 
 var nextGlobalID int
 
+const (
+	NamespaceGlobal = "global"
+
+	HandleTypeCube HandleType = "cube"
+)
+
+type HandleType string
+
 type Handle struct {
 	Namespace string
 	ID        string
+
+	Type         HandleType
+	IntTypeParam int
 }
 
 func NewGlobalHandle(id string) Handle {
-	return Handle{Namespace: "global", ID: id}
+	return Handle{Namespace: NamespaceGlobal, ID: id}
 }
 
 func NewHandle(namespace string, id string) Handle {
@@ -64,6 +75,8 @@ func New() *ModelLibrary {
 
 func (m *ModelLibrary) GetOrCreateCubeMeshHandle(length int) Handle {
 	handle := NewHandle("global", fmt.Sprintf("cube-%d", length))
+	handle.Type = HandleTypeCube
+	handle.IntTypeParam = length
 	if _, ok := m.Primitives[handle]; ok {
 		return handle
 	}
@@ -158,6 +171,14 @@ func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.Anima
 }
 
 func (m *ModelLibrary) GetPrimitives(handle Handle) []Primitive {
+	if _, ok := m.Primitives[handle]; !ok {
+		if handle.Type == HandleTypeCube {
+			newHandle := m.GetOrCreateCubeMeshHandle(handle.IntTypeParam)
+			handle = newHandle
+		} else {
+			return nil
+		}
+	}
 	return m.Primitives[handle]
 }
 

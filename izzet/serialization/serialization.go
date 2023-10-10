@@ -75,6 +75,8 @@ func (s *Serializer) ReadIn(filepath string) error {
 			e.Animation.AnimationPlayer = animation.NewAnimationPlayer()
 			e.Animation.AnimationPlayer.Initialize(animations, joints[e.Animation.RootJointID])
 		}
+
+		// rebuild collider
 	}
 
 	// rebuild relations

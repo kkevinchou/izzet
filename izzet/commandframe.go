@@ -32,6 +32,20 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.renderer.Resized(g.width, g.height)
 	}
 
+	if panels.DBG.EnableSpatialPartition {
+		var spatialEntities []spatialpartition.Entity
+		for _, entity := range g.Entities() {
+			if !entity.Dirty() {
+				continue
+			}
+			if entity.BoundingBox() == collider.EmptyBoundingBox {
+				continue
+			}
+			spatialEntities = append(spatialEntities, entity)
+		}
+		g.spatialPartition.IndexEntities(spatialEntities)
+	}
+
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 
@@ -209,19 +223,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	panels.DBG.CameraPosition = g.camera.Position
 	panels.DBG.CameraOrientation = g.camera.Orientation
 
-	if panels.DBG.EnableSpatialPartition {
-		var spatialEntities []spatialpartition.Entity
-		for _, entity := range g.Entities() {
-			if !entity.Dirty() {
-				continue
-			}
-			if entity.BoundingBox() == collider.EmptyBoundingBox {
-				continue
-			}
-			spatialEntities = append(spatialEntities, entity)
-		}
-		g.spatialPartition.IndexEntities(spatialEntities)
-	}
 }
 
 var copiedEntity []byte

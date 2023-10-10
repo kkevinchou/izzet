@@ -120,6 +120,9 @@ func (g *Izzet) LoadWorld(name string) {
 		return
 	}
 
+	g.editHistory.Clear()
+	g.spatialPartition.Clear()
+
 	var maxID int
 	es := g.serializer.Entities()
 	g.entities = map[int]*entities.Entity{}
@@ -135,7 +138,7 @@ func (g *Izzet) LoadWorld(name string) {
 	}
 
 	panels.SelectEntity(nil)
-	g.editHistory.Clear()
+
 }
 
 func (g *Izzet) AppendEdit(edit edithistory.Edit) {

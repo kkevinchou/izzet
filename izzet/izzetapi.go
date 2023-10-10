@@ -49,12 +49,9 @@ func (g *Izzet) GetEntityByID(id int) *entities.Entity {
 	return g.entities[id]
 }
 
-var sortFrame int
-var sortedEntities []*entities.Entity
-
 func (g *Izzet) Entities() []*entities.Entity {
-	if sortFrame != g.CommandFrame() {
-		sortFrame = g.CommandFrame()
+	if g.sortFrame != g.CommandFrame() {
+		g.sortFrame = g.CommandFrame()
 
 		var ids []int
 		for id, _ := range g.entities {
@@ -67,10 +64,10 @@ func (g *Izzet) Entities() []*entities.Entity {
 		for _, id := range ids {
 			entities = append(entities, g.entities[id])
 		}
-		sortedEntities = entities
+		g.sortedEntities = entities
 	}
 
-	return sortedEntities
+	return g.sortedEntities
 }
 
 func (g *Izzet) Prefabs() []*prefabs.Prefab {
@@ -119,6 +116,9 @@ func (g *Izzet) LoadWorld(name string) {
 		fmt.Println("failed to load world", name, err)
 		return
 	}
+
+	g.sortFrame = -1
+	g.sortedEntities = []*entities.Entity{}
 
 	g.editHistory.Clear()
 	g.spatialPartition.Clear()

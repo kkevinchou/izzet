@@ -53,6 +53,9 @@ type Izzet struct {
 	navigationMesh  *navmesh.NavigationMesh
 	metricsRegistry *metrics.MetricsRegistry
 
+	sortFrame      int
+	sortedEntities []*entities.Entity
+
 	// iztData       *izzetdata.Data
 	showImguiDemo bool
 }

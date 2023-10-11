@@ -53,6 +53,13 @@ func sceneHierarchy(world World) {
 	if !entityPopup {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
+			if imgui.Button("Add Player") {
+				entity := entities.CreateCapsule(world.ModelLibrary(), 20, 10)
+				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 10}
+				world.AddEntity(entity)
+				SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
 			if imgui.Button("Add Capsule") {
 				entity := entities.CreateCapsule(world.ModelLibrary(), 20, 10)
 				world.AddEntity(entity)

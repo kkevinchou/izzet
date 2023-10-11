@@ -43,6 +43,8 @@ type Entity struct {
 	MeshComponent       *MeshComponent
 	InternalBoundingBox collider.BoundingBox
 
+	CharacterControllerComponent *CharacterControllerComponent
+
 	// relationships
 	Parent   *Entity         `json:"-"`
 	Children map[int]*Entity `json:"-"`

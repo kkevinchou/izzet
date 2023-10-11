@@ -32,6 +32,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.renderer.Resized(g.width, g.height)
 	}
 
+	for _, s := range g.systems {
+		s.Update(delta, g, frameInput)
+	}
+
 	if panels.DBG.EnableSpatialPartition {
 		var spatialEntities []spatialpartition.Entity
 		for _, entity := range g.Entities() {

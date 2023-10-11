@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -26,6 +27,10 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
+
+type System interface {
+	Update(time.Duration, systems.World, input.Input)
+}
 
 type Izzet struct {
 	gameOver      bool
@@ -58,6 +63,8 @@ type Izzet struct {
 
 	// iztData       *izzetdata.Data
 	showImguiDemo bool
+
+	systems []System
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
@@ -114,6 +121,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.editHistory = edithistory.New()
 	// g.navigationMesh = navmesh.New(g)
 	g.metricsRegistry = metrics.New()
+
+	g.systems = append(g.systems, &systems.CharacterControllerSystem{})
 
 	fmt.Println(time.Since(start), "to start up systems")
 

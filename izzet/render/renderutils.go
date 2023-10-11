@@ -413,6 +413,7 @@ func drawModel(
 	modelLibrary *modellibrary.ModelLibrary,
 	entity *entities.Entity,
 ) {
+
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		shader.SetUniformInt("isAnimated", 1)
 		animationTransforms := animationPlayer.AnimationTransforms()

@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -373,6 +374,18 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	// joint rendering for the selected entity
 	entity := panels.SelectedEntity()
 	if entity != nil {
+		// draw bounding box
+		bb := entity.BoundingBox()
+		if bb != collider.EmptyBoundingBox {
+			drawAABB(
+				viewerContext,
+				shaderManager.GetShaderProgram("flat"),
+				mgl64.Vec3{.2, 0, .7},
+				bb,
+				0.5,
+			)
+		}
+
 		// modelMatrix := entities.WorldTransform(entity)
 		// TODO: optimize this - can probably cache some of these computations
 
@@ -416,41 +429,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 
 		// 			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
 		// 		}
-
-		// draw bounding box
-		bb := entity.BoundingBox()
-		if bb != collider.EmptyBoundingBox {
-			drawAABB(
-				viewerContext,
-				shaderManager.GetShaderProgram("flat"),
-				mgl64.Vec3{.2, 0, .7},
-				bb,
-				0.5,
-			)
-		}
-
-		if entity.Collider != nil {
-			// capsuleCollider := entity.Collider.TransformedCapsuleCollider
-			capsuleCollider := entity.Collider.CapsuleCollider
-			if capsuleCollider != nil {
-				shader := shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
-
-				transform := entities.WorldTransform(entity)
-
-				top := transform.Mul4x1(capsuleCollider.Top.Add(mgl64.Vec3{0, capsuleCollider.Radius, 0}).Vec4(1)).Vec3()
-				bottom := transform.Mul4x1(capsuleCollider.Bottom.Add(mgl64.Vec3{0, -capsuleCollider.Radius, 0}).Vec4(1)).Vec3()
-
-				// directional light arrow
-				lines := [][]mgl64.Vec3{
-					[]mgl64.Vec3{
-						top,
-						bottom,
-					},
-				}
-				drawLines(viewerContext, shader, lines, 3, color)
-			}
-		}
 	}
 
 	// 	nm := r.world.NavMesh()
@@ -748,25 +726,6 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true)
 			}
 		}
-
-		collider := entity.Collider
-		if collider != nil {
-			localPosition := entities.GetLocalPosition(entity)
-			translation := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
-			// lots of hacky rendering stuff to get the rectangle to billboard
-			center := mgl64.Vec3{localPosition.X(), 0, localPosition.Z()}
-			viewerArtificialCenter := mgl64.Vec3{viewerContext.Position.X(), 0, viewerContext.Position.Z()}
-			vecToViewer := viewerArtificialCenter.Sub(center).Normalize()
-			billboardModelMatrix := translation.Mul4(mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, 1}, vecToViewer).Mat4())
-			drawCapsuleCollider(
-				viewerContext,
-				lightContext,
-				shaderManager.GetShaderProgram("flat"),
-				mgl64.Vec3{0.5, 1, 0},
-				collider.CapsuleCollider,
-				billboardModelMatrix,
-			)
-		}
 	}
 }
 
@@ -853,7 +812,78 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			r.world.ModelLibrary(),
 			entity,
 		)
+	}
 
+	for _, entity := range renderableEntities {
+		if entity == nil || entity.Material != nil || entity.MeshComponent != nil || entity.Collider == nil {
+			continue
+		}
+
+		capsuleCollider := entity.Collider.CapsuleCollider
+		if capsuleCollider != nil {
+			shader := shaderManager.GetShaderProgram("flat")
+			color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
+
+			transform := entities.WorldTransform(entity)
+			top := transform.Mul4x1(capsuleCollider.Top.Vec4(1)).Vec3()
+			bottom := transform.Mul4x1(capsuleCollider.Bottom.Vec4(1)).Vec3()
+			_, _, scale := utils.DecomposeF64(transform)
+
+			var numCircleSegments int = 8
+			var lines [][]mgl64.Vec3
+			radius := capsuleCollider.Radius
+			scaledRadius := scale.Mul(radius)
+
+			// -x +x vertical lines
+			lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{-scaledRadius.X(), 0, 0}), bottom.Add(mgl64.Vec3{-scaledRadius.X(), 0, 0})})
+			lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{scaledRadius.X(), 0, 0}), top.Add(mgl64.Vec3{scaledRadius.X(), 0, 0})})
+
+			// -z +z vertical lines
+			lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -scaledRadius.Z()}), bottom.Add(mgl64.Vec3{0, 0, -scaledRadius.Z()})})
+			lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, scaledRadius.Z()}), top.Add(mgl64.Vec3{0, 0, scaledRadius.Z()})})
+
+			radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
+
+			// top and bottom xz plane rings
+			for i := 0; i < numCircleSegments; i++ {
+				x1 := math.Cos(float64(i)*radiansPerSegment) * scaledRadius.X()
+				z1 := math.Sin(float64(i)*radiansPerSegment) * scaledRadius.Z()
+
+				x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * scaledRadius.X()
+				z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * scaledRadius.Z()
+
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
+			}
+
+			radiansPerSegment = math.Pi / float64(numCircleSegments)
+
+			// top and bottom xy plane rings
+			for i := 0; i < numCircleSegments; i++ {
+				x1 := math.Cos(float64(i)*radiansPerSegment) * scaledRadius.X()
+				y1 := math.Sin(float64(i)*radiansPerSegment) * scaledRadius.Y()
+
+				x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * scaledRadius.X()
+				y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * scaledRadius.Y()
+
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
+			}
+
+			// top and bottom yz plane rings
+			for i := 0; i < numCircleSegments; i++ {
+				z1 := math.Cos(float64(i)*radiansPerSegment) * scaledRadius.Z()
+				y1 := math.Sin(float64(i)*radiansPerSegment) * scaledRadius.Y()
+
+				z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * scaledRadius.Z()
+				y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * scaledRadius.Y()
+
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
+			}
+
+			drawLines(viewerContext, shader, lines, 0.5, color)
+		}
 	}
 }
 

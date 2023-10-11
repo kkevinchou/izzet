@@ -246,7 +246,7 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.AddEntity(directionalLight)
 
-	doc := g.assetManager.GetDocument("demo_scene_samurai")
+	doc := g.assetManager.GetDocument("demo_scene_scificity")
 	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
 		g.AddEntity(e)
 	}

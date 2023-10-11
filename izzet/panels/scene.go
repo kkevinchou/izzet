@@ -53,13 +53,15 @@ func sceneHierarchy(world World) {
 	if !entityPopup {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
-			if imgui.Button("Add Cube (Capsule)") {
-				entity := uiCreateCube(world, 25, true)
+			if imgui.Button("Add Capsule") {
+				entity := entities.CreateCapsule(world.ModelLibrary(), 20, 10)
+				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube (Trimesh)") {
-				entity := uiCreateCube(world, 100, false)
+				entity := uiCreateCube(world, 100)
+				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
@@ -87,13 +89,25 @@ func sceneHierarchy(world World) {
 	}
 }
 
-func uiCreateCube(world World, length int, capsuleCollider bool) *entities.Entity {
+func uiCreateCube(world World, length int) *entities.Entity {
+	entity := entities.CreateCube(world.ModelLibrary(), length)
+
+	meshHandle := entity.MeshComponent.MeshHandle
+	primitives := world.ModelLibrary().GetPrimitives(meshHandle)
+	entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
+	entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+
+	world.AddEntity(entity)
+	return entity
+}
+
+func uiCreateCapsule(world World, length int, capsuleCollider bool) *entities.Entity {
 	entity := entities.CreateCube(world.ModelLibrary(), length)
 
 	if capsuleCollider {
 		entity.Collider = &entities.ColliderComponent{
 			CapsuleCollider: &collider.Capsule{
-				Radius: 5,
+				Radius: 10,
 				Top:    mgl64.Vec3{0, 20, 0},
 				Bottom: mgl64.Vec3{0, -20, 0},
 			},
@@ -130,7 +144,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if imgui.Button("Add Cube") {
-				child := uiCreateCube(world, 25, true)
+				child := uiCreateCube(world, 25)
 				entities.BuildRelation(entity, child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()

@@ -83,6 +83,27 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 	return entity
 }
 
+func CreateCapsule(ml *modellibrary.ModelLibrary, length float64, radius float64) *Entity {
+	entity := InstantiateBaseEntity("capsule", id)
+	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
+	entity.Collider = &ColliderComponent{
+		CapsuleCollider: &collider.Capsule{
+			Radius: 10,
+			Top:    mgl64.Vec3{0, length / 2, 0},
+			Bottom: mgl64.Vec3{0, -length / 2, 0},
+		},
+		ColliderGroup: ColliderGroupFlagPlayer,
+		CollisionMask: ColliderGroupFlagTerrain,
+		Contacts:      map[int]bool{},
+	}
+
+	capsule := entity.Collider.CapsuleCollider
+	entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
+
+	id += 1
+	return entity
+}
+
 func CreateTriangle(v1, v2, v3 mgl64.Vec3) *Entity {
 	entity := InstantiateBaseEntity("triangle", id)
 	entity.ShapeData = []*ShapeData{
@@ -96,5 +117,4 @@ func CreateTriangle(v1, v2, v3 mgl64.Vec3) *Entity {
 	}
 	id += 1
 	return entity
-
 }

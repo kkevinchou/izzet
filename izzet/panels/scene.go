@@ -59,7 +59,7 @@ func sceneHierarchy(world World) {
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
-			if imgui.Button("Add Cube (Trimesh)") {
+			if imgui.Button("Add Cube") {
 				entity := uiCreateCube(world, 100)
 				world.AddEntity(entity)
 				SelectEntity(entity)

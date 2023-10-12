@@ -18,6 +18,9 @@ type App interface {
 	ShowImguiDemo() bool
 	NavMesh() *navmesh.NavigationMesh
 	AssetManager() *assets.AssetManager
+
+	StartLiveWorld()
+	StopLiveWorld()
 }
 
 var worldName string = "scene"
@@ -87,6 +90,14 @@ func SetupMenuBar(app App) imgui.Vec2 {
 
 		if imgui.MenuItem(showImguiLabel) {
 			app.SetShowImguiDemo(!val)
+		}
+
+		if imgui.MenuItem("Play Scene") {
+			app.StartLiveWorld()
+		}
+
+		if imgui.MenuItem("Exit Scene") {
+			app.StopLiveWorld()
 		}
 
 		if imgui.MenuItem("Bake Navigation Mesh") {

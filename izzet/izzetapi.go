@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -59,26 +60,22 @@ func (g *Izzet) Serializer() *serialization.Serializer {
 }
 
 func (g *Izzet) SaveWorld(name string) {
-	g.serializer.WriteOut(fmt.Sprintf("./%s.json", name))
+	g.serializer.WriteToFile(g.world, fmt.Sprintf("./%s.json", name))
 }
 
 func (g *Izzet) LoadWorld(name string) {
-	err := g.serializer.ReadIn(fmt.Sprintf("./%s.json", name))
+	filename := fmt.Sprintf("./%s.json", name)
+	world, err := g.serializer.ReadFromFile(filename)
 	if err != nil {
-		fmt.Println("failed to load world", name, err)
-		return
+		fmt.Println("failed to load world", filename, err)
+		panic(err)
 	}
 
-	g.sortFrame = -1
-	g.sortedEntities = []*entities.Entity{}
-
 	g.editHistory.Clear()
-	g.spatialPartition.Clear()
+	g.world.SpatialPartition().Clear()
 
 	var maxID int
-	es := g.serializer.Entities()
-	g.entities = map[int]*entities.Entity{}
-	for _, e := range es {
+	for _, e := range world.Entities() {
 		if e.ID > maxID {
 			maxID = e.ID
 		}
@@ -90,7 +87,7 @@ func (g *Izzet) LoadWorld(name string) {
 	}
 
 	panels.SelectEntity(nil)
-
+	g.SetWorld(world)
 }
 
 // game world
@@ -126,4 +123,9 @@ func (g *Izzet) ShowImguiDemo() bool {
 
 func (g *Izzet) MetricsRegistry() *metrics.MetricsRegistry {
 	return g.metricsRegistry
+}
+
+func (g *Izzet) SetWorld(world *world.GameWorld) {
+	g.world = world
+	g.renderer.SetWorld(world)
 }

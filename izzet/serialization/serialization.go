@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/animation"
 )
 
@@ -25,48 +26,91 @@ type Relation struct {
 	Child  int
 }
 
-type SerializedWorld struct {
+type WorldIM struct {
 	Entities  []*entities.Entity
 	Relations []Relation
 }
 
 type Serializer struct {
-	app             App
-	world           GameWorld
-	serializedWorld SerializedWorld
+	app App
 }
 
 func New(app App, world GameWorld) *Serializer {
-	return &Serializer{app: app, world: world}
+	return &Serializer{app: app}
 }
 
-func (s *Serializer) WriteOut(filepath string) {
-	entities := s.world.Entities()
+func (s *Serializer) WriteToFile(world *world.GameWorld, filepath string) error {
+	f, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
 
-	serializedWorld := SerializedWorld{
+	defer f.Close()
+
+	err = s.Write(world, f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Serializer) Write(world *world.GameWorld, writer io.Writer) error {
+	entities := world.Entities()
+
+	worldIM := WorldIM{
 		Entities: entities,
 	}
 
 	for _, e := range entities {
 		if e.Parent != nil {
-			serializedWorld.Relations = append(serializedWorld.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
+			worldIM.Relations = append(worldIM.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
 		}
 	}
 
-	if err := writeToFile(serializedWorld, filepath); err != nil {
-		panic(err)
-	}
-}
-
-func (s *Serializer) ReadIn(filepath string) error {
-	serializedWorld, err := readFile(filepath)
+	bytes, err := json.MarshalIndent(worldIM, "", "    ")
 	if err != nil {
 		return err
 	}
 
-	s.serializedWorld = *serializedWorld
+	_, err = writer.Write(bytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Serializer) ReadFromFile(filepath string) (*world.GameWorld, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	gameWorld, err := s.Read(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return gameWorld, err
+}
+
+func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
+	bytes, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	var worldIM WorldIM
+	err = json.Unmarshal(bytes, &worldIM)
+	if err != nil {
+		return nil, err
+	}
+
 	entityMap := map[int]*entities.Entity{}
-	for _, e := range s.serializedWorld.Entities {
+	for _, e := range worldIM.Entities {
 		entityMap[e.ID] = e
 
 		// set dirty flags
@@ -84,7 +128,7 @@ func (s *Serializer) ReadIn(filepath string) error {
 	}
 
 	// rebuild relations
-	for _, relation := range s.serializedWorld.Relations {
+	for _, relation := range worldIM.Relations {
 		parent := entityMap[relation.Parent]
 		child := entityMap[relation.Child]
 		if len(parent.Children) == 0 {
@@ -94,52 +138,9 @@ func (s *Serializer) ReadIn(filepath string) error {
 		child.Parent = parent
 	}
 
-	return nil
+	return world.New(entityMap), nil
 }
 
-func writeToFile(app SerializedWorld, filepath string) error {
-	bytes, err := json.MarshalIndent(app, "", "    ")
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-
-	defer f.Close()
-
-	_, err = f.Write(bytes)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func readFile(filepath string) (*SerializedWorld, error) {
-	f, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-
-	bytes, err := io.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-
-	var serializedWorld SerializedWorld
-	err = json.Unmarshal(bytes, &serializedWorld)
-	if err != nil {
-		return nil, err
-	}
-
-	return &serializedWorld, err
-}
-
-func (s *Serializer) Entities() []*entities.Entity {
-	return s.serializedWorld.Entities
-}
+// func (s *Serializer) Entities() []*entities.Entity {
+// 	return s.serializedWorld.Entities
+// }

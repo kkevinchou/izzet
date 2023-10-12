@@ -25,9 +25,10 @@ type GameWorld struct {
 	sortedEntities []*entities.Entity
 }
 
-func New() *GameWorld {
+func New(entities map[int]*entities.Entity) *GameWorld {
 	g := &GameWorld{
-		entities:         map[int]*entities.Entity{},
+		sortFrame:        -1,
+		entities:         entities,
 		spatialPartition: spatialpartition.NewSpatialPartition(200, 25),
 	}
 	return g

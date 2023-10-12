@@ -58,18 +58,6 @@ func (g *GameWorld) Entities() []*entities.Entity {
 // 	return g.camera
 // }
 
-// func (g *GameWorld) AppendEdit(edit edithistory.Edit) {
-// 	g.editHistory.Append(edit)
-// }
-
-// func (g *GameWorld) Redo() {
-// 	g.editHistory.Redo()
-// }
-
-// func (g *GameWorld) Undo() {
-// 	g.editHistory.Undo()
-// }
-
 func (g *GameWorld) CommandFrame() int {
 	return g.commandFrameCount
 }

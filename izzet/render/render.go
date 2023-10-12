@@ -33,7 +33,7 @@ import (
 type GameWorld interface {
 }
 
-type World interface {
+type App interface {
 	AssetManager() *assets.AssetManager
 	ModelLibrary() *modellibrary.ModelLibrary
 	Camera() *camera.Camera
@@ -63,7 +63,7 @@ const MaxBloomTextureWidth int = 1920
 const MaxBloomTextureHeight int = 1080
 
 type Renderer struct {
-	world         World
+	app           App
 	gameWorld     GameWorld
 	shaderManager *shaders.ShaderManager
 
@@ -113,8 +113,8 @@ type Renderer struct {
 	width, height int
 }
 
-func New(world World, gameWorld GameWorld, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{world: world, gameWorld: gameWorld, width: width, height: height}
+func New(app App, gameWorld GameWorld, shaderDirectory string, width, height int) *Renderer {
+	r := &Renderer{app: app, gameWorld: gameWorld, width: width, height: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -229,8 +229,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	panels.DBG.DrawCount = 0
 
 	// configure camera viewer context
-	position := r.world.Camera().Position
-	orientation := r.world.Camera().Orientation
+	position := r.app.Camera().Position
+	orientation := r.app.Camera().Orientation
 
 	viewerViewMatrix := orientation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
@@ -246,7 +246,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	lightFrustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), float64(panels.DBG.ShadowFarFactor))
 
 	// find the directional light if there is one
-	lights := r.world.Lights()
+	lights := r.app.Lights()
 	var directionalLight *entities.Entity
 	for _, light := range lights {
 		if light.LightInfo.Type == 0 {
@@ -277,7 +277,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
-		Lights:           r.world.Lights(),
+		Lights:           r.app.Lights(),
 	}
 
 	r.viewerContext = cameraViewerContext
@@ -295,7 +295,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
-		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
+		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.app.SpatialPartition(), 0.5)
 	}
 
 	var finalRenderTexture uint32
@@ -360,13 +360,13 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientatio
 
 	var renderEntities []*entities.Entity
 	if panels.DBG.EnableSpatialPartition {
-		spatialPartition := r.world.SpatialPartition()
+		spatialPartition := r.app.SpatialPartition()
 		frustumEntities := spatialPartition.QueryEntities(frustumBoundingBox)
 		for _, entity := range frustumEntities {
-			renderEntities = append(renderEntities, r.world.GetEntityByID(entity.GetID()))
+			renderEntities = append(renderEntities, r.app.GetEntityByID(entity.GetID()))
 		}
 	} else {
-		renderEntities = r.world.Entities()
+		renderEntities = r.app.Entities()
 	}
 
 	return renderEntities
@@ -435,7 +435,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		// 		}
 	}
 
-	// 	nm := r.world.NavMesh()
+	// 	nm := r.app.NavMesh()
 
 	// 	if nm != nil {
 	// 		// draw bounding box
@@ -553,7 +553,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		for _, renderData := range getRenderData(r.world.ModelLibrary(), entity) {
+		for _, renderData := range getRenderData(r.app.ModelLibrary(), entity) {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.GeometryVAO)
@@ -567,7 +567,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 
 	// we only support cube depth maps for one point light atm
 	var pointLight *entities.Entity
-	for _, light := range r.world.Lights() {
+	for _, light := range r.app.Lights() {
 		if light.LightInfo.Type == 1 {
 			pointLight = light
 			break
@@ -615,7 +615,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		for _, renderData := range getRenderData(r.world.ModelLibrary(), entity) {
+		for _, renderData := range getRenderData(r.app.ModelLibrary(), entity) {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
 
 			gl.BindVertexArray(renderData.GeometryVAO)
@@ -636,7 +636,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 	shaderManager := r.shaderManager
 
 	// render non-models
-	for _, entity := range r.world.Entities() {
+	for _, entity := range r.app.Entities() {
 		if entity.MeshComponent != nil {
 			continue
 		}
@@ -685,14 +685,14 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 
 		if entity.ImageInfo != nil {
 			textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
-			texture := r.world.AssetManager().GetTexture(textureName)
+			texture := r.app.AssetManager().GetTexture(textureName)
 			if texture != nil {
 				if entity.Billboard {
 					shader := shaderManager.GetShaderProgram("world_space_quad")
 					shader.Use()
 
 					shader.SetUniformUInt("entityID", uint32(entity.ID))
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.world.Camera().Orientation.Mat4())))
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.Camera().Orientation.Mat4())))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
@@ -724,7 +724,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 
 		particles := entity.Particles
 		if particles != nil {
-			texture := r.world.AssetManager().GetTexture("light").ID
+			texture := r.app.AssetManager().GetTexture("light").ID
 			for _, particle := range particles.GetActiveParticles() {
 				particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
 				drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true)
@@ -807,13 +807,13 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			lightContext,
 			r.shadowMap,
 			shader,
-			r.world.AssetManager(),
+			r.app.AssetManager(),
 			animationPlayer,
 			modelMatrix,
 			r.depthCubeMapTexture,
 			entity.ID,
 			entity.Material,
-			r.world.ModelLibrary(),
+			r.app.ModelLibrary(),
 			entity,
 		)
 	}
@@ -894,10 +894,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 func (r *Renderer) renderImgui(renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.world.Platform().NewFrame()
+	r.app.Platform().NewFrame()
 	imgui.NewFrame()
 
-	menuBarSize := menus.SetupMenuBar(r.world)
+	menuBarSize := menus.SetupMenuBar(r.app)
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
 	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
@@ -931,21 +931,21 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
 	panels.BuildTabsSet(
-		r.world,
+		r.app,
 		renderContext,
 		menuBarSize,
-		r.world.Prefabs(),
+		r.app.Prefabs(),
 	)
 
 	imgui.PopStyleColorV(20)
 	imgui.PopStyleVarV(7)
 
-	if r.world.ShowImguiDemo() {
+	if r.app.ShowImguiDemo() {
 		imgui.ShowDemoWindow(nil)
 	}
 
 	imgui.Render()
-	r.imguiRenderer.Render(r.world.Platform().DisplaySize(), r.world.Platform().FramebufferSize(), imgui.RenderedDrawData())
+	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.RenderedDrawData())
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {
@@ -955,7 +955,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
+	entity := r.app.GetEntityByID(panels.SelectedEntity().ID)
 	position := entity.WorldPosition()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {

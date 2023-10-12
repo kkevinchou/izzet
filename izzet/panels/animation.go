@@ -22,18 +22,18 @@ var JointHover *int
 
 var JointsToRender []int
 
-func animationUI(world World, entity *entities.Entity) {
+func animationUI(app App, entity *entities.Entity) {
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
-	// world.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
+	// app.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
 	fullAnimationLength := entity.Animation.AnimationPlayer.Length()
 
 	// imgui.BeginV("animation window", &open, imgui.WindowFlagsNone)
 
 	var anims []string
 
-	animations, joints := world.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
+	animations, joints := app.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
 	for name, _ := range animations {
 		anims = append(anims, name)
 	}
@@ -61,7 +61,7 @@ func animationUI(world World, entity *entities.Entity) {
 	imgui.LabelText("", "Joints")
 	JointHover = nil
 	JointsToRender = nil
-	drawJointTree(world, entity, joints[entity.Animation.RootJointID])
+	drawJointTree(app, entity, joints[entity.Animation.RootJointID])
 
 	if RenderJoints {
 		// for jid, _ := range entity.Model.JointMap() {
@@ -74,7 +74,7 @@ func animationUI(world World, entity *entities.Entity) {
 	// imgui.End()
 }
 
-func drawJointTree(world World, parent *entities.Entity, joint *modelspec.JointSpec) {
+func drawJointTree(app App, parent *entities.Entity, joint *modelspec.JointSpec) {
 	nodeFlags := imgui.TreeNodeFlagsNone
 
 	if len(joint.Children) == 0 {
@@ -84,7 +84,7 @@ func drawJointTree(world World, parent *entities.Entity, joint *modelspec.JointS
 	opened := imgui.TreeNodeV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags)
 
 	imgui.PushID(joint.Name)
-	setupMenu(world, parent, joint)
+	setupMenu(app, parent, joint)
 	imgui.PopID()
 	if imgui.IsItemHovered() {
 		JointHover = &joint.ID
@@ -92,19 +92,19 @@ func drawJointTree(world World, parent *entities.Entity, joint *modelspec.JointS
 
 	if opened {
 		for _, child := range joint.Children {
-			drawJointTree(world, parent, child)
+			drawJointTree(app, parent, child)
 		}
 		imgui.TreePop()
 	}
 }
 
-func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec) {
+func setupMenu(app App, parent *entities.Entity, joint *modelspec.JointSpec) {
 	imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 	if imgui.BeginPopupContextItem() {
 		if imgui.Button("Create Socket") {
 			// socket := entities.CreateSocket()
-			// world.AddEntity(socket)
+			// app.AddEntity(socket)
 			// entities.BuildRelation(SelectedEntity(), socket)
 			// socket.ParentJoint = joint
 			imgui.CloseCurrentPopup()
@@ -112,7 +112,7 @@ func setupMenu(world World, parent *entities.Entity, joint *modelspec.JointSpec)
 
 		if imgui.BeginMenu("Assign Socket") {
 			// socketCount := 0
-			// for _, entity := range world.Entities() {
+			// for _, entity := range app.Entities() {
 			// 	if entity.IsSocket {
 			// 		socketCount++
 

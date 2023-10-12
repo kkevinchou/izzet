@@ -11,10 +11,10 @@ import (
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
-func sceneUI(world World) {
+func sceneUI(app App) {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
-	sceneHierarchy(world)
+	sceneHierarchy(app)
 
 	if imgui.BeginDragDropTarget() {
 		if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
@@ -24,10 +24,10 @@ func sceneUI(world World) {
 				panic(err)
 			}
 
-			prefab := world.GetPrefabByID(prefabID)
-			entities := entities.InstantiateFromPrefab(prefab, world.ModelLibrary())
+			prefab := app.GetPrefabByID(prefabID)
+			entities := entities.InstantiateFromPrefab(prefab, app.ModelLibrary())
 			for _, entity := range entities {
-				world.AddEntity(entity)
+				app.AddEntity(entity)
 			}
 
 			if len(entities) > 0 {
@@ -39,12 +39,12 @@ func sceneUI(world World) {
 	imgui.PopStyleVar()
 }
 
-func sceneHierarchy(world World) {
+func sceneHierarchy(app App) {
 	entityPopup := false
 	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
-	for _, entity := range world.Entities() {
+	for _, entity := range app.Entities() {
 		if entity.Parent == nil {
-			popup := drawEntity(entity, world)
+			popup := drawEntity(entity, app)
 			entityPopup = entityPopup || popup
 		}
 	}
@@ -54,39 +54,39 @@ func sceneHierarchy(world World) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Player") {
-				entity := entities.CreateCapsule(world.ModelLibrary(), 20, 10)
+				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
 				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 10}
-				world.AddEntity(entity)
+				app.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Capsule") {
-				entity := entities.CreateCapsule(world.ModelLibrary(), 20, 10)
-				world.AddEntity(entity)
+				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
+				app.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube") {
-				entity := uiCreateCube(world, 100)
-				world.AddEntity(entity)
+				entity := uiCreateCube(app, 100)
+				app.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Triangle") {
 				entity := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
-				world.AddEntity(entity)
+				app.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Point Light") {
 				light := entities.CreatePointLight()
-				world.AddEntity(light)
+				app.AddEntity(light)
 				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Directional Light") {
 				light := entities.CreateDirectionalLight()
-				world.AddEntity(light)
+				app.AddEntity(light)
 				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
@@ -96,20 +96,20 @@ func sceneHierarchy(world World) {
 	}
 }
 
-func uiCreateCube(world World, length int) *entities.Entity {
-	entity := entities.CreateCube(world.ModelLibrary(), length)
+func uiCreateCube(app App, length int) *entities.Entity {
+	entity := entities.CreateCube(app.ModelLibrary(), length)
 
 	meshHandle := entity.MeshComponent.MeshHandle
-	primitives := world.ModelLibrary().GetPrimitives(meshHandle)
+	primitives := app.ModelLibrary().GetPrimitives(meshHandle)
 	entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
 	entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 
-	world.AddEntity(entity)
+	app.AddEntity(entity)
 	return entity
 }
 
-func uiCreateCapsule(world World, length int, capsuleCollider bool) *entities.Entity {
-	entity := entities.CreateCube(world.ModelLibrary(), length)
+func uiCreateCapsule(app App, length int, capsuleCollider bool) *entities.Entity {
+	entity := entities.CreateCube(app.ModelLibrary(), length)
 
 	if capsuleCollider {
 		entity.Collider = &entities.ColliderComponent{
@@ -123,16 +123,16 @@ func uiCreateCapsule(world World, length int, capsuleCollider bool) *entities.En
 		}
 	} else {
 		meshHandle := entity.MeshComponent.MeshHandle
-		primitives := world.ModelLibrary().GetPrimitives(meshHandle)
+		primitives := app.ModelLibrary().GetPrimitives(meshHandle)
 		entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
 		entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 	}
 
-	world.AddEntity(entity)
+	app.AddEntity(entity)
 	return entity
 }
 
-func drawEntity(entity *entities.Entity, world World) bool {
+func drawEntity(entity *entities.Entity, app App) bool {
 	popup := false
 	nodeFlags := imgui.TreeNodeFlagsNone
 	if len(entity.Children) == 0 {
@@ -151,7 +151,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if imgui.Button("Add Cube") {
-				child := uiCreateCube(world, 25)
+				child := uiCreateCube(app, 25)
 				entities.BuildRelation(entity, child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()
@@ -177,8 +177,8 @@ func drawEntity(entity *entities.Entity, world World) bool {
 				if err != nil {
 					panic(err)
 				}
-				child := world.GetEntityByID(childID)
-				parent := world.GetEntityByID(entity.ID)
+				child := app.GetEntityByID(childID)
+				parent := app.GetEntityByID(entity.ID)
 				entities.BuildRelation(parent, child)
 			}
 			imgui.EndDragDropTarget()
@@ -187,7 +187,7 @@ func drawEntity(entity *entities.Entity, world World) bool {
 		childIDs := sortedIDs(entity.Children)
 		for _, id := range childIDs {
 			child := entity.Children[id]
-			childPopup := drawEntity(child, world)
+			childPopup := drawEntity(child, app)
 			popup = popup || childPopup
 		}
 

@@ -28,7 +28,7 @@ func (u MinXTriangles) Less(i, j int) bool {
 // checks which is the expensive part of voxelization.
 func (n *NavigationMesh) voxelize() [][][]Voxel {
 	// start := time.Now()
-	// spatialPartition := n.world.SpatialPartition()
+	// spatialPartition := n.app.SpatialPartition()
 	// sEntities := spatialPartition.QueryEntities(n.Volume)
 
 	// var candidateEntities []*entities.Entity
@@ -38,7 +38,7 @@ func (n *NavigationMesh) voxelize() [][][]Voxel {
 
 	// // collect candidate entities for voxelization
 	// for _, entity := range sEntities {
-	// 	e := n.world.GetEntityByID(entity.GetID())
+	// 	e := n.app.GetEntityByID(entity.GetID())
 	// 	if e == nil {
 	// 		continue
 	// 	}

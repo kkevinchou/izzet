@@ -31,7 +31,7 @@ var (
 	}
 )
 
-func worldProps(world World, renderContext RenderContext) {
+func worldProps(app App, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
@@ -84,32 +84,32 @@ func worldProps(world World, renderContext RenderContext) {
 		initColumns()
 		setupRow("NavMeshHSV", func() {
 			if imgui.Checkbox("NavMeshHSV", &DBG.NavMeshHSV) {
-				world.ResetNavMeshVAO()
+				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("NavMesh Region Threshold", func() {
 			if imgui.InputInt("", &DBG.NavMeshRegionIDThreshold) {
-				world.ResetNavMeshVAO()
+				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("NavMesh Distance Field Threshold", func() {
 			if imgui.InputInt("", &DBG.NavMeshDistanceFieldThreshold) {
-				world.ResetNavMeshVAO()
+				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("HSV Offset", func() {
 			if imgui.InputInt("", &DBG.HSVOffset) {
-				world.ResetNavMeshVAO()
+				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Voxel Highlight X", func() {
 			if imgui.InputInt("Voxel Highlight X", &DBG.VoxelHighlightX) {
-				world.ResetNavMeshVAO()
+				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Voxel Highlight Z", func() {
 			if imgui.InputInt("Voxel Highlight Z", &DBG.VoxelHighlightZ) {
-				world.ResetNavMeshVAO()
+				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Highlight Distance Field", func() {

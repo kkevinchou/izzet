@@ -24,12 +24,15 @@ type RenderContext interface {
 var selectedEntity *entities.Entity
 
 type App interface {
-	AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab
-	GetEntityByID(id int) *entities.Entity
 	ModelLibrary() *modellibrary.ModelLibrary
-	Entities() []*entities.Entity
 	ResetNavMeshVAO()
+}
+
+type GameWorld interface {
+	Entities() []*entities.Entity
+	AddEntity(entity *entities.Entity)
+	GetEntityByID(id int) *entities.Entity
 }
 
 func SelectEntity(entity *entities.Entity) {

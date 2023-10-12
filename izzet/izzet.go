@@ -120,7 +120,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	fmt.Println(time.Since(start), "prefabs done")
 	g.setupEntities(data)
 	fmt.Println(time.Since(start), "entities done")
-	g.serializer = serialization.New(g)
+	g.serializer = serialization.New(g, g.world)
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 
@@ -245,21 +245,21 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	pointLight.LightInfo.PreScaledIntensity = 6
 	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
-	g.AddEntity(pointLight)
+	g.world.AddEntity(pointLight)
 
 	cube := entities.CreateCube(g.modelLibrary, 50)
 	entities.SetLocalPosition(cube, mgl64.Vec3{154, 126, -22})
-	g.AddEntity(cube)
+	g.world.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
 	directionalLight.LightInfo.PreScaledIntensity = 8
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
-	g.AddEntity(directionalLight)
+	g.world.AddEntity(directionalLight)
 
 	doc := g.assetManager.GetDocument("demo_scene_scificity")
 	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
-		g.AddEntity(e)
+		g.world.AddEntity(e)
 	}
 }
 

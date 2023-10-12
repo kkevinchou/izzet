@@ -12,14 +12,14 @@ var prefabsSelectIndex = -1
 
 const prefabsContextItemID = "prefabsContextItem"
 
-func prefabsUI(app App, ps []*prefabs.Prefab) {
+func prefabsUI(app App, world GameWorld, ps []*prefabs.Prefab) {
 	for i, prefab := range ps {
 		nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 
 		open := imgui.TreeNodeV(prefab.Name, nodeFlags)
 
 		if prefabsSelectIndex == -1 || prefabsSelectIndex == i {
-			prefabsBeginPopupContextItem(app, i, prefab)
+			prefabsBeginPopupContextItem(app, world, i, prefab)
 		}
 
 		if open {
@@ -53,12 +53,12 @@ func beginPrefabDragDrop(id int) {
 	}
 }
 
-func prefabsBeginPopupContextItem(app App, index int, prefab *prefabs.Prefab) {
+func prefabsBeginPopupContextItem(app App, world GameWorld, index int, prefab *prefabs.Prefab) {
 	if imgui.BeginPopupContextItemV(prefabsContextItemID, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate") {
 			entities := entities.InstantiateFromPrefab(prefab, app.ModelLibrary())
 			for _, entity := range entities {
-				app.AddEntity(entity)
+				world.AddEntity(entity)
 			}
 
 			if len(entities) > 0 {

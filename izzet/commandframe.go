@@ -32,13 +32,13 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.renderer.Resized(g.width, g.height)
 	}
 
-	for _, s := range g.systems {
-		s.Update(delta, g, frameInput)
-	}
+	// for _, s := range g.systems {
+	// 	s.Update(delta, g, frameInput)
+	// }
 
 	if panels.DBG.EnableSpatialPartition {
 		var spatialEntities []spatialpartition.Entity
-		for _, entity := range g.Entities() {
+		for _, entity := range g.world.Entities() {
 			if !entity.Dirty() {
 				continue
 			}
@@ -56,7 +56,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	g.handleInputCommands(frameInput)
 
 	// system loop
-	for _, entity := range g.Entities() {
+	for _, entity := range g.world.Entities() {
 		// animation system
 		if entity.Animation != nil {
 			if panels.LoopAnimation {
@@ -182,7 +182,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			panels.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		} else {
-			clickedEntity := g.GetEntityByID(*entityID)
+			clickedEntity := g.world.GetEntityByID(*entityID)
 			currentSelection := panels.SelectedEntity()
 
 			if currentSelection != nil && currentSelection.ID != clickedEntity.ID {
@@ -275,7 +275,7 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	// delete entity
 	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
 		if event.Event == input.KeyboardEventUp {
-			g.DeleteEntity(panels.SelectedEntity())
+			g.world.DeleteEntity(panels.SelectedEntity())
 			panels.SelectEntity(nil)
 		}
 	}
@@ -310,7 +310,7 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 					id := entities.GetNextIDAndAdvance()
 					newEntity.ID = id
 
-					g.AddEntity(&newEntity)
+					g.world.AddEntity(&newEntity)
 					panels.SelectEntity(&newEntity)
 				}
 			}

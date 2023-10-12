@@ -74,6 +74,10 @@ func (g *GameWorld) CommandFrame() int {
 	return g.commandFrameCount
 }
 
+func (g *GameWorld) IncrementCommandFrameCount() {
+	g.commandFrameCount++
+}
+
 func (g *GameWorld) Lights() []*entities.Entity {
 	allEntities := g.Entities()
 	result := []*entities.Entity{}

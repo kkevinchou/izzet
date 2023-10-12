@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/inkyblackness/imgui-go/v4"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/assets"
@@ -18,7 +17,6 @@ type App interface {
 	SetShowImguiDemo(bool)
 	ShowImguiDemo() bool
 	NavMesh() *navmesh.NavigationMesh
-	AddEntity(entity *entities.Entity)
 	AssetManager() *assets.AssetManager
 }
 

@@ -11,10 +11,10 @@ import (
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
-func sceneUI(app App) {
+func sceneUI(app App, world GameWorld) {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
-	sceneHierarchy(app)
+	sceneHierarchy(app, world)
 
 	if imgui.BeginDragDropTarget() {
 		if payload := imgui.AcceptDragDropPayload("prefabid", imgui.DragDropFlagsNone); payload != nil {
@@ -27,7 +27,7 @@ func sceneUI(app App) {
 			prefab := app.GetPrefabByID(prefabID)
 			entities := entities.InstantiateFromPrefab(prefab, app.ModelLibrary())
 			for _, entity := range entities {
-				app.AddEntity(entity)
+				world.AddEntity(entity)
 			}
 
 			if len(entities) > 0 {
@@ -39,12 +39,12 @@ func sceneUI(app App) {
 	imgui.PopStyleVar()
 }
 
-func sceneHierarchy(app App) {
+func sceneHierarchy(app App, world GameWorld) {
 	entityPopup := false
 	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
-	for _, entity := range app.Entities() {
+	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
-			popup := drawEntity(entity, app)
+			popup := drawEntity(entity, app, world)
 			entityPopup = entityPopup || popup
 		}
 	}
@@ -56,37 +56,37 @@ func sceneHierarchy(app App) {
 			if imgui.Button("Add Player") {
 				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
 				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 10}
-				app.AddEntity(entity)
+				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Capsule") {
 				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
-				app.AddEntity(entity)
+				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube") {
-				entity := uiCreateCube(app, 100)
-				app.AddEntity(entity)
+				entity := uiCreateCube(app, world, 100)
+				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Triangle") {
 				entity := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
-				app.AddEntity(entity)
+				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Point Light") {
 				light := entities.CreatePointLight()
-				app.AddEntity(light)
+				world.AddEntity(light)
 				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Directional Light") {
 				light := entities.CreateDirectionalLight()
-				app.AddEntity(light)
+				world.AddEntity(light)
 				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
@@ -96,7 +96,7 @@ func sceneHierarchy(app App) {
 	}
 }
 
-func uiCreateCube(app App, length int) *entities.Entity {
+func uiCreateCube(app App, world GameWorld, length int) *entities.Entity {
 	entity := entities.CreateCube(app.ModelLibrary(), length)
 
 	meshHandle := entity.MeshComponent.MeshHandle
@@ -104,11 +104,11 @@ func uiCreateCube(app App, length int) *entities.Entity {
 	entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
 	entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 
-	app.AddEntity(entity)
+	world.AddEntity(entity)
 	return entity
 }
 
-func uiCreateCapsule(app App, length int, capsuleCollider bool) *entities.Entity {
+func uiCreateCapsule(app App, world GameWorld, length int, capsuleCollider bool) *entities.Entity {
 	entity := entities.CreateCube(app.ModelLibrary(), length)
 
 	if capsuleCollider {
@@ -128,11 +128,11 @@ func uiCreateCapsule(app App, length int, capsuleCollider bool) *entities.Entity
 		entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 	}
 
-	app.AddEntity(entity)
+	world.AddEntity(entity)
 	return entity
 }
 
-func drawEntity(entity *entities.Entity, app App) bool {
+func drawEntity(entity *entities.Entity, app App, world GameWorld) bool {
 	popup := false
 	nodeFlags := imgui.TreeNodeFlagsNone
 	if len(entity.Children) == 0 {
@@ -151,7 +151,7 @@ func drawEntity(entity *entities.Entity, app App) bool {
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if imgui.Button("Add Cube") {
-				child := uiCreateCube(app, 25)
+				child := uiCreateCube(app, world, 25)
 				entities.BuildRelation(entity, child)
 				SelectEntity(child)
 				imgui.CloseCurrentPopup()
@@ -177,8 +177,8 @@ func drawEntity(entity *entities.Entity, app App) bool {
 				if err != nil {
 					panic(err)
 				}
-				child := app.GetEntityByID(childID)
-				parent := app.GetEntityByID(entity.ID)
+				child := world.GetEntityByID(childID)
+				parent := world.GetEntityByID(entity.ID)
 				entities.BuildRelation(parent, child)
 			}
 			imgui.EndDragDropTarget()
@@ -187,7 +187,7 @@ func drawEntity(entity *entities.Entity, app App) bool {
 		childIDs := sortedIDs(entity.Children)
 		for _, id := range childIDs {
 			child := entity.Children[id]
-			childPopup := drawEntity(child, app)
+			childPopup := drawEntity(child, app, world)
 			popup = popup || childPopup
 		}
 

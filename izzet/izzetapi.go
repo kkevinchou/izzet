@@ -14,61 +14,59 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/assets"
-	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
-func (g *Izzet) AddEntity(entity *entities.Entity) {
-	g.entities[entity.ID] = entity
-	if entity.BoundingBox() != collider.EmptyBoundingBox {
-		g.spatialPartition.IndexEntities([]spatialpartition.Entity{entity})
-	}
-}
+// func (g *Izzet) AddEntity(entity *entities.Entity) {
+// 	g.entities[entity.ID] = entity
+// 	if entity.BoundingBox() != collider.EmptyBoundingBox {
+// 		g.spatialPartition.IndexEntities([]spatialpartition.Entity{entity})
+// 	}
+// }
 
-func (g *Izzet) DeleteEntity(entity *entities.Entity) {
-	if entity == nil {
-		return
-	}
+// func (g *Izzet) DeleteEntity(entity *entities.Entity) {
+// 	if entity == nil {
+// 		return
+// 	}
 
-	for _, child := range entity.Children {
-		entities.RemoveParent(child)
-		g.DeleteEntity(child)
-	}
+// 	for _, child := range entity.Children {
+// 		entities.RemoveParent(child)
+// 		g.DeleteEntity(child)
+// 	}
 
-	entities.RemoveParent(entity)
-	delete(g.entities, entity.ID)
-}
+// 	entities.RemoveParent(entity)
+// 	delete(g.entities, entity.ID)
+// }
 
 func (g *Izzet) GetPrefabByID(id int) *prefabs.Prefab {
 	return g.prefabs[id]
 }
 
-func (g *Izzet) GetEntityByID(id int) *entities.Entity {
-	return g.entities[id]
-}
+// func (g *Izzet) GetEntityByID(id int) *entities.Entity {
+// 	return g.entities[id]
+// }
 
-func (g *Izzet) Entities() []*entities.Entity {
-	if g.sortFrame != g.CommandFrame() {
-		g.sortFrame = g.CommandFrame()
+// func (g *Izzet) Entities() []*entities.Entity {
+// 	if g.sortFrame != g.CommandFrame() {
+// 		g.sortFrame = g.CommandFrame()
 
-		var ids []int
-		for id, _ := range g.entities {
-			ids = append(ids, id)
-		}
+// 		var ids []int
+// 		for id, _ := range g.entities {
+// 			ids = append(ids, id)
+// 		}
 
-		sort.Ints(ids)
+// 		sort.Ints(ids)
 
-		entities := []*entities.Entity{}
-		for _, id := range ids {
-			entities = append(entities, g.entities[id])
-		}
-		g.sortedEntities = entities
-	}
+// 		entities := []*entities.Entity{}
+// 		for _, id := range ids {
+// 			entities = append(entities, g.entities[id])
+// 		}
+// 		g.sortedEntities = entities
+// 	}
 
-	return g.sortedEntities
-}
+// 	return g.sortedEntities
+// }
 
 func (g *Izzet) Prefabs() []*prefabs.Prefab {
 	var ids []int
@@ -156,27 +154,27 @@ func (g *Izzet) Undo() {
 	g.editHistory.Undo()
 }
 
-// game world
-func (g *Izzet) CommandFrame() int {
-	return g.commandFrameCount
-}
+// // game world
+// func (g *Izzet) CommandFrame() int {
+// 	return g.commandFrameCount
+// }
 
-// game world
-func (g *Izzet) Lights() []*entities.Entity {
-	allEntities := g.Entities()
-	result := []*entities.Entity{}
-	for _, e := range allEntities {
-		if e.LightInfo != nil {
-			result = append(result, e)
-		}
-	}
-	return result
-}
+// // game world
+// func (g *Izzet) Lights() []*entities.Entity {
+// 	allEntities := g.Entities()
+// 	result := []*entities.Entity{}
+// 	for _, e := range allEntities {
+// 		if e.LightInfo != nil {
+// 			result = append(result, e)
+// 		}
+// 	}
+// 	return result
+// }
 
-// game world
-func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
-	return g.spatialPartition
-}
+// // game world
+// func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
+// 	return g.spatialPartition
+// }
 
 func (g *Izzet) NavMesh() *navmesh.NavigationMesh {
 	return g.navigationMesh

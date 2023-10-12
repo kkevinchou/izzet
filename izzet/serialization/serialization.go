@@ -12,9 +12,12 @@ import (
 )
 
 type App interface {
-	Entities() []*entities.Entity
 	GetPrefabByID(id int) *prefabs.Prefab
 	ModelLibrary() *modellibrary.ModelLibrary
+}
+
+type GameWorld interface {
+	Entities() []*entities.Entity
 }
 
 type Relation struct {
@@ -29,15 +32,16 @@ type SerializedWorld struct {
 
 type Serializer struct {
 	app             App
+	world           GameWorld
 	serializedWorld SerializedWorld
 }
 
-func New(app App) *Serializer {
-	return &Serializer{app: app}
+func New(app App, world GameWorld) *Serializer {
+	return &Serializer{app: app, world: world}
 }
 
 func (s *Serializer) WriteOut(filepath string) {
-	entities := s.app.Entities()
+	entities := s.world.Entities()
 
 	serializedWorld := SerializedWorld{
 		Entities: entities,

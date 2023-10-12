@@ -7,7 +7,7 @@ import (
 
 var open bool
 
-func BuildTabsSet(app App, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
+func BuildTabsSet(app App, world GameWorld, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
 	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 	width := rect.X * 0.20
 	height := rect.Y * 0.5
@@ -20,7 +20,7 @@ func BuildTabsSet(app App, renderContext RenderContext, menuBarSize imgui.Vec2, 
 	imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar)
 	if imgui.BeginTabBar("Scene") {
 		if imgui.BeginTabItem("Scene Hierarchy") {
-			sceneUI(app)
+			sceneUI(app, world)
 			imgui.EndTabItem()
 		}
 		imgui.EndTabBar()
@@ -42,7 +42,7 @@ func BuildTabsSet(app App, renderContext RenderContext, menuBarSize imgui.Vec2, 
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Prefabs") {
-			prefabsUI(app, ps)
+			prefabsUI(app, world, ps)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Animation") {

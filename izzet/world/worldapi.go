@@ -3,11 +3,7 @@ package world
 import (
 	"sort"
 
-	"github.com/kkevinchou/izzet/izzet/camera"
-	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -58,31 +54,26 @@ func (g *GameWorld) Entities() []*entities.Entity {
 	return g.sortedEntities
 }
 
-func (g *GameWorld) Camera() *camera.Camera {
-	return g.camera
-}
+// func (g *GameWorld) Camera() *camera.Camera {
+// 	return g.camera
+// }
 
-// game world
-func (g *GameWorld) AppendEdit(edit edithistory.Edit) {
-	g.editHistory.Append(edit)
-}
+// func (g *GameWorld) AppendEdit(edit edithistory.Edit) {
+// 	g.editHistory.Append(edit)
+// }
 
-// game world
-func (g *GameWorld) Redo() {
-	g.editHistory.Redo()
-}
+// func (g *GameWorld) Redo() {
+// 	g.editHistory.Redo()
+// }
 
-// game world
-func (g *GameWorld) Undo() {
-	g.editHistory.Undo()
-}
+// func (g *GameWorld) Undo() {
+// 	g.editHistory.Undo()
+// }
 
-// game world
 func (g *GameWorld) CommandFrame() int {
 	return g.commandFrameCount
 }
 
-// game world
 func (g *GameWorld) Lights() []*entities.Entity {
 	allEntities := g.Entities()
 	result := []*entities.Entity{}
@@ -99,10 +90,10 @@ func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
 }
 
-func (g *GameWorld) NavMesh() *navmesh.NavigationMesh {
-	return g.navigationMesh
-}
+// func (g *GameWorld) NavMesh() *navmesh.NavigationMesh {
+// 	return g.navigationMesh
+// }
 
-func (g *GameWorld) ResetNavMeshVAO() {
-	render.ResetNavMeshVAO = true
-}
+// func (g *GameWorld) ResetNavMeshVAO() {
+// 	render.ResetNavMeshVAO = true
+// }

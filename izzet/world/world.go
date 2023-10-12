@@ -7,7 +7,6 @@ import (
 
 type GameWorld struct {
 	// gameOver bool
-
 	// camera *camera.Camera
 
 	entities map[int]*entities.Entity

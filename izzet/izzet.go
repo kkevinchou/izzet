@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -61,8 +62,9 @@ type Izzet struct {
 	sortFrame      int
 	sortedEntities []*entities.Entity
 
-	// iztData       *izzetdata.Data
 	showImguiDemo bool
+
+	world *world.GameWorld
 
 	systems []System
 }
@@ -103,9 +105,10 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	start := time.Now()
 
+	g.world = world.New()
 	w, h := g.window.GetSize()
 	g.width, g.height = int(w), int(h)
-	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
+	g.renderer = render.New(g, g.world, shaderDirectory, g.width, g.height)
 	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 25)
 
 	fmt.Println(time.Since(start), "spatial partition done")
@@ -119,10 +122,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	fmt.Println(time.Since(start), "entities done")
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
-	// g.navigationMesh = navmesh.New(g)
 	g.metricsRegistry = metrics.New()
 
-	g.systems = append(g.systems, &systems.CharacterControllerSystem{})
+	// g.systems = append(g.systems, &systems.CharacterControllerSystem{})
 
 	fmt.Println(time.Since(start), "to start up systems")
 

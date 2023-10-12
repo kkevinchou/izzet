@@ -30,6 +30,9 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+type GameWorld interface {
+}
+
 type World interface {
 	AssetManager() *assets.AssetManager
 	ModelLibrary() *modellibrary.ModelLibrary
@@ -61,6 +64,7 @@ const MaxBloomTextureHeight int = 1080
 
 type Renderer struct {
 	world         World
+	gameWorld     GameWorld
 	shaderManager *shaders.ShaderManager
 
 	shadowMap           *ShadowMap
@@ -109,8 +113,8 @@ type Renderer struct {
 	width, height int
 }
 
-func New(world World, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{world: world, width: width, height: height}
+func New(world World, gameWorld GameWorld, shaderDirectory string, width, height int) *Renderer {
+	r := &Renderer{world: world, gameWorld: gameWorld, width: width, height: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 

@@ -141,22 +141,27 @@ func (g *Izzet) LoadWorld(name string) {
 
 }
 
+// game world
 func (g *Izzet) AppendEdit(edit edithistory.Edit) {
 	g.editHistory.Append(edit)
 }
 
+// game world
 func (g *Izzet) Redo() {
 	g.editHistory.Redo()
 }
 
+// game world
 func (g *Izzet) Undo() {
 	g.editHistory.Undo()
 }
 
+// game world
 func (g *Izzet) CommandFrame() int {
 	return g.commandFrameCount
 }
 
+// game world
 func (g *Izzet) Lights() []*entities.Entity {
 	allEntities := g.Entities()
 	result := []*entities.Entity{}
@@ -168,6 +173,7 @@ func (g *Izzet) Lights() []*entities.Entity {
 	return result
 }
 
+// game world
 func (g *Izzet) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
 }

@@ -47,7 +47,7 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 			}
 			spatialEntities = append(spatialEntities, entity)
 		}
-		g.spatialPartition.IndexEntities(spatialEntities)
+		g.world.SpatialPartition().IndexEntities(spatialEntities)
 	}
 
 	mouseInput := frameInput.MouseInput

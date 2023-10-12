@@ -24,7 +24,6 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -51,15 +50,11 @@ type Izzet struct {
 	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
 
-	spatialPartition    *spatialpartition.SpatialPartition
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
 
 	navigationMesh  *navmesh.NavigationMesh
 	metricsRegistry *metrics.MetricsRegistry
-
-	sortFrame      int
-	sortedEntities []*entities.Entity
 
 	showImguiDemo bool
 
@@ -104,11 +99,10 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	start := time.Now()
 
-	g.world = world.New()
+	g.world = world.New(map[int]*entities.Entity{})
 	w, h := g.window.GetSize()
 	g.width, g.height = int(w), int(h)
 	g.renderer = render.New(g, g.world, shaderDirectory, g.width, g.height)
-	g.spatialPartition = spatialpartition.NewSpatialPartition(200, 25)
 
 	fmt.Println(time.Since(start), "spatial partition done")
 

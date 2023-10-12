@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
@@ -975,5 +976,8 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 
 func triangleVAOKey(triangle entities.Triangle) string {
 	return fmt.Sprintf("%v_%v_%v", triangle.V1, triangle.V2, triangle.V3)
+}
 
+func (r *Renderer) SetWorld(world *world.GameWorld) {
+	r.world = world
 }

@@ -43,11 +43,11 @@ type ColliderComponent struct {
 	Contacts map[int]bool
 
 	CapsuleCollider     *collider.Capsule
-	TriMeshCollider     *collider.TriMesh
+	TriMeshCollider     *collider.TriMesh `json:"-"`
 	BoundingBoxCollider *collider.BoundingBox
 
 	// stores the transformed collider (e.g. if the entity moves)
 	TransformedCapsuleCollider     *collider.Capsule
-	TransformedTriMeshCollider     *collider.TriMesh
+	TransformedTriMeshCollider     *collider.TriMesh `json:"-"`
 	TransformedBoundingBoxCollider *collider.BoundingBox
 }

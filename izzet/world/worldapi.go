@@ -4,15 +4,11 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 func (g *GameWorld) AddEntity(entity *entities.Entity) {
 	g.entities[entity.ID] = entity
-	if entity.BoundingBox() != collider.EmptyBoundingBox {
-		g.spatialPartition.IndexEntities([]spatialpartition.Entity{entity})
-	}
 }
 
 func (g *GameWorld) DeleteEntity(entity *entities.Entity) {

@@ -58,7 +58,8 @@ type Izzet struct {
 
 	showImguiDemo bool
 
-	world *world.GameWorld
+	editorWorld *world.GameWorld
+	world       *world.GameWorld
 
 	systems []System
 }

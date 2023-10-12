@@ -51,6 +51,9 @@ type App interface {
 	NavMesh() *navmesh.NavigationMesh
 	ResetNavMeshVAO()
 
+	StartLiveWorld()
+	StopLiveWorld()
+
 	// for panels
 	// AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab

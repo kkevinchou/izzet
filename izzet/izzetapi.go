@@ -1,6 +1,7 @@
 package izzet
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 
@@ -128,4 +129,29 @@ func (g *Izzet) MetricsRegistry() *metrics.MetricsRegistry {
 func (g *Izzet) SetWorld(world *world.GameWorld) {
 	g.world = world
 	g.renderer.SetWorld(world)
+}
+
+func (g *Izzet) StartLiveWorld() {
+	g.editorWorld = g.world
+
+	var buffer bytes.Buffer
+	err := g.serializer.Write(g.world, &buffer)
+	if err != nil {
+		panic(err)
+	}
+
+	liveWorld, err := g.serializer.Read(&buffer)
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
+	panels.SelectEntity(nil)
+	g.SetWorld(liveWorld)
+}
+
+func (g *Izzet) StopLiveWorld() {
+	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
+	panels.SelectEntity(nil)
+	g.SetWorld(g.editorWorld)
 }

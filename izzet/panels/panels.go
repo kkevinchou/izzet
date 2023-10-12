@@ -23,7 +23,7 @@ type RenderContext interface {
 // var HierarchySelection int
 var selectedEntity *entities.Entity
 
-type World interface {
+type App interface {
 	AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab
 	GetEntityByID(id int) *entities.Entity

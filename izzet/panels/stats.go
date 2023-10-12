@@ -6,7 +6,7 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 )
 
-func stats(world World, renderContext RenderContext) {
+func stats(app App, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)

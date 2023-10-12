@@ -13,7 +13,7 @@ import (
 
 var resolveCountMax = 3
 
-type World interface {
+type App interface {
 	GetEntityByID(id int) *entities.Entity
 	Entities() []*entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
@@ -44,9 +44,9 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 	}
 }
 
-func ResolveCollisions(world World) {
+func ResolveCollisions(app App) {
 	var collidableEntities []*entities.Entity
-	for _, e := range world.Entities() {
+	for _, e := range app.Entities() {
 		if e.Collider == nil {
 			continue
 		}
@@ -69,9 +69,9 @@ func ResolveCollisions(world World) {
 			continue
 		}
 
-		entitiesInPartition := world.SpatialPartition().QueryEntities(e1.BoundingBox())
+		entitiesInPartition := app.SpatialPartition().QueryEntities(e1.BoundingBox())
 		for _, spatialEntity := range entitiesInPartition {
-			e2 := world.GetEntityByID(spatialEntity.GetID())
+			e2 := app.GetEntityByID(spatialEntity.GetID())
 			// todo: remove this hack, entities that are deleted should be removed
 			// from the spatial partition
 			if e2 == nil {
@@ -107,11 +107,11 @@ func ResolveCollisions(world World) {
 	}
 
 	if len(entityPairs) > 0 {
-		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
+		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, app)
 	}
 }
 
-func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world World) {
+func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, app App) {
 	// 1. collect pairs of entities that are colliding, sorted by separating vector
 	// 2. perform collision resolution for any colliding entities
 	// 3. this can cause more collisions, repeat until no more further detected collisions, or we hit the configured max
@@ -125,15 +125,15 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 	// the number of entities times the cap.
 	collisionRuns := 0
 	for collisionRuns = 0; collisionRuns < absoluteMaxRunCount; collisionRuns++ {
-		collisionCandidates := collectSortedCollisionCandidates(entityPairs, entityList, maximallyCollidingEntities, world)
+		collisionCandidates := collectSortedCollisionCandidates(entityPairs, entityList, maximallyCollidingEntities, app)
 		if len(collisionCandidates) == 0 {
 			break
 		}
 
-		resolvedEntities := resolveCollisions(collisionCandidates, world)
+		resolvedEntities := resolveCollisions(collisionCandidates, app)
 		for entityID, otherEntityID := range resolvedEntities {
-			e1 := world.GetEntityByID(entityID)
-			e2 := world.GetEntityByID(otherEntityID)
+			e1 := app.GetEntityByID(entityID)
+			e2 := app.GetEntityByID(otherEntityID)
 			resolveCount[entityID] += 1
 
 			if resolveCount[entityID] > resolveCountMax {
@@ -161,7 +161,7 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 // collectSortedCollisionCandidates collects all potential collisions that can occur in the frame.
 // these are "candidates" in that they are not guaranteed to have actually happened since
 // if we resolve some of the collisions in the list, some will be invalidated
-func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world World) []*collision.Contact {
+func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, app App) []*collision.Contact {
 	// initialize collision state
 
 	// TODO: may not need to transform the collider since colliders will be children of the actual entity
@@ -251,11 +251,11 @@ func collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {
 	return filteredContacts
 }
 
-func resolveCollisions(contacts []*collision.Contact, world World) map[int]int {
+func resolveCollisions(contacts []*collision.Contact, app App) map[int]int {
 	resolved := map[int]int{}
 	for _, contact := range contacts {
-		entity := world.GetEntityByID(*contact.EntityID)
-		sourceEntity := world.GetEntityByID(*contact.SourceEntityID)
+		entity := app.GetEntityByID(*contact.EntityID)
+		sourceEntity := app.GetEntityByID(*contact.SourceEntityID)
 		resolveCollision(entity, sourceEntity, contact)
 
 		resolved[*contact.EntityID] = *contact.SourceEntityID

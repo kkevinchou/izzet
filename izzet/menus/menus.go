@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 )
 
-type World interface {
+type App interface {
 	SaveWorld(string)
 	LoadWorld(string)
 	SetShowImguiDemo(bool)
@@ -26,7 +26,7 @@ var worldName string = "scene"
 
 var selectedWorldName string = ""
 
-func SetupMenuBar(world World) imgui.Vec2 {
+func SetupMenuBar(app App) imgui.Vec2 {
 	imgui.BeginMainMenuBar()
 	size := imgui.WindowSize()
 	if imgui.BeginMenu("File") {
@@ -38,7 +38,7 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		if imgui.Button("Save") {
 			fmt.Println("Save to", worldName)
 			// if imgui.MenuItem("Save") {
-			world.SaveWorld(worldName)
+			app.SaveWorld(worldName)
 		}
 
 		files, err := os.ReadDir(".")
@@ -72,13 +72,13 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		imgui.SameLine()
 		if imgui.Button("Load") {
 			fmt.Println("Load from", selectedWorldName)
-			world.LoadWorld(selectedWorldName)
+			app.LoadWorld(selectedWorldName)
 		}
 
-		val := world.ShowImguiDemo()
+		val := app.ShowImguiDemo()
 		showImguiLabel := "ShowImguiDemo"
 		if val {
-			texture := panels.CreateUserSpaceTextureHandle(world.AssetManager().GetTexture("check-mark").ID)
+			texture := panels.CreateUserSpaceTextureHandle(app.AssetManager().GetTexture("check-mark").ID)
 			size := imgui.Vec2{X: 20, Y: 20}
 
 			// invert the Y axis since opengl vs texture coordinate systems differ
@@ -88,11 +88,11 @@ func SetupMenuBar(world World) imgui.Vec2 {
 		}
 
 		if imgui.MenuItem(showImguiLabel) {
-			world.SetShowImguiDemo(!val)
+			app.SetShowImguiDemo(!val)
 		}
 
 		if imgui.MenuItem("Bake Navigation Mesh") {
-			world.NavMesh().BakeNavMesh()
+			app.NavMesh().BakeNavMesh()
 		}
 		imgui.EndMenu()
 	}

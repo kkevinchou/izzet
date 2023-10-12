@@ -23,21 +23,21 @@ const agentHeight int = 30
 // interested in anyway, so any holes that are smaller than this size will be filled
 const minimumHoleDimension int = 5
 
-type World interface {
+type App interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetEntityByID(id int) *entities.Entity
 }
 
 type NavigationMesh struct {
 	Volume collider.BoundingBox
-	world  World
+	app    App
 
 	voxelCount     int
 	voxelField     [][][]Voxel
 	voxelDimension float64
 }
 
-func New(world World) *NavigationMesh {
+func New(app App) *NavigationMesh {
 	nm := &NavigationMesh{
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
@@ -46,11 +46,11 @@ func New(world World) *NavigationMesh {
 		Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -25, -150}, MaxVertex: mgl64.Vec3{100, 100}},
 		// Volume:         collider.BoundingBox{MinVertex: mgl64.Vec3{-50, -50, -75}, MaxVertex: mgl64.Vec3{50, 50, 75}},
 		voxelDimension: 1.0,
-		world:          world,
+		app:            app,
 	}
 	nm.BakeNavMesh()
 	// move the scene out of the way
-	// entity := world.GetEntityByID(3)
+	// entity := app.GetEntityByID(3)
 	// entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})
 	return nm
 }

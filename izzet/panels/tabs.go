@@ -7,7 +7,7 @@ import (
 
 var open bool
 
-func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
+func BuildTabsSet(app App, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
 	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 	width := rect.X * 0.20
 	height := rect.Y * 0.5
@@ -20,7 +20,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 	imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar)
 	if imgui.BeginTabBar("Scene") {
 		if imgui.BeginTabItem("Scene Hierarchy") {
-			sceneUI(world)
+			sceneUI(app)
 			imgui.EndTabItem()
 		}
 		imgui.EndTabBar()
@@ -34,7 +34,7 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 
 	if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("World") {
-			worldProps(world, renderContext)
+			worldProps(app, renderContext)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Details") {
@@ -42,20 +42,20 @@ func BuildTabsSet(world World, renderContext RenderContext, menuBarSize imgui.Ve
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Prefabs") {
-			prefabsUI(world, ps)
+			prefabsUI(app, ps)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Animation") {
 			entity := SelectedEntity()
 			if entity != nil && entity.Animation != nil {
-				animationUI(world, entity)
+				animationUI(app, entity)
 			} else {
 				imgui.Text("<select an entity with animations>")
 			}
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Stats") {
-			stats(world, renderContext)
+			stats(app, renderContext)
 			imgui.EndTabItem()
 		}
 		imgui.EndTabBar()

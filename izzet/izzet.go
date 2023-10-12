@@ -30,7 +30,7 @@ import (
 )
 
 type System interface {
-	Update(time.Duration, systems.World, input.Input)
+	Update(time.Duration, systems.App, input.Input)
 }
 
 type Izzet struct {

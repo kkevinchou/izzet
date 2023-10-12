@@ -11,7 +11,7 @@ import (
 	"github.com/kkevinchou/kitolib/animation"
 )
 
-type World interface {
+type App interface {
 	Entities() []*entities.Entity
 	GetPrefabByID(id int) *prefabs.Prefab
 	ModelLibrary() *modellibrary.ModelLibrary
@@ -28,16 +28,16 @@ type SerializedWorld struct {
 }
 
 type Serializer struct {
-	world           World
+	app             App
 	serializedWorld SerializedWorld
 }
 
-func New(world World) *Serializer {
-	return &Serializer{world: world}
+func New(app App) *Serializer {
+	return &Serializer{app: app}
 }
 
 func (s *Serializer) WriteOut(filepath string) {
-	entities := s.world.Entities()
+	entities := s.app.Entities()
 
 	serializedWorld := SerializedWorld{
 		Entities: entities,
@@ -71,7 +71,7 @@ func (s *Serializer) ReadIn(filepath string) error {
 		// rebuild animation player
 		if e.Animation != nil {
 			handle := e.Animation.AnimationHandle
-			animations, joints := s.world.ModelLibrary().GetAnimations(handle)
+			animations, joints := s.app.ModelLibrary().GetAnimations(handle)
 			e.Animation.AnimationPlayer = animation.NewAnimationPlayer()
 			e.Animation.AnimationPlayer.Initialize(animations, joints[e.Animation.RootJointID])
 		}
@@ -93,8 +93,8 @@ func (s *Serializer) ReadIn(filepath string) error {
 	return nil
 }
 
-func writeToFile(world SerializedWorld, filepath string) error {
-	bytes, err := json.MarshalIndent(world, "", "    ")
+func writeToFile(app SerializedWorld, filepath string) error {
+	bytes, err := json.MarshalIndent(app, "", "    ")
 	if err != nil {
 		return err
 	}

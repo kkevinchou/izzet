@@ -51,7 +51,6 @@ type Izzet struct {
 	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
 
-	commandFrameCount   int
 	spatialPartition    *spatialpartition.SpatialPartition
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
@@ -163,7 +162,7 @@ func (g *Izzet) Start() {
 			g.runCommandFrame(input, time.Duration(settings.MSPerCommandFrame)*time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
-			g.commandFrameCount++
+			g.world.IncrementCommandFrameCount()
 			commandFrameCountBeforeRender += 1
 
 			accumulator -= float64(settings.MSPerCommandFrame)

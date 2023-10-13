@@ -22,6 +22,7 @@ func (g *GameWorld) DeleteEntity(entity *entities.Entity) {
 	}
 
 	entities.RemoveParent(entity)
+	g.spatialPartition.DeleteEntity(entity.ID)
 	delete(g.entities, entity.ID)
 }
 

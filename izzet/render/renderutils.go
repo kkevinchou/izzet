@@ -1201,7 +1201,7 @@ func initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	return vao
 }
 
-func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, farPlaneScaleFactor float64) []mgl64.Vec3 {
+func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, nearPlaneOffset float64, farPlaneScaleFactor float64) []mgl64.Vec3 {
 	viewerViewMatrix := orientation.Mat4()
 
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
@@ -1214,11 +1214,12 @@ func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, f
 
 	corners := []float64{-1, 1}
 	nearFar := []float64{near, far * farPlaneScaleFactor}
+	offsets := []float64{nearPlaneOffset, 0}
 
-	for _, distance := range nearFar {
+	for k, distance := range nearFar {
 		for _, i := range corners {
 			for _, j := range corners {
-				vert := viewMatrix.Mul4x1(mgl64.Vec3{i * halfX * distance, j * halfY * distance, -distance}.Vec4(1)).Vec3()
+				vert := viewMatrix.Mul4x1(mgl64.Vec3{i * halfX * distance, j * halfY * distance, -distance + offsets[k]}.Vec4(1)).Vec3()
 				verts = append(verts, vert)
 			}
 		}

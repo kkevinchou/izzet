@@ -254,7 +254,17 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(panels.DBG.Near), float64(panels.DBG.Far)),
 	}
 
-	lightFrustumPoints := calculateFrustumPoints(position, orientation, float64(panels.DBG.Near), float64(panels.DBG.Far), renderContext.FovX(), renderContext.FovY(), renderContext.AspectRatio(), float64(panels.DBG.ShadowFarFactor))
+	lightFrustumPoints := calculateFrustumPoints(
+		position,
+		orientation,
+		float64(panels.DBG.Near),
+		float64(panels.DBG.Far),
+		renderContext.FovX(),
+		renderContext.FovY(),
+		renderContext.AspectRatio(),
+		0,
+		float64(panels.DBG.ShadowFarFactor),
+	)
 
 	// find the directional light if there is one
 	lights := r.world.Lights()
@@ -296,10 +306,11 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.clearMainFrameBuffer(renderContext)
 
 	renderEntities := r.fetchRenderableEntities(position, orientation, renderContext)
+	shadowEntities := r.fetchShadowCastingEntities(position, orientation, renderContext)
 
 	r.drawSkybox(renderContext)
-	r.drawToShadowDepthMap(lightViewerContext, renderEntities)
-	r.drawToCubeDepthMap(lightContext, renderEntities)
+	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
+	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
@@ -356,6 +367,22 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderImgui(renderContext)
 }
 
+func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+	frustumPoints := calculateFrustumPoints(
+		cameraPosition,
+		orientation,
+		float64(panels.DBG.Near),
+		float64(panels.DBG.Far),
+		renderContext.FovX(),
+		renderContext.FovY(),
+		renderContext.AspectRatio(),
+		float64(panels.DBG.SPNearPlaneOffset),
+		1,
+	)
+	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
+	return r.fetchEntitiesByBoundingBox(cameraPosition, orientation, renderContext, frustumBoundingBox)
+}
+
 func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
@@ -365,14 +392,18 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientatio
 		renderContext.FovX(),
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
+		0,
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
+	return r.fetchEntitiesByBoundingBox(cameraPosition, orientation, renderContext, frustumBoundingBox)
+}
 
+func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox) []*entities.Entity {
 	var renderEntities []*entities.Entity
 	if panels.DBG.EnableSpatialPartition {
 		spatialPartition := r.world.SpatialPartition()
-		frustumEntities := spatialPartition.QueryEntities(frustumBoundingBox)
+		frustumEntities := spatialPartition.QueryEntities(boundingBox)
 		for _, entity := range frustumEntities {
 			renderEntities = append(renderEntities, r.world.GetEntityByID(entity.GetID()))
 		}

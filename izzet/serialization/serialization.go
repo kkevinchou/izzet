@@ -7,13 +7,11 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/animation"
 )
 
 type App interface {
-	GetPrefabByID(id int) *prefabs.Prefab
 	ModelLibrary() *modellibrary.ModelLibrary
 }
 
@@ -140,7 +138,3 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 
 	return world.New(entityMap), nil
 }
-
-// func (s *Serializer) Entities() []*entities.Entity {
-// 	return s.serializedWorld.Entities
-// }

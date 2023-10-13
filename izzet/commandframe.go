@@ -687,12 +687,6 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 // 	return screenPos.Vec2()
 // }
 
-func dropY(v mgl64.Vec3) mgl64.Vec3 {
-	new := v
-	new[1] = 0
-	return new
-}
-
 // TODO: move this method out of izzet and into the gizmo package?
 func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Vec3, int) {
 	if selectedEntity == nil {

@@ -32,7 +32,7 @@ type Entity struct {
 	Animation *AnimationComponent
 
 	// dirty flag caching world transform
-	DirtyTransformFlag   bool
+	DirtyTransformFlag   bool       `json:"-"`
 	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
 
 	// each Entity has their own transforms and animation player

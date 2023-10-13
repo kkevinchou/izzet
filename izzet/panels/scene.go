@@ -143,7 +143,7 @@ func drawEntity(entity *entities.Entity, app App, world GameWorld) bool {
 	}
 
 	if imgui.TreeNodeV(entity.NameID(), nodeFlags) {
-		if imgui.IsItemClicked() && !imgui.IsItemToggledOpen() {
+		if imgui.IsItemClicked() && imgui.IsItemToggledOpen() {
 			SelectEntity(entity)
 		}
 

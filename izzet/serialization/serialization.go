@@ -26,7 +26,7 @@ type Relation struct {
 	Child  int
 }
 
-type WorldIM struct {
+type WorldIR struct {
 	Entities  []*entities.Entity
 	Relations []Relation
 }
@@ -58,17 +58,17 @@ func (s *Serializer) WriteToFile(world *world.GameWorld, filepath string) error 
 func (s *Serializer) Write(world *world.GameWorld, writer io.Writer) error {
 	entities := world.Entities()
 
-	worldIM := WorldIM{
+	worldIR := WorldIR{
 		Entities: entities,
 	}
 
 	for _, e := range entities {
 		if e.Parent != nil {
-			worldIM.Relations = append(worldIM.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
+			worldIR.Relations = append(worldIR.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
 		}
 	}
 
-	bytes, err := json.MarshalIndent(worldIM, "", "    ")
+	bytes, err := json.MarshalIndent(worldIR, "", "    ")
 	if err != nil {
 		return err
 	}
@@ -103,14 +103,14 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 		return nil, err
 	}
 
-	var worldIM WorldIM
-	err = json.Unmarshal(bytes, &worldIM)
+	var worldIR WorldIR
+	err = json.Unmarshal(bytes, &worldIR)
 	if err != nil {
 		return nil, err
 	}
 
 	entityMap := map[int]*entities.Entity{}
-	for _, e := range worldIM.Entities {
+	for _, e := range worldIR.Entities {
 		entityMap[e.ID] = e
 
 		// set dirty flags
@@ -128,7 +128,7 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	}
 
 	// rebuild relations
-	for _, relation := range worldIM.Relations {
+	for _, relation := range worldIR.Relations {
 		parent := entityMap[relation.Parent]
 		child := entityMap[relation.Child]
 		if len(parent.Children) == 0 {

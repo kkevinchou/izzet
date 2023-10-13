@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	izzetapp "github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/assets"
 )
 
@@ -79,42 +78,26 @@ func SetupMenuBar(app App) imgui.Vec2 {
 			app.LoadWorld(selectedWorldName)
 		}
 
-		val := app.ShowImguiDemo()
-		showImguiLabel := "ShowImguiDemo"
-		if val {
-			texture := panels.CreateUserSpaceTextureHandle(app.AssetManager().GetTexture("check-mark").ID)
-			size := imgui.Vec2{X: 20, Y: 20}
-
-			// invert the Y axis since opengl vs texture coordinate systems differ
-			// https://learnopengl.com/Getting-started/Textures
-			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-			imgui.SameLine()
+		if imgui.MenuItemV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {
+			app.SetShowImguiDemo(!app.ShowImguiDemo())
 		}
 
-		if imgui.MenuItem(showImguiLabel) {
-			app.SetShowImguiDemo(!val)
-		}
+		// if imgui.MenuItem("Bake Navigation Mesh") {
+		// 	app.NavMesh().BakeNavMesh()
+		// }
+		imgui.EndMenu()
+	}
 
-		if app.AppMode() == izzetapp.AppModePlay {
-			texture := panels.CreateUserSpaceTextureHandle(app.AssetManager().GetTexture("check-mark").ID)
-			size := imgui.Vec2{X: 20, Y: 20}
-
-			// invert the Y axis since opengl vs texture coordinate systems differ
-			// https://learnopengl.com/Getting-started/Textures
-			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-			imgui.SameLine()
-		}
-		if imgui.MenuItem("Play Scene") {
+	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
+	if imgui.BeginMenu("Run") {
+		if imgui.MenuItemV("Play Scene", "", app.AppMode() == izzetapp.AppModePlay, true) {
 			app.StartLiveWorld()
 		}
 
-		if imgui.MenuItem("Exit Scene") {
+		if imgui.MenuItemV("Exit Scene", "", false, true) {
 			app.StopLiveWorld()
 		}
 
-		if imgui.MenuItem("Bake Navigation Mesh") {
-			app.NavMesh().BakeNavMesh()
-		}
 		imgui.EndMenu()
 	}
 	imgui.EndMainMenuBar()

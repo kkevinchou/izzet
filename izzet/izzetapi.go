@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -132,6 +133,10 @@ func (g *Izzet) SetWorld(world *world.GameWorld) {
 }
 
 func (g *Izzet) StartLiveWorld() {
+	if g.AppMode() != app.AppModeEditor {
+		return
+	}
+	g.appMode = app.AppModePlay
 	g.editorWorld = g.world
 
 	var buffer bytes.Buffer
@@ -151,7 +156,15 @@ func (g *Izzet) StartLiveWorld() {
 }
 
 func (g *Izzet) StopLiveWorld() {
+	if g.AppMode() != app.AppModePlay {
+		return
+	}
+	g.appMode = app.AppModeEditor
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	panels.SelectEntity(nil)
 	g.SetWorld(g.editorWorld)
+}
+
+func (g *Izzet) AppMode() app.AppMode {
+	return g.appMode
 }

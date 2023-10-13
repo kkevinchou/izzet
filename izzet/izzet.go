@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -62,6 +63,7 @@ type Izzet struct {
 	world       *world.GameWorld
 
 	systems []System
+	appMode app.AppMode
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
@@ -91,6 +93,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
 	g.modelLibrary = modellibrary.New()
+	g.appMode = app.AppModeEditor
 	data := izzetdata.LoadData(dataFilePath)
 
 	g.camera = &camera.Camera{

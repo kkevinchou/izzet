@@ -15,6 +15,7 @@ type DebugSettings struct {
 	MaterialOverride          bool
 	EnableShadowMapping       bool
 	ShadowFarFactor           float32
+	SPNearPlaneOffset         float32
 	BloomIntensity            float32
 	Exposure                  float32
 	AmbientFactor             float32
@@ -69,6 +70,7 @@ var DBG DebugSettings = DebugSettings{
 	MaterialOverride:          false,
 	EnableShadowMapping:       true,
 	ShadowFarFactor:           1,
+	SPNearPlaneOffset:         300,
 	BloomIntensity:            0.04,
 	Exposure:                  1.0,
 	AmbientFactor:             0.1,

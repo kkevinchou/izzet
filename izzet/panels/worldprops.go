@@ -131,6 +131,7 @@ func worldProps(app App, renderContext RenderContext) {
 		// setupRow("Material Override", func() { imgui.Checkbox("", &DBG.MaterialOverride) })
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &DBG.EnableSpatialPartition) }, true)
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) }, true)
+		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &DBG.SPNearPlaneOffset, 0, 1000) }, true)
 		imgui.EndTable()
 	}
 }

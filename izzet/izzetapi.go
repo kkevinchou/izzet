@@ -66,6 +66,10 @@ func (g *Izzet) SaveWorld(name string) {
 }
 
 func (g *Izzet) LoadWorld(name string) {
+	if name == "" {
+		return
+	}
+
 	filename := fmt.Sprintf("./%s.json", name)
 	world, err := g.serializer.ReadFromFile(filename)
 	if err != nil {

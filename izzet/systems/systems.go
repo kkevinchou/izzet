@@ -10,9 +10,13 @@ import (
 
 type GameWorld interface {
 	Entities() []*entities.Entity
+	GetEntityByID(int) *entities.Entity
 }
 
 type CharacterControllerSystem struct {
+}
+
+type CameraSystem struct {
 }
 
 func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
@@ -38,4 +42,22 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld,
 			entities.SetLocalPosition(entity, entity.LocalPosition.Add(mgl64.Vec3{c.Speed * float64(delta.Milliseconds()) / 1000, 0, 0}))
 		}
 	}
+}
+
+func (s *CameraSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+	var camera *entities.Entity
+	for _, entity := range world.Entities() {
+		if entity.CameraComponent == nil {
+			continue
+		}
+		camera = entity
+		break
+	}
+
+	if camera == nil {
+		return
+	}
+
+	targetcamera := world.GetEntityByID(camera.CameraComponent.Target)
+	entities.SetLocalPosition(camera, targetcamera.WorldPosition().Add(camera.CameraComponent.PositionOffset))
 }

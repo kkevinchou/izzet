@@ -33,6 +33,12 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.renderer.Resized(g.width, g.height)
 	}
 
+	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
+	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
+	if panels.DBG.EnableSpatialPartition {
+		g.handleSpatialPartition()
+	}
+
 	if g.AppMode() == app.AppModePlay {
 		for _, s := range g.playModeSystems {
 			s.Update(delta, g.world, frameInput)
@@ -41,20 +47,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		for _, s := range g.editorModeSystems {
 			s.Update(delta, g.world, frameInput)
 		}
-	}
-
-	if panels.DBG.EnableSpatialPartition {
-		var spatialEntities []spatialpartition.Entity
-		for _, entity := range g.world.Entities() {
-			if !entity.Dirty() {
-				continue
-			}
-			if entity.BoundingBox() == collider.EmptyBoundingBox {
-				continue
-			}
-			spatialEntities = append(spatialEntities, entity)
-		}
-		g.world.SpatialPartition().IndexEntities(spatialEntities)
 	}
 
 	g.handleInputCommands(frameInput)
@@ -108,6 +100,20 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	panels.DBG.CameraPosition = g.camera.Position
 	panels.DBG.CameraOrientation = g.camera.Orientation
+}
+
+func (g *Izzet) handleSpatialPartition() {
+	var spatialEntities []spatialpartition.Entity
+	for _, entity := range g.world.Entities() {
+		if !entity.Dirty() {
+			continue
+		}
+		if entity.BoundingBox() == collider.EmptyBoundingBox {
+			continue
+		}
+		spatialEntities = append(spatialEntities, entity)
+	}
+	g.world.SpatialPartition().IndexEntities(spatialEntities)
 }
 
 var copiedEntity []byte

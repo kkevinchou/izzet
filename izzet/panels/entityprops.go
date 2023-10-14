@@ -17,12 +17,14 @@ type ComponentComboOption string
 var MaterialComboOption ComponentComboOption = "Material Component"
 var PhysicsComboOption ComponentComboOption = "Physics Component"
 var LightComboOption ComponentComboOption = "Light Component"
+var CameraComboOption ComponentComboOption = "Camera Component"
 var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
 var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	MaterialComboOption,
 	PhysicsComboOption,
 	LightComboOption,
+	CameraComboOption,
 }
 
 func entityProps(entity *entities.Entity) {
@@ -73,7 +75,7 @@ func entityProps(entity *entities.Entity) {
 			x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
 		}
 
-		setupRow("Local Position X", func() {
+		setupRow("Local Position", func() {
 			imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
 			imgui.PushID("position x")
 			if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
@@ -117,8 +119,68 @@ func entityProps(entity *entities.Entity) {
 		return
 	}
 
+	if entity.CameraComponent != nil {
+		if imgui.CollapsingHeaderV("Camera Properties", imgui.TreeNodeFlagsNone) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
+
+			var position *mgl64.Vec3
+			var x, y, z int32
+			if entity != nil {
+				position = &entity.CameraComponent.PositionOffset
+				x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
+			}
+
+			setupRow("Camera Position", func() {
+				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
+				imgui.PushID("position x")
+				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
+					if entity != nil {
+						position[0] = float64(x)
+						entities.SetDirty(entity)
+					}
+				}
+				imgui.PopID()
+				imgui.SameLine()
+				imgui.PushID("position y")
+				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
+					if entity != nil {
+						position[1] = float64(y)
+						entities.SetDirty(entity)
+					}
+				}
+				imgui.PopID()
+				imgui.SameLine()
+				imgui.PushID("position z")
+				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
+					if entity != nil {
+						position[2] = float64(z)
+						entities.SetDirty(entity)
+					}
+				}
+				imgui.PopID()
+				imgui.PopItemWidth()
+			}, false)
+
+			setupRow("Target ID", func() {
+				var target int32
+
+				if entity.CameraComponent.Target != nil {
+					target = int32(*entity.CameraComponent.Target)
+				}
+
+				if imgui.InputInt("", &target) {
+					intTarget := int(target)
+					entity.CameraComponent.Target = &intTarget
+				}
+			}, true)
+
+			imgui.EndTable()
+		}
+	}
+
 	if entity.LightInfo != nil {
-		if imgui.CollapsingHeaderV("Light Properties", imgui.TreeNodeFlagsDefaultOpen) {
+		if imgui.CollapsingHeaderV("Light Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -151,7 +213,7 @@ func entityProps(entity *entities.Entity) {
 	}
 
 	if entity.Material != nil {
-		if imgui.CollapsingHeaderV("Material Properties", imgui.TreeNodeFlagsDefaultOpen) {
+		if imgui.CollapsingHeaderV("Material Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -180,7 +242,7 @@ func entityProps(entity *entities.Entity) {
 	if entity.Physics != nil {
 		physicsComponent := entity.Physics
 		velocity := &physicsComponent.Velocity
-		if imgui.CollapsingHeaderV("Physics Properties", imgui.TreeNodeFlagsDefaultOpen) {
+		if imgui.CollapsingHeaderV("Physics Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -217,8 +279,9 @@ func entityProps(entity *entities.Entity) {
 	}
 
 	if entity.Collider != nil {
-		if imgui.CollapsingHeaderV("Collider Properties", imgui.TreeNodeFlagsDefaultOpen) {
+		if imgui.CollapsingHeaderV("Collider Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
 
 			setupRow("Collider Type", func() {
 				imgui.LabelText("", string(entities.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
@@ -258,6 +321,8 @@ func entityProps(entity *entities.Entity) {
 				}
 			} else if SelectedComponentComboOption == PhysicsComboOption {
 				entity.Physics = &entities.PhysicsComponent{}
+			} else if SelectedComponentComboOption == CameraComboOption {
+				entity.CameraComponent = &entities.CameraComponent{}
 			}
 		}
 	}

@@ -240,8 +240,28 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	panels.DBG.DrawCount = 0
 
 	// configure camera viewer context
-	position := r.app.Camera().Position
-	orientation := r.app.Camera().Orientation
+
+	var position mgl64.Vec3
+	var orientation mgl64.Quat
+
+	if r.app.AppMode() == app.AppModeEditor {
+		position = r.app.Camera().Position
+		orientation = r.app.Camera().Orientation
+	} else {
+		found := false
+		for _, entity := range r.world.Entities() {
+			if entity.CameraComponent != nil {
+				position = entity.WorldPosition()
+				orientation = entity.WorldRotation()
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			panic("could not find an entity with a camera component")
+		}
+	}
 
 	viewerViewMatrix := orientation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())

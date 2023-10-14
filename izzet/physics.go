@@ -66,6 +66,8 @@ func ResolveCollisions(world GameWorld) {
 	var entityList []*entities.Entity
 	for _, e1 := range collidableEntities {
 		if e1.Static {
+			// allow other entities to collide against a static entity. static entities
+			// are picked up when the spatial partition query is done below for e2
 			continue
 		}
 

@@ -236,9 +236,8 @@ func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
 }
 
 func (g *Izzet) setupEntities(data *izzetdata.Data) {
-	camera := entities.InstantiateEntity("camera")
-	camera.CameraComponent = &entities.CameraComponent{PositionOffset: mgl64.Vec3{0, 100, 300}}
-	g.world.AddEntity(camera)
+	// camera := entities.InstantiateEntity("camera")
+	// g.world.AddEntity(camera)
 
 	pointLight := entities.CreatePointLight()
 	pointLight.Movement = &entities.MovementComponent{
@@ -265,8 +264,6 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
 		g.world.AddEntity(e)
 	}
-
-	camera.CameraComponent.Target = cube.ID
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

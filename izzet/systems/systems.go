@@ -58,6 +58,15 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld, frameInput i
 		return
 	}
 
-	targetcamera := world.GetEntityByID(camera.CameraComponent.Target)
-	entities.SetLocalPosition(camera, targetcamera.WorldPosition().Add(camera.CameraComponent.PositionOffset))
+	targetID := camera.CameraComponent.Target
+	if targetID == nil {
+		return
+	}
+
+	targetEntity := world.GetEntityByID(*targetID)
+	if targetEntity == nil {
+		return
+	}
+
+	entities.SetLocalPosition(camera, targetEntity.WorldPosition().Add(camera.CameraComponent.PositionOffset))
 }

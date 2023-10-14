@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -94,7 +95,10 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.physicsStep(delta)
 	g.cameraMovement(frameInput, delta)
-	g.handleGizmos(frameInput)
+
+	if g.AppMode() == app.AppModeEditor {
+		g.handleGizmos(frameInput)
+	}
 
 	panels.DBG.CameraPosition = g.camera.Position
 	panels.DBG.CameraOrientation = g.camera.Orientation

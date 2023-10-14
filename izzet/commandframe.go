@@ -50,9 +50,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.world.SpatialPartition().IndexEntities(spatialEntities)
 	}
 
-	mouseInput := frameInput.MouseInput
-	keyboardInput := frameInput.KeyboardInput
-
 	g.handleInputCommands(frameInput)
 
 	// system loop
@@ -96,137 +93,11 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 
 	g.physicsStep(delta)
-
-	var viewRotation mgl64.Vec2
-	var controlVector mgl64.Vec3
-	if g.relativeMouseActive {
-		var xRel, yRel float64
-		var mouseSensitivity float64 = 0.003
-		if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
-			xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
-			yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
-		}
-		viewRotation = mgl64.Vec2{xRel, yRel}
-		controlVector = getControlVector(keyboardInput)
-	}
-
-	g.cameraMovement(frameInput, viewRotation, controlVector, delta)
-
-	// set gizmo mode
-	if panels.SelectedEntity() != nil {
-		if gizmo.CurrentGizmoMode == gizmo.GizmoModeNone {
-			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
-		}
-		keyboardInput := frameInput.KeyboardInput
-		if _, ok := keyboardInput[input.KeyboardKeyT]; ok {
-			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
-		} else if _, ok := keyboardInput[input.KeyboardKeyR]; ok {
-			gizmo.CurrentGizmoMode = gizmo.GizmoModeRotation
-		} else if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
-			gizmo.CurrentGizmoMode = gizmo.GizmoModeScale
-		}
-	}
-
-	var gizmoHovered bool = false
-	// handle gizmo transforms
-	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		entity := panels.SelectedEntity()
-		newPosition, hoverIndex := g.handleTranslationGizmo(frameInput, entity)
-		if newPosition != nil {
-			if entity.Parent != nil {
-				// the computed position is in world space but entity.LocalPosition is in local space
-				// to compute the new local space position we need to do conversions
-
-				// compute the full transformation matrix, excluding local transformations
-				// i.e. local transformations should not affect how the gizmo affects the entity
-				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
-
-				// take the new world position and convert it to local space
-				newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(newPosition.Vec4(1)).Vec3()
-
-				entities.SetLocalPosition(entity, newPositionInLocalSpace)
-			} else {
-				entities.SetLocalPosition(entity, *newPosition)
-			}
-		}
-		gizmoHovered = hoverIndex != -1
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		entity := panels.SelectedEntity()
-		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
-		if newEntityRotation != nil {
-			if entity.Parent != nil {
-				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
-				worldToLocalMatrix := transformMatrix.Inv()
-				_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
-				computedRotation := r.Mul(*newEntityRotation)
-				entities.SetLocalRotation(entity, computedRotation)
-			} else {
-				entities.SetLocalRotation(entity, *newEntityRotation)
-			}
-		}
-		gizmoHovered = hoverIndex != -1
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		scaleDelta, hovered := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
-		if scaleDelta != nil {
-			entity := panels.SelectedEntity()
-			scale := entities.GetLocalScale(entity)
-
-			entities.SetScale(entity, scale.Add(*scaleDelta))
-		}
-		gizmoHovered = hovered
-	}
-
-	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-		if entityID == nil {
-			panels.SelectEntity(nil)
-			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
-		} else {
-			clickedEntity := g.world.GetEntityByID(*entityID)
-			currentSelection := panels.SelectedEntity()
-
-			if currentSelection != nil && currentSelection.ID != clickedEntity.ID {
-				gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
-			}
-
-			panels.SelectEntity(clickedEntity)
-		}
-	}
-
-	// g.spatialPartition.FrameSetup(sEntities)
-
-	// selectedEntity := panels.SelectedEntity()
-	// if selectedEntity != nil && selectedEntity.BoundingBox() != nil {
-	// 	// fmt.Println("CHECKING WITH", selectedEntity.GetID())
-	// 	bb := selectedEntity.BoundingBox()
-	// 	for _, entity := range g.spatialPartition.QueryCollisionCandidates(*bb) {
-	// 		_ = entity
-	// 		// fmt.Println(entity.GetID())
-	// 	}
-	// }
-
-	// cube := g.GetEntityByID(3379)
-	// tri := g.GetEntityByID(3380)
-	// if cube != nil && tri != nil {
-	// 	length := cube.ShapeData[0].Cube.Length
-	// 	ht := float64(length) / 2
-	// 	aabb := navmesh.AABB{
-	// 		Min: mgl64.Vec3{-ht, -ht, -ht},
-	// 		Max: mgl64.Vec3{ht, ht, ht},
-	// 	}
-
-	// 	triangle := navmesh.Triangle(*tri.ShapeData[0].Triangle)
-	// 	transform := entities.WorldTransform(tri)
-	// 	triangle.V1 = transform.Mul4x1(triangle.V1.Vec4(1)).Vec3()
-	// 	triangle.V2 = transform.Mul4x1(triangle.V2.Vec4(1)).Vec3()
-	// 	triangle.V3 = transform.Mul4x1(triangle.V3.Vec4(1)).Vec3()
-
-	// 	panels.DBG.TriangleHIT = navmesh.IntersectAABBTriangle(aabb, triangle)
-	// }
+	g.cameraMovement(frameInput, delta)
+	g.handleGizmos(frameInput)
 
 	panels.DBG.CameraPosition = g.camera.Position
 	panels.DBG.CameraOrientation = g.camera.Orientation
-
 }
 
 var copiedEntity []byte
@@ -344,7 +215,23 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	}
 }
 
-func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, controlVector mgl64.Vec3, delta time.Duration) {
+func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
+	mouseInput := frameInput.MouseInput
+	keyboardInput := frameInput.KeyboardInput
+
+	var viewRotation mgl64.Vec2
+	var controlVector mgl64.Vec3
+	if g.relativeMouseActive {
+		var xRel, yRel float64
+		var mouseSensitivity float64 = 0.003
+		if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
+			xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
+			yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
+		}
+		viewRotation = mgl64.Vec2{xRel, yRel}
+		controlVector = getControlVector(keyboardInput)
+	}
+
 	forwardVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 	upVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 1, 0})
 	// there's probably away to get the right vector directly rather than going crossing the up vector :D
@@ -411,7 +298,6 @@ func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, 
 
 	g.camera.Position = g.camera.Position.Add(movementDelta).Add(g.camera.Drift)
 
-	keyboardInput := frameInput.KeyboardInput
 	if key, ok := keyboardInput[input.KeyboardKeyUp]; ok && key.Event == input.KeyboardEventDown {
 		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
@@ -426,6 +312,92 @@ func (g *Izzet) cameraMovement(frameInput input.Input, viewRotation mgl64.Vec2, 
 	}
 
 	g.camera.LastFrameMovementVector = movementVector
+}
+
+func (g *Izzet) handleGizmos(frameInput input.Input) {
+	mouseInput := frameInput.MouseInput
+
+	// set gizmo mode
+	if panels.SelectedEntity() != nil {
+		if gizmo.CurrentGizmoMode == gizmo.GizmoModeNone {
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
+		}
+		keyboardInput := frameInput.KeyboardInput
+		if _, ok := keyboardInput[input.KeyboardKeyT]; ok {
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
+		} else if _, ok := keyboardInput[input.KeyboardKeyR]; ok {
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeRotation
+		} else if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeScale
+		}
+	}
+
+	var gizmoHovered bool = false
+	// handle gizmo transforms
+	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+		entity := panels.SelectedEntity()
+		newPosition, hoverIndex := g.handleTranslationGizmo(frameInput, entity)
+		if newPosition != nil {
+			if entity.Parent != nil {
+				// the computed position is in world space but entity.LocalPosition is in local space
+				// to compute the new local space position we need to do conversions
+
+				// compute the full transformation matrix, excluding local transformations
+				// i.e. local transformations should not affect how the gizmo affects the entity
+				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+
+				// take the new world position and convert it to local space
+				newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(newPosition.Vec4(1)).Vec3()
+
+				entities.SetLocalPosition(entity, newPositionInLocalSpace)
+			} else {
+				entities.SetLocalPosition(entity, *newPosition)
+			}
+		}
+		gizmoHovered = hoverIndex != -1
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+		entity := panels.SelectedEntity()
+		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
+		if newEntityRotation != nil {
+			if entity.Parent != nil {
+				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+				worldToLocalMatrix := transformMatrix.Inv()
+				_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
+				computedRotation := r.Mul(*newEntityRotation)
+				entities.SetLocalRotation(entity, computedRotation)
+			} else {
+				entities.SetLocalRotation(entity, *newEntityRotation)
+			}
+		}
+		gizmoHovered = hoverIndex != -1
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+		scaleDelta, hovered := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
+		if scaleDelta != nil {
+			entity := panels.SelectedEntity()
+			scale := entities.GetLocalScale(entity)
+
+			entities.SetScale(entity, scale.Add(*scaleDelta))
+		}
+		gizmoHovered = hovered
+	}
+
+	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+		if entityID == nil {
+			panels.SelectEntity(nil)
+			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
+		} else {
+			clickedEntity := g.world.GetEntityByID(*entityID)
+			currentSelection := panels.SelectedEntity()
+
+			if currentSelection != nil && currentSelection.ID != clickedEntity.ID {
+				gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
+			}
+
+			panels.SelectEntity(clickedEntity)
+		}
+	}
+
 }
 
 // TODO: move this method out of izzet and into the gizmo package?

@@ -31,6 +31,7 @@ type Entity struct {
 	Material        *MaterialComponent
 	Animation       *AnimationComponent
 	CameraComponent *CameraComponent
+	Static          bool
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
@@ -136,7 +137,7 @@ func (e *Entity) BoundingBox() collider.BoundingBox {
 }
 
 func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary, data *izzetdata.Data) []*Entity {
-	var result []*Entity
+	var spawnedEntities []*Entity
 
 	entityAsset := data.EntityAssets[document.Name]
 
@@ -170,19 +171,19 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 			animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
 			entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
 		}
-		result = append(result, entity)
+		spawnedEntities = append(spawnedEntities, entity)
 	} else {
 		parent := InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
-		result = append(result, parent)
+		spawnedEntities = append(spawnedEntities, parent)
 
 		for _, scene := range document.Scenes {
 			for _, node := range scene.Nodes {
-				result = append(result, parseEntities(node, nil, document.Name, document, ml)...)
+				spawnedEntities = append(spawnedEntities, parseEntities(node, nil, document.Name, document, ml)...)
 			}
 		}
 
 		var rootEntities []*Entity
-		for _, e := range result {
+		for _, e := range spawnedEntities {
 			if e.Parent == nil {
 				rootEntities = append(rootEntities, e)
 			}
@@ -199,7 +200,11 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		}
 	}
 
-	for _, entity := range result {
+	for _, entity := range spawnedEntities {
+		entity.Static = entityAsset.Static
+		if entityAsset.Physics == nil {
+			entity.Physics = &PhysicsComponent{}
+		}
 		if entityAsset.Collider != nil && entityAsset.Collider.TriMeshCollider {
 			if entity.MeshComponent == nil {
 				continue
@@ -213,17 +218,11 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[ColliderGroup(entityAsset.Collider.ColliderGroup)]}
 			}
 			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(MLPrimitivesTospecPrimitive(primitives))
-			if ColliderGroup(entityAsset.Collider.ColliderGroup) == ColliderGroupTerrain {
-				if entity.Physics == nil {
-					entity.Physics = &PhysicsComponent{}
-				}
-				entity.Physics.Static = true
-			}
 		}
 	}
 
-	if len(result) > 0 {
-		rootEntity := result[0]
+	if len(spawnedEntities) > 0 {
+		rootEntity := spawnedEntities[0]
 		if entityAsset.Translation != nil {
 			SetLocalPosition(rootEntity, *entityAsset.Translation)
 		}
@@ -235,7 +234,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		}
 	}
 
-	return result
+	return spawnedEntities
 }
 
 func MLPrimitivesTospecPrimitive(primitives []modellibrary.Primitive) []*modelspec.PrimitiveSpecification {

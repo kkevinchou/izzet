@@ -24,7 +24,7 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 
 	for _, entity := range allEntities {
 		physicsComponent := entity.Physics
-		if physicsComponent == nil || physicsComponent.Static {
+		if entity.Static || physicsComponent == nil {
 			continue
 		}
 
@@ -65,7 +65,7 @@ func ResolveCollisions(world GameWorld) {
 	entityPairs := [][]*entities.Entity{}
 	var entityList []*entities.Entity
 	for _, e1 := range collidableEntities {
-		if e1.Physics == nil || e1.Physics.Static {
+		if e1.Static {
 			continue
 		}
 

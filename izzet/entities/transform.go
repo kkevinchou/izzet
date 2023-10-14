@@ -14,7 +14,7 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	// TODO:
 	// animations can move obects around pretty regularly, we shouldn't cache world
 	// transforms for entities that have animations
-	if entity.DirtyTransformFlag {
+	if entity.Dirty() {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
 
 		localPosition := GetLocalPosition(entity)

@@ -9,9 +9,10 @@ import (
 )
 
 type EntityAsset struct {
-	SingleEntity bool      `json:"single_entity"`
-	Collider     *Collider `json:"collider"`
-	Physics      *Physics  `json:"physics"`
+	SingleEntity bool `json:"single_entity"`
+	Collider     *Collider
+	Static       bool
+	Physics      *Physics
 
 	Translation *mgl64.Vec3
 	Rotation    *mgl64.Quat
@@ -19,7 +20,6 @@ type EntityAsset struct {
 }
 
 type Physics struct {
-	Static   bool
 	Velocity mgl64.Vec3
 }
 

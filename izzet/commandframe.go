@@ -105,9 +105,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 func (g *Izzet) handleSpatialPartition() {
 	var spatialEntities []spatialpartition.Entity
 	for _, entity := range g.world.Entities() {
-		if !entity.Dirty() {
-			continue
-		}
 		if entity.BoundingBox() == collider.EmptyBoundingBox {
 			continue
 		}

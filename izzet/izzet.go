@@ -123,6 +123,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.metricsRegistry = metrics.New()
 
 	g.playModeSystems = append(g.playModeSystems, &systems.CharacterControllerSystem{})
+	g.playModeSystems = append(g.playModeSystems, &systems.CameraSystem{})
 
 	fmt.Println(time.Since(start), "to start up systems")
 
@@ -236,7 +237,7 @@ func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
 
 func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	camera := entities.InstantiateEntity("camera")
-	camera.CameraComponent = &entities.CameraComponent{}
+	camera.CameraComponent = &entities.CameraComponent{PositionOffset: mgl64.Vec3{0, 100, 300}}
 	g.world.AddEntity(camera)
 
 	pointLight := entities.CreatePointLight()
@@ -250,7 +251,8 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	g.world.AddEntity(pointLight)
 
 	cube := entities.CreateCube(g.modelLibrary, 50)
-	cube.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 20}
+	cube.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200}
+	entities.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()

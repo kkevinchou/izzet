@@ -94,9 +94,9 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 	}
 
 	g.physicsStep(delta)
-	g.cameraMovement(frameInput, delta)
 
 	if g.AppMode() == app.AppModeEditor {
+		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)
 	}
 
@@ -219,7 +219,7 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	}
 }
 
-func (g *Izzet) cameraMovement(frameInput input.Input, delta time.Duration) {
+func (g *Izzet) editorCameraMovement(frameInput input.Input, delta time.Duration) {
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 

@@ -30,7 +30,7 @@ import (
 )
 
 type System interface {
-	Update(time.Duration, systems.App, input.Input)
+	Update(time.Duration, systems.GameWorld, input.Input)
 }
 
 type Izzet struct {
@@ -62,8 +62,9 @@ type Izzet struct {
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
 
-	systems []System
-	appMode app.AppMode
+	playModeSystems   []System
+	editorModeSystems []System
+	appMode           app.AppMode
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
@@ -121,7 +122,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 
-	// g.systems = append(g.systems, &systems.CharacterControllerSystem{})
+	g.playModeSystems = append(g.playModeSystems, &systems.CharacterControllerSystem{})
 
 	fmt.Println(time.Since(start), "to start up systems")
 
@@ -249,7 +250,7 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	g.world.AddEntity(pointLight)
 
 	cube := entities.CreateCube(g.modelLibrary, 50)
-	entities.SetLocalPosition(cube, mgl64.Vec3{154, 126, -22})
+	cube.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 20}
 	g.world.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()
@@ -262,6 +263,8 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
 		g.world.AddEntity(e)
 	}
+
+	camera.CameraComponent.Target = cube.ID
 }
 
 func initializeOpenGL() (*sdl.Window, error) {

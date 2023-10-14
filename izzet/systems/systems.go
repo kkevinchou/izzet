@@ -8,15 +8,15 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
-type App interface {
+type GameWorld interface {
 	Entities() []*entities.Entity
 }
 
 type CharacterControllerSystem struct {
 }
 
-func (s *CharacterControllerSystem) Update(delta time.Duration, app App, frameInput input.Input) {
-	for _, entity := range app.Entities() {
+func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+	for _, entity := range world.Entities() {
 		if entity.CharacterControllerComponent == nil {
 			continue
 		}

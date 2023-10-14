@@ -33,9 +33,15 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		g.renderer.Resized(g.width, g.height)
 	}
 
-	// for _, s := range g.systems {
-	// 	s.Update(delta, g, frameInput)
-	// }
+	if g.AppMode() == app.AppModePlay {
+		for _, s := range g.playModeSystems {
+			s.Update(delta, g.world, frameInput)
+		}
+	} else if g.AppMode() == app.AppModeEditor {
+		for _, s := range g.editorModeSystems {
+			s.Update(delta, g.world, frameInput)
+		}
+	}
 
 	if panels.DBG.EnableSpatialPartition {
 		var spatialEntities []spatialpartition.Entity

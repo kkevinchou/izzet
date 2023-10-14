@@ -12,6 +12,13 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 )
 
+var (
+	ignoredJsonFiles map[string]any = map[string]any{
+		"config.json":     true,
+		"izzet_data.json": true,
+	}
+)
+
 type App interface {
 	SaveWorld(string)
 	LoadWorld(string)
@@ -53,6 +60,10 @@ func SetupMenuBar(app App) imgui.Vec2 {
 		for _, file := range files {
 			extension := filepath.Ext(file.Name())
 			if extension != ".json" {
+				continue
+			}
+
+			if _, ok := ignoredJsonFiles[file.Name()]; ok {
 				continue
 			}
 

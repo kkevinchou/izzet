@@ -234,6 +234,10 @@ func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
 }
 
 func (g *Izzet) setupEntities(data *izzetdata.Data) {
+	camera := entities.InstantiateEntity("camera")
+	camera.CameraComponent = &entities.CameraComponent{}
+	g.world.AddEntity(camera)
+
 	pointLight := entities.CreatePointLight()
 	pointLight.Movement = &entities.MovementComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},

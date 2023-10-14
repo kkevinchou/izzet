@@ -3,6 +3,7 @@
         "alpha": {"single_entity": true},
         "demo_scene_samurai": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
         "demo_scene_scificity": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
+        "scene": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
         "demo_scene_city": {"scale": [20, 20, 20]},
         "demo_scene_dungeon": {"scale": [20, 20, 20]},
         "demo_scene_adventure": {"scale": [20, 20, 20]},

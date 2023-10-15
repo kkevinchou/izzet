@@ -435,13 +435,12 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	entity := panels.SelectedEntity()
 	if entity != nil {
 		// draw bounding box
-		bb := entity.BoundingBox()
-		if bb != collider.EmptyBoundingBox {
+		if entity.HasBoundingBox() {
 			drawAABB(
 				viewerContext,
 				shaderManager.GetShaderProgram("flat"),
 				mgl64.Vec3{.2, 0, .7},
-				bb,
+				entity.BoundingBox(),
 				0.5,
 			)
 		}

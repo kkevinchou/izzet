@@ -76,34 +76,36 @@ func entityProps(entity *entities.Entity) {
 		}
 
 		setupRow("Local Position", func() {
-			imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
-			imgui.PushID("position x")
-			if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
-				if entity != nil {
-					position[0] = float64(x)
-					entities.SetDirty(entity)
+			if entity != nil {
+				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
+				imgui.PushID("position x")
+				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
+					if entity != nil {
+						position[0] = float64(x)
+						entities.SetDirty(entity)
+					}
 				}
-			}
-			imgui.PopID()
-			imgui.SameLine()
-			imgui.PushID("position y")
-			if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
-				if entity != nil {
-					position[1] = float64(y)
-					entities.SetDirty(entity)
+				imgui.PopID()
+				imgui.SameLine()
+				imgui.PushID("position y")
+				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
+					if entity != nil {
+						position[1] = float64(y)
+						entities.SetDirty(entity)
+					}
 				}
-			}
-			imgui.PopID()
-			imgui.SameLine()
-			imgui.PushID("position z")
-			if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
-				if entity != nil {
-					position[2] = float64(z)
-					entities.SetDirty(entity)
+				imgui.PopID()
+				imgui.SameLine()
+				imgui.PushID("position z")
+				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
+					if entity != nil {
+						position[2] = float64(z)
+						entities.SetDirty(entity)
+					}
 				}
+				imgui.PopID()
+				imgui.PopItemWidth()
 			}
-			imgui.PopID()
-			imgui.PopItemWidth()
 		}, false)
 
 		uiTableRow("Local Rotation", localRotationStr)

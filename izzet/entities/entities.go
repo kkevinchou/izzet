@@ -56,6 +56,10 @@ func (e *Entity) GetID() int {
 	return e.ID
 }
 
+func (e *Entity) GetName() string {
+	return e.Name
+}
+
 func (e *Entity) Dirty() bool {
 	return e.DirtyTransformFlag
 }
@@ -124,6 +128,10 @@ func RemoveParent(child *Entity) {
 		delete(parent.Children, child.ID)
 		child.Parent = nil
 	}
+}
+
+func (e *Entity) HasBoundingBox() bool {
+	return e.InternalBoundingBox != collider.EmptyBoundingBox
 }
 
 func (e *Entity) BoundingBox() collider.BoundingBox {

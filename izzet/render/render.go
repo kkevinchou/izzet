@@ -67,6 +67,9 @@ type App interface {
 	Serializer() *serialization.Serializer
 	LoadWorld(string)
 	SaveWorld(string)
+
+	NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3
+	WorldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) mgl64.Vec2
 }
 
 const mipsCount int = 6
@@ -327,6 +330,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
+	r.renderGizmos(cameraViewerContext, renderContext)
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
@@ -377,7 +381,6 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false)
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.renderGizmos(cameraViewerContext, renderContext)
 	r.renderImgui(renderContext)
 }
 
@@ -1015,7 +1018,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	position := entity.WorldPosition()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
+		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat2"), position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
 		r.drawCircleGizmo(&viewerContext, position, renderContext)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {

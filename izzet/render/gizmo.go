@@ -7,21 +7,28 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
-func drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
+
+	// in the range -1 - 1
+	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
+	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(10).Add(nearPlanePosition)
 
 	for i, axis := range gizmo.T.Axes {
 		lines := [][]mgl64.Vec3{
-			[]mgl64.Vec3{position, position.Add(axis)},
+			// []mgl64.Vec3{position, position.Add(axis)},
+			[]mgl64.Vec3{renderPosition, renderPosition.Add(axis)},
 		}
 		color := colors[i]
 		if i == gizmo.T.HoverIndex {
 			color = mgl64.Vec3{1, 1, 0}
 		}
-		drawLines(*viewerContext, shader, lines, 1, color)
+		drawLines2(*viewerContext, shader, lines, 0.2, color)
 	}
 }
 

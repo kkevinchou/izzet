@@ -6,11 +6,13 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 type GameWorld interface {
 	Entities() []*entities.Entity
 	GetEntityByID(int) *entities.Entity
+	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
 type CharacterControllerSystem struct {

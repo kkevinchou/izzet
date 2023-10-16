@@ -91,8 +91,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 		}
 	}
 
-	g.physicsStep(delta)
-
 	if g.AppMode() == app.AppModeEditor {
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)

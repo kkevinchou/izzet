@@ -30,7 +30,7 @@ import (
 )
 
 type System interface {
-	Update(time.Duration, systems.GameWorld, input.Input)
+	Update(time.Duration, systems.GameWorld)
 }
 
 type Izzet struct {
@@ -158,7 +158,8 @@ func (g *Izzet) Start() {
 			input := g.platform.PollInput()
 			g.HandleInput(input)
 			start := time.Now()
-			g.runCommandFrame(input, time.Duration(settings.MSPerCommandFrame)*time.Millisecond)
+			g.world.SetFrameInput(input)
+			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
 			g.world.IncrementCommandFrameCount()

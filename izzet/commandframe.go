@@ -26,7 +26,9 @@ var (
 
 // Systems Context
 
-func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
+func (g *Izzet) runCommandFrame(delta time.Duration) {
+	frameInput := g.world.GetFrameInput()
+
 	if frameInput.WindowEvent.Resized {
 		w, h := g.window.GetSize()
 		g.width, g.height = int(w), int(h)
@@ -41,11 +43,11 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	if g.AppMode() == app.AppModePlay {
 		for _, s := range g.playModeSystems {
-			s.Update(delta, g.world, frameInput)
+			s.Update(delta, g.world)
 		}
 	} else if g.AppMode() == app.AppModeEditor {
 		for _, s := range g.editorModeSystems {
-			s.Update(delta, g.world, frameInput)
+			s.Update(delta, g.world)
 		}
 	}
 

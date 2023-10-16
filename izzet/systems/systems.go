@@ -13,6 +13,7 @@ type GameWorld interface {
 	Entities() []*entities.Entity
 	GetEntityByID(int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
+	GetFrameInput() input.Input
 }
 
 type CharacterControllerSystem struct {
@@ -21,7 +22,8 @@ type CharacterControllerSystem struct {
 type CameraSystem struct {
 }
 
-func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld) {
+	frameInput := world.GetFrameInput()
 	for _, entity := range world.Entities() {
 		if entity.CharacterControllerComponent == nil {
 			continue
@@ -46,7 +48,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld,
 	}
 }
 
-func (s *CameraSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 	var camera *entities.Entity
 	for _, entity := range world.Entities() {
 		if entity.CameraComponent == nil {

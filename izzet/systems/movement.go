@@ -4,14 +4,13 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
 type MovementSystem struct {
 }
 
-func (s *MovementSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+func (s *MovementSystem) Update(delta time.Duration, world GameWorld) {
 	for _, entity := range world.Entities() {
 		if entity.Movement != nil {
 			mc := entity.Movement

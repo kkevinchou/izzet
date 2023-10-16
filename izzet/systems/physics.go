@@ -8,7 +8,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
-	"github.com/kkevinchou/kitolib/input"
 )
 
 const (
@@ -18,7 +17,7 @@ const (
 type PhysicsSystem struct {
 }
 
-func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 	allEntities := world.Entities()
 
 	for _, entity := range allEntities {

@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -86,3 +87,11 @@ func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 // func (g *GameWorld) ResetNavMeshVAO() {
 // 	render.ResetNavMeshVAO = true
 // }
+
+func (g *GameWorld) SetFrameInput(input input.Input) {
+	g.frameInput = input
+}
+
+func (g *GameWorld) GetFrameInput() input.Input {
+	return g.frameInput
+}

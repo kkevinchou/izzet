@@ -2,6 +2,7 @@ package world
 
 import (
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -23,6 +24,7 @@ type GameWorld struct {
 
 	sortFrame      int
 	sortedEntities []*entities.Entity
+	frameInput     input.Input
 }
 
 func New(entities map[int]*entities.Entity) *GameWorld {

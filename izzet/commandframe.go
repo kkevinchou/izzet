@@ -51,46 +51,6 @@ func (g *Izzet) runCommandFrame(frameInput input.Input, delta time.Duration) {
 
 	g.handleInputCommands(frameInput)
 
-	// system loop
-	for _, entity := range g.world.Entities() {
-		// animation system
-		if entity.Animation != nil {
-			if panels.LoopAnimation {
-				entity.Animation.AnimationPlayer.Update(delta)
-			}
-		}
-
-		// particle system
-		if entity.Particles != nil {
-			entity.Particles.SetPosition(entity.WorldPosition())
-			entity.Particles.Update(delta)
-		}
-
-		// movement system
-		if entity.Movement != nil {
-			mc := entity.Movement
-
-			if mc.PatrolConfig != nil {
-				target := mc.PatrolConfig.Points[mc.PatrolConfig.Index]
-				startPosition := entity.Position()
-				if startPosition.Sub(target).Len() < 5 {
-					mc.PatrolConfig.Index = (mc.PatrolConfig.Index + 1) % len(mc.PatrolConfig.Points)
-					target = mc.PatrolConfig.Points[mc.PatrolConfig.Index]
-				}
-				movementDirection := target.Sub(startPosition).Normalize()
-				newPosition := startPosition.Add(movementDirection.Mul(mc.Speed / 1000 * float64(delta.Milliseconds())))
-				entities.SetLocalPosition(entity, newPosition)
-			}
-
-			if mc.RotationConfig != nil {
-				r := entities.GetLocalRotation(entity)
-				finalRotation := mc.RotationConfig.Quat.Mul(r)
-				frameRotation := utils.QInterpolate64(r, finalRotation, float64(delta.Milliseconds())/1000)
-				entities.SetLocalRotation(entity, frameRotation)
-			}
-		}
-	}
-
 	if g.AppMode() == app.AppModeEditor {
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)

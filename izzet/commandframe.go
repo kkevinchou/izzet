@@ -77,8 +77,12 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 	// shutdown
 	keyboardInput := frameInput.KeyboardInput
-	if _, ok := keyboardInput[input.KeyboardKeyEscape]; ok {
-		g.Shutdown()
+	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {
+		if g.AppMode() == app.AppModeEditor {
+			g.Shutdown()
+		} else if g.AppMode() == app.AppModePlay {
+			g.StopLiveWorld()
+		}
 	}
 
 	if !InteractingWithUI() {

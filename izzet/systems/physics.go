@@ -1,4 +1,4 @@
-package izzet
+package systems
 
 import (
 	"fmt"
@@ -8,19 +8,18 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
-	"github.com/kkevinchou/kitolib/spatialpartition"
+	"github.com/kkevinchou/kitolib/input"
 )
 
-var resolveCountMax = 3
+const (
+	resolveCountMax = 3
+)
 
-type GameWorld interface {
-	GetEntityByID(id int) *entities.Entity
-	Entities() []*entities.Entity
-	SpatialPartition() *spatialpartition.SpatialPartition
+type PhysicsSystem struct {
 }
 
-func (g *Izzet) physicsStep(delta time.Duration) {
-	allEntities := g.world.Entities()
+func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+	allEntities := world.Entities()
 
 	for _, entity := range allEntities {
 		physicsComponent := entity.Physics
@@ -33,7 +32,7 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 		}
 	}
 
-	ResolveCollisions(g.world)
+	ResolveCollisions(world)
 
 	// reset contacts - probably want to do this later
 	for _, entity := range allEntities {
@@ -42,6 +41,7 @@ func (g *Izzet) physicsStep(delta time.Duration) {
 		}
 		entity.Collider.Contacts = map[int]bool{}
 	}
+
 }
 
 func ResolveCollisions(world GameWorld) {

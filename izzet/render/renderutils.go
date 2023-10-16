@@ -509,6 +509,31 @@ func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
 
+func drawLines2(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+	var points []mgl64.Vec3
+	for _, line := range lines {
+		start := line[0]
+		end := line[1]
+		length := end.Sub(start).Len()
+
+		dir := end.Sub(start).Normalize()
+		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+
+		for _, dp := range linePoints(thickness, length) {
+			newEnd := q.Rotate(dp).Add(start)
+			points = append(points, newEnd)
+		}
+	}
+	shader.Use()
+	shader.SetUniformUInt("entityID", uint32(6969696))
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformFloat("intensity", 1.0)
+	drawTris(points)
+}
+
 func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var points []mgl64.Vec3
 	for _, line := range lines {

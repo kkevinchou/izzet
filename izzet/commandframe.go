@@ -2,6 +2,7 @@ package izzet
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
@@ -314,6 +315,10 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		entity := panels.SelectedEntity()
 		newPosition, hoverIndex := g.handleTranslationGizmo(frameInput, entity)
+		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+		if entityID != nil && *entityID == 6969696 {
+			fmt.Println("HI")
+		}
 		if newPosition != nil {
 			if entity.Parent != nil {
 				// the computed position is in world space but entity.LocalPosition is in local space
@@ -629,12 +634,6 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 
 	return newEntityScale, gizmo.S.HoveredAxisType != gizmo.NullAxis
 }
-
-// func WorldToScreen(viewerContext ViewerContext, worldCoord mgl64.Vec3) mgl64.Vec2 {
-// 	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(appCoord.Vec4(1))
-// 	screenPos = screenPos.Mul(1 / screenPos.W())
-// 	return screenPos.Vec2()
-// }
 
 // TODO: move this method out of izzet and into the gizmo package?
 func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Vec3, int) {

@@ -330,9 +330,9 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
-	r.renderGizmos(cameraViewerContext, renderContext)
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	r.renderGizmos(cameraViewerContext, renderContext)
 
 	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
 		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)

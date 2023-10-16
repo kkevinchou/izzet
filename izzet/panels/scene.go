@@ -67,13 +67,13 @@ func sceneHierarchy(app App, world GameWorld) {
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube") {
-				entity := uiCreateCube(app, world, 100)
-				world.AddEntity(entity)
-				SelectEntity(entity)
-				imgui.CloseCurrentPopup()
-			}
-			if imgui.Button("Add Triangle") {
-				entity := entities.CreateTriangle(mgl64.Vec3{-10, -10, 0}, mgl64.Vec3{10, -10, 0}, mgl64.Vec3{0, 10, 0})
+				entity := entities.CreateCube(app.ModelLibrary(), 100)
+
+				meshHandle := entity.MeshComponent.MeshHandle
+				primitives := app.ModelLibrary().GetPrimitives(meshHandle)
+				entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
+				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+
 				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
@@ -94,18 +94,6 @@ func sceneHierarchy(app App, world GameWorld) {
 		}
 		imgui.PopID()
 	}
-}
-
-func uiCreateCube(app App, world GameWorld, length int) *entities.Entity {
-	entity := entities.CreateCube(app.ModelLibrary(), length)
-
-	meshHandle := entity.MeshComponent.MeshHandle
-	primitives := app.ModelLibrary().GetPrimitives(meshHandle)
-	entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
-	entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
-
-	world.AddEntity(entity)
-	return entity
 }
 
 func uiCreateCapsule(app App, world GameWorld, length int, capsuleCollider bool) *entities.Entity {
@@ -150,12 +138,6 @@ func drawEntity(entity *entities.Entity, app App, world GameWorld) bool {
 		imgui.PushID(entity.NameID())
 		if imgui.BeginPopupContextItem() {
 			popup = true
-			if imgui.Button("Add Cube") {
-				child := uiCreateCube(app, world, 25)
-				entities.BuildRelation(entity, child)
-				SelectEntity(child)
-				imgui.CloseCurrentPopup()
-			}
 			if entity.Parent != nil {
 				if imgui.Button("Remove Parent") {
 					entities.RemoveParent(entity)

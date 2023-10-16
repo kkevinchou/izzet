@@ -237,7 +237,11 @@ func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
 func (g *Izzet) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, &systems.CharacterControllerSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraSystem{})
+	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{})
+	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
+
+	g.editorModeSystems = append(g.editorModeSystems, &systems.AnimationSystem{})
 }
 
 func (g *Izzet) setupEntities(data *izzetdata.Data) {

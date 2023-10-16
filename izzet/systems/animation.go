@@ -4,13 +4,12 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/panels"
-	"github.com/kkevinchou/kitolib/input"
 )
 
 type AnimationSystem struct {
 }
 
-func (s *AnimationSystem) Update(delta time.Duration, world GameWorld, frameInput input.Input) {
+func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 	for _, entity := range world.Entities() {
 		if entity.Animation == nil {
 			continue

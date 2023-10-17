@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
@@ -171,4 +172,19 @@ func (g *Izzet) StopLiveWorld() {
 
 func (g *Izzet) AppMode() app.AppMode {
 	return g.appMode
+}
+
+// computes the near plane position for a given x y coordinate
+func (g *Izzet) NDCToWorldPosition(viewerContext render.ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
+	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
+	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
+	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
+
+	return nearPlanePos.Vec3()
+}
+
+func (g *Izzet) WorldToNDCPosition(viewerContext render.ViewerContext, worldPosition mgl64.Vec3) mgl64.Vec2 {
+	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
+	screenPos = screenPos.Mul(1 / screenPos.W())
+	return screenPos.Vec2()
 }

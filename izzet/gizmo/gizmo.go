@@ -37,9 +37,9 @@ func init() {
 		HoverIndex: -1}
 
 	segments := []Axis{
-		Axis{Vector: mgl64.Vec3{20, 0, 0}, Type: XAxis},
-		Axis{Vector: mgl64.Vec3{0, 20, 0}, Type: YAxis},
-		Axis{Vector: mgl64.Vec3{0, 0, 20}, Type: ZAxis},
+		Axis{Vector: mgl64.Vec3{1, 0, 0}, Type: XAxis},
+		Axis{Vector: mgl64.Vec3{0, 1, 0}, Type: YAxis},
+		Axis{Vector: mgl64.Vec3{0, 0, 1}, Type: ZAxis},
 	}
 	S = &ScaleGizmo{Axes: segments, HoveredAxisType: NullAxis}
 }

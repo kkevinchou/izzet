@@ -49,7 +49,7 @@ const (
 
 	DefaultTexture string = "color_grid"
 
-	GizmoAxisThickness  float64 = 0.06
+	GizmoAxisThickness  float64 = 0.08
 	GizmoDistanceFactor float64 = 8
 )
 

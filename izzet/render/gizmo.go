@@ -38,47 +38,64 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	}
 }
 
-func drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+	shader.Use()
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
+	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
+
 	axisColors := map[gizmo.AxisType]mgl64.Vec3{
 		gizmo.XAxis: mgl64.Vec3{1, 0, 0},
 		gizmo.YAxis: mgl64.Vec3{0, 0, 1},
 		gizmo.ZAxis: mgl64.Vec3{0, 1, 0},
 	}
-	var cubeSize float64 = 5
-	cubeLineThickness := 0.5
 	hoverColor := mgl64.Vec3{1, 1, 0}
 
+	cubeVAO := r.getCubeVAO(0.2)
+
 	for _, axis := range gizmo.S.Axes {
+		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 		lines := [][]mgl64.Vec3{
-			[]mgl64.Vec3{position, position.Add(axis.Vector)},
+			[]mgl64.Vec3{renderPosition, renderPosition.Add(axis.Vector)},
 		}
 		color := axisColors[axis.Type]
 		if axis.Type == gizmo.S.HoveredAxisType || gizmo.S.HoveredAxisType == gizmo.AllAxis {
 			color = hoverColor
 		}
-		drawLines(*viewerContext, shader, lines, 1, color)
+		drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 
-		cLines := cubeLines(cubeSize)
-		for _, line := range cLines {
-			for i := range line {
-				line[i] = line[i].Add(position).Add(axis.Vector)
-			}
-		}
-		drawLines(*viewerContext, shader, cLines, cubeLineThickness, color)
+		// cLines := cubeLines(cubeSize)
+		// for _, line := range cLines {
+		// 	for i := range line {
+		// 		line[i] = line[i].Add(renderPosition).Add(axis.Vector)
+		// 	}
+		// }
+		// drawLines(*viewerContext, shader, cLines, cubeLineThickness, color)
+
+		cubePosition := renderPosition.Add(axis.Vector)
+
+		gl.BindVertexArray(cubeVAO)
+		shader.SetUniformMat4("model", mgl32.Translate3D(float32(cubePosition.X()), float32(cubePosition.Y()), float32(cubePosition.Z())))
+		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+		shader.SetUniformFloat("intensity", 10)
+		iztDrawArrays(0, 36)
 	}
 
-	// center of scale gizmo
-	cLines := cubeLines(cubeSize)
-	for _, line := range cLines {
-		for i := range line {
-			line[i] = line[i].Add(position)
-		}
-	}
-	var cubeColor = mgl64.Vec3{1, 1, 1}
-	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
-		cubeColor = hoverColor
-	}
-	drawLines(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
+	// // center of scale gizmo
+	// cLines := cubeLines(cubeSize)
+	// for _, line := range cLines {
+	// 	for i := range line {
+	// 		line[i] = line[i].Add(renderPosition)
+	// 	}
+	// }
+	// var cubeColor = mgl64.Vec3{1, 1, 1}
+	// if gizmo.S.HoveredAxisType == gizmo.AllAxis {
+	// 	cubeColor = hoverColor
+	// }
+	// drawLines2(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)

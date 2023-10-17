@@ -121,7 +121,7 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs     map[int]uint32
+	cubeVAOs     map[float32]uint32
 	triangleVAOs map[string]uint32
 
 	width, height int
@@ -154,7 +154,7 @@ func New(app App, world GameWorld, shaderDirectory string, width, height int) *R
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
-	r.cubeVAOs = map[int]uint32{}
+	r.cubeVAOs = map[float32]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
 	r.initMainRenderFBO(width, height)
@@ -1020,7 +1020,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
 		r.drawCircleGizmo(&viewerContext, position, renderContext)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
+		r.drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	}
 }
 

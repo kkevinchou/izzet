@@ -1081,8 +1081,16 @@ func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color 
 	)
 }
 
-func initCubeVAO(length int) uint32 {
-	ht := float32(length) / 2
+func (r *Renderer) getCubeVAO(length float32) uint32 {
+	if vao, ok := r.cubeVAOs[length]; !ok {
+		vao = initCubeVAO(length)
+		r.cubeVAOs[length] = vao
+	}
+	return r.cubeVAOs[length]
+}
+
+func initCubeVAO(length float32) uint32 {
+	ht := length / 2
 
 	vertices := []float32{
 		// front

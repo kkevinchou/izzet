@@ -2,7 +2,6 @@ package izzet
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"time"
 
@@ -642,50 +641,40 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 	position := selectedEntity.WorldPosition()
 
-	var minDist *float64
-	minAxis := mgl64.Vec3{}
-	motionPivot := mgl64.Vec3{}
-	closestAxisIndex := -1
+	axisIndex := -1
 
-	for i, axis := range gizmo.T.Axes {
-		if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
-			length := a.Sub(b).Len()
-			if length > gizmo.ActivationRadius {
-				continue
-			}
-
-			if minDist == nil || length < *minDist {
-				minAxis = axis
-				minDist = &length
-				motionPivot = b
-				closestAxisIndex = i
-			}
-		}
-	}
-
-	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-	if entityID != nil {
-		if *entityID == constants.GizmoTranslationXPickingID {
-			fmt.Println("X HOVER")
-		} else if *entityID == constants.GizmoTranslationYPickingID {
-			fmt.Println("Y HOVER")
-		} else if *entityID == constants.GizmoTranslationZPickingID {
-			fmt.Println("Z HOVER")
+	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+	if colorPickingID != nil {
+		if *colorPickingID == constants.GizmoTranslationXPickingID {
+			axisIndex = 0
+		} else if *colorPickingID == constants.GizmoTranslationYPickingID {
+			axisIndex = 1
+		} else if *colorPickingID == constants.GizmoTranslationZPickingID {
+			axisIndex = 2
+		} else {
+			// we picked some other ID other than the translation gizmo
+			colorPickingID = nil
 		}
 	}
 
 	// mouse is close to one of the axes
-	if minDist != nil {
+	if colorPickingID != nil {
 		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+			axis := gizmo.T.Axes[axisIndex]
+			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
+				gizmo.T.MotionPivot = closestPointOnAxis.Sub(position)
+			} else {
+				panic("parallel")
+			}
+
 			gizmo.T.Active = true
-			gizmo.T.TranslationDir = minAxis
-			gizmo.T.MotionPivot = motionPivot.Sub(position)
-			gizmo.T.HoverIndex = closestAxisIndex
+			gizmo.T.HoverIndex = axisIndex
+			gizmo.T.TranslationDir = gizmo.T.Axes[axisIndex]
 			gizmo.T.ActivationPosition = entities.GetLocalPosition(selectedEntity)
 		}
 
 		if !gizmo.T.Active {
-			gizmo.T.HoverIndex = closestAxisIndex
+			gizmo.T.HoverIndex = axisIndex
 		}
 	} else if !gizmo.T.Active {
 		// specifically check that the gizmo is not active before reseting.
@@ -707,8 +696,8 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	var newEntityPosition *mgl64.Vec3
 	// handle when mouse moves the translation slider
 	if gizmo.T.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-		if _, b, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
-			newPosition := b.Sub(gizmo.T.MotionPivot)
+		if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
+			newPosition := closestPointOnAxis.Sub(gizmo.T.MotionPivot)
 			newEntityPosition = &newPosition
 		}
 	}

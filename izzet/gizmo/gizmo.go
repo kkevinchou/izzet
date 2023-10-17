@@ -17,10 +17,17 @@ var (
 	CurrentGizmoMode GizmoMode = GizmoModeNone
 )
 
+var (
+	GizmoTranslationXAxis mgl64.Vec3 = mgl64.Vec3{1, 0, 0}
+	GizmoTranslationYAxis mgl64.Vec3 = mgl64.Vec3{0, 1, 0}
+	GizmoTranslationZAxis mgl64.Vec3 = mgl64.Vec3{0, 0, 1}
+)
+
 func init() {
 	CurrentGizmoMode = GizmoModeNone
-	axes := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 1, 0}, mgl64.Vec3{0, 0, 1}}
+	axes := []mgl64.Vec3{GizmoTranslationXAxis, GizmoTranslationYAxis, GizmoTranslationZAxis}
 	T = &TranslationGizmo{Axes: axes, HoverIndex: -1}
+
 	R = &RotationGizmo{
 		Axes: []Circle{
 			Circle{Normal: mgl64.Vec3{0, 0, 1}, Radius: 25},

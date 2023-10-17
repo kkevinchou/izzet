@@ -498,42 +498,42 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 	position := selectedEntity.WorldPosition()
 
-	closestAxisType := gizmo.NullAxis
+	axisType := gizmo.NullAxis
 
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
 	if colorPickingID != nil {
 		if *colorPickingID == constants.GizmoXAxisPickingID {
-			closestAxisType = gizmo.XAxis
+			axisType = gizmo.XAxis
 		} else if *colorPickingID == constants.GizmoYAxisPickingID {
-			closestAxisType = gizmo.YAxis
+			axisType = gizmo.YAxis
 		} else if *colorPickingID == constants.GizmoZAxisPickingID {
-			closestAxisType = gizmo.ZAxis
+			axisType = gizmo.ZAxis
 		} else if *colorPickingID == constants.GizmoAllAxisPickingID {
-			closestAxisType = gizmo.AllAxis
+			axisType = gizmo.AllAxis
 		} else {
-			closestAxisType = gizmo.NullAxis
+			axisType = gizmo.NullAxis
 			// we picked some other ID other than the translation gizmo
 			colorPickingID = nil
 		}
 	}
 
 	// mouse is close to one of the axes, activate if we clicked
-	if closestAxisType != gizmo.NullAxis && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+	if axisType != gizmo.NullAxis && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		gizmo.S.Active = true
-		gizmo.S.MotionPivot = mouseInput.Position
-		gizmo.S.HoveredAxisType = closestAxisType
+		gizmo.S.OldMousePosition = mouseInput.Position
+		gizmo.S.HoveredAxisType = axisType
 		gizmo.S.ActivationScale = entities.GetLocalScale(selectedEntity)
 	}
 
 	// reset if our gizmo isn't active
 	if !gizmo.S.Active {
 		gizmo.S.Reset()
-		gizmo.S.HoveredAxisType = closestAxisType
+		gizmo.S.HoveredAxisType = axisType
 		return nil, gizmo.S.HoveredAxisType != gizmo.NullAxis
 	}
 
 	// if the gizmo was active and we receive a mouse up event, set it as inactive
-	if gizmo.S.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		scale := entities.GetLocalScale(selectedEntity)
 		if gizmo.S.ActivationScale != scale {
 			g.AppendEdit(
@@ -552,7 +552,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
 		// handle the all axes scaling
 
-		delta := mouseInput.Position.Sub(gizmo.S.MotionPivot)
+		delta := mouseInput.Position.Sub(gizmo.S.OldMousePosition)
 		var sensitivity float64 = 0.005
 		magnitude := (delta[0]*sensitivity - delta[1]*sensitivity)
 		scale := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
@@ -574,7 +574,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		if _, _, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
 			viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
 			rightVector := g.Camera().Orientation.Rotate(mgl64.Vec3{1, 0, 0})
-			delta := mouseInput.Position.Sub(gizmo.S.MotionPivot)
+			delta := mouseInput.Position.Sub(gizmo.S.OldMousePosition)
 
 			if gizmo.S.HoveredAxisType == gizmo.XAxis {
 				// X Scale
@@ -622,7 +622,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		}
 	}
 
-	gizmo.S.MotionPivot = mouseInput.Position
+	gizmo.S.OldMousePosition = mouseInput.Position
 
 	return newEntityScale, gizmo.S.HoveredAxisType != gizmo.NullAxis
 }
@@ -680,7 +680,11 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 		gizmo.T.Reset()
 	}
 
-	if gizmo.T.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+	if !gizmo.T.Active {
+		return nil, gizmo.T.HoverIndex
+	}
+
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
 		localPosition := entities.GetLocalPosition(selectedEntity)
 		if gizmo.T.ActivationPosition != localPosition {
 			g.AppendEdit(
@@ -692,7 +696,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 
 	var newEntityPosition *mgl64.Vec3
 	// handle when mouse moves the translation slider
-	if gizmo.T.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
 			newPosition := gizmo.T.OldWorldPosition.Add(closestPointOnAxis.Sub(gizmo.T.OldClosestPoint))
 			newEntityPosition = &newPosition

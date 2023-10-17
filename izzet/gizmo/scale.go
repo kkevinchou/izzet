@@ -20,11 +20,11 @@ type Axis struct {
 }
 
 type ScaleGizmo struct {
-	MotionPivot     mgl64.Vec2
-	Active          bool
-	Axes            []Axis
-	HoveredAxisType AxisType
-	ActivationScale mgl64.Vec3
+	OldMousePosition mgl64.Vec2
+	Active           bool
+	Axes             []Axis
+	HoveredAxisType  AxisType
+	ActivationScale  mgl64.Vec3
 }
 
 func (g *ScaleGizmo) Reset() {

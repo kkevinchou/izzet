@@ -499,25 +499,21 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 	position := selectedEntity.WorldPosition()
 
 	closestAxisType := gizmo.NullAxis
-	closestPointOnRay := checks.ClosestPointRayVsPoint(g.camera.Position, nearPlanePos.Sub(g.camera.Position).Normalize(), position)
-	if closestPointOnRay.Sub(position).Len() < 3 {
-		// check if we're close to the origin
-		closestAxisType = gizmo.AllAxis
-	} else {
-		// check if we're close to an axis
-		var minDist *float64
-		for _, axis := range gizmo.S.Axes {
-			if a, b, nonParallel := checks.ClosestPointsInfiniteLineVSLine(g.camera.Position, nearPlanePos, position, position.Add(axis.Vector)); nonParallel {
-				length := a.Sub(b).Len()
-				if length > gizmo.ActivationRadius {
-					continue
-				}
 
-				if minDist == nil || length < *minDist {
-					minDist = &length
-					closestAxisType = axis.Type
-				}
-			}
+	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+	if colorPickingID != nil {
+		if *colorPickingID == constants.GizmoXAxisPickingID {
+			closestAxisType = gizmo.XAxis
+		} else if *colorPickingID == constants.GizmoYAxisPickingID {
+			closestAxisType = gizmo.YAxis
+		} else if *colorPickingID == constants.GizmoZAxisPickingID {
+			closestAxisType = gizmo.ZAxis
+		} else if *colorPickingID == constants.GizmoAllAxisPickingID {
+			closestAxisType = gizmo.AllAxis
+		} else {
+			closestAxisType = gizmo.NullAxis
+			// we picked some other ID other than the translation gizmo
+			colorPickingID = nil
 		}
 	}
 
@@ -645,11 +641,11 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
 	if colorPickingID != nil {
-		if *colorPickingID == constants.GizmoTranslationXPickingID {
+		if *colorPickingID == constants.GizmoXAxisPickingID {
 			axisIndex = 0
-		} else if *colorPickingID == constants.GizmoTranslationYPickingID {
+		} else if *colorPickingID == constants.GizmoYAxisPickingID {
 			axisIndex = 1
-		} else if *colorPickingID == constants.GizmoTranslationZPickingID {
+		} else if *colorPickingID == constants.GizmoZAxisPickingID {
 			axisIndex = 2
 		} else {
 			// we picked some other ID other than the translation gizmo

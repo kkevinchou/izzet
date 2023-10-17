@@ -6,7 +6,8 @@ var T *TranslationGizmo
 
 type TranslationGizmo struct {
 	TranslationDir     mgl64.Vec3
-	MotionPivot        mgl64.Vec3
+	OldClosestPoint    mgl64.Vec3
+	OldWorldPosition   mgl64.Vec3
 	Active             bool
 	Axes               []mgl64.Vec3
 	HoverIndex         int

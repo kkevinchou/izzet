@@ -58,22 +58,12 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 
 	for _, axis := range gizmo.S.Axes {
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		lines := [][]mgl64.Vec3{
-			[]mgl64.Vec3{renderPosition, renderPosition.Add(axis.Vector)},
-		}
+		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Vector)}}
 		color := axisColors[axis.Type]
 		if axis.Type == gizmo.S.HoveredAxisType || gizmo.S.HoveredAxisType == gizmo.AllAxis {
 			color = hoverColor
 		}
 		drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
-
-		// cLines := cubeLines(cubeSize)
-		// for _, line := range cLines {
-		// 	for i := range line {
-		// 		line[i] = line[i].Add(renderPosition).Add(axis.Vector)
-		// 	}
-		// }
-		// drawLines(*viewerContext, shader, cLines, cubeLineThickness, color)
 
 		cubePosition := renderPosition.Add(axis.Vector)
 
@@ -84,18 +74,15 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		iztDrawArrays(0, 36)
 	}
 
-	// // center of scale gizmo
-	// cLines := cubeLines(cubeSize)
-	// for _, line := range cLines {
-	// 	for i := range line {
-	// 		line[i] = line[i].Add(renderPosition)
-	// 	}
-	// }
-	// var cubeColor = mgl64.Vec3{1, 1, 1}
-	// if gizmo.S.HoveredAxisType == gizmo.AllAxis {
-	// 	cubeColor = hoverColor
-	// }
-	// drawLines2(*viewerContext, shader, cLines, cubeLineThickness, cubeColor)
+	var cubeColor = mgl64.Vec3{1, 1, 1}
+	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
+		cubeColor = hoverColor
+	}
+	gl.BindVertexArray(cubeVAO)
+	shader.SetUniformMat4("model", mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y()), float32(renderPosition.Z())))
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(cubeColor))
+	shader.SetUniformFloat("intensity", 10)
+	iztDrawArrays(0, 36)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)

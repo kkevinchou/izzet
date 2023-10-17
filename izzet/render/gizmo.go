@@ -6,9 +6,11 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/constants"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/shaders"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
@@ -19,7 +21,13 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(10).Add(nearPlanePosition)
 
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
 	for i, axis := range gizmo.T.Axes {
+		shader.SetUniformUInt("entityID", uint32(constants.GizmoTranslationXPickingID)+uint32(i))
 		lines := [][]mgl64.Vec3{
 			// []mgl64.Vec3{position, position.Add(axis)},
 			[]mgl64.Vec3{renderPosition, renderPosition.Add(axis)},

@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/constants"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -315,10 +316,6 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		entity := panels.SelectedEntity()
 		newPosition, hoverIndex := g.handleTranslationGizmo(frameInput, entity)
-		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-		if entityID != nil && *entityID == 6969696 {
-			fmt.Println("HI")
-		}
 		if newPosition != nil {
 			if entity.Parent != nil {
 				// the computed position is in world space but entity.LocalPosition is in local space
@@ -663,6 +660,17 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 				motionPivot = b
 				closestAxisIndex = i
 			}
+		}
+	}
+
+	entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+	if entityID != nil {
+		if *entityID == constants.GizmoTranslationXPickingID {
+			fmt.Println("X HOVER")
+		} else if *entityID == constants.GizmoTranslationYPickingID {
+			fmt.Println("Y HOVER")
+		} else if *entityID == constants.GizmoTranslationZPickingID {
+			fmt.Println("Z HOVER")
 		}
 	}
 

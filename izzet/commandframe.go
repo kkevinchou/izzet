@@ -662,7 +662,8 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 			axis := gizmo.T.Axes[axisIndex]
 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis)); nonParallel {
-				gizmo.T.MotionPivot = closestPointOnAxis.Sub(position)
+				gizmo.T.OldWorldPosition = position
+				gizmo.T.OldClosestPoint = closestPointOnAxis
 			} else {
 				panic("parallel")
 			}
@@ -697,7 +698,7 @@ func (g *Izzet) handleTranslationGizmo(frameInput input.Input, selectedEntity *e
 	// handle when mouse moves the translation slider
 	if gizmo.T.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(gizmo.T.TranslationDir)); nonParallel {
-			newPosition := closestPointOnAxis.Sub(gizmo.T.MotionPivot)
+			newPosition := gizmo.T.OldWorldPosition.Add(closestPointOnAxis.Sub(gizmo.T.OldClosestPoint))
 			newEntityPosition = &newPosition
 		}
 	}

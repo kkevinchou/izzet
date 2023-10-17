@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/constants"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -19,7 +20,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	// in the range -1 - 1
 	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
 	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
-	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(10).Add(nearPlanePosition)
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
@@ -28,15 +29,12 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 
 	for i, axis := range gizmo.T.Axes {
 		shader.SetUniformUInt("entityID", uint32(constants.GizmoTranslationXPickingID)+uint32(i))
-		lines := [][]mgl64.Vec3{
-			// []mgl64.Vec3{position, position.Add(axis)},
-			[]mgl64.Vec3{renderPosition, renderPosition.Add(axis)},
-		}
+		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis)}}
 		color := colors[i]
 		if i == gizmo.T.HoverIndex {
 			color = mgl64.Vec3{1, 1, 0}
 		}
-		drawLines2(*viewerContext, shader, lines, 0.2, color)
+		drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 }
 

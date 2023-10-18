@@ -286,6 +286,12 @@ func initializeOpenGL() (*sdl.Window, error) {
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
+
+	// sdl.GLSetAttribute(sdl.GL_RED_SIZE, 10)
+	// sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 10)
+	// sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 10)
+	sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 2)
+
 	sdl.SetRelativeMouseMode(false)
 
 	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
@@ -326,7 +332,7 @@ func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput, width, height i
 
 	// -1 for the near plane
 	ndcP := mgl64.Vec4{((x / float64(width)) - 0.5) * 2, ((y / float64(height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := g.renderer.ViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.ViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
+	nearPlanePos := g.renderer.CameraViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.CameraViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()

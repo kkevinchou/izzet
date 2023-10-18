@@ -893,8 +893,8 @@ func (r *Renderer) drawSkybox(renderContext RenderContext) {
 	drawWithNDC(r.shaderManager)
 }
 
-func (r *Renderer) ViewerContext() ViewerContext {
-	return r.viewerContext
+func (r *Renderer) CameraViewerContext() ViewerContext {
+	return r.cameraViewerContext
 }
 
 func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) *int {

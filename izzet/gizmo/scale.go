@@ -20,6 +20,7 @@ type Axis struct {
 }
 
 type ScaleGizmo struct {
+	OldClosestPoint  mgl64.Vec3
 	OldMousePosition mgl64.Vec2
 	Active           bool
 	Axes             []Axis

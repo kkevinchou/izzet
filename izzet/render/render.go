@@ -98,7 +98,7 @@ type Renderer struct {
 	yellowCircleFB      uint32
 	yellowCircleTexture uint32
 
-	viewerContext ViewerContext
+	cameraViewerContext ViewerContext
 
 	renderFBO              uint32
 	mainColorTexture       uint32
@@ -318,7 +318,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		Lights:           r.world.Lights(),
 	}
 
-	r.viewerContext = cameraViewerContext
+	r.cameraViewerContext = cameraViewerContext
 
 	r.clearMainFrameBuffer(renderContext)
 

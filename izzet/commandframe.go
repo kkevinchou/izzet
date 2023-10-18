@@ -494,6 +494,7 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		return nil, false
 	}
 
+	var scaleDir mgl64.Vec3
 	mouseInput := frameInput.MouseInput
 	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 	position := selectedEntity.WorldPosition()
@@ -517,8 +518,20 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		}
 	}
 
+	if gizmo.S.HoveredAxisType == gizmo.XAxis {
+		scaleDir = mgl64.Vec3{1, 0, 0}
+	} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
+		scaleDir = mgl64.Vec3{0, 1, 0}
+	} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
+		scaleDir = mgl64.Vec3{0, 0, 1}
+	}
+
 	// mouse is close to one of the axes, activate if we clicked
 	if axisType != gizmo.NullAxis && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+		if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
+			gizmo.S.OldClosestPoint = closestPointOnAxis
+		}
+
 		gizmo.S.Active = true
 		gizmo.S.OldMousePosition = mouseInput.Position
 		gizmo.S.HoveredAxisType = axisType
@@ -543,10 +556,6 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		gizmo.S.Reset()
 	}
 
-	if mouseInput.MouseMotionEvent.IsZero() {
-		return nil, gizmo.S.HoveredAxisType != gizmo.NullAxis
-	}
-
 	var newEntityScale *mgl64.Vec3
 	// handle the actual scaling of the entity
 	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
@@ -558,72 +567,18 @@ func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entitie
 		scale := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
 		newEntityScale = &scale
 	} else if gizmo.S.HoveredAxisType != gizmo.NullAxis {
-		// handle case single axis scaling
 
-		var scaleDir mgl64.Vec3
-		if gizmo.S.HoveredAxisType == gizmo.XAxis {
-			scaleDir = mgl64.Vec3{1, 0, 0}
-		} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
-			scaleDir = mgl64.Vec3{0, 1, 0}
-		} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
-			scaleDir = mgl64.Vec3{0, 0, 1}
-		} else {
-			panic("WAT")
-		}
-
-		if _, _, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
-			viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
-			rightVector := g.Camera().Orientation.Rotate(mgl64.Vec3{1, 0, 0})
-			delta := mouseInput.Position.Sub(gizmo.S.OldMousePosition)
-
-			if gizmo.S.HoveredAxisType == gizmo.XAxis {
-				// X Scale
-				yWeight := math.Abs(viewDir.Dot(mgl64.Vec3{1, 0, 0}))
-				xWeight := 1 - yWeight
-				xSensitivity := 0.01 * xWeight
-				ySensitivity := 0.01 * yWeight
-
-				var xDir float64 = 1
-				if rightVector.Dot(mgl64.Vec3{1, 0, 0}) < 0 {
-					xDir = -1
-				}
-
-				var yDir float64 = 1
-				if viewDir.Dot(mgl64.Vec3{1, 0, 0}) < 0 {
-					yDir = -1
-				}
-
-				magnitude := (delta[0]*xSensitivity*xDir - delta[1]*ySensitivity*yDir)
-				newEntityScale = &mgl64.Vec3{magnitude, 0, 0}
-			} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
-				// Y Scale
-				magnitude := (delta[0]*0.001 - delta[1]*0.01)
-				newEntityScale = &mgl64.Vec3{0, magnitude, 0}
-			} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
-				// Z Scale
-				yWeight := math.Abs(viewDir.Dot(mgl64.Vec3{0, 0, 1}))
-				xWeight := 1 - yWeight
-				xSensitivity := 0.01 * xWeight
-				ySensitivity := 0.01 * yWeight
-
-				var xDir float64 = 1
-				if rightVector.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
-					xDir = -1
-				}
-
-				var yDir float64 = 1
-				if viewDir.Dot(mgl64.Vec3{0, 0, 1}) < 0 {
-					yDir = -1
-				}
-
-				magnitude := (delta[0]*xSensitivity*xDir - delta[1]*ySensitivity*yDir)
-				newEntityScale = &mgl64.Vec3{0, 0, magnitude}
+		// handle when mouse moves the translation slider
+		if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
+				newScale := (closestPointOnAxis.Sub(gizmo.S.OldClosestPoint)).Mul(0.05)
+				gizmo.S.OldClosestPoint = closestPointOnAxis
+				newEntityScale = &newScale
 			}
 		}
 	}
 
 	gizmo.S.OldMousePosition = mouseInput.Position
-
 	return newEntityScale, gizmo.S.HoveredAxisType != gizmo.NullAxis
 }
 

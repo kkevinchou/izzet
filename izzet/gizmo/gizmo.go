@@ -2,7 +2,6 @@ package gizmo
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/constants"
 )
 
 const (
@@ -23,6 +22,13 @@ var (
 var (
 	TranslationGizmo *Gizmo
 	ScaleGizmo       *Gizmo
+)
+
+const (
+	GizmoXAxisPickingID   int = 1000000000
+	GizmoYAxisPickingID   int = 1000000001
+	GizmoZAxisPickingID   int = 1000000002
+	GizmoAllAxisPickingID int = 1000000003
 )
 
 func init() {
@@ -56,9 +62,9 @@ func setupTranslationGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			constants.GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
-			constants.GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
-			constants.GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+			GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
 		},
 	}
 }
@@ -67,10 +73,10 @@ func setupScaleGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			constants.GizmoXAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
-			constants.GizmoYAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
-			constants.GizmoZAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
-			constants.GizmoAllAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
+			GizmoXAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+			GizmoAllAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
 		},
 	}
 }

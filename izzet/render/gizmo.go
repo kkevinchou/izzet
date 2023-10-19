@@ -6,7 +6,6 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/constants"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -16,9 +15,9 @@ import (
 
 func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	colors := map[int]mgl64.Vec3{
-		constants.GizmoXAxisPickingID: mgl64.Vec3{1, 0, 0},
-		constants.GizmoYAxisPickingID: mgl64.Vec3{0, 0, 1},
-		constants.GizmoZAxisPickingID: mgl64.Vec3{0, 1, 0},
+		gizmo.GizmoXAxisPickingID: mgl64.Vec3{1, 0, 0},
+		gizmo.GizmoYAxisPickingID: mgl64.Vec3{0, 0, 1},
+		gizmo.GizmoZAxisPickingID: mgl64.Vec3{0, 1, 0},
 	}
 
 	// in the range -1 - 1
@@ -54,10 +53,10 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	colors := map[int]mgl64.Vec3{
-		constants.GizmoXAxisPickingID:   mgl64.Vec3{1, 0, 0},
-		constants.GizmoYAxisPickingID:   mgl64.Vec3{0, 0, 1},
-		constants.GizmoZAxisPickingID:   mgl64.Vec3{0, 1, 0},
-		constants.GizmoAllAxisPickingID: mgl64.Vec3{1, 1, 1},
+		gizmo.GizmoXAxisPickingID:   mgl64.Vec3{1, 0, 0},
+		gizmo.GizmoYAxisPickingID:   mgl64.Vec3{0, 0, 1},
+		gizmo.GizmoZAxisPickingID:   mgl64.Vec3{0, 1, 0},
+		gizmo.GizmoAllAxisPickingID: mgl64.Vec3{1, 1, 1},
 	}
 	hoverColor := mgl64.Vec3{1, 1, 0}
 
@@ -68,11 +67,11 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		shader.SetUniformMat4("model", mgl32.Ident4())
 
 		color := colors[entityID]
-		if gizmo.ScaleGizmo.HoveredEntityID == entityID || gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+		if gizmo.ScaleGizmo.HoveredEntityID == entityID || gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 			color = hoverColor
 		}
 
-		if entityID != constants.GizmoAllAxisPickingID {
+		if entityID != gizmo.GizmoAllAxisPickingID {
 			lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
 			drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 		}
@@ -85,11 +84,14 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		iztDrawArrays(0, 36)
 	}
 }
-func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
+func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
-	t := mgl32.Translate3D(float32(position[0]), float32(position[1]), float32(position[2]))
-	s := mgl32.Scale3D(25, 25, 25)
+	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
+	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
+
+	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
 
 	rotations := []mgl32.Mat4{
 		mgl32.Ident4(),
@@ -100,15 +102,15 @@ func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position 
 	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
 
 	r.renderCircle()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	for i := 0; i < 3; i++ {
-		modelMatrix := t.Mul4(rotations[i]).Mul4(s)
+		modelMatrix := t.Mul4(rotations[i])
 		texture := textures[i]
 		if i == gizmo.R.HoverIndex {
 			texture = r.yellowCircleTexture
 		}
-		drawTexturedQuad(cameraViewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true)
+		drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true)
 	}
 }
 

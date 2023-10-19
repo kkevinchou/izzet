@@ -68,11 +68,12 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		shader.SetUniformMat4("model", mgl32.Ident4())
 
 		color := colors[entityID]
+		if gizmo.ScaleGizmo.HoveredEntityID == entityID || gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+			color = hoverColor
+		}
+
 		if entityID != constants.GizmoAllAxisPickingID {
 			lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
-			if gizmo.ScaleGizmo.HoveredEntityID == entityID || gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
-				color = hoverColor
-			}
 			drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 		}
 
@@ -83,18 +84,6 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		shader.SetUniformFloat("intensity", 10)
 		iztDrawArrays(0, 36)
 	}
-
-	var cubeColor = mgl64.Vec3{1, 1, 1}
-	if gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
-		cubeColor = hoverColor
-	}
-
-	shader.SetUniformUInt("entityID", uint32(constants.GizmoAllAxisPickingID))
-	gl.BindVertexArray(cubeVAO)
-	shader.SetUniformMat4("model", mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y()), float32(renderPosition.Z())))
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(cubeColor))
-	shader.SetUniformFloat("intensity", 10)
-	iztDrawArrays(0, 36)
 }
 func (r *Renderer) drawCircleGizmo(cameraViewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)

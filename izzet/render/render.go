@@ -69,7 +69,7 @@ type App interface {
 	SaveWorld(string)
 
 	NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3
-	WorldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) mgl64.Vec2
+	WorldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool)
 }
 
 const mipsCount int = 6

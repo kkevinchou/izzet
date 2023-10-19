@@ -96,7 +96,7 @@ func defaultSettings() {
 	gl.CullFace(gl.BACK)
 	gl.FrontFace(gl.CCW)
 	gl.Enable(gl.MULTISAMPLE)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }

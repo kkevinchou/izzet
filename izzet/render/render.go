@@ -184,6 +184,7 @@ func New(app App, world GameWorld, shaderDirectory string, width, height int) *R
 	r.blendFBO, _ = r.initFBOAndTexture(width, height)
 
 	r.initCompositeFBO(width, height)
+	r.renderCircle()
 
 	return r
 }
@@ -376,7 +377,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false)
+	drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
 	r.renderImgui(renderContext)
 }
@@ -782,7 +783,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 			texture := r.app.AssetManager().GetTexture("light").ID
 			for _, particle := range particles.GetActiveParticles() {
 				particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-				drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true)
+				drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
 			}
 		}
 	}

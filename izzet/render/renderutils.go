@@ -739,35 +739,6 @@ func drawBillboardTexture(
 	iztDrawArrays(0, 6)
 }
 
-func drawCircle(shader *shaders.ShaderProgram, color mgl64.Vec4) {
-	var vertices []float32 = []float32{
-		-1, -1, 0,
-		1, -1, 0,
-		1, 1, 0,
-		1, 1, 0,
-		-1, 1, 0,
-		-1, -1, 0,
-	}
-
-	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.BindVertexArray(vao)
-
-	shader.Use()
-	shader.SetUniformVec4("color", utils.Vec4F64To4F32(color))
-
-	iztDrawArrays(0, 6)
-}
-
 // drawHUDTextureToQuad does a shitty perspective based rendering of a flat texture
 func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
 	// texture coords top left = 0,0 | bottom right = 1,1
@@ -1232,4 +1203,35 @@ func iztDrawElements(count int32) {
 	panels.DBG.TriangleDrawCount += int(count / 3)
 	panels.DBG.DrawCount += 1
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
+}
+
+// setup reusale circle textures
+func (r *Renderer) renderCircle() {
+	shaderManager := r.shaderManager
+	shader := shaderManager.GetShaderProgram("unit_circle")
+	shader.Use()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.redCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{1, 0, 0, 1})
+	drawCircle()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.greenCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{0, 1, 0, 1})
+	drawCircle()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blueCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{0, 0, 1, 1})
+	drawCircle()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{1, 1, 0, 1})
+	drawCircle()
 }

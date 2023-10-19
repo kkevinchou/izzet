@@ -15,7 +15,11 @@ import (
 )
 
 func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
-	colors := []mgl64.Vec3{mgl64.Vec3{1, 0, 0}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
+	colors := map[int]mgl64.Vec3{
+		constants.GizmoXAxisPickingID: mgl64.Vec3{1, 0, 0},
+		constants.GizmoYAxisPickingID: mgl64.Vec3{0, 0, 1},
+		constants.GizmoZAxisPickingID: mgl64.Vec3{0, 1, 0},
+	}
 
 	// in the range -1 - 1
 	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
@@ -27,13 +31,15 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for i, axis := range gizmo.T.Axes {
-		shader.SetUniformUInt("entityID", uint32(constants.GizmoXAxisPickingID)+uint32(i))
-		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis)}}
-		color := colors[i]
-		if i == gizmo.T.HoverIndex {
+	for entityID, axis := range gizmo.TGizmo.EntityIDToAxis {
+		shader.SetUniformUInt("entityID", uint32(entityID))
+		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
+		color := colors[entityID]
+
+		if gizmo.TGizmo.HoveredEntityID == entityID {
 			color = mgl64.Vec3{1, 1, 0}
 		}
+
 		drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 }

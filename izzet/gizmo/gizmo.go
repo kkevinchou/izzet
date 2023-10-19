@@ -1,6 +1,9 @@
 package gizmo
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/constants"
+)
 
 const (
 	ActivationRadius = 10
@@ -21,6 +24,9 @@ var (
 	GizmoXAxis mgl64.Vec3 = mgl64.Vec3{1, 0, 0}
 	GizmoYAxis mgl64.Vec3 = mgl64.Vec3{0, 1, 0}
 	GizmoZAxis mgl64.Vec3 = mgl64.Vec3{0, 0, 1}
+
+	TGizmo *Gizmo
+	SGizmo *Gizmo
 )
 
 func init() {
@@ -42,4 +48,45 @@ func init() {
 		Axis{Vector: GizmoZAxis, Type: ZAxis},
 	}
 	S = &ScaleGizmo{Axes: segments, HoveredAxisType: NullAxis}
+
+	TGizmo = setupTranslationGizmo()
+	SGizmo = setupTranslationGizmo()
+}
+
+type GizmoAxis struct {
+	Direction mgl64.Vec3
+}
+
+type Gizmo struct {
+	EntityIDToAxis        map[int]GizmoAxis
+	HoveredEntityID       int
+	Active                bool
+	LastFrameClosestPoint mgl64.Vec3
+}
+
+func setupTranslationGizmo() *Gizmo {
+	return &Gizmo{
+		HoveredEntityID: -1,
+		EntityIDToAxis: map[int]GizmoAxis{
+			constants.GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
+			constants.GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
+			constants.GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+		},
+	}
+}
+
+func setupScaleGizmo() *Gizmo {
+	return &Gizmo{
+		HoveredEntityID: -1,
+		EntityIDToAxis: map[int]GizmoAxis{
+			constants.GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
+			constants.GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
+			constants.GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+		},
+	}
+}
+
+func (g *Gizmo) Reset() {
+	g.HoveredEntityID = -1
+	g.Active = false
 }

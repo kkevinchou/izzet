@@ -311,58 +311,56 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 	}
 
 	var gizmoHovered bool = false
-	// handle gizmo transforms
-	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		entity := panels.SelectedEntity()
-		delta := g.calculateGizmoDelta(gizmo.TranslationGizmo, frameInput, entity.WorldPosition())
-		if delta != nil {
-			if entity.Parent != nil {
-				// the computed position is in world space but entity.LocalPosition is in local space
-				// to compute the new local space position we need to do conversions
+	entity := panels.SelectedEntity()
 
-				// compute the full transformation matrix, excluding local transformations
-				// i.e. local transformations should not affect how the gizmo affects the entity
-				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+	if entity != nil {
+		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+			delta := g.calculateGizmoDelta(gizmo.TranslationGizmo, frameInput, entity.WorldPosition())
+			if delta != nil {
+				if entity.Parent != nil {
+					// the computed position is in world space but entity.LocalPosition is in local space
+					// to compute the new local space position we need to do conversions
 
-				// take the new world position and convert it to local space
-				worldPosition := entity.WorldPosition().Add(*delta)
-				newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(worldPosition.Vec4(1)).Vec3()
+					// compute the full transformation matrix, excluding local transformations
+					// i.e. local transformations should not affect how the gizmo affects the entity
+					transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
 
-				entities.SetLocalPosition(entity, newPositionInLocalSpace)
-			} else {
-				entities.SetLocalPosition(entity, entity.LocalPosition.Add(*delta))
-				// entities.SetLocalPosition(entity, *newPosition)
+					// take the new world position and convert it to local space
+					worldPosition := entity.WorldPosition().Add(*delta)
+					newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(worldPosition.Vec4(1)).Vec3()
+
+					entities.SetLocalPosition(entity, newPositionInLocalSpace)
+				} else {
+					entities.SetLocalPosition(entity, entity.LocalPosition.Add(*delta))
+				}
 			}
-		}
-
-		gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		entity := panels.SelectedEntity()
-		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
-		if newEntityRotation != nil {
-			if entity.Parent != nil {
-				transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
-				worldToLocalMatrix := transformMatrix.Inv()
-				_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
-				computedRotation := r.Mul(*newEntityRotation)
-				entities.SetLocalRotation(entity, computedRotation)
-			} else {
-				entities.SetLocalRotation(entity, *newEntityRotation)
+			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
+		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+			newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
+			if newEntityRotation != nil {
+				if entity.Parent != nil {
+					transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+					worldToLocalMatrix := transformMatrix.Inv()
+					_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
+					computedRotation := r.Mul(*newEntityRotation)
+					entities.SetLocalRotation(entity, computedRotation)
+				} else {
+					entities.SetLocalRotation(entity, *newEntityRotation)
+				}
 			}
-		}
-		gizmoHovered = hoverIndex != -1
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		entity := panels.SelectedEntity()
-		delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
-		if delta != nil {
-			magnitude := 0.05
-			if gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
-				magnitude = 0.005
+			gizmoHovered = hoverIndex != -1
+		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+			delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
+			if delta != nil {
+				magnitude := 0.05
+				if gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+					magnitude = 0.005
+				}
+				scale := entities.GetLocalScale(entity)
+				entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
 			}
-			scale := entities.GetLocalScale(entity)
-			entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
+			gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
 		}
-		gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
 	}
 
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {

@@ -183,8 +183,9 @@ func (g *Izzet) NDCToWorldPosition(viewerContext render.ViewerContext, direction
 	return nearPlanePos.Vec3()
 }
 
-func (g *Izzet) WorldToNDCPosition(viewerContext render.ViewerContext, worldPosition mgl64.Vec3) mgl64.Vec2 {
+func (g *Izzet) WorldToNDCPosition(viewerContext render.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
 	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
+	behind := screenPos.Z() < 0
 	screenPos = screenPos.Mul(1 / screenPos.W())
-	return screenPos.Vec2()
+	return screenPos.Vec2(), behind
 }

@@ -21,7 +21,10 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	}
 
 	// in the range -1 - 1
-	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
+	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
+	if behind {
+		return
+	}
 	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
@@ -48,7 +51,10 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
+	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
+	if behind {
+		return
+	}
 	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
@@ -87,7 +93,10 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	defer resetGLRenderSettings(r.renderFBO)
 
-	screenPosition := r.app.WorldToNDCPosition(*viewerContext, position)
+	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
+	if behind {
+		return
+	}
 	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 

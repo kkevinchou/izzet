@@ -314,7 +314,7 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 	// handle gizmo transforms
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		entity := panels.SelectedEntity()
-		delta := g.calculateGizmoDelta(gizmo.TGizmo, frameInput, entity.WorldPosition())
+		delta := g.calculateGizmoDelta(gizmo.TranslationGizmo, frameInput, entity.WorldPosition())
 		if delta != nil {
 			if entity.Parent != nil {
 				// the computed position is in world space but entity.LocalPosition is in local space
@@ -335,7 +335,7 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 			}
 		}
 
-		gizmoHovered = gizmo.TGizmo.HoveredEntityID != -1
+		gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
 		entity := panels.SelectedEntity()
 		newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
@@ -352,14 +352,17 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 		}
 		gizmoHovered = hoverIndex != -1
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		scaleDelta, hovered := g.handleScaleGizmo(frameInput, panels.SelectedEntity())
-		if scaleDelta != nil {
-			entity := panels.SelectedEntity()
+		entity := panels.SelectedEntity()
+		delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
+		if delta != nil {
+			magnitude := 0.05
+			if gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+				magnitude = 0.005
+			}
 			scale := entities.GetLocalScale(entity)
-
-			entities.SetScale(entity, scale.Add(*scaleDelta))
+			entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
 		}
-		gizmoHovered = hovered
+		gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
 	}
 
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
@@ -491,108 +494,13 @@ func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *enti
 	return nil, gizmo.R.HoverIndex
 }
 
-// TODO: move this method out of izzet and into the gizmo package?
-func (g *Izzet) handleScaleGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Vec3, bool) {
-	if selectedEntity == nil {
-		return nil, false
-	}
-
-	mouseInput := frameInput.MouseInput
-	axisType := gizmo.NullAxis
-
-	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-	if colorPickingID != nil {
-		if *colorPickingID == constants.GizmoXAxisPickingID {
-			axisType = gizmo.XAxis
-		} else if *colorPickingID == constants.GizmoYAxisPickingID {
-			axisType = gizmo.YAxis
-		} else if *colorPickingID == constants.GizmoZAxisPickingID {
-			axisType = gizmo.ZAxis
-		} else if *colorPickingID == constants.GizmoAllAxisPickingID {
-			axisType = gizmo.AllAxis
-		} else {
-			axisType = gizmo.NullAxis
-			// we picked some other ID other than the translation gizmo
-			colorPickingID = nil
-		}
-	}
-
-	var scaleDir mgl64.Vec3
-	if gizmo.S.HoveredAxisType == gizmo.XAxis {
-		scaleDir = mgl64.Vec3{1, 0, 0}
-	} else if gizmo.S.HoveredAxisType == gizmo.YAxis {
-		scaleDir = mgl64.Vec3{0, 1, 0}
-	} else if gizmo.S.HoveredAxisType == gizmo.ZAxis {
-		scaleDir = mgl64.Vec3{0, 0, 1}
-	}
-
-	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
-	position := selectedEntity.WorldPosition()
-	// mouse is close to one of the axes, activate if we clicked
-	if axisType != gizmo.NullAxis && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
-			gizmo.S.OldClosestPoint = closestPointOnAxis
-		}
-
-		gizmo.S.Active = true
-		gizmo.S.OldMousePosition = mouseInput.Position
-		gizmo.S.HoveredAxisType = axisType
-		gizmo.S.ActivationScale = entities.GetLocalScale(selectedEntity)
-	}
-
-	// reset if our gizmo isn't active
-	if !gizmo.S.Active {
-		gizmo.S.Reset()
-		gizmo.S.HoveredAxisType = axisType
-		return nil, gizmo.S.HoveredAxisType != gizmo.NullAxis
-	}
-
-	// if the gizmo was active and we receive a mouse up event, set it as inactive
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		scale := entities.GetLocalScale(selectedEntity)
-		if gizmo.S.ActivationScale != scale {
-			g.AppendEdit(
-				edithistory.NewScaleEdit(gizmo.S.ActivationScale, scale, selectedEntity),
-			)
-		}
-		gizmo.S.Reset()
-	}
-
-	var newEntityScale *mgl64.Vec3
-	// handle the actual scaling of the entity
-	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
-		// handle the all axes scaling
-
-		delta := mouseInput.Position.Sub(gizmo.S.OldMousePosition)
-		var sensitivity float64 = 0.005
-		magnitude := (delta[0]*sensitivity - delta[1]*sensitivity)
-		scale := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
-		newEntityScale = &scale
-	} else if gizmo.S.HoveredAxisType != gizmo.NullAxis {
-
-		// handle when mouse moves the translation slider
-		if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(scaleDir)); nonParallel {
-				newScale := (closestPointOnAxis.Sub(gizmo.S.OldClosestPoint)).Mul(0.05)
-				gizmo.S.OldClosestPoint = closestPointOnAxis
-				newEntityScale = &newScale
-			}
-		}
-	}
-
-	gizmo.S.OldMousePosition = mouseInput.Position
-	return newEntityScale, gizmo.S.HoveredAxisType != gizmo.NullAxis
-}
-
-// TODO: move this method out of izzet and into the gizmo package?
 func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, position mgl64.Vec3) *mgl64.Vec3 {
 	mouseInput := frameInput.MouseInput
 
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-
 	if colorPickingID != nil {
 		if _, ok := targetGizmo.EntityIDToAxis[*colorPickingID]; ok {
-			if targetGizmo.HoveredEntityID == -1 {
+			if !mouseInput.Buttons[0] {
 				targetGizmo.HoveredEntityID = *colorPickingID
 			}
 		} else {
@@ -606,6 +514,10 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 			axis := targetGizmo.EntityIDToAxis[*colorPickingID]
 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			} else if !nonParallel && *colorPickingID == constants.GizmoAllAxisPickingID {
+				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
 			} else {
 				panic("parallel")
 			}
@@ -631,10 +543,20 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 
 	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
-		if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
-			delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
+
+		if targetGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
+			magnitude := (mouseDelta[0] - mouseDelta[1])
+			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
 			gizmoDelta = &delta
-			targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+			targetGizmo.LastFrameMousePosition = mouseInput.Position
+		} else {
+			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
+				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
+				gizmoDelta = &delta
+				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			}
 		}
 	}
 

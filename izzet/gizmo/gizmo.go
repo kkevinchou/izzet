@@ -21,18 +21,12 @@ var (
 )
 
 var (
-	GizmoXAxis mgl64.Vec3 = mgl64.Vec3{1, 0, 0}
-	GizmoYAxis mgl64.Vec3 = mgl64.Vec3{0, 1, 0}
-	GizmoZAxis mgl64.Vec3 = mgl64.Vec3{0, 0, 1}
-
-	TGizmo *Gizmo
-	SGizmo *Gizmo
+	TranslationGizmo *Gizmo
+	ScaleGizmo       *Gizmo
 )
 
 func init() {
 	CurrentGizmoMode = GizmoModeNone
-	axes := []mgl64.Vec3{GizmoXAxis, GizmoYAxis, GizmoZAxis}
-	T = &TranslationGizmo{Axes: axes, HoverIndex: -1}
 
 	R = &RotationGizmo{
 		Axes: []Circle{
@@ -42,15 +36,8 @@ func init() {
 		},
 		HoverIndex: -1}
 
-	segments := []Axis{
-		Axis{Vector: GizmoXAxis, Type: XAxis},
-		Axis{Vector: GizmoYAxis, Type: YAxis},
-		Axis{Vector: GizmoZAxis, Type: ZAxis},
-	}
-	S = &ScaleGizmo{Axes: segments, HoveredAxisType: NullAxis}
-
-	TGizmo = setupTranslationGizmo()
-	SGizmo = setupTranslationGizmo()
+	TranslationGizmo = setupTranslationGizmo()
+	ScaleGizmo = setupScaleGizmo()
 }
 
 type GizmoAxis struct {
@@ -58,10 +45,11 @@ type GizmoAxis struct {
 }
 
 type Gizmo struct {
-	EntityIDToAxis        map[int]GizmoAxis
-	HoveredEntityID       int
-	Active                bool
-	LastFrameClosestPoint mgl64.Vec3
+	EntityIDToAxis         map[int]GizmoAxis
+	HoveredEntityID        int
+	Active                 bool
+	LastFrameClosestPoint  mgl64.Vec3
+	LastFrameMousePosition mgl64.Vec2
 }
 
 func setupTranslationGizmo() *Gizmo {
@@ -79,9 +67,10 @@ func setupScaleGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			constants.GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
-			constants.GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
-			constants.GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+			constants.GizmoXAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
+			constants.GizmoYAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
+			constants.GizmoZAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+			constants.GizmoAllAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
 		},
 	}
 }

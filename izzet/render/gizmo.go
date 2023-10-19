@@ -31,12 +31,12 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for entityID, axis := range gizmo.TGizmo.EntityIDToAxis {
+	for entityID, axis := range gizmo.TranslationGizmo.EntityIDToAxis {
 		shader.SetUniformUInt("entityID", uint32(entityID))
 		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
 		color := colors[entityID]
 
-		if gizmo.TGizmo.HoveredEntityID == entityID {
+		if gizmo.TranslationGizmo.HoveredEntityID == entityID {
 			color = mgl64.Vec3{1, 1, 0}
 		}
 
@@ -53,27 +53,30 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(panels.DBG.Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
-	axisColors := map[gizmo.AxisType]mgl64.Vec3{
-		gizmo.XAxis: mgl64.Vec3{1, 0, 0},
-		gizmo.YAxis: mgl64.Vec3{0, 0, 1},
-		gizmo.ZAxis: mgl64.Vec3{0, 1, 0},
+	colors := map[int]mgl64.Vec3{
+		constants.GizmoXAxisPickingID:   mgl64.Vec3{1, 0, 0},
+		constants.GizmoYAxisPickingID:   mgl64.Vec3{0, 0, 1},
+		constants.GizmoZAxisPickingID:   mgl64.Vec3{0, 1, 0},
+		constants.GizmoAllAxisPickingID: mgl64.Vec3{1, 1, 1},
 	}
 	hoverColor := mgl64.Vec3{1, 1, 0}
 
-	cubeVAO := r.getCubeVAO(0.2)
+	cubeVAO := r.getCubeVAO(0.25)
 
-	for i, axis := range gizmo.S.Axes {
-		shader.SetUniformUInt("entityID", uint32(constants.GizmoXAxisPickingID)+uint32(i))
-		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Vector)}}
-		color := axisColors[axis.Type]
-		if axis.Type == gizmo.S.HoveredAxisType || gizmo.S.HoveredAxisType == gizmo.AllAxis {
-			color = hoverColor
+	for entityID, axis := range gizmo.ScaleGizmo.EntityIDToAxis {
+		shader.SetUniformUInt("entityID", uint32(entityID))
+		shader.SetUniformMat4("model", mgl32.Ident4())
+
+		color := colors[entityID]
+		if entityID != constants.GizmoAllAxisPickingID {
+			lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
+			if gizmo.ScaleGizmo.HoveredEntityID == entityID || gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+				color = hoverColor
+			}
+			drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 		}
-		drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 
-		cubePosition := renderPosition.Add(axis.Vector)
-
+		cubePosition := renderPosition.Add(axis.Direction)
 		gl.BindVertexArray(cubeVAO)
 		shader.SetUniformMat4("model", mgl32.Translate3D(float32(cubePosition.X()), float32(cubePosition.Y()), float32(cubePosition.Z())))
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
@@ -82,9 +85,10 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 
 	var cubeColor = mgl64.Vec3{1, 1, 1}
-	if gizmo.S.HoveredAxisType == gizmo.AllAxis {
+	if gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
 		cubeColor = hoverColor
 	}
+
 	shader.SetUniformUInt("entityID", uint32(constants.GizmoAllAxisPickingID))
 	gl.BindVertexArray(cubeVAO)
 	shader.SetUniformMat4("model", mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y()), float32(renderPosition.Z())))

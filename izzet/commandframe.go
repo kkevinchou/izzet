@@ -8,7 +8,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/constants"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -353,7 +352,7 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 			delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
 			if delta != nil {
 				magnitude := 0.05
-				if gizmo.ScaleGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 					magnitude = 0.005
 				}
 				scale := entities.GetLocalScale(entity)
@@ -513,7 +512,7 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else if !nonParallel && *colorPickingID == constants.GizmoAllAxisPickingID {
+			} else if !nonParallel && *colorPickingID == gizmo.GizmoAllAxisPickingID {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
 			} else {
@@ -542,7 +541,7 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
 
-		if targetGizmo.HoveredEntityID == constants.GizmoAllAxisPickingID {
+		if targetGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
 			magnitude := (mouseDelta[0] - mouseDelta[1])
 			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)

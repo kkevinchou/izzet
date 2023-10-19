@@ -15,7 +15,8 @@ void main() {
     float dist = length(uv);
 
     if (dist > 1 || dist < 0.9) {
-        discard;
+        // discard;
+        FragColor = vec4(vec3(color), color.a);
     } else {
         // FragColor = vec4(vec3(color), color.a);
         FragColor = vec4(vec3(color), color.a);

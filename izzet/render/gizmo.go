@@ -99,42 +99,51 @@ func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.
 		mgl32.HomogRotate3DX(-90 * math.Pi / 180),
 	}
 
+	pickingIDs := []int{
+		gizmo.GizmoXDistancePickingID,
+		gizmo.GizmoYDistancePickingID,
+		gizmo.GizmoZDistancePickingID,
+	}
+
 	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
 
-	r.renderCircle()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	for i := 0; i < 3; i++ {
 		modelMatrix := t.Mul4(rotations[i])
 		texture := textures[i]
-		if i == gizmo.R.HoverIndex {
+		pickingID := pickingIDs[i]
+
+		if pickingID == gizmo.RotationGizmo.HoveredEntityID {
 			texture = r.yellowCircleTexture
 		}
-		drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true)
+
+		drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
 	}
 }
 
-func (r *Renderer) renderCircle() {
-	shaderManager := r.shaderManager
-	var alpha float64 = 1
+func drawCircle() {
+	var vertices []float32 = []float32{
+		-1, -1, 0,
+		1, -1, 0,
+		1, 1, 0,
+		1, 1, 0,
+		-1, 1, 0,
+		-1, -1, 0,
+	}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.redCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 0, 0, alpha})
+	var vbo, vao uint32
+	gl.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.greenCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 1, 0, alpha})
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blueCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{0, 0, 1, alpha})
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	drawCircle(shaderManager.GetShaderProgram("unit_circle"), mgl64.Vec4{1, 1, 0, alpha})
+	gl.BindVertexArray(vao)
+
+	iztDrawArrays(0, 6)
 }

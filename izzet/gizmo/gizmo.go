@@ -21,6 +21,7 @@ var (
 
 var (
 	TranslationGizmo *Gizmo
+	RotationGizmo    *Gizmo
 	ScaleGizmo       *Gizmo
 )
 
@@ -29,25 +30,23 @@ const (
 	GizmoYAxisPickingID   int = 1000000001
 	GizmoZAxisPickingID   int = 1000000002
 	GizmoAllAxisPickingID int = 1000000003
+
+	GizmoXDistancePickingID int = 1000000004
+	GizmoYDistancePickingID int = 1000000005
+	GizmoZDistancePickingID int = 1000000006
 )
 
 func init() {
 	CurrentGizmoMode = GizmoModeNone
 
-	R = &RotationGizmo{
-		Axes: []Circle{
-			Circle{Normal: mgl64.Vec3{0, 0, 1}, Radius: 25},
-			Circle{Normal: mgl64.Vec3{1, 0, 0}, Radius: 25},
-			Circle{Normal: mgl64.Vec3{0, 1, 0}, Radius: 25},
-		},
-		HoverIndex: -1}
-
 	TranslationGizmo = setupTranslationGizmo()
+	RotationGizmo = setupRotationGizmo()
 	ScaleGizmo = setupScaleGizmo()
 }
 
 type GizmoAxis struct {
-	Direction mgl64.Vec3
+	DistanceBasedDelta bool
+	Direction          mgl64.Vec3
 }
 
 type Gizmo struct {
@@ -65,6 +64,17 @@ func setupTranslationGizmo() *Gizmo {
 			GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
 			GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
 			GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+		},
+	}
+}
+
+func setupRotationGizmo() *Gizmo {
+	return &Gizmo{
+		HoveredEntityID: -1,
+		EntityIDToAxis: map[int]GizmoAxis{
+			GizmoXDistancePickingID: GizmoAxis{DistanceBasedDelta: true},
+			GizmoYDistancePickingID: GizmoAxis{DistanceBasedDelta: true},
+			GizmoZDistancePickingID: GizmoAxis{DistanceBasedDelta: true},
 		},
 	}
 }

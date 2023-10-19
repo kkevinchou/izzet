@@ -53,7 +53,7 @@ func getInternedQuadVAO() uint32 {
 	return internedQuadVAO
 }
 
-func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool) {
+func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
 	vao := getInternedQuadVAO()
 
 	gl.BindVertexArray(vao)
@@ -63,6 +63,9 @@ func drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.Shade
 	if modelMatrix != nil {
 		shader := shaderManager.GetShaderProgram("world_space_quad")
 		shader.Use()
+		if pickingID != nil {
+			shader.SetUniformUInt("entityID", uint32(*pickingID))
+		}
 		shader.SetUniformMat4("model", *modelMatrix)
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))

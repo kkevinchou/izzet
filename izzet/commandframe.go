@@ -8,12 +8,10 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/collision/checks"
-	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -335,19 +333,39 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-			newEntityRotation, hoverIndex := g.handleRotationGizmo(frameInput, panels.SelectedEntity())
-			if newEntityRotation != nil {
+			delta := g.calculateGizmoDelta(gizmo.RotationGizmo, frameInput, entity.WorldPosition())
+			if delta != nil {
+				var magnitude float64 = 0
+
+				if math.Abs(delta.X()) >= math.Abs(delta.Y()) {
+					magnitude = delta.X()
+				} else {
+					magnitude = delta.Y()
+				}
+				magnitude *= 0.01
+
+				var newRotationAdjustment mgl64.Quat
+				if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoXDistancePickingID {
+					newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, 1})
+				} else if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoYDistancePickingID {
+					newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{1, 0, 0})
+				} else if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoZDistancePickingID {
+					newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 1, 0})
+				} else {
+					panic("wat")
+				}
+
 				if entity.Parent != nil {
 					transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
 					worldToLocalMatrix := transformMatrix.Inv()
 					_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
-					computedRotation := r.Mul(*newEntityRotation)
-					entities.SetLocalRotation(entity, computedRotation)
+					computedRotation := r.Mul(newRotationAdjustment)
+					entities.SetLocalRotation(entity, computedRotation.Mul(entities.GetLocalRotation(entity)))
 				} else {
-					entities.SetLocalRotation(entity, *newEntityRotation)
+					entities.SetLocalRotation(entity, newRotationAdjustment.Mul(entities.GetLocalRotation(entity)))
 				}
 			}
-			gizmoHovered = hoverIndex != -1
+			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
 			delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
 			if delta != nil {
@@ -381,116 +399,6 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 
 }
 
-// TODO: move this method out of izzet and into the gizmo package?
-func (g *Izzet) handleRotationGizmo(frameInput input.Input, selectedEntity *entities.Entity) (*mgl64.Quat, int) {
-	if selectedEntity == nil {
-		return nil, -1
-	}
-
-	mouseInput := frameInput.MouseInput
-	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
-	position := selectedEntity.WorldPosition()
-
-	var minDist *float64
-	closestAxisIndex := -1
-
-	for i, axis := range gizmo.R.Axes {
-		ray := collider.Ray{Origin: g.camera.Position, Direction: nearPlanePos.Sub(g.camera.Position).Normalize()}
-		plane := collider.Plane{Point: position, Normal: axis.Normal}
-
-		intersect, front := checks.IntersectRayPlane(ray, plane)
-		if !front || intersect == nil {
-			continue
-		}
-
-		dist := position.Sub(*intersect).Len()
-
-		circleRadius := axis.Radius
-		activationRange := 3
-
-		if dist >= float64(circleRadius)-float64(activationRange) && dist <= float64(circleRadius)+float64(activationRange) {
-		} else {
-			continue
-		}
-
-		if minDist == nil || dist < *minDist {
-			minDist = &dist
-			closestAxisIndex = i
-		}
-	}
-
-	// mouse is close to one of the axes
-	if minDist != nil {
-		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-			gizmo.R.Active = true
-			gizmo.R.MotionPivot = mouseInput.Position
-			gizmo.R.HoverIndex = closestAxisIndex
-			gizmo.R.ActivationRotation = selectedEntity.WorldRotation()
-		}
-
-		if !gizmo.R.Active {
-			gizmo.R.HoverIndex = closestAxisIndex
-		}
-	} else if !gizmo.R.Active {
-		// specifically check that the gizmo is not active before reseting.
-		// this supports the scenario where we initially click and drag a gizmo
-		// to the point where the mouse leaves the range of any axes
-		gizmo.R.Reset()
-		gizmo.R.HoverIndex = -1
-	}
-
-	if gizmo.R.Active && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		if gizmo.R.ActivationRotation != selectedEntity.WorldRotation() {
-			g.AppendEdit(
-				edithistory.NewRotationEdit(gizmo.R.ActivationRotation, selectedEntity.WorldRotation(), selectedEntity),
-			)
-		}
-		gizmo.R.Reset()
-	}
-
-	// handle when mouse moves the rotation gizmo
-	if gizmo.R.Active && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-		viewDir := g.Camera().Orientation.Rotate(mgl64.Vec3{0, 0, -1})
-		delta := mouseInput.Position.Sub(gizmo.R.MotionPivot)
-		sensitivity := 2 * math.Pi / 1000
-		rotation := mgl64.QuatIdent()
-
-		if gizmo.R.HoverIndex == 0 {
-			// rotation around Z axis
-			horizontalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{0, 0, -1}))
-			magnitude := (horizontalAlignment*delta[0] + delta[1]) * float64(sensitivity)
-			var dir float64 = 1
-			if viewDir.Dot(mgl64.Vec3{0, 0, -1}) > 0 {
-				dir = -1
-			}
-			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, dir})
-		} else if gizmo.R.HoverIndex == 1 {
-			// rotation around X axis
-			horizontalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{1, 0, 0}))
-			magnitude := (horizontalAlignment*delta[0] + delta[1]) * float64(sensitivity)
-			var dir float64 = 1
-			if viewDir.Dot(mgl64.Vec3{-1, 0, 0}) > 0 {
-				dir = -1
-			}
-			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{dir, 0, 0})
-		} else if gizmo.R.HoverIndex == 2 {
-			// rotation around Y axis
-			verticalAlignment := math.Abs(g.Camera().Position.Sub(position).Normalize().Dot(mgl64.Vec3{0, 1, 0}))
-			magnitude := (delta[0] + verticalAlignment*delta[1]) * float64(sensitivity)
-			var dir float64 = 1
-			if viewDir.Dot(mgl64.Vec3{0, -1, 0}) > 0 {
-				dir = -1
-			}
-			rotation = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, dir, 0})
-		}
-		computedQuat := rotation.Mul(selectedEntity.WorldRotation())
-		gizmo.R.MotionPivot = mouseInput.Position
-		return &computedQuat, gizmo.R.HoverIndex
-	}
-
-	return nil, gizmo.R.HoverIndex
-}
-
 func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, position mgl64.Vec3) *mgl64.Vec3 {
 	mouseInput := frameInput.MouseInput
 
@@ -509,7 +417,9 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 	if colorPickingID != nil {
 		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 			axis := targetGizmo.EntityIDToAxis[*colorPickingID]
-			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
+			if axis.DistanceBasedDelta {
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
 			} else if !nonParallel && *colorPickingID == gizmo.GizmoAllAxisPickingID {
@@ -541,7 +451,12 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
 
-		if targetGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
+		if axis.DistanceBasedDelta {
+			// mouse position based deltas, store the x,y mouse delta in the return value with 0 for the z value
+			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
+			gizmoDelta = &mouseDelta
+			targetGizmo.LastFrameMousePosition = mouseInput.Position
+		} else if targetGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
 			magnitude := (mouseDelta[0] - mouseDelta[1])
 			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)

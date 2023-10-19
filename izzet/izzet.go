@@ -290,7 +290,7 @@ func initializeOpenGL() (*sdl.Window, error) {
 	// sdl.GLSetAttribute(sdl.GL_RED_SIZE, 10)
 	// sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 10)
 	// sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 10)
-	sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 2)
+	// sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 2)
 
 	sdl.SetRelativeMouseMode(false)
 

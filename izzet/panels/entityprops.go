@@ -17,14 +17,12 @@ type ComponentComboOption string
 var MaterialComboOption ComponentComboOption = "Material Component"
 var PhysicsComboOption ComponentComboOption = "Physics Component"
 var LightComboOption ComponentComboOption = "Light Component"
-var CameraComboOption ComponentComboOption = "Camera Component"
 var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
 var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	MaterialComboOption,
 	PhysicsComboOption,
 	LightComboOption,
-	CameraComboOption,
 }
 
 func entityProps(entity *entities.Entity) {
@@ -288,6 +286,15 @@ func entityProps(entity *entities.Entity) {
 			setupRow("Collider Type", func() {
 				imgui.LabelText("", string(entities.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
 			}, true)
+			setupRow("Capsule", func() {
+				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.CapsuleCollider != nil))
+			}, true)
+			setupRow("Triangular Mesh", func() {
+				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.TriMeshCollider != nil))
+			}, true)
+			setupRow("Bounding Box", func() {
+				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.BoundingBoxCollider != nil))
+			}, true)
 			imgui.EndTable()
 		}
 	}
@@ -323,10 +330,6 @@ func entityProps(entity *entities.Entity) {
 				}
 			} else if SelectedComponentComboOption == PhysicsComboOption {
 				entity.Physics = &entities.PhysicsComponent{}
-			} else if SelectedComponentComboOption == CameraComboOption {
-				entity.CameraComponent = &entities.CameraComponent{}
-				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
-				entity.Billboard = true
 			}
 		}
 	}

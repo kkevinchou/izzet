@@ -96,6 +96,15 @@ func sceneHierarchy(app App, world GameWorld) {
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
+			if imgui.Button("Add Camera") {
+				entity := entities.InstantiateEntity("camera")
+				entity.CameraComponent = &entities.CameraComponent{}
+				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
+				entity.Billboard = true
+				world.AddEntity(entity)
+				SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
 			imgui.EndPopup()
 		}
 		imgui.PopID()

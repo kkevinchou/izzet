@@ -101,6 +101,10 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
+	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
+		g.StartLiveWorld()
+	}
+
 	// undo/undo
 	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
 		if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {

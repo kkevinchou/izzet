@@ -49,6 +49,8 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld)
 }
 
 func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
+	frameInput := world.GetFrameInput()
+
 	var camera *entities.Entity
 	for _, entity := range world.Entities() {
 		if entity.CameraComponent == nil {
@@ -73,4 +75,30 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 	}
 
 	entities.SetLocalPosition(camera, targetEntity.WorldPosition().Add(camera.CameraComponent.PositionOffset))
+
+	// camera rotations
+	var xRel, yRel float64
+	mouseInput := frameInput.MouseInput
+	var mouseSensitivity float64 = 0.005
+	if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
+		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
+		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
+	}
+
+	forwardVector := camera.LocalRotation.Rotate(mgl64.Vec3{0, 0, -1})
+	upVector := camera.LocalRotation.Rotate(mgl64.Vec3{0, 1, 0})
+	// there's probably away to get the right vector directly rather than going crossing the up vector :D
+	rightVector := forwardVector.Cross(upVector)
+
+	// calculate the quaternion for the delta in rotation
+	deltaRotationX := mgl64.QuatRotate(yRel, rightVector)         // pitch
+	deltaRotationY := mgl64.QuatRotate(xRel, mgl64.Vec3{0, 1, 0}) // yaw
+	deltaRotation := deltaRotationY.Mul(deltaRotationX)
+
+	newOrientation := deltaRotation.Mul(camera.LocalRotation) // don't let the camera go upside down
+
+	if newOrientation.Rotate(mgl64.Vec3{0, 1, 0})[1] < 0 {
+		newOrientation = camera.LocalRotation
+	}
+	entities.SetLocalRotation(camera, newOrientation)
 }

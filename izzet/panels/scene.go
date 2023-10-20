@@ -90,6 +90,12 @@ func sceneHierarchy(app App, world GameWorld) {
 				SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
+			if imgui.Button("Add Empty Entity") {
+				entity := entities.InstantiateEntity("empty-entity")
+				world.AddEntity(entity)
+				SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
 			imgui.EndPopup()
 		}
 		imgui.PopID()

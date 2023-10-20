@@ -127,11 +127,11 @@ func entityProps(entity *entities.Entity) {
 			var position *mgl64.Vec3
 			var x, y, z int32
 			if entity != nil {
-				position = &entity.CameraComponent.PositionOffset
+				position = &entity.CameraComponent.TargetPositionOffset
 				x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
 			}
 
-			setupRow("Camera Position", func() {
+			setupRow("Target Position Offset", func() {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
 				imgui.PushID("position x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {

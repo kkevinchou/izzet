@@ -21,7 +21,7 @@ var (
 
 type App interface {
 	SaveWorld(string)
-	LoadWorld(string)
+	LoadWorld(string) bool
 	SetShowImguiDemo(bool)
 	ShowImguiDemo() bool
 	NavMesh() *navmesh.NavigationMesh
@@ -86,7 +86,9 @@ func SetupMenuBar(app App) imgui.Vec2 {
 		imgui.SameLine()
 		if imgui.Button("Load") {
 			fmt.Println("Load from", selectedWorldName)
-			app.LoadWorld(selectedWorldName)
+			if app.LoadWorld(selectedWorldName) {
+				worldName = selectedWorldName
+			}
 		}
 
 		if imgui.MenuItemV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {

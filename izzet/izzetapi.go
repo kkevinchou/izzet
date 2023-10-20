@@ -66,9 +66,9 @@ func (g *Izzet) SaveWorld(name string) {
 	g.serializer.WriteToFile(g.world, fmt.Sprintf("./%s.json", name))
 }
 
-func (g *Izzet) LoadWorld(name string) {
+func (g *Izzet) LoadWorld(name string) bool {
 	if name == "" {
-		return
+		return false
 	}
 
 	filename := fmt.Sprintf("./%s.json", name)
@@ -95,6 +95,7 @@ func (g *Izzet) LoadWorld(name string) {
 
 	panels.SelectEntity(nil)
 	g.SetWorld(world)
+	return true
 }
 
 // game world

@@ -65,7 +65,7 @@ type App interface {
 	ShowImguiDemo() bool
 
 	Serializer() *serialization.Serializer
-	LoadWorld(string)
+	LoadWorld(string) bool
 	SaveWorld(string)
 
 	NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3

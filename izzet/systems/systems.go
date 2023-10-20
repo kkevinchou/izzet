@@ -85,7 +85,6 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 
 	forwardVector := camera.LocalRotation.Rotate(mgl64.Vec3{0, 0, -1})
 	upVector := camera.LocalRotation.Rotate(mgl64.Vec3{0, 1, 0})
-	// there's probably away to get the right vector directly rather than going crossing the up vector :D
 	rightVector := forwardVector.Cross(upVector)
 
 	// calculate the quaternion for the delta in rotation
@@ -93,9 +92,9 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 	deltaRotationY := mgl64.QuatRotate(xRel, mgl64.Vec3{0, 1, 0}) // yaw
 	deltaRotation := deltaRotationY.Mul(deltaRotationX)
 
-	newOrientation := deltaRotation.Mul(camera.LocalRotation) // don't let the camera go upside down
-
-	if newOrientation.Rotate(mgl64.Vec3{0, 1, 0})[1] < 0 {
+	newOrientation := deltaRotation.Mul(camera.LocalRotation)
+	// don't let the camera go upside down
+	if newOrientation.Rotate(mgl64.Vec3{0, 1, 0}).Y() < 0 {
 		newOrientation = camera.LocalRotation
 	}
 

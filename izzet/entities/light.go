@@ -2,7 +2,6 @@ package entities
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/go-gl/mathgl/mgl64"
 )
 
 type LightType int
@@ -42,10 +41,9 @@ func CreateDirectionalLight() *Entity {
 	}
 
 	entity := InstantiateBaseEntity("directional-light", id)
-	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
+	entity.ImageInfo = NewImageInfo("lamp.png", 15)
 	entity.LightInfo = lightInfo
 	entity.Billboard = true
-	SetScale(entity, mgl64.Vec3{15, 15, 15})
 	id += 1
 	return entity
 }
@@ -59,11 +57,9 @@ func CreatePointLight() *Entity {
 	}
 
 	entity := InstantiateBaseEntity("point-light", id)
-	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
-	entity.ImageInfo = &ImageInfo{ImageName: "lamp.png"}
+	entity.ImageInfo = NewImageInfo("lamp.png", 15)
 	entity.LightInfo = lightInfo
 	entity.Billboard = true
-	SetScale(entity, mgl64.Vec3{15, 15, 15})
 	id += 1
 	return entity
 }

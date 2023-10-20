@@ -325,6 +325,8 @@ func entityProps(entity *entities.Entity) {
 				entity.Physics = &entities.PhysicsComponent{}
 			} else if SelectedComponentComboOption == CameraComboOption {
 				entity.CameraComponent = &entities.CameraComponent{}
+				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
+				entity.Billboard = true
 			}
 		}
 	}

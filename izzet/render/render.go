@@ -747,6 +747,11 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 					shader := shaderManager.GetShaderProgram("world_space_quad")
 					shader.Use()
 
+					position := entity.WorldPosition()
+					modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+					scale := entity.ImageInfo.Scale
+					modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
+
 					shader.SetUniformUInt("entityID", uint32(entity.ID))
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.Camera().Orientation.Mat4())))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))

@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
@@ -316,7 +317,13 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 
 	if entity != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+			startStatus := gizmo.TranslationGizmo.Active
 			delta := g.calculateGizmoDelta(gizmo.TranslationGizmo, frameInput, entity.WorldPosition())
+			endStatus := gizmo.TranslationGizmo.Active
+
+			activated := startStatus == false && endStatus == true
+			completed := startStatus == true && endStatus == false
+
 			if delta != nil {
 				if entity.Parent != nil {
 					// the computed position is in world space but entity.LocalPosition is in local space
@@ -334,10 +341,23 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 				} else {
 					entities.SetLocalPosition(entity, entity.LocalPosition.Add(*delta))
 				}
+			} else if completed {
+				g.AppendEdit(
+					edithistory.NewPositionEdit(gizmo.TranslationGizmo.ActivationPosition, entities.GetLocalPosition(entity), entity),
+				)
+			}
+			if activated {
+				gizmo.TranslationGizmo.ActivationPosition = entities.GetLocalPosition(entity)
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+			startStatus := gizmo.RotationGizmo.Active
 			delta := g.calculateGizmoDelta(gizmo.RotationGizmo, frameInput, entity.WorldPosition())
+			endStatus := gizmo.RotationGizmo.Active
+
+			activated := startStatus == false && endStatus == true
+			completed := startStatus == true && endStatus == false
+
 			if delta != nil {
 				var magnitude float64 = 0
 
@@ -368,10 +388,23 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 				} else {
 					entities.SetLocalRotation(entity, newRotationAdjustment.Mul(entities.GetLocalRotation(entity)))
 				}
+			} else if completed {
+				g.AppendEdit(
+					edithistory.NewRotationEdit(gizmo.TranslationGizmo.ActivationRotation, entities.GetLocalRotation(entity), entity),
+				)
+			}
+			if activated {
+				gizmo.RotationGizmo.ActivationRotation = entities.GetLocalRotation(entity)
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+			startStatus := gizmo.ScaleGizmo.Active
 			delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
+			endStatus := gizmo.ScaleGizmo.Active
+
+			activated := startStatus == false && endStatus == true
+			completed := startStatus == true && endStatus == false
+
 			if delta != nil {
 				magnitude := 0.05
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
@@ -379,6 +412,13 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 				}
 				scale := entities.GetLocalScale(entity)
 				entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
+			} else if completed {
+				g.AppendEdit(
+					edithistory.NewScaleEdit(gizmo.ScaleGizmo.ActivationScale, entities.GetLocalScale(entity), entity),
+				)
+			}
+			if activated {
+				gizmo.ScaleGizmo.ActivationScale = entities.GetLocalScale(entity)
 			}
 			gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
 		}
@@ -403,7 +443,7 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 
 }
 
-func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, position mgl64.Vec3) *mgl64.Vec3 {
+func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3) *mgl64.Vec3 {
 	mouseInput := frameInput.MouseInput
 
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
@@ -423,7 +463,7 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 			axis := targetGizmo.EntityIDToAxis[*colorPickingID]
 			if axis.DistanceBasedDelta {
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
+			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
 			} else if !nonParallel && *colorPickingID == gizmo.GizmoAllAxisPickingID {
@@ -467,7 +507,7 @@ func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.I
 			gizmoDelta = &delta
 			targetGizmo.LastFrameMousePosition = mouseInput.Position
 		} else {
-			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, position, position.Add(axis.Direction)); nonParallel {
+			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
 				gizmoDelta = &delta
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis

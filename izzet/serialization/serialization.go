@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/animation"
+	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type App interface {
@@ -25,8 +26,9 @@ type Relation struct {
 }
 
 type WorldIR struct {
-	Entities  []*entities.Entity
-	Relations []Relation
+	Entities   []*entities.Entity
+	Relations  []Relation
+	HasTriMesh map[int]any
 }
 
 type Serializer struct {
@@ -57,12 +59,16 @@ func (s *Serializer) Write(world *world.GameWorld, writer io.Writer) error {
 	entities := world.Entities()
 
 	worldIR := WorldIR{
-		Entities: entities,
+		Entities:   entities,
+		HasTriMesh: map[int]any{},
 	}
 
-	for _, e := range entities {
-		if e.Parent != nil {
-			worldIR.Relations = append(worldIR.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
+	for _, entity := range entities {
+		if entity.Parent != nil {
+			worldIR.Relations = append(worldIR.Relations, Relation{Parent: entity.Parent.ID, Child: entity.ID})
+		}
+		if entity.Collider != nil && entity.Collider.TriMeshCollider != nil {
+			worldIR.HasTriMesh[entity.GetID()] = true
 		}
 	}
 
@@ -108,21 +114,26 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	}
 
 	entityMap := map[int]*entities.Entity{}
-	for _, e := range worldIR.Entities {
-		entityMap[e.ID] = e
+	for _, entity := range worldIR.Entities {
+		entityMap[entity.ID] = entity
 
 		// set dirty flags
-		e.DirtyTransformFlag = true
+		entity.DirtyTransformFlag = true
 
 		// rebuild animation player
-		if e.Animation != nil {
-			handle := e.Animation.AnimationHandle
+		if entity.Animation != nil {
+			handle := entity.Animation.AnimationHandle
 			animations, joints := s.app.ModelLibrary().GetAnimations(handle)
-			e.Animation.AnimationPlayer = animation.NewAnimationPlayer()
-			e.Animation.AnimationPlayer.Initialize(animations, joints[e.Animation.RootJointID])
+			entity.Animation.AnimationPlayer = animation.NewAnimationPlayer()
+			entity.Animation.AnimationPlayer.Initialize(animations, joints[entity.Animation.RootJointID])
 		}
 
-		// rebuild collider
+		// rebuild trimesh collider
+		if _, ok := worldIR.HasTriMesh[entity.GetID()]; ok {
+			meshHandle := entity.MeshComponent.MeshHandle
+			primitives := s.app.ModelLibrary().GetPrimitives(meshHandle)
+			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+		}
 	}
 
 	// rebuild relations

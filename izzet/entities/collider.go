@@ -47,7 +47,7 @@ type ColliderComponent struct {
 	BoundingBoxCollider *collider.BoundingBox
 
 	// stores the transformed collider (e.g. if the entity moves)
-	TransformedCapsuleCollider     *collider.Capsule
-	TransformedTriMeshCollider     *collider.TriMesh `json:"-"`
-	TransformedBoundingBoxCollider *collider.BoundingBox
+	TransformedCapsuleCollider     *collider.Capsule     `json:"-"`
+	TransformedTriMeshCollider     *collider.TriMesh     `json:"-"`
+	TransformedBoundingBoxCollider *collider.BoundingBox `json:"-"`
 }

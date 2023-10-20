@@ -55,6 +55,10 @@ type Gizmo struct {
 	Active                 bool
 	LastFrameClosestPoint  mgl64.Vec3
 	LastFrameMousePosition mgl64.Vec2
+
+	ActivationPosition mgl64.Vec3
+	ActivationScale    mgl64.Vec3
+	ActivationRotation mgl64.Quat
 }
 
 func setupTranslationGizmo() *Gizmo {

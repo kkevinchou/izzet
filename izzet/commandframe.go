@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
@@ -73,6 +74,7 @@ func (g *Izzet) handleSpatialPartition() {
 }
 
 var copiedEntity []byte
+var copiedEntityHasTriMesh bool
 
 func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
@@ -139,6 +141,7 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 					if entity := panels.SelectedEntity(); entity != nil {
 						var err error
 						copiedEntity, err = json.Marshal(entity)
+						copiedEntityHasTriMesh = entity.Collider != nil && entity.Collider.TriMeshCollider != nil
 						if err != nil {
 							panic(err)
 						}
@@ -160,6 +163,8 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 					}
 					id := entities.GetNextIDAndAdvance()
 					newEntity.ID = id
+
+					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary(), copiedEntityHasTriMesh)
 
 					g.world.AddEntity(&newEntity)
 					panels.SelectEntity(&newEntity)

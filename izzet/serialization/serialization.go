@@ -28,7 +28,7 @@ type Relation struct {
 type WorldIR struct {
 	Entities   []*entities.Entity
 	Relations  []Relation
-	HasTriMesh map[int]any
+	HasTriMesh map[int]bool
 }
 
 type Serializer struct {
@@ -60,7 +60,7 @@ func (s *Serializer) Write(world *world.GameWorld, writer io.Writer) error {
 
 	worldIR := WorldIR{
 		Entities:   entities,
-		HasTriMesh: map[int]any{},
+		HasTriMesh: map[int]bool{},
 	}
 
 	for _, entity := range entities {
@@ -117,23 +117,7 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	for _, entity := range worldIR.Entities {
 		entityMap[entity.ID] = entity
 
-		// set dirty flags
-		entity.DirtyTransformFlag = true
-
-		// rebuild animation player
-		if entity.Animation != nil {
-			handle := entity.Animation.AnimationHandle
-			animations, joints := s.app.ModelLibrary().GetAnimations(handle)
-			entity.Animation.AnimationPlayer = animation.NewAnimationPlayer()
-			entity.Animation.AnimationPlayer.Initialize(animations, joints[entity.Animation.RootJointID])
-		}
-
-		// rebuild trimesh collider
-		if _, ok := worldIR.HasTriMesh[entity.GetID()]; ok {
-			meshHandle := entity.MeshComponent.MeshHandle
-			primitives := s.app.ModelLibrary().GetPrimitives(meshHandle)
-			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
-		}
+		InitDeserializedEntity(entity, s.app.ModelLibrary(), worldIR.HasTriMesh[entity.GetID()])
 	}
 
 	// rebuild relations
@@ -148,4 +132,24 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	}
 
 	return world.New(entityMap), nil
+}
+
+func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibrary, hasTriMesh bool) {
+	// set dirty flags
+	entity.DirtyTransformFlag = true
+
+	// rebuild animation player
+	if entity.Animation != nil {
+		handle := entity.Animation.AnimationHandle
+		animations, joints := ml.GetAnimations(handle)
+		entity.Animation.AnimationPlayer = animation.NewAnimationPlayer()
+		entity.Animation.AnimationPlayer.Initialize(animations, joints[entity.Animation.RootJointID])
+	}
+
+	// rebuild trimesh collider
+	if hasTriMesh {
+		meshHandle := entity.MeshComponent.MeshHandle
+		primitives := ml.GetPrimitives(meshHandle)
+		entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+	}
 }

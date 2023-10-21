@@ -1,12 +1,15 @@
 package systems
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
+)
+
+const (
+	jumpVelocity float64 = 200
 )
 
 type CharacterControllerSystem struct {
@@ -34,12 +37,10 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld)
 
 	c := entity.CharacterControllerComponent
 
-	fmt.Println(entity.Physics.Grounded)
-
 	controlVector := app.GetControlVector(keyboardInput)
 	if controlVector.Y() > 0 && entity.Physics.Grounded {
 		entity.Physics.Grounded = false
-		entity.Physics.Velocity = mgl64.Vec3{0, 100, 0}
+		entity.Physics.Velocity = mgl64.Vec3{0, jumpVelocity, 0}
 	}
 	movementDir := calculateMovementDir(entities.GetLocalRotation(camera), controlVector)
 	entities.SetLocalPosition(entity, entity.LocalPosition.Add(movementDir.Mul(c.Speed*float64(delta.Milliseconds())/1000)))

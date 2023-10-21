@@ -431,7 +431,7 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-		if entityID == nil {
+		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
 			panels.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		} else {

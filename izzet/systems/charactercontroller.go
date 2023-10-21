@@ -43,6 +43,13 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld)
 		entity.Physics.Velocity = mgl64.Vec3{0, jumpVelocity, 0}
 	}
 	movementDir := calculateMovementDir(entities.GetLocalRotation(camera), controlVector)
+
+	emptyVec := mgl64.Vec3{}
+	if movementDir != emptyVec {
+		xzMovementDir := mgl64.Vec3{movementDir.X(), 0, movementDir.Z()}
+		newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, xzMovementDir)
+		entities.SetLocalRotation(entity, newRotation)
+	}
 	entities.SetLocalPosition(entity, entity.LocalPosition.Add(movementDir.Mul(c.Speed*float64(delta.Milliseconds())/1000)))
 }
 

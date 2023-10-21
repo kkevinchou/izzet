@@ -31,7 +31,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld)
 	}
 
 	entity := world.GetEntityByID(*camera.CameraComponent.Target)
-	if entity.CharacterControllerComponent == nil {
+	if entity == nil || entity.CharacterControllerComponent == nil {
 		return
 	}
 

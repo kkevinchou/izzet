@@ -8,7 +8,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -174,10 +173,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
 
 		if len(document.Animations) > 0 {
-			animations, joints := ml.GetAnimations(document.Name)
-			animationPlayer := animation.NewAnimationPlayer()
-			animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
-			entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
+			entity.Animation = NewAnimationComponent(document.Name, ml)
 		}
 		spawnedEntities = append(spawnedEntities, entity)
 	} else {
@@ -268,10 +264,7 @@ func parseEntities(node *modelspec.Node, parent *Entity, namespace string, docum
 		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
 
 		if len(document.Animations) > 0 {
-			animations, joints := ml.GetAnimations(document.Name)
-			animationPlayer := animation.NewAnimationPlayer()
-			animationPlayer.Initialize(animations, joints[document.RootJoint.ID])
-			entity.Animation = &AnimationComponent{RootJointID: document.RootJoint.ID, AnimationHandle: document.Name, AnimationPlayer: animationPlayer}
+			entity.Animation = NewAnimationComponent(document.Name, ml)
 		}
 	}
 

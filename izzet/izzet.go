@@ -222,7 +222,7 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 			modelLibrary.RegisterMesh(doc.Name, mesh)
 		}
 		if len(doc.Animations) > 0 {
-			modelLibrary.RegisterAnimations(docName, doc.Animations, doc.JointMap)
+			modelLibrary.RegisterAnimations(docName, doc)
 		}
 	}
 }

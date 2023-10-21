@@ -8,7 +8,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -141,9 +140,7 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 	// rebuild animation player
 	if entity.Animation != nil {
 		handle := entity.Animation.AnimationHandle
-		animations, joints := ml.GetAnimations(handle)
-		entity.Animation.AnimationPlayer = animation.NewAnimationPlayer()
-		entity.Animation.AnimationPlayer.Initialize(animations, joints[entity.Animation.RootJointID])
+		entity.Animation = entities.NewAnimationComponent(handle, ml)
 	}
 
 	// rebuild trimesh collider

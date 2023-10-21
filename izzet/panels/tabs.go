@@ -38,7 +38,7 @@ func BuildTabsSet(app App, world GameWorld, renderContext RenderContext, menuBar
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Details") {
-			entityProps(SelectedEntity())
+			entityProps(SelectedEntity(), app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Prefabs") {

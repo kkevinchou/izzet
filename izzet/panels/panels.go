@@ -4,6 +4,7 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 )
 
@@ -26,6 +27,7 @@ var selectedEntity *entities.Entity
 type App interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	ModelLibrary() *modellibrary.ModelLibrary
+	PhysicsObserver() *observers.PhysicsObserver
 	ResetNavMeshVAO()
 }
 

@@ -25,7 +25,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	LightComboOption,
 }
 
-func entityProps(entity *entities.Entity) {
+func entityProps(entity *entities.Entity, app App) {
 	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
 		entityIDStr := ""
 		entityNameStr := ""
@@ -335,6 +335,20 @@ func entityProps(entity *entities.Entity) {
 			} else if SelectedComponentComboOption == PhysicsComboOption {
 				entity.Physics = &entities.PhysicsComponent{}
 			}
+		}
+	}
+
+	if entity.Collider != nil {
+		if imgui.CollapsingHeaderV("Debugging Properties", imgui.TreeNodeFlagsNone) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
+
+			physicsObserver := app.PhysicsObserver()
+			setupRow("Entities In Partition", func() { imgui.LabelText("", formatNumber(physicsObserver.SpatialQuery[entity.GetID()])) }, true)
+			setupRow("Collision Checks", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionCheck[entity.GetID()])) }, true)
+			setupRow("Collision Resolutions", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionResolution[entity.GetID()])) }, true)
+
+			imgui.EndTable()
 		}
 	}
 }

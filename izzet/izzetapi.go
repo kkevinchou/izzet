@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -189,4 +190,8 @@ func (g *Izzet) WorldToNDCPosition(viewerContext render.ViewerContext, worldPosi
 	behind := screenPos.Z() < 0
 	screenPos = screenPos.Mul(1 / screenPos.W())
 	return screenPos.Vec2(), behind
+}
+
+func (g *Izzet) PhysicsObserver() *observers.PhysicsObserver {
+	return g.physicsObserver
 }

@@ -206,14 +206,13 @@ func filterCollisionCandidates(contacts []*collision.Contact) []*collision.Conta
 func (s *PhysicsSystem) collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world GameWorld) []*collision.Contact {
 	// initialize collision state
 
-	// TODO: may not need to transform the collider since colliders will be children of the actual entity
 	for _, e := range entityList {
 		cc := e.Collider
 		if cc.CapsuleCollider != nil {
 			transformMatrix := entities.WorldTransform(e)
 			capsule := cc.CapsuleCollider.Transform(transformMatrix)
 			cc.TransformedCapsuleCollider = &capsule
-		} else if cc.TriMeshCollider != nil {
+		} else if cc.TriMeshCollider != nil && (!e.Static || cc.TransformedTriMeshCollider == nil) {
 			// localPosition := entities.GetLocalPosition(e)
 			// transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
 			transformMatrix := entities.WorldTransform(e)

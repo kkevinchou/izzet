@@ -40,7 +40,7 @@ type ColliderComponent struct {
 	SkipSeparation bool
 
 	// Contacts marks which entities it collided with in the current frame
-	Contacts map[int]bool
+	Contacts map[int]bool `json:"-"`
 
 	CapsuleCollider     *collider.Capsule
 	TriMeshCollider     *collider.TriMesh `json:"-"`

@@ -346,6 +346,9 @@ func entityProps(entity *entities.Entity, app App) {
 			physicsObserver := app.PhysicsObserver()
 			setupRow("Entities In Partition", func() { imgui.LabelText("", formatNumber(physicsObserver.SpatialQuery[entity.GetID()])) }, true)
 			setupRow("Collision Checks", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionCheck[entity.GetID()])) }, true)
+			setupRow("Triangle Mesh Checks", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionCheckTriMesh[entity.GetID()])) }, true)
+			setupRow("Triangle Checks", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionCheckTriangle[entity.GetID()])) }, true)
+			setupRow("Capsule Checks", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionCheckCapsule[entity.GetID()])) }, true)
 			setupRow("Collision Resolutions", func() { imgui.LabelText("", formatNumber(physicsObserver.CollisionResolution[entity.GetID()])) }, true)
 
 			imgui.EndTable()

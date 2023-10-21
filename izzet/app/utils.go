@@ -31,5 +31,6 @@ func GetControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {
 	if key, ok := keyboardInput[input.KeyboardKeySpace]; ok && key.Event == input.KeyboardEventDown {
 		controlVector[1]++
 	}
+
 	return controlVector
 }

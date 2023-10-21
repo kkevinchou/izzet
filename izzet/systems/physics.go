@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	resolveCountMax = 3
+	resolveCountMax   = 3
+	groundedThreshold = 0.005
 )
 
 type PhysicsSystem struct {
@@ -38,9 +39,22 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 		if entity.Collider == nil {
 			continue
 		}
-		entity.Collider.Contacts = map[int]bool{}
-	}
 
+		if entity.Physics != nil {
+			entity.Physics.Grounded = false
+		}
+
+		if entity.Collider.Contacts != nil && entity.Physics != nil {
+			for _, contact := range entity.Collider.Contacts {
+				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > (1 - groundedThreshold) {
+					entity.Physics.Grounded = true
+				}
+			}
+		}
+
+		// entity.Collider.Contacts = map[int]bool{}
+		entity.Collider.Contacts = nil
+	}
 }
 
 func ResolveCollisions(world GameWorld) {
@@ -126,6 +140,8 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 	// the number of entities times the cap.
 	collisionRuns := 0
 	for collisionRuns = 0; collisionRuns < absoluteMaxRunCount; collisionRuns++ {
+		// TODO: update entityPairs to not include collisions that have already been resolved
+		// in fact, we may want to do the looping at the ResolveCollisions level
 		collisionCandidates := collectSortedCollisionCandidates(entityPairs, entityList, maximallyCollidingEntities, world)
 		if len(collisionCandidates) == 0 {
 			break
@@ -133,26 +149,16 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 
 		collisionCandidates = filterCollisionCandidates(collisionCandidates)
 
-		resolvedEntities := resolveCollisions(collisionCandidates, world)
-		for entityID, otherEntityID := range resolvedEntities {
-			e1 := world.GetEntityByID(entityID)
-			e2 := world.GetEntityByID(otherEntityID)
-			resolveCount[entityID] += 1
+		for _, contact := range collisionCandidates {
+			entity := world.GetEntityByID(*contact.EntityID)
+			sourceEntity := world.GetEntityByID(*contact.SourceEntityID)
+			resolveCollision(entity, sourceEntity, contact)
 
-			if resolveCount[entityID] > resolveCountMax {
-				maximallyCollidingEntities[entityID] = true
-				// fmt.Println("reached max count for entity", entityID, e1.GetName(), "most recent collision with", otherEntityID, e2.GetName())
+			entity.Collider.Contacts = append(entity.Collider.Contacts, *contact)
+
+			if resolveCount[entity.ID] > resolveCountMax {
+				maximallyCollidingEntities[entity.ID] = true
 			}
-
-			// TODO(kchou): consider that two of the same entity may collide twice
-			// also, we may want to support colliding with individual mesh chunks of an
-			// entity rather than consideration of the whole entity itself
-
-			// NOTE(kchou): ideally we'd include the full collision information (contact point, separting vector, etc)
-			// but I don't yet have a good story around registering this information for both entities. i.e. if A is colliding
-			// with B, is B colliding with A? do we share half the separation between the two?
-			e1.Collider.Contacts[e2.ID] = true
-			e2.Collider.Contacts[e1.ID] = true
 		}
 	}
 
@@ -265,20 +271,6 @@ func collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {
 		}
 	}
 	return filteredContacts
-}
-
-func resolveCollisions(contacts []*collision.Contact, world GameWorld) map[int]int {
-	resolved := map[int]int{}
-	for _, contact := range contacts {
-		entity := world.GetEntityByID(*contact.EntityID)
-		sourceEntity := world.GetEntityByID(*contact.SourceEntityID)
-		resolveCollision(entity, sourceEntity, contact)
-
-		resolved[*contact.EntityID] = *contact.SourceEntityID
-		resolved[*contact.SourceEntityID] = *contact.EntityID
-	}
-
-	return resolved
 }
 
 func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact) {

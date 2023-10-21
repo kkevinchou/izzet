@@ -94,7 +94,6 @@ func CreateCapsule(ml *modellibrary.ModelLibrary, length float64, radius float64
 		},
 		ColliderGroup: ColliderGroupFlagPlayer,
 		CollisionMask: ColliderGroupFlagTerrain,
-		Contacts:      map[int]bool{},
 	}
 
 	capsule := entity.Collider.CapsuleCollider

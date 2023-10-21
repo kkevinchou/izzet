@@ -201,8 +201,9 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 			capsule := cc.CapsuleCollider.Transform(transformMatrix)
 			cc.TransformedCapsuleCollider = &capsule
 		} else if cc.TriMeshCollider != nil {
-			localPosition := entities.GetLocalPosition(e)
-			transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
+			// localPosition := entities.GetLocalPosition(e)
+			// transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
+			transformMatrix := entities.WorldTransform(e)
 			triMesh := cc.TriMeshCollider.Transform(transformMatrix)
 			cc.TransformedTriMeshCollider = &triMesh
 		}

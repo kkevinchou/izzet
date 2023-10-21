@@ -16,7 +16,15 @@ const (
 	accelerationDueToGravity float64 = 250 // units per second
 )
 
+type PhysicsObserver interface {
+	OnSpatialQuery(entityID int, count int)
+	OnCollisionCheck(entityID int)
+	OnCollisionResolution(entityID int)
+	Clear()
+}
+
 type PhysicsSystem struct {
+	Observer PhysicsObserver
 }
 
 func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
@@ -28,6 +36,8 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
+		s.Observer.Clear()
+
 		if physicsComponent.GravityEnabled {
 			velocityFromGravity := mgl64.Vec3{0, -accelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
 			physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
@@ -35,7 +45,7 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
 	}
 
-	ResolveCollisions(world)
+	s.resolveCollisions(world)
 
 	// reset contacts - probably want to do this later
 	for _, entity := range allEntities {
@@ -61,7 +71,7 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 	}
 }
 
-func ResolveCollisions(world GameWorld) {
+func (s *PhysicsSystem) resolveCollisions(world GameWorld) {
 	var collidableEntities []*entities.Entity
 	for _, e := range world.Entities() {
 		if e.Collider == nil {
@@ -89,6 +99,7 @@ func ResolveCollisions(world GameWorld) {
 		}
 
 		entitiesInPartition := world.SpatialPartition().QueryEntities(e1.BoundingBox())
+		s.Observer.OnSpatialQuery(e1.GetID(), len(entitiesInPartition))
 		for _, spatialEntity := range entitiesInPartition {
 			e2 := world.GetEntityByID(spatialEntity.GetID())
 			// todo: remove this hack, entities that are deleted should be removed
@@ -126,11 +137,11 @@ func ResolveCollisions(world GameWorld) {
 	}
 
 	if len(entityPairs) > 0 {
-		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
+		s.detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world)
 	}
 }
 
-func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world GameWorld) {
+func (s *PhysicsSystem) detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world GameWorld) {
 	// 1. collect pairs of entities that are colliding, sorted by separating vector
 	// 2. perform collision resolution for any colliding entities
 	// 3. this can cause more collisions, repeat until no more further detected collisions, or we hit the configured max
@@ -146,7 +157,7 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 	for collisionRuns = 0; collisionRuns < absoluteMaxRunCount; collisionRuns++ {
 		// TODO: update entityPairs to not include collisions that have already been resolved
 		// in fact, we may want to do the looping at the ResolveCollisions level
-		collisionCandidates := collectSortedCollisionCandidates(entityPairs, entityList, maximallyCollidingEntities, world)
+		collisionCandidates := s.collectSortedCollisionCandidates(entityPairs, entityList, maximallyCollidingEntities, world)
 		if len(collisionCandidates) == 0 {
 			break
 		}
@@ -157,6 +168,7 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 			entity := world.GetEntityByID(*contact.EntityID)
 			sourceEntity := world.GetEntityByID(*contact.SourceEntityID)
 			resolveCollision(entity, sourceEntity, contact)
+			s.Observer.OnCollisionResolution(entity.GetID())
 
 			entity.Collider.Contacts = append(entity.Collider.Contacts, *contact)
 
@@ -190,7 +202,7 @@ func filterCollisionCandidates(contacts []*collision.Contact) []*collision.Conta
 // collectSortedCollisionCandidates collects all potential collisions that can occur in the frame.
 // these are "candidates" in that they are not guaranteed to have actually happened since
 // if we resolve some of the collisions in the list, some will be invalidated
-func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world GameWorld) []*collision.Contact {
+func (s *PhysicsSystem) collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world GameWorld) []*collision.Contact {
 	// initialize collision state
 
 	// TODO: may not need to transform the collider since colliders will be children of the actual entity
@@ -219,6 +231,7 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 		}
 
 		contacts := collide(pair[0], pair[1])
+		s.Observer.OnCollisionCheck(pair[0].GetID())
 		if len(contacts) == 0 {
 			continue
 		}

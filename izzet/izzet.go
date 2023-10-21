@@ -15,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -65,6 +66,7 @@ type Izzet struct {
 	playModeSystems   []System
 	editorModeSystems []System
 	appMode           app.AppMode
+	physicsObserver   *observers.PhysicsObserver
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
@@ -121,6 +123,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.serializer = serialization.New(g, g.world)
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
+	g.physicsObserver = observers.NewPhysicsObserver()
 
 	g.setupSystems()
 
@@ -239,7 +242,7 @@ func (g *Izzet) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, &systems.CharacterControllerSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
-	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{})
+	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
 
 	g.editorModeSystems = append(g.editorModeSystems, &systems.AnimationSystem{})

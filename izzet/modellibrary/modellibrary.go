@@ -61,6 +61,7 @@ type ModelLibrary struct {
 	Primitives map[Handle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
+	RootJoints map[string]int
 }
 
 func New() *ModelLibrary {
@@ -68,6 +69,7 @@ func New() *ModelLibrary {
 		Primitives: map[Handle][]Primitive{},
 		Animations: map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:     map[string]map[int]*modelspec.JointSpec{},
+		RootJoints: map[string]int{},
 	}
 
 	return m
@@ -161,13 +163,14 @@ func (m *ModelLibrary) RegisterMeshWithHandle(handle Handle, mesh *modelspec.Mes
 	return handle
 }
 
-func (m *ModelLibrary) RegisterAnimations(handle string, animations map[string]*modelspec.AnimationSpec, joints map[int]*modelspec.JointSpec) {
-	m.Animations[handle] = animations
-	m.Joints[handle] = joints
+func (m *ModelLibrary) RegisterAnimations(handle string, document *modelspec.Document) {
+	m.Animations[handle] = document.Animations
+	m.Joints[handle] = document.JointMap
+	m.RootJoints[handle] = document.RootJoint.ID
 }
 
-func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec) {
-	return m.Animations[handle], m.Joints[handle]
+func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
+	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
 }
 
 func (m *ModelLibrary) GetPrimitives(handle Handle) []Primitive {

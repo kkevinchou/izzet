@@ -88,9 +88,9 @@ func CreateCapsule(ml *modellibrary.ModelLibrary, length float64, radius float64
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
 	entity.Collider = &ColliderComponent{
 		CapsuleCollider: &collider.Capsule{
-			Radius: 10,
-			Top:    mgl64.Vec3{0, length / 2, 0},
-			Bottom: mgl64.Vec3{0, -length / 2, 0},
+			Radius: radius,
+			Top:    mgl64.Vec3{0, radius + length, 0},
+			Bottom: mgl64.Vec3{0, radius, 0},
 		},
 		ColliderGroup: ColliderGroupFlagPlayer,
 		CollisionMask: ColliderGroupFlagTerrain,

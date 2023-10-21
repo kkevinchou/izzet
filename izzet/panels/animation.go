@@ -33,7 +33,7 @@ func animationUI(app App, entity *entities.Entity) {
 
 	var anims []string
 
-	animations, joints := app.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
+	animations, joints, _ := app.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
 	for name, _ := range animations {
 		anims = append(anims, name)
 	}

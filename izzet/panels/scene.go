@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -54,9 +55,13 @@ func sceneHierarchy(app App, world GameWorld) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Player") {
-				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
-				// handle := modellibrary.NewGlobalHandle("alpha")
-				// entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle}
+				entity := entities.CreateCapsule(app.ModelLibrary(), 80, 40)
+
+				handle := modellibrary.NewGlobalHandle("alpha")
+				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle}
+				entity.Animation = entities.NewAnimationComponent("alpha", app.ModelLibrary())
+				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
+
 				entity.Physics.GravityEnabled = true
 				entity.Name = "player"
 				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}

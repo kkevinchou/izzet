@@ -66,38 +66,7 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 
 	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
 	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
-	// entity.Movement = &MovementComponent{
-	// 	RotationConfig: &RotationConfig{
-	// 		Quat: rotation,
-	// 	},
-	// }
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
-
-	// msPrimitives := []*modelspec.PrimitiveSpecification{primitives[0].Primitive}
-	// entity.Collider = &ColliderComponent{TriMeshCollider: collider.CreateTriMeshFromPrimitives(msPrimitives)}
-
-	// capsule := collider.NewCapsuleFromVertices(uniqueVertices)
-	// entity.Collider = &ColliderComponent{CapsuleCollider: &capsule, CollisionMask: ColliderGroupFlagTerrain}
-
-	id += 1
-	return entity
-}
-
-func CreateCapsule(ml *modellibrary.ModelLibrary, length float64, radius float64) *Entity {
-	entity := InstantiateBaseEntity("capsule", id)
-	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
-	entity.Collider = &ColliderComponent{
-		CapsuleCollider: &collider.Capsule{
-			Radius: radius,
-			Top:    mgl64.Vec3{0, radius + length, 0},
-			Bottom: mgl64.Vec3{0, radius, 0},
-		},
-		ColliderGroup: ColliderGroupFlagPlayer,
-		CollisionMask: ColliderGroupFlagTerrain,
-	}
-
-	capsule := entity.Collider.CapsuleCollider
-	entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
 	id += 1
 	return entity

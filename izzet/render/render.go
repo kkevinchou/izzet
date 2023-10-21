@@ -884,70 +884,72 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			continue
 		}
 
-		capsuleCollider := entity.Collider.CapsuleCollider
-		if capsuleCollider != nil {
-			shader := shaderManager.GetShaderProgram("flat")
-			color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
+		if panels.DBG.RenderColliders {
+			capsuleCollider := entity.Collider.CapsuleCollider
+			if capsuleCollider != nil {
+				shader := shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
 
-			transform := entities.WorldTransform(entity)
-			capsuleCollider := capsuleCollider.Transform(transform)
+				transform := entities.WorldTransform(entity)
+				capsuleCollider := capsuleCollider.Transform(transform)
 
-			top := capsuleCollider.Top
-			bottom := capsuleCollider.Bottom
-			radius := capsuleCollider.Radius
+				top := capsuleCollider.Top
+				bottom := capsuleCollider.Bottom
+				radius := capsuleCollider.Radius
 
-			var numCircleSegments int = 8
-			var lines [][]mgl64.Vec3
+				var numCircleSegments int = 8
+				var lines [][]mgl64.Vec3
 
-			// -x +x vertical lines
-			lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
-			lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
+				// -x +x vertical lines
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
 
-			// -z +z vertical lines
-			lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
-			lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
+				// -z +z vertical lines
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
 
-			radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
+				radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
 
-			// top and bottom xz plane rings
-			for i := 0; i < numCircleSegments; i++ {
-				x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-				z1 := math.Sin(float64(i)*radiansPerSegment) * radius
+				// top and bottom xz plane rings
+				for i := 0; i < numCircleSegments; i++ {
+					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
+					z1 := math.Sin(float64(i)*radiansPerSegment) * radius
 
-				x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-				z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
+					x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
+					z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
 
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
+					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
+					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
+				}
+
+				radiansPerSegment = math.Pi / float64(numCircleSegments)
+
+				// top and bottom xy plane rings
+				for i := 0; i < numCircleSegments; i++ {
+					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
+					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+					x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
+					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
+
+					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
+					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
+				}
+
+				// top and bottom yz plane rings
+				for i := 0; i < numCircleSegments; i++ {
+					z1 := math.Cos(float64(i)*radiansPerSegment) * radius
+					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+					z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
+					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
+
+					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
+					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
+				}
+
+				drawLines(viewerContext, shader, lines, 0.5, color)
 			}
-
-			radiansPerSegment = math.Pi / float64(numCircleSegments)
-
-			// top and bottom xy plane rings
-			for i := 0; i < numCircleSegments; i++ {
-				x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-				y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-				x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-				y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
-			}
-
-			// top and bottom yz plane rings
-			for i := 0; i < numCircleSegments; i++ {
-				z1 := math.Cos(float64(i)*radiansPerSegment) * radius
-				y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-				z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-				y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
-			}
-
-			drawLines(viewerContext, shader, lines, 0.5, color)
 		}
 	}
 }

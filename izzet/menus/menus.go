@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	izzetapp "github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/assets"
 )
 
@@ -113,6 +114,16 @@ func SetupMenuBar(app App) imgui.Vec2 {
 
 		imgui.EndMenu()
 	}
+
+	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
+	if imgui.BeginMenu("View") {
+		if imgui.MenuItemV("Show Colliders", "", panels.DBG.RenderColliders, true) {
+			panels.DBG.RenderColliders = !panels.DBG.RenderColliders
+		}
+
+		imgui.EndMenu()
+	}
+
 	imgui.EndMainMenuBar()
 	return size
 }

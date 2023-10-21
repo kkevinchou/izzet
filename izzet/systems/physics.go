@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	resolveCountMax   = 3
-	groundedThreshold = 0.005
+	resolveCountMax          int     = 3
+	groundedThreshold        float64 = 0.005
+	accelerationDueToGravity float64 = 250 // units per second
 )
 
 type PhysicsSystem struct {
@@ -27,9 +28,9 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		if physicsComponent.Velocity.Len() != 0 {
-			entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
-		}
+		velocityFromGravity := mgl64.Vec3{0, -accelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
+		physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
+		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
 	}
 
 	ResolveCollisions(world)
@@ -48,6 +49,7 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 			for _, contact := range entity.Collider.Contacts {
 				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > (1 - groundedThreshold) {
 					entity.Physics.Grounded = true
+					entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
 				}
 			}
 		}

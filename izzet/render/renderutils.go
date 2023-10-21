@@ -389,7 +389,7 @@ func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Ent
 		for _, p := range primitives {
 			result = append(result, RenderData{
 				Primitive:   p.Primitive,
-				Transform:   mgl32.Ident4(),
+				Transform:   utils.Mat4F64ToF32(entity.MeshComponent.Transform),
 				VAO:         p.VAO,
 				GeometryVAO: p.GeometryVAO,
 			})

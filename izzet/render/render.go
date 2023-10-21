@@ -880,7 +880,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 
 	for _, entity := range renderableEntities {
-		if entity == nil || entity.Material != nil || entity.MeshComponent != nil || entity.Collider == nil {
+		if entity == nil || entity.Material != nil || entity.Collider == nil {
 			continue
 		}
 

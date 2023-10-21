@@ -12,7 +12,7 @@ import (
 
 const (
 	resolveCountMax          int     = 3
-	groundedThreshold        float64 = 0.005
+	groundedThreshold        float64 = 0.85
 	accelerationDueToGravity float64 = 250 // units per second
 )
 
@@ -28,8 +28,10 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		velocityFromGravity := mgl64.Vec3{0, -accelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
-		physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
+		if physicsComponent.GravityEnabled {
+			velocityFromGravity := mgl64.Vec3{0, -accelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
+			physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
+		}
 		entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(physicsComponent.Velocity.Mul(delta.Seconds())))
 	}
 
@@ -47,7 +49,7 @@ func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 
 		if entity.Collider.Contacts != nil && entity.Physics != nil {
 			for _, contact := range entity.Collider.Contacts {
-				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > (1 - groundedThreshold) {
+				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > groundedThreshold {
 					entity.Physics.Grounded = true
 					entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
 				}

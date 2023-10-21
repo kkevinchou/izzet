@@ -272,6 +272,7 @@ func entityProps(entity *entities.Entity) {
 			setupRow("Grounded", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Physics.Grounded))
 			}, true)
+			setupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
 			imgui.EndTable()
 			imgui.PushID("remove phys")
 			if imgui.Button("Remove") {

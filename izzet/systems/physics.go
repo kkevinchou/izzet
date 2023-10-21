@@ -131,6 +131,8 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 			break
 		}
 
+		collisionCandidates = filterCollisionCandidates(collisionCandidates)
+
 		resolvedEntities := resolveCollisions(collisionCandidates, world)
 		for entityID, otherEntityID := range resolvedEntities {
 			e1 := world.GetEntityByID(entityID)
@@ -157,6 +159,22 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 	if collisionRuns == absoluteMaxRunCount && collisionRuns != 0 {
 		fmt.Println("hit absolute max collision run count", collisionRuns)
 	}
+}
+
+// only resolve collisions for an entity, one collision at a time. resolving one collision may, as a side-effect, resolve other collisions as well
+func filterCollisionCandidates(contacts []*collision.Contact) []*collision.Contact {
+	var filteredSlice []*collision.Contact
+
+	seen := map[int]bool{}
+	for i := range contacts {
+		contact := contacts[i]
+		if _, ok := seen[*contact.EntityID]; !ok {
+			seen[*contact.EntityID] = true
+			filteredSlice = append(filteredSlice, contact)
+		}
+	}
+
+	return filteredSlice
 }
 
 // collectSortedCollisionCandidates collects all potential collisions that can occur in the frame.

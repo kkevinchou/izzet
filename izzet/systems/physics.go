@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/collision"
 )
@@ -18,7 +19,7 @@ const (
 
 type PhysicsObserver interface {
 	OnSpatialQuery(entityID int, count int)
-	OnCollisionCheck(entityID int)
+	OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity)
 	OnCollisionResolution(entityID int)
 	Clear()
 }
@@ -167,8 +168,7 @@ func (s *PhysicsSystem) detectAndResolveCollisionsForEntityPairs(entityPairs [][
 		for _, contact := range collisionCandidates {
 			entity := world.GetEntityByID(*contact.EntityID)
 			sourceEntity := world.GetEntityByID(*contact.SourceEntityID)
-			resolveCollision(entity, sourceEntity, contact)
-			s.Observer.OnCollisionResolution(entity.GetID())
+			s.resolveCollision(entity, sourceEntity, contact)
 
 			entity.Collider.Contacts = append(entity.Collider.Contacts, *contact)
 
@@ -230,8 +230,7 @@ func (s *PhysicsSystem) collectSortedCollisionCandidates(entityPairs [][]*entiti
 			continue
 		}
 
-		contacts := collide(pair[0], pair[1])
-		s.Observer.OnCollisionCheck(pair[0].GetID())
+		contacts := s.collide(pair[0], pair[1])
 		if len(contacts) == 0 {
 			continue
 		}
@@ -243,10 +242,12 @@ func (s *PhysicsSystem) collectSortedCollisionCandidates(entityPairs [][]*entiti
 	return allContacts
 }
 
-func collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {
+func (s *PhysicsSystem) collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {
+	s.Observer.OnCollisionCheck(e1, e2)
+
 	var result []*collision.Contact
 
-	if ok, capsuleEntity, triMeshEntity := isCapsuleTriMeshCollision(e1, e2); ok {
+	if ok, capsuleEntity, triMeshEntity := app.IsCapsuleTriMeshCollision(e1, e2); ok {
 		contacts := collision.CheckCollisionCapsuleTriMesh(
 			*capsuleEntity.Collider.TransformedCapsuleCollider,
 			*triMeshEntity.Collider.TransformedTriMeshCollider,
@@ -264,7 +265,7 @@ func collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {
 		}
 
 		result = contacts
-	} else if ok := isCapsuleCapsuleCollision(e1, e2); ok {
+	} else if ok := app.IsCapsuleCapsuleCollision(e1, e2); ok {
 		contact := collision.CheckCollisionCapsuleCapsule(
 			*e1.Collider.TransformedCapsuleCollider,
 			*e2.Collider.TransformedCapsuleCollider,
@@ -291,33 +292,8 @@ func collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {
 	return filteredContacts
 }
 
-func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact) {
+func (s *PhysicsSystem) resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact) {
 	separatingVector := contact.SeparatingVector
 	entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(separatingVector))
-}
-
-func isCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity, *entities.Entity) {
-	if e1.Collider.CapsuleCollider != nil {
-		if e2.Collider.TriMeshCollider != nil {
-			return true, e1, e2
-		}
-	}
-
-	if e2.Collider.CapsuleCollider != nil {
-		if e1.Collider.TriMeshCollider != nil {
-			return true, e2, e1
-		}
-	}
-
-	return false, nil, nil
-}
-
-func isCapsuleCapsuleCollision(e1, e2 *entities.Entity) bool {
-	if e1.Collider.CapsuleCollider != nil {
-		if e2.Collider.CapsuleCollider != nil {
-			return true
-		}
-	}
-
-	return false
+	s.Observer.OnCollisionResolution(entity.GetID())
 }

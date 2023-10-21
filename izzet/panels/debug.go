@@ -56,6 +56,8 @@ type DebugSettings struct {
 	VoxelHighlightZ               int32
 	VoxelHighlightDistanceField   float32
 	VoxelHighlightRegionID        int
+
+	RenderColliders bool
 }
 
 var DBG DebugSettings = DebugSettings{

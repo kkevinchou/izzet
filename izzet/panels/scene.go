@@ -55,22 +55,29 @@ func sceneHierarchy(app App, world GameWorld) {
 		imgui.PushID("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Player") {
-				entity := entities.CreateCapsule(app.ModelLibrary(), 80, 40)
+				var radius float64 = 40
+				var length float64 = 80
+				entity := entities.InstantiateEntity("player")
+				entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
+				entity.Collider = &entities.ColliderComponent{
+					CapsuleCollider: &collider.Capsule{
+						Radius: radius,
+						Top:    mgl64.Vec3{0, radius + length, 0},
+						Bottom: mgl64.Vec3{0, radius, 0},
+					},
+					ColliderGroup: entities.ColliderGroupFlagPlayer,
+					CollisionMask: entities.ColliderGroupFlagTerrain,
+				}
+				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
+
+				capsule := entity.Collider.CapsuleCollider
+				entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
 				handle := modellibrary.NewGlobalHandle("alpha")
 				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle}
 				entity.Animation = entities.NewAnimationComponent("alpha", app.ModelLibrary())
 				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
-				entity.Physics.GravityEnabled = true
-				entity.Name = "player"
-				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
-				world.AddEntity(entity)
-				SelectEntity(entity)
-				imgui.CloseCurrentPopup()
-			}
-			if imgui.Button("Add Capsule") {
-				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
 				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()
@@ -118,30 +125,6 @@ func sceneHierarchy(app App, world GameWorld) {
 		}
 		imgui.PopID()
 	}
-}
-
-func uiCreateCapsule(app App, world GameWorld, length int, capsuleCollider bool) *entities.Entity {
-	entity := entities.CreateCube(app.ModelLibrary(), length)
-
-	if capsuleCollider {
-		entity.Collider = &entities.ColliderComponent{
-			CapsuleCollider: &collider.Capsule{
-				Radius: 10,
-				Top:    mgl64.Vec3{0, 20, 0},
-				Bottom: mgl64.Vec3{0, -20, 0},
-			},
-			ColliderGroup: entities.ColliderGroupFlagPlayer,
-			CollisionMask: entities.ColliderGroupFlagTerrain,
-		}
-	} else {
-		meshHandle := entity.MeshComponent.MeshHandle
-		primitives := app.ModelLibrary().GetPrimitives(meshHandle)
-		entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
-		entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
-	}
-
-	world.AddEntity(entity)
-	return entity
 }
 
 func drawEntity(entity *entities.Entity, app App, world GameWorld) bool {

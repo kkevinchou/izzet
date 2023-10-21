@@ -16,6 +16,8 @@ type PhysicsObserver struct {
 	CollisionCheckTriangle map[int]int
 	CollisionCheckTriMesh  map[int]int
 	CollisionCheckCapsule  map[int]int
+
+	BoundingBoxCheck map[int]int
 }
 
 func NewPhysicsObserver() *PhysicsObserver {
@@ -26,9 +28,12 @@ func NewPhysicsObserver() *PhysicsObserver {
 		CollisionCheckTriangle: map[int]int{},
 		CollisionCheckTriMesh:  map[int]int{},
 		CollisionCheckCapsule:  map[int]int{},
+		BoundingBoxCheck:       map[int]int{},
 	}
 }
-
+func (o *PhysicsObserver) OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity) {
+	o.BoundingBoxCheck[e1.GetID()] += 1
+}
 func (o *PhysicsObserver) OnSpatialQuery(entityID int, count int) {
 	o.SpatialQuery[entityID] += count
 }
@@ -62,5 +67,8 @@ func (o *PhysicsObserver) Clear() {
 	}
 	for k := range o.CollisionCheckCapsule {
 		o.CollisionCheckCapsule[k] = 0
+	}
+	for k := range o.BoundingBoxCheck {
+		o.BoundingBoxCheck[k] = 0
 	}
 }

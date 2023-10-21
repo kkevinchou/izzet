@@ -55,7 +55,7 @@ func sceneHierarchy(app App, world GameWorld) {
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Player") {
 				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
-				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 10}
+				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
 				world.AddEntity(entity)
 				SelectEntity(entity)
 				imgui.CloseCurrentPopup()

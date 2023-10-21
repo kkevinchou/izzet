@@ -257,7 +257,6 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	g.world.AddEntity(pointLight)
 
 	cube := entities.CreateCube(g.modelLibrary, 50)
-	cube.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200}
 	entities.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(cube)
 

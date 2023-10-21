@@ -16,36 +16,7 @@ type GameWorld interface {
 	GetFrameInput() input.Input
 }
 
-type CharacterControllerSystem struct {
-}
-
 type CameraSystem struct {
-}
-
-func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld) {
-	frameInput := world.GetFrameInput()
-	for _, entity := range world.Entities() {
-		if entity.CharacterControllerComponent == nil {
-			continue
-		}
-
-		c := entity.CharacterControllerComponent
-
-		keyboardInput := frameInput.KeyboardInput
-		if key, ok := keyboardInput[input.KeyboardKeyI]; ok && key.Event == input.KeyboardEventDown {
-			entities.SetLocalPosition(entity, entity.LocalPosition.Add(mgl64.Vec3{0, 0, -c.Speed * float64(delta.Milliseconds()) / 1000}))
-		}
-		if key, ok := keyboardInput[input.KeyboardKeyK]; ok && key.Event == input.KeyboardEventDown {
-			entities.SetLocalPosition(entity, entity.LocalPosition.Add(mgl64.Vec3{0, 0, c.Speed * float64(delta.Milliseconds()) / 1000}))
-		}
-
-		if key, ok := keyboardInput[input.KeyboardKeyJ]; ok && key.Event == input.KeyboardEventDown {
-			entities.SetLocalPosition(entity, entity.LocalPosition.Add(mgl64.Vec3{-c.Speed * float64(delta.Milliseconds()) / 1000, 0, 0}))
-		}
-		if key, ok := keyboardInput[input.KeyboardKeyL]; ok && key.Event == input.KeyboardEventDown {
-			entities.SetLocalPosition(entity, entity.LocalPosition.Add(mgl64.Vec3{c.Speed * float64(delta.Milliseconds()) / 1000, 0, 0}))
-		}
-	}
 }
 
 func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
@@ -53,11 +24,10 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 
 	var camera *entities.Entity
 	for _, entity := range world.Entities() {
-		if entity.CameraComponent == nil {
-			continue
+		if entity.CameraComponent != nil {
+			camera = entity
+			break
 		}
-		camera = entity
-		break
 	}
 
 	if camera == nil {

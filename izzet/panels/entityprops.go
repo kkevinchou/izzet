@@ -269,6 +269,9 @@ func entityProps(entity *entities.Entity) {
 				}
 				imgui.PopID()
 			}, true)
+			setupRow("Grounded", func() {
+				imgui.LabelText("", fmt.Sprintf("%t", entity.Physics.Grounded))
+			}, true)
 			imgui.EndTable()
 			imgui.PushID("remove phys")
 			if imgui.Button("Remove") {

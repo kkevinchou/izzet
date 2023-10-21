@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/kkevinchou/kitolib/collision/collider"
+import (
+	"github.com/kkevinchou/kitolib/collision"
+	"github.com/kkevinchou/kitolib/collision/collider"
+)
 
 type ColliderGroup string
 
@@ -40,7 +43,7 @@ type ColliderComponent struct {
 	SkipSeparation bool
 
 	// Contacts marks which entities it collided with in the current frame
-	Contacts map[int]bool `json:"-"`
+	Contacts []collision.Contact
 
 	CapsuleCollider     *collider.Capsule
 	TriMeshCollider     *collider.TriMesh `json:"-"`

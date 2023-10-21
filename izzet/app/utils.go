@@ -5,6 +5,12 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
+var zeroVec mgl64.Vec3
+
+func IsZeroVec(v mgl64.Vec3) bool {
+	return v == zeroVec
+}
+
 func GetControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {
 	var controlVector mgl64.Vec3
 	if key, ok := keyboardInput[input.KeyboardKeyW]; ok && key.Event == input.KeyboardEventDown {

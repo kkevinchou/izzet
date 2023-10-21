@@ -55,6 +55,9 @@ func sceneHierarchy(app App, world GameWorld) {
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Player") {
 				entity := entities.CreateCapsule(app.ModelLibrary(), 20, 10)
+				// handle := modellibrary.NewGlobalHandle("alpha")
+				// entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle}
+				entity.Physics.GravityEnabled = true
 				entity.Name = "player"
 				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
 				world.AddEntity(entity)

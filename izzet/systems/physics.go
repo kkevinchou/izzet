@@ -21,6 +21,7 @@ type PhysicsObserver interface {
 	OnSpatialQuery(entityID int, count int)
 	OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity)
 	OnCollisionResolution(entityID int)
+	OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity)
 	Clear()
 }
 
@@ -230,6 +231,10 @@ func (s *PhysicsSystem) collectSortedCollisionCandidates(entityPairs [][]*entiti
 			continue
 		}
 
+		if !s.collideBoundingBox(pair[0], pair[1]) {
+			continue
+		}
+
 		contacts := s.collide(pair[0], pair[1])
 		if len(contacts) == 0 {
 			continue
@@ -240,6 +245,27 @@ func (s *PhysicsSystem) collectSortedCollisionCandidates(entityPairs [][]*entiti
 	sort.Sort(collision.ContactsBySeparatingDistance(allContacts))
 
 	return allContacts
+}
+
+func (s *PhysicsSystem) collideBoundingBox(e1 *entities.Entity, e2 *entities.Entity) bool {
+	s.Observer.OnBoundingBoxCheck(e1, e2)
+
+	bb1 := e1.BoundingBox()
+	bb2 := e2.BoundingBox()
+
+	if bb1.MaxVertex.X() < bb2.MinVertex.X() || bb2.MaxVertex.X() < bb1.MinVertex.X() {
+		return false
+	}
+
+	if bb1.MaxVertex.Y() < bb2.MinVertex.Y() || bb2.MaxVertex.Y() < bb1.MinVertex.Y() {
+		return false
+	}
+
+	if bb1.MaxVertex.Z() < bb2.MinVertex.Z() || bb2.MaxVertex.Z() < bb1.MinVertex.Z() {
+		return false
+	}
+
+	return true
 }
 
 func (s *PhysicsSystem) collide(e1 *entities.Entity, e2 *entities.Entity) []*collision.Contact {

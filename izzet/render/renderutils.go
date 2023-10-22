@@ -433,8 +433,7 @@ func drawModel(
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
 	for _, p := range primitives {
-		primitive := p.Primitive
-		if material == nil && primitive.PBRMaterial == nil {
+		if material == nil && p.Primitive.PBRMaterial == nil {
 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
 			shader.SetUniformVec3("albedo", mgl32.Vec3{255.0 / 255, 28.0 / 255, 217.0 / 121.0})
 			shader.SetUniformFloat("roughness", 0.85)
@@ -447,7 +446,7 @@ func drawModel(
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		} else if material == nil {
-			primitiveMaterial := primitive.PBRMaterial.PBRMetallicRoughness
+			primitiveMaterial := p.Primitive.PBRMaterial.PBRMetallicRoughness
 			shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
 
 			if primitiveMaterial.BaseColorTextureIndex != nil {
@@ -469,8 +468,8 @@ func drawModel(
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
 			textureName := settings.DefaultTexture
-			if primitive.TextureName() != "" {
-				textureName = primitive.TextureName()
+			if p.Primitive.TextureName() != "" {
+				textureName = p.Primitive.TextureName()
 			}
 			texture := assetManager.GetTexture(textureName)
 			textureID = texture.ID
@@ -499,7 +498,7 @@ func drawModel(
 			// order is clockwise.
 			gl.FrontFace(gl.CW)
 		}
-		iztDrawElements(int32(len(primitive.VertexIndices)))
+		iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		if modelMat.Det() < 0 {
 			gl.FrontFace(gl.CCW)
 		}

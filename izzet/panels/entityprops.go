@@ -313,6 +313,7 @@ func entityProps(entity *entities.Entity, app App) {
 		imgui.EndCombo()
 	}
 	imgui.PopID()
+	imgui.SameLine()
 	if imgui.Button("Add Component") {
 		entity := SelectedEntity()
 		if entity != nil {

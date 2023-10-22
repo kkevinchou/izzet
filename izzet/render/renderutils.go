@@ -381,23 +381,23 @@ type RenderData struct {
 	GeometryVAO uint32
 }
 
-func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
-	var result []RenderData
+// func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
+// 	var result []RenderData
 
-	if entity.MeshComponent != nil {
-		primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
-		for _, p := range primitives {
-			result = append(result, RenderData{
-				Primitive:   p.Primitive,
-				Transform:   utils.Mat4F64ToF32(entity.MeshComponent.Transform),
-				VAO:         p.VAO,
-				GeometryVAO: p.GeometryVAO,
-			})
-		}
-	}
+// 	if entity.MeshComponent != nil {
+// 		primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
+// 		for _, p := range primitives {
+// 			result = append(result, RenderData{
+// 				Primitive:   p.Primitive,
+// 				Transform:   utils.Mat4F64ToF32(entity.MeshComponent.Transform),
+// 				VAO:         p.VAO,
+// 				GeometryVAO: p.GeometryVAO,
+// 			})
+// 		}
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
 func drawModel(
 	viewerContext ViewerContext,
@@ -431,8 +431,9 @@ func drawModel(
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	for _, renderData := range getRenderData(modelLibrary, entity) {
-		primitive := renderData.Primitive
+	primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
+	for _, p := range primitives {
+		primitive := p.Primitive
 		if material == nil && primitive.PBRMaterial == nil {
 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
 			shader.SetUniformVec3("albedo", mgl32.Vec3{255.0 / 255, 28.0 / 255, 217.0 / 121.0})
@@ -486,10 +487,10 @@ func drawModel(
 		}
 		shader.SetUniformFloat("ao", 1.0)
 
-		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(renderData.Transform)
+		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
 		shader.SetUniformMat4("model", modelMat)
 
-		gl.BindVertexArray(renderData.VAO)
+		gl.BindVertexArray(p.VAO)
 		if modelMat.Det() < 0 {
 			// from the gltf spec:
 			// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),
@@ -498,7 +499,7 @@ func drawModel(
 			// order is clockwise.
 			gl.FrontFace(gl.CW)
 		}
-		iztDrawElements(int32(len(renderData.Primitive.VertexIndices)))
+		iztDrawElements(int32(len(primitive.VertexIndices)))
 		if modelMat.Det() < 0 {
 			gl.FrontFace(gl.CCW)
 		}

@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 const (
@@ -38,9 +39,16 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld)
 	c := entity.CharacterControllerComponent
 
 	c.ControlVector = app.GetControlVector(keyboardInput)
-	if c.ControlVector.Y() > 0 && entity.Physics.Grounded {
-		entity.Physics.Grounded = false
-		entity.Physics.Velocity = mgl64.Vec3{0, jumpVelocity, 0}
+	if entity.Physics.Grounded {
+		entity.Physics.Velocity = mgl64.Vec3{}
+		if c.ControlVector.Y() > 0 {
+			entity.Physics.Grounded = false
+			entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl64.Vec3{0, jumpVelocity, 0})
+		}
+		if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
+			dir := entities.GetLocalRotation(camera).Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
+			entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(800))
+		}
 	}
 	movementDir := calculateMovementDir(entities.GetLocalRotation(camera), c.ControlVector)
 

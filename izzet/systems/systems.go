@@ -34,6 +34,9 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 		return
 	}
 
+	newOrientation := cameraOrientation(frameInput, camera)
+	entities.SetLocalRotation(camera, newOrientation)
+
 	targetID := camera.CameraComponent.Target
 	if targetID == nil {
 		return
@@ -44,6 +47,15 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 		return
 	}
 
+	// swivel around target
+	target := world.GetEntityByID(*camera.CameraComponent.Target)
+	targetPosition := target.WorldPosition().Add(camera.CameraComponent.TargetPositionOffset)
+	position := newOrientation.Rotate(mgl64.Vec3{0, 0, 100}).Add(targetPosition)
+
+	entities.SetLocalPosition(camera, position)
+}
+
+func cameraOrientation(frameInput input.Input, camera *entities.Entity) mgl64.Quat {
 	// camera rotations
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
@@ -68,11 +80,5 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 		newOrientation = camera.LocalRotation
 	}
 
-	// swivel around target
-	target := world.GetEntityByID(*camera.CameraComponent.Target)
-	targetPosition := target.WorldPosition().Add(camera.CameraComponent.TargetPositionOffset)
-	position := newOrientation.Rotate(mgl64.Vec3{0, 0, 100}).Add(targetPosition)
-
-	entities.SetLocalPosition(camera, position)
-	entities.SetLocalRotation(camera, newOrientation)
+	return newOrientation
 }

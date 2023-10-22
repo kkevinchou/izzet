@@ -3,7 +3,6 @@ package modellibrary
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/model"
@@ -43,9 +42,7 @@ func NewHandleFromMeshID(namespace string, meshID int) Handle {
 }
 
 type Primitive struct {
-	// Name      string
 	Primitive *modelspec.PrimitiveSpecification
-	Transform mgl32.Mat4
 
 	// vao that contains all vertex attributes
 	// position, normals, texture coords, joint indices/weights, etc

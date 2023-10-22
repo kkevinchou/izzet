@@ -612,11 +612,12 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		for _, renderData := range getRenderData(r.app.ModelLibrary(), entity) {
-			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
+		primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+		for _, p := range primitives {
+			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 
-			gl.BindVertexArray(renderData.GeometryVAO)
-			iztDrawElements(int32(len(renderData.Primitive.VertexIndices)))
+			gl.BindVertexArray(p.GeometryVAO)
+			iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
 	}
 }
@@ -674,11 +675,12 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		for _, renderData := range getRenderData(r.app.ModelLibrary(), entity) {
-			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(renderData.Transform))
+		primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+		for _, p := range primitives {
+			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 
-			gl.BindVertexArray(renderData.GeometryVAO)
-			iztDrawElements(int32(len(renderData.Primitive.VertexIndices)))
+			gl.BindVertexArray(p.GeometryVAO)
+			iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
 	}
 }

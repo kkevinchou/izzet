@@ -449,50 +449,74 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			)
 		}
 
-		// modelMatrix := entities.WorldTransform(entity)
-		// TODO: optimize this - can probably cache some of these computations
-
-		// 		// draw joint
-		// 		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-		// 			jointShader := shaderManager.GetShaderProgram("flat")
-		// 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
-
-		// 			var jointLines [][]mgl64.Vec3
-		// 			model := entity.Model
-		// 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-
-		// 			for _, jid := range panels.JointsToRender {
-		// 				jointTransform := animationTransforms[jid]
-		// 				lines := cubeLines(15)
-		// 				jt := utils.Mat4F32ToF64(jointTransform)
-		// 				for _, line := range lines {
-		// 					points := line
-		// 					for i := 0; i < len(points); i++ {
-		// 						bindTransform := model.JointMap()[jid].FullBindTransform
-		// 						// The calculated joint transforms apply to joints in bind space
-		// 						// 		i.e. the calculated transforms are computed as:
-		// 						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
-		// 						//
-		// 						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
-		// 						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
-		// 						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
-		// 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
-		// 						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
-		// 					}
-		// 				}
-		// 				jointLines = append(jointLines, lines...)
-		// 			}
-
-		// 			for _, line := range jointLines {
-		// 				points := line
-		// 				for i := 0; i < len(points); i++ {
-		// 					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
-		// 				}
-		// 			}
-
-		// 			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
-		// 		}
 	}
+
+	if r.app.AppMode() == app.AppModeEditor {
+		for _, entity := range r.world.Entities() {
+			lightInfo := entity.LightInfo
+			if lightInfo != nil {
+				if lightInfo.Type == 0 {
+					shader := shaderManager.GetShaderProgram("flat")
+					color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+
+					direction3F := lightInfo.Direction3F
+					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
+					// directional light arrow
+					lines := [][]mgl64.Vec3{
+						[]mgl64.Vec3{
+							entity.WorldPosition(),
+							entity.WorldPosition().Add(dir),
+						},
+					}
+					drawLines(viewerContext, shader, lines, 0.5, color)
+				}
+			}
+		}
+	}
+
+	// modelMatrix := entities.WorldTransform(entity)
+	// TODO: optimize this - can probably cache some of these computations
+
+	// 		// draw joint
+	// 		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
+	// 			jointShader := shaderManager.GetShaderProgram("flat")
+	// 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+
+	// 			var jointLines [][]mgl64.Vec3
+	// 			model := entity.Model
+	// 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+
+	// 			for _, jid := range panels.JointsToRender {
+	// 				jointTransform := animationTransforms[jid]
+	// 				lines := cubeLines(15)
+	// 				jt := utils.Mat4F32ToF64(jointTransform)
+	// 				for _, line := range lines {
+	// 					points := line
+	// 					for i := 0; i < len(points); i++ {
+	// 						bindTransform := model.JointMap()[jid].FullBindTransform
+	// 						// The calculated joint transforms apply to joints in bind space
+	// 						// 		i.e. the calculated transforms are computed as:
+	// 						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
+	// 						//
+	// 						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
+	// 						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
+	// 						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
+	// 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
+	// 						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
+	// 					}
+	// 				}
+	// 				jointLines = append(jointLines, lines...)
+	// 			}
+
+	// 			for _, line := range jointLines {
+	// 				points := line
+	// 				for i := 0; i < len(points); i++ {
+	// 					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
+	// 				}
+	// 			}
+
+	// 			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
+	// 		}
 
 	// 	nm := r.app.NavMesh()
 
@@ -766,25 +790,6 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				}
 			} else {
 				fmt.Println("couldn't find texture", "light")
-			}
-		}
-
-		lightInfo := entity.LightInfo
-		if lightInfo != nil {
-			if lightInfo.Type == 0 {
-				shader := shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-
-				direction3F := lightInfo.Direction3F
-				dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
-				// directional light arrow
-				lines := [][]mgl64.Vec3{
-					[]mgl64.Vec3{
-						entity.WorldPosition(),
-						entity.WorldPosition().Add(dir),
-					},
-				}
-				drawLines(viewerContext, shader, lines, 0.5, color)
 			}
 		}
 

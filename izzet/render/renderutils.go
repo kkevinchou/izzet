@@ -859,7 +859,6 @@ func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
 }
 
 func (r *Renderer) drawSkybox(renderContext RenderContext) {
-	defer resetGLRenderSettings(r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	drawWithNDC(r.shaderManager)
 }

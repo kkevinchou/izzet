@@ -582,8 +582,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	defer resetGLRenderSettings(r.renderFBO)
-
 	gl.Viewport(0, 0, int32(r.width), int32(r.height))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -592,9 +590,8 @@ func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableE
 }
 
 func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	defer resetGLRenderSettings(r.renderFBO)
-
 	r.shadowMap.Prepare()
+	defer gl.CullFace(gl.BACK)
 
 	if !panels.DBG.EnableShadowMapping {
 		// set the depth to be max value to prevent shadow mapping
@@ -604,6 +601,7 @@ func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableE
 	}
 
 	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
+
 }
 
 func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
@@ -647,8 +645,6 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 }
 
 func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntities []*entities.Entity) {
-	defer resetGLRenderSettings(r.renderFBO)
-
 	// we only support cube depth maps for one point light atm
 	var pointLight *entities.Entity
 	for _, light := range r.world.Lights() {
@@ -709,6 +705,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 	}
 }
 
+// drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
@@ -932,7 +929,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 }
 
 func (r *Renderer) renderImgui(renderContext RenderContext) {
-	defer resetGLRenderSettings(r.renderFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.app.Platform().NewFrame()
 	imgui.NewFrame()

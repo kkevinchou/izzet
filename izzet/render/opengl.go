@@ -12,7 +12,17 @@ type Platform interface {
 }
 
 func initOpenGLRenderSettings() {
-	defaultSettings()
+	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
+	gl.ClearDepth(1)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LEQUAL)
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+	gl.FrontFace(gl.CCW)
+	gl.Enable(gl.MULTISAMPLE)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
 func compileShaders(shaderManager *shaders.ShaderManager) {
@@ -78,25 +88,4 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("point_shadow", "point_shadow", "point_shadow", "point_shadow"); err != nil {
 		panic(err)
 	}
-}
-
-func resetGLRenderSettings(fbo uint32) {
-	defaultSettings()
-	gl.BindVertexArray(0)
-	gl.UseProgram(0)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-}
-
-func defaultSettings() {
-	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
-	gl.ClearDepth(1)
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LEQUAL)
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
-	gl.FrontFace(gl.CCW)
-	gl.Enable(gl.MULTISAMPLE)
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }

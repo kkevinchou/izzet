@@ -46,10 +46,6 @@ type App interface {
 	ModelLibrary() *modellibrary.ModelLibrary
 	Camera() *camera.Camera
 	Prefabs() []*prefabs.Prefab
-	// Entities() []*entities.Entity
-	// Lights() []*entities.Entity
-	// GetEntityByID(id int) *entities.Entity
-	// SpatialPartition() *spatialpartition.SpatialPartition
 	NavMesh() *navmesh.NavigationMesh
 	ResetNavMeshVAO()
 
@@ -58,7 +54,6 @@ type App interface {
 	AppMode() app.AppMode
 
 	// for panels
-	// AddEntity(entity *entities.Entity)
 	GetPrefabByID(id int) *prefabs.Prefab
 	Platform() *input.SDLPlatform
 
@@ -334,13 +329,13 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
 
+	// main color FBO
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
-	r.renderGizmos(cameraViewerContext, renderContext)
 
-	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
-		drawSpatialPartition(cameraViewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
-	}
+	// clear depth for gizmo rendering
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	r.renderGizmos(cameraViewerContext, renderContext)
 
 	var finalRenderTexture uint32
 	if panels.DBG.Bloom {
@@ -377,6 +372,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		}
 	}
 
+	// render to back buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -472,6 +468,10 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 				}
 			}
 		}
+	}
+
+	if panels.DBG.EnableSpatialPartition && panels.DBG.RenderSpatialPartition {
+		drawSpatialPartition(viewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
 	}
 
 	// modelMatrix := entities.WorldTransform(entity)
@@ -709,10 +709,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 	}
 }
 
-// drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	defer resetGLRenderSettings(r.renderFBO)
-
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
@@ -736,36 +733,6 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-			for _, shapeData := range entity.ShapeData {
-				// if shapeData.Cube != nil {
-				// 	var ok bool
-				// 	var vao uint32
-				// 	if vao, ok = r.cubeVAOs[shapeData.Cube.Length]; !ok {
-				// 		vao = initCubeVAO(int(shapeData.Cube.Length))
-				// 		r.cubeVAOs[shapeData.Cube.Length] = vao
-				// 	}
-
-				// 	gl.BindVertexArray(vao)
-				// 	shader.SetUniformVec3("color", panels.DBG.Color)
-				// 	shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
-				// 	iztDrawArrays(0, 48)
-				// }
-
-				if shapeData.Triangle != nil {
-					var ok bool
-					var vao uint32
-					if vao, ok = r.triangleVAOs[triangleVAOKey(*shapeData.Triangle)]; !ok {
-						vao = initTriangleVAO(shapeData.Triangle.V1, shapeData.Triangle.V2, shapeData.Triangle.V3)
-						r.triangleVAOs[triangleVAOKey(*shapeData.Triangle)] = vao
-					}
-
-					gl.BindVertexArray(vao)
-					shader.SetUniformVec3("color", mgl32.Vec3{0, 1, 1})
-					shader.SetUniformFloat("intensity", panels.DBG.ColorIntensity)
-					iztDrawArrays(0, 6)
-				}
-			}
 		}
 
 		if entity.ImageInfo != nil {
@@ -1026,8 +993,6 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	if panels.SelectedEntity() == nil {
 		return
 	}
-
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
 	position := entity.WorldPosition()

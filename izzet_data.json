@@ -7,6 +7,7 @@
         "demo_scene_city": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
         "demo_scene_adventure": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
         "demo_scene_dungeon": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
+        "demo_scene_battleroyale": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]},
         "demo_scene_vikings": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]}, "scale": [20, 20, 20]}
     }
 }

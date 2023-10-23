@@ -91,7 +91,6 @@ func (r *Renderer) init2f2fVAO() uint32 {
 }
 
 func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
-	defer resetGLRenderSettings(r.renderFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.downSampleFBO)
 
 	shader := r.shaderManager.GetShaderProgram("bloom_downsample")
@@ -126,8 +125,6 @@ func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 // double check that the upsampling works and blends the right textures
 // welp, i need to be ping ponging GG
 func (r *Renderer) upSample(widths, heights []int) uint32 {
-	defer resetGLRenderSettings(r.renderFBO)
-
 	mipsCount := len(r.downSampleTextures)
 
 	var upSampleSource uint32

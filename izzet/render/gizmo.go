@@ -91,8 +91,6 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 }
 func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
-	defer resetGLRenderSettings(r.renderFBO)
-
 	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
 	if behind {
 		return

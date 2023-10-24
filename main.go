@@ -11,7 +11,7 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/kkevinchou/izzet/izzet"
+	"github.com/kkevinchou/izzet/izzet/client"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/veandco/go-sdl2/sdl"
@@ -64,25 +64,25 @@ func main() {
 		}()
 	}
 
-	client := false
+	isServer := false
 
 	if len(os.Args) > 1 {
 		mode := strings.ToUpper(os.Args[1])
-		client = mode == "CLIENT"
+		isServer = mode == "SERVER"
 		if mode != "SERVER" && mode != "CLIENT" {
 			panic(fmt.Sprintf("unexpected mode %s", mode))
 		}
 	}
 
-	if !client {
+	if isServer {
 		go func() {
 			serverApp := server.New("_assets", "shaders", "izzet_data.json")
 			serverApp.Start()
 		}()
 	}
 
-	app := izzet.New("_assets", "shaders", "izzet_data.json")
-	app.Start()
+	clientApp := client.New("_assets", "shaders", "izzet_data.json")
+	clientApp.Start()
 	sdl.Quit()
 }
 

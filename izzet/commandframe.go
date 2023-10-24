@@ -37,7 +37,7 @@ func (g *Izzet) runCommandFrame(delta time.Duration) {
 
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
-	if panels.DBG.EnableSpatialPartition {
+	if g.Settings().EnableSpatialPartition {
 		g.handleSpatialPartition()
 	}
 
@@ -58,8 +58,8 @@ func (g *Izzet) runCommandFrame(delta time.Duration) {
 		g.handleGizmos(frameInput)
 	}
 
-	panels.DBG.CameraPosition = g.camera.Position
-	panels.DBG.CameraOrientation = g.camera.Orientation
+	g.Settings().CameraPosition = g.camera.Position
+	g.Settings().CameraOrientation = g.camera.Orientation
 }
 
 func (g *Izzet) handleSpatialPartition() {
@@ -176,25 +176,25 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	// navmesh - move highlight
 	if event, ok := keyboardInput[input.KeyboardKeyI]; ok {
 		if event.Event == input.KeyboardEventUp {
-			panels.DBG.VoxelHighlightZ--
+			g.Settings().VoxelHighlightZ--
 			g.ResetNavMeshVAO()
 		}
 	}
 	if event, ok := keyboardInput[input.KeyboardKeyK]; ok {
 		if event.Event == input.KeyboardEventUp {
-			panels.DBG.VoxelHighlightZ++
+			g.Settings().VoxelHighlightZ++
 			g.ResetNavMeshVAO()
 		}
 	}
 	if event, ok := keyboardInput[input.KeyboardKeyJ]; ok {
 		if event.Event == input.KeyboardEventUp {
-			panels.DBG.VoxelHighlightX--
+			g.Settings().VoxelHighlightX--
 			g.ResetNavMeshVAO()
 		}
 	}
 	if event, ok := keyboardInput[input.KeyboardKeyL]; ok {
 		if event.Event == input.KeyboardEventUp {
-			panels.DBG.VoxelHighlightX++
+			g.Settings().VoxelHighlightX++
 			g.ResetNavMeshVAO()
 		}
 	}

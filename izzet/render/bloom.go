@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/panels"
 )
 
 func createSamplingDimensions(startWidth int, startHeight int, count int) ([]int, []int) {
@@ -111,13 +110,13 @@ func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 		} else {
 			shader.SetUniformInt("karis", 0)
 		}
-		if i < int(panels.DBG.BloomThresholdPasses) {
+		if i < int(r.app.Settings().BloomThresholdPasses) {
 			shader.SetUniformInt("bloomThresholdEnabled", 1)
 		} else {
 			shader.SetUniformInt("bloomThresholdEnabled", 0)
 		}
-		shader.SetUniformFloat("bloomThreshold", panels.DBG.BloomThreshold)
-		iztDrawArrays(0, 6)
+		shader.SetUniformFloat("bloomThreshold", r.app.Settings().BloomThreshold)
+		r.iztDrawArrays(0, 6)
 		srcTexture = r.downSampleTextures[i]
 	}
 }
@@ -141,7 +140,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 
 		shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 		shader.Use()
-		shader.SetUniformFloat("upSamplingScale", panels.DBG.BloomUpsamplingScale)
+		shader.SetUniformFloat("upSamplingScale", r.app.Settings().BloomUpsamplingScale)
 
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
@@ -152,7 +151,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 		gl.DrawBuffers(1, &drawBuffers[0])
 
 		gl.BindVertexArray(r.xyTextureVAO)
-		iztDrawArrays(0, 6)
+		r.iztDrawArrays(0, 6)
 
 		r.blend(width, height, r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
 		upSampleSource = blendTargetMip
@@ -163,7 +162,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 
 	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 	shader.Use()
-	shader.SetUniformFloat("upSamplingScale", panels.DBG.BloomUpsamplingScale)
+	shader.SetUniformFloat("upSamplingScale", r.app.Settings().BloomUpsamplingScale)
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
@@ -174,7 +173,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 	gl.DrawBuffers(1, &drawBuffers[0])
 
 	gl.BindVertexArray(r.xyTextureVAO)
-	iztDrawArrays(0, 6)
+	r.iztDrawArrays(0, 6)
 
 	return blendTargetMip
 }
@@ -198,7 +197,7 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
-	iztDrawArrays(0, 6)
+	r.iztDrawArrays(0, 6)
 }
 
 func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) uint32 {
@@ -215,14 +214,14 @@ func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uin
 
 	shader.SetUniformInt("scene", 0)
 	shader.SetUniformInt("bloomBlur", 1)
-	shader.SetUniformFloat("exposure", panels.DBG.Exposure)
-	shader.SetUniformFloat("bloomIntensity", panels.DBG.BloomIntensity)
+	shader.SetUniformFloat("exposure", r.app.Settings().Exposure)
+	shader.SetUniformFloat("bloomIntensity", r.app.Settings().BloomIntensity)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
-	iztDrawArrays(0, 6)
+	r.iztDrawArrays(0, 6)
 
 	return r.compositeTexture
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/observers"
-	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -67,11 +66,14 @@ type Izzet struct {
 	editorModeSystems []System
 	appMode           app.AppMode
 	physicsObserver   *observers.PhysicsObserver
+
+	settings *app.Settings
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	initSeed()
 	g := &Izzet{}
+	g.initSettings()
 	window, err := initializeOpenGL()
 	if err != nil {
 		panic(err)
@@ -186,16 +188,16 @@ func (g *Izzet) Start() {
 		if renderAccumulator >= msPerFrame {
 			g.MetricsRegistry().Inc("fps", 1)
 
-			panels.DBG.FPS = g.MetricsRegistry().GetOneSecondSum("fps")
-			panels.DBG.CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
-			panels.DBG.RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
-			panels.DBG.CommandFramesPerRender = commandFrameCountBeforeRender
+			g.Settings().FPS = g.MetricsRegistry().GetOneSecondSum("fps")
+			g.Settings().CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
+			g.Settings().RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
+			g.Settings().CommandFramesPerRender = commandFrameCountBeforeRender
 			commandFrameCountBeforeRender = 0
 
 			start := time.Now()
 			frameCount++
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			renderContext := render.NewRenderContext(g.width, g.height, float64(panels.DBG.FovX))
+			renderContext := render.NewRenderContext(g.width, g.height, float64(g.Settings().FovX))
 			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
 			renderTime := time.Since(start).Milliseconds()
@@ -375,4 +377,50 @@ func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput, width, height i
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()
+}
+
+func (g *Izzet) initSettings() {
+	g.settings = &app.Settings{
+		DirectionalLightDir:    [3]float32{-1, -1, -1},
+		Roughness:              0.55,
+		Metallic:               1.0,
+		PointLightBias:         1,
+		MaterialOverride:       false,
+		EnableShadowMapping:    true,
+		ShadowFarFactor:        1,
+		SPNearPlaneOffset:      300,
+		BloomIntensity:         0.04,
+		Exposure:               1.0,
+		AmbientFactor:          0.1,
+		Bloom:                  true,
+		BloomThresholdPasses:   1,
+		BloomThreshold:         0.8,
+		BloomUpsamplingScale:   1.0,
+		Color:                  [3]float32{1, 1, 1},
+		ColorIntensity:         20.0,
+		RenderSpatialPartition: false,
+		EnableSpatialPartition: true,
+		FPS:                    0,
+
+		Near: 1,
+		Far:  3000,
+		FovX: 105,
+
+		FogStart:   200,
+		FogEnd:     1000,
+		FogDensity: 1,
+		FogEnabled: true,
+
+		TriangleDrawCount: 0,
+		DrawCount:         0,
+
+		NavMeshHSV:                    true,
+		NavMeshRegionIDThreshold:      3000,
+		NavMeshDistanceFieldThreshold: 23,
+		HSVOffset:                     11,
+		VoxelHighlightX:               0,
+		VoxelHighlightZ:               0,
+		VoxelHighlightDistanceField:   -1,
+		VoxelHighlightRegionID:        -1,
+	}
 }

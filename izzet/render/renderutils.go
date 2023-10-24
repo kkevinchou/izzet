@@ -13,7 +13,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/assets"
@@ -35,7 +34,7 @@ func genLineKey(thickness, length float64) string {
 }
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawTris(points []mgl64.Vec3) {
+func (r *Renderer) drawTris(points []mgl64.Vec3) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
@@ -53,7 +52,7 @@ func drawTris(points []mgl64.Vec3) {
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	iztDrawArrays(0, int32(len(vertices)))
+	r.iztDrawArrays(0, int32(len(vertices)))
 }
 
 var navMeshTrisVAO uint32
@@ -65,7 +64,7 @@ var ResetNavMeshVAO bool = false
 var lastMeshUpdate time.Time = time.Now()
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
+func (r *Renderer) drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
 	if navmesh.VoxelCount() != lastVoxelCount || ResetNavMeshVAO {
 		if time.Since(lastMeshUpdate) > 5*time.Second || ResetNavMeshVAO {
 			ResetNavMeshVAO = false
@@ -74,7 +73,7 @@ func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMes
 			vbos := []uint32{navMeshVBO}
 			gl.DeleteBuffers(1, &vbos[0])
 
-			vertices := generateNavMeshVertexAttributes(navmesh)
+			vertices := r.generateNavMeshVertexAttributes(navmesh)
 
 			var vbo, vao uint32
 			gl.GenBuffers(1, &vbo)
@@ -104,10 +103,10 @@ func drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMes
 	}
 
 	gl.BindVertexArray(navMeshTrisVAO)
-	iztDrawArrays(0, int32(lastVertexCount))
+	r.iztDrawArrays(0, int32(lastVertexCount))
 }
 
-func generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 {
+func (r *Renderer) generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 {
 	delta := navmesh.Volume.MaxVertex.Sub(navmesh.Volume.MinVertex)
 	voxelDimension := navmesh.VoxelDimension()
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
@@ -127,14 +126,14 @@ func generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 
 					MinVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
 					MaxVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
 				}
-				vertexAttributes = append(vertexAttributes, generateVoxelVertexAttributes(voxel, voxelField, bb)...)
+				vertexAttributes = append(vertexAttributes, r.generateVoxelVertexAttributes(voxel, voxelField, bb)...)
 			}
 		}
 	}
 	return vertexAttributes
 }
 
-func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh.Voxel, bb collider.BoundingBox) []float32 {
+func (r *Renderer) generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh.Voxel, bb collider.BoundingBox) []float32 {
 	min := bb.MinVertex
 	max := bb.MaxVertex
 	delta := max.Sub(min)
@@ -225,16 +224,16 @@ func generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh
 		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
 		color = HSVtoRGB(hsv)
 
-		if voxel.X == int(panels.DBG.VoxelHighlightX) && voxel.Z == int(panels.DBG.VoxelHighlightZ) && voxel.Y < 50 {
-			panels.DBG.VoxelHighlightDistanceField = float32(voxel.DistanceField)
-			panels.DBG.VoxelHighlightRegionID = voxel.RegionID
+		if voxel.X == int(r.app.Settings().VoxelHighlightX) && voxel.Z == int(r.app.Settings().VoxelHighlightZ) && voxel.Y < 50 {
+			r.app.Settings().VoxelHighlightDistanceField = float32(voxel.DistanceField)
+			r.app.Settings().VoxelHighlightRegionID = voxel.RegionID
 			color = mgl32.Vec3{10, 10, 10}
 		} else if voxel.Seed {
 			color = mgl32.Vec3{1, 0, 1}
-		} else if panels.DBG.NavMeshHSV {
-			if voxel.RegionID != -1 && voxel.RegionID <= int(panels.DBG.NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(panels.DBG.NavMeshDistanceFieldThreshold) {
+		} else if r.app.Settings().NavMeshHSV {
+			if voxel.RegionID != -1 && voxel.RegionID <= int(r.app.Settings().NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(r.app.Settings().NavMeshDistanceFieldThreshold) {
 				// if voxel.RegionID != -1 {
-				hsv = mgl32.Vec3{float32((voxel.RegionID * int(panels.DBG.HSVOffset)) % 255), 1, 1}
+				hsv = mgl32.Vec3{float32((voxel.RegionID * int(r.app.Settings().HSVOffset)) % 255), 1, 1}
 				color = HSVtoRGB(hsv)
 			}
 		}
@@ -399,7 +398,7 @@ type RenderData struct {
 // 	return result
 // }
 
-func drawModel(
+func (r *Renderer) drawModel(
 	viewerContext ViewerContext,
 	lightContext LightContext,
 	shadowMap *ShadowMap,
@@ -456,9 +455,9 @@ func drawModel(
 			}
 
 			shader.SetUniformVec3("albedo", primitiveMaterial.BaseColorFactor.Vec3())
-			if panels.DBG.MaterialOverride {
-				shader.SetUniformFloat("roughness", panels.DBG.Roughness)
-				shader.SetUniformFloat("metallic", panels.DBG.Metallic)
+			if r.app.Settings().MaterialOverride {
+				shader.SetUniformFloat("roughness", r.app.Settings().Roughness)
+				shader.SetUniformFloat("metallic", r.app.Settings().Metallic)
 			} else {
 				shader.SetUniformFloat("roughness", primitiveMaterial.RoughnessFactor)
 				shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
@@ -498,7 +497,7 @@ func drawModel(
 			// order is clockwise.
 			gl.FrontFace(gl.CW)
 		}
-		iztDrawElements(int32(len(p.Primitive.VertexIndices)))
+		r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		if modelMat.Det() < 0 {
 			gl.FrontFace(gl.CCW)
 		}
@@ -509,7 +508,7 @@ func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
 
-func drawLines2(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *Renderer) drawLines2(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var points []mgl64.Vec3
 	for _, line := range lines {
 		start := line[0]
@@ -526,10 +525,10 @@ func drawLines2(viewerContext ViewerContext, shader *shaders.ShaderProgram, line
 	}
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("intensity", 1.0)
-	drawTris(points)
+	r.drawTris(points)
 }
 
-func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var points []mgl64.Vec3
 	for _, line := range lines {
 		start := line[0]
@@ -550,7 +549,7 @@ func drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("intensity", 1.0)
-	drawTris(points)
+	r.drawTris(points)
 }
 
 func cubeLines(length float64) [][]mgl64.Vec3 {
@@ -661,7 +660,7 @@ func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 	return linePoints
 }
 
-func drawWithNDC(shaderManager *shaders.ShaderManager) {
+func (r *Renderer) drawWithNDC(shaderManager *shaders.ShaderManager) {
 	// triangle
 	// var vertices []float32 = []float32{
 	// 	-0.5, -0.5, 1,
@@ -696,12 +695,12 @@ func drawWithNDC(shaderManager *shaders.ShaderManager) {
 
 	shader := shaderManager.GetShaderProgram("skybox")
 	shader.Use()
-	iztDrawArrays(0, int32(len(vertices)))
+	r.iztDrawArrays(0, int32(len(vertices)))
 }
 
 var singleSidedQuadVAO uint32
 
-func drawBillboardTexture(
+func (r *Renderer) drawBillboardTexture(
 	texture uint32,
 	length float32,
 ) {
@@ -736,11 +735,11 @@ func drawBillboardTexture(
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	iztDrawArrays(0, 6)
+	r.iztDrawArrays(0, 6)
 }
 
 // drawHUDTextureToQuad does a shitty perspective based rendering of a flat texture
-func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
+func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
 	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{
 		// front
@@ -775,7 +774,7 @@ func drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderPro
 	shader.SetUniformMat4("view", mgl32.Ident4())
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	iztDrawArrays(0, 6)
+	r.iztDrawArrays(0, 6)
 }
 
 func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internalFormat int32, format uint32) (uint32, uint32) {
@@ -860,7 +859,7 @@ func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
 
 func (r *Renderer) drawSkybox(renderContext RenderContext) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	drawWithNDC(r.shaderManager)
+	r.drawWithNDC(r.shaderManager)
 }
 
 func (r *Renderer) CameraViewerContext() ViewerContext {
@@ -945,7 +944,7 @@ var (
 	spatialPartitionLineCache [][]mgl64.Vec3
 )
 
-func drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
+func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
 	var allLines [][]mgl64.Vec3
 
 	if len(spatialPartitionLineCache) == 0 {
@@ -993,7 +992,7 @@ func drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderPro
 	}
 	allLines = spatialPartitionLineCache
 
-	drawLines(
+	r.drawLines(
 		viewerContext,
 		shader,
 		allLines,
@@ -1002,7 +1001,7 @@ func drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderPro
 	)
 }
 
-func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
+func (r *Renderer) drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
 	var allLines [][]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)
@@ -1042,7 +1041,7 @@ func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color 
 		}
 	}
 
-	drawLines(
+	r.drawLines(
 		viewerContext,
 		shader,
 		allLines,
@@ -1053,13 +1052,13 @@ func drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color 
 
 func (r *Renderer) getCubeVAO(length float32) uint32 {
 	if vao, ok := r.cubeVAOs[length]; !ok {
-		vao = initCubeVAO(length)
+		vao = r.initCubeVAO(length)
 		r.cubeVAOs[length] = vao
 	}
 	return r.cubeVAOs[length]
 }
 
-func initCubeVAO(length float32) uint32 {
+func (r *Renderer) initCubeVAO(length float32) uint32 {
 	ht := length / 2
 
 	vertices := []float32{
@@ -1132,12 +1131,12 @@ func initCubeVAO(length float32) uint32 {
 	// gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	iztDrawArrays(0, int32(len(vertices))/3)
+	r.iztDrawArrays(0, int32(len(vertices))/3)
 
 	return vao
 }
 
-func initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
+func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	vertices := []float32{
 		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
 		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
@@ -1160,7 +1159,7 @@ func initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
-	iztDrawArrays(0, int32(len(vertices))/3)
+	r.iztDrawArrays(0, int32(len(vertices))/3)
 
 	return vao
 }
@@ -1192,15 +1191,15 @@ func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, f
 	return verts
 }
 
-func iztDrawArrays(first, count int32) {
-	panels.DBG.TriangleDrawCount += int(count / 3)
-	panels.DBG.DrawCount += 1
+func (r *Renderer) iztDrawArrays(first, count int32) {
+	r.app.Settings().TriangleDrawCount += int(count / 3)
+	r.app.Settings().DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
 }
 
-func iztDrawElements(count int32) {
-	panels.DBG.TriangleDrawCount += int(count / 3)
-	panels.DBG.DrawCount += 1
+func (r *Renderer) iztDrawElements(count int32) {
+	r.app.Settings().TriangleDrawCount += int(count / 3)
+	r.app.Settings().DrawCount += 1
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }
 
@@ -1214,23 +1213,23 @@ func (r *Renderer) renderCircle() {
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	shader.SetUniformVec4("color", mgl32.Vec4{1, 0, 0, 1})
-	drawCircle()
+	r.drawCircle()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.greenCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	shader.SetUniformVec4("color", mgl32.Vec4{0, 1, 0, 1})
-	drawCircle()
+	r.drawCircle()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blueCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	shader.SetUniformVec4("color", mgl32.Vec4{0, 0, 1, 1})
-	drawCircle()
+	r.drawCircle()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	shader.SetUniformVec4("color", mgl32.Vec4{1, 1, 0, 1})
-	drawCircle()
+	r.drawCircle()
 }

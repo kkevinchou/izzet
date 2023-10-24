@@ -2,6 +2,7 @@ package panels
 
 import (
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -29,6 +30,7 @@ type App interface {
 	ModelLibrary() *modellibrary.ModelLibrary
 	PhysicsObserver() *observers.PhysicsObserver
 	ResetNavMeshVAO()
+	Settings() *app.Settings
 }
 
 type GameWorld interface {

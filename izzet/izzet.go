@@ -1,8 +1,11 @@
 package izzet
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
+	"sync"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -70,6 +73,10 @@ type Izzet struct {
 
 	settings *app.Settings
 	isServer bool
+
+	// Server Properties
+	playerIDGenerator int
+	playerIDLock      sync.Mutex
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
@@ -138,7 +145,30 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	return g
 }
 
+func (g *Izzet) connect() {
+	address := fmt.Sprintf("localhost:7878")
+	fmt.Println("connecting to " + address)
+
+	dialFunc := net.Dial
+
+	conn, err := dialFunc("tcp", address)
+	if err != nil {
+		panic(err)
+	}
+
+	var response int
+	decoder := json.NewDecoder(conn)
+	err = decoder.Decode(&response)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("connected with player id ", response)
+}
+
 func (g *Izzet) Start() {
+	g.connect()
+
 	var accumulator float64
 	var renderAccumulator float64
 	// var oneSecondAccumulator float64

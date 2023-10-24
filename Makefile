@@ -39,6 +39,10 @@ test:
 build:
 	go build -o izzet.exe 
 
+.PHONY: client
+client:
+	go run main.go client
+
 .PHONY: clean
 clean:
 	rm -rf $(RELEASE_FOLDER)

@@ -1,7 +1,9 @@
 package izzet
 
 import (
+	"encoding/json"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/edithistory"
@@ -18,7 +20,7 @@ import (
 
 func NewServer(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	initSeed()
-	g := &Izzet{isServer: true}
+	g := &Izzet{isServer: true, playerIDGenerator: 100000}
 	g.initSettings()
 
 	g.assetManager = assets.NewAssetManager(assetsDirectory, false)
@@ -58,6 +60,56 @@ func NewServer(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 }
 
 func (g *Izzet) StartServer() {
+	host := "0.0.0.0"
+	port := "7878"
+	listener, err := net.Listen("tcp", host+":"+port)
+	if err != nil {
+		panic(err)
+	}
+	_ = listener
+
+	fmt.Println("listening on " + host + ":" + port)
+
+	go func() {
+		defer listener.Close()
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				fmt.Println("error accepting a connection on the listener:", err.Error())
+				continue
+			}
+
+			g.playerIDLock.Lock()
+			id := g.playerIDGenerator
+			g.playerIDGenerator += 1
+			g.playerIDLock.Unlock()
+
+			// message, err := s.createAcceptMessage(id)
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	continue
+			// }
+			// sendMessage(conn, message)
+			// if err != nil {
+			// 	fmt.Println("error sending accept message:", err.Error())
+			// 	continue
+			// }
+
+			encoder := json.NewEncoder(conn)
+			err = encoder.Encode(id)
+			if err != nil {
+				fmt.Println("error with incoming message: %w", err)
+			}
+
+			// select {
+			// case s.incomingConnections <- &Connection{ID: id, Connection: conn}:
+			// default:
+			// 	panic("incomingConnections queue full")
+			// }
+		}
+
+	}()
+
 	var accumulator float64
 
 	// msPerFrame := float64(1000) / float64(60)

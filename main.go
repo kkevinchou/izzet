@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	_ "net/http/pprof"
 
@@ -62,10 +63,22 @@ func main() {
 		}()
 	}
 
-	go func() {
-		serverApp := izzet.NewServer("_assets", "shaders", "izzet_data.json")
-		serverApp.StartServer()
-	}()
+	client := false
+
+	if len(os.Args) > 1 {
+		mode := strings.ToUpper(os.Args[1])
+		client = mode == "CLIENT"
+		if mode != "SERVER" && mode != "CLIENT" {
+			panic(fmt.Sprintf("unexpected mode %s", mode))
+		}
+	}
+
+	if !client {
+		go func() {
+			serverApp := izzet.NewServer("_assets", "shaders", "izzet_data.json")
+			serverApp.StartServer()
+		}()
+	}
 
 	app := izzet.New("_assets", "shaders", "izzet_data.json")
 	app.Start()

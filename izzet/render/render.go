@@ -601,7 +601,6 @@ func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableE
 	}
 
 	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
-
 }
 
 func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity) {

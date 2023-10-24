@@ -18,6 +18,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -77,6 +78,7 @@ type Izzet struct {
 	// Server Properties
 	playerIDGenerator int
 	playerIDLock      sync.Mutex
+	players           map[int]network.Player
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {

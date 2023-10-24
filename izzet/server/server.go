@@ -12,11 +12,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -36,19 +33,11 @@ type Server struct {
 	modelLibrary *modellibrary.ModelLibrary
 
 	entities map[int]*entities.Entity
-	prefabs  map[int]*prefabs.Prefab
 
-	renderer    *render.Renderer
 	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
 
-	relativeMouseOrigin [2]int32
-	relativeMouseActive bool
-
-	navigationMesh  *navmesh.NavigationMesh
 	metricsRegistry *metrics.MetricsRegistry
-
-	showImguiDemo bool
 
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
@@ -58,9 +47,7 @@ type Server struct {
 	physicsObserver *observers.PhysicsObserver
 
 	settings *app.Settings
-	isServer bool
 
-	// Server Properties
 	playerIDGenerator int
 	playerIDLock      sync.Mutex
 	players           map[int]network.Player
@@ -69,7 +56,6 @@ type Server struct {
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	initSeed()
 	g := &Server{
-		isServer:          true,
 		playerIDGenerator: 100000,
 		players:           map[int]network.Player{},
 	}

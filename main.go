@@ -62,6 +62,11 @@ func main() {
 		}()
 	}
 
+	go func() {
+		serverApp := izzet.NewServer("_assets", "shaders", "izzet_data.json")
+		serverApp.StartServer()
+	}()
+
 	app := izzet.New("_assets", "shaders", "izzet_data.json")
 	app.Start()
 	sdl.Quit()

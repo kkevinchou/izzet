@@ -59,14 +59,17 @@ type ModelLibrary struct {
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
 	RootJoints map[string]int
+
+	processVisuals bool
 }
 
-func New() *ModelLibrary {
+func New(processVisuals bool) *ModelLibrary {
 	m := &ModelLibrary{
-		Primitives: map[Handle][]Primitive{},
-		Animations: map[string]map[string]*modelspec.AnimationSpec{},
-		Joints:     map[string]map[int]*modelspec.JointSpec{},
-		RootJoints: map[string]int{},
+		Primitives:     map[Handle][]Primitive{},
+		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
+		Joints:         map[string]map[int]*modelspec.JointSpec{},
+		RootJoints:     map[string]int{},
+		processVisuals: processVisuals,
 	}
 
 	return m
@@ -147,15 +150,25 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 
 func (m *ModelLibrary) RegisterMeshWithHandle(handle Handle, mesh *modelspec.MeshSpecification) Handle {
 	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-	vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-	geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+
+	var vaos [][]uint32
+	var geometryVAOs [][]uint32
+	if m.processVisuals {
+		vaos = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+		geometryVAOs = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+	}
 
 	for i, primitive := range mesh.Primitives {
-		m.Primitives[handle] = append(m.Primitives[handle], Primitive{
-			Primitive:   primitive,
-			VAO:         vaos[0][i],
-			GeometryVAO: geometryVAOs[0][i],
-		})
+		p := Primitive{
+			Primitive: primitive,
+		}
+
+		if m.processVisuals {
+			p.VAO = vaos[0][i]
+			p.GeometryVAO = geometryVAOs[0][i]
+		}
+
+		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
 }

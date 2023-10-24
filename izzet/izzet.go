@@ -64,15 +64,17 @@ type Izzet struct {
 
 	playModeSystems   []System
 	editorModeSystems []System
+	serverModeSystems []System
 	appMode           app.AppMode
 	physicsObserver   *observers.PhysicsObserver
 
 	settings *app.Settings
+	isServer bool
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	initSeed()
-	g := &Izzet{}
+	g := &Izzet{isServer: false}
 	g.initSettings()
 	window, err := initializeOpenGL()
 	if err != nil {
@@ -97,7 +99,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
 	g.platform = input.NewSDLPlatform(window, imguiIO)
 	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
-	g.modelLibrary = modellibrary.New()
+	g.modelLibrary = modellibrary.New(true)
 	g.appMode = app.AppModeEditor
 	data := izzetdata.LoadData(dataFilePath)
 
@@ -207,41 +209,6 @@ func (g *Izzet) Start() {
 			// it's unlikely the game state has changed much from one step to the next.
 			for renderAccumulator > msPerFrame {
 				renderAccumulator -= msPerFrame
-			}
-		}
-	}
-}
-
-func (g *Izzet) StartServer() {
-	var accumulator float64
-
-	// msPerFrame := float64(1000) / float64(60)
-	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
-
-	commandFrameCountBeforeRender := 0
-	for !g.gameOver {
-		now := float64(time.Now().UnixNano()) / 1000000
-		delta := now - previousTimeStamp
-		previousTimeStamp = now
-
-		accumulator += delta
-
-		currentLoopCommandFrames := 0
-		for accumulator >= float64(settings.MSPerCommandFrame) {
-			input := g.platform.PollInput()
-			g.HandleInput(input)
-			start := time.Now()
-			g.world.SetFrameInput(input)
-			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
-			commandFrameNanos := time.Since(start).Nanoseconds()
-			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
-			g.world.IncrementCommandFrameCount()
-			commandFrameCountBeforeRender += 1
-
-			accumulator -= float64(settings.MSPerCommandFrame)
-			currentLoopCommandFrames++
-			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
-				accumulator = 0
 			}
 		}
 	}

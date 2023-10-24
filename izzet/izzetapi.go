@@ -136,7 +136,9 @@ func (g *Izzet) MetricsRegistry() *metrics.MetricsRegistry {
 
 func (g *Izzet) SetWorld(world *world.GameWorld) {
 	g.world = world
-	g.renderer.SetWorld(world)
+	if !g.IsServer() {
+		g.renderer.SetWorld(world)
+	}
 }
 
 func (g *Izzet) StartLiveWorld() {
@@ -198,4 +200,8 @@ func (g *Izzet) PhysicsObserver() *observers.PhysicsObserver {
 
 func (g *Izzet) Settings() *app.Settings {
 	return g.settings
+}
+
+func (g *Izzet) IsServer() bool {
+	return g.isServer
 }

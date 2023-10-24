@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"time"
@@ -71,12 +72,14 @@ type Client struct {
 	physicsObserver   *observers.PhysicsObserver
 
 	settings *app.Settings
-	isServer bool
+
+	playerID   int
+	connection net.Conn
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
 	initSeed()
-	g := &Client{isServer: false}
+	g := &Client{}
 	g.initSettings()
 	window, err := initializeOpenGL()
 	if err != nil {
@@ -140,7 +143,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
 	return g
 }
 
-func (g *Client) connect() {
+func (g *Client) connect() (int, net.Conn, error) {
 	address := fmt.Sprintf("localhost:7878")
 	fmt.Println("connecting to " + address)
 
@@ -148,21 +151,47 @@ func (g *Client) connect() {
 
 	conn, err := dialFunc("tcp", address)
 	if err != nil {
-		panic(err)
+		return 0, nil, err
 	}
 
-	var response int
+	var playerID int
 	decoder := json.NewDecoder(conn)
-	err = decoder.Decode(&response)
+	err = decoder.Decode(&playerID)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	fmt.Println("connected with player id ", playerID)
+	return playerID, conn, nil
+}
+
+func (g *Client) Start() {
+	playerID, conn, err := g.connect()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("connected with player id ", response)
-}
+	g.playerID = playerID
+	g.connection = conn
 
-func (g *Client) Start() {
-	g.connect()
+	go func() {
+		defer conn.Close()
+
+		decoder := json.NewDecoder(conn)
+		for {
+			var message []int
+			err := decoder.Decode(&message)
+			if err != nil {
+				if err == io.EOF {
+					continue
+				}
+
+				fmt.Println("error reading incoming message:", err.Error())
+				fmt.Println("closing connection")
+				return
+			}
+		}
+	}()
 
 	var accumulator float64
 	var renderAccumulator float64
@@ -172,7 +201,7 @@ func (g *Client) Start() {
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
 
 	// immediate updates when swapping buffers
-	err := sdl.GLSetSwapInterval(0)
+	err = sdl.GLSetSwapInterval(0)
 	if err != nil {
 		panic(err)
 	}

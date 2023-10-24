@@ -12,6 +12,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/kkevinchou/izzet/izzet"
+	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -75,8 +76,8 @@ func main() {
 
 	if !client {
 		go func() {
-			serverApp := izzet.NewServer("_assets", "shaders", "izzet_data.json")
-			serverApp.StartServer()
+			serverApp := server.New("_assets", "shaders", "izzet_data.json")
+			serverApp.Start()
 		}()
 	}
 

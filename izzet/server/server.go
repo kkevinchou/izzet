@@ -1,16 +1,22 @@
-package izzet
+package server
 
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net"
+	"sync"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
+	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -19,9 +25,50 @@ import (
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
-func NewServer(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
+type System interface {
+	Update(time.Duration, systems.GameWorld)
+}
+
+type IzzetServer struct {
+	gameOver bool
+
+	assetManager *assets.AssetManager
+	modelLibrary *modellibrary.ModelLibrary
+
+	entities map[int]*entities.Entity
+	prefabs  map[int]*prefabs.Prefab
+
+	renderer    *render.Renderer
+	serializer  *serialization.Serializer
+	editHistory *edithistory.EditHistory
+
+	relativeMouseOrigin [2]int32
+	relativeMouseActive bool
+
+	navigationMesh  *navmesh.NavigationMesh
+	metricsRegistry *metrics.MetricsRegistry
+
+	showImguiDemo bool
+
+	editorWorld *world.GameWorld
+	world       *world.GameWorld
+
+	systems         []System
+	appMode         app.AppMode
+	physicsObserver *observers.PhysicsObserver
+
+	settings *app.Settings
+	isServer bool
+
+	// Server Properties
+	playerIDGenerator int
+	playerIDLock      sync.Mutex
+	players           map[int]network.Player
+}
+
+func New(assetsDirectory, shaderDirectory, dataFilePath string) *IzzetServer {
 	initSeed()
-	g := &Izzet{
+	g := &IzzetServer{
 		isServer:          true,
 		playerIDGenerator: 100000,
 		players:           map[int]network.Player{},
@@ -30,12 +77,6 @@ func NewServer(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	g.assetManager = assets.NewAssetManager(assetsDirectory, false)
 	g.modelLibrary = modellibrary.New(false)
-	// g.appMode = app.AppModeEditor
-
-	// g.camera = &camera.Camera{
-	// 	Position:    mgl64.Vec3{-82, 230, 95},
-	// 	Orientation: mgl64.QuatIdent(),
-	// }
 
 	start := time.Now()
 
@@ -53,8 +94,8 @@ func NewServer(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	// THINGS TO DELETE AFTER DEBUGGING
 	g.editHistory = edithistory.New()
 
-	g.serverModeSystems = append(g.serverModeSystems, &systems.MovementSystem{})
-	g.serverModeSystems = append(g.serverModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
+	g.systems = append(g.systems, &systems.MovementSystem{})
+	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 
 	// g.setupEntities(data)
 	g.LoadWorld("cubes")
@@ -64,7 +105,7 @@ func NewServer(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	return g
 }
 
-func (g *Izzet) StartServer() {
+func (g *IzzetServer) Start() {
 	host := "0.0.0.0"
 	port := "7878"
 	listener, err := net.Listen("tcp", host+":"+port)
@@ -132,7 +173,7 @@ func (g *Izzet) StartServer() {
 		currentLoopCommandFrames := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			start := time.Now()
-			g.runCommandFrameServer(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
+			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
 			g.world.IncrementCommandFrameCount()
@@ -144,5 +185,57 @@ func (g *Izzet) StartServer() {
 				accumulator = 0
 			}
 		}
+	}
+}
+
+func initSeed() {
+	seed := settings.Seed
+	fmt.Printf("initializing with seed %d ...\n", seed)
+	rand.Seed(seed)
+}
+
+func (g *IzzetServer) initSettings() {
+	g.settings = &app.Settings{
+		DirectionalLightDir:    [3]float32{-1, -1, -1},
+		Roughness:              0.55,
+		Metallic:               1.0,
+		PointLightBias:         1,
+		MaterialOverride:       false,
+		EnableShadowMapping:    true,
+		ShadowFarFactor:        1,
+		SPNearPlaneOffset:      300,
+		BloomIntensity:         0.04,
+		Exposure:               1.0,
+		AmbientFactor:          0.1,
+		Bloom:                  true,
+		BloomThresholdPasses:   1,
+		BloomThreshold:         0.8,
+		BloomUpsamplingScale:   1.0,
+		Color:                  [3]float32{1, 1, 1},
+		ColorIntensity:         20.0,
+		RenderSpatialPartition: false,
+		EnableSpatialPartition: true,
+		FPS:                    0,
+
+		Near: 1,
+		Far:  3000,
+		FovX: 105,
+
+		FogStart:   200,
+		FogEnd:     1000,
+		FogDensity: 1,
+		FogEnabled: true,
+
+		TriangleDrawCount: 0,
+		DrawCount:         0,
+
+		NavMeshHSV:                    true,
+		NavMeshRegionIDThreshold:      3000,
+		NavMeshDistanceFieldThreshold: 23,
+		HSVOffset:                     11,
+		VoxelHighlightX:               0,
+		VoxelHighlightZ:               0,
+		VoxelHighlightDistanceField:   -1,
+		VoxelHighlightRegionID:        -1,
 	}
 }

@@ -62,6 +62,18 @@ func (g *Izzet) runCommandFrame(delta time.Duration) {
 	g.Settings().CameraOrientation = g.camera.Orientation
 }
 
+func (g *Izzet) runCommandFrameServer(delta time.Duration) {
+	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
+	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
+	if g.Settings().EnableSpatialPartition {
+		g.handleSpatialPartition()
+	}
+
+	for _, s := range g.serverModeSystems {
+		s.Update(delta, g.world)
+	}
+}
+
 func (g *Izzet) handleSpatialPartition() {
 	var spatialEntities []spatialpartition.Entity
 	for _, entity := range g.world.Entities() {

@@ -195,3 +195,7 @@ func (g *Izzet) WorldToNDCPosition(viewerContext render.ViewerContext, worldPosi
 func (g *Izzet) PhysicsObserver() *observers.PhysicsObserver {
 	return g.physicsObserver
 }
+
+func (g *Izzet) Settings() *app.Settings {
+	return g.settings
+}

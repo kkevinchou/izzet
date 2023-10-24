@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	izzetapp "github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/kitolib/assets"
 )
 
@@ -31,6 +30,7 @@ type App interface {
 	StartLiveWorld()
 	StopLiveWorld()
 	AppMode() app.AppMode
+	Settings() *app.Settings
 }
 
 var worldName string = "scene"
@@ -38,6 +38,8 @@ var worldName string = "scene"
 var selectedWorldName string = ""
 
 func SetupMenuBar(app App) imgui.Vec2 {
+	settings := app.Settings()
+
 	imgui.BeginMainMenuBar()
 	size := imgui.WindowSize()
 	if imgui.BeginMenu("File") {
@@ -117,8 +119,8 @@ func SetupMenuBar(app App) imgui.Vec2 {
 
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("View") {
-		if imgui.MenuItemV("Show Colliders", "", panels.DBG.RenderColliders, true) {
-			panels.DBG.RenderColliders = !panels.DBG.RenderColliders
+		if imgui.MenuItemV("Show Colliders", "", settings.RenderColliders, true) {
+			settings.RenderColliders = !settings.RenderColliders
 		}
 
 		imgui.EndMenu()

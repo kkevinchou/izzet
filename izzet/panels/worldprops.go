@@ -32,16 +32,18 @@ var (
 )
 
 func worldProps(app App, renderContext RenderContext) {
+	settings := app.Settings()
+
 	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 
 		setupRow("Camera Position", func() {
-			imgui.LabelText("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", DBG.CameraPosition[0], DBG.CameraPosition[1], DBG.CameraPosition[2]))
+			imgui.LabelText("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", settings.CameraPosition[0], settings.CameraPosition[1], settings.CameraPosition[2]))
 		}, true)
 
 		setupRow("Camera Viewing Direction", func() {
-			viewDir := DBG.CameraOrientation.Rotate(mgl64.Vec3{0, 0, -1})
+			viewDir := settings.CameraOrientation.Rotate(mgl64.Vec3{0, 0, -1})
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
 
@@ -51,68 +53,68 @@ func worldProps(app App, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Lighting Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &DBG.AmbientFactor, 0, 1) }, true)
-		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &DBG.PointLightBias, 0, 1) }, true)
-		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &DBG.EnableShadowMapping) }, true)
-		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &DBG.ShadowFarFactor, 0, 10) }, true)
-		setupRow("Fog Density", func() { imgui.SliderInt("", &DBG.FogDensity, 0, 100) }, true)
+		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &settings.AmbientFactor, 0, 1) }, true)
+		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &settings.PointLightBias, 0, 1) }, true)
+		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &settings.EnableShadowMapping) }, true)
+		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &settings.ShadowFarFactor, 0, 10) }, true)
+		setupRow("Fog Density", func() { imgui.SliderInt("", &settings.FogDensity, 0, 100) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Enable Bloom", func() { imgui.Checkbox("", &DBG.Bloom) }, true)
-		setupRow("Bloom Intensity", func() { imgui.SliderFloat("", &DBG.BloomIntensity, 0, 1) }, true)
-		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &DBG.BloomThresholdPasses, 0, 3) }, true)
-		setupRow("Bloom Threshold", func() { imgui.SliderFloat("", &DBG.BloomThreshold, 0, 3) }, true)
-		setupRow("Upsampling Scale", func() { imgui.SliderFloat("", &DBG.BloomUpsamplingScale, 0, 5.0) }, true)
+		setupRow("Enable Bloom", func() { imgui.Checkbox("", &settings.Bloom) }, true)
+		setupRow("Bloom Intensity", func() { imgui.SliderFloat("", &settings.BloomIntensity, 0, 1) }, true)
+		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &settings.BloomThresholdPasses, 0, 3) }, true)
+		setupRow("Bloom Threshold", func() { imgui.SliderFloat("", &settings.BloomThreshold, 0, 3) }, true)
+		setupRow("Upsampling Scale", func() { imgui.SliderFloat("", &settings.BloomUpsamplingScale, 0, 5.0) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Far", func() { imgui.SliderFloat("", &DBG.Far, 0, 100000) }, true)
-		setupRow("FovX", func() { imgui.SliderFloat("", &DBG.FovX, 0, 170) }, true)
+		setupRow("Far", func() { imgui.SliderFloat("", &settings.Far, 0, 100000) }, true)
+		setupRow("FovX", func() { imgui.SliderFloat("", &settings.FovX, 0, 170) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("NavMesh", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("NavMesh Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("NavMeshHSV", func() {
-			if imgui.Checkbox("NavMeshHSV", &DBG.NavMeshHSV) {
+			if imgui.Checkbox("NavMeshHSV", &settings.NavMeshHSV) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("NavMesh Region Threshold", func() {
-			if imgui.InputInt("", &DBG.NavMeshRegionIDThreshold) {
+			if imgui.InputInt("", &settings.NavMeshRegionIDThreshold) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("NavMesh Distance Field Threshold", func() {
-			if imgui.InputInt("", &DBG.NavMeshDistanceFieldThreshold) {
+			if imgui.InputInt("", &settings.NavMeshDistanceFieldThreshold) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("HSV Offset", func() {
-			if imgui.InputInt("", &DBG.HSVOffset) {
+			if imgui.InputInt("", &settings.HSVOffset) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Voxel Highlight X", func() {
-			if imgui.InputInt("Voxel Highlight X", &DBG.VoxelHighlightX) {
+			if imgui.InputInt("Voxel Highlight X", &settings.VoxelHighlightX) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Voxel Highlight Z", func() {
-			if imgui.InputInt("Voxel Highlight Z", &DBG.VoxelHighlightZ) {
+			if imgui.InputInt("Voxel Highlight Z", &settings.VoxelHighlightZ) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Highlight Distance Field", func() {
-			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", DBG.VoxelHighlightDistanceField))
+			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", settings.VoxelHighlightDistanceField))
 		}, true)
 		setupRow("Highlight Region ID", func() {
-			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", DBG.VoxelHighlightRegionID))
+			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", settings.VoxelHighlightRegionID))
 		}, true)
 		imgui.EndTable()
 	}
@@ -120,9 +122,9 @@ func worldProps(app App, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &DBG.EnableSpatialPartition) }, true)
-		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &DBG.RenderSpatialPartition) }, true)
-		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &DBG.SPNearPlaneOffset, 0, 1000) }, true)
+		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &settings.EnableSpatialPartition) }, true)
+		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &settings.RenderSpatialPartition) }, true)
+		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &settings.SPNearPlaneOffset, 0, 1000) }, true)
 		imgui.EndTable()
 	}
 }

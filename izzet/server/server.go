@@ -39,8 +39,7 @@ type Server struct {
 
 	metricsRegistry *metrics.MetricsRegistry
 
-	editorWorld *world.GameWorld
-	world       *world.GameWorld
+	world *world.GameWorld
 
 	systems         []System
 	appMode         app.AppMode

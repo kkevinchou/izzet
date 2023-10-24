@@ -15,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/server/serversystems"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -81,6 +82,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
+	g.systems = append(g.systems, &serversystems.ReplicationSystem{})
 
 	// g.setupEntities(data)
 	g.LoadWorld("cubes")

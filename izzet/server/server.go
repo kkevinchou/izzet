@@ -29,7 +29,7 @@ type System interface {
 	Update(time.Duration, systems.GameWorld)
 }
 
-type IzzetServer struct {
+type Server struct {
 	gameOver bool
 
 	assetManager *assets.AssetManager
@@ -66,9 +66,9 @@ type IzzetServer struct {
 	players           map[int]network.Player
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string) *IzzetServer {
+func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	initSeed()
-	g := &IzzetServer{
+	g := &Server{
 		isServer:          true,
 		playerIDGenerator: 100000,
 		players:           map[int]network.Player{},
@@ -105,7 +105,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *IzzetServer {
 	return g
 }
 
-func (g *IzzetServer) Start() {
+func (g *Server) Start() {
 	host := "0.0.0.0"
 	port := "7878"
 	listener, err := net.Listen("tcp", host+":"+port)
@@ -194,7 +194,7 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *IzzetServer) initSettings() {
+func (g *Server) initSettings() {
 	g.settings = &app.Settings{
 		DirectionalLightDir:    [3]float32{-1, -1, -1},
 		Roughness:              0.55,

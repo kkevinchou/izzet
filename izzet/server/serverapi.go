@@ -10,11 +10,11 @@ import (
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
-func (g *IzzetServer) MetricsRegistry() *metrics.MetricsRegistry {
+func (g *Server) MetricsRegistry() *metrics.MetricsRegistry {
 	return g.metricsRegistry
 }
 
-func (g *IzzetServer) LoadWorld(name string) bool {
+func (g *Server) LoadWorld(name string) bool {
 	if name == "" {
 		return false
 	}
@@ -46,10 +46,10 @@ func (g *IzzetServer) LoadWorld(name string) bool {
 	return true
 }
 
-func (g *IzzetServer) SetWorld(world *world.GameWorld) {
+func (g *Server) SetWorld(world *world.GameWorld) {
 	g.world = world
 }
 
-func (g *IzzetServer) ModelLibrary() *modellibrary.ModelLibrary {
+func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
 	return g.modelLibrary
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
-	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -27,6 +26,10 @@ type Handle struct {
 
 	Type         HandleType
 	IntTypeParam int
+}
+
+type ModelConfig struct {
+	MaxAnimationJointWeights int
 }
 
 func NewGlobalHandle(id string) Handle {
@@ -107,7 +110,7 @@ func getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
 			if node.MeshID != nil {
 				mesh := doc.Meshes[*node.MeshID]
 
-				modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+				modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 				vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 				geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
 
@@ -149,7 +152,7 @@ func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecif
 }
 
 func (m *ModelLibrary) RegisterMeshWithHandle(handle Handle, mesh *modelspec.MeshSpecification) Handle {
-	modelConfig := &model.ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
+	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32

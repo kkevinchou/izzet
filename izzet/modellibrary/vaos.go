@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/model"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -12,7 +11,7 @@ import (
 // also, when we merged everything into one vao, we need to first apply any node transformations
 // onto the vertices since we won't be able to set uniforms for each mesh, as we now render them
 // all at once, rather than one at a time and setting the transform uniforms
-func createVAOs(modelConfig *model.ModelConfig, meshes []*modelspec.MeshSpecification) [][]uint32 {
+func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) [][]uint32 {
 	vaos := [][]uint32{}
 	for i, mesh := range meshes {
 		vaos = append(vaos, []uint32{})
@@ -111,7 +110,7 @@ func createVAOs(modelConfig *model.ModelConfig, meshes []*modelspec.MeshSpecific
 	return vaos
 }
 
-func createGeometryVAOs(modelConfig *model.ModelConfig, meshes []*modelspec.MeshSpecification) [][]uint32 {
+func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) [][]uint32 {
 	vaos := [][]uint32{}
 	for i, mesh := range meshes {
 		vaos = append(vaos, []uint32{})

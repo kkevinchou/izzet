@@ -5,6 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -52,4 +53,8 @@ func (g *Server) SetWorld(world *world.GameWorld) {
 
 func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
 	return g.modelLibrary
+}
+
+func (g *Server) GetPlayers() map[int]network.Player {
+	return g.players
 }

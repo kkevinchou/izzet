@@ -136,9 +136,7 @@ func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {
 
 func (g *Client) SetWorld(world *world.GameWorld) {
 	g.world = world
-	if !g.IsServer() {
-		g.renderer.SetWorld(world)
-	}
+	g.renderer.SetWorld(world)
 }
 
 func (g *Client) StartLiveWorld() {
@@ -200,8 +198,4 @@ func (g *Client) PhysicsObserver() *observers.PhysicsObserver {
 
 func (g *Client) Settings() *app.Settings {
 	return g.settings
-}
-
-func (g *Client) IsServer() bool {
-	return g.isServer
 }

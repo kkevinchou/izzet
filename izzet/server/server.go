@@ -82,7 +82,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
-	g.systems = append(g.systems, &serversystems.ReplicationSystem{})
+	g.systems = append(g.systems, serversystems.New(g))
 
 	// g.setupEntities(data)
 	g.LoadWorld("cubes")

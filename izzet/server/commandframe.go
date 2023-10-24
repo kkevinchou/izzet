@@ -6,7 +6,7 @@ import (
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
-func (g *IzzetServer) runCommandFrame(delta time.Duration) {
+func (g *Server) runCommandFrame(delta time.Duration) {
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
 	g.handleSpatialPartition()
@@ -16,7 +16,7 @@ func (g *IzzetServer) runCommandFrame(delta time.Duration) {
 	}
 }
 
-func (g *IzzetServer) handleSpatialPartition() {
+func (g *Server) handleSpatialPartition() {
 	var spatialEntities []spatialpartition.Entity
 	for _, entity := range g.world.Entities() {
 		if !entity.HasBoundingBox() {

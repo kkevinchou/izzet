@@ -118,7 +118,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.setupPrefabs(data)
 	fmt.Println(time.Since(start), "prefabs done")
-	g.setupEntities(data)
 	fmt.Println(time.Since(start), "entities done")
 	g.serializer = serialization.New(g, g.world)
 	g.editHistory = edithistory.New()
@@ -126,6 +125,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.physicsObserver = observers.NewPhysicsObserver()
 
 	g.setupSystems()
+
+	// g.setupEntities(data)
+	g.LoadWorld("cubes")
 
 	fmt.Println(time.Since(start), "to start up systems")
 
@@ -203,6 +205,41 @@ func (g *Izzet) Start() {
 			// it's unlikely the game state has changed much from one step to the next.
 			for renderAccumulator > msPerFrame {
 				renderAccumulator -= msPerFrame
+			}
+		}
+	}
+}
+
+func (g *Izzet) StartServer() {
+	var accumulator float64
+
+	// msPerFrame := float64(1000) / float64(60)
+	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
+
+	commandFrameCountBeforeRender := 0
+	for !g.gameOver {
+		now := float64(time.Now().UnixNano()) / 1000000
+		delta := now - previousTimeStamp
+		previousTimeStamp = now
+
+		accumulator += delta
+
+		currentLoopCommandFrames := 0
+		for accumulator >= float64(settings.MSPerCommandFrame) {
+			input := g.platform.PollInput()
+			g.HandleInput(input)
+			start := time.Now()
+			g.world.SetFrameInput(input)
+			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
+			commandFrameNanos := time.Since(start).Nanoseconds()
+			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			g.world.IncrementCommandFrameCount()
+			commandFrameCountBeforeRender += 1
+
+			accumulator -= float64(settings.MSPerCommandFrame)
+			currentLoopCommandFrames++
+			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
+				accumulator = 0
 			}
 		}
 	}

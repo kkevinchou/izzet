@@ -24,10 +24,6 @@ import (
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
-type System interface {
-	Update(time.Duration, systems.GameWorld)
-}
-
 type Server struct {
 	gameOver bool
 
@@ -43,7 +39,7 @@ type Server struct {
 
 	world *world.GameWorld
 
-	systems         []System
+	systems         []systems.System
 	appMode         app.AppMode
 	physicsObserver *observers.PhysicsObserver
 

@@ -31,10 +31,6 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-type System interface {
-	Update(time.Duration, systems.GameWorld)
-}
-
 type Client struct {
 	gameOver      bool
 	window        *sdl.Window
@@ -64,9 +60,9 @@ type Client struct {
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
 
-	playModeSystems   []System
-	editorModeSystems []System
-	serverModeSystems []System
+	playModeSystems   []systems.System
+	editorModeSystems []systems.System
+	serverModeSystems []systems.System
 	appMode           app.AppMode
 	physicsObserver   *observers.PhysicsObserver
 
@@ -159,20 +155,20 @@ func (g *Client) Start() {
 			// var buf []byte = make([]byte, 1000000)
 			// n, err := conn.Read(buf)
 			// if err != nil && err != io.EOF {
-			// 	panic(err)
+			//      panic(err)
 			// }
 			// _ = n
 			// fmt.Println(string(buf))
 
 			// err = decoder.Decode(buf)
 			// if err != nil {
-			// 	if err == io.EOF {
-			// 		continue
-			// 	}
+			//      if err == io.EOF {
+			//              continue
+			//      }
 
-			// 	fmt.Println("error reading incoming message:", err.Error())
-			// 	fmt.Println("closing connection")
-			// 	return
+			//      fmt.Println("error reading incoming message:", err.Error())
+			//      fmt.Println("closing connection")
+			//      return
 			// }
 
 			// Read data from the connection

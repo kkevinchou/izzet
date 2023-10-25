@@ -10,6 +10,10 @@ import (
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
+type System interface {
+	Update(time.Duration, GameWorld)
+}
+
 type GameWorld interface {
 	Entities() []*entities.Entity
 	GetEntityByID(int) *entities.Entity

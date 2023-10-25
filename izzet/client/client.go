@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"net"
 	"time"
@@ -143,28 +142,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
 	return g
 }
 
-func (g *Client) connect() (int, net.Conn, error) {
-	address := fmt.Sprintf("localhost:7878")
-	fmt.Println("connecting to " + address)
-
-	dialFunc := net.Dial
-
-	conn, err := dialFunc("tcp", address)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	var playerID int
-	decoder := json.NewDecoder(conn)
-	err = decoder.Decode(&playerID)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	fmt.Println("connected with player id ", playerID)
-	return playerID, conn, nil
-}
-
 func (g *Client) Start() {
 	playerID, conn, err := g.connect()
 	if err != nil {
@@ -177,19 +154,35 @@ func (g *Client) Start() {
 	go func() {
 		defer conn.Close()
 
-		decoder := json.NewDecoder(conn)
+		// decoder := json.NewDecoder(conn)
 		for {
-			var message []int
-			err := decoder.Decode(&message)
-			if err != nil {
-				if err == io.EOF {
-					continue
-				}
+			// var buf []byte = make([]byte, 1000000)
+			// n, err := conn.Read(buf)
+			// if err != nil && err != io.EOF {
+			// 	panic(err)
+			// }
+			// _ = n
+			// fmt.Println(string(buf))
 
-				fmt.Println("error reading incoming message:", err.Error())
-				fmt.Println("closing connection")
+			// err = decoder.Decode(buf)
+			// if err != nil {
+			// 	if err == io.EOF {
+			// 		continue
+			// 	}
+
+			// 	fmt.Println("error reading incoming message:", err.Error())
+			// 	fmt.Println("closing connection")
+			// 	return
+			// }
+
+			// Read data from the connection
+
+			worldFromServer, err := g.serializer.Read(conn)
+			if err != nil {
+				fmt.Println(fmt.Sprintf("error reading world %w", err))
 				return
 			}
+			fmt.Println(worldFromServer)
 		}
 	}()
 
@@ -266,6 +259,28 @@ func (g *Client) Start() {
 			}
 		}
 	}
+}
+
+func (g *Client) connect() (int, net.Conn, error) {
+	address := fmt.Sprintf("localhost:7878")
+	fmt.Println("connecting to " + address)
+
+	dialFunc := net.Dial
+
+	conn, err := dialFunc("tcp", address)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	var playerID int
+	decoder := json.NewDecoder(conn)
+	err = decoder.Decode(&playerID)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	fmt.Println("connected with player id ", playerID)
+	return playerID, conn, nil
 }
 
 func initSeed() {

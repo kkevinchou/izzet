@@ -56,5 +56,13 @@ func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
 }
 
 func (g *Server) GetPlayers() map[int]network.Player {
-	return g.players
+	playerMap := map[int]network.Player{}
+	g.playerLock.Lock()
+	defer g.playerLock.Unlock()
+
+	for k, v := range g.players {
+		playerMap[k] = v
+	}
+
+	return playerMap
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -49,7 +50,7 @@ type Server struct {
 	settings *app.Settings
 
 	playerIDGenerator int
-	playerIDLock      sync.Mutex
+	playerLock        sync.Mutex
 	players           map[int]network.Player
 }
 
@@ -83,6 +84,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.systems = append(g.systems, serversystems.New(g))
+	g.systems = append(g.systems, serversystems.NewClientManagementSystem(g, g.serializer))
 
 	// g.setupEntities(data)
 	g.LoadWorld("cubes")
@@ -112,36 +114,21 @@ func (g *Server) Start() {
 				continue
 			}
 
-			g.playerIDLock.Lock()
+			g.playerLock.Lock()
 			id := g.playerIDGenerator
 			g.players[id] = network.Player{ID: id, Connection: conn}
 			g.playerIDGenerator += 1
-			g.playerIDLock.Unlock()
+			g.playerLock.Unlock()
 
-			// message, err := s.createAcceptMessage(id)
-			// if err != nil {
-			// 	fmt.Println(err)
-			// 	continue
-			// }
-			// sendMessage(conn, message)
-			// if err != nil {
-			// 	fmt.Println("error sending accept message:", err.Error())
-			// 	continue
-			// }
-
+			fmt.Println("encoding world to client connection")
 			encoder := json.NewEncoder(conn)
 			err = encoder.Encode(id)
 			if err != nil {
 				fmt.Println("error with incoming message: %w", err)
 			}
 
-			// select {
-			// case s.incomingConnections <- &Connection{ID: id, Connection: conn}:
-			// default:
-			// 	panic("incomingConnections queue full")
-			// }
+			g.world.QueueEvent(events.PlayerJoinEvent{PlayerID: id})
 		}
-
 	}()
 
 	var accumulator float64

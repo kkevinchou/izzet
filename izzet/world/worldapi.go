@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -94,4 +95,16 @@ func (g *GameWorld) SetFrameInput(input input.Input) {
 
 func (g *GameWorld) GetFrameInput() input.Input {
 	return g.frameInput
+}
+
+func (g *GameWorld) GetEvents() []events.Event {
+	return g.events
+}
+
+func (g *GameWorld) QueueEvent(event events.Event) {
+	g.events = append(g.events, event)
+}
+
+func (g *GameWorld) ClearEventQueue() {
+	g.events = nil
 }

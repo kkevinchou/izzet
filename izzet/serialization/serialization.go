@@ -38,7 +38,7 @@ func New(app App, world GameWorld) *Serializer {
 	return &Serializer{app: app}
 }
 
-func (s *Serializer) WriteToFile(world *world.GameWorld, filepath string) error {
+func (s *Serializer) WriteToFile(world GameWorld, filepath string) error {
 	f, err := os.Create(filepath)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (s *Serializer) WriteToFile(world *world.GameWorld, filepath string) error 
 	return nil
 }
 
-func (s *Serializer) Write(world *world.GameWorld, writer io.Writer) error {
+func (s *Serializer) Write(world GameWorld, writer io.Writer) error {
 	entities := world.Entities()
 
 	worldIR := WorldIR{
@@ -101,13 +101,15 @@ func (s *Serializer) ReadFromFile(filepath string) (*world.GameWorld, error) {
 }
 
 func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
-	bytes, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
+	// bytes, err := io.ReadAll(reader)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	var worldIR WorldIR
-	err = json.Unmarshal(bytes, &worldIR)
+	decoder := json.NewDecoder(reader)
+	err := decoder.Decode(&worldIR)
+	// err = json.Unmarshal(bytes, &worldIR)
 	if err != nil {
 		return nil, err
 	}

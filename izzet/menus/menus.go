@@ -31,6 +31,7 @@ type App interface {
 	StopLiveWorld()
 	AppMode() app.AppMode
 	Settings() *app.Settings
+	Connect()
 }
 
 var worldName string = "scene"
@@ -50,7 +51,6 @@ func SetupMenuBar(app App) imgui.Vec2 {
 		imgui.SameLine()
 		if imgui.Button("Save") {
 			fmt.Println("Save to", worldName)
-			// if imgui.MenuItem("Save") {
 			app.SaveWorld(worldName)
 		}
 
@@ -121,6 +121,15 @@ func SetupMenuBar(app App) imgui.Vec2 {
 	if imgui.BeginMenu("View") {
 		if imgui.MenuItemV("Show Colliders", "", settings.RenderColliders, true) {
 			settings.RenderColliders = !settings.RenderColliders
+		}
+
+		imgui.EndMenu()
+	}
+
+	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
+	if imgui.BeginMenu("Multiplayer") {
+		if imgui.MenuItem("Connect") {
+			app.Connect()
 		}
 
 		imgui.EndMenu()

@@ -1,13 +1,32 @@
 package clientsystems
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems"
 )
 
+type App interface {
+	NetworkMessagesChannel() chan network.Message
+}
+
 type ReceiverSystem struct {
+	app App
+}
+
+func NewReceiverSystem(app App) *ReceiverSystem {
+	return &ReceiverSystem{app: app}
 }
 
 func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
+	for {
+		select {
+		case message := <-s.app.NetworkMessagesChannel():
+			fmt.Println(message)
+		default:
+			return
+		}
+	}
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
@@ -56,13 +57,13 @@ func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
 }
 
 func (g *Server) GetPlayers() map[int]network.Player {
-	playerMap := map[int]network.Player{}
-	g.playerLock.Lock()
-	defer g.playerLock.Unlock()
+	return g.players
+}
 
-	for k, v := range g.players {
-		playerMap[k] = v
-	}
+func (g *Server) RegisterPlayer(playerID int, connection net.Conn) {
+	g.players[playerID] = network.Player{ID: playerID, Connection: connection}
+}
 
-	return playerMap
+func (g *Server) CommandFrame() int {
+	return g.commandFrame
 }

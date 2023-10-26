@@ -2,7 +2,10 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net"
 	"sort"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -12,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -198,4 +202,74 @@ func (g *Client) PhysicsObserver() *observers.PhysicsObserver {
 
 func (g *Client) Settings() *app.Settings {
 	return g.settings
+}
+
+func (g *Client) Connect() {
+	playerID, conn, err := connect()
+	if err != nil {
+		panic(err)
+	}
+
+	// reinitialize all network related state
+	g.playerID = playerID
+	g.connection = conn
+	g.networkMessages = make(chan network.Message, 100)
+
+	// TODO a done channel to close out the goroutine
+	go func() {
+		defer conn.Close()
+
+		decoder := json.NewDecoder(g.connection)
+		for {
+			var message network.Message
+			err := decoder.Decode(&message)
+			if err != nil {
+				if err == io.EOF {
+					continue
+				}
+
+				fmt.Println("error reading incoming message:", err.Error())
+				fmt.Println("closing connection")
+				return
+			}
+
+			g.networkMessages <- message
+
+			// worldFromServer, err := g.serializer.Read(conn)
+			// if err != nil {
+			// 	fmt.Println(fmt.Sprintf("error reading world %w", err))
+			// 	return
+			// }
+			// // time.Sleep(10 * time.Second)
+			// fmt.Println("setting world from server")
+			// // g.SetWorld(worldFromServer)
+			// fmt.Println(worldFromServer)
+		}
+	}()
+}
+
+func connect() (int, net.Conn, error) {
+	address := fmt.Sprintf("localhost:7878")
+	fmt.Println("connecting to " + address)
+
+	dialFunc := net.Dial
+
+	conn, err := dialFunc("tcp", address)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	var playerID int
+	decoder := json.NewDecoder(conn)
+	err = decoder.Decode(&playerID)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	fmt.Println("connected with player id ", playerID)
+	return playerID, conn, nil
+}
+
+func (g *Client) NetworkMessagesChannel() chan network.Message {
+	return g.networkMessages
 }

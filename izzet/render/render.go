@@ -69,6 +69,7 @@ type App interface {
 
 	PhysicsObserver() *observers.PhysicsObserver
 	Settings() *app.Settings
+	Connect()
 }
 
 const mipsCount int = 6

@@ -72,6 +72,7 @@ type Client struct {
 	playerID        int
 	connection      net.Conn
 	networkMessages chan network.Message
+	commandFrame    int
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
@@ -247,7 +248,7 @@ func (g *Client) setupPrefabs(data *izzetdata.Data) {
 }
 
 func (g *Client) setupSystems() {
-	g.playModeSystems = append(g.playModeSystems, &systems.CharacterControllerSystem{})
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})

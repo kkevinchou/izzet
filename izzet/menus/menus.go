@@ -129,6 +129,7 @@ func SetupMenuBar(app App) imgui.Vec2 {
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("Multiplayer") {
 		if imgui.MenuItem("Connect") {
+			app.StartLiveWorld()
 			app.Connect()
 		}
 

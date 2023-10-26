@@ -50,7 +50,8 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		conn := player.Connection
 		encoder := json.NewEncoder(conn)
 
-		message := network.Message{SenderID: 9000, CommandFrame: s.app.CommandFrame(), Timestamp: time.Now(), Body: messageBytes}
+		message := network.NewBaseMessage(-1, network.MsgTypeGameStateUpdate, s.app.CommandFrame())
+		message.Body = messageBytes
 		encoder.Encode(message)
 		// s.serializer.Write(world, conn)
 	}

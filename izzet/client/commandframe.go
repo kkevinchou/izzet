@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/collision/checks"
@@ -27,7 +29,9 @@ var (
 // Systems Context
 
 func (g *Client) runCommandFrame(delta time.Duration) {
+	g.commandFrame += 1
 	frameInput := g.world.GetFrameInput()
+	g.sendInputToServer(frameInput)
 
 	if frameInput.WindowEvent.Resized {
 		w, h := g.window.GetSize()
@@ -62,15 +66,37 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	g.Settings().CameraOrientation = g.camera.Orientation
 }
 
-func (g *Client) runCommandFrameServer(delta time.Duration) {
-	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
-	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
-	if g.Settings().EnableSpatialPartition {
-		g.handleSpatialPartition()
+func (g *Client) sendInputToServer(frameInput input.Input) {
+	if g.connection == nil {
+		return
 	}
 
-	for _, s := range g.serverModeSystems {
-		s.Update(delta, g.world)
+	if frameInput.KeyboardInput[input.KeyboardKeyA].Event == input.KeyboardEventDown {
+		fmt.Println(g.CommandFrame(), "CLIENT SEND INPUT")
+	}
+
+	inputMessage := network.InputMessage{
+		Input: frameInput,
+	}
+	bytes, err := json.Marshal(inputMessage)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to write input message body %w", err))
+		return
+	}
+
+	message := network.NewBaseMessage(g.playerID, network.MsgTypePlayerInput, g.CommandFrame())
+	message.Body = bytes
+
+	baseMessageBytes, err := json.Marshal(message)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to write input message base %w", err))
+		return
+	}
+
+	_, err = g.connection.Write(baseMessageBytes)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
+		return
 	}
 }
 

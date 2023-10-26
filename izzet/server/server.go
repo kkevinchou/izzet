@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/server/serversystems"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -49,12 +50,14 @@ type Server struct {
 	replicator     *Replicator
 
 	commandFrame int
+	inputBuffer  *inputbuffer.InputBuffer
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	initSeed()
 	g := &Server{
-		players: map[int]network.Player{},
+		players:     map[int]network.Player{},
+		inputBuffer: inputbuffer.New(),
 	}
 	g.initSettings()
 
@@ -80,6 +83,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	// THINGS TO DELETE AFTER DEBUGGING
 	g.editHistory = edithistory.New()
 
+	g.systems = append(g.systems, serversystems.NewReceiverSystem(g))
+	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))

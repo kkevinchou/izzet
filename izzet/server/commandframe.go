@@ -1,9 +1,13 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -14,10 +18,32 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 	g.handleSpatialPartition()
 
 	g.handlePlayerConnections()
+	g.handleNetworkMessages()
 	for _, s := range g.systems {
 		s.Update(delta, g.world)
 	}
 	g.replicator.Update(delta, g.world)
+}
+
+func (g *Server) handleNetworkMessages() {
+	for _, player := range g.players {
+		decoder := json.NewDecoder(player.Connection)
+		var message network.Message
+		err := decoder.Decode(&message)
+		if err != nil {
+			reader := decoder.Buffered()
+			bytes, err := io.ReadAll(reader)
+			if err != nil {
+				fmt.Println(fmt.Errorf("error reading remaining bytes %w", err))
+			}
+			fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
+			continue
+		}
+
+		if message.MessageType == network.MsgTypePlayerInput {
+			player.InMessageChannel <- message
+		}
+	}
 }
 
 func (g *Server) handlePlayerConnections() {

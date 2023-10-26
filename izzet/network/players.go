@@ -1,8 +1,11 @@
 package network
 
-import "net"
+import (
+	"net"
+)
 
 type Player struct {
-	ID         int
-	Connection net.Conn
+	ID               int
+	Connection       net.Conn
+	InMessageChannel chan Message
 }

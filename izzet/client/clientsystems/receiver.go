@@ -9,10 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems"
 )
 
-type App interface {
-	NetworkMessagesChannel() chan network.Message
-}
-
 type ReceiverSystem struct {
 	app App
 }
@@ -25,13 +21,15 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for {
 		select {
 		case message := <-s.app.NetworkMessagesChannel():
-			var gameStateUpdateMessage network.GameStateUpdateMessage
-			err := json.Unmarshal(message.Body, &gameStateUpdateMessage)
-			if err != nil {
-				fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
-				continue
+			if message.MessageType == network.MsgTypeGameStateUpdate {
+				var gameStateUpdateMessage network.GameStateUpdateMessage
+				err := json.Unmarshal(message.Body, &gameStateUpdateMessage)
+				if err != nil {
+					fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
+					continue
+				}
+				// fmt.Println(gameStateUpdateMessage)
 			}
-			fmt.Println(gameStateUpdateMessage)
 		default:
 			return
 		}

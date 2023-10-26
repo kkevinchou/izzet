@@ -1,4 +1,4 @@
-package systems
+package shared
 
 import (
 	"time"
@@ -13,28 +13,8 @@ const (
 	jumpVelocity float64 = 200
 )
 
-type CharacterControllerSystem struct {
-}
-
-func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld) {
-	frameInput := world.GetFrameInput()
+func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, camera *entities.Entity, entity *entities.Entity) {
 	keyboardInput := frameInput.KeyboardInput
-
-	var camera *entities.Entity
-	for _, entity := range world.Entities() {
-		if entity.CameraComponent != nil {
-			camera = entity
-			break
-		}
-	}
-	if camera == nil || camera.CameraComponent.Target == nil {
-		return
-	}
-
-	entity := world.GetEntityByID(*camera.CameraComponent.Target)
-	if entity == nil || entity.CharacterControllerComponent == nil {
-		return
-	}
 
 	c := entity.CharacterControllerComponent
 

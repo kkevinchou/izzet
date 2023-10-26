@@ -22,6 +22,7 @@ type GameWorld interface {
 	GetEvents() []events.Event
 	QueueEvent(events.Event)
 	ClearEventQueue()
+	AddEntity(*entities.Entity)
 }
 
 type CameraSystem struct {

@@ -273,3 +273,11 @@ func connect() (int, net.Conn, error) {
 func (g *Client) NetworkMessagesChannel() chan network.Message {
 	return g.networkMessages
 }
+
+func (g *Client) CommandFrame() int {
+	return g.commandFrame
+}
+
+func (g *Client) GetPlayerID() int {
+	return g.playerID
+}

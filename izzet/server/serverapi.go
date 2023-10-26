@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/panels"
+	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -61,9 +62,13 @@ func (g *Server) GetPlayers() map[int]network.Player {
 }
 
 func (g *Server) RegisterPlayer(playerID int, connection net.Conn) {
-	g.players[playerID] = network.Player{ID: playerID, Connection: connection}
+	g.players[playerID] = network.Player{ID: playerID, Connection: connection, InMessageChannel: make(chan network.Message, 100)}
 }
 
 func (g *Server) CommandFrame() int {
 	return g.commandFrame
+}
+
+func (g *Server) InputBuffer() *inputbuffer.InputBuffer {
+	return g.inputBuffer
 }

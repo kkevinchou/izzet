@@ -9,11 +9,13 @@ type MessageType int
 const (
 	MsgTypeAcceptConnection MessageType = iota
 	MsgTypeAckCreatePlayer
+	MsgTypeGameStateUpdate
+	MsgTypePlayerInput
 )
 
 type Message struct {
 	SenderID     int
-	MessageType  int
+	MessageType  MessageType
 	CommandFrame int
 	Timestamp    time.Time
 

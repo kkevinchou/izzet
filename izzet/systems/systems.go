@@ -20,6 +20,7 @@ type GameWorld interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetFrameInput() input.Input
 	GetEvents() []events.Event
+	QueueEvent(events.Event)
 	ClearEventQueue()
 }
 

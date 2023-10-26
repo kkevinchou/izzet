@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
@@ -12,11 +11,13 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/camera"
+	"github.com/kkevinchou/izzet/izzet/client/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -68,8 +69,9 @@ type Client struct {
 
 	settings *app.Settings
 
-	playerID   int
-	connection net.Conn
+	playerID        int
+	connection      net.Conn
+	networkMessages chan network.Message
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
@@ -139,49 +141,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
 }
 
 func (g *Client) Start() {
-	playerID, conn, err := g.connect()
-	if err != nil {
-		panic(err)
-	}
-
-	g.playerID = playerID
-	g.connection = conn
-
-	go func() {
-		defer conn.Close()
-
-		// decoder := json.NewDecoder(conn)
-		for {
-			// var buf []byte = make([]byte, 1000000)
-			// n, err := conn.Read(buf)
-			// if err != nil && err != io.EOF {
-			//      panic(err)
-			// }
-			// _ = n
-			// fmt.Println(string(buf))
-
-			// err = decoder.Decode(buf)
-			// if err != nil {
-			//      if err == io.EOF {
-			//              continue
-			//      }
-
-			//      fmt.Println("error reading incoming message:", err.Error())
-			//      fmt.Println("closing connection")
-			//      return
-			// }
-
-			// Read data from the connection
-
-			worldFromServer, err := g.serializer.Read(conn)
-			if err != nil {
-				fmt.Println(fmt.Sprintf("error reading world %w", err))
-				return
-			}
-			fmt.Println(worldFromServer)
-		}
-	}()
-
 	var accumulator float64
 	var renderAccumulator float64
 	// var oneSecondAccumulator float64
@@ -190,7 +149,7 @@ func (g *Client) Start() {
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
 
 	// immediate updates when swapping buffers
-	err = sdl.GLSetSwapInterval(0)
+	err := sdl.GLSetSwapInterval(0)
 	if err != nil {
 		panic(err)
 	}
@@ -257,28 +216,6 @@ func (g *Client) Start() {
 	}
 }
 
-func (g *Client) connect() (int, net.Conn, error) {
-	address := fmt.Sprintf("localhost:7878")
-	fmt.Println("connecting to " + address)
-
-	dialFunc := net.Dial
-
-	conn, err := dialFunc("tcp", address)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	var playerID int
-	decoder := json.NewDecoder(conn)
-	err = decoder.Decode(&playerID)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	fmt.Println("connected with player id ", playerID)
-	return playerID, conn, nil
-}
-
 func initSeed() {
 	seed := settings.Seed
 	fmt.Printf("initializing with seed %d ...\n", seed)
@@ -315,6 +252,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 
 	g.editorModeSystems = append(g.editorModeSystems, &systems.AnimationSystem{})
 }

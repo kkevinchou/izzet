@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -45,16 +43,18 @@ type Server struct {
 
 	settings *app.Settings
 
-	playerIDGenerator int
-	playerLock        sync.Mutex
-	players           map[int]network.Player
+	players map[int]network.Player
+
+	newConnections chan NewConnection
+	replicator     *Replicator
+
+	commandFrame int
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	initSeed()
 	g := &Server{
-		playerIDGenerator: 100000,
-		players:           map[int]network.Player{},
+		players: map[int]network.Player{},
 	}
 	g.initSettings()
 
@@ -74,13 +74,15 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g.metricsRegistry = metrics.New()
 	g.physicsObserver = observers.NewPhysicsObserver()
 
+	g.newConnections = make(chan NewConnection, 100)
+	g.replicator = NewReplicator(g, g.serializer)
+
 	// THINGS TO DELETE AFTER DEBUGGING
 	g.editHistory = edithistory.New()
 
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
-	g.systems = append(g.systems, serversystems.New(g))
-	g.systems = append(g.systems, serversystems.NewClientManagementSystem(g, g.serializer))
+	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
 
 	// g.setupEntities(data)
 	g.LoadWorld("cubes")
@@ -91,42 +93,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 }
 
 func (g *Server) Start() {
-	host := "0.0.0.0"
-	port := "7878"
-	listener, err := net.Listen("tcp", host+":"+port)
-	if err != nil {
-		panic(err)
-	}
-	_ = listener
-
-	fmt.Println("listening on " + host + ":" + port)
-
-	go func() {
-		defer listener.Close()
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				fmt.Println("error accepting a connection on the listener:", err.Error())
-				continue
-			}
-
-			g.playerLock.Lock()
-			id := g.playerIDGenerator
-			g.players[id] = network.Player{ID: id, Connection: conn}
-			g.playerIDGenerator += 1
-			g.playerLock.Unlock()
-
-			fmt.Println("encoding world to client connection")
-			encoder := json.NewEncoder(conn)
-			err = encoder.Encode(id)
-			if err != nil {
-				fmt.Println("error with incoming message: %w", err)
-			}
-
-			g.world.QueueEvent(events.PlayerJoinEvent{PlayerID: id})
-		}
-	}()
-
+	g.listen()
 	var accumulator float64
 
 	// msPerFrame := float64(1000) / float64(60)
@@ -208,4 +175,42 @@ func (g *Server) initSettings() {
 		VoxelHighlightDistanceField:   -1,
 		VoxelHighlightRegionID:        -1,
 	}
+}
+
+type NewConnection struct {
+	PlayerID   int
+	Connection net.Conn
+}
+
+func (s *Server) listen() {
+	host := "0.0.0.0"
+	port := "7878"
+	listener, err := net.Listen("tcp", host+":"+port)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("listening on " + host + ":" + port)
+
+	go func() {
+		defer listener.Close()
+		playerIDGenerator := 100000
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				fmt.Println("error accepting a connection on the listener:", err.Error())
+				continue
+			}
+
+			id := playerIDGenerator
+			playerIDGenerator += 1
+			encoder := json.NewEncoder(conn)
+			err = encoder.Encode(id)
+			if err != nil {
+				fmt.Println("error with incoming message: %w", err)
+			}
+
+			s.newConnections <- NewConnection{PlayerID: id, Connection: conn}
+		}
+	}()
 }

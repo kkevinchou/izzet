@@ -1,7 +1,10 @@
 package events
 
+import "net"
+
 type Event interface{}
 
 type PlayerJoinEvent struct {
-	PlayerID int
+	PlayerID   int
+	Connection net.Conn
 }

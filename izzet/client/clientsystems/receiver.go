@@ -1,6 +1,7 @@
 package clientsystems
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -24,7 +25,13 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for {
 		select {
 		case message := <-s.app.NetworkMessagesChannel():
-			fmt.Println(message)
+			var gameStateUpdateMessage network.GameStateUpdateMessage
+			err := json.Unmarshal(message.Body, &gameStateUpdateMessage)
+			if err != nil {
+				fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
+				continue
+			}
+			fmt.Println(gameStateUpdateMessage)
 		default:
 			return
 		}

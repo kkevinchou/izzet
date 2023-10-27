@@ -30,10 +30,6 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	world.SetInputCameraOrientation(cameraOrientation)
 	frameInput = world.GetFrameInput()
 
-	if frameInput.KeyboardInput[input.KeyboardKeyA].Event == input.KeyboardEventDown {
-		fmt.Println(s.app.CommandFrame(), "CLIENT SEND INPUT")
-	}
-
 	inputMessage := network.InputMessage{
 		Input: frameInput,
 	}

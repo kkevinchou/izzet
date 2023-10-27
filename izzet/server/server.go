@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
@@ -51,6 +52,7 @@ type Server struct {
 
 	commandFrame int
 	inputBuffer  *inputbuffer.InputBuffer
+	playerInput  map[int]input.Input
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
@@ -58,6 +60,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g := &Server{
 		players:     map[int]network.Player{},
 		inputBuffer: inputbuffer.New(),
+		playerInput: map[int]input.Input{},
 	}
 	g.initSettings()
 
@@ -84,6 +87,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g.editHistory = edithistory.New()
 
 	g.systems = append(g.systems, serversystems.NewReceiverSystem(g))
+	g.systems = append(g.systems, serversystems.NewInputSystem(g))
 	g.systems = append(g.systems, &systems.CameraTargetSystem{})
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, &systems.MovementSystem{})

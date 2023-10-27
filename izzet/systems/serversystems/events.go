@@ -16,6 +16,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 type App interface {
@@ -25,6 +26,8 @@ type App interface {
 	CommandFrame() int
 	ModelLibrary() *modellibrary.ModelLibrary
 	GetPlayer(playerID int) network.Player
+	GetPlayerInput(playerID int) input.Input
+	SetPlayerInput(playerID int, input input.Input)
 }
 
 type EventsSystem struct {

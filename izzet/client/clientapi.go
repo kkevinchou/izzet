@@ -205,6 +205,12 @@ func (g *Client) Settings() *app.Settings {
 }
 
 func (g *Client) Connect() {
+	if g.IsConnected() {
+		return
+	}
+
+	g.StartLiveWorld()
+
 	playerID, conn, err := connect()
 	if err != nil {
 		panic(err)

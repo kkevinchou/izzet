@@ -10,6 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
@@ -80,4 +81,12 @@ func (g *Server) InputBuffer() *inputbuffer.InputBuffer {
 
 func (g *Server) GetPlayer(playerID int) network.Player {
 	return g.players[playerID]
+}
+
+func (g *Server) SetPlayerInput(playerID int, input input.Input) {
+	g.playerInput[playerID] = input
+}
+
+func (g *Server) GetPlayerInput(playerID int) input.Input {
+	return g.playerInput[playerID]
 }

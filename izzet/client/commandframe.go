@@ -107,6 +107,8 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 
 	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
 		g.StartLiveWorld()
+	} else if _, ok := keyboardInput[input.KeyboardKeyF6]; ok {
+		g.Connect()
 	}
 
 	// undo/undo

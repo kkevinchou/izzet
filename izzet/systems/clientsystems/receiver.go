@@ -45,6 +45,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					}
 
 					entities.SetLocalPosition(entity, transform.Position)
+					entities.SetLocalRotation(entity, transform.Orientation)
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage

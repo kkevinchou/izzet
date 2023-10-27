@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"time"
 
@@ -22,38 +21,16 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 	g.handleSpatialPartition()
 
 	g.handlePlayerConnections()
-	g.handleNetworkMessages()
 	for _, s := range g.systems {
 		s.Update(delta, g.world)
 	}
 	g.replicator.Update(delta, g.world)
 }
 
-func (g *Server) handleNetworkMessages() {
-	for _, player := range g.players {
-		decoder := json.NewDecoder(player.Connection)
-		var message network.Message
-		err := decoder.Decode(&message)
-		if err != nil {
-			// reader := decoder.Buffered()
-			// bytes, err2 := io.ReadAll(reader)
-			// if err2 != nil {
-			// 	fmt.Println(fmt.Errorf("error reading remaining bytes %w", err2))
-			// }
-			// fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
-			fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err))
-			continue
-		}
-
-		if message.MessageType == network.MsgTypePlayerInput {
-			player.InMessageChannel <- message
-		}
-	}
-}
-
 func (g *Server) handlePlayerConnections() {
 	select {
 	case connection := <-g.newConnections:
+		g.world.QueueEvent(events.PlayerJoinEvent{PlayerID: connection.PlayerID, Connection: connection.Connection})
 		player := g.RegisterPlayer(connection.PlayerID, connection.Connection)
 
 		var radius float64 = 40

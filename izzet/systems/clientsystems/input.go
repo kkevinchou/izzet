@@ -1,10 +1,13 @@
 package clientsystems
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/input"
 )
@@ -18,41 +21,37 @@ func NewInputSystem(app App) *InputSystem {
 }
 
 func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
-	if !s.app.IsConnected() {
+	frameInput := world.GetFrameInput()
+	cameraOrientation := s.computePlayerCameraOrientation(world, frameInput)
+	world.SetInputCameraOrientation(cameraOrientation)
+	frameInput = world.GetFrameInput()
+
+	inputMessage := network.InputMessage{
+		Input: frameInput,
+	}
+	bytes, err := json.Marshal(inputMessage)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to write input message body %w", err))
 		return
 	}
 
-	// frameInput := world.GetFrameInput()
-	// cameraOrientation := s.computePlayerCameraOrientation(world, frameInput)
-	// world.SetInputCameraOrientation(cameraOrientation)
-	// frameInput = world.GetFrameInput()
+	message := network.NewBaseMessage(s.app.GetPlayerID(), network.MsgTypePlayerInput, s.app.CommandFrame())
+	message.Body = bytes
 
-	// inputMessage := network.InputMessage{
-	// 	Input: frameInput,
-	// }
-	// bytes, err := json.Marshal(inputMessage)
+	// baseMessageBytes, err := json.Marshal(message)
 	// if err != nil {
-	// 	fmt.Println(fmt.Errorf("failed to write input message body %w", err))
+	// 	fmt.Println(fmt.Errorf("failed to write input message base %w", err))
 	// 	return
 	// }
 
-	// message := network.NewBaseMessage(s.app.GetPlayerID(), network.MsgTypePlayerInput, s.app.CommandFrame())
-	// message.Body = bytes
-
-	// // baseMessageBytes, err := json.Marshal(message)
-	// // if err != nil {
-	// // 	fmt.Println(fmt.Errorf("failed to write input message base %w", err))
-	// // 	return
-	// // }
-
-	// conn := s.app.GetPlayerConnection()
-	// encoder := json.NewEncoder(conn)
-	// err = encoder.Encode(message)
-	// // _, err = conn.Write(baseMessageBytes)
-	// if err != nil {
-	// 	fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
-	// 	return
-	// }
+	conn := s.app.GetPlayerConnection()
+	encoder := json.NewEncoder(conn)
+	err = encoder.Encode(message)
+	// _, err = conn.Write(baseMessageBytes)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
+		return
+	}
 }
 
 func (s *InputSystem) computePlayerCameraOrientation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -41,7 +42,14 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		if entity.CameraComponent != nil {
 			continue
 		}
-		transforms = append(transforms, network.Transform{EntityID: entity.ID, Position: entity.WorldPosition()})
+		if entity.Static {
+			continue
+		}
+		transforms = append(transforms, network.Transform{
+			EntityID:    entity.ID,
+			Position:    entities.GetLocalPosition(entity),
+			Orientation: entities.GetLocalRotation(entity),
+		})
 	}
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
 		Transforms: transforms,

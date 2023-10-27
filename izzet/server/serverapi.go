@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 
@@ -63,11 +64,36 @@ func (g *Server) GetPlayers() map[int]network.Player {
 }
 
 func (g *Server) RegisterPlayer(playerID int, connection net.Conn) network.Player {
+	inMessageChannel := make(chan network.Message, 100)
 	g.players[playerID] = network.Player{
 		ID: playerID, Connection: connection,
-		InMessageChannel:  make(chan network.Message, 100),
+		InMessageChannel:  inMessageChannel,
 		OutMessageChannel: make(chan network.Message, 100),
 	}
+
+	// TODO: handle teardown
+	go func(conn net.Conn, id int, ch chan network.Message) {
+		for {
+			decoder := json.NewDecoder(conn)
+			var message network.Message
+			err := decoder.Decode(&message)
+			if err != nil {
+				// reader := decoder.Buffered()
+				// bytes, err2 := io.ReadAll(reader)
+				// if err2 != nil {
+				// 	fmt.Println(fmt.Errorf("error reading remaining bytes %w", err2))
+				// }
+				// fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
+				fmt.Println(fmt.Errorf("error decoding message from player %d remaining buffered data: %w", id, err))
+				continue
+			}
+
+			if message.MessageType == network.MsgTypePlayerInput {
+				ch <- message
+			}
+		}
+	}(connection, playerID, inMessageChannel)
+
 	return g.players[playerID]
 }
 

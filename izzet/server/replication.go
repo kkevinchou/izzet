@@ -38,6 +38,9 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 
 	var transforms []network.Transform
 	for _, entity := range world.Entities() {
+		if entity.CameraComponent != nil {
+			continue
+		}
 		transforms = append(transforms, network.Transform{EntityID: entity.ID, Position: entity.WorldPosition()})
 	}
 	gamestateUpdateMessage := network.GameStateUpdateMessage{

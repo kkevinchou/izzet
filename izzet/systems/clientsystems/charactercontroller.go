@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/kitolib/input"
@@ -25,14 +24,8 @@ func NewCharacterControllerSystem(app App) *CharacterControllerSystem {
 var moveCount int
 
 func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.GameWorld) {
-	var camera *entities.Entity
-	for _, entity := range world.Entities() {
-		// if entity.CameraComponent != nil && entity.PlayerInput != nil && entity.PlayerInput.PlayerID == s.app.GetPlayerID() {
-		if entity.CameraComponent != nil {
-			camera = entity
-			break
-		}
-	}
+	camera := s.app.GetPlayerCamera()
+
 	if camera == nil || camera.CameraComponent.Target == nil {
 		return
 	}

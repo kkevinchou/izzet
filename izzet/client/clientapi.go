@@ -295,3 +295,15 @@ func (g *Client) IsConnected() bool {
 func (g *Client) GetPlayerConnection() net.Conn {
 	return g.connection
 }
+func (g *Client) SetPlayerEntity(entity *entities.Entity) {
+	g.playerEntity = entity
+}
+func (g *Client) SetPlayerCamera(entity *entities.Entity) {
+	g.playerCamera = entity
+}
+func (g *Client) GetPlayerEntity() *entities.Entity {
+	return g.playerEntity
+}
+func (g *Client) GetPlayerCamera() *entities.Entity {
+	return g.playerCamera
+}

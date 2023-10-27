@@ -68,6 +68,13 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				serialization.InitDeserializedEntity(&entity, s.app.ModelLibrary(), false)
 				world.AddEntity(&entity)
 
+				if entity.PlayerInput != nil && entity.PlayerInput.PlayerID == s.app.GetPlayerID() {
+					if entity.CameraComponent != nil {
+						s.app.SetPlayerCamera(&entity)
+					} else {
+						s.app.SetPlayerEntity(&entity)
+					}
+				}
 				// var radius float64 = 40
 				// var length float64 = 80
 				// entity := entities.InstantiateEntity("player")

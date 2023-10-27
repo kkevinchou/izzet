@@ -79,10 +79,15 @@ func main() {
 			serverApp := server.New("_assets", "shaders", "izzet_data.json")
 			serverApp.Start()
 		}()
+		clientApp := client.New("_assets", "shaders", "izzet_data.json")
+		clientApp.Start()
+	} else {
+		clientApp := client.New("_assets", "shaders", "izzet_data.json")
+		clientApp.StartLiveWorld()
+		clientApp.Connect()
+		clientApp.Start()
 	}
 
-	clientApp := client.New("_assets", "shaders", "izzet_data.json")
-	clientApp.Start()
 	sdl.Quit()
 }
 

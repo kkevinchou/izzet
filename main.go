@@ -83,7 +83,6 @@ func main() {
 		clientApp.Start()
 	} else {
 		clientApp := client.New("_assets", "shaders", "izzet_data.json")
-		clientApp.StartLiveWorld()
 		clientApp.Connect()
 		clientApp.Start()
 	}

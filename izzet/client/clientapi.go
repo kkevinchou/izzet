@@ -21,6 +21,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/systems/clientsystems/commandframe"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -221,6 +222,39 @@ func (g *Client) Connect() {
 	g.connection = conn
 	g.networkMessages = make(chan network.Message, 100)
 
+	var message network.Message
+	decoder := json.NewDecoder(g.connection)
+	err = decoder.Decode(&message)
+	if err != nil {
+		panic(err)
+	}
+
+	var ackPlayerJoinMessage network.AckPlayerJoinMessage
+	err = json.Unmarshal(message.Body, &ackPlayerJoinMessage)
+	if err != nil {
+		panic(err)
+	}
+
+	// initialize the player's camera and entity
+	var entity entities.Entity
+	err = json.Unmarshal(ackPlayerJoinMessage.EntityBytes, &entity)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
+	}
+	serialization.InitDeserializedEntity(&entity, g.ModelLibrary(), false)
+	g.world.AddEntity(&entity)
+
+	var camera entities.Entity
+	err = json.Unmarshal(ackPlayerJoinMessage.CameraBytes, &camera)
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
+	}
+	serialization.InitDeserializedEntity(&camera, g.ModelLibrary(), false)
+	g.world.AddEntity(&camera)
+
+	g.SetPlayerCamera(&camera)
+	g.SetPlayerEntity(&entity)
+
 	// TODO a done channel to close out the goroutine
 	go func() {
 		defer conn.Close()
@@ -253,6 +287,7 @@ func (g *Client) Connect() {
 		}
 	}()
 	g.connected = true
+	fmt.Println("finished connect")
 }
 
 func connect() (int, net.Conn, error) {
@@ -306,4 +341,8 @@ func (g *Client) GetPlayerEntity() *entities.Entity {
 }
 func (g *Client) GetPlayerCamera() *entities.Entity {
 	return g.playerCamera
+}
+
+func (g *Client) GetCommandFrameHistory() *commandframe.CommandFrameHistory {
+	return g.commandFrameHistory
 }

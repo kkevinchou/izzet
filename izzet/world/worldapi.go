@@ -11,6 +11,9 @@ import (
 )
 
 func (g *GameWorld) AddEntity(entity *entities.Entity) {
+	if _, ok := g.entities[entity.GetID()]; ok {
+		return
+	}
 	g.entities[entity.ID] = entity
 }
 

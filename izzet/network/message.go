@@ -11,6 +11,7 @@ const (
 	MsgTypeGameStateUpdate
 	MsgTypePlayerInput
 	MsgTypeCreateEntity
+	MsgTypeAckPlayerJoin
 )
 
 type Message struct {

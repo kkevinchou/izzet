@@ -81,14 +81,14 @@ type Client struct {
 	commandFrameHistory *commandframe.CommandFrameHistory
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
+func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config) *Client {
 	initSeed()
 	g := &Client{
 		commandFrameHistory: commandframe.NewCommandFrameHistory(),
 	}
 
 	g.initSettings()
-	window, err := initializeOpenGL()
+	window, err := initializeOpenGL(config)
 	if err != nil {
 		panic(err)
 	}
@@ -297,7 +297,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	}
 }
 
-func initializeOpenGL() (*sdl.Window, error) {
+func initializeOpenGL(config settings.Config) (*sdl.Window, error) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
 	}
@@ -319,19 +319,19 @@ func initializeOpenGL() (*sdl.Window, error) {
 	sdl.SetRelativeMouseMode(false)
 
 	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
-	if settings.Fullscreen {
+	if config.Fullscreen {
 		dm, err := sdl.GetCurrentDisplayMode(0)
 		if err != nil {
 			panic(err)
 		}
-		settings.Width = int(dm.W)
-		settings.Height = int(dm.H)
+		config.Width = int(dm.W)
+		config.Height = int(dm.H)
 		windowFlags |= sdl.WINDOW_MAXIMIZED
 		// windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
 		// windowFlags |= sdl.WINDOW_FULLSCREEN
 	}
 
-	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(settings.Width), int32(settings.Height), uint32(windowFlags))
+	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(config.Width), int32(config.Height), uint32(windowFlags))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create window %s", err)
 	}

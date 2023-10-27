@@ -84,13 +84,15 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g.editHistory = edithistory.New()
 
 	g.systems = append(g.systems, serversystems.NewReceiverSystem(g))
+	g.systems = append(g.systems, &systems.CameraTargetSystem{})
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
 
 	// g.setupEntities(data)
-	g.LoadWorld("cubes")
+	// g.LoadWorld("cubes")
+	g.LoadWorld("multiplayer_test")
 
 	fmt.Println(time.Since(start), "to start up systems")
 

@@ -1,7 +1,6 @@
 package clientsystems
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -48,7 +47,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 		moved = true
 	}
 	if moved {
-		fmt.Println(s.app.CommandFrame(), "CLIENT CHARACTER MOVED", entity.WorldPosition(), moveCount)
+		// fmt.Println(s.app.CommandFrame(), "CLIENT CHARACTER MOVED", entity.WorldPosition(), moveCount)
 		moveCount += 1
 	}
 }

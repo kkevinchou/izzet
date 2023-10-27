@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -63,56 +62,11 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					continue
 				}
 
-				fmt.Println("RECEIVED CREATE", entity.ID)
-
 				serialization.InitDeserializedEntity(&entity, s.app.ModelLibrary(), false)
 				world.AddEntity(&entity)
-
-				if entity.PlayerInput != nil && entity.PlayerInput.PlayerID == s.app.GetPlayerID() {
-					if entity.CameraComponent != nil {
-						s.app.SetPlayerCamera(&entity)
-					} else {
-						s.app.SetPlayerEntity(&entity)
-					}
-				}
-				// var radius float64 = 40
-				// var length float64 = 80
-				// entity := entities.InstantiateEntity("player")
-				// entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
-				// entity.Collider = &entities.ColliderComponent{
-				// 	CapsuleCollider: &collider.Capsule{
-				// 		Radius: radius,
-				// 		Top:    mgl64.Vec3{0, radius + length, 0},
-				// 		Bottom: mgl64.Vec3{0, radius, 0},
-				// 	},
-				// 	ColliderGroup: entities.ColliderGroupFlagPlayer,
-				// 	CollisionMask: entities.ColliderGroupFlagTerrain,
-				// }
-				// entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
-
-				// capsule := entity.Collider.CapsuleCollider
-				// entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
-
-				// handle := modellibrary.NewGlobalHandle("alpha")
-				// entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4()}
-				// entity.Animation = entities.NewAnimationComponent("alpha", s.app.ModelLibrary())
-				// entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
-
-				// camera := createCamera(createEntityMessage.OwnerID, entity.GetID())
-				// world.AddEntity(camera)
-				// world.AddEntity(entity)
 			}
 		default:
 			return
 		}
 	}
-}
-
-func createCamera(playerID int, targetEntityID int) *entities.Entity {
-	entity := entities.InstantiateEntity("camera")
-	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, 50, 0}, Target: &targetEntityID}
-	entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
-	entity.Billboard = true
-	entity.PlayerInput = &entities.PlayerInputComponent{PlayerID: playerID}
-	return entity
 }

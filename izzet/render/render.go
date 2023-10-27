@@ -144,8 +144,7 @@ func New(app App, world GameWorld, shaderDirectory string, width, height int) *R
 	// so, I cap it at a fraction of the max
 	var maxTextureSize int32
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
-	settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
-
+	// settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 	// shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
 	dimension := 14400
 	shadowMap, err := NewShadowMap(dimension, dimension, float64(r.app.Settings().Far))

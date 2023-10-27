@@ -51,9 +51,9 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 		},
 	}
 
-	h.CommandFrames[h.CommandFrameCursor] = cf
 	h.CommandFrameCursor = (h.CommandFrameCursor + 1) % maxCommandFrameBufferSize
-	h.CommandFrameCount += 1
+	h.CommandFrames[h.CommandFrameCursor] = cf
+	// h.CommandFrameCount += 1
 }
 
 func (h *CommandFrameHistory) GetCommandFrame(frameNumber int) (CommandFrame, error) {

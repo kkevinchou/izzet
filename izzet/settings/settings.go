@@ -4,15 +4,31 @@ import "github.com/inkyblackness/imgui-go/v4"
 
 type GameMode string
 
-var (
-	// dynamic settings loaded from config
-	Width      int  = 0
-	Height     int  = 0
-	Fullscreen bool = false
-	Profile    bool = false
+// var (
+// 	// dynamic settings loaded from config
+// 	Width      int  = 0
+// 	Height     int  = 0
+// 	Fullscreen bool = false
+// 	Profile    bool = false
 
-	RuntimeMaxTextureSize int
-)
+// 	RuntimeMaxTextureSize int
+// )
+
+type Config struct {
+	Width      int
+	Height     int
+	Fullscreen bool
+	Profile    bool
+}
+
+func NewConfig() Config {
+	return Config{
+		Width:      0,
+		Height:     0,
+		Fullscreen: false,
+		Profile:    false,
+	}
+}
 
 const (
 	LoggingLevel       = 1

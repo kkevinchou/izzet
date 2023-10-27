@@ -15,4 +15,6 @@ func NewPostFrameSystem(app App) *PostFrameSystem {
 }
 
 func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
+	history := s.app.GetCommandFrameHistory()
+	history.AddCommandFrame(s.app.CommandFrame(), world.GetFrameInput(), s.app.GetPlayerEntity())
 }

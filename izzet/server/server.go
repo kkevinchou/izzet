@@ -103,8 +103,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	return g
 }
 
-func (g *Server) Start() {
+func (g *Server) Start(started chan bool) {
 	g.listen()
+	started <- true
 	var accumulator float64
 
 	// msPerFrame := float64(1000) / float64(60)

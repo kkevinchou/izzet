@@ -1,7 +1,6 @@
 package serversystems
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -60,7 +59,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 			moved = true
 		}
 		if moved {
-			fmt.Println(s.app.CommandFrame(), "SERVER CHARACTER MOVED", targetEntity.WorldPosition(), moveCount)
+			// fmt.Println(s.app.CommandFrame(), "SERVER CHARACTER MOVED", targetEntity.WorldPosition(), moveCount)
 			moveCount += 1
 		}
 	}

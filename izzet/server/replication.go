@@ -40,7 +40,9 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 	for _, entity := range world.Entities() {
 		transforms = append(transforms, network.Transform{EntityID: entity.ID, Position: entity.WorldPosition()})
 	}
-	gamestateUpdateMessage := network.GameStateUpdateMessage{Transforms: transforms}
+	gamestateUpdateMessage := network.GameStateUpdateMessage{
+		Transforms: transforms,
+	}
 	messageBytes, err := json.Marshal(gamestateUpdateMessage)
 	if err != nil {
 		return

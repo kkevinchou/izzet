@@ -22,6 +22,8 @@ func (i *InputBuffer) PushInput(commandFrame int, playerID int, frameInput input
 	i.inputs[playerID] = append(i.inputs[playerID], frameInput)
 }
 
+var lastCursor int = 0
+
 func (i *InputBuffer) PullInput(playerID int) input.Input {
 	cursor := i.cursor[playerID]
 	if cursor >= len(i.inputs[playerID]) {
@@ -31,6 +33,11 @@ func (i *InputBuffer) PullInput(playerID int) input.Input {
 		fmt.Println("no input found for player", playerID)
 		return input.Input{}
 	}
+
+	if cursor == lastCursor {
+		fmt.Println("reading same cursor", cursor)
+	}
+	lastCursor = cursor
 
 	input := i.inputs[playerID][cursor]
 	i.cursor[playerID] += 1

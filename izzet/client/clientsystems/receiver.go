@@ -54,6 +54,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
 					continue
 				}
+				fmt.Println(len(createEntityMessage.EntityBytes))
 
 				var entity entities.Entity
 				err = json.Unmarshal(createEntityMessage.EntityBytes, &entity)

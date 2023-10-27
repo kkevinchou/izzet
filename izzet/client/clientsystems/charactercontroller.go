@@ -22,6 +22,8 @@ func NewCharacterControllerSystem(app App) *CharacterControllerSystem {
 	return &CharacterControllerSystem{app: app}
 }
 
+var moveCount int
+
 func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.GameWorld) {
 	var camera *entities.Entity
 	for _, entity := range world.Entities() {
@@ -53,6 +55,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 		moved = true
 	}
 	if moved {
-		fmt.Println(s.app.CommandFrame(), "CLIENT CHARACTER MOVED", entity.WorldPosition())
+		fmt.Println(s.app.CommandFrame(), "CLIENT CHARACTER MOVED", entity.WorldPosition(), moveCount)
+		moveCount += 1
 	}
 }

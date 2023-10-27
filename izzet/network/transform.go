@@ -8,5 +8,6 @@ type Transform struct {
 }
 
 type GameStateUpdateMessage struct {
-	Transforms []Transform
+	Transforms            []Transform
+	LastInputCommandFrame int
 }

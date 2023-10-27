@@ -147,7 +147,7 @@ func New(app App, world GameWorld, shaderDirectory string, width, height int) *R
 	settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 
 	// shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
-	dimension := 8640
+	dimension := 14400
 	shadowMap, err := NewShadowMap(dimension, dimension, float64(r.app.Settings().Far))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))

@@ -70,27 +70,29 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			world.AddEntity(camera)
 			world.AddEntity(entity)
 
-			createEntityMessage := network.CreateEntityMessage{
-				Position:    entities.GetLocalPosition(entity),
-				Orientation: entities.GetLocalRotation(entity),
-				Scale:       entities.GetLocalScale(entity),
-				OwnerID:     e.PlayerID,
-			}
-
-			bytes, err := json.Marshal(createEntityMessage)
+			message, err := createEntityMessage(e.PlayerID, entity)
 			if err != nil {
 				panic(err)
 			}
 
-			message := network.Message{MessageType: network.MsgTypeCreateEntity, Timestamp: time.Now(), Body: bytes}
 			messageBytes, err := json.Marshal(message)
 			if err != nil {
 				panic(err)
 			}
-
 			player.Connection.Write(messageBytes)
 
-			fmt.Printf("player %d joined, camera %d, entityID %d", e.PlayerID, camera.GetID(), entity.GetID())
+			message, err = createEntityMessage(e.PlayerID, camera)
+			if err != nil {
+				panic(err)
+			}
+
+			messageBytes, err = json.Marshal(message)
+			if err != nil {
+				panic(err)
+			}
+			player.Connection.Write(messageBytes)
+
+			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
 		}
 	}
 	world.ClearEventQueue()
@@ -103,4 +105,23 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	entity.Billboard = true
 	entity.PlayerInput = &entities.PlayerInputComponent{PlayerID: playerID}
 	return entity
+}
+
+func createEntityMessage(playerID int, entity *entities.Entity) (network.Message, error) {
+	createEntityMessage := network.CreateEntityMessage{
+		OwnerID: playerID,
+	}
+
+	cameraBytes, err := json.Marshal(entity)
+	if err != nil {
+		return network.Message{}, err
+	}
+	createEntityMessage.EntityBytes = cameraBytes
+
+	bytes, err := json.Marshal(createEntityMessage)
+	if err != nil {
+		panic(err)
+	}
+
+	return network.Message{MessageType: network.MsgTypeCreateEntity, Timestamp: time.Now(), Body: bytes}, nil
 }

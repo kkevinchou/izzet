@@ -32,9 +32,9 @@ func (g *Server) handleNetworkMessages() {
 		err := decoder.Decode(&message)
 		if err != nil {
 			reader := decoder.Buffered()
-			bytes, err := io.ReadAll(reader)
-			if err != nil {
-				fmt.Println(fmt.Errorf("error reading remaining bytes %w", err))
+			bytes, err2 := io.ReadAll(reader)
+			if err2 != nil {
+				fmt.Println(fmt.Errorf("error reading remaining bytes %w", err2))
 			}
 			fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
 			continue

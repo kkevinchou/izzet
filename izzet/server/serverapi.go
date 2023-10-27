@@ -61,8 +61,13 @@ func (g *Server) GetPlayers() map[int]network.Player {
 	return g.players
 }
 
-func (g *Server) RegisterPlayer(playerID int, connection net.Conn) {
-	g.players[playerID] = network.Player{ID: playerID, Connection: connection, InMessageChannel: make(chan network.Message, 100)}
+func (g *Server) RegisterPlayer(playerID int, connection net.Conn) network.Player {
+	g.players[playerID] = network.Player{
+		ID: playerID, Connection: connection,
+		InMessageChannel:  make(chan network.Message, 100),
+		OutMessageChannel: make(chan network.Message, 100),
+	}
+	return g.players[playerID]
 }
 
 func (g *Server) CommandFrame() int {
@@ -71,4 +76,8 @@ func (g *Server) CommandFrame() int {
 
 func (g *Server) InputBuffer() *inputbuffer.InputBuffer {
 	return g.inputBuffer
+}
+
+func (g *Server) GetPlayer(playerID int) network.Player {
+	return g.players[playerID]
 }

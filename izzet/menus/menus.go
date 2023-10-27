@@ -32,6 +32,7 @@ type App interface {
 	AppMode() app.AppMode
 	Settings() *app.Settings
 	Connect()
+	IsConnected() bool
 }
 
 var worldName string = "scene"

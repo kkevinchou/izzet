@@ -1,11 +1,13 @@
 package clientsystems
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 const (
@@ -40,4 +42,17 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 
 	frameInput := world.GetFrameInput()
 	shared.UpdateCharacterController(delta, world, frameInput, camera, entity)
+	moved := false
+	if frameInput.KeyboardInput[input.KeyboardKeyW].Event == input.KeyboardEventDown {
+		moved = true
+	} else if frameInput.KeyboardInput[input.KeyboardKeyA].Event == input.KeyboardEventDown {
+		moved = true
+	} else if frameInput.KeyboardInput[input.KeyboardKeyS].Event == input.KeyboardEventDown {
+		moved = true
+	} else if frameInput.KeyboardInput[input.KeyboardKeyD].Event == input.KeyboardEventDown {
+		moved = true
+	}
+	if moved {
+		fmt.Println(s.app.CommandFrame(), "CLIENT CHARACTER MOVED", entity.WorldPosition())
+	}
 }

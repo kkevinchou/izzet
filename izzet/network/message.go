@@ -8,9 +8,9 @@ type MessageType int
 
 const (
 	MsgTypeAcceptConnection MessageType = iota
-	MsgTypeAckCreatePlayer
 	MsgTypeGameStateUpdate
 	MsgTypePlayerInput
+	MsgTypeCreateEntity
 )
 
 type Message struct {

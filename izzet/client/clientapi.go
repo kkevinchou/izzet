@@ -246,6 +246,7 @@ func (g *Client) Connect() {
 			// fmt.Println(worldFromServer)
 		}
 	}()
+	g.connected = true
 }
 
 func connect() (int, net.Conn, error) {
@@ -280,4 +281,11 @@ func (g *Client) CommandFrame() int {
 
 func (g *Client) GetPlayerID() int {
 	return g.playerID
+
+}
+func (g *Client) IsConnected() bool {
+	return g.connected
+}
+func (g *Client) GetPlayerConnection() net.Conn {
+	return g.connection
 }

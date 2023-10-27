@@ -73,6 +73,7 @@ type Client struct {
 	connection      net.Conn
 	networkMessages chan network.Message
 	commandFrame    int
+	connected       bool
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
@@ -134,7 +135,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
 	g.setupSystems()
 
 	// g.setupEntities(data)
-	g.LoadWorld("cubes")
+	g.LoadWorld("multiplayer_test")
 
 	fmt.Println(time.Since(start), "to start up systems")
 
@@ -248,8 +249,10 @@ func (g *Client) setupPrefabs(data *izzetdata.Data) {
 }
 
 func (g *Client) setupSystems() {
+	// input system depends on the camera system to update the camera orientation
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
+	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
-	g.playModeSystems = append(g.playModeSystems, &systems.CameraSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})

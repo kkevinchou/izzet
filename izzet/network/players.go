@@ -5,7 +5,8 @@ import (
 )
 
 type Player struct {
-	ID               int
-	Connection       net.Conn
-	InMessageChannel chan Message
+	ID                int
+	Connection        net.Conn
+	InMessageChannel  chan Message
+	OutMessageChannel chan Message
 }

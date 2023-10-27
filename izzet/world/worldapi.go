@@ -3,6 +3,7 @@ package world
 import (
 	"sort"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/kitolib/input"
@@ -107,4 +108,11 @@ func (g *GameWorld) QueueEvent(event events.Event) {
 
 func (g *GameWorld) ClearEventQueue() {
 	g.events = nil
+}
+
+// DIRTY HACK: the camera orientation isn't really an input, but is contextual
+// information for inputs. I don't know a good place to put this yet so I'm
+// hijacking input.Input
+func (g *GameWorld) SetInputCameraOrientation(orientation mgl64.Quat) {
+	g.frameInput.CameraOrientation = orientation
 }

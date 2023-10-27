@@ -1,6 +1,7 @@
 package serversystems
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -19,10 +20,11 @@ import (
 
 type App interface {
 	GetPlayers() map[int]network.Player
-	RegisterPlayer(playerID int, connection net.Conn)
+	RegisterPlayer(playerID int, connection net.Conn) network.Player
 	InputBuffer() *inputbuffer.InputBuffer
 	CommandFrame() int
 	ModelLibrary() *modellibrary.ModelLibrary
+	GetPlayer(playerID int) network.Player
 }
 
 type EventsSystem struct {
@@ -39,7 +41,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, event := range world.GetEvents() {
 		switch e := event.(type) {
 		case events.PlayerJoinEvent:
-			s.app.RegisterPlayer(e.PlayerID, e.Connection)
+			player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
 			var radius float64 = 40
 			var length float64 = 80
@@ -67,6 +69,26 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			camera := createCamera(e.PlayerID, entity.GetID())
 			world.AddEntity(camera)
 			world.AddEntity(entity)
+
+			createEntityMessage := network.CreateEntityMessage{
+				Position:    entities.GetLocalPosition(entity),
+				Orientation: entities.GetLocalRotation(entity),
+				Scale:       entities.GetLocalScale(entity),
+				OwnerID:     e.PlayerID,
+			}
+
+			bytes, err := json.Marshal(createEntityMessage)
+			if err != nil {
+				panic(err)
+			}
+
+			message := network.Message{MessageType: network.MsgTypeCreateEntity, Timestamp: time.Now(), Body: bytes}
+			messageBytes, err := json.Marshal(message)
+			if err != nil {
+				panic(err)
+			}
+
+			player.Connection.Write(messageBytes)
 
 			fmt.Printf("player %d joined, camera %d, entityID %d", e.PlayerID, camera.GetID(), entity.GetID())
 		}

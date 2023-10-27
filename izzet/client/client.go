@@ -24,6 +24,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/systems/clientsystems/commandframe"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -70,15 +71,22 @@ type Client struct {
 	settings *app.Settings
 
 	playerID        int
+	playerEntity    *entities.Entity
+	playerCamera    *entities.Entity
 	connection      net.Conn
 	networkMessages chan network.Message
 	commandFrame    int
 	connected       bool
+
+	commandFrameHistory *commandframe.CommandFrameHistory
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Client {
 	initSeed()
-	g := &Client{}
+	g := &Client{
+		commandFrameHistory: commandframe.NewCommandFrameHistory(),
+	}
+
 	g.initSettings()
 	window, err := initializeOpenGL()
 	if err != nil {
@@ -255,6 +263,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
 	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 

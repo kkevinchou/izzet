@@ -18,7 +18,7 @@ type InputBuffer struct {
 
 func New() *InputBuffer {
 	return &InputBuffer{
-		inputs: map[int][]BufferedInput{},
+		inputs: map[int][]BufferedInput{}, // TOOD -  use a ring buffer of inputs
 		cursor: map[int]int{},
 	}
 }

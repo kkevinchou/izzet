@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/kitolib/metrics"
 )
 
 const (
@@ -32,6 +33,7 @@ type App interface {
 	ResetNavMeshVAO()
 	Settings() *app.Settings
 	CommandFrame() int
+	MetricsRegistry() *metrics.MetricsRegistry
 }
 
 type GameWorld interface {

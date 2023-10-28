@@ -28,6 +28,7 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -72,6 +73,7 @@ type App interface {
 	Settings() *app.Settings
 	Connect()
 	IsConnected() bool
+	MetricsRegistry() *metrics.MetricsRegistry
 }
 
 const mipsCount int = 6

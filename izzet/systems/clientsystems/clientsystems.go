@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems/commandframe"
+	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type App interface {
@@ -19,4 +20,5 @@ type App interface {
 	GetPlayerEntity() *entities.Entity
 	GetPlayerCamera() *entities.Entity
 	GetCommandFrameHistory() *commandframe.CommandFrameHistory
+	MetricsRegistry() *metrics.MetricsRegistry
 }

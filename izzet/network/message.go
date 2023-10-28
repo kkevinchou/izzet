@@ -12,6 +12,7 @@ const (
 	MsgTypePlayerInput
 	MsgTypeCreateEntity
 	MsgTypeAckPlayerJoin
+	MsgTypeAckPlayerInit
 )
 
 type Message interface {

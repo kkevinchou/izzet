@@ -216,6 +216,7 @@ func (g *Client) Connect() {
 	if err != nil {
 		panic(err)
 	}
+	g.client = network.NewClient(conn)
 
 	// reinitialize all network related state
 	g.playerID = playerID
@@ -229,15 +230,15 @@ func (g *Client) Connect() {
 		panic(err)
 	}
 
-	var ackPlayerJoinMessage network.AckPlayerJoinMessage
-	err = json.Unmarshal(message.Body, &ackPlayerJoinMessage)
+	var ackPlayerCreateMessage network.AckPlayerInitMessage
+	err = json.Unmarshal(message.Body, &ackPlayerCreateMessage)
 	if err != nil {
 		panic(err)
 	}
 
 	// initialize the player's camera and entity
 	var entity entities.Entity
-	err = json.Unmarshal(ackPlayerJoinMessage.EntityBytes, &entity)
+	err = json.Unmarshal(ackPlayerCreateMessage.EntityBytes, &entity)
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
@@ -245,7 +246,7 @@ func (g *Client) Connect() {
 	g.world.AddEntity(&entity)
 
 	var camera entities.Entity
-	err = json.Unmarshal(ackPlayerJoinMessage.CameraBytes, &camera)
+	err = json.Unmarshal(ackPlayerCreateMessage.CameraBytes, &camera)
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
@@ -343,4 +344,8 @@ func (g *Client) GetPlayerCamera() *entities.Entity {
 
 func (g *Client) GetCommandFrameHistory() *commandframe.CommandFrameHistory {
 	return g.commandFrameHistory
+}
+
+func (g *Client) Client() network.IzzetClient {
+	return g.client
 }

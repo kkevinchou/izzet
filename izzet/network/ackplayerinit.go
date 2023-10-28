@@ -1,6 +1,6 @@
 package network
 
-type AckPlayerJoinMessage struct {
+type AckPlayerInitMessage struct {
 	EntityBytes []byte
 	CameraBytes []byte
 }

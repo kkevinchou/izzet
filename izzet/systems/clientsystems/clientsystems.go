@@ -21,4 +21,5 @@ type App interface {
 	GetPlayerCamera() *entities.Entity
 	GetCommandFrameHistory() *commandframe.CommandFrameHistory
 	MetricsRegistry() *metrics.MetricsRegistry
+	Client() network.IzzetClient
 }

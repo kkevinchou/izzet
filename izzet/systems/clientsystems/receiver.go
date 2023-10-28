@@ -72,6 +72,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					mr.Inc("prediction_hit", 1)
 					cfHistory.ClearUntilFrameNumber(gameStateUpdateMessage.LastInputCommandFrame)
 				} else {
+					mr.Inc("prediction_miss", 1)
 					fmt.Println("PREDICTION FAILED", gameStateUpdateMessage.LastInputCommandFrame)
 					// TODO - resim the frames leading up to the current command frame
 				}

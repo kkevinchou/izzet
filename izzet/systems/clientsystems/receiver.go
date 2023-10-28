@@ -3,8 +3,10 @@ package clientsystems
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -20,6 +22,8 @@ func NewReceiverSystem(app App) *ReceiverSystem {
 }
 
 func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
+	mr := s.app.MetricsRegistry()
+
 	for {
 		select {
 		case message := <-s.app.NetworkMessagesChannel():
@@ -31,21 +35,45 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					continue
 				}
 
+				// this is an edge case where the player has joined, and is receiving
+				// a game state update but hasn't had input processed by the server yet.
+				// this results in a LastInputCommandFrame of 0, which will not be found
+				// in the command frame history
+				if gameStateUpdateMessage.LastInputCommandFrame == 0 {
+					return
+				}
+
+				playerEntityID := s.app.GetPlayerEntity().GetID()
+				var serverConfirmedPosition mgl64.Vec3
+
 				for _, transform := range gameStateUpdateMessage.Transforms {
 					entity := world.GetEntityByID(transform.EntityID)
 					if entity == nil {
 						continue
 					}
 
-					if entity.CameraComponent != nil {
-						if entity.PlayerInput.PlayerID == s.app.GetPlayerID() {
-							// don't synchronize local camera position
-							continue
-						}
+					if entity.GetID() == playerEntityID {
+						serverConfirmedPosition = transform.Position
+						continue
 					}
 
 					entities.SetLocalPosition(entity, transform.Position)
 					entities.SetLocalRotation(entity, transform.Orientation)
+				}
+
+				cfHistory := s.app.GetCommandFrameHistory()
+				cf, err := cfHistory.GetCommandFrame(gameStateUpdateMessage.LastInputCommandFrame)
+				if err != nil {
+					panic(err)
+				}
+
+				state := cf.PostCFState
+				if Vec3ApproxEqualThreshold(state.Position, serverConfirmedPosition, 0.001) {
+					mr.Inc("prediction_hit", 1)
+					cfHistory.ClearUntilFrameNumber(gameStateUpdateMessage.LastInputCommandFrame)
+				} else {
+					fmt.Println("PREDICTION FAILED", gameStateUpdateMessage.LastInputCommandFrame)
+					// TODO - resim the frames leading up to the current command frame
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage
@@ -69,4 +97,10 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 			return
 		}
 	}
+}
+
+func Vec3ApproxEqualThreshold(v1 mgl64.Vec3, v2 mgl64.Vec3, threshold float64) bool {
+	return v1.ApproxFuncEqual(v2, func(a, b float64) bool {
+		return math.Abs(a-b) < threshold
+	})
 }

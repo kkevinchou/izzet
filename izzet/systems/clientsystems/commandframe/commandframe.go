@@ -32,7 +32,7 @@ type CommandFrameHistory struct {
 }
 
 func NewCommandFrameHistory() *CommandFrameHistory {
-	return &CommandFrameHistory{CommandFrameCursor: -1}
+	return &CommandFrameHistory{CommandFrameCursor: 0}
 }
 
 func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.Input, player *entities.Entity) {
@@ -51,9 +51,8 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 		},
 	}
 
-	h.CommandFrameCursor = (h.CommandFrameCursor + 1) % maxCommandFrameBufferSize
-	h.CommandFrames[h.CommandFrameCursor] = cf
-	// h.CommandFrameCount += 1
+	h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount)%maxCommandFrameBufferSize] = cf
+	h.CommandFrameCount += 1
 }
 
 func (h *CommandFrameHistory) GetCommandFrame(frameNumber int) (CommandFrame, error) {
@@ -70,7 +69,7 @@ func (h *CommandFrameHistory) GetCommandFrame(frameNumber int) (CommandFrame, er
 		return CommandFrame{}, fmt.Errorf("frame number %d is too old and is no longer stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
 	}
 
-	return h.CommandFrames[frameNumber-startFrameNumber], nil
+	return h.CommandFrames[(h.CommandFrameCursor+frameNumber-startFrameNumber)%maxCommandFrameBufferSize], nil
 }
 
 func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {
@@ -90,6 +89,6 @@ func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {
 }
 
 func (h *CommandFrameHistory) Reset() {
-	h.CommandFrameCursor = -1
+	h.CommandFrameCursor = 0
 	h.CommandFrameCount = 0
 }

@@ -85,7 +85,7 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 				// 	fmt.Println(fmt.Errorf("error reading remaining bytes %w", err2))
 				// }
 				// fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
-				fmt.Println(fmt.Errorf("error decoding message from player %d remaining buffered data: %w", id, err))
+				fmt.Println(fmt.Errorf("error decoding message from player %d - %w", id, err))
 				if strings.Contains(err.Error(), "An existing connection was forcibly closed") {
 					fmt.Println("connection closed by remote player", id)
 					conn.Close()

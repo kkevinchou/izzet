@@ -294,9 +294,7 @@ func connect() (int, net.Conn, error) {
 	address := fmt.Sprintf("localhost:7878")
 	fmt.Println("connecting to " + address)
 
-	dialFunc := net.Dial
-
-	conn, err := dialFunc("tcp", address)
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return 0, nil, err
 	}

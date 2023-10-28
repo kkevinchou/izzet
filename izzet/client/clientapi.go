@@ -259,10 +259,8 @@ func (g *Client) Connect() {
 	go func() {
 		defer conn.Close()
 
-		decoder := json.NewDecoder(g.connection)
 		for {
-			var message network.MessageTransport
-			err := decoder.Decode(&message)
+			message, err := g.client.Recv()
 			if err != nil {
 				if err == io.EOF {
 					continue

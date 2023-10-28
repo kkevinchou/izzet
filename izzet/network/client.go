@@ -47,8 +47,7 @@ func (c *connectionImpl) Send(message Message, frame int) error {
 
 func (c *connectionImpl) Recv() (MessageTransport, error) {
 	var message MessageTransport
-	decoder := json.NewDecoder(c.conn)
-	err := decoder.Decode(&message)
+	err := c.decoder.Decode(&message)
 	if err != nil {
 		return MessageTransport{}, err
 	}

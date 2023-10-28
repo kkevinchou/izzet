@@ -60,7 +60,7 @@ func (g *Server) handlePlayerConnections() {
 		g.world.AddEntity(camera)
 		g.world.AddEntity(entity)
 
-		message, err := createAckPlayerJoinMessage(camera, entity)
+		message, err := createAckPlayerInitMessage(camera, entity)
 		if err != nil {
 			panic(err)
 		}
@@ -101,25 +101,25 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	return entity
 }
 
-func createAckPlayerJoinMessage(camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
-	ackPlayerJoinMessage := network.AckPlayerJoinMessage{}
+func createAckPlayerInitMessage(camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
+	ackPlayerInitMessage := network.AckPlayerInitMessage{}
 
 	entityBytes, err := json.Marshal(entity)
 	if err != nil {
 		panic(err)
 	}
-	ackPlayerJoinMessage.EntityBytes = entityBytes
+	ackPlayerInitMessage.EntityBytes = entityBytes
 
 	cameraBytes, err := json.Marshal(camera)
 	if err != nil {
 		panic(err)
 	}
-	ackPlayerJoinMessage.CameraBytes = cameraBytes
+	ackPlayerInitMessage.CameraBytes = cameraBytes
 
-	bytes, err := json.Marshal(ackPlayerJoinMessage)
+	bytes, err := json.Marshal(ackPlayerInitMessage)
 	if err != nil {
 		panic(err)
 	}
 
-	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerJoin, Timestamp: time.Now(), Body: bytes}, nil
+	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerInit, Timestamp: time.Now(), Body: bytes}, nil
 }

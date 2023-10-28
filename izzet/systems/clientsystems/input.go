@@ -30,7 +30,7 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 		Input: frameInput,
 	}
 
-	err := network.SendMessage(s.app.GetPlayerConnection(), network.MsgTypePlayerInput, inputMessage, s.app.CommandFrame())
+	err := s.app.Client().Send(inputMessage, s.app.CommandFrame())
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
 		return

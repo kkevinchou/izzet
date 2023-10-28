@@ -55,8 +55,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			}
 
 			for _, player := range s.app.GetPlayers() {
-				network.SendMessage(player.Connection, network.MsgTypeCreateEntity, cameraMessage, s.app.CommandFrame())
-				network.SendMessage(player.Connection, network.MsgTypeCreateEntity, entityMessage, s.app.CommandFrame())
+				player.Client.Send(cameraMessage, s.app.CommandFrame())
+				player.Client.Send(entityMessage, s.app.CommandFrame())
 			}
 			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, e.PlayerCameraID, e.PlayerEntityID)
 		case events.PlayerDisconnectEvent:

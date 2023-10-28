@@ -38,6 +38,7 @@ type Client struct {
 	window        *sdl.Window
 	platform      *input.SDLPlatform
 	width, height int
+	client        network.IzzetClient
 
 	assetManager *assets.AssetManager
 	modelLibrary *modellibrary.ModelLibrary

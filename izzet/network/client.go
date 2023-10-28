@@ -14,6 +14,7 @@ type connectionImpl struct {
 
 type IzzetClient interface {
 	Send(messageBody Message, frame int) error
+	Recv() (MessageTransport, error)
 }
 
 func NewClient(conn net.Conn) IzzetClient {
@@ -42,4 +43,15 @@ func (c *connectionImpl) Send(message Message, frame int) error {
 		return err
 	}
 	return nil
+}
+
+func (c *connectionImpl) Recv() (MessageTransport, error) {
+	var message MessageTransport
+	decoder := json.NewDecoder(c.conn)
+	err := decoder.Decode(&message)
+	if err != nil {
+		return MessageTransport{}, err
+	}
+
+	return message, nil
 }

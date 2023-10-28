@@ -30,7 +30,6 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 func (g *Server) handlePlayerConnections() {
 	select {
 	case connection := <-g.newConnections:
-		g.world.QueueEvent(events.PlayerJoinEvent{PlayerID: connection.PlayerID, Connection: connection.Connection})
 		player := g.RegisterPlayer(connection.PlayerID, connection.Connection)
 
 		var radius float64 = 40
@@ -60,7 +59,7 @@ func (g *Server) handlePlayerConnections() {
 		g.world.AddEntity(camera)
 		g.world.AddEntity(entity)
 
-		message, err := createAckPlayerInitMessage(camera, entity)
+		message, err := createAckPlayerJoinMessage(connection.PlayerID, camera, entity)
 		if err != nil {
 			panic(err)
 		}
@@ -101,25 +100,25 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	return entity
 }
 
-func createAckPlayerInitMessage(camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
-	ackPlayerInitMessage := network.AckPlayerInitMessage{}
+func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
+	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID}
 
 	entityBytes, err := json.Marshal(entity)
 	if err != nil {
 		panic(err)
 	}
-	ackPlayerInitMessage.EntityBytes = entityBytes
+	ackPlayerJoinMessage.EntityBytes = entityBytes
 
 	cameraBytes, err := json.Marshal(camera)
 	if err != nil {
 		panic(err)
 	}
-	ackPlayerInitMessage.CameraBytes = cameraBytes
+	ackPlayerJoinMessage.CameraBytes = cameraBytes
 
-	bytes, err := json.Marshal(ackPlayerInitMessage)
+	bytes, err := json.Marshal(ackPlayerJoinMessage)
 	if err != nil {
 		panic(err)
 	}
 
-	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerInit, Timestamp: time.Now(), Body: bytes}, nil
+	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerJoin, Timestamp: time.Now(), Body: bytes}, nil
 }

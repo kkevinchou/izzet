@@ -24,14 +24,12 @@ func New() *InputBuffer {
 }
 
 func (i *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input) {
-	fmt.Println("push")
 	i.inputs[playerID] = append(i.inputs[playerID], BufferedInput{Input: frameInput, LocalCommandFrame: localCommandFrame})
 }
 
 var lastCursor int = 0
 
 func (i *InputBuffer) PullInput(playerID int) BufferedInput {
-	fmt.Println("pull")
 	cursor := i.cursor[playerID]
 	if cursor >= len(i.inputs[playerID]) {
 		cursor = len(i.inputs[playerID]) - 1

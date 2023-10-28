@@ -31,6 +31,7 @@ type App interface {
 	PhysicsObserver() *observers.PhysicsObserver
 	ResetNavMeshVAO()
 	Settings() *app.Settings
+	CommandFrame() int
 }
 
 type GameWorld interface {

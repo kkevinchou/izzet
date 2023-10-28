@@ -48,6 +48,7 @@ type App interface {
 	Prefabs() []*prefabs.Prefab
 	NavMesh() *navmesh.NavigationMesh
 	ResetNavMeshVAO()
+	CommandFrame() int
 
 	StartLiveWorld()
 	StopLiveWorld()

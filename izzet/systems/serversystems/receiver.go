@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems"
 )
@@ -32,6 +33,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 			}
 			s.app.InputBuffer().PushInput(message.CommandFrame, player.ID, inputMessage.Input)
 			// processedMessage = true
+		case <-player.DisconnectChannel:
+			world.QueueEvent(events.PlayerDisconnectEvent{PlayerID: player.ID})
 		default:
 		}
 

@@ -54,8 +54,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			}
 
 			for _, player := range s.app.GetPlayers() {
-				sendMessage(player.Connection, network.MsgTypeCreateEntity, cameraMessage, s.app.CommandFrame())
-				sendMessage(player.Connection, network.MsgTypeCreateEntity, entityMessage, s.app.CommandFrame())
+				network.SendMessage(player.Connection, network.MsgTypeCreateEntity, cameraMessage, s.app.CommandFrame())
+				network.SendMessage(player.Connection, network.MsgTypeCreateEntity, entityMessage, s.app.CommandFrame())
 			}
 			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, e.PlayerCameraID, e.PlayerEntityID)
 		}
@@ -75,28 +75,4 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 	createEntityMessage.EntityBytes = entityBytes
 
 	return createEntityMessage, nil
-}
-
-func sendMessage(conn net.Conn, messageType network.MessageType, body any, frame int) {
-	bytes, err := json.Marshal(body)
-	if err != nil {
-		panic(err)
-	}
-
-	message := network.Message{
-		MessageType:  messageType,
-		Timestamp:    time.Now(),
-		Body:         bytes,
-		CommandFrame: frame,
-	}
-
-	messageBytes, err := json.Marshal(message)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = conn.Write(messageBytes)
-	if err != nil {
-		panic(err)
-	}
 }

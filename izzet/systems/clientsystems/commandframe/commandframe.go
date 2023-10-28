@@ -83,8 +83,6 @@ func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {
 		return fmt.Errorf("frame number %d exceeds what's currently stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
 	}
 
-	// 0 1 2 3 4 5
-	// 3 - 0
 	delta := frameNumber - startFrameNumber
 	h.CommandFrameCursor = (h.CommandFrameCursor + delta) % maxCommandFrameBufferSize
 	h.CommandFrameCount -= delta

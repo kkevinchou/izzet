@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func NewBaseMessage(senderID int, messageType MessageType, commandFrame int) Message {
-	return Message{
+func NewBaseMessage(senderID int, messageType MessageType, commandFrame int) MessageTransport {
+	return MessageTransport{
 		SenderID:     senderID,
 		MessageType:  messageType,
 		CommandFrame: commandFrame,
@@ -20,7 +20,7 @@ func SendMessage(conn net.Conn, messageType MessageType, body any, frame int) er
 		return err
 	}
 
-	message := Message{
+	message := MessageTransport{
 		MessageType:  messageType,
 		Timestamp:    time.Now(),
 		Body:         bytes,

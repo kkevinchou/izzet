@@ -12,7 +12,7 @@ import (
 
 type App interface {
 	ModelLibrary() *modellibrary.ModelLibrary
-	NetworkMessagesChannel() chan network.Message
+	NetworkMessagesChannel() chan network.MessageTransport
 	GetPlayerID() int
 	CommandFrame() int
 	IsConnected() bool

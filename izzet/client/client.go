@@ -74,7 +74,7 @@ type Client struct {
 	playerEntity    *entities.Entity
 	playerCamera    *entities.Entity
 	connection      net.Conn
-	networkMessages chan network.Message
+	networkMessages chan network.MessageTransport
 	commandFrame    int
 	connected       bool
 

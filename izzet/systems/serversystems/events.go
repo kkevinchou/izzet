@@ -17,12 +17,12 @@ import (
 )
 
 type App interface {
-	GetPlayers() map[int]network.Player
-	RegisterPlayer(playerID int, connection net.Conn) network.Player
+	GetPlayers() map[int]*network.Player
+	RegisterPlayer(playerID int, connection net.Conn) *network.Player
 	InputBuffer() *inputbuffer.InputBuffer
 	CommandFrame() int
 	ModelLibrary() *modellibrary.ModelLibrary
-	GetPlayer(playerID int) network.Player
+	GetPlayer(playerID int) *network.Player
 	GetPlayerInput(playerID int) input.Input
 	SetPlayerInput(playerID int, input input.Input)
 }

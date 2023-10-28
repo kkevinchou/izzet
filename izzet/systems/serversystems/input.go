@@ -19,5 +19,7 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, player := range s.app.GetPlayers() {
 		input := inputBuffer.PullInput(player.ID)
 		s.app.SetPlayerInput(player.ID, input)
+		// player := s.app.GetPlayer(player.ID)
+		// player.LastInputLocalCommandFrame =
 	}
 }

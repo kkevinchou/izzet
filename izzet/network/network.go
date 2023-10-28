@@ -14,10 +14,10 @@ func NewBaseMessage(senderID int, messageType MessageType, commandFrame int) Mes
 	}
 }
 
-func SendMessage(conn net.Conn, messageType MessageType, body any, frame int) {
+func SendMessage(conn net.Conn, messageType MessageType, body any, frame int) error {
 	bytes, err := json.Marshal(body)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	message := Message{
@@ -27,13 +27,10 @@ func SendMessage(conn net.Conn, messageType MessageType, body any, frame int) {
 		CommandFrame: frame,
 	}
 
-	messageBytes, err := json.Marshal(message)
+	encoder := json.NewEncoder(conn)
+	err = encoder.Encode(message)
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	_, err = conn.Write(messageBytes)
-	if err != nil {
-		panic(err)
-	}
+	return nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 type App interface {
-	GetPlayers() map[int]network.Player
+	GetPlayers() map[int]*network.Player
 	CommandFrame() int
 }
 

@@ -1,7 +1,6 @@
 package clientsystems
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -29,25 +28,8 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	inputMessage := network.InputMessage{
 		Input: frameInput,
 	}
-	bytes, err := json.Marshal(inputMessage)
-	if err != nil {
-		fmt.Println(fmt.Errorf("failed to write input message body %w", err))
-		return
-	}
 
-	message := network.NewBaseMessage(s.app.GetPlayerID(), network.MsgTypePlayerInput, s.app.CommandFrame())
-	message.Body = bytes
-
-	// baseMessageBytes, err := json.Marshal(message)
-	// if err != nil {
-	// 	fmt.Println(fmt.Errorf("failed to write input message base %w", err))
-	// 	return
-	// }
-
-	conn := s.app.GetPlayerConnection()
-	encoder := json.NewEncoder(conn)
-	err = encoder.Encode(message)
-	// _, err = conn.Write(baseMessageBytes)
+	err := network.SendMessage(s.app.GetPlayerConnection(), network.MsgTypePlayerInput, inputMessage, s.app.CommandFrame())
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
 		return

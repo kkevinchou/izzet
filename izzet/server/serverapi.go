@@ -60,13 +60,13 @@ func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
 	return g.modelLibrary
 }
 
-func (g *Server) GetPlayers() map[int]network.Player {
+func (g *Server) GetPlayers() map[int]*network.Player {
 	return g.players
 }
 
-func (g *Server) RegisterPlayer(playerID int, connection net.Conn) network.Player {
+func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Player {
 	inMessageChannel := make(chan network.Message, 100)
-	g.players[playerID] = network.Player{
+	g.players[playerID] = &network.Player{
 		ID: playerID, Connection: connection,
 		InMessageChannel:  inMessageChannel,
 		OutMessageChannel: make(chan network.Message, 100),
@@ -111,7 +111,7 @@ func (g *Server) InputBuffer() *inputbuffer.InputBuffer {
 	return g.inputBuffer
 }
 
-func (g *Server) GetPlayer(playerID int) network.Player {
+func (g *Server) GetPlayer(playerID int) *network.Player {
 	return g.players[playerID]
 }
 

@@ -6,6 +6,11 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
+type BufferedInput struct {
+	input             input.Input
+	localCommandFrame int
+}
+
 type InputBuffer struct {
 	inputs map[int][]input.Input
 	cursor map[int]int

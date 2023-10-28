@@ -75,7 +75,6 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 		Client:            network.NewClient(connection),
 	}
 
-	// TODO: handle teardown
 	go func(conn net.Conn, id int, ch chan network.MessageTransport, discCh chan bool) {
 		for {
 			decoder := json.NewDecoder(conn)

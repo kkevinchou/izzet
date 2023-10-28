@@ -45,7 +45,7 @@ type Server struct {
 
 	settings *app.Settings
 
-	players map[int]network.Player
+	players map[int]*network.Player
 
 	newConnections chan NewConnection
 	replicator     *Replicator
@@ -58,7 +58,7 @@ type Server struct {
 func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	initSeed()
 	g := &Server{
-		players:     map[int]network.Player{},
+		players:     map[int]*network.Player{},
 		inputBuffer: inputbuffer.New(),
 		playerInput: map[int]input.Input{},
 	}

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
@@ -216,11 +215,6 @@ func (s *Server) listen() {
 
 			id := playerIDGenerator
 			playerIDGenerator += 1
-			encoder := json.NewEncoder(conn)
-			err = encoder.Encode(id)
-			if err != nil {
-				fmt.Println("error with incoming message: %w", err)
-			}
 
 			s.newConnections <- NewConnection{PlayerID: id, Connection: conn}
 		}

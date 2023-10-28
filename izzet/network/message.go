@@ -11,8 +11,8 @@ const (
 	MsgTypeGameStateUpdate
 	MsgTypePlayerInput
 	MsgTypeCreateEntity
+	MsgTypePlayerJoin
 	MsgTypeAckPlayerJoin
-	MsgTypeAckPlayerInit
 )
 
 type Message interface {

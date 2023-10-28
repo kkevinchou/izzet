@@ -212,33 +212,32 @@ func (g *Client) Connect() {
 
 	g.StartLiveWorld()
 
-	playerID, conn, err := connect()
+	address := fmt.Sprintf("localhost:7878")
+	fmt.Println("connecting to " + address)
+
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		panic(err)
 	}
-	g.client = network.NewClient(conn)
 
-	// reinitialize all network related state
-	g.playerID = playerID
+	g.client = network.NewClient(conn)
+	messageTransport, err := g.client.Recv()
+	if err != nil {
+		panic(err)
+	}
+
+	message, err := network.ExtractMessage[network.AckPlayerJoinMessage](messageTransport)
+	if err != nil {
+		panic(err)
+	}
+
+	g.playerID = message.PlayerID
 	g.connection = conn
 	g.networkMessages = make(chan network.MessageTransport, 100)
 
-	var message network.MessageTransport
-	decoder := json.NewDecoder(g.connection)
-	err = decoder.Decode(&message)
-	if err != nil {
-		panic(err)
-	}
-
-	var ackPlayerCreateMessage network.AckPlayerInitMessage
-	err = json.Unmarshal(message.Body, &ackPlayerCreateMessage)
-	if err != nil {
-		panic(err)
-	}
-
 	// initialize the player's camera and entity
 	var entity entities.Entity
-	err = json.Unmarshal(ackPlayerCreateMessage.EntityBytes, &entity)
+	err = json.Unmarshal(message.EntityBytes, &entity)
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
@@ -246,7 +245,7 @@ func (g *Client) Connect() {
 	g.world.AddEntity(&entity)
 
 	var camera entities.Entity
-	err = json.Unmarshal(ackPlayerCreateMessage.CameraBytes, &camera)
+	err = json.Unmarshal(message.CameraBytes, &camera)
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
@@ -275,40 +274,10 @@ func (g *Client) Connect() {
 			}
 
 			g.networkMessages <- message
-
-			// worldFromServer, err := g.serializer.Read(conn)
-			// if err != nil {
-			// 	fmt.Println(fmt.Sprintf("error reading world %w", err))
-			// 	return
-			// }
-			// // time.Sleep(10 * time.Second)
-			// fmt.Println("setting world from server")
-			// // g.SetWorld(worldFromServer)
-			// fmt.Println(worldFromServer)
 		}
 	}()
 	g.connected = true
 	fmt.Println("finished connect")
-}
-
-func connect() (int, net.Conn, error) {
-	address := fmt.Sprintf("localhost:7878")
-	fmt.Println("connecting to " + address)
-
-	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	var playerID int
-	decoder := json.NewDecoder(conn)
-	err = decoder.Decode(&playerID)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	fmt.Println("connected with player id ", playerID)
-	return playerID, conn, nil
 }
 
 func (g *Client) NetworkMessagesChannel() chan network.MessageTransport {

@@ -40,7 +40,7 @@ func (i *InputBuffer) PullInput(playerID int) BufferedInput {
 	}
 
 	if cursor == lastCursor {
-		fmt.Println("reading same cursor", cursor)
+		fmt.Printf("player %d reading same cursor %d\n", playerID, cursor)
 	}
 	lastCursor = cursor
 

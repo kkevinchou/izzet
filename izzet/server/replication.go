@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -54,18 +53,9 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
 		Transforms: transforms,
 	}
-	messageBytes, err := json.Marshal(gamestateUpdateMessage)
-	if err != nil {
-		return
-	}
 
 	for _, player := range players {
-		conn := player.Connection
-		encoder := json.NewEncoder(conn)
-
-		message := network.NewBaseMessage(-1, network.MsgTypeGameStateUpdate, s.app.CommandFrame())
-		message.Body = messageBytes
-		encoder.Encode(message)
-		// s.serializer.Write(world, conn)
+		gamestateUpdateMessage.LastInputCommandFrame = player.LastInputLocalCommandFrame
+		network.SendMessage(player.Connection, network.MsgTypeGameStateUpdate, gamestateUpdateMessage, s.app.CommandFrame())
 	}
 }

@@ -30,7 +30,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
 				continue
 			}
-			s.app.InputBuffer().PushInput(s.app.CommandFrame(), player.ID, inputMessage.Input)
+			s.app.InputBuffer().PushInput(message.CommandFrame, player.ID, inputMessage.Input)
 			// processedMessage = true
 		default:
 		}

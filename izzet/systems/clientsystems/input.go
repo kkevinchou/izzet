@@ -20,6 +20,7 @@ func NewInputSystem(app App) *InputSystem {
 }
 
 func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
+	// TODO - send inputs asynchronously
 	frameInput := world.GetFrameInput()
 	cameraOrientation := s.computePlayerCameraOrientation(world, frameInput)
 	world.SetInputCameraOrientation(cameraOrientation)

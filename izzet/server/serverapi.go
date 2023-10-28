@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
@@ -85,6 +86,11 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) network.Playe
 				// }
 				// fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
 				fmt.Println(fmt.Errorf("error decoding message from player %d remaining buffered data: %w", id, err))
+				if strings.Contains(err.Error(), "An existing connection was forcibly closed") {
+					fmt.Println("connection closed by remote player", id)
+					conn.Close()
+					return
+				}
 				continue
 			}
 

@@ -65,20 +65,21 @@ func (g *Server) GetPlayers() map[int]*network.Player {
 }
 
 func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Player {
-	inMessageChannel := make(chan network.Message, 100)
+	inMessageChannel := make(chan network.MessageTransport, 100)
 	disconnectChannel := make(chan bool, 1)
 	g.players[playerID] = &network.Player{
 		ID: playerID, Connection: connection,
 		InMessageChannel:  inMessageChannel,
-		OutMessageChannel: make(chan network.Message, 100),
+		OutMessageChannel: make(chan network.MessageTransport, 100),
 		DisconnectChannel: disconnectChannel,
+		Client:            network.NewClient(connection),
 	}
 
 	// TODO: handle teardown
-	go func(conn net.Conn, id int, ch chan network.Message, discCh chan bool) {
+	go func(conn net.Conn, id int, ch chan network.MessageTransport, discCh chan bool) {
 		for {
 			decoder := json.NewDecoder(conn)
-			var message network.Message
+			var message network.MessageTransport
 			err := decoder.Decode(&message)
 			if err != nil {
 				// reader := decoder.Buffered()

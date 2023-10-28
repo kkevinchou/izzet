@@ -220,9 +220,9 @@ func (g *Client) Connect() {
 	// reinitialize all network related state
 	g.playerID = playerID
 	g.connection = conn
-	g.networkMessages = make(chan network.Message, 100)
+	g.networkMessages = make(chan network.MessageTransport, 100)
 
-	var message network.Message
+	var message network.MessageTransport
 	decoder := json.NewDecoder(g.connection)
 	err = decoder.Decode(&message)
 	if err != nil {
@@ -261,7 +261,7 @@ func (g *Client) Connect() {
 
 		decoder := json.NewDecoder(g.connection)
 		for {
-			var message network.Message
+			var message network.MessageTransport
 			err := decoder.Decode(&message)
 			if err != nil {
 				if err == io.EOF {
@@ -310,7 +310,7 @@ func connect() (int, net.Conn, error) {
 	return playerID, conn, nil
 }
 
-func (g *Client) NetworkMessagesChannel() chan network.Message {
+func (g *Client) NetworkMessagesChannel() chan network.MessageTransport {
 	return g.networkMessages
 }
 

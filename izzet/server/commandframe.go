@@ -101,7 +101,7 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	return entity
 }
 
-func createAckPlayerJoinMessage(camera *entities.Entity, entity *entities.Entity) (network.Message, error) {
+func createAckPlayerJoinMessage(camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
 	ackPlayerJoinMessage := network.AckPlayerJoinMessage{}
 
 	entityBytes, err := json.Marshal(entity)
@@ -121,5 +121,5 @@ func createAckPlayerJoinMessage(camera *entities.Entity, entity *entities.Entity
 		panic(err)
 	}
 
-	return network.Message{MessageType: network.MsgTypeAckPlayerJoin, Timestamp: time.Now(), Body: bytes}, nil
+	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerJoin, Timestamp: time.Now(), Body: bytes}, nil
 }

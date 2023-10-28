@@ -14,7 +14,11 @@ const (
 	MsgTypeAckPlayerJoin
 )
 
-type Message struct {
+type Message interface {
+	Type() MessageType
+}
+
+type MessageTransport struct {
 	SenderID     int
 	MessageType  MessageType
 	CommandFrame int

@@ -56,6 +56,6 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 
 	for _, player := range players {
 		gamestateUpdateMessage.LastInputCommandFrame = player.LastInputLocalCommandFrame
-		network.SendMessage(player.Connection, network.MsgTypeGameStateUpdate, gamestateUpdateMessage, s.app.CommandFrame())
+		player.Client.Send(gamestateUpdateMessage, s.app.CommandFrame())
 	}
 }

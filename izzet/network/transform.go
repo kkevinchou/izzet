@@ -12,3 +12,7 @@ type GameStateUpdateMessage struct {
 	Transforms            []Transform
 	LastInputCommandFrame int
 }
+
+func (m GameStateUpdateMessage) Type() MessageType {
+	return MsgTypeGameStateUpdate
+}

@@ -25,6 +25,7 @@ type App interface {
 	GetPlayer(playerID int) *network.Player
 	GetPlayerInput(playerID int) input.Input
 	SetPlayerInput(playerID int, input input.Input)
+	DeregisterPlayer(playerID int)
 }
 
 type EventsSystem struct {
@@ -58,6 +59,10 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 				network.SendMessage(player.Connection, network.MsgTypeCreateEntity, entityMessage, s.app.CommandFrame())
 			}
 			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, e.PlayerCameraID, e.PlayerEntityID)
+		case events.PlayerDisconnectEvent:
+			fmt.Printf("player %d disconnected\n", e.PlayerID)
+			s.app.DeregisterPlayer(e.PlayerID)
+		default:
 		}
 	}
 	world.ClearEventQueue()

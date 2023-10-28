@@ -10,3 +10,7 @@ type PlayerJoinEvent struct {
 	PlayerEntityID int
 	PlayerCameraID int
 }
+
+type PlayerDisconnectEvent struct {
+	PlayerID int
+}

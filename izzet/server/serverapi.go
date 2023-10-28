@@ -66,14 +66,16 @@ func (g *Server) GetPlayers() map[int]*network.Player {
 
 func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Player {
 	inMessageChannel := make(chan network.Message, 100)
+	disconnectChannel := make(chan bool, 1)
 	g.players[playerID] = &network.Player{
 		ID: playerID, Connection: connection,
 		InMessageChannel:  inMessageChannel,
 		OutMessageChannel: make(chan network.Message, 100),
+		DisconnectChannel: disconnectChannel,
 	}
 
 	// TODO: handle teardown
-	go func(conn net.Conn, id int, ch chan network.Message) {
+	go func(conn net.Conn, id int, ch chan network.Message, discCh chan bool) {
 		for {
 			decoder := json.NewDecoder(conn)
 			var message network.Message
@@ -89,6 +91,7 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 				if strings.Contains(err.Error(), "An existing connection was forcibly closed") {
 					fmt.Println("connection closed by remote player", id)
 					conn.Close()
+					discCh <- true
 					return
 				}
 				continue
@@ -98,9 +101,13 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 				ch <- message
 			}
 		}
-	}(connection, playerID, inMessageChannel)
+	}(connection, playerID, inMessageChannel, disconnectChannel)
 
 	return g.players[playerID]
+}
+
+func (g *Server) DeregisterPlayer(playerID int) {
+	delete(g.players, playerID)
 }
 
 func (g *Server) CommandFrame() int {

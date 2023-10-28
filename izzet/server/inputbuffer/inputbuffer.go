@@ -24,12 +24,14 @@ func New() *InputBuffer {
 }
 
 func (i *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input) {
+	fmt.Println("push")
 	i.inputs[playerID] = append(i.inputs[playerID], BufferedInput{Input: frameInput, LocalCommandFrame: localCommandFrame})
 }
 
 var lastCursor int = 0
 
 func (i *InputBuffer) PullInput(playerID int) BufferedInput {
+	fmt.Println("pull")
 	cursor := i.cursor[playerID]
 	if cursor >= len(i.inputs[playerID]) {
 		cursor = len(i.inputs[playerID]) - 1
@@ -45,6 +47,6 @@ func (i *InputBuffer) PullInput(playerID int) BufferedInput {
 	lastCursor = cursor
 
 	bufferedInput := i.inputs[playerID][cursor]
-	i.cursor[playerID] += 1
+	i.cursor[playerID] += 1 // todo - should we skip incrementing if we pull an input that matches the last frame? i.e. if we detect that we have a late input?
 	return bufferedInput
 }

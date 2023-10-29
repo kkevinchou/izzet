@@ -316,3 +316,15 @@ func (g *Client) GetCommandFrameHistory() *commandframe.CommandFrameHistory {
 func (g *Client) Client() network.IzzetClient {
 	return g.client
 }
+
+func (g *Client) IsServer() bool {
+	return false
+}
+
+func (g *Client) IsClient() bool {
+	return true
+}
+
+func (g *Client) GetPlayer(playerID int) *network.Player {
+	panic("wat")
+}

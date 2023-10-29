@@ -88,13 +88,7 @@ func (s *PhysicsSystem) resolveCollisions(world GameWorld) {
 		collidableEntities = append(collidableEntities, e)
 	}
 
-	// pairExists stores the pairs of entities that we've already created,
-	// don't create a pair for both (e1, e2) and (e2, e1), just one of them
-	pairExists := map[int]map[int]bool{}
-	for _, e := range collidableEntities {
-		pairExists[e.ID] = map[int]bool{}
-	}
-
+	uniquePairMap := map[string]any{}
 	seen := map[int]bool{}
 
 	entityPairs := [][]*entities.Entity{}
@@ -127,7 +121,10 @@ func (s *PhysicsSystem) resolveCollisions(world GameWorld) {
 				continue
 			}
 
-			if pairExists[e1.ID][e2.ID] || pairExists[e2.ID][e1.ID] {
+			if _, ok := uniquePairMap[generateUniquePairKey(e1, e2)]; ok {
+				continue
+			}
+			if _, ok := uniquePairMap[generateUniquePairKey(e2, e1)]; ok {
 				continue
 			}
 
@@ -139,8 +136,8 @@ func (s *PhysicsSystem) resolveCollisions(world GameWorld) {
 			}
 
 			entityPairs = append(entityPairs, []*entities.Entity{e1, e2})
-			pairExists[e1.ID][e2.ID] = true
-			pairExists[e2.ID][e1.ID] = true
+			uniquePairMap[generateUniquePairKey(e1, e2)] = true
+			uniquePairMap[generateUniquePairKey(e2, e1)] = true
 		}
 	}
 
@@ -327,4 +324,9 @@ func (s *PhysicsSystem) resolveCollision(entity *entities.Entity, sourceEntity *
 	separatingVector := contact.SeparatingVector
 	entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(separatingVector))
 	s.Observer.OnCollisionResolution(entity.GetID())
+}
+
+func generateUniquePairKey(e1, e2 *entities.Entity) string {
+	return fmt.Sprintf("%d_%d", e1.GetID(), e2.GetID())
+
 }

@@ -28,8 +28,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 		select {
 		case message := <-s.app.NetworkMessagesChannel():
 			if message.MessageType == network.MsgTypeGameStateUpdate {
-				var gameStateUpdateMessage network.GameStateUpdateMessage
-				err := json.Unmarshal(message.Body, &gameStateUpdateMessage)
+				var gamestateUpdateMessage network.GameStateUpdateMessage
+				err := json.Unmarshal(message.Body, &gamestateUpdateMessage)
 				if err != nil {
 					fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
 					continue
@@ -39,14 +39,14 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				// a game state update but hasn't had input processed by the server yet.
 				// this results in a LastInputCommandFrame of 0, which will not be found
 				// in the command frame history
-				if gameStateUpdateMessage.LastInputCommandFrame == 0 {
+				if gamestateUpdateMessage.LastInputCommandFrame == 0 {
 					return
 				}
 
 				playerEntityID := s.app.GetPlayerEntity().GetID()
 				var serverTransform network.Transform
 
-				for _, transform := range gameStateUpdateMessage.Transforms {
+				for _, transform := range gamestateUpdateMessage.Transforms {
 					entity := world.GetEntityByID(transform.EntityID)
 					if entity == nil {
 						continue
@@ -62,7 +62,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 
 				cfHistory := s.app.GetCommandFrameHistory()
-				cf, err := cfHistory.GetCommandFrame(gameStateUpdateMessage.LastInputCommandFrame)
+				cf, err := cfHistory.GetFrame(gamestateUpdateMessage.LastInputCommandFrame)
 				if err != nil {
 					panic(err)
 				}
@@ -70,13 +70,10 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				state := cf.PostCFState
 				if Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
-					cfHistory.ClearUntilFrameNumber(gameStateUpdateMessage.LastInputCommandFrame)
+					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 				} else {
 					mr.Inc("prediction_miss", 1)
-					fmt.Println("PREDICTION FAILED", gameStateUpdateMessage.LastInputCommandFrame)
-					entities.SetLocalPosition(s.app.GetPlayerEntity(), serverTransform.Position)
-					entities.SetLocalRotation(s.app.GetPlayerEntity(), serverTransform.Orientation)
-					cfHistory.ClearUntilFrameNumber(gameStateUpdateMessage.LastInputCommandFrame)
+					fmt.Println("PREDICTION FAILED", gamestateUpdateMessage.LastInputCommandFrame)
 					// TODO - resim the frames leading up to the current command frame
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {

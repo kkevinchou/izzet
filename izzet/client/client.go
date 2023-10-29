@@ -45,8 +45,7 @@ type Client struct {
 
 	camera *camera.Camera
 
-	entities map[int]*entities.Entity
-	prefabs  map[int]*prefabs.Prefab
+	prefabs map[int]*prefabs.Prefab
 
 	renderer    *render.Renderer
 	serializer  *serialization.Serializer
@@ -130,7 +129,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 
 	fmt.Println(time.Since(start), "spatial partition done")
 
-	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.setupPrefabs(data)
@@ -262,7 +260,6 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
-	// g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
 	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g, g.physicsObserver))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))

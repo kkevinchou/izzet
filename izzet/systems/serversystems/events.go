@@ -62,6 +62,17 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		case events.PlayerDisconnectEvent:
 			fmt.Printf("player %d disconnected\n", e.PlayerID)
 			s.app.DeregisterPlayer(e.PlayerID)
+		case events.EntitySpawnEvent:
+			world.AddEntity(e.Entity)
+			entityMessage, err := createEntityMessage(0, e.Entity)
+			if err != nil {
+				panic(err)
+			}
+			for _, player := range s.app.GetPlayers() {
+				player.Client.Send(entityMessage, s.app.CommandFrame())
+			}
+			fmt.Printf("spawned entity with ID %d\n", e.Entity.GetID())
+
 		default:
 		}
 	}

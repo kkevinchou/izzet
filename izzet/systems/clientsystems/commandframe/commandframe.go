@@ -55,21 +55,44 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 	h.CommandFrameCount += 1
 }
 
-func (h *CommandFrameHistory) GetCommandFrame(frameNumber int) (CommandFrame, error) {
+func (h *CommandFrameHistory) GetFrame(frameNumber int) (CommandFrame, error) {
+	index, err := h.GetBufferIndexByFrameNumber(frameNumber)
+	if err != nil {
+		return CommandFrame{}, nil
+	}
+
+	return h.CommandFrames[index], nil
+}
+
+func (h *CommandFrameHistory) GetAllFramesStartingFrom(frameNumber int) ([]CommandFrame, error) {
+	index, err := h.GetBufferIndexByFrameNumber(frameNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]CommandFrame, h.CommandFrameCount)
+	for i := 0; i < h.CommandFrameCount; i++ {
+		result[i] = h.CommandFrames[(index+i)%maxCommandFrameBufferSize]
+	}
+
+	return result, nil
+}
+
+func (h *CommandFrameHistory) GetBufferIndexByFrameNumber(frameNumber int) (int, error) {
 	if h.CommandFrameCount == 0 {
-		return CommandFrame{}, fmt.Errorf("no command frames")
+		return -1, fmt.Errorf("no command frames")
 	}
 
 	startFrameNumber := h.CommandFrames[h.CommandFrameCursor].FrameNumber
 	if frameNumber-startFrameNumber+1 > h.CommandFrameCount {
-		return CommandFrame{}, fmt.Errorf("frame number %d exceeds what's currently stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
+		return -1, fmt.Errorf("frame number %d exceeds what's currently stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
 	}
 
 	if frameNumber-startFrameNumber < 0 {
-		return CommandFrame{}, fmt.Errorf("frame number %d is too old and is no longer stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
+		return -1, fmt.Errorf("frame number %d is too old and is no longer stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
 	}
 
-	return h.CommandFrames[(h.CommandFrameCursor+frameNumber-startFrameNumber)%maxCommandFrameBufferSize], nil
+	return (h.CommandFrameCursor + frameNumber - startFrameNumber) % maxCommandFrameBufferSize, nil
 }
 
 func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {

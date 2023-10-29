@@ -92,12 +92,8 @@ func (g *Client) LoadWorld(name string) bool {
 		if e.ID > maxID {
 			maxID = e.ID
 		}
-		g.entities[e.ID] = e
 	}
-
-	if len(g.entities) > 0 {
-		entities.SetNextID(maxID + 1)
-	}
+	entities.SetNextID(maxID + 1)
 
 	panels.SelectEntity(nil)
 	g.SetWorld(world)

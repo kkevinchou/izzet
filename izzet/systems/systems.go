@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -24,4 +25,11 @@ type GameWorld interface {
 	QueueEvent(events.Event)
 	ClearEventQueue()
 	AddEntity(*entities.Entity)
+}
+
+type App interface {
+	IsClient() bool
+	IsServer() bool
+	CommandFrame() int
+	GetPlayer(playerID int) *network.Player
 }

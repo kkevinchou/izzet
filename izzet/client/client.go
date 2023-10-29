@@ -262,11 +262,11 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
-	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
-	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
+	// g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
+	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g, g.physicsObserver))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 
 	g.editorModeSystems = append(g.editorModeSystems, &systems.AnimationSystem{})
 }

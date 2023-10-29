@@ -129,3 +129,11 @@ func (g *Server) SetPlayerInput(playerID int, input input.Input) {
 func (g *Server) GetPlayerInput(playerID int) input.Input {
 	return g.playerInput[playerID]
 }
+
+func (g *Server) IsServer() bool {
+	return true
+}
+
+func (g *Server) IsClient() bool {
+	return false
+}

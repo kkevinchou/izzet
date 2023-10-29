@@ -27,6 +27,12 @@ type PhysicsObserver interface {
 
 type PhysicsSystem struct {
 	Observer PhysicsObserver
+	app      App
+}
+
+func NewPhysicsSystem(app App, physicsObserver PhysicsObserver) *PhysicsSystem {
+	return &PhysicsSystem{app: app, Observer: physicsObserver}
+
 }
 
 func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {

@@ -44,7 +44,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 
 				playerEntityID := s.app.GetPlayerEntity().GetID()
-				var serverConfirmedPosition mgl64.Vec3
+				var serverTransform network.Transform
 
 				for _, transform := range gameStateUpdateMessage.Transforms {
 					entity := world.GetEntityByID(transform.EntityID)
@@ -53,7 +53,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					}
 
 					if entity.GetID() == playerEntityID {
-						serverConfirmedPosition = transform.Position
+						serverTransform = transform
 						continue
 					}
 
@@ -68,12 +68,14 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 
 				state := cf.PostCFState
-				if Vec3ApproxEqualThreshold(state.Position, serverConfirmedPosition, 0.001) {
+				if Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
 					cfHistory.ClearUntilFrameNumber(gameStateUpdateMessage.LastInputCommandFrame)
 				} else {
 					mr.Inc("prediction_miss", 1)
 					fmt.Println("PREDICTION FAILED", gameStateUpdateMessage.LastInputCommandFrame)
+					entities.SetLocalPosition(s.app.GetPlayerEntity(), serverTransform.Position)
+					entities.SetLocalRotation(s.app.GetPlayerEntity(), serverTransform.Orientation)
 					cfHistory.ClearUntilFrameNumber(gameStateUpdateMessage.LastInputCommandFrame)
 					// TODO - resim the frames leading up to the current command frame
 				}

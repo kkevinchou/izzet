@@ -90,6 +90,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g.systems = append(g.systems, &systems.CameraTargetSystem{})
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, &systems.MovementSystem{})
+	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
 	g.systems = append(g.systems, &systems.PhysicsSystem{Observer: g.physicsObserver})
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
 

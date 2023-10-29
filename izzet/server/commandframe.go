@@ -43,7 +43,7 @@ func (g *Server) handlePlayerConnections() {
 				Bottom: mgl64.Vec3{0, radius, 0},
 			},
 			ColliderGroup: entities.ColliderGroupFlagPlayer,
-			CollisionMask: entities.ColliderGroupFlagTerrain,
+			CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 		}
 		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
 

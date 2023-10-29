@@ -1,6 +1,10 @@
 package events
 
-import "net"
+import (
+	"net"
+
+	"github.com/kkevinchou/izzet/izzet/entities"
+)
 
 type Event interface{}
 
@@ -9,6 +13,10 @@ type PlayerJoinEvent struct {
 	Connection     net.Conn
 	PlayerEntityID int
 	PlayerCameraID int
+}
+
+type EntitySpawnEvent struct {
+	Entity *entities.Entity
 }
 
 type PlayerDisconnectEvent struct {

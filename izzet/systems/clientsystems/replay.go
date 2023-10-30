@@ -5,6 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
@@ -41,6 +42,8 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 	//		set player input
 	// 		simulate frame and add the new cf to the history
 
+	// TODO: make this a dummy physics observer
+	observer := observers.NewCollisionObserver()
 	for i := 1; i < len(commandFrames); i++ {
 		commandFrame := commandFrames[i]
 
@@ -48,10 +51,14 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 		// rerun spatial partioning over these entities
 
 		// update character controller
+		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, nil, entity)
+
 		// update physics
 
+		// resolve collision
+		shared.ResolveCollisionsSingle(world, entity, observer)
+
 		// add a new command frame
-		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, nil, entity)
 		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, entity)
 	}
 	return nil

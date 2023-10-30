@@ -69,7 +69,7 @@ type App interface {
 	NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3
 	WorldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool)
 
-	PhysicsObserver() *observers.PhysicsObserver
+	CollisionObserver() *observers.CollisionObserver
 	Settings() *app.Settings
 	Connect()
 	IsConnected() bool

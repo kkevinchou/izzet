@@ -193,8 +193,8 @@ func (g *Client) WorldToNDCPosition(viewerContext render.ViewerContext, worldPos
 	return screenPos.Vec2(), behind
 }
 
-func (g *Client) PhysicsObserver() *observers.PhysicsObserver {
-	return g.physicsObserver
+func (g *Client) CollisionObserver() *observers.CollisionObserver {
+	return g.collisionObserver
 }
 
 func (g *Client) Settings() *app.Settings {

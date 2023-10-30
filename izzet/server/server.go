@@ -38,9 +38,9 @@ type Server struct {
 
 	world *world.GameWorld
 
-	systems         []systems.System
-	appMode         app.AppMode
-	physicsObserver *observers.PhysicsObserver
+	systems           []systems.System
+	appMode           app.AppMode
+	collisionObserver *observers.CollisionObserver
 
 	settings *app.Settings
 
@@ -77,7 +77,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	// g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.serializer = serialization.New(g, g.world)
 	g.metricsRegistry = metrics.New()
-	g.physicsObserver = observers.NewPhysicsObserver()
+	g.collisionObserver = observers.NewCollisionObserver()
 
 	g.newConnections = make(chan NewConnection, 100)
 	g.replicator = NewReplicator(g, g.serializer)
@@ -90,8 +90,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	g.systems = append(g.systems, &systems.CameraTargetSystem{})
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, &systems.MovementSystem{})
-	g.systems = append(g.systems, systems.NewPhysicsSystem(g, g.physicsObserver))
-	g.systems = append(g.systems, systems.NewCollisionSystem(g))
+	g.systems = append(g.systems, systems.NewPhysicsSystem(g))
+	g.systems = append(g.systems, systems.NewCollisionSystem(g, g.collisionObserver))
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
 

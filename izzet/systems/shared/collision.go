@@ -15,7 +15,11 @@ const (
 	GroundedThreshold float64 = 0.85
 )
 
-func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observer *observers.PhysicsObserver) {
+func ResolveCollisionsSingle(world GameWorld, entity *entities.Entity, observer *observers.CollisionObserver) {
+	ResolveCollisions(world, []*entities.Entity{entity}, observer)
+}
+
+func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observer *observers.CollisionObserver) {
 	uniquePairMap := map[string]any{}
 	seen := map[int]bool{}
 
@@ -77,7 +81,7 @@ func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observ
 	}
 }
 
-func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world GameWorld, observer *observers.PhysicsObserver) {
+func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world GameWorld, observer *observers.CollisionObserver) {
 	// 1. collect pairs of entities that are colliding, sorted by separating vector
 	// 2. perform collision resolution for any colliding entities
 	// 3. this can cause more collisions, repeat until no more further detected collisions, or we hit the configured max
@@ -137,7 +141,7 @@ func filterCollisionCandidates(contacts []*collision.Contact) []*collision.Conta
 // collectSortedCollisionCandidates collects all potential collisions that can occur in the frame.
 // these are "candidates" in that they are not guaranteed to have actually happened since
 // if we resolve some of the collisions in the list, some will be invalidated
-func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world GameWorld, observer *observers.PhysicsObserver) []*collision.Contact {
+func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world GameWorld, observer *observers.CollisionObserver) []*collision.Contact {
 	// initialize collision state
 
 	for _, e := range entityList {
@@ -180,7 +184,7 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 	return allContacts
 }
 
-func collideBoundingBox(e1 *entities.Entity, e2 *entities.Entity, observer *observers.PhysicsObserver) bool {
+func collideBoundingBox(e1 *entities.Entity, e2 *entities.Entity, observer *observers.CollisionObserver) bool {
 	observer.OnBoundingBoxCheck(e1, e2)
 
 	bb1 := e1.BoundingBox()
@@ -201,7 +205,7 @@ func collideBoundingBox(e1 *entities.Entity, e2 *entities.Entity, observer *obse
 	return true
 }
 
-func collide(e1 *entities.Entity, e2 *entities.Entity, observer *observers.PhysicsObserver) []*collision.Contact {
+func collide(e1 *entities.Entity, e2 *entities.Entity, observer *observers.CollisionObserver) []*collision.Contact {
 	observer.OnCollisionCheck(e1, e2)
 
 	var result []*collision.Contact
@@ -251,7 +255,7 @@ func collide(e1 *entities.Entity, e2 *entities.Entity, observer *observers.Physi
 	return filteredContacts
 }
 
-func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact, observer *observers.PhysicsObserver) {
+func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact, observer *observers.CollisionObserver) {
 	separatingVector := contact.SeparatingVector
 	entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(separatingVector))
 	observer.OnCollisionResolution(entity.GetID())

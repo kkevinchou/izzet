@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/kitolib/metrics"
 )
 
 const (
@@ -28,9 +29,11 @@ var selectedEntity *entities.Entity
 type App interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	ModelLibrary() *modellibrary.ModelLibrary
-	PhysicsObserver() *observers.PhysicsObserver
+	CollisionObserver() *observers.CollisionObserver
 	ResetNavMeshVAO()
 	Settings() *app.Settings
+	CommandFrame() int
+	MetricsRegistry() *metrics.MetricsRegistry
 }
 
 type GameWorld interface {

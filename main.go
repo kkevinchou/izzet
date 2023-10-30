@@ -7,11 +7,15 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	_ "net/http/pprof"
 
-	"github.com/kkevinchou/izzet/izzet"
+	"github.com/kkevinchou/izzet/izzet/client"
+	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/kitolib/assets/assetslog"
+	"github.com/kkevinchou/kitolib/log"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -35,6 +39,8 @@ type Game interface {
 
 func main() {
 	configFile, err := os.Open("config.json")
+	config := settings.NewConfig()
+
 	if err != nil {
 		fmt.Printf("failed to load config.json, using defaults: %s\n", err)
 	} else {
@@ -47,41 +53,50 @@ func main() {
 			panic(err)
 		}
 
-		var configSettings Config
-		err = json.Unmarshal(configBytes, &configSettings)
+		err = json.Unmarshal(configBytes, &config)
 		if err != nil {
 			panic(err)
 		}
-
-		loadConfig(configSettings)
 	}
 
-	if settings.Profile {
+	if config.Profile {
 		go func() {
 			http.ListenAndServe(":6868", nil)
 		}()
 	}
 
-	go func() {
-		serverApp := izzet.NewServer("_assets", "shaders", "izzet_data.json")
-		serverApp.StartServer()
-	}()
+	assetslog.SetLogger(log.EmptyLogger)
 
-	app := izzet.New("_assets", "shaders", "izzet_data.json")
-	app.Start()
+	isServer := false
+
+	if len(os.Args) > 1 {
+		mode := strings.ToUpper(os.Args[1])
+		isServer = mode == "SERVER"
+		if mode != "SERVER" && mode != "CLIENT" {
+			panic(fmt.Sprintf("unexpected mode %s", mode))
+		}
+	}
+
+	if isServer {
+		started := make(chan bool)
+		go func() {
+			serverApp := server.New("_assets", "shaders", "izzet_data.json")
+			serverApp.Start(started)
+		}()
+		<-started
+
+		clientApp := client.New("_assets", "shaders", "izzet_data.json", config)
+		clientApp.Connect()
+		clientApp.Start()
+	} else {
+		config.Width = 854
+		config.Height = 480
+		config.Fullscreen = false
+		config.Profile = false
+		clientApp := client.New("_assets", "shaders", "izzet_data.json", config)
+		clientApp.Connect()
+		clientApp.Start()
+	}
+
 	sdl.Quit()
-}
-
-func loadConfig(c Config) {
-	settings.Width = c.Width
-	settings.Height = c.Height
-	settings.Fullscreen = c.Fullscreen
-	settings.Profile = c.Profile
-}
-
-type Config struct {
-	Width      int
-	Height     int
-	Fullscreen bool
-	Profile    bool
 }

@@ -1,4 +1,4 @@
-package izzet
+package client
 
 import (
 	"fmt"
@@ -6,11 +6,11 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
-func (g *Izzet) Shutdown() {
+func (g *Client) Shutdown() {
 	g.gameOver = true
 }
 
-func (g *Izzet) HandleInput(frameInput input.Input) {
+func (g *Client) HandleInput(frameInput input.Input) {
 	for _, cmd := range frameInput.Commands {
 		if _, ok := cmd.(input.QuitCommand); ok {
 			g.Shutdown()

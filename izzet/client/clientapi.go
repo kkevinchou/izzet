@@ -21,7 +21,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems/commandframe"
+	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -305,7 +305,7 @@ func (g *Client) GetPlayerCamera() *entities.Entity {
 	return g.playerCamera
 }
 
-func (g *Client) GetCommandFrameHistory() *commandframe.CommandFrameHistory {
+func (g *Client) GetCommandFrameHistory() *clientsystems.CommandFrameHistory {
 	return g.commandFrameHistory
 }
 

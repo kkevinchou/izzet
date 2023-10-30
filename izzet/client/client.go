@@ -24,7 +24,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems/commandframe"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -78,13 +77,13 @@ type Client struct {
 	commandFrame    int
 	connected       bool
 
-	commandFrameHistory *commandframe.CommandFrameHistory
+	commandFrameHistory *clientsystems.CommandFrameHistory
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config) *Client {
 	initSeed()
 	g := &Client{
-		commandFrameHistory: commandframe.NewCommandFrameHistory(),
+		commandFrameHistory: clientsystems.NewCommandFrameHistory(),
 	}
 
 	g.initSettings()

@@ -16,5 +16,6 @@ func NewPostFrameSystem(app App) *PostFrameSystem {
 
 func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 	history := s.app.GetCommandFrameHistory()
+	// fmt.Printf("CLIENT ACTUAL - [%d] - %v\n", s.app.CommandFrame(), entities.GetLocalPosition(s.app.GetPlayerEntity()))
 	history.AddCommandFrame(s.app.CommandFrame(), world.GetFrameInput(), s.app.GetPlayerEntity())
 }

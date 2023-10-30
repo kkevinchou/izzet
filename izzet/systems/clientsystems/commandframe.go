@@ -53,6 +53,9 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 
 	h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount)%maxCommandFrameBufferSize] = cf
 	h.CommandFrameCount += 1
+	if h.CommandFrames[h.CommandFrameCursor].FrameNumber > h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount-1)%maxCommandFrameBufferSize].FrameNumber {
+		fmt.Println("WAT")
+	}
 }
 
 func (h *CommandFrameHistory) GetFrame(frameNumber int) (CommandFrame, error) {
@@ -70,8 +73,11 @@ func (h *CommandFrameHistory) GetAllFramesStartingFrom(frameNumber int) ([]Comma
 		return nil, err
 	}
 
-	result := make([]CommandFrame, h.CommandFrameCount)
-	for i := 0; i < h.CommandFrameCount; i++ {
+	countDelta := frameNumber - h.CommandFrames[h.CommandFrameCursor].FrameNumber
+	frameCount := h.CommandFrameCount - countDelta
+
+	result := make([]CommandFrame, frameCount)
+	for i := 0; i < frameCount; i++ {
 		result[i] = h.CommandFrames[(index+i)%maxCommandFrameBufferSize]
 	}
 
@@ -91,8 +97,12 @@ func (h *CommandFrameHistory) GetBufferIndexByFrameNumber(frameNumber int) (int,
 	if frameNumber-startFrameNumber < 0 {
 		return -1, fmt.Errorf("frame number %d is too old and is no longer stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
 	}
+	index := (h.CommandFrameCursor + frameNumber - startFrameNumber) % maxCommandFrameBufferSize
+	if h.CommandFrames[index].FrameNumber != frameNumber {
+		fmt.Println("Wat")
+	}
 
-	return (h.CommandFrameCursor + frameNumber - startFrameNumber) % maxCommandFrameBufferSize, nil
+	return index, nil
 }
 
 func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {
@@ -108,10 +118,18 @@ func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {
 	delta := frameNumber - startFrameNumber
 	h.CommandFrameCursor = (h.CommandFrameCursor + delta) % maxCommandFrameBufferSize
 	h.CommandFrameCount -= delta
+
+	if h.CommandFrames[h.CommandFrameCursor].FrameNumber > h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount-1)%maxCommandFrameBufferSize].FrameNumber {
+		fmt.Println("WAT")
+	}
+
 	return nil
 }
 
 func (h *CommandFrameHistory) Reset() {
 	h.CommandFrameCursor = 0
 	h.CommandFrameCount = 0
+	for i := range h.CommandFrames {
+		h.CommandFrames[i].FrameNumber = -1
+	}
 }

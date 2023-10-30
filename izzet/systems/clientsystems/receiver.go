@@ -73,8 +73,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 				} else {
 					mr.Inc("prediction_miss", 1)
-					fmt.Println("PREDICTION FAILED", gamestateUpdateMessage.LastInputCommandFrame)
-					// TODO - resim the frames leading up to the current command frame
+					replay(world.GetEntityByID(playerEntityID), gamestateUpdateMessage, cfHistory, world)
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage

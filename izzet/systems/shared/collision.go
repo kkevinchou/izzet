@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -78,6 +79,28 @@ func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observ
 
 	if len(entityPairs) > 0 {
 		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world, observer)
+	}
+
+	// reset contacts - TODO probably want to do this later in a separate system
+	for _, entity := range worldEntities {
+		if entity.Static || entity.Collider == nil {
+			continue
+		}
+
+		if entity.Physics != nil {
+			entity.Physics.Grounded = false
+		}
+
+		if entity.Collider.Contacts != nil && entity.Physics != nil {
+			for _, contact := range entity.Collider.Contacts {
+				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
+					entity.Physics.Grounded = true
+					entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
+				}
+			}
+		}
+
+		entity.Collider.Contacts = nil
 	}
 }
 

@@ -22,15 +22,22 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 	if err != nil {
 		return err
 	}
-	cfHistory.Reset()
 
 	if gamestateUpdateMessage.LastInputCommandFrame != commandFrames[0].FrameNumber {
 		panic("the first frame we fetch should match the last input command frame")
 	}
 
-	entities.SetLocalPosition(entity, commandFrames[0].PostCFState.Position)
-	entities.SetLocalRotation(entity, commandFrames[0].PostCFState.Orientation)
-	entity.Physics.Velocity = commandFrames[0].PostCFState.Velocity
+	for _, transform := range gamestateUpdateMessage.Transforms {
+		// special case for the player for now
+		if transform.EntityID != entity.GetID() {
+			continue
+		}
+		entities.SetLocalPosition(entity, transform.Position)
+		entities.SetLocalRotation(entity, transform.Orientation)
+		entity.Physics.Velocity = transform.Velocity
+	}
+
+	cfHistory.Reset()
 	cfHistory.AddCommandFrame(gamestateUpdateMessage.LastInputCommandFrame, commandFrames[0].FrameInput, entity)
 
 	if len(commandFrames) == 1 {
@@ -50,15 +57,9 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 		// reset entity positions, (if they exist on the client)
 		// rerun spatial partioning over these entities
 
-		// update character controller
-		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, nil, entity)
-
-		// update physics
-
-		// resolve collision
+		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
+		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
 		shared.ResolveCollisionsSingle(world, entity, observer)
-
-		// add a new command frame
 		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, entity)
 	}
 	return nil

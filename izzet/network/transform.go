@@ -6,6 +6,7 @@ type Transform struct {
 	EntityID    int
 	Position    mgl64.Vec3
 	Orientation mgl64.Quat
+	Velocity    mgl64.Vec3
 }
 
 type GameStateUpdateMessage struct {

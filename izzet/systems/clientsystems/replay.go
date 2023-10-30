@@ -7,11 +7,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems/commandframe"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
-func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *commandframe.CommandFrameHistory, world systems.GameWorld) error {
+func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
 	// cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 
 	// entities := []*entities.Entity{}

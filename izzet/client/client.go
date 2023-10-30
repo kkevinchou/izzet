@@ -261,6 +261,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g, g.physicsObserver))
+	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))

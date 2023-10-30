@@ -32,4 +32,6 @@ type App interface {
 	IsServer() bool
 	CommandFrame() int
 	GetPlayer(playerID int) *network.Player
+	GetPlayerEntity() *entities.Entity
+	GetPlayerCamera() *entities.Entity
 }

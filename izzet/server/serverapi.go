@@ -137,3 +137,11 @@ func (g *Server) IsServer() bool {
 func (g *Server) IsClient() bool {
 	return false
 }
+
+func (g *Server) GetPlayerEntity() *entities.Entity {
+	panic("wat")
+}
+
+func (g *Server) GetPlayerCamera() *entities.Entity {
+	panic("wat")
+}

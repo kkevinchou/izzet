@@ -256,13 +256,13 @@ func (g *Client) setupPrefabs(data *izzetdata.Data) {
 
 func (g *Client) setupSystems() {
 	// input system depends on the camera system to update the camera orientation
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g))
 	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g, g.collisionObserver))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 
 	g.editorModeSystems = append(g.editorModeSystems, &systems.AnimationSystem{})

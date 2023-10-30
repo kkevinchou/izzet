@@ -44,11 +44,15 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		if entity.Static {
 			continue
 		}
-		transforms = append(transforms, network.Transform{
+		t := network.Transform{
 			EntityID:    entity.ID,
 			Position:    entities.GetLocalPosition(entity),
 			Orientation: entities.GetLocalRotation(entity),
-		})
+		}
+		if entity.Physics != nil {
+			t.Velocity = entity.Physics.Velocity
+		}
+		transforms = append(transforms, t)
 	}
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
 		Transforms: transforms,

@@ -6,7 +6,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
-	"github.com/kkevinchou/kitolib/input"
 )
 
 const (
@@ -46,21 +45,6 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 		frameInput := s.app.GetPlayerInput(camera.PlayerInput.PlayerID)
 
 		entities.SetLocalRotation(camera, frameInput.CameraOrientation)
-		shared.UpdateCharacterController(delta, world, frameInput, camera, targetEntity)
-
-		moved := false
-		if frameInput.KeyboardInput[input.KeyboardKeyW].Event == input.KeyboardEventDown {
-			moved = true
-		} else if frameInput.KeyboardInput[input.KeyboardKeyA].Event == input.KeyboardEventDown {
-			moved = true
-		} else if frameInput.KeyboardInput[input.KeyboardKeyS].Event == input.KeyboardEventDown {
-			moved = true
-		} else if frameInput.KeyboardInput[input.KeyboardKeyD].Event == input.KeyboardEventDown {
-			moved = true
-		}
-		if moved {
-			// fmt.Println(s.app.CommandFrame(), "SERVER CHARACTER MOVED", targetEntity.WorldPosition(), moveCount)
-			moveCount += 1
-		}
+		shared.UpdateCharacterController(delta, world, frameInput, targetEntity)
 	}
 }

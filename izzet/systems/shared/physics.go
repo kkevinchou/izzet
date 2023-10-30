@@ -11,6 +11,10 @@ const (
 	accelerationDueToGravity float64 = 250 // units per second
 )
 
+func PhysicsStepSingle(delta time.Duration, entity *entities.Entity) {
+	PhysicsStep(delta, []*entities.Entity{entity})
+}
+
 func PhysicsStep(delta time.Duration, worldEntities []*entities.Entity) {
 	for _, entity := range worldEntities {
 		physicsComponent := entity.Physics

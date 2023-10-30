@@ -38,7 +38,6 @@ func NewEventsSystem(app App, serializer *serialization.Serializer) *EventsSyste
 }
 
 func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
-	// players := s.app.GetPlayers()
 	for _, event := range world.GetEvents() {
 		switch e := event.(type) {
 		case events.PlayerJoinEvent:

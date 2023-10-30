@@ -11,15 +11,16 @@ import (
 
 type CollisionSystem struct {
 	app      App
-	observer PhysicsObserver
+	observer *observers.CollisionObserver
 }
 
-func NewCollisionSystem(app App) *CollisionSystem {
-	return &CollisionSystem{app: app}
+func NewCollisionSystem(app App, observer *observers.CollisionObserver) *CollisionSystem {
+	return &CollisionSystem{app: app, observer: observer}
 }
 
 func (s *CollisionSystem) Update(delta time.Duration, world GameWorld) {
-	shared.ResolveCollisions(world, world.Entities(), observers.NewPhysicsObserver())
+	s.observer.Clear()
+	shared.ResolveCollisions(world, world.Entities(), s.observer)
 
 	var worldEntities []*entities.Entity
 	if s.app.IsClient() {

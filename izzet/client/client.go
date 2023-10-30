@@ -65,7 +65,7 @@ type Client struct {
 	editorModeSystems []systems.System
 	serverModeSystems []systems.System
 	appMode           app.AppMode
-	physicsObserver   *observers.PhysicsObserver
+	collisionObserver *observers.CollisionObserver
 
 	settings *app.Settings
 
@@ -136,7 +136,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.serializer = serialization.New(g, g.world)
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
-	g.physicsObserver = observers.NewPhysicsObserver()
+	g.collisionObserver = observers.NewCollisionObserver()
 
 	g.setupSystems()
 
@@ -259,8 +259,8 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
-	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g, g.physicsObserver))
-	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g))
+	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g))
+	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g, g.collisionObserver))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))

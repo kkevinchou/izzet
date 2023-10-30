@@ -29,7 +29,7 @@ var selectedEntity *entities.Entity
 type App interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	ModelLibrary() *modellibrary.ModelLibrary
-	PhysicsObserver() *observers.PhysicsObserver
+	CollisionObserver() *observers.CollisionObserver
 	ResetNavMeshVAO()
 	Settings() *app.Settings
 	CommandFrame() int

@@ -3,9 +3,11 @@ package serversystems
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
@@ -13,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 )
 
@@ -41,8 +44,44 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, event := range world.GetEvents() {
 		switch e := event.(type) {
 		case events.PlayerJoinEvent:
-			camera := world.GetEntityByID(e.PlayerCameraID)
-			entity := world.GetEntityByID(e.PlayerEntityID)
+			player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
+
+			var radius float64 = 40
+			var length float64 = 80
+			entity := entities.InstantiateEntity("player")
+			entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
+			entity.Collider = &entities.ColliderComponent{
+				CapsuleCollider: &collider.Capsule{
+					Radius: radius,
+					Top:    mgl64.Vec3{0, radius + length, 0},
+					Bottom: mgl64.Vec3{0, radius, 0},
+				},
+				ColliderGroup: entities.ColliderGroupFlagPlayer,
+				CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
+			}
+			entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
+
+			capsule := entity.Collider.CapsuleCollider
+			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
+
+			handle := modellibrary.NewGlobalHandle("alpha")
+			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4()}
+			entity.Animation = entities.NewAnimationComponent("alpha", s.app.ModelLibrary())
+			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
+
+			camera := createCamera(e.PlayerID, entity.GetID())
+			world.AddEntity(camera)
+			world.AddEntity(entity)
+
+			message, err := createAckPlayerJoinMessage(e.PlayerID, camera, entity)
+			if err != nil {
+				panic(err)
+			}
+			messageBytes, err := json.Marshal(message)
+			if err != nil {
+				panic(err)
+			}
+			player.Connection.Write(messageBytes)
 
 			cameraMessage, err := createEntityMessage(e.PlayerID, camera)
 			if err != nil {
@@ -57,7 +96,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 				player.Client.Send(cameraMessage, s.app.CommandFrame())
 				player.Client.Send(entityMessage, s.app.CommandFrame())
 			}
-			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, e.PlayerCameraID, e.PlayerEntityID)
+			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
 		case events.PlayerDisconnectEvent:
 			fmt.Printf("player %d disconnected\n", e.PlayerID)
 			s.app.DeregisterPlayer(e.PlayerID)
@@ -90,4 +129,36 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 	createEntityMessage.EntityBytes = entityBytes
 
 	return createEntityMessage, nil
+}
+
+func createCamera(playerID int, targetEntityID int) *entities.Entity {
+	entity := entities.InstantiateEntity("camera")
+	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, 50, 0}, Target: &targetEntityID}
+	entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
+	entity.Billboard = true
+	entity.PlayerInput = &entities.PlayerInputComponent{PlayerID: playerID}
+	return entity
+}
+
+func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
+	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID}
+
+	entityBytes, err := json.Marshal(entity)
+	if err != nil {
+		panic(err)
+	}
+	ackPlayerJoinMessage.EntityBytes = entityBytes
+
+	cameraBytes, err := json.Marshal(camera)
+	if err != nil {
+		panic(err)
+	}
+	ackPlayerJoinMessage.CameraBytes = cameraBytes
+
+	bytes, err := json.Marshal(ackPlayerJoinMessage)
+	if err != nil {
+		panic(err)
+	}
+
+	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerJoin, Timestamp: time.Now(), Body: bytes}, nil
 }

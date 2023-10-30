@@ -9,10 +9,8 @@ import (
 type Event interface{}
 
 type PlayerJoinEvent struct {
-	PlayerID       int
-	Connection     net.Conn
-	PlayerEntityID int
-	PlayerCameraID int
+	PlayerID   int
+	Connection net.Conn
 }
 
 type EntitySpawnEvent struct {

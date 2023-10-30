@@ -1,8 +1,9 @@
-package izzet
+package client
 
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -15,12 +16,14 @@ import (
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -29,23 +32,19 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-type System interface {
-	Update(time.Duration, systems.GameWorld)
-}
-
-type Izzet struct {
+type Client struct {
 	gameOver      bool
 	window        *sdl.Window
 	platform      *input.SDLPlatform
 	width, height int
+	client        network.IzzetClient
 
 	assetManager *assets.AssetManager
 	modelLibrary *modellibrary.ModelLibrary
 
 	camera *camera.Camera
 
-	entities map[int]*entities.Entity
-	prefabs  map[int]*prefabs.Prefab
+	prefabs map[int]*prefabs.Prefab
 
 	renderer    *render.Renderer
 	serializer  *serialization.Serializer
@@ -62,21 +61,33 @@ type Izzet struct {
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
 
-	playModeSystems   []System
-	editorModeSystems []System
-	serverModeSystems []System
+	playModeSystems   []systems.System
+	editorModeSystems []systems.System
+	serverModeSystems []systems.System
 	appMode           app.AppMode
-	physicsObserver   *observers.PhysicsObserver
+	collisionObserver *observers.CollisionObserver
 
 	settings *app.Settings
-	isServer bool
+
+	playerID        int
+	playerEntity    *entities.Entity
+	playerCamera    *entities.Entity
+	connection      net.Conn
+	networkMessages chan network.MessageTransport
+	commandFrame    int
+	connected       bool
+
+	commandFrameHistory *clientsystems.CommandFrameHistory
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
+func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config) *Client {
 	initSeed()
-	g := &Izzet{isServer: false}
+	g := &Client{
+		commandFrameHistory: clientsystems.NewCommandFrameHistory(),
+	}
+
 	g.initSettings()
-	window, err := initializeOpenGL()
+	window, err := initializeOpenGL(config)
 	if err != nil {
 		panic(err)
 	}
@@ -117,7 +128,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 
 	fmt.Println(time.Since(start), "spatial partition done")
 
-	g.entities = map[int]*entities.Entity{}
 	g.prefabs = map[int]*prefabs.Prefab{}
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.setupPrefabs(data)
@@ -126,19 +136,19 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Izzet {
 	g.serializer = serialization.New(g, g.world)
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
-	g.physicsObserver = observers.NewPhysicsObserver()
+	g.collisionObserver = observers.NewCollisionObserver()
 
 	g.setupSystems()
 
 	// g.setupEntities(data)
-	g.LoadWorld("cubes")
+	g.LoadWorld("multiplayer_test")
 
 	fmt.Println(time.Since(start), "to start up systems")
 
 	return g
 }
 
-func (g *Izzet) Start() {
+func (g *Client) Start() {
 	var accumulator float64
 	var renderAccumulator float64
 	// var oneSecondAccumulator float64
@@ -220,7 +230,7 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
+func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
 	// docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha"}
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
@@ -236,7 +246,7 @@ func (g *Izzet) setupAssets(assetManager *assets.AssetManager, modelLibrary *mod
 	}
 }
 
-func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
+func (g *Client) setupPrefabs(data *izzetdata.Data) {
 	for name, _ := range data.EntityAssets {
 		document := g.assetManager.GetDocument(name)
 		pf := prefabs.CreatePrefab(document, data)
@@ -244,17 +254,21 @@ func (g *Izzet) setupPrefabs(data *izzetdata.Data) {
 	}
 }
 
-func (g *Izzet) setupSystems() {
-	g.playModeSystems = append(g.playModeSystems, &systems.CharacterControllerSystem{})
-	g.playModeSystems = append(g.playModeSystems, &systems.CameraSystem{})
-	g.playModeSystems = append(g.playModeSystems, &systems.MovementSystem{})
-	g.playModeSystems = append(g.playModeSystems, &systems.PhysicsSystem{Observer: g.physicsObserver})
+func (g *Client) setupSystems() {
+	// input system depends on the camera system to update the camera orientation
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
+	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
+	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g))
+	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g, g.collisionObserver))
 	g.playModeSystems = append(g.playModeSystems, &systems.AnimationSystem{})
+	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 
 	g.editorModeSystems = append(g.editorModeSystems, &systems.AnimationSystem{})
 }
 
-func (g *Izzet) setupEntities(data *izzetdata.Data) {
+func (g *Client) setupEntities(data *izzetdata.Data) {
 	pointLight := entities.CreatePointLight()
 	pointLight.Movement = &entities.MovementComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
@@ -281,7 +295,7 @@ func (g *Izzet) setupEntities(data *izzetdata.Data) {
 	}
 }
 
-func initializeOpenGL() (*sdl.Window, error) {
+func initializeOpenGL(config settings.Config) (*sdl.Window, error) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
 	}
@@ -303,19 +317,19 @@ func initializeOpenGL() (*sdl.Window, error) {
 	sdl.SetRelativeMouseMode(false)
 
 	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
-	if settings.Fullscreen {
+	if config.Fullscreen {
 		dm, err := sdl.GetCurrentDisplayMode(0)
 		if err != nil {
 			panic(err)
 		}
-		settings.Width = int(dm.W)
-		settings.Height = int(dm.H)
+		config.Width = int(dm.W)
+		config.Height = int(dm.H)
 		windowFlags |= sdl.WINDOW_MAXIMIZED
 		// windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
 		// windowFlags |= sdl.WINDOW_FULLSCREEN
 	}
 
-	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(settings.Width), int32(settings.Height), uint32(windowFlags))
+	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(config.Width), int32(config.Height), uint32(windowFlags))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create window %s", err)
 	}
@@ -334,7 +348,7 @@ func initializeOpenGL() (*sdl.Window, error) {
 	return window, nil
 }
 
-func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput, width, height int) mgl64.Vec3 {
+func (g *Client) mousePosToNearPlane(mouseInput input.MouseInput, width, height int) mgl64.Vec3 {
 	x := mouseInput.Position.X()
 	y := mouseInput.Position.Y()
 
@@ -346,7 +360,7 @@ func (g *Izzet) mousePosToNearPlane(mouseInput input.MouseInput, width, height i
 	return nearPlanePos.Vec3()
 }
 
-func (g *Izzet) initSettings() {
+func (g *Client) initSettings() {
 	g.settings = &app.Settings{
 		DirectionalLightDir:    [3]float32{-1, -1, -1},
 		Roughness:              0.55,

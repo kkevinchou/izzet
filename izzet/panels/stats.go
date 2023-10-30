@@ -8,6 +8,7 @@ import (
 
 func stats(app App, renderContext RenderContext) {
 	settings := app.Settings()
+	mr := app.MetricsRegistry()
 
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
@@ -18,6 +19,9 @@ func stats(app App, renderContext RenderContext) {
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", settings.RenderTime)) }, true)
 		setupRow("Command Frame Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", settings.CommandFrameTime)) }, true)
 		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", settings.FPS)) }, true)
+		setupRow("Command Frame", func() { imgui.LabelText("", fmt.Sprintf("%d", app.CommandFrame())) }, true)
+		setupRow("Prediction Hit", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.GetOneSecondSum("prediction_hit")))) }, true)
+		setupRow("Prediction Miss", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.GetOneSecondSum("prediction_miss")))) }, true)
 
 		// Rendering
 		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &settings.ShadowFarFactor, 0, 10) }, true)

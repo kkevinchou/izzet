@@ -1,4 +1,4 @@
-package izzet
+package client
 
 import (
 	"encoding/json"
@@ -26,7 +26,8 @@ var (
 
 // Systems Context
 
-func (g *Izzet) runCommandFrame(delta time.Duration) {
+func (g *Client) runCommandFrame(delta time.Duration) {
+	g.commandFrame += 1
 	frameInput := g.world.GetFrameInput()
 
 	if frameInput.WindowEvent.Resized {
@@ -62,19 +63,7 @@ func (g *Izzet) runCommandFrame(delta time.Duration) {
 	g.Settings().CameraOrientation = g.camera.Orientation
 }
 
-func (g *Izzet) runCommandFrameServer(delta time.Duration) {
-	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
-	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
-	if g.Settings().EnableSpatialPartition {
-		g.handleSpatialPartition()
-	}
-
-	for _, s := range g.serverModeSystems {
-		s.Update(delta, g.world)
-	}
-}
-
-func (g *Izzet) handleSpatialPartition() {
+func (g *Client) handleSpatialPartition() {
 	var spatialEntities []spatialpartition.Entity
 	for _, entity := range g.world.Entities() {
 		if !entity.HasBoundingBox() {
@@ -88,7 +77,7 @@ func (g *Izzet) handleSpatialPartition() {
 var copiedEntity []byte
 var copiedEntityHasTriMesh bool
 
-func (g *Izzet) handleInputCommands(frameInput input.Input) {
+func (g *Client) handleInputCommands(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 	// shutdown
 	keyboardInput := frameInput.KeyboardInput
@@ -118,6 +107,8 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 
 	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
 		g.StartLiveWorld()
+	} else if _, ok := keyboardInput[input.KeyboardKeyF6]; ok {
+		g.Connect()
 	}
 
 	// undo/undo
@@ -212,7 +203,7 @@ func (g *Izzet) handleInputCommands(frameInput input.Input) {
 	}
 }
 
-func (g *Izzet) editorCameraMovement(frameInput input.Input, delta time.Duration) {
+func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duration) {
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 
@@ -311,7 +302,7 @@ func (g *Izzet) editorCameraMovement(frameInput input.Input, delta time.Duration
 	g.camera.LastFrameMovementVector = movementVector
 }
 
-func (g *Izzet) handleGizmos(frameInput input.Input) {
+func (g *Client) handleGizmos(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 
 	// set gizmo mode
@@ -460,7 +451,7 @@ func (g *Izzet) handleGizmos(frameInput input.Input) {
 
 }
 
-func (g *Izzet) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3) *mgl64.Vec3 {
+func (g *Client) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3) *mgl64.Vec3 {
 	mouseInput := frameInput.MouseInput
 
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)

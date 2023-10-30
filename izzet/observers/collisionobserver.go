@@ -8,7 +8,7 @@ import (
 // OnSpatialQuery(entityID int, count int)
 // OnCollisionCheck(entityID int)
 // OnCollisionResolution(entityID int)
-type PhysicsObserver struct {
+type CollisionObserver struct {
 	SpatialQuery        map[int]int
 	CollisionCheck      map[int]int
 	CollisionResolution map[int]int
@@ -20,8 +20,8 @@ type PhysicsObserver struct {
 	BoundingBoxCheck map[int]int
 }
 
-func NewPhysicsObserver() *PhysicsObserver {
-	return &PhysicsObserver{
+func NewCollisionObserver() *CollisionObserver {
+	return &CollisionObserver{
 		SpatialQuery:           map[int]int{},
 		CollisionCheck:         map[int]int{},
 		CollisionResolution:    map[int]int{},
@@ -31,13 +31,13 @@ func NewPhysicsObserver() *PhysicsObserver {
 		BoundingBoxCheck:       map[int]int{},
 	}
 }
-func (o *PhysicsObserver) OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity) {
+func (o *CollisionObserver) OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity) {
 	o.BoundingBoxCheck[e1.GetID()] += 1
 }
-func (o *PhysicsObserver) OnSpatialQuery(entityID int, count int) {
+func (o *CollisionObserver) OnSpatialQuery(entityID int, count int) {
 	o.SpatialQuery[entityID] += count
 }
-func (o *PhysicsObserver) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
+func (o *CollisionObserver) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
 	o.CollisionCheck[e1.GetID()] += 1
 	if app.IsCapsuleCapsuleCollision(e1, e2) {
 		o.CollisionCheckCapsule[e1.GetID()] += 1
@@ -46,10 +46,10 @@ func (o *PhysicsObserver) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Ent
 		o.CollisionCheckTriangle[e1.GetID()] += len(e2.Collider.TriMeshCollider.Triangles)
 	}
 }
-func (o *PhysicsObserver) OnCollisionResolution(entityID int) {
+func (o *CollisionObserver) OnCollisionResolution(entityID int) {
 	o.CollisionResolution[entityID] += 1
 }
-func (o *PhysicsObserver) Clear() {
+func (o *CollisionObserver) Clear() {
 	for k := range o.SpatialQuery {
 		o.SpatialQuery[k] = 0
 	}

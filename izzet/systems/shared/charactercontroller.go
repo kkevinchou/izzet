@@ -1,4 +1,4 @@
-package systems
+package shared
 
 import (
 	"time"
@@ -13,28 +13,9 @@ const (
 	jumpVelocity float64 = 200
 )
 
-type CharacterControllerSystem struct {
-}
-
-func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld) {
-	frameInput := world.GetFrameInput()
+func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, entity *entities.Entity) {
 	keyboardInput := frameInput.KeyboardInput
-
-	var camera *entities.Entity
-	for _, entity := range world.Entities() {
-		if entity.CameraComponent != nil {
-			camera = entity
-			break
-		}
-	}
-	if camera == nil || camera.CameraComponent.Target == nil {
-		return
-	}
-
-	entity := world.GetEntityByID(*camera.CameraComponent.Target)
-	if entity == nil || entity.CharacterControllerComponent == nil {
-		return
-	}
+	cameraOrientation := frameInput.CameraOrientation
 
 	c := entity.CharacterControllerComponent
 
@@ -46,11 +27,11 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world GameWorld)
 			entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl64.Vec3{0, jumpVelocity, 0})
 		}
 		if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
-			dir := entities.GetLocalRotation(camera).Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
+			dir := cameraOrientation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
 			entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(800))
 		}
 	}
-	movementDir := calculateMovementDir(entities.GetLocalRotation(camera), c.ControlVector)
+	movementDir := calculateMovementDir(cameraOrientation, c.ControlVector)
 
 	emptyVec := mgl64.Vec3{}
 	if movementDir != emptyVec {

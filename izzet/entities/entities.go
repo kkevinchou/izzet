@@ -16,21 +16,22 @@ import (
 var id int
 
 type Entity struct {
-	ID              int
-	Name            string
-	Billboard       bool
-	Physics         *PhysicsComponent
-	Collider        *ColliderComponent
-	Movement        *MovementComponent
-	Particles       *ParticleGenerator
-	IsSocket        bool
-	LightInfo       *LightInfo
-	ImageInfo       *ImageInfo
-	ShapeData       []*ShapeData
-	Material        *MaterialComponent
-	Animation       *AnimationComponent
-	CameraComponent *CameraComponent
-	Static          bool
+	ID                  int
+	Name                string
+	Billboard           bool
+	Physics             *PhysicsComponent
+	Collider            *ColliderComponent
+	Movement            *MovementComponent
+	Particles           *ParticleGenerator
+	IsSocket            bool
+	LightInfo           *LightInfo
+	ImageInfo           *ImageInfo
+	ShapeData           []*ShapeData
+	Material            *MaterialComponent
+	Animation           *AnimationComponent
+	CameraComponent     *CameraComponent
+	Static              bool
+	ClientSidePredicted bool
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
@@ -49,6 +50,8 @@ type Entity struct {
 	// relationships
 	Parent   *Entity         `json:"-"`
 	Children map[int]*Entity `json:"-"`
+
+	PlayerInput *PlayerInputComponent
 }
 
 func (e *Entity) GetID() int {

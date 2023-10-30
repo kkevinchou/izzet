@@ -28,6 +28,7 @@ import (
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -48,6 +49,7 @@ type App interface {
 	Prefabs() []*prefabs.Prefab
 	NavMesh() *navmesh.NavigationMesh
 	ResetNavMeshVAO()
+	CommandFrame() int
 
 	StartLiveWorld()
 	StopLiveWorld()
@@ -67,8 +69,11 @@ type App interface {
 	NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3
 	WorldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool)
 
-	PhysicsObserver() *observers.PhysicsObserver
+	CollisionObserver() *observers.CollisionObserver
 	Settings() *app.Settings
+	Connect()
+	IsConnected() bool
+	MetricsRegistry() *metrics.MetricsRegistry
 }
 
 const mipsCount int = 6
@@ -142,10 +147,9 @@ func New(app App, world GameWorld, shaderDirectory string, width, height int) *R
 	// so, I cap it at a fraction of the max
 	var maxTextureSize int32
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
-	settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
-
+	// settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 	// shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
-	dimension := 8640
+	dimension := 14400
 	shadowMap, err := NewShadowMap(dimension, dimension, float64(r.app.Settings().Far))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))

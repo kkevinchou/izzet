@@ -12,12 +12,6 @@ import (
 )
 
 func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
-	// cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
-
-	// entities := []*entities.Entity{}
-
-	// fetch all command frame inputs
-
 	commandFrames, err := cfHistory.GetAllFramesStartingFrom(gamestateUpdateMessage.LastInputCommandFrame)
 	if err != nil {
 		return err
@@ -44,18 +38,13 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 		return nil
 	}
 
-	// start loop
-	//		load entity transforms of non-predicted entities
-	//		set player input
-	// 		simulate frame and add the new cf to the history
-
 	// TODO: make this a dummy physics observer
 	observer := observers.NewCollisionObserver()
 	for i := 1; i < len(commandFrames); i++ {
 		commandFrame := commandFrames[i]
 
 		// reset entity positions, (if they exist on the client)
-		// rerun spatial partioning over these entities
+		// rerun spatial partioning over these entities ?
 
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
 		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)

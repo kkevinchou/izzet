@@ -144,7 +144,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.setupSystems()
 
 	// g.setupEntities(data)
-	// g.LoadWorld("multiplayer_test")
+	g.LoadWorld("multiplayer_test")
 
 	fmt.Println(time.Since(start), "to start up systems")
 

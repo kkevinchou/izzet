@@ -38,18 +38,7 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 }
 
 func (s *InputSystem) computePlayerCameraOrientation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {
-	var camera *entities.Entity
-	for _, entity := range world.Entities() {
-		if entity.CameraComponent != nil && entity.PlayerInput.PlayerID == s.app.GetPlayerID() {
-			camera = entity
-			break
-		}
-	}
-
-	if camera == nil {
-		return mgl64.QuatIdent()
-	}
-
+	camera := s.app.GetPlayerCamera()
 	newOrientation := computeCameraOrientation(frameInput, camera)
 	entities.SetLocalRotation(camera, newOrientation)
 	return newOrientation

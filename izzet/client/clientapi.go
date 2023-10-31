@@ -56,7 +56,7 @@ func (g *Client) ModelLibrary() *modellibrary.ModelLibrary {
 	return g.modelLibrary
 }
 
-func (g *Client) Camera() *camera.Camera {
+func (g *Client) GetEditorCamera() *camera.Camera {
 	return g.camera
 }
 
@@ -231,14 +231,14 @@ func (g *Client) Connect() {
 	g.connection = conn
 	g.networkMessages = make(chan network.MessageTransport, 100)
 
-	// initialize the player's camera and entity
-	var entity entities.Entity
-	err = json.Unmarshal(message.EntityBytes, &entity)
+	// initialize the player's camera and playerEntity
+	var playerEntity entities.Entity
+	err = json.Unmarshal(message.EntityBytes, &playerEntity)
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&entity, g.ModelLibrary(), false)
-	g.world.AddEntity(&entity)
+	serialization.InitDeserializedEntity(&playerEntity, g.ModelLibrary(), false)
+	g.world.AddEntity(&playerEntity)
 
 	var camera entities.Entity
 	err = json.Unmarshal(message.CameraBytes, &camera)
@@ -249,7 +249,21 @@ func (g *Client) Connect() {
 	g.world.AddEntity(&camera)
 
 	g.SetPlayerCamera(&camera)
-	g.SetPlayerEntity(&entity)
+	g.SetPlayerEntity(&playerEntity)
+
+	fmt.Println("CLIENT player id", playerEntity.GetID(), "camera id", camera.GetID())
+
+	world, err := g.serializer.Read(bytes.NewReader(message.Snapshot))
+	if err != nil {
+		panic(err)
+	}
+
+	for _, entity := range world.Entities() {
+		if entity.GetID() == camera.GetID() || entity.GetID() == playerEntity.GetID() {
+			continue
+		}
+		g.world.AddEntity(entity)
+	}
 
 	// TODO a done channel to close out the goroutine
 	go func() {

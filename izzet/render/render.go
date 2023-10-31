@@ -45,7 +45,7 @@ type GameWorld interface {
 type App interface {
 	AssetManager() *assets.AssetManager
 	ModelLibrary() *modellibrary.ModelLibrary
-	Camera() *camera.Camera
+	GetEditorCamera() *camera.Camera
 	Prefabs() []*prefabs.Prefab
 	NavMesh() *navmesh.NavigationMesh
 	ResetNavMeshVAO()
@@ -74,6 +74,7 @@ type App interface {
 	Connect()
 	IsConnected() bool
 	MetricsRegistry() *metrics.MetricsRegistry
+	GetPlayerCamera() *entities.Entity
 }
 
 const mipsCount int = 6
@@ -252,16 +253,12 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	var orientation mgl64.Quat = mgl64.QuatIdent()
 
 	if r.app.AppMode() == app.AppModeEditor {
-		position = r.app.Camera().Position
-		orientation = r.app.Camera().Orientation
+		position = r.app.GetEditorCamera().Position
+		orientation = r.app.GetEditorCamera().Orientation
 	} else {
-		for _, entity := range r.world.Entities() {
-			if entity.CameraComponent != nil {
-				position = entity.WorldPosition()
-				orientation = entity.WorldRotation()
-				break
-			}
-		}
+		camera := r.app.GetPlayerCamera()
+		position = camera.WorldPosition()
+		orientation = camera.WorldRotation()
 	}
 
 	viewerViewMatrix := orientation.Mat4()
@@ -750,7 +747,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 					modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
 
 					shader.SetUniformUInt("entityID", uint32(entity.ID))
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.Camera().Orientation.Mat4())))
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.GetEditorCamera().Orientation.Mat4())))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 

@@ -29,6 +29,7 @@ type App interface {
 	GetPlayerInput(playerID int) input.Input
 	SetPlayerInput(playerID int, input input.Input)
 	DeregisterPlayer(playerID int)
+	SerializeWorld() []byte
 }
 
 type EventsSystem struct {
@@ -77,7 +78,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			world.AddEntity(camera)
 			world.AddEntity(entity)
 
-			message, err := createAckPlayerJoinMessage(e.PlayerID, camera, entity)
+			worldBytes := s.app.SerializeWorld()
+			message, err := createAckPlayerJoinMessage(e.PlayerID, camera, entity, worldBytes)
 			if err != nil {
 				panic(err)
 			}
@@ -135,7 +137,7 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	return entity
 }
 
-func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity) (network.MessageTransport, error) {
+func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity, worldBytes []byte) (network.MessageTransport, error) {
 	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID}
 
 	entityBytes, err := json.Marshal(entity)
@@ -149,6 +151,8 @@ func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *e
 		panic(err)
 	}
 	ackPlayerJoinMessage.CameraBytes = cameraBytes
+
+	ackPlayerJoinMessage.Snapshot = worldBytes
 
 	bytes, err := json.Marshal(ackPlayerJoinMessage)
 	if err != nil {

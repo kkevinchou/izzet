@@ -41,7 +41,11 @@ func NewEventsSystem(app App, serializer *serialization.Serializer) *EventsSyste
 }
 
 func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
-	for _, event := range world.GetEvents() {
+	worldEvents := world.GetEvents()
+	var nextEventIndex = 0
+
+	for nextEventIndex < len(worldEvents) {
+		event := worldEvents[nextEventIndex]
 		switch e := event.(type) {
 		case events.PlayerJoinEvent:
 			player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
@@ -83,19 +87,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			}
 			player.Connection.Write(messageBytes)
 
-			cameraMessage, err := createEntityMessage(e.PlayerID, camera)
-			if err != nil {
-				panic(err)
-			}
-			entityMessage, err := createEntityMessage(e.PlayerID, entity)
-			if err != nil {
-				panic(err)
-			}
-
-			for _, player := range s.app.GetPlayers() {
-				player.Client.Send(cameraMessage, s.app.CommandFrame())
-				player.Client.Send(entityMessage, s.app.CommandFrame())
-			}
+			world.QueueEvent(events.EntitySpawnEvent{Entity: camera})
+			world.QueueEvent(events.EntitySpawnEvent{Entity: entity})
 			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
 		case events.PlayerDisconnectEvent:
 			fmt.Printf("player %d disconnected\n", e.PlayerID)
@@ -110,10 +103,12 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 				player.Client.Send(entityMessage, s.app.CommandFrame())
 			}
 			fmt.Printf("spawned entity with ID %d\n", e.Entity.GetID())
-
 		default:
 		}
+		nextEventIndex += 1
+		worldEvents = world.GetEvents()
 	}
+
 	world.ClearEventQueue()
 }
 

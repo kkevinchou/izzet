@@ -71,10 +71,15 @@ type App interface {
 
 	CollisionObserver() *observers.CollisionObserver
 	Settings() *app.Settings
-	Connect()
+	Connect() error
 	IsConnected() bool
 	MetricsRegistry() *metrics.MetricsRegistry
 	GetPlayerCamera() *entities.Entity
+
+	StartAsyncServer()
+	DisconnectAsyncServer()
+	AsyncServerStarted() bool
+	DisconnectClient()
 }
 
 const mipsCount int = 6
@@ -327,6 +332,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	shadowEntities := r.fetchShadowCastingEntities(position, orientation, renderContext)
 
 	r.drawSkybox(renderContext)
+	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)

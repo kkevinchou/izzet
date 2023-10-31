@@ -75,15 +75,18 @@ type Client struct {
 	connection      net.Conn
 	networkMessages chan network.MessageTransport
 	commandFrame    int
-	connected       bool
+	clientConnected bool
 
 	commandFrameHistory *clientsystems.CommandFrameHistory
+	asyncServerStarted  bool
+	asyncServerDone     chan bool
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config) *Client {
 	initSeed()
 	g := &Client{
 		commandFrameHistory: clientsystems.NewCommandFrameHistory(),
+		asyncServerDone:     make(chan bool),
 	}
 
 	g.initSettings()
@@ -141,7 +144,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.setupSystems()
 
 	// g.setupEntities(data)
-	g.LoadWorld("multiplayer_test")
+	// g.LoadWorld("multiplayer_test")
 
 	fmt.Println(time.Since(start), "to start up systems")
 

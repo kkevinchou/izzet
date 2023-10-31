@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
@@ -85,7 +86,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		if g.AppMode() == app.AppModeEditor {
 			g.Shutdown()
 		} else if g.AppMode() == app.AppModePlay {
-			g.StopLiveWorld()
+			g.DisconnectClient()
 		}
 	}
 
@@ -106,9 +107,10 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	}
 
 	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
-		g.StartLiveWorld()
-	} else if _, ok := keyboardInput[input.KeyboardKeyF6]; ok {
-		g.Connect()
+		err := g.Connect()
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	// undo/undo

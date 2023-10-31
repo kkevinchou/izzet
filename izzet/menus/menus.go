@@ -31,8 +31,13 @@ type App interface {
 	StopLiveWorld()
 	AppMode() app.AppMode
 	Settings() *app.Settings
-	Connect()
+	Connect() error
 	IsConnected() bool
+
+	StartAsyncServer()
+	DisconnectAsyncServer()
+	AsyncServerStarted() bool
+	DisconnectClient()
 }
 
 var worldName string = "scene"
@@ -129,8 +134,24 @@ func SetupMenuBar(app App) imgui.Vec2 {
 
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("Multiplayer") {
-		if imgui.MenuItem("Connect") {
-			app.Connect()
+		if imgui.MenuItemV("Connect Client", "", app.IsConnected(), true) {
+			err := app.Connect()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
+		if imgui.MenuItem("Disconnect Client") {
+			app.DisconnectClient()
+		}
+
+		// if imgui.MenuItem("Start Async Server") {
+		if imgui.MenuItemV("Start Async Server", "", app.AsyncServerStarted(), true) {
+			app.StartAsyncServer()
+		}
+
+		if imgui.MenuItem("Stop Async Server") {
+			app.DisconnectAsyncServer()
 		}
 
 		imgui.EndMenu()

@@ -21,6 +21,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
@@ -201,30 +202,30 @@ func (g *Client) Settings() *app.Settings {
 	return g.settings
 }
 
-func (g *Client) Connect() {
+func (g *Client) Connect() error {
 	if g.IsConnected() {
-		return
+		return nil
 	}
-
-	g.StartLiveWorld()
 
 	address := fmt.Sprintf("localhost:7878")
 	fmt.Println("connecting to " + address)
 
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	g.StartLiveWorld()
 
 	g.client = network.NewClient(conn)
 	messageTransport, err := g.client.Recv()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	message, err := network.ExtractMessage[network.AckPlayerJoinMessage](messageTransport)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	g.playerID = message.PlayerID
@@ -255,7 +256,7 @@ func (g *Client) Connect() {
 
 	world, err := g.serializer.Read(bytes.NewReader(message.Snapshot))
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for _, entity := range world.Entities() {
@@ -284,8 +285,9 @@ func (g *Client) Connect() {
 			g.networkMessages <- message
 		}
 	}()
-	g.connected = true
+	g.clientConnected = true
 	fmt.Println("finished connect")
+	return nil
 }
 
 func (g *Client) NetworkMessagesChannel() chan network.MessageTransport {
@@ -301,7 +303,7 @@ func (g *Client) GetPlayerID() int {
 
 }
 func (g *Client) IsConnected() bool {
-	return g.connected
+	return g.clientConnected
 }
 func (g *Client) GetPlayerConnection() net.Conn {
 	return g.connection
@@ -337,4 +339,33 @@ func (g *Client) IsClient() bool {
 
 func (g *Client) GetPlayer(playerID int) *network.Player {
 	panic("wat")
+}
+
+func (g *Client) StartAsyncServer() {
+	started := make(chan bool)
+
+	go func() {
+		serverApp := server.New("_assets", "shaders", "izzet_data.json")
+		serverApp.Start(started, g.asyncServerDone)
+		g.asyncServerStarted = false
+		fmt.Println("Server finished teardown")
+	}()
+	<-started
+	g.asyncServerStarted = true
+}
+
+func (g *Client) DisconnectAsyncServer() {
+	g.DisconnectClient()
+	g.asyncServerDone <- true
+}
+
+func (g *Client) AsyncServerStarted() bool {
+	return g.asyncServerStarted
+}
+
+func (g *Client) DisconnectClient() {
+	g.connection.Close()
+	g.clientConnected = false
+	g.commandFrameHistory.Reset()
+	g.StopLiveWorld()
 }

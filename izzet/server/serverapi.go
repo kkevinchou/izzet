@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -144,4 +145,10 @@ func (g *Server) GetPlayerEntity() *entities.Entity {
 
 func (g *Server) GetPlayerCamera() *entities.Entity {
 	panic("wat")
+}
+
+func (g *Server) SerializeWorld() []byte {
+	var buffer bytes.Buffer
+	g.serializer.Write(g.world, &buffer)
+	return buffer.Bytes()
 }

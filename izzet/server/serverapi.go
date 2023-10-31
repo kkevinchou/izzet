@@ -82,14 +82,9 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 			var message network.MessageTransport
 			err := decoder.Decode(&message)
 			if err != nil {
-				// reader := decoder.Buffered()
-				// bytes, err2 := io.ReadAll(reader)
-				// if err2 != nil {
-				// 	fmt.Println(fmt.Errorf("error reading remaining bytes %w", err2))
-				// }
-				// fmt.Println(fmt.Errorf("error decoding message from player %w remaining buffered data: %s", err, string(bytes)))
 				fmt.Println(fmt.Errorf("error decoding message from player %d - %w", id, err))
-				if strings.Contains(err.Error(), "An existing connection was forcibly closed") {
+				if strings.Contains(err.Error(), "An existing connection was forcibly closed") ||
+					strings.Contains(err.Error(), "An established connection was aborted by the software in your host machine") {
 					fmt.Println("connection closed by remote player", id)
 					conn.Close()
 					discCh <- true

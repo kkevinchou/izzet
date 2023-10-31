@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/app"
@@ -104,8 +105,12 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 	return g
 }
 
-func (g *Server) Start(started chan bool) {
-	g.listen()
+func (g *Server) Start(started chan bool, done chan bool) {
+	listener, err := g.listen()
+	if err != nil {
+		panic(err)
+	}
+
 	started <- true
 	var accumulator float64
 
@@ -134,6 +139,14 @@ func (g *Server) Start(started chan bool) {
 			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
 				accumulator = 0
 			}
+		}
+
+		select {
+		case <-done:
+			listener.Close()
+			return
+		default:
+			break
 		}
 	}
 }
@@ -195,22 +208,24 @@ type NewConnection struct {
 	Connection net.Conn
 }
 
-func (s *Server) listen() {
+func (s *Server) listen() (net.Listener, error) {
 	host := "0.0.0.0"
 	port := "7878"
 	listener, err := net.Listen("tcp", host+":"+port)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	fmt.Println("listening on " + host + ":" + port)
 
 	go func() {
-		defer listener.Close()
 		playerIDGenerator := 100000
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					return
+				}
 				fmt.Println("error accepting a connection on the listener:", err.Error())
 				continue
 			}
@@ -221,4 +236,6 @@ func (s *Server) listen() {
 			s.newConnections <- NewConnection{PlayerID: id, Connection: conn}
 		}
 	}()
+
+	return listener, nil
 }

@@ -12,7 +12,6 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/kkevinchou/izzet/izzet/client"
-	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/log"
@@ -78,15 +77,12 @@ func main() {
 	}
 
 	if isServer {
-		started := make(chan bool)
-		go func() {
-			serverApp := server.New("_assets", "shaders", "izzet_data.json")
-			serverApp.Start(started)
-		}()
-		<-started
-
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config)
-		clientApp.Connect()
+		clientApp.StartAsyncServer()
+		err := clientApp.Connect()
+		if err != nil {
+			fmt.Println(err)
+		}
 		clientApp.Start()
 	} else {
 		config.Width = 854

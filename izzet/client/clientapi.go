@@ -345,11 +345,23 @@ func (g *Client) StartAsyncServer() {
 	started := make(chan bool)
 
 	go func() {
-		serverApp := server.New("_assets", "shaders", "izzet_data.json")
+		var worldBytes bytes.Buffer
+		err := g.serializer.Write(g.world, &worldBytes)
+		if err != nil {
+			panic(err)
+		}
+
+		world, err := g.serializer.Read(&worldBytes)
+		if err != nil {
+			panic(err)
+		}
+
+		serverApp := server.NewWithWorld("_assets", world)
 		serverApp.Start(started, g.asyncServerDone)
 		g.asyncServerStarted = false
 		fmt.Println("Server finished teardown")
 	}()
+
 	<-started
 	g.asyncServerStarted = true
 }
@@ -368,4 +380,8 @@ func (g *Client) DisconnectClient() {
 	g.clientConnected = false
 	g.commandFrameHistory.Reset()
 	g.StopLiveWorld()
+}
+
+func (g *Client) World() *world.GameWorld {
+	return g.world
 }

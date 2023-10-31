@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 
@@ -84,7 +85,11 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 			if err != nil {
 				fmt.Println(fmt.Errorf("error decoding message from player %d - %w", id, err))
 				if strings.Contains(err.Error(), "An existing connection was forcibly closed") ||
-					strings.Contains(err.Error(), "An established connection was aborted by the software in your host machine") {
+					strings.Contains(err.Error(), "An established connection was aborted by the software in your host machine") ||
+					err == io.EOF {
+					if err == io.EOF {
+						fmt.Println("Got EOF from remote player", id)
+					}
 					fmt.Println("connection closed by remote player", id)
 					conn.Close()
 					discCh <- true

@@ -55,7 +55,7 @@ type Server struct {
 	playerInput  map[int]input.Input
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
+func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	initSeed()
 	g := &Server{
 		players:     map[int]*network.Player{},
@@ -69,7 +69,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 
 	start := time.Now()
 
-	g.world = world.New(map[int]*entities.Entity{})
+	g.world = world
 
 	fmt.Println(time.Since(start), "spatial partition done")
 
@@ -98,7 +98,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string) *Server {
 
 	// g.setupEntities(data)
 	// g.LoadWorld("cubes")
-	g.LoadWorld("multiplayer_test")
+	// g.LoadWorld("multiplayer_test")
 
 	fmt.Println(time.Since(start), "to start up systems")
 
@@ -149,6 +149,11 @@ func (g *Server) Start(started chan bool, done chan bool) {
 			break
 		}
 	}
+}
+
+func New(assetsDirectory, shaderDirectory string) *Server {
+	world := world.New(map[int]*entities.Entity{})
+	return NewWithWorld(assetsDirectory, world)
 }
 
 func initSeed() {

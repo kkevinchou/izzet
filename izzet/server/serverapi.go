@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -69,40 +68,51 @@ func (g *Server) GetPlayers() map[int]*network.Player {
 func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Player {
 	inMessageChannel := make(chan network.MessageTransport, 100)
 	disconnectChannel := make(chan bool, 1)
+	c := network.NewClient(connection)
 	g.players[playerID] = &network.Player{
 		ID: playerID, Connection: connection,
 		InMessageChannel:  inMessageChannel,
 		OutMessageChannel: make(chan network.MessageTransport, 100),
 		DisconnectChannel: disconnectChannel,
-		Client:            network.NewClient(connection),
+		Client:            c,
 	}
 
-	go func(conn net.Conn, id int, ch chan network.MessageTransport, discCh chan bool) {
+	go func(client network.IzzetClient, id int, ch chan network.MessageTransport, discCh chan bool) {
+		// f, err := os.OpenFile("serverlog.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// defer f.Close()
+
 		for {
-			decoder := json.NewDecoder(conn)
-			var message network.MessageTransport
-			err := decoder.Decode(&message)
+			message, err := g.players[playerID].Client.Recv()
 			if err != nil {
 				fmt.Println(fmt.Errorf("error decoding message from player %d - %w", id, err))
+				// f.Write([]byte(fmt.Sprintf("%s - %d - FAILED TO DECODE\n", time.Now().Format("2006-01-02 15:04:05"), message.CommandFrame)))
 				if strings.Contains(err.Error(), "An existing connection was forcibly closed") ||
 					strings.Contains(err.Error(), "An established connection was aborted by the software in your host machine") ||
 					err == io.EOF {
+
 					if err == io.EOF {
 						fmt.Println("Got EOF from remote player", id)
 					}
 					fmt.Println("connection closed by remote player", id)
-					conn.Close()
+					client.Close()
 					discCh <- true
 					return
 				}
 				continue
 			}
+			// _, err = f.Write([]byte(fmt.Sprintf("%s - %d - %s\n", time.Now().Format("2006-01-02 15:04:05"), message.CommandFrame, string(message.Body))))
+			// if err != nil {
+			// 	fmt.Println("failed to write to server log")
+			// }
 
 			if message.MessageType == network.MsgTypePlayerInput {
 				ch <- message
 			}
 		}
-	}(connection, playerID, inMessageChannel, disconnectChannel)
+	}(c, playerID, inMessageChannel, disconnectChannel)
 
 	return g.players[playerID]
 }

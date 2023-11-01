@@ -15,6 +15,7 @@ type connectionImpl struct {
 type IzzetClient interface {
 	Send(messageBody Message, frame int) error
 	Recv() (MessageTransport, error)
+	Close()
 }
 
 func NewClient(conn net.Conn) IzzetClient {
@@ -53,4 +54,8 @@ func (c *connectionImpl) Recv() (MessageTransport, error) {
 	}
 
 	return message, nil
+}
+
+func (c *connectionImpl) Close() {
+	c.conn.Close()
 }

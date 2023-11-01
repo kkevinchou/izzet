@@ -52,6 +52,9 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		if entity.Physics != nil {
 			t.Velocity = entity.Physics.Velocity
 		}
+		if entity.Animation != nil {
+			t.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()
+		}
 		transforms = append(transforms, t)
 	}
 	gamestateUpdateMessage := network.GameStateUpdateMessage{

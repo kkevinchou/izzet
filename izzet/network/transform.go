@@ -7,6 +7,7 @@ type Transform struct {
 	Position    mgl64.Vec3
 	Orientation mgl64.Quat
 	Velocity    mgl64.Vec3
+	Animation   string
 }
 
 type GameStateUpdateMessage struct {

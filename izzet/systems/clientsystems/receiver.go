@@ -59,6 +59,23 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 					entities.SetLocalPosition(entity, transform.Position)
 					entities.SetLocalRotation(entity, transform.Orientation)
+
+					if entity.Animation != nil {
+						animationPlayer := entity.Animation.AnimationPlayer
+
+						// if transform.Animation != "" {
+						// 	animationPlayer.PlayAnimation(transform.Animation)
+						// }
+
+						currentAnimation := animationPlayer.CurrentAnimation()
+						if currentAnimation != transform.Animation && transform.Animation != "" {
+							if currentAnimation == "" {
+								animationPlayer.PlayAnimation(transform.Animation)
+							} else {
+								animationPlayer.PlayAndBlendAnimation(transform.Animation, 250*time.Millisecond)
+							}
+						}
+					}
 				}
 
 				cfHistory := s.app.GetCommandFrameHistory()

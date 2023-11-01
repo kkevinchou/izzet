@@ -10,6 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -74,8 +75,9 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	fmt.Println(time.Since(start), "spatial partition done")
 
 	g.entities = map[int]*entities.Entity{}
-	// data := izzetdata.LoadData(dataFilePath)
-	// g.setupAssets(g.assetManager, g.modelLibrary, data)
+	dataFilePath := "izzet_data.json"
+	data := izzetdata.LoadData(dataFilePath)
+	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.serializer = serialization.New(g, g.world)
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
@@ -93,6 +95,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.systems = append(g.systems, &systems.MovementSystem{})
 	g.systems = append(g.systems, systems.NewPhysicsSystem(g))
 	g.systems = append(g.systems, systems.NewCollisionSystem(g, g.collisionObserver))
+	g.systems = append(g.systems, systems.NewAnimationSystem(g))
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
 
@@ -243,4 +246,20 @@ func (s *Server) listen() (net.Listener, error) {
 	}()
 
 	return listener, nil
+}
+
+func (g *Server) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
+	// docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha"}
+	for docName, _ := range data.EntityAssets {
+		doc := assetManager.GetDocument(docName)
+
+		modelLibrary.RegisterDocument(doc, data)
+
+		for _, mesh := range doc.Meshes {
+			modelLibrary.RegisterMesh(doc.Name, mesh)
+		}
+		if len(doc.Animations) > 0 {
+			modelLibrary.RegisterAnimations(docName, doc)
+		}
+	}
 }

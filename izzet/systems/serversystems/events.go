@@ -83,11 +83,10 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			if err != nil {
 				panic(err)
 			}
-			messageBytes, err := json.Marshal(message)
+			player.Client.Send(message, s.app.CommandFrame())
 			if err != nil {
 				panic(err)
 			}
-			player.Connection.Write(messageBytes)
 
 			world.QueueEvent(events.EntitySpawnEvent{Entity: camera})
 			world.QueueEvent(events.EntitySpawnEvent{Entity: entity})
@@ -137,27 +136,21 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	return entity
 }
 
-func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity, worldBytes []byte) (network.MessageTransport, error) {
+func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity, worldBytes []byte) (network.AckPlayerJoinMessage, error) {
 	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID}
 
 	entityBytes, err := json.Marshal(entity)
 	if err != nil {
-		panic(err)
+		return network.AckPlayerJoinMessage{}, err
 	}
-	ackPlayerJoinMessage.EntityBytes = entityBytes
-
 	cameraBytes, err := json.Marshal(camera)
 	if err != nil {
-		panic(err)
+		return network.AckPlayerJoinMessage{}, err
 	}
-	ackPlayerJoinMessage.CameraBytes = cameraBytes
 
+	ackPlayerJoinMessage.EntityBytes = entityBytes
+	ackPlayerJoinMessage.CameraBytes = cameraBytes
 	ackPlayerJoinMessage.Snapshot = worldBytes
 
-	bytes, err := json.Marshal(ackPlayerJoinMessage)
-	if err != nil {
-		panic(err)
-	}
-
-	return network.MessageTransport{MessageType: network.MsgTypeAckPlayerJoin, Timestamp: time.Now(), Body: bytes}, nil
+	return ackPlayerJoinMessage, nil
 }

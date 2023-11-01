@@ -2,6 +2,7 @@ package clientsystems
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -13,6 +14,7 @@ import (
 
 type InputSystem struct {
 	app App
+	f   *os.File
 }
 
 func NewInputSystem(app App) *InputSystem {
@@ -20,6 +22,14 @@ func NewInputSystem(app App) *InputSystem {
 }
 
 func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
+	// if s.f == nil {
+	// 	f, err := os.OpenFile(fmt.Sprintf("clientlog-%d.log", s.app.GetPlayerID()), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// 	s.f = f
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+
 	// TODO - send inputs asynchronously
 	frameInput := world.GetFrameInput()
 	cameraOrientation := s.computePlayerCameraOrientation(world, frameInput)
@@ -35,6 +45,11 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
 		return
 	}
+
+	// _, err = s.f.Write([]byte(fmt.Sprintf("%s - %d\n", time.Now().Format("2006-01-02 15:04:05"), s.app.CommandFrame())))
+	// if err != nil {
+	// 	fmt.Println("failed to write to client log")
+	// }
 }
 
 func (s *InputSystem) computePlayerCameraOrientation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {

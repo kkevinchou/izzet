@@ -82,7 +82,7 @@ type Client struct {
 	asyncServerDone     chan bool
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config) *Client {
+func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
 	initSeed()
 	g := &Client{
 		commandFrameHistory: clientsystems.NewCommandFrameHistory(),
@@ -144,7 +144,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.setupSystems()
 
 	// g.setupEntities(data)
-	g.LoadWorld("multiplayer_test")
+	if defaultWorld != "" {
+		g.LoadWorld(defaultWorld)
+	}
 
 	fmt.Println(time.Since(start), "to start up systems")
 

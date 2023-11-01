@@ -77,7 +77,7 @@ func main() {
 	}
 
 	if isServer {
-		clientApp := client.New("_assets", "shaders", "izzet_data.json", config)
+		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, "multiplayer_test")
 		clientApp.StartAsyncServer()
 		err := clientApp.Connect()
 		if err != nil {
@@ -87,7 +87,7 @@ func main() {
 	} else {
 		config.Fullscreen = false
 		config.Profile = false
-		clientApp := client.New("_assets", "shaders", "izzet_data.json", config)
+		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, "")
 		clientApp.Connect()
 		clientApp.Start()
 	}

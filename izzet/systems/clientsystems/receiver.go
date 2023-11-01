@@ -62,19 +62,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 					if entity.Animation != nil {
 						animationPlayer := entity.Animation.AnimationPlayer
-
-						// if transform.Animation != "" {
-						// 	animationPlayer.PlayAnimation(transform.Animation)
-						// }
-
-						currentAnimation := animationPlayer.CurrentAnimation()
-						if currentAnimation != transform.Animation && transform.Animation != "" {
-							if currentAnimation == "" {
-								animationPlayer.PlayAnimation(transform.Animation)
-							} else {
-								animationPlayer.PlayAndBlendAnimation(transform.Animation, 250*time.Millisecond)
-							}
-						}
+						animationPlayer.PlayAnimation(transform.Animation)
 					}
 				}
 

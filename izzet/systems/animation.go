@@ -25,7 +25,6 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 		if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == entity.GetID()) || s.app.IsServer() {
 			if entity.CharacterControllerComponent != nil {
 				animationPlayer := entity.Animation.AnimationPlayer
-				currentAnimation := animationPlayer.CurrentAnimation()
 				var animationName = "Walk"
 				if !entity.Physics.Grounded {
 					animationName = "Falling"
@@ -34,13 +33,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				} else {
 					animationName = "Idle"
 				}
-				if currentAnimation != animationName {
-					if currentAnimation == "" {
-						animationPlayer.PlayAnimation(animationName)
-					} else {
-						animationPlayer.PlayAndBlendAnimation(animationName, 250*time.Millisecond)
-					}
-				}
+				animationPlayer.PlayAnimation(animationName)
 			}
 		}
 

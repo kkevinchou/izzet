@@ -99,7 +99,7 @@ func (m *ModelLibrary) GetOrCreateCubeMeshHandle(length int) Handle {
 //			- Question, do I want to support selected instantiation of entities within a document?
 //			- e.g. from within demo_scene_samurai, instantiating one entity by name
 
-func getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
+func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
 	q := []*modelspec.Node{node}
 
 	var result []Primitive
@@ -111,15 +111,25 @@ func getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
 				mesh := doc.Meshes[*node.MeshID]
 
 				modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-				vaos := createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-				geometryVAOs := createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+
+				var vaos [][]uint32
+				var geometryVAOs [][]uint32
+				if m.processVisuals {
+					vaos = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+					geometryVAOs = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+				}
 
 				for i, primitive := range mesh.Primitives {
-					result = append(result, Primitive{
-						Primitive:   primitive,
-						VAO:         vaos[0][i],
-						GeometryVAO: geometryVAOs[0][i],
-					})
+					p := Primitive{
+						Primitive: primitive,
+					}
+
+					if m.processVisuals {
+						p.VAO = vaos[0][i]
+						p.GeometryVAO = geometryVAOs[0][i]
+					}
+
+					result = append(result, p)
 				}
 			}
 
@@ -137,7 +147,7 @@ func (m *ModelLibrary) RegisterDocument(document *modelspec.Document, data *izze
 			if entityAsset, ok := data.EntityAssets[document.Name]; ok {
 				if entityAsset.SingleEntity {
 					handle := NewGlobalHandle(document.Name)
-					primitives := getPrimitives(document, node)
+					primitives := m.getPrimitives(document, node)
 					m.Primitives[handle] = primitives
 				}
 			}

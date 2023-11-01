@@ -62,6 +62,8 @@ type Settings struct {
 	PartitionEntityCount           int32
 	PhysicsCollisionCheckCount     int32
 	PhysicsConfirmedCollisionCount int32
+
+	UIEnabled bool
 }
 
 var AppSettings Settings = Settings{

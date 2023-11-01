@@ -129,6 +129,10 @@ func SetupMenuBar(app App) imgui.Vec2 {
 			settings.RenderColliders = !settings.RenderColliders
 		}
 
+		if imgui.MenuItemV("Show UI", "", settings.UIEnabled, true) {
+			settings.UIEnabled = !settings.UIEnabled
+		}
+
 		imgui.EndMenu()
 	}
 

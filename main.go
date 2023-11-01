@@ -85,8 +85,6 @@ func main() {
 		}
 		clientApp.Start()
 	} else {
-		config.Width = 854
-		config.Height = 480
 		config.Fullscreen = false
 		config.Profile = false
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config)

@@ -941,51 +941,52 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.NewFrame()
 
 	menuBarSize := menus.SetupMenuBar(r.app)
+	if r.app.Settings().UIEnabled {
+		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
+		imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
+		imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
+		// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
+		// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
+		imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
+		imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
+		imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
+		imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
+		// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
+		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+		imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
+		imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
+		imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
+		imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
+		imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
+		imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
+		imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
+		imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
+		imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
+		imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
+		imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+		imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
+		imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
+		imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
+		imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
+		imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
+		imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
+		imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
+		imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
-	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
-	imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
-	imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-	// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
-	// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
-	imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
-	imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
-	imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
-	imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-	// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
-	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-	imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
-	imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
-	imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
-	imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
-	imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
-	imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
-	imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
-	imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
-	imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
-	imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
-	imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-	imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
-	imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
-	imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
-	imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
-	imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
-	imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
-	imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
-	imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
+		panels.BuildTabsSet(
+			r.app,
+			r.world,
+			renderContext,
+			menuBarSize,
+			r.app.Prefabs(),
+		)
 
-	panels.BuildTabsSet(
-		r.app,
-		r.world,
-		renderContext,
-		menuBarSize,
-		r.app.Prefabs(),
-	)
+		imgui.PopStyleColorV(20)
+		imgui.PopStyleVarV(7)
 
-	imgui.PopStyleColorV(20)
-	imgui.PopStyleVarV(7)
-
-	if r.app.ShowImguiDemo() {
-		imgui.ShowDemoWindow(nil)
+		if r.app.ShowImguiDemo() {
+			imgui.ShowDemoWindow(nil)
+		}
 	}
 
 	imgui.Render()

@@ -21,7 +21,7 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 		panic("the first frame we fetch should match the last input command frame")
 	}
 
-	for _, transform := range gamestateUpdateMessage.Transforms {
+	for _, transform := range gamestateUpdateMessage.EntityStates {
 		// special case for the player for now
 		if transform.EntityID != entity.GetID() {
 			continue

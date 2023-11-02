@@ -66,6 +66,7 @@ type Client struct {
 	serverModeSystems []systems.System
 	appMode           app.AppMode
 	collisionObserver *observers.CollisionObserver
+	stateBuffer       *clientsystems.StateBuffer
 
 	settings *app.Settings
 
@@ -140,7 +141,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
-
+	g.stateBuffer = clientsystems.NewStateBuffer()
 	g.setupSystems()
 
 	// g.setupEntities(data)

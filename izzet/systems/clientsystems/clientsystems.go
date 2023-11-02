@@ -21,4 +21,5 @@ type App interface {
 	GetCommandFrameHistory() *CommandFrameHistory
 	MetricsRegistry() *metrics.MetricsRegistry
 	Client() network.IzzetClient
+	StateBuffer() *StateBuffer
 }

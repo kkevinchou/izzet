@@ -34,7 +34,7 @@ type Serializer struct {
 	app App
 }
 
-func New(app App, world GameWorld) *Serializer {
+func New(app App) *Serializer {
 	return &Serializer{app: app}
 }
 

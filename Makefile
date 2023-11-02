@@ -47,6 +47,10 @@ client:
 server:
 	go run main.go SERVER
 
+.PHONY: headless
+headless:
+	go run main.go HEADLESS
+
 .PHONY: clean
 clean:
 	rm -rf $(RELEASE_FOLDER)

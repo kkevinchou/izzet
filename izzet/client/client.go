@@ -137,7 +137,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.setupPrefabs(data)
 	fmt.Println(time.Since(start), "prefabs done")
 	fmt.Println(time.Since(start), "entities done")
-	g.serializer = serialization.New(g, g.world)
+	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()

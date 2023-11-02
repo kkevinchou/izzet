@@ -56,6 +56,16 @@ type Server struct {
 	playerInput  map[int]input.Input
 }
 
+func NewWithFile(assetsDirectory string, filepath string) *Server {
+	s := NewWithWorld(assetsDirectory, nil)
+	world, err := s.serializer.ReadFromFile(filepath)
+	if err != nil {
+		panic(err)
+	}
+	s.world = world
+	return s
+}
+
 func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	initSeed()
 	g := &Server{
@@ -78,7 +88,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	dataFilePath := "izzet_data.json"
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
-	g.serializer = serialization.New(g, g.world)
+	g.serializer = serialization.New(g)
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
 

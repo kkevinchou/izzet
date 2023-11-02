@@ -12,6 +12,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/kkevinchou/izzet/izzet/client"
+	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/log"
@@ -66,17 +67,16 @@ func main() {
 
 	assetslog.SetLogger(log.EmptyLogger)
 
-	isServer := false
+	mode := "CLIENT"
 
 	if len(os.Args) > 1 {
-		mode := strings.ToUpper(os.Args[1])
-		isServer = mode == "SERVER"
-		if mode != "SERVER" && mode != "CLIENT" {
+		mode = strings.ToUpper(os.Args[1])
+		if mode != "SERVER" && mode != "CLIENT" && mode != "HEADLESS" {
 			panic(fmt.Sprintf("unexpected mode %s", mode))
 		}
 	}
 
-	if isServer {
+	if mode == "SERVER" {
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, "multiplayer_test")
 		clientApp.StartAsyncServer()
 		err := clientApp.Connect()
@@ -84,7 +84,14 @@ func main() {
 			fmt.Println(err)
 		}
 		clientApp.Start()
-	} else {
+	} else if mode == "HEADLESS" {
+		started := make(chan bool)
+		go func() {
+			<-started
+		}()
+		serverApp := server.NewWithFile("_assets", "multiplayer_test.json")
+		serverApp.Start(started, make(chan bool))
+	} else if mode == "CLIENT" {
 		config.Fullscreen = false
 		config.Profile = false
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, "")

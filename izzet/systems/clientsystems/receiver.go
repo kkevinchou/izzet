@@ -44,9 +44,9 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 
 				playerEntityID := s.app.GetPlayerEntity().GetID()
-				var serverTransform network.Transform
+				var serverTransform network.EntityState
 
-				for _, transform := range gamestateUpdateMessage.Transforms {
+				for _, transform := range gamestateUpdateMessage.EntityStates {
 					entity := world.GetEntityByID(transform.EntityID)
 					if entity == nil {
 						continue
@@ -57,8 +57,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 						continue
 					}
 
-					entities.SetLocalPosition(entity, transform.Position)
-					entities.SetLocalRotation(entity, transform.Orientation)
+					// entities.SetLocalPosition(entity, transform.Position)
+					// entities.SetLocalRotation(entity, transform.Orientation)
 
 					if entity.Animation != nil {
 						animationPlayer := entity.Animation.AnimationPlayer
@@ -66,12 +66,16 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					}
 				}
 
+				// entity interpolation
+				sb := s.app.StateBuffer()
+				sb.Push(gamestateUpdateMessage, s.app.CommandFrame())
+
+				// prediction validation
 				cfHistory := s.app.GetCommandFrameHistory()
 				cf, err := cfHistory.GetFrame(gamestateUpdateMessage.LastInputCommandFrame)
 				if err != nil {
 					panic(err)
 				}
-
 				state := cf.PostCFState
 				if Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)

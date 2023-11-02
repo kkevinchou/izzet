@@ -36,7 +36,8 @@ const (
 
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.
-	MSPerCommandFrame int = 16
+	MSPerCommandFrame    int = 16
+	MSPerGameStateUpdate int = 100
 
 	// number of rendered frames per second, separate from command frames
 	FPS int = 300

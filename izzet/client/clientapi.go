@@ -385,3 +385,7 @@ func (g *Client) DisconnectClient() {
 func (g *Client) World() *world.GameWorld {
 	return g.world
 }
+
+func (g *Client) StateBuffer() *clientsystems.StateBuffer {
+	return g.stateBuffer
+}

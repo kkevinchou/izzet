@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 )
 
@@ -28,7 +29,7 @@ var count int
 
 func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 	s.accumulator += int(delta.Milliseconds())
-	if s.accumulator < 100 {
+	if s.accumulator < settings.MSPerGameStateUpdate {
 		return
 	}
 	s.accumulator = 0
@@ -36,7 +37,7 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 	players := s.app.GetPlayers()
 	count += 1
 
-	var transforms []network.Transform
+	var transforms []network.EntityState
 	for _, entity := range world.Entities() {
 		if entity.CameraComponent != nil {
 			continue
@@ -44,7 +45,7 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		if entity.Static {
 			continue
 		}
-		t := network.Transform{
+		t := network.EntityState{
 			EntityID:    entity.ID,
 			Position:    entities.GetLocalPosition(entity),
 			Orientation: entities.GetLocalRotation(entity),
@@ -58,7 +59,8 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		transforms = append(transforms, t)
 	}
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
-		Transforms: transforms,
+		EntityStates:       transforms,
+		GlobalCommandFrame: s.app.CommandFrame(),
 	}
 
 	for _, player := range players {

@@ -2,7 +2,7 @@ package network
 
 import "github.com/go-gl/mathgl/mgl64"
 
-type Transform struct {
+type EntityState struct {
 	EntityID    int
 	Position    mgl64.Vec3
 	Orientation mgl64.Quat
@@ -11,8 +11,9 @@ type Transform struct {
 }
 
 type GameStateUpdateMessage struct {
-	Transforms            []Transform
+	EntityStates          []EntityState
 	LastInputCommandFrame int
+	GlobalCommandFrame    int
 }
 
 func (m GameStateUpdateMessage) Type() MessageType {

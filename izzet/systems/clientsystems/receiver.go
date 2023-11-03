@@ -101,6 +101,13 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 				serialization.InitDeserializedEntity(&entity, s.app.ModelLibrary(), false)
 				world.AddEntity(&entity)
+			} else if message.MessageType == network.MsgTypePing {
+				pingMessage, err := network.ExtractMessage[network.PingMessage](message)
+				if err != nil {
+					fmt.Println(fmt.Errorf("failed to deserialize ping message %w", err))
+					continue
+				}
+				s.app.MetricsRegistry().Inc("ping", float64(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
 			}
 		default:
 			return

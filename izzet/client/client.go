@@ -116,6 +116,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		height:          int(h),
 		assetManager:    assets.NewAssetManager(assetsDirectory, true),
 		modelLibrary:    modellibrary.New(true),
+		world:           world.New(map[int]*entities.Entity{}),
 	}
 
 	g.initSettings()

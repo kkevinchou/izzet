@@ -108,9 +108,7 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 			// 	fmt.Println("failed to write to server log")
 			// }
 
-			if message.MessageType == network.MsgTypePlayerInput {
-				ch <- message
-			}
+			ch <- message
 		}
 	}(c, playerID, inMessageChannel, disconnectChannel)
 

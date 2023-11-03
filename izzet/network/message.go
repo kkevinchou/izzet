@@ -13,6 +13,7 @@ const (
 	MsgTypeCreateEntity
 	MsgTypePlayerJoin
 	MsgTypeAckPlayerJoin
+	MsgTypePing
 )
 
 type Message interface {

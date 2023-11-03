@@ -85,71 +85,50 @@ type Client struct {
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
 	initSeed()
-	g := &Client{
-		commandFrameHistory: clientsystems.NewCommandFrameHistory(),
-		asyncServerDone:     make(chan bool),
-	}
 
-	g.initSettings()
 	window, err := initializeOpenGL(config)
 	if err != nil {
 		panic(err)
 	}
-	g.window = window
-
-	// prevent load screen flashbang
-	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	g.window.GLSwap()
 
 	err = ttf.Init()
 	if err != nil {
 		panic(err)
 	}
 
+	// prevent load screen flashbang
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	window.GLSwap()
+
 	imgui.CreateContext(nil)
 	imguiIO := imgui.CurrentIO()
-	// imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/robotomono-regular.ttf", 20)
-	// imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/helvetica.ttf", 20)
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
-	g.platform = input.NewSDLPlatform(window, imguiIO)
-	g.assetManager = assets.NewAssetManager(assetsDirectory, true)
-	g.modelLibrary = modellibrary.New(true)
-	g.appMode = app.AppModeEditor
-	data := izzetdata.LoadData(dataFilePath)
 
-	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{-82, 230, 95},
-		Orientation: mgl64.QuatIdent(),
+	w, h := window.GetSize()
+
+	g := &Client{
+		asyncServerDone: make(chan bool),
+		window:          window,
+		appMode:         app.AppModeEditor,
+		platform:        input.NewSDLPlatform(window, imguiIO),
+		width:           int(w),
+		height:          int(h),
+		assetManager:    assets.NewAssetManager(assetsDirectory, true),
+		modelLibrary:    modellibrary.New(true),
 	}
 
-	start := time.Now()
-
-	g.world = world.New(map[int]*entities.Entity{})
-	w, h := g.window.GetSize()
-	g.width, g.height = int(w), int(h)
+	g.initSettings()
 	g.renderer = render.New(g, g.world, shaderDirectory, g.width, g.height)
 
-	fmt.Println(time.Since(start), "spatial partition done")
-
-	g.prefabs = map[int]*prefabs.Prefab{}
+	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.setupPrefabs(data)
-	fmt.Println(time.Since(start), "prefabs done")
-	fmt.Println(time.Since(start), "entities done")
-	g.serializer = serialization.New(g)
-	g.editHistory = edithistory.New()
-	g.metricsRegistry = metrics.New()
-	g.collisionObserver = observers.NewCollisionObserver()
-	g.stateBuffer = clientsystems.NewStateBuffer()
-	g.setupSystems()
 
-	// g.setupEntities(data)
+	g.initialize()
 	if defaultWorld != "" {
 		g.LoadWorld(defaultWorld)
 	}
-
-	fmt.Println(time.Since(start), "to start up systems")
 
 	return g
 }
@@ -253,6 +232,7 @@ func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *mo
 }
 
 func (g *Client) setupPrefabs(data *izzetdata.Data) {
+	g.prefabs = map[int]*prefabs.Prefab{}
 	for name, _ := range data.EntityAssets {
 		document := g.assetManager.GetDocument(name)
 		pf := prefabs.CreatePrefab(document, data)

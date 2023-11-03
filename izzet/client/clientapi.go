@@ -185,12 +185,15 @@ func (g *Client) CollisionObserver() *observers.CollisionObserver {
 func (g *Client) Settings() *app.Settings {
 	return g.settings
 }
+func (g *Client) ConnectAndInitialize() error {
+	g.initialize()
+	return g.Connect()
+}
 
 func (g *Client) Connect() error {
 	if g.IsConnected() {
 		return nil
 	}
-	g.initialize()
 
 	address := fmt.Sprintf("localhost:7878")
 	fmt.Println("connecting to " + address)

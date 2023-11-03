@@ -107,7 +107,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	}
 
 	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
-		err := g.Connect()
+		err := g.ConnectAndInitialize()
 		if err != nil {
 			fmt.Println(err)
 		}

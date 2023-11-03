@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"sort"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
@@ -388,4 +389,31 @@ func (g *Client) World() *world.GameWorld {
 
 func (g *Client) StateBuffer() *clientsystems.StateBuffer {
 	return g.stateBuffer
+}
+
+func (g *Client) initialize() {
+	g.stateBuffer = clientsystems.NewStateBuffer()
+	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
+
+	g.camera = &camera.Camera{
+		Position:    mgl64.Vec3{-82, 230, 95},
+		Orientation: mgl64.QuatIdent(),
+	}
+
+	start := time.Now()
+
+	g.world = world.New(map[int]*entities.Entity{})
+
+	fmt.Println(time.Since(start), "spatial partition done")
+
+	fmt.Println(time.Since(start), "prefabs done")
+	fmt.Println(time.Since(start), "entities done")
+	g.serializer = serialization.New(g)
+	g.editHistory = edithistory.New()
+	g.metricsRegistry = metrics.New()
+	g.collisionObserver = observers.NewCollisionObserver()
+	g.stateBuffer = clientsystems.NewStateBuffer()
+	g.setupSystems()
+
+	fmt.Println(time.Since(start), "to start up systems")
 }

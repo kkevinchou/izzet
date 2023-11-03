@@ -131,6 +131,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		g.LoadWorld(defaultWorld)
 	}
 
+	g.setupSystems()
+
 	return g
 }
 

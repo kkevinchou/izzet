@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"sort"
-	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
@@ -191,6 +190,7 @@ func (g *Client) Connect() error {
 	if g.IsConnected() {
 		return nil
 	}
+	g.initialize()
 
 	address := fmt.Sprintf("localhost:7878")
 	fmt.Println("connecting to " + address)
@@ -384,18 +384,9 @@ func (g *Client) initialize() {
 		Orientation: mgl64.QuatIdent(),
 	}
 
-	start := time.Now()
-
-	fmt.Println(time.Since(start), "spatial partition done")
-
-	fmt.Println(time.Since(start), "prefabs done")
-	fmt.Println(time.Since(start), "entities done")
 	g.serializer = serialization.New(g)
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
-	g.setupSystems()
-
-	fmt.Println(time.Since(start), "to start up systems")
 }

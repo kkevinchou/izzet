@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
-func stats(app App, renderContext RenderContext) {
+func stats(app renderiface.App, renderContext RenderContext) {
 	settings := app.Settings()
 	mr := app.MetricsRegistry()
 

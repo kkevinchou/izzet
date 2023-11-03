@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
 type ComboOption string
@@ -31,7 +32,7 @@ var (
 	}
 )
 
-func worldProps(app App, renderContext RenderContext) {
+func worldProps(app renderiface.App, renderContext RenderContext) {
 	settings := app.Settings()
 
 	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {

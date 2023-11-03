@@ -20,11 +20,11 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	}
 
 	// in the range -1 - 1
-	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
+	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
 	}
-	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.Settings().Near)})
+	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.Settings().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	shader.Use()
@@ -50,11 +50,11 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
+	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
 	}
-	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.Settings().Near)})
+	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.Settings().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	colors := map[int]mgl64.Vec3{
@@ -90,11 +90,11 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 }
 func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
-	screenPosition, behind := r.app.WorldToNDCPosition(*viewerContext, position)
+	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
 	}
-	nearPlanePosition := r.app.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.Settings().Near)})
+	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.Settings().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
@@ -152,4 +152,20 @@ func (r *Renderer) drawCircle() {
 	gl.BindVertexArray(vao)
 
 	r.iztDrawArrays(0, 6)
+}
+
+// computes the near plane position for a given x y coordinate
+func ndcToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
+	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
+	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
+	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
+
+	return nearPlanePos.Vec3()
+}
+
+func worldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
+	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
+	behind := screenPos.Z() < 0
+	screenPos = screenPos.Mul(1 / screenPos.W())
+	return screenPos.Vec2(), behind
 }

@@ -6,13 +6,14 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
 var prefabsSelectIndex = -1
 
 const prefabsContextItemID = "prefabsContextItem"
 
-func prefabsUI(app App, world GameWorld, ps []*prefabs.Prefab) {
+func prefabsUI(app renderiface.App, world GameWorld, ps []*prefabs.Prefab) {
 	for i, prefab := range ps {
 		nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 
@@ -53,7 +54,7 @@ func beginPrefabDragDrop(id int) {
 	}
 }
 
-func prefabsBeginPopupContextItem(app App, world GameWorld, index int, prefab *prefabs.Prefab) {
+func prefabsBeginPopupContextItem(app renderiface.App, world GameWorld, index int, prefab *prefabs.Prefab) {
 	if imgui.BeginPopupContextItemV(prefabsContextItemID, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate") {
 			entities := entities.InstantiateFromPrefab(prefab, app.ModelLibrary())

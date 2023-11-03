@@ -18,9 +18,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
-	"github.com/kkevinchou/izzet/izzet/panels"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
+	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
@@ -177,22 +177,6 @@ func (g *Client) StopLiveWorld() {
 
 func (g *Client) AppMode() app.AppMode {
 	return g.appMode
-}
-
-// computes the near plane position for a given x y coordinate
-func (g *Client) NDCToWorldPosition(viewerContext render.ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
-	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
-	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
-
-	return nearPlanePos.Vec3()
-}
-
-func (g *Client) WorldToNDCPosition(viewerContext render.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
-	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
-	behind := screenPos.Z() < 0
-	screenPos = screenPos.Mul(1 / screenPos.W())
-	return screenPos.Vec2(), behind
 }
 
 func (g *Client) CollisionObserver() *observers.CollisionObserver {

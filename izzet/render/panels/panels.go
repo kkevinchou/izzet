@@ -2,12 +2,7 @@ package panels
 
 import (
 	"github.com/inkyblackness/imgui-go/v4"
-	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/observers"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 const (
@@ -25,16 +20,6 @@ type RenderContext interface {
 
 // var HierarchySelection int
 var selectedEntity *entities.Entity
-
-type App interface {
-	GetPrefabByID(id int) *prefabs.Prefab
-	ModelLibrary() *modellibrary.ModelLibrary
-	CollisionObserver() *observers.CollisionObserver
-	ResetNavMeshVAO()
-	Settings() *app.Settings
-	CommandFrame() int
-	MetricsRegistry() *metrics.MetricsRegistry
-}
 
 type GameWorld interface {
 	Entities() []*entities.Entity

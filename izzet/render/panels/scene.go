@@ -10,10 +10,11 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
-func sceneUI(app App, world GameWorld) {
+func sceneUI(app renderiface.App, world GameWorld) {
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
 	sceneHierarchy(app, world)
@@ -41,7 +42,7 @@ func sceneUI(app App, world GameWorld) {
 	imgui.PopStyleVar()
 }
 
-func sceneHierarchy(app App, world GameWorld) {
+func sceneHierarchy(app renderiface.App, world GameWorld) {
 	entityPopup := false
 	imgui.BeginChildV("sceneHierarchy", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range world.Entities() {
@@ -128,7 +129,7 @@ func sceneHierarchy(app App, world GameWorld) {
 	}
 }
 
-func drawEntity(entity *entities.Entity, app App, world GameWorld) bool {
+func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) bool {
 	popup := false
 	nodeFlags := imgui.TreeNodeFlagsNone
 	if len(entity.Children) == 0 {

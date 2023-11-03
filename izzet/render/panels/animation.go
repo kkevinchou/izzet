@@ -7,6 +7,7 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -22,7 +23,7 @@ var JointHover *int
 
 var JointsToRender []int
 
-func animationUI(app App, entity *entities.Entity) {
+func animationUI(app renderiface.App, entity *entities.Entity) {
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
@@ -74,7 +75,7 @@ func animationUI(app App, entity *entities.Entity) {
 	// imgui.End()
 }
 
-func drawJointTree(app App, parent *entities.Entity, joint *modelspec.JointSpec) {
+func drawJointTree(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
 	nodeFlags := imgui.TreeNodeFlagsNone
 
 	if len(joint.Children) == 0 {
@@ -98,7 +99,7 @@ func drawJointTree(app App, parent *entities.Entity, joint *modelspec.JointSpec)
 	}
 }
 
-func setupMenu(app App, parent *entities.Entity, joint *modelspec.JointSpec) {
+func setupMenu(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
 	imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
 	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 	if imgui.BeginPopupContextItem() {

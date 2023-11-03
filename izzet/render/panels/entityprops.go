@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
@@ -25,7 +26,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	LightComboOption,
 }
 
-func entityProps(entity *entities.Entity, app App) {
+func entityProps(entity *entities.Entity, app renderiface.App) {
 	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
 		entityIDStr := ""
 		entityNameStr := ""

@@ -11,24 +11,16 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/menus"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/izzet/izzet/observers"
-	"github.com/kkevinchou/izzet/izzet/panels"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/render/menus"
+	"github.com/kkevinchou/izzet/izzet/render/panels"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/kitolib/animation"
-	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/input"
-	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -42,52 +34,12 @@ type GameWorld interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
-type App interface {
-	AssetManager() *assets.AssetManager
-	ModelLibrary() *modellibrary.ModelLibrary
-	GetEditorCamera() *camera.Camera
-	Prefabs() []*prefabs.Prefab
-	NavMesh() *navmesh.NavigationMesh
-	ResetNavMeshVAO()
-	CommandFrame() int
-
-	StartLiveWorld()
-	StopLiveWorld()
-	AppMode() app.AppMode
-
-	// for panels
-	GetPrefabByID(id int) *prefabs.Prefab
-	Platform() *input.SDLPlatform
-
-	SetShowImguiDemo(bool)
-	ShowImguiDemo() bool
-
-	Serializer() *serialization.Serializer
-	LoadWorld(string) bool
-	SaveWorld(string)
-
-	NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3
-	WorldToNDCPosition(viewerContext ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool)
-
-	CollisionObserver() *observers.CollisionObserver
-	Settings() *app.Settings
-	Connect() error
-	IsConnected() bool
-	MetricsRegistry() *metrics.MetricsRegistry
-	GetPlayerCamera() *entities.Entity
-
-	StartAsyncServer()
-	DisconnectAsyncServer()
-	AsyncServerStarted() bool
-	DisconnectClient()
-}
-
 const mipsCount int = 6
 const MaxBloomTextureWidth int = 1920
 const MaxBloomTextureHeight int = 1080
 
 type Renderer struct {
-	app           App
+	app           renderiface.App
 	world         GameWorld
 	shaderManager *shaders.ShaderManager
 
@@ -137,7 +89,7 @@ type Renderer struct {
 	width, height int
 }
 
-func New(app App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
+func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
 	r := &Renderer{app: app, world: world, width: width, height: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)

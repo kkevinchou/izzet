@@ -6,10 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/inkyblackness/imgui-go/v4"
-	"github.com/kkevinchou/izzet/izzet/app"
 	izzetapp "github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
 var (
@@ -19,32 +17,11 @@ var (
 	}
 )
 
-type App interface {
-	SaveWorld(string)
-	LoadWorld(string) bool
-	SetShowImguiDemo(bool)
-	ShowImguiDemo() bool
-	NavMesh() *navmesh.NavigationMesh
-	AssetManager() *assets.AssetManager
-
-	StartLiveWorld()
-	StopLiveWorld()
-	AppMode() app.AppMode
-	Settings() *app.Settings
-	Connect() error
-	IsConnected() bool
-
-	StartAsyncServer()
-	DisconnectAsyncServer()
-	AsyncServerStarted() bool
-	DisconnectClient()
-}
-
 var worldName string = "scene"
 
 var selectedWorldName string = ""
 
-func SetupMenuBar(app App) imgui.Vec2 {
+func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 	settings := app.Settings()
 
 	imgui.BeginMainMenuBar()

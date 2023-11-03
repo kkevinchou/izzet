@@ -386,8 +386,6 @@ func (g *Client) initialize() {
 
 	start := time.Now()
 
-	g.world = world.New(map[int]*entities.Entity{})
-
 	fmt.Println(time.Since(start), "spatial partition done")
 
 	fmt.Println(time.Since(start), "prefabs done")

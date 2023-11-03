@@ -18,7 +18,7 @@ func NewPingSystem(app App) *PingSystem {
 
 func (s *PingSystem) Update(delta time.Duration, world systems.GameWorld) {
 	s.accumulator += delta.Milliseconds()
-	if s.accumulator <= 500 {
+	if s.accumulator <= 2000 {
 		return
 	}
 	s.accumulator -= 500

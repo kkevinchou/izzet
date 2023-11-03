@@ -41,6 +41,7 @@ type App interface {
 	CollisionObserver() *observers.CollisionObserver
 	Settings() *app.Settings
 	Connect() error
+	ConnectAndInitialize() error
 	IsConnected() bool
 	MetricsRegistry() *metrics.MetricsRegistry
 	GetPlayerCamera() *entities.Entity

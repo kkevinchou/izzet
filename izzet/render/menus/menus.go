@@ -116,7 +116,7 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("Multiplayer") {
 		if imgui.MenuItemV("Connect Client", "", app.IsConnected(), true) {
-			err := app.Connect()
+			err := app.ConnectAndInitialize()
 			if err != nil {
 				fmt.Println(err)
 			}

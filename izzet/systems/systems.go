@@ -19,6 +19,7 @@ type GameWorld interface {
 	GetEntityByID(int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetFrameInput() input.Input
+	GetFrameInputPtr() *input.Input
 	SetFrameInput(input input.Input)
 	GetEvents() []events.Event
 	QueueEvent(events.Event)

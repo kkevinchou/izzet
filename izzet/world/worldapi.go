@@ -101,6 +101,10 @@ func (g *GameWorld) GetFrameInput() input.Input {
 	return g.frameInput
 }
 
+func (g *GameWorld) GetFrameInputPtr() *input.Input {
+	return &g.frameInput
+}
+
 func (g *GameWorld) GetEvents() []events.Event {
 	return g.events
 }

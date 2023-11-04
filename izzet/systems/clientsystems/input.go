@@ -35,11 +35,6 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
 		return
 	}
-
-	// _, err = s.f.Write([]byte(fmt.Sprintf("%s - %d\n", time.Now().Format("2006-01-02 15:04:05"), s.app.CommandFrame())))
-	// if err != nil {
-	// 	fmt.Println("failed to write to client log")
-	// }
 }
 
 func (s *InputSystem) computePlayerCameraRotation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {

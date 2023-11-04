@@ -232,14 +232,14 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	deltaRotationY := mgl64.QuatRotate(viewRotation[0], mgl64.Vec3{0, 1, 0}) // yaw
 	deltaRotation := deltaRotationY.Mul(deltaRotationX)
 
-	newOrientation := deltaRotation.Mul(g.camera.Rotation)
+	newRotation := deltaRotation.Mul(g.camera.Rotation)
 
 	// don't let the camera go upside down
-	if newOrientation.Rotate(mgl64.Vec3{0, 1, 0})[1] < 0 {
-		newOrientation = g.camera.Rotation
+	if newRotation.Rotate(mgl64.Vec3{0, 1, 0})[1] < 0 {
+		newRotation = g.camera.Rotation
 	}
 
-	g.camera.Rotation = newOrientation
+	g.camera.Rotation = newRotation
 
 	// keyboardInput := frameInput.KeyboardInput
 	// controlVector := getControlVector(keyboardInput)

@@ -15,7 +15,7 @@ const (
 
 func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, entity *entities.Entity) {
 	keyboardInput := frameInput.KeyboardInput
-	cameraOrientation := frameInput.CameraRotation
+	cameraRotation := frameInput.CameraRotation
 
 	c := entity.CharacterControllerComponent
 
@@ -27,11 +27,11 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 			entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl64.Vec3{0, jumpVelocity, 0})
 		}
 		if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
-			dir := cameraOrientation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
+			dir := cameraRotation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
 			entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(800))
 		}
 	}
-	movementDir := calculateMovementDir(cameraOrientation, c.ControlVector)
+	movementDir := calculateMovementDir(cameraRotation, c.ControlVector)
 
 	emptyVec := mgl64.Vec3{}
 	if movementDir != emptyVec {
@@ -43,12 +43,12 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 	entities.SetLocalPosition(entity, entity.LocalPosition.Add(movementDir.Mul(c.Speed*float64(delta.Milliseconds())/1000)))
 }
 
-func calculateMovementDir(cameraOrientation mgl64.Quat, controlVector mgl64.Vec3) mgl64.Vec3 {
-	forwardVector := cameraOrientation.Rotate(mgl64.Vec3{0, 0, -1})
+func calculateMovementDir(cameraRotation mgl64.Quat, controlVector mgl64.Vec3) mgl64.Vec3 {
+	forwardVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 	forwardVector = forwardVector.Normalize().Mul(controlVector.Z())
 	forwardVector[1] = 0
 
-	rightVector := cameraOrientation.Rotate(mgl64.Vec3{1, 0, 0})
+	rightVector := cameraRotation.Rotate(mgl64.Vec3{1, 0, 0})
 	rightVector = rightVector.Normalize().Mul(controlVector.X())
 	rightVector[1] = 0
 

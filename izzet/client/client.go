@@ -10,7 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/camera"
+	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
@@ -41,7 +41,7 @@ type Client struct {
 	assetManager *assets.AssetManager
 	modelLibrary *modellibrary.ModelLibrary
 
-	camera *camera.Camera
+	camera *editorcamera.Camera
 
 	prefabs map[int]*prefabs.Prefab
 

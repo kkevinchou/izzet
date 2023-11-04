@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/camera"
+	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
@@ -56,8 +56,12 @@ func (g *Client) ModelLibrary() *modellibrary.ModelLibrary {
 	return g.modelLibrary
 }
 
-func (g *Client) GetEditorCamera() *camera.Camera {
-	return g.camera
+func (g *Client) GetEditorCameraPosition() mgl64.Vec3 {
+	return g.camera.Position
+}
+
+func (g *Client) GetEditorCameraRotation() mgl64.Quat {
+	return g.camera.Rotation
 }
 
 func (g *Client) Platform() *input.SDLPlatform {
@@ -381,7 +385,7 @@ func (g *Client) initialize() {
 	g.stateBuffer = clientsystems.NewStateBuffer()
 	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
 
-	g.camera = &camera.Camera{
+	g.camera = &editorcamera.Camera{
 		Position: mgl64.Vec3{-82, 230, 95},
 		Rotation: mgl64.QuatIdent(),
 	}

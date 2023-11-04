@@ -194,7 +194,6 @@ func (g *Client) Connect() error {
 	if g.IsConnected() {
 		return nil
 	}
-	g.settings.UIEnabled = false
 
 	address := fmt.Sprintf("localhost:7878")
 	fmt.Println("connecting to " + address)
@@ -203,6 +202,8 @@ func (g *Client) Connect() error {
 	if err != nil {
 		return err
 	}
+
+	g.settings.UIEnabled = false
 
 	g.StartLiveWorld()
 

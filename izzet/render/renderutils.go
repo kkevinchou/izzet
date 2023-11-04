@@ -224,16 +224,16 @@ func (r *Renderer) generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField
 		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
 		color = HSVtoRGB(hsv)
 
-		if voxel.X == int(r.app.Settings().VoxelHighlightX) && voxel.Z == int(r.app.Settings().VoxelHighlightZ) && voxel.Y < 50 {
-			r.app.Settings().VoxelHighlightDistanceField = float32(voxel.DistanceField)
-			r.app.Settings().VoxelHighlightRegionID = voxel.RegionID
+		if voxel.X == int(r.app.RuntimeConfig().VoxelHighlightX) && voxel.Z == int(r.app.RuntimeConfig().VoxelHighlightZ) && voxel.Y < 50 {
+			r.app.RuntimeConfig().VoxelHighlightDistanceField = float32(voxel.DistanceField)
+			r.app.RuntimeConfig().VoxelHighlightRegionID = voxel.RegionID
 			color = mgl32.Vec3{10, 10, 10}
 		} else if voxel.Seed {
 			color = mgl32.Vec3{1, 0, 1}
-		} else if r.app.Settings().NavMeshHSV {
-			if voxel.RegionID != -1 && voxel.RegionID <= int(r.app.Settings().NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(r.app.Settings().NavMeshDistanceFieldThreshold) {
+		} else if r.app.RuntimeConfig().NavMeshHSV {
+			if voxel.RegionID != -1 && voxel.RegionID <= int(r.app.RuntimeConfig().NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(r.app.RuntimeConfig().NavMeshDistanceFieldThreshold) {
 				// if voxel.RegionID != -1 {
-				hsv = mgl32.Vec3{float32((voxel.RegionID * int(r.app.Settings().HSVOffset)) % 255), 1, 1}
+				hsv = mgl32.Vec3{float32((voxel.RegionID * int(r.app.RuntimeConfig().HSVOffset)) % 255), 1, 1}
 				color = HSVtoRGB(hsv)
 			}
 		}
@@ -455,9 +455,9 @@ func (r *Renderer) drawModel(
 			}
 
 			shader.SetUniformVec3("albedo", primitiveMaterial.BaseColorFactor.Vec3())
-			if r.app.Settings().MaterialOverride {
-				shader.SetUniformFloat("roughness", r.app.Settings().Roughness)
-				shader.SetUniformFloat("metallic", r.app.Settings().Metallic)
+			if r.app.RuntimeConfig().MaterialOverride {
+				shader.SetUniformFloat("roughness", r.app.RuntimeConfig().Roughness)
+				shader.SetUniformFloat("metallic", r.app.RuntimeConfig().Metallic)
 			} else {
 				shader.SetUniformFloat("roughness", primitiveMaterial.RoughnessFactor)
 				shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
@@ -1198,14 +1198,14 @@ func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far,
 }
 
 func (r *Renderer) iztDrawArrays(first, count int32) {
-	r.app.Settings().TriangleDrawCount += int(count / 3)
-	r.app.Settings().DrawCount += 1
+	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
+	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
 }
 
 func (r *Renderer) iztDrawElements(count int32) {
-	r.app.Settings().TriangleDrawCount += int(count / 3)
-	r.app.Settings().DrawCount += 1
+	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
+	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }
 

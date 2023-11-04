@@ -108,7 +108,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	// settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
 	// shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
 	dimension := 14400
-	shadowMap, err := NewShadowMap(dimension, dimension, float64(r.app.Settings().Far))
+	shadowMap, err := NewShadowMap(dimension, dimension, float64(r.app.RuntimeConfig().Far))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
@@ -201,8 +201,8 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 
 func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	initOpenGLRenderSettings()
-	r.app.Settings().TriangleDrawCount = 0
-	r.app.Settings().DrawCount = 0
+	r.app.RuntimeConfig().TriangleDrawCount = 0
+	r.app.RuntimeConfig().DrawCount = 0
 
 	// configure camera viewer context
 
@@ -226,19 +226,19 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		Rotation: rotation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.Settings().Near), float64(r.app.Settings().Far)),
+		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
 	}
 
 	lightFrustumPoints := calculateFrustumPoints(
 		position,
 		rotation,
-		float64(r.app.Settings().Near),
-		float64(r.app.Settings().Far),
+		float64(r.app.RuntimeConfig().Near),
+		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
 		0,
-		float64(r.app.Settings().ShadowFarFactor),
+		float64(r.app.RuntimeConfig().ShadowFarFactor),
 	)
 
 	// find the directional light if there is one
@@ -298,37 +298,37 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderGizmos(cameraViewerContext, renderContext)
 
 	var finalRenderTexture uint32
-	if r.app.Settings().Bloom {
+	if r.app.RuntimeConfig().Bloom {
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
-			r.app.Settings().DebugTexture = finalRenderTexture
+			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
-			r.app.Settings().DebugTexture = r.colorPickingTexture
+			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionHDR {
-			r.app.Settings().DebugTexture = r.mainColorTexture
+			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
-			r.app.Settings().DebugTexture = upsampleTexture
+			r.app.RuntimeConfig().DebugTexture = upsampleTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionShadowDepthMap {
-			r.app.Settings().DebugTexture = r.shadowMap.depthTexture
+			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionCameraDepthMap {
-			r.app.Settings().DebugTexture = r.cameraDepthTexture
+			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
-			r.app.Settings().DebugTexture = finalRenderTexture
+			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
-			r.app.Settings().DebugTexture = r.colorPickingTexture
+			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionHDR {
-			r.app.Settings().DebugTexture = 0
+			r.app.RuntimeConfig().DebugTexture = 0
 		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
-			r.app.Settings().DebugTexture = 0
+			r.app.RuntimeConfig().DebugTexture = 0
 		} else if panels.SelectedComboOption == panels.ComboOptionShadowDepthMap {
-			r.app.Settings().DebugTexture = r.shadowMap.depthTexture
+			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionCameraDepthMap {
-			r.app.Settings().DebugTexture = r.cameraDepthTexture
+			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		}
 	}
 
@@ -345,12 +345,12 @@ func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotatio
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
-		float64(r.app.Settings().Near),
-		float64(r.app.Settings().Far),
+		float64(r.app.RuntimeConfig().Near),
+		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
-		float64(r.app.Settings().SPNearPlaneOffset),
+		float64(r.app.RuntimeConfig().SPNearPlaneOffset),
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
@@ -361,8 +361,8 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation m
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
-		float64(r.app.Settings().Near),
-		float64(r.app.Settings().Far),
+		float64(r.app.RuntimeConfig().Near),
+		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
@@ -375,7 +375,7 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation m
 
 func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox) []*entities.Entity {
 	var renderEntities []*entities.Entity
-	if r.app.Settings().EnableSpatialPartition {
+	if r.app.RuntimeConfig().EnableSpatialPartition {
 		spatialPartition := r.world.SpatialPartition()
 		frustumEntities := spatialPartition.QueryEntities(boundingBox)
 		for _, entity := range frustumEntities {
@@ -430,7 +430,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		}
 	}
 
-	if r.app.Settings().EnableSpatialPartition && r.app.Settings().RenderSpatialPartition {
+	if r.app.RuntimeConfig().EnableSpatialPartition && r.app.RuntimeConfig().RenderSpatialPartition {
 		r.drawSpatialPartition(viewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
 	}
 
@@ -496,7 +496,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	// 			shader := shaderManager.GetShaderProgram("color_pbr")
 	// 			shader.Use()
 
-	// 			if r.app.Settings().Bloom {
+	// 			if r.app.RuntimeConfig().Bloom {
 	// 				shader.SetUniformInt("applyToneMapping", 0)
 	// 			} else {
 	// 				// only tone map if we're not applying bloom, otherwise
@@ -510,10 +510,10 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
 	// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	// 			shader.SetUniformFloat("ambientFactor", r.app.Settings().AmbientFactor)
+	// 			shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 	// 			shader.SetUniformInt("shadowMap", 31)
 	// 			shader.SetUniformInt("depthCubeMap", 30)
-	// 			shader.SetUniformFloat("bias", r.app.Settings().PointLightBias)
+	// 			shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
 	// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 	// 			shader.SetUniformInt("isAnimated", 0)
 	// 			shader.SetUniformInt("hasColorOverride", 1)
@@ -525,8 +525,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	// 			shader.SetUniformInt("hasPBRMaterial", 1)
 	// 			shader.SetUniformFloat("ao", 1.0)
 	// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-	// 			shader.SetUniformFloat("roughness", r.app.Settings().Roughness)
-	// 			shader.SetUniformFloat("metallic", r.app.Settings().Metallic)
+	// 			shader.SetUniformFloat("roughness", r.app.RuntimeConfig().Roughness)
+	// 			shader.SetUniformFloat("metallic", r.app.RuntimeConfig().Metallic)
 
 	// 			setupLightingUniforms(shader, lightContext.Lights)
 
@@ -553,7 +553,7 @@ func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableE
 	r.shadowMap.Prepare()
 	defer gl.CullFace(gl.BACK)
 
-	if !r.app.Settings().EnableShadowMapping {
+	if !r.app.RuntimeConfig().EnableShadowMapping {
 		// set the depth to be max value to prevent shadow mapping
 		gl.ClearDepth(1)
 		gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -733,7 +733,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader := shaderManager.GetShaderProgram("modelpbr")
 	shader.Use()
 
-	if !r.app.Settings().Bloom {
+	if !r.app.RuntimeConfig().Bloom {
 		// only tone map if we're not applying bloom, otherwise
 		// we want to keep the HDR values and tone map later
 		shader.SetUniformInt("applyToneMapping", 1)
@@ -741,18 +741,18 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		shader.SetUniformInt("applyToneMapping", 0)
 	}
 
-	if r.app.Settings().FogEnabled {
+	if r.app.RuntimeConfig().FogEnabled {
 		shader.SetUniformInt("fog", 1)
 	} else {
 		shader.SetUniformInt("fog", 0)
 	}
 
 	var fog int32 = 0
-	if r.app.Settings().FogDensity != 0 {
+	if r.app.RuntimeConfig().FogDensity != 0 {
 		fog = 1
 	}
 	shader.SetUniformInt("fog", fog)
-	shader.SetUniformInt("fogDensity", r.app.Settings().FogDensity)
+	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
 	shader.SetUniformInt("width", int32(r.width))
 	shader.SetUniformInt("height", int32(r.height))
@@ -761,14 +761,14 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	shader.SetUniformFloat("ambientFactor", r.app.Settings().AmbientFactor)
+	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
 	shader.SetUniformInt("cameraDepthMap", 29)
 
-	shader.SetUniformFloat("near", r.app.Settings().Near)
-	shader.SetUniformFloat("far", r.app.Settings().Far)
-	shader.SetUniformFloat("bias", r.app.Settings().PointLightBias)
+	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+	shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
 	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
 	shader.SetUniformInt("hasColorOverride", 0)
 
@@ -817,7 +817,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			continue
 		}
 
-		if r.app.Settings().RenderColliders {
+		if r.app.RuntimeConfig().RenderColliders {
 			capsuleCollider := entity.Collider.CapsuleCollider
 			if capsuleCollider != nil {
 				shader := shaderManager.GetShaderProgram("flat")
@@ -893,7 +893,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 	imgui.NewFrame()
 
 	menuBarSize := menus.SetupMenuBar(r.app)
-	if r.app.Settings().UIEnabled {
+	if r.app.RuntimeConfig().UIEnabled {
 		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
 		imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 		imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)

@@ -13,10 +13,10 @@ const (
 )
 
 type EntityState struct {
-	ID          int
-	Position    mgl64.Vec3
-	Orientation mgl64.Quat
-	Velocity    mgl64.Vec3
+	ID       int
+	Position mgl64.Vec3
+	Rotation mgl64.Quat
+	Velocity mgl64.Vec3
 }
 
 type CommandFrame struct {
@@ -44,10 +44,10 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 		FrameNumber: frameNumber,
 		FrameInput:  frameInput,
 		PostCFState: EntityState{
-			ID:          player.GetID(),
-			Position:    player.LocalPosition,
-			Orientation: player.LocalRotation,
-			Velocity:    player.Physics.Velocity,
+			ID:       player.GetID(),
+			Position: player.LocalPosition,
+			Rotation: player.LocalRotation,
+			Velocity: player.Physics.Velocity,
 		},
 	}
 

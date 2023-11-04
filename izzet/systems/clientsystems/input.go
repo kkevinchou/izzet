@@ -32,8 +32,8 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 	// TODO - send inputs asynchronously
 	frameInput := world.GetFrameInput()
-	cameraOrientation := s.computePlayerCameraOrientation(world, frameInput)
-	world.SetInputCameraRotation(cameraOrientation)
+	cameraRotation := s.computePlayerCameraRotation(world, frameInput)
+	world.SetInputCameraRotation(cameraRotation)
 	frameInput = world.GetFrameInput()
 
 	inputMessage := network.InputMessage{
@@ -52,14 +52,14 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	// }
 }
 
-func (s *InputSystem) computePlayerCameraOrientation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {
+func (s *InputSystem) computePlayerCameraRotation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {
 	camera := s.app.GetPlayerCamera()
-	newOrientation := computeCameraOrientation(frameInput, camera)
-	entities.SetLocalRotation(camera, newOrientation)
-	return newOrientation
+	newRotation := computeCameraRotation(frameInput, camera)
+	entities.SetLocalRotation(camera, newRotation)
+	return newRotation
 }
 
-func computeCameraOrientation(frameInput input.Input, camera *entities.Entity) mgl64.Quat {
+func computeCameraRotation(frameInput input.Input, camera *entities.Entity) mgl64.Quat {
 	// camera rotations
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
@@ -78,11 +78,11 @@ func computeCameraOrientation(frameInput input.Input, camera *entities.Entity) m
 	deltaRotationY := mgl64.QuatRotate(xRel, mgl64.Vec3{0, 1, 0}) // yaw
 	deltaRotation := deltaRotationY.Mul(deltaRotationX)
 
-	newOrientation := deltaRotation.Mul(camera.LocalRotation)
+	newRotation := deltaRotation.Mul(camera.LocalRotation)
 	// don't let the camera go upside down
-	if newOrientation.Rotate(mgl64.Vec3{0, 1, 0}).Y() < 0 {
-		newOrientation = camera.LocalRotation
+	if newRotation.Rotate(mgl64.Vec3{0, 1, 0}).Y() < 0 {
+		newRotation = camera.LocalRotation
 	}
 
-	return newOrientation
+	return newRotation
 }

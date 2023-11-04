@@ -70,6 +70,9 @@ const (
 
 	GizmoAxisThickness  float64 = 0.08
 	GizmoDistanceFactor float64 = 8
+
+	MaxCommandFrameBufferSize int = 100000
+	MaxStateBufferSize        int = 100
 )
 
 // styles

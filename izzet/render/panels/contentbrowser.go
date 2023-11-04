@@ -87,17 +87,13 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 				imgui.ImageV(item.texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 				if imgui.BeginPopupContextItem() {
 					if imgui.Button("Instantiate") {
-						fmt.Println(i)
 						document := app.AssetManager().GetDocument(item.name)
 						handle := modellibrary.NewGlobalHandle(item.name)
-						// entity := InstantiateEntity(document.Name)
-						// entity.MeshComponent = &MeshC
-						var scene *modelspec.Scene
 						if len(document.Scenes) != 1 {
 							panic("single entity asset loading only supports a singular scene")
 						}
 
-						scene = document.Scenes[0]
+						scene := document.Scenes[0]
 						node := scene.Nodes[0]
 
 						entity := entities.InstantiateEntity(document.Name)

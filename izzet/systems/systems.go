@@ -3,7 +3,6 @@ package systems
 import (
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -20,7 +19,7 @@ type GameWorld interface {
 	GetEntityByID(int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetFrameInput() input.Input
-	SetInputCameraRotation(mgl64.Quat)
+	SetFrameInput(input input.Input)
 	GetEvents() []events.Event
 	QueueEvent(events.Event)
 	ClearEventQueue()

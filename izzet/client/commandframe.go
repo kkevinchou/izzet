@@ -435,7 +435,11 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 
 	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+		entityID, err := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
 			panels.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
@@ -456,7 +460,11 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 func (g *Client) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3) *mgl64.Vec3 {
 	mouseInput := frameInput.MouseInput
 
-	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+	colorPickingID, err := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	if colorPickingID != nil {
 		if _, ok := targetGizmo.EntityIDToAxis[*colorPickingID]; ok {
 			if !mouseInput.Buttons[0] {

@@ -80,8 +80,6 @@ func main() {
 
 	if mode == "SERVER" {
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, defaultSaveFile)
-		// clientApp.StartAsyncServer()
-		// err := clientApp.Connect()
 		if err != nil {
 			fmt.Println(err)
 		}

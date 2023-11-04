@@ -78,6 +78,7 @@ type Client struct {
 	commandFrameHistory *clientsystems.CommandFrameHistory
 	asyncServerStarted  bool
 	asyncServerDone     chan bool
+	serverAddress       string
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
@@ -114,6 +115,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		assetManager:    assets.NewAssetManager(assetsDirectory, true),
 		modelLibrary:    modellibrary.New(true),
 		world:           world.New(map[int]*entities.Entity{}),
+		serverAddress:   config.ServerAddress,
 	}
 
 	g.initSettings()

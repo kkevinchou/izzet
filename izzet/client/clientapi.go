@@ -190,10 +190,9 @@ func (g *Client) Connect() error {
 		return nil
 	}
 
-	address := fmt.Sprintf("localhost:7878")
-	fmt.Println("connecting to " + address)
+	fmt.Println("connecting to " + g.serverAddress)
 
-	conn, err := net.Dial("tcp", address)
+	conn, err := net.Dial("tcp", g.serverAddress)
 	if err != nil {
 		return err
 	}
@@ -392,4 +391,8 @@ func (g *Client) initialize() {
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
+}
+
+func (g *Client) ServerAddress() string {
+	return g.serverAddress
 }

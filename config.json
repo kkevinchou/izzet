@@ -2,5 +2,6 @@
 	"width": 1024,
 	"height": 768,
 	"fullscreen": true,
-	"profile": true
+	"profile": true,
+	"server_address": "localhost:7878"
 }

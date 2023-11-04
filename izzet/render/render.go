@@ -925,6 +925,14 @@ func (r *Renderer) renderImgui(renderContext RenderContext) {
 		imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
 		imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
+		panels.BuildContentBrowser(
+			r.app,
+			r.world,
+			renderContext,
+			menuBarSize,
+			r.app.Prefabs(),
+		)
+
 		panels.BuildTabsSet(
 			r.app,
 			r.world,

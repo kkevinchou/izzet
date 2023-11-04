@@ -77,10 +77,6 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 			}
 		}
 
-		if imgui.MenuItemV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {
-			app.SetShowImguiDemo(!app.ShowImguiDemo())
-		}
-
 		// if imgui.MenuItem("Bake Navigation Mesh") {
 		// 	app.NavMesh().BakeNavMesh()
 		// }
@@ -108,6 +104,10 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 
 		if imgui.MenuItemV("Show UI", "", settings.UIEnabled, true) {
 			settings.UIEnabled = !settings.UIEnabled
+		}
+
+		if imgui.MenuItemV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {
+			app.SetShowImguiDemo(!app.ShowImguiDemo())
 		}
 
 		imgui.EndMenu()

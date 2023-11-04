@@ -226,14 +226,14 @@ func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *mo
 		if entityAsset, ok := data.EntityAssets[docName]; ok {
 			if entityAsset.SingleEntity {
 				modelLibrary.RegisterSingleEntityDocument(doc)
+			} else {
+				for _, mesh := range doc.Meshes {
+					modelLibrary.RegisterMesh(doc.Name, mesh)
+				}
 			}
-		}
-
-		for _, mesh := range doc.Meshes {
-			modelLibrary.RegisterMesh(doc.Name, mesh)
-		}
-		if len(doc.Animations) > 0 {
-			modelLibrary.RegisterAnimations(docName, doc)
+			if len(doc.Animations) > 0 {
+				modelLibrary.RegisterAnimations(docName, doc)
+			}
 		}
 	}
 }
@@ -258,8 +258,6 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, systems.NewAnimationSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
-
-	g.editorModeSystems = append(g.editorModeSystems, systems.NewAnimationSystem(g))
 }
 
 func (g *Client) setupEntities(data *izzetdata.Data) {

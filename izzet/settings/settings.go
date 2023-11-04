@@ -15,18 +15,20 @@ type GameMode string
 // )
 
 type Config struct {
-	Width      int
-	Height     int
-	Fullscreen bool
-	Profile    bool
+	Width         int
+	Height        int
+	Fullscreen    bool
+	Profile       bool
+	ServerAddress string `json:"server_address"`
 }
 
 func NewConfig() Config {
 	return Config{
-		Width:      0,
-		Height:     0,
-		Fullscreen: false,
-		Profile:    false,
+		Width:         0,
+		Height:        0,
+		Fullscreen:    false,
+		Profile:       false,
+		ServerAddress: "localhost:7878",
 	}
 }
 

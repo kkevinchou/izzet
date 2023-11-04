@@ -51,7 +51,7 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	imgui.BeginV("Content Browser", nil, imgui.WindowFlagsNone)
 
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
-		if imgui.BeginTabItem("World") {
+		if imgui.BeginTabItem("Content") {
 			if imgui.Button("Import") {
 
 				// loading the asset

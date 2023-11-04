@@ -388,8 +388,8 @@ func (g *Client) initialize() {
 	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
 
 	g.camera = &camera.Camera{
-		Position:    mgl64.Vec3{-82, 230, 95},
-		Orientation: mgl64.QuatIdent(),
+		Position: mgl64.Vec3{-82, 230, 95},
+		Rotation: mgl64.QuatIdent(),
 	}
 
 	g.serializer = serialization.New(g)

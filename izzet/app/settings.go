@@ -3,8 +3,8 @@ package app
 import "github.com/go-gl/mathgl/mgl64"
 
 type Settings struct {
-	CameraPosition    mgl64.Vec3
-	CameraOrientation mgl64.Quat
+	CameraPosition mgl64.Vec3
+	CameraRotation mgl64.Quat
 
 	DirectionalLightDir  [3]float32
 	Roughness            float32

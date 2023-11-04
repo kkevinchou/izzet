@@ -44,7 +44,7 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		}, true)
 
 		setupRow("Camera Viewing Direction", func() {
-			viewDir := settings.CameraOrientation.Rotate(mgl64.Vec3{0, 0, -1})
+			viewDir := settings.CameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
 

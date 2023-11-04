@@ -57,9 +57,6 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 						continue
 					}
 
-					// entities.SetLocalPosition(entity, transform.Position)
-					// entities.SetLocalRotation(entity, transform.Orientation)
-
 					if entity.Animation != nil {
 						animationPlayer := entity.Animation.AnimationPlayer
 						animationPlayer.PlayAnimation(transform.Animation)

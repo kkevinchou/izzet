@@ -116,6 +116,6 @@ func (g *GameWorld) ClearEventQueue() {
 // DIRTY HACK: the camera orientation isn't really an input, but is contextual
 // information for inputs. I don't know a good place to put this yet so I'm
 // hijacking input.Input
-func (g *GameWorld) SetInputCameraOrientation(orientation mgl64.Quat) {
-	g.frameInput.CameraOrientation = orientation
+func (g *GameWorld) SetInputCameraRotation(rotation mgl64.Quat) {
+	g.frameInput.CameraRotation = rotation
 }

@@ -76,10 +76,12 @@ func main() {
 		}
 	}
 
+	defaultSaveFile := "cubes"
+
 	if mode == "SERVER" {
-		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, "multiplayer_test")
-		clientApp.StartAsyncServer()
-		err := clientApp.Connect()
+		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, defaultSaveFile)
+		// clientApp.StartAsyncServer()
+		// err := clientApp.Connect()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -89,7 +91,7 @@ func main() {
 		go func() {
 			<-started
 		}()
-		serverApp := server.NewWithFile("_assets", "multiplayer_test.json")
+		serverApp := server.NewWithFile("_assets", defaultSaveFile)
 		serverApp.Start(started, make(chan bool))
 	} else if mode == "CLIENT" {
 		config.Fullscreen = false

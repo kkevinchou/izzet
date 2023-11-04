@@ -109,10 +109,6 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
 
-	// g.setupEntities(data)
-	// g.LoadWorld("cubes")
-	// g.LoadWorld("multiplayer_test")
-
 	fmt.Println(time.Since(start), "to start up systems")
 
 	return g

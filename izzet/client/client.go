@@ -393,5 +393,7 @@ func (g *Client) initSettings() {
 		VoxelHighlightZ:               0,
 		VoxelHighlightDistanceField:   -1,
 		VoxelHighlightRegionID:        -1,
+
+		UIEnabled: true,
 	}
 }

@@ -5,14 +5,11 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/network"
-)
-
-const (
-	maxBufferedInterpolations = 100
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 type StateBuffer struct {
-	bufferedInterpolations  [maxBufferedInterpolations]BufferedInterpolation
+	bufferedInterpolations  [settings.MaxStateBufferSize]BufferedInterpolation
 	lastGameStateUpdate     network.GameStateUpdateMessage
 	lastGameStateLocalFrame int
 	cursor                  int
@@ -93,9 +90,9 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 			bi.BufferedStates = append(bi.BufferedStates, bs)
 		}
 
-		sb.bufferedInterpolations[(sb.cursor+sb.count)%maxBufferedInterpolations] = bi
-		if sb.count == maxBufferedInterpolations {
-			panic(fmt.Sprintf("buffer has filled with max capacity %d", maxBufferedInterpolations))
+		sb.bufferedInterpolations[(sb.cursor+sb.count)%settings.MaxStateBufferSize] = bi
+		if sb.count == settings.MaxStateBufferSize {
+			panic(fmt.Sprintf("buffer has filled with max capacity %d", settings.MaxStateBufferSize))
 		}
 		sb.count += 1
 	}
@@ -110,7 +107,7 @@ func (sb *StateBuffer) Pull(localCommandFrame int) (BufferedInterpolation, bool)
 	}
 
 	snapshot := sb.bufferedInterpolations[sb.cursor]
-	sb.cursor = (sb.cursor + 1) % maxBufferedInterpolations
+	sb.cursor = (sb.cursor + 1) % settings.MaxStateBufferSize
 	sb.count -= 1
 	return snapshot, true
 }

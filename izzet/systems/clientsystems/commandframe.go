@@ -5,11 +5,8 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/input"
-)
-
-const (
-	maxCommandFrameBufferSize = 100
 )
 
 type EntityState struct {
@@ -26,7 +23,7 @@ type CommandFrame struct {
 }
 
 type CommandFrameHistory struct {
-	CommandFrames      [maxCommandFrameBufferSize]CommandFrame
+	CommandFrames      [settings.MaxCommandFrameBufferSize]CommandFrame
 	CommandFrameCount  int
 	CommandFrameCursor int
 }
@@ -36,7 +33,7 @@ func NewCommandFrameHistory() *CommandFrameHistory {
 }
 
 func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.Input, player *entities.Entity) {
-	if h.CommandFrameCount == maxCommandFrameBufferSize {
+	if h.CommandFrameCount == settings.MaxCommandFrameBufferSize {
 		panic("command frame buffer size exceeded")
 	}
 
@@ -51,9 +48,9 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 		},
 	}
 
-	h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount)%maxCommandFrameBufferSize] = cf
+	h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount)%settings.MaxCommandFrameBufferSize] = cf
 	h.CommandFrameCount += 1
-	if h.CommandFrames[h.CommandFrameCursor].FrameNumber > h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount-1)%maxCommandFrameBufferSize].FrameNumber {
+	if h.CommandFrames[h.CommandFrameCursor].FrameNumber > h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount-1)%settings.MaxCommandFrameBufferSize].FrameNumber {
 		fmt.Println("WAT")
 	}
 }
@@ -78,7 +75,7 @@ func (h *CommandFrameHistory) GetAllFramesStartingFrom(frameNumber int) ([]Comma
 
 	result := make([]CommandFrame, frameCount)
 	for i := 0; i < frameCount; i++ {
-		result[i] = h.CommandFrames[(index+i)%maxCommandFrameBufferSize]
+		result[i] = h.CommandFrames[(index+i)%settings.MaxCommandFrameBufferSize]
 	}
 
 	return result, nil
@@ -97,7 +94,7 @@ func (h *CommandFrameHistory) GetBufferIndexByFrameNumber(frameNumber int) (int,
 	if frameNumber-startFrameNumber < 0 {
 		return -1, fmt.Errorf("frame number %d is too old and is no longer stored. cursor: %d count: %d start frame: %d", frameNumber, h.CommandFrameCursor, h.CommandFrameCount, startFrameNumber)
 	}
-	index := (h.CommandFrameCursor + frameNumber - startFrameNumber) % maxCommandFrameBufferSize
+	index := (h.CommandFrameCursor + frameNumber - startFrameNumber) % settings.MaxCommandFrameBufferSize
 	if h.CommandFrames[index].FrameNumber != frameNumber {
 		fmt.Println("Wat")
 	}
@@ -116,10 +113,10 @@ func (h *CommandFrameHistory) ClearUntilFrameNumber(frameNumber int) error {
 	}
 
 	delta := frameNumber - startFrameNumber
-	h.CommandFrameCursor = (h.CommandFrameCursor + delta) % maxCommandFrameBufferSize
+	h.CommandFrameCursor = (h.CommandFrameCursor + delta) % settings.MaxCommandFrameBufferSize
 	h.CommandFrameCount -= delta
 
-	if h.CommandFrames[h.CommandFrameCursor].FrameNumber > h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount-1)%maxCommandFrameBufferSize].FrameNumber {
+	if h.CommandFrames[h.CommandFrameCursor].FrameNumber > h.CommandFrames[(h.CommandFrameCursor+h.CommandFrameCount-1)%settings.MaxCommandFrameBufferSize].FrameNumber {
 		fmt.Println("WAT")
 	}
 

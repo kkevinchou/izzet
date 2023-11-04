@@ -15,7 +15,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -53,7 +52,6 @@ type Client struct {
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
 
-	navigationMesh  *navmesh.NavigationMesh
 	metricsRegistry *metrics.MetricsRegistry
 
 	showImguiDemo bool
@@ -63,7 +61,6 @@ type Client struct {
 
 	playModeSystems   []systems.System
 	editorModeSystems []systems.System
-	serverModeSystems []systems.System
 	appMode           app.AppMode
 	collisionObserver *observers.CollisionObserver
 	stateBuffer       *clientsystems.StateBuffer

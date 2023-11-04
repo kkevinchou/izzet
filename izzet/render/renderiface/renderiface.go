@@ -5,7 +5,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -19,7 +18,6 @@ type App interface {
 	ModelLibrary() *modellibrary.ModelLibrary
 	GetEditorCamera() *camera.Camera
 	Prefabs() []*prefabs.Prefab
-	NavMesh() *navmesh.NavigationMesh
 	ResetNavMeshVAO()
 	CommandFrame() int
 

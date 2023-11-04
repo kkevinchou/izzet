@@ -14,7 +14,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -114,10 +113,6 @@ func (g *Client) Redo() {
 // game world
 func (g *Client) Undo() {
 	g.editHistory.Undo()
-}
-
-func (g *Client) NavMesh() *navmesh.NavigationMesh {
-	return g.navigationMesh
 }
 
 func (g *Client) ResetNavMeshVAO() {

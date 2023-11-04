@@ -1164,8 +1164,8 @@ func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	return vao
 }
 
-func calculateFrustumPoints(position mgl64.Vec3, orientation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, nearPlaneOffset float64, farPlaneScaleFactor float64) []mgl64.Vec3 {
-	viewerViewMatrix := orientation.Mat4()
+func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, nearPlaneOffset float64, farPlaneScaleFactor float64) []mgl64.Vec3 {
+	viewerViewMatrix := rotation.Mat4()
 
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 	viewMatrix := viewTranslationMatrix.Mul4(viewerViewMatrix)

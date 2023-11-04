@@ -207,23 +207,23 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	// configure camera viewer context
 
 	var position mgl64.Vec3
-	var orientation mgl64.Quat = mgl64.QuatIdent()
+	var rotation mgl64.Quat = mgl64.QuatIdent()
 
 	if r.app.AppMode() == app.AppModeEditor {
 		position = r.app.GetEditorCamera().Position
-		orientation = r.app.GetEditorCamera().Rotation
+		rotation = r.app.GetEditorCamera().Rotation
 	} else {
 		camera := r.app.GetPlayerCamera()
 		position = camera.WorldPosition()
-		orientation = camera.WorldRotation()
+		rotation = camera.WorldRotation()
 	}
 
-	viewerViewMatrix := orientation.Mat4()
+	viewerViewMatrix := rotation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 
 	cameraViewerContext := ViewerContext{
 		Position: position,
-		Rotation: orientation,
+		Rotation: rotation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
 		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.Settings().Near), float64(r.app.Settings().Far)),
@@ -231,7 +231,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	lightFrustumPoints := calculateFrustumPoints(
 		position,
-		orientation,
+		rotation,
 		float64(r.app.Settings().Near),
 		float64(r.app.Settings().Far),
 		renderContext.FovX(),
@@ -258,13 +258,13 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		directionalLightZ = float64(directionalLight.LightInfo.Direction3F[2])
 	}
 
-	lightOrientation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightOrientation.Mat4(), lightFrustumPoints, settings.ShadowmapZOffset)
-	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightOrientation.Mat4()).Inv()
+	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
+	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, settings.ShadowmapZOffset)
+	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
 
 	lightViewerContext := ViewerContext{
 		Position:          lightPosition,
-		Rotation:          lightOrientation,
+		Rotation:          lightRotation,
 		InverseViewMatrix: lightViewMatrix,
 		ProjectionMatrix:  lightProjectionMatrix,
 	}
@@ -280,8 +280,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	r.clearMainFrameBuffer(renderContext)
 
-	renderEntities := r.fetchRenderableEntities(position, orientation, renderContext)
-	shadowEntities := r.fetchShadowCastingEntities(position, orientation, renderContext)
+	renderEntities := r.fetchRenderableEntities(position, rotation, renderContext)
+	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
 	r.drawSkybox(renderContext)
 	_ = lightViewerContext
@@ -341,10 +341,10 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	r.renderImgui(renderContext)
 }
 
-func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
-		orientation,
+		rotation,
 		float64(r.app.Settings().Near),
 		float64(r.app.Settings().Far),
 		renderContext.FovX(),
@@ -354,13 +354,13 @@ func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, orienta
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
-	return r.fetchEntitiesByBoundingBox(cameraPosition, orientation, renderContext, frustumBoundingBox)
+	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox)
 }
 
-func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
-		orientation,
+		rotation,
 		float64(r.app.Settings().Near),
 		float64(r.app.Settings().Far),
 		renderContext.FovX(),
@@ -370,10 +370,10 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, orientatio
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
-	return r.fetchEntitiesByBoundingBox(cameraPosition, orientation, renderContext, frustumBoundingBox)
+	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox)
 }
 
-func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, orientation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox) []*entities.Entity {
+func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox) []*entities.Entity {
 	var renderEntities []*entities.Entity
 	if r.app.Settings().EnableSpatialPartition {
 		spatialPartition := r.world.SpatialPartition()

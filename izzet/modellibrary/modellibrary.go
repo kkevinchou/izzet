@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -141,16 +140,12 @@ func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.No
 	return result
 }
 
-func (m *ModelLibrary) RegisterDocument(document *modelspec.Document, data *izzetdata.Data) {
+func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document) {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
-			if entityAsset, ok := data.EntityAssets[document.Name]; ok {
-				if entityAsset.SingleEntity {
-					handle := NewGlobalHandle(document.Name)
-					primitives := m.getPrimitives(document, node)
-					m.Primitives[handle] = primitives
-				}
-			}
+			handle := NewGlobalHandle(document.Name)
+			primitives := m.getPrimitives(document, node)
+			m.Primitives[handle] = primitives
 		}
 	}
 }

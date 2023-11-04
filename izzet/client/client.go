@@ -223,7 +223,11 @@ func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *mo
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 
-		modelLibrary.RegisterDocument(doc, data)
+		if entityAsset, ok := data.EntityAssets[docName]; ok {
+			if entityAsset.SingleEntity {
+				modelLibrary.RegisterSingleEntityDocument(doc)
+			}
+		}
 
 		for _, mesh := range doc.Meshes {
 			modelLibrary.RegisterMesh(doc.Name, mesh)

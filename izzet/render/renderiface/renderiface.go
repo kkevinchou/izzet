@@ -1,8 +1,8 @@
 package renderiface
 
 import (
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/camera"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -16,7 +16,8 @@ import (
 type App interface {
 	AssetManager() *assets.AssetManager
 	ModelLibrary() *modellibrary.ModelLibrary
-	GetEditorCamera() *camera.Camera
+	GetEditorCameraPosition() mgl64.Vec3
+	GetEditorCameraRotation() mgl64.Quat
 	Prefabs() []*prefabs.Prefab
 	ResetNavMeshVAO()
 	CommandFrame() int

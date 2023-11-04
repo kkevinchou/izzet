@@ -44,7 +44,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 
 		frameInput := s.app.GetPlayerInput(camera.PlayerInput.PlayerID)
 
-		entities.SetLocalRotation(camera, frameInput.CameraOrientation)
+		entities.SetLocalRotation(camera, frameInput.CameraRotation)
 		shared.UpdateCharacterController(delta, world, frameInput, targetEntity)
 	}
 }

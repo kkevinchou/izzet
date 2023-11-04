@@ -27,7 +27,7 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 			continue
 		}
 		entities.SetLocalPosition(entity, transform.Position)
-		entities.SetLocalRotation(entity, transform.Orientation)
+		entities.SetLocalRotation(entity, transform.Rotation)
 		entity.Physics.Velocity = transform.Velocity
 	}
 

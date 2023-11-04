@@ -15,7 +15,7 @@ const (
 
 func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, entity *entities.Entity) {
 	keyboardInput := frameInput.KeyboardInput
-	cameraOrientation := frameInput.CameraOrientation
+	cameraOrientation := frameInput.CameraRotation
 
 	c := entity.CharacterControllerComponent
 

@@ -3,11 +3,11 @@ package network
 import "github.com/go-gl/mathgl/mgl64"
 
 type EntityState struct {
-	EntityID    int
-	Position    mgl64.Vec3
-	Orientation mgl64.Quat
-	Velocity    mgl64.Vec3
-	Animation   string
+	EntityID  int
+	Position  mgl64.Vec3
+	Rotation  mgl64.Quat
+	Velocity  mgl64.Vec3
+	Animation string
 }
 
 type GameStateUpdateMessage struct {

@@ -48,7 +48,7 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 	for _, entity := range gamestateUpdateMessage.EntityStates {
 		currentEntityStates[entity.EntityID] = BufferedState{
 			Position: entity.Position,
-			Rotation: entity.Orientation,
+			Rotation: entity.Rotation,
 		}
 	}
 
@@ -64,7 +64,7 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 		for _, entity := range sb.lastGameStateUpdate.EntityStates {
 			lastEntityStates[entity.EntityID] = BufferedState{
 				Position: entity.Position,
-				Rotation: entity.Orientation,
+				Rotation: entity.Rotation,
 			}
 		}
 	}

@@ -61,7 +61,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	}
 
 	g.Settings().CameraPosition = g.camera.Position
-	g.Settings().CameraOrientation = g.camera.Orientation
+	g.Settings().CameraRotation = g.camera.Rotation
 }
 
 func (g *Client) handleSpatialPartition() {
@@ -222,8 +222,8 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 		controlVector = app.GetControlVector(keyboardInput)
 	}
 
-	forwardVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 0, -1})
-	upVector := g.camera.Orientation.Rotate(mgl64.Vec3{0, 1, 0})
+	forwardVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
+	upVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 1, 0})
 	// there's probably away to get the right vector directly rather than going crossing the up vector :D
 	rightVector := forwardVector.Cross(upVector)
 
@@ -232,14 +232,14 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	deltaRotationY := mgl64.QuatRotate(viewRotation[0], mgl64.Vec3{0, 1, 0}) // yaw
 	deltaRotation := deltaRotationY.Mul(deltaRotationX)
 
-	newOrientation := deltaRotation.Mul(g.camera.Orientation)
+	newOrientation := deltaRotation.Mul(g.camera.Rotation)
 
 	// don't let the camera go upside down
 	if newOrientation.Rotate(mgl64.Vec3{0, 1, 0})[1] < 0 {
-		newOrientation = g.camera.Orientation
+		newOrientation = g.camera.Rotation
 	}
 
-	g.camera.Orientation = newOrientation
+	g.camera.Rotation = newOrientation
 
 	// keyboardInput := frameInput.KeyboardInput
 	// controlVector := getControlVector(keyboardInput)

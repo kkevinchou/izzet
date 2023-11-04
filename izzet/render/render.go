@@ -211,7 +211,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	if r.app.AppMode() == app.AppModeEditor {
 		position = r.app.GetEditorCamera().Position
-		orientation = r.app.GetEditorCamera().Orientation
+		orientation = r.app.GetEditorCamera().Rotation
 	} else {
 		camera := r.app.GetPlayerCamera()
 		position = camera.WorldPosition()
@@ -222,8 +222,8 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 
 	cameraViewerContext := ViewerContext{
-		Position:    position,
-		Orientation: orientation,
+		Position: position,
+		Rotation: orientation,
 
 		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
 		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.Settings().Near), float64(r.app.Settings().Far)),
@@ -264,7 +264,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 
 	lightViewerContext := ViewerContext{
 		Position:          lightPosition,
-		Orientation:       lightOrientation,
+		Rotation:          lightOrientation,
 		InverseViewMatrix: lightViewMatrix,
 		ProjectionMatrix:  lightProjectionMatrix,
 	}
@@ -705,7 +705,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 					modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
 
 					shader.SetUniformUInt("entityID", uint32(entity.ID))
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.GetEditorCamera().Orientation.Mat4())))
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.GetEditorCamera().Rotation.Mat4())))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 

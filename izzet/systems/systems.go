@@ -20,7 +20,7 @@ type GameWorld interface {
 	GetEntityByID(int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetFrameInput() input.Input
-	SetInputCameraOrientation(mgl64.Quat)
+	SetInputCameraRotation(mgl64.Quat)
 	GetEvents() []events.Event
 	QueueEvent(events.Event)
 	ClearEventQueue()

@@ -22,15 +22,6 @@ func NewInputSystem(app App) *InputSystem {
 }
 
 func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
-	// if s.f == nil {
-	// 	f, err := os.OpenFile(fmt.Sprintf("clientlog-%d.log", s.app.GetPlayerID()), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// 	s.f = f
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// }
-
-	// TODO - send inputs asynchronously
 	frameInput := world.GetFrameInput()
 	cameraRotation := s.computePlayerCameraRotation(world, frameInput)
 	world.SetInputCameraRotation(cameraRotation)

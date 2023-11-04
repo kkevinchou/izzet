@@ -115,23 +115,22 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("Multiplayer") {
-		if imgui.MenuItemV("Connect Client", "", app.IsConnected(), true) {
+		if imgui.MenuItemV("Connect Client", "", app.IsConnected(), !app.IsConnected()) {
 			err := app.ConnectAndInitialize()
 			if err != nil {
 				fmt.Println(err)
 			}
 		}
 
-		if imgui.MenuItem("Disconnect Client") {
+		if imgui.MenuItemV("Disconnect Client", "", false, app.IsConnected()) {
 			app.DisconnectClient()
 		}
 
-		// if imgui.MenuItem("Start Async Server") {
-		if imgui.MenuItemV("Start Async Server", "", app.AsyncServerStarted(), true) {
+		if imgui.MenuItemV("Start Async Server", "", app.AsyncServerStarted(), !app.AsyncServerStarted()) {
 			app.StartAsyncServer()
 		}
 
-		if imgui.MenuItem("Stop Async Server") {
+		if imgui.MenuItemV("Stop Async Server", "", false, app.AsyncServerStarted()) {
 			app.DisconnectAsyncServer()
 		}
 

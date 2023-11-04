@@ -365,11 +365,13 @@ func (g *Client) AsyncServerStarted() bool {
 }
 
 func (g *Client) DisconnectClient() {
-	g.connection.Close()
-	g.clientConnected = false
-	g.commandFrameHistory.Reset()
-	g.StopLiveWorld()
-	g.settings.UIEnabled = true
+	if g.clientConnected {
+		g.connection.Close()
+		g.clientConnected = false
+		g.commandFrameHistory.Reset()
+		g.StopLiveWorld()
+		g.settings.UIEnabled = true
+	}
 }
 
 func (g *Client) World() *world.GameWorld {

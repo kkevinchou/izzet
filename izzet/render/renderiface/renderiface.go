@@ -38,7 +38,7 @@ type App interface {
 	SaveWorld(string)
 
 	CollisionObserver() *observers.CollisionObserver
-	Settings() *app.Settings
+	RuntimeConfig() *app.RuntimeConfig
 	Connect() error
 	ConnectAndInitialize() error
 	IsConnected() bool

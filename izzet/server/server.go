@@ -44,7 +44,7 @@ type Server struct {
 	appMode           app.AppMode
 	collisionObserver *observers.CollisionObserver
 
-	settings *app.Settings
+	settings *app.RuntimeConfig
 
 	players map[int]*network.Player
 
@@ -172,7 +172,7 @@ func initSeed() {
 }
 
 func (g *Server) initSettings() {
-	g.settings = &app.Settings{
+	g.settings = &app.RuntimeConfig{
 		DirectionalLightDir:    [3]float32{-1, -1, -1},
 		Roughness:              0.55,
 		Metallic:               1.0,

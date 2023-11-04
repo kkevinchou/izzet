@@ -181,8 +181,8 @@ func (g *Client) CollisionObserver() *observers.CollisionObserver {
 	return g.collisionObserver
 }
 
-func (g *Client) Settings() *app.Settings {
-	return g.settings
+func (g *Client) RuntimeConfig() *app.RuntimeConfig {
+	return g.runtimeConfig
 }
 func (g *Client) ConnectAndInitialize() error {
 	g.initialize()
@@ -201,7 +201,7 @@ func (g *Client) Connect() error {
 		return err
 	}
 
-	g.settings.UIEnabled = false
+	g.runtimeConfig.UIEnabled = false
 
 	g.StartLiveWorld()
 
@@ -369,7 +369,7 @@ func (g *Client) DisconnectClient() {
 		g.clientConnected = false
 		g.commandFrameHistory.Reset()
 		g.StopLiveWorld()
-		g.settings.UIEnabled = true
+		g.runtimeConfig.UIEnabled = true
 	}
 }
 

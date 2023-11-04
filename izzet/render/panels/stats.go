@@ -8,7 +8,7 @@ import (
 )
 
 func stats(app renderiface.App, renderContext RenderContext) {
-	settings := app.Settings()
+	settings := app.RuntimeConfig()
 	mr := app.MetricsRegistry()
 
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {

@@ -65,7 +65,7 @@ type Client struct {
 	collisionObserver *observers.CollisionObserver
 	stateBuffer       *clientsystems.StateBuffer
 
-	settings *app.Settings
+	runtimeConfig *app.RuntimeConfig
 
 	playerID        int
 	playerEntity    *entities.Entity
@@ -187,16 +187,16 @@ func (g *Client) Start() {
 		if renderAccumulator >= msPerFrame {
 			g.MetricsRegistry().Inc("fps", 1)
 
-			g.Settings().FPS = g.MetricsRegistry().GetOneSecondSum("fps")
-			g.Settings().CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
-			g.Settings().RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
-			g.Settings().CommandFramesPerRender = commandFrameCountBeforeRender
+			g.RuntimeConfig().FPS = g.MetricsRegistry().GetOneSecondSum("fps")
+			g.RuntimeConfig().CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
+			g.RuntimeConfig().RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
+			g.RuntimeConfig().CommandFramesPerRender = commandFrameCountBeforeRender
 			commandFrameCountBeforeRender = 0
 
 			start := time.Now()
 			frameCount++
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			renderContext := render.NewRenderContext(g.width, g.height, float64(g.Settings().FovX))
+			renderContext := render.NewRenderContext(g.width, g.height, float64(g.RuntimeConfig().FovX))
 			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
 			g.window.GLSwap()
 			renderTime := time.Since(start).Milliseconds()
@@ -352,7 +352,7 @@ func (g *Client) mousePosToNearPlane(mouseInput input.MouseInput, width, height 
 }
 
 func (g *Client) initSettings() {
-	g.settings = &app.Settings{
+	g.runtimeConfig = &app.RuntimeConfig{
 		DirectionalLightDir:    [3]float32{-1, -1, -1},
 		Roughness:              0.55,
 		Metallic:               1.0,

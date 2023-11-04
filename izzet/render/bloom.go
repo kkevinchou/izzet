@@ -110,12 +110,12 @@ func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 		} else {
 			shader.SetUniformInt("karis", 0)
 		}
-		if i < int(r.app.Settings().BloomThresholdPasses) {
+		if i < int(r.app.RuntimeConfig().BloomThresholdPasses) {
 			shader.SetUniformInt("bloomThresholdEnabled", 1)
 		} else {
 			shader.SetUniformInt("bloomThresholdEnabled", 0)
 		}
-		shader.SetUniformFloat("bloomThreshold", r.app.Settings().BloomThreshold)
+		shader.SetUniformFloat("bloomThreshold", r.app.RuntimeConfig().BloomThreshold)
 		r.iztDrawArrays(0, 6)
 		srcTexture = r.downSampleTextures[i]
 	}
@@ -140,7 +140,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 
 		shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 		shader.Use()
-		shader.SetUniformFloat("upSamplingScale", r.app.Settings().BloomUpsamplingScale)
+		shader.SetUniformFloat("upSamplingScale", r.app.RuntimeConfig().BloomUpsamplingScale)
 
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
@@ -162,7 +162,7 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 
 	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 	shader.Use()
-	shader.SetUniformFloat("upSamplingScale", r.app.Settings().BloomUpsamplingScale)
+	shader.SetUniformFloat("upSamplingScale", r.app.RuntimeConfig().BloomUpsamplingScale)
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
@@ -214,8 +214,8 @@ func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uin
 
 	shader.SetUniformInt("scene", 0)
 	shader.SetUniformInt("bloomBlur", 1)
-	shader.SetUniformFloat("exposure", r.app.Settings().Exposure)
-	shader.SetUniformFloat("bloomIntensity", r.app.Settings().BloomIntensity)
+	shader.SetUniformFloat("exposure", r.app.RuntimeConfig().Exposure)
+	shader.SetUniformFloat("bloomIntensity", r.app.RuntimeConfig().BloomIntensity)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)

@@ -33,7 +33,7 @@ var (
 )
 
 func worldProps(app renderiface.App, renderContext RenderContext) {
-	settings := app.Settings()
+	settings := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)

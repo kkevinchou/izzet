@@ -22,7 +22,7 @@ var worldName string = "scene"
 var selectedWorldName string = ""
 
 func SetupMenuBar(app renderiface.App) imgui.Vec2 {
-	settings := app.Settings()
+	settings := app.RuntimeConfig()
 
 	imgui.BeginMainMenuBar()
 	size := imgui.WindowSize()

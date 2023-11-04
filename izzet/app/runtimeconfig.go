@@ -2,7 +2,7 @@ package app
 
 import "github.com/go-gl/mathgl/mgl64"
 
-type Settings struct {
+type RuntimeConfig struct {
 	CameraPosition mgl64.Vec3
 	CameraRotation mgl64.Quat
 

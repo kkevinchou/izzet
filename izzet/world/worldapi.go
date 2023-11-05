@@ -3,10 +3,8 @@ package world
 import (
 	"sort"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -57,10 +55,6 @@ func (g *GameWorld) Entities() []*entities.Entity {
 	return g.sortedEntities
 }
 
-// func (g *GameWorld) Camera() *camera.Camera {
-// 	return g.camera
-// }
-
 func (g *GameWorld) CommandFrame() int {
 	return g.commandFrameCount
 }
@@ -80,29 +74,8 @@ func (g *GameWorld) Lights() []*entities.Entity {
 	return result
 }
 
-// game world
 func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
-}
-
-// func (g *GameWorld) NavMesh() *navmesh.NavigationMesh {
-// 	return g.navigationMesh
-// }
-
-// func (g *GameWorld) ResetNavMeshVAO() {
-// 	render.ResetNavMeshVAO = true
-// }
-
-func (g *GameWorld) SetFrameInput(input input.Input) {
-	g.frameInput = input
-}
-
-func (g *GameWorld) GetFrameInput() input.Input {
-	return g.frameInput
-}
-
-func (g *GameWorld) GetFrameInputPtr() *input.Input {
-	return &g.frameInput
 }
 
 func (g *GameWorld) GetEvents() []events.Event {
@@ -115,11 +88,4 @@ func (g *GameWorld) QueueEvent(event events.Event) {
 
 func (g *GameWorld) ClearEventQueue() {
 	g.events = nil
-}
-
-// DIRTY HACK: the camera orientation isn't really an input, but is contextual
-// information for inputs. I don't know a good place to put this yet so I'm
-// hijacking input.Input
-func (g *GameWorld) SetInputCameraRotation(rotation mgl64.Quat) {
-	g.frameInput.CameraRotation = rotation
 }

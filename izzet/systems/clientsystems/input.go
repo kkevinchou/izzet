@@ -22,7 +22,7 @@ func NewInputSystem(app App) *InputSystem {
 }
 
 func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
-	frameInput := world.GetFrameInputPtr()
+	frameInput := s.app.GetFrameInputPtr()
 	cameraRotation := s.computePlayerCameraRotation(world, *frameInput)
 	frameInput.CameraRotation = cameraRotation
 

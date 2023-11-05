@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
@@ -22,4 +23,6 @@ type App interface {
 	MetricsRegistry() *metrics.MetricsRegistry
 	Client() network.IzzetClient
 	StateBuffer() *StateBuffer
+	GetFrameInput() input.Input
+	GetFrameInputPtr() *input.Input
 }

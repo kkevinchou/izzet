@@ -79,6 +79,8 @@ type Client struct {
 	asyncServerStarted  bool
 	asyncServerDone     chan bool
 	serverAddress       string
+
+	frameInput input.Input
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
@@ -164,7 +166,8 @@ func (g *Client) Start() {
 			input := g.platform.PollInput()
 			g.HandleInput(input)
 			start := time.Now()
-			g.world.SetFrameInput(input)
+			g.frameInput = input
+
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))

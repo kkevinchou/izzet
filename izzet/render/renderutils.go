@@ -866,13 +866,7 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
-func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) (entityIDPtr *int, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("recovered from panic %v", r)
-		}
-	}()
-
+func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) *int {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
@@ -883,11 +877,11 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {
-		return nil, nil
+		return nil
 	}
 
 	id := int(uintID)
-	return &id, nil
+	return &id
 }
 
 func (r *Renderer) ReadAllPixels() {

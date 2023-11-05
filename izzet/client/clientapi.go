@@ -400,3 +400,11 @@ func (g *Client) initialize() {
 func (g *Client) ServerAddress() string {
 	return g.serverAddress
 }
+
+func (g *Client) GetFrameInput() input.Input {
+	return g.frameInput
+}
+
+func (g *Client) GetFrameInputPtr() *input.Input {
+	return &g.frameInput
+}

@@ -6,7 +6,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -18,9 +17,6 @@ type GameWorld interface {
 	Entities() []*entities.Entity
 	GetEntityByID(int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
-	GetFrameInput() input.Input
-	GetFrameInputPtr() *input.Input
-	SetFrameInput(input input.Input)
 	GetEvents() []events.Event
 	QueueEvent(events.Event)
 	ClearEventQueue()

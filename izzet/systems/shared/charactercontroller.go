@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	jumpVelocity float64 = 200
+	jumpVelocity float64 = 300
 )
 
 func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, entity *entities.Entity) {

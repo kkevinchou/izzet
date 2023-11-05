@@ -8,10 +8,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
-const (
-	jumpVelocity float64 = 200
-)
-
 type CharacterControllerSystem struct {
 	app App
 }

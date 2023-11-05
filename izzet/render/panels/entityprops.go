@@ -240,6 +240,16 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		}
 	}
 
+	if entity.MeshComponent != nil {
+		if imgui.CollapsingHeaderV("Mesh Properties", imgui.TreeNodeFlagsNone) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			initColumns()
+			setupRow("Visible", func() { imgui.Checkbox("", &entity.MeshComponent.Visible) }, true)
+			setupRow("Shadow Casting", func() { imgui.Checkbox("", &entity.MeshComponent.ShadowCasting) }, true)
+			imgui.EndTable()
+		}
+	}
+
 	if entity.Physics != nil {
 		physicsComponent := entity.Physics
 		velocity := &physicsComponent.Velocity

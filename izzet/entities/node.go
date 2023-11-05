@@ -6,6 +6,8 @@ import (
 )
 
 type MeshComponent struct {
-	MeshHandle modellibrary.Handle
-	Transform  mgl64.Mat4
+	MeshHandle    modellibrary.Handle
+	Transform     mgl64.Mat4
+	Visible       bool
+	ShadowCasting bool
 }

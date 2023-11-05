@@ -571,7 +571,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil {
+		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.ShadowCasting {
 			continue
 		}
 
@@ -784,7 +784,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
 	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil {
+		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
 			continue
 		}
 

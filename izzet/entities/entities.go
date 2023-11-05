@@ -167,7 +167,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 		node := scene.Nodes[0]
 
 		entity := InstantiateEntity(document.Name)
-		entity.MeshComponent = &MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4()}
+		entity.MeshComponent = &MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
@@ -258,7 +258,7 @@ func parseEntities(node *modelspec.Node, parent *Entity, namespace string, docum
 	if node.MeshID != nil {
 		entity = InstantiateEntity(node.Name)
 		meshHandle := modellibrary.NewHandleFromMeshID(namespace, *node.MeshID)
-		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Ident4()}
+		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))

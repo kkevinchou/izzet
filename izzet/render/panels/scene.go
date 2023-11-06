@@ -70,7 +70,7 @@ func sceneHierarchy(app renderiface.App, world GameWorld) {
 					ColliderGroup: entities.ColliderGroupFlagPlayer,
 					CollisionMask: entities.ColliderGroupFlagTerrain,
 				}
-				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 100}
+				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200}
 
 				capsule := entity.Collider.CapsuleCollider
 				entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}

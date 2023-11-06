@@ -76,7 +76,7 @@ func main() {
 		}
 	}
 
-	defaultSaveFile := "cubes"
+	defaultSaveFile := "scene"
 
 	if mode == "SERVER" {
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, defaultSaveFile)

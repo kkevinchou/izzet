@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 type CameraTargetSystem struct {
@@ -38,7 +39,7 @@ func update(delta time.Duration, world GameWorld, camera *entities.Entity) {
 	// swivel around target
 	target := world.GetEntityByID(*camera.CameraComponent.Target)
 	targetPosition := target.WorldPosition().Add(camera.CameraComponent.TargetPositionOffset)
-	position := entities.GetLocalRotation(camera).Rotate(mgl64.Vec3{0, 0, 0}).Add(targetPosition)
+	position := entities.GetLocalRotation(camera).Rotate(mgl64.Vec3{0, 0, settings.CameraEntityOffset}).Add(targetPosition)
 
 	entities.SetLocalPosition(camera, position)
 }

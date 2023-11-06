@@ -679,53 +679,72 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 
 	// render non-models
 	for _, entity := range r.world.Entities() {
-		if entity.MeshComponent != nil {
-			continue
-		}
+		if entity.MeshComponent == nil {
+			modelMatrix := entities.WorldTransform(entity)
 
-		modelMatrix := entities.WorldTransform(entity)
+			if len(entity.ShapeData) > 0 {
+				shader := shaderManager.GetShaderProgram("flat")
+				shader.Use()
 
-		if len(entity.ShapeData) > 0 {
-			shader := shaderManager.GetShaderProgram("flat")
-			shader.Use()
-
-			shader.SetUniformUInt("entityID", uint32(entity.ID))
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		}
-
-		if entity.ImageInfo != nil {
-			textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
-			texture := r.app.AssetManager().GetTexture(textureName)
-			if texture != nil {
-				if entity.Billboard && r.app.AppMode() == app.AppModeEditor {
-					shader := shaderManager.GetShaderProgram("world_space_quad")
-					shader.Use()
-
-					position := entity.WorldPosition()
-					modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
-					scale := entity.ImageInfo.Scale
-					modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
-
-					shader.SetUniformUInt("entityID", uint32(entity.ID))
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.GetEditorCameraRotation().Mat4())))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-					r.drawBillboardTexture(texture.ID, 1)
-				}
-			} else {
-				fmt.Println("couldn't find texture", "light")
+				shader.SetUniformUInt("entityID", uint32(entity.ID))
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			}
-		}
 
-		particles := entity.Particles
-		if particles != nil {
-			texture := r.app.AssetManager().GetTexture("light").ID
-			for _, particle := range particles.GetActiveParticles() {
-				particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-				r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
+			if entity.ImageInfo != nil {
+				textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
+				texture := r.app.AssetManager().GetTexture(textureName)
+				if texture != nil {
+					if entity.Billboard && r.app.AppMode() == app.AppModeEditor {
+						shader := shaderManager.GetShaderProgram("world_space_quad")
+						shader.Use()
+
+						position := entity.WorldPosition()
+						modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+						scale := entity.ImageInfo.Scale
+						modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
+
+						shader.SetUniformUInt("entityID", uint32(entity.ID))
+						shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.GetEditorCameraRotation().Mat4())))
+						shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+						shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+						r.drawBillboardTexture(texture.ID, 1)
+					}
+				} else {
+					fmt.Println("couldn't find texture", "light")
+				}
+			}
+
+			particles := entity.Particles
+			if particles != nil {
+				texture := r.app.AssetManager().GetTexture("light").ID
+				for _, particle := range particles.GetActiveParticles() {
+					particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
+					r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
+				}
+			}
+		} else if entity.CharacterControllerComponent != nil {
+			v := mgl64.Vec3{}
+			if entity.CharacterControllerComponent.WebVector != v {
+				// r.drawAABB(
+				// 	viewerContext,
+				// 	shaderManager.GetShaderProgram("flat"),
+				// 	mgl64.Vec3{.2, 0, .7},
+				// 	entity.BoundingBox(),
+				// 	0.5,
+				// )
+
+				forwardVector := viewerContext.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
+				upVector := viewerContext.Rotation.Rotate(mgl64.Vec3{0, 1, 0})
+				// there's probably away to get the right vector directly rather than going crossing the up vector :D
+				rightVector := forwardVector.Cross(upVector)
+
+				lines := [][]mgl64.Vec3{
+					{entity.WorldPosition().Add(rightVector), entity.WorldPosition().Add(entity.CharacterControllerComponent.WebVector)},
+				}
+				r.drawLines(viewerContext, shaderManager.GetShaderProgram("flat"), lines, 1, mgl64.Vec3{1, 0, 0})
 			}
 		}
 	}

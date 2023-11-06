@@ -97,7 +97,7 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 						node := scene.Nodes[0]
 
 						entity := entities.InstantiateEntity(document.Name)
-						entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4()}
+						entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
 						var vertices []modelspec.Vertex
 						entities.VerticesFromNode(node, document, &vertices)
 						entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))

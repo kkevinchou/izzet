@@ -6,7 +6,8 @@ require (
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6
 	github.com/go-gl/mathgl v1.0.0
 	github.com/inkyblackness/imgui-go/v4 v4.6.0
-	github.com/kkevinchou/kitolib v0.0.0-20230211072115-50658f3684cd
+	github.com/kkevinchou/kitolib v0.0.0-20231104093503-cc78ceb7e874
+	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf
 	github.com/veandco/go-sdl2 v0.4.25
 )
 
@@ -14,7 +15,6 @@ require (
 	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/qmuntal/gltf v0.23.1 // indirect
-	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
 )
 

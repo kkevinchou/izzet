@@ -354,7 +354,7 @@ func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotatio
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
-	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox)
+	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.ShadowCasting)
 }
 
 func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -370,16 +370,20 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation m
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
-	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox)
+	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.Renderable)
 }
 
-func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox) []*entities.Entity {
+func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
 	var renderEntities []*entities.Entity
 	if r.app.RuntimeConfig().EnableSpatialPartition {
 		spatialPartition := r.world.SpatialPartition()
 		frustumEntities := spatialPartition.QueryEntities(boundingBox)
 		for _, entity := range frustumEntities {
-			renderEntities = append(renderEntities, r.world.GetEntityByID(entity.GetID()))
+			e := r.world.GetEntityByID(entity.GetID())
+			if !filter(e) {
+				continue
+			}
+			renderEntities = append(renderEntities, e)
 		}
 	} else {
 		renderEntities = r.world.Entities()
@@ -571,7 +575,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.ShadowCasting {
+		if entity == nil || entity.MeshComponent == nil {
 			continue
 		}
 

@@ -741,7 +741,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				// there's probably away to get the right vector directly rather than going crossing the up vector :D
 				rightVector := forwardVector.Cross(upVector)
 
-				start := entity.WorldPosition().Add(rightVector.Mul(10)).Add(mgl64.Vec3{0, 10, 0})
+				start := entity.WorldPosition().Add(rightVector.Mul(10)).Add(mgl64.Vec3{0, 30, 0})
 				lines := [][]mgl64.Vec3{
 					{start, entity.WorldPosition().Add(entity.CharacterControllerComponent.WebVector)},
 				}

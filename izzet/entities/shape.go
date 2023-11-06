@@ -56,8 +56,10 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 
 	handle := ml.GetOrCreateCubeMeshHandle(length)
 	entity.MeshComponent = &MeshComponent{
-		MeshHandle: handle,
-		Transform:  mgl64.Ident4(),
+		MeshHandle:    handle,
+		Transform:     mgl64.Ident4(),
+		Visible:       true,
+		ShadowCasting: true,
 	}
 
 	// cube only has a singular primitives

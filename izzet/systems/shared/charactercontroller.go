@@ -35,9 +35,9 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 	movementDir := calculateMovementDir(cameraRotation, c.ControlVector)
 
 	c.WebVector = mgl64.Vec3{}
+	viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 	if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
 		if event.Event == input.KeyboardEventDown {
-			viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 			c.WebVector = viewVector.Mul(webSpeed)
 		}
 	}
@@ -47,6 +47,12 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 		xzMovementDir := mgl64.Vec3{movementDir.X(), 0, movementDir.Z()}
 		newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, xzMovementDir)
 		entities.SetLocalRotation(entity, newRotation)
+	}
+
+	if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
+		if event.Event == input.KeyboardEventUp {
+			entity.Physics.Velocity = entity.Physics.Velocity.Add(viewVector.Mul(1000))
+		}
 	}
 
 	finalMovementDir := movementDir.Mul(c.Speed)

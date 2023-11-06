@@ -71,8 +71,9 @@ const (
 	GizmoAxisThickness  float64 = 0.08
 	GizmoDistanceFactor float64 = 8
 
-	MaxCommandFrameBufferSize int = 100000
-	MaxStateBufferSize        int = 100
+	MaxCommandFrameBufferSize int     = 100000
+	MaxStateBufferSize        int     = 100
+	CameraEntityOffset        float64 = 100
 )
 
 // styles

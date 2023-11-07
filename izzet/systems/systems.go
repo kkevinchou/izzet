@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -30,4 +31,5 @@ type App interface {
 	GetPlayer(playerID int) *network.Player
 	GetPlayerEntity() *entities.Entity
 	GetPlayerCamera() *entities.Entity
+	MetricsRegistry() *metrics.MetricsRegistry
 }

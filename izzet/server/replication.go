@@ -1,18 +1,22 @@
 package server
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type App interface {
 	GetPlayers() map[int]*network.Player
 	CommandFrame() int
+	MetricsRegistry() *metrics.MetricsRegistry
 }
 
 type Replicator struct {
@@ -58,9 +62,24 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		}
 		transforms = append(transforms, t)
 	}
+
+	stats := serverstats.ServerStats{
+		Data: []serverstats.Stat{
+			{
+				Name:  "CFPS",
+				Value: fmt.Sprintf("%.0f", s.app.MetricsRegistry().GetOneSecondSum("command_frames")),
+			},
+			{
+				Name:  "Collision Time",
+				Value: fmt.Sprintf("%.1f", s.app.MetricsRegistry().GetOneSecondAverage("collision_time")),
+			},
+		},
+	}
+
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
 		EntityStates:       transforms,
 		GlobalCommandFrame: s.app.CommandFrame(),
+		ServerStats:        stats,
 	}
 
 	for _, player := range players {

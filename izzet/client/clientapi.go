@@ -21,6 +21,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server"
+	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
@@ -407,4 +408,12 @@ func (g *Client) GetFrameInput() input.Input {
 
 func (g *Client) GetFrameInputPtr() *input.Input {
 	return &g.frameInput
+}
+
+func (g *Client) SetServerStats(stats serverstats.ServerStats) {
+	g.serverStats = stats
+}
+
+func (g *Client) GetServerStats() serverstats.ServerStats {
+	return g.serverStats
 }

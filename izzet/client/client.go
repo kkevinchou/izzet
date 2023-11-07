@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
@@ -80,7 +81,8 @@ type Client struct {
 	asyncServerDone     chan bool
 	serverAddress       string
 
-	frameInput input.Input
+	frameInput  input.Input
+	serverStats serverstats.ServerStats
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {

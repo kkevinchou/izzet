@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -25,4 +26,5 @@ type App interface {
 	StateBuffer() *StateBuffer
 	GetFrameInput() input.Input
 	GetFrameInputPtr() *input.Input
+	SetServerStats(stats serverstats.ServerStats)
 }

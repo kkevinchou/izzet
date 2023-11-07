@@ -43,6 +43,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					return
 				}
 
+				s.app.SetServerStats(gamestateUpdateMessage.ServerStats)
+
 				playerEntityID := s.app.GetPlayerEntity().GetID()
 				var serverTransform network.EntityState
 

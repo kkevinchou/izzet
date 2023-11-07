@@ -13,7 +13,8 @@ func stats(app renderiface.App, renderContext RenderContext) {
 
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
-		imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
+		initColumns()
+		// imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 
 		// Frame Profiling
 		setupRow("Command Frames Before Render", func() { imgui.LabelText("", fmt.Sprintf("%d", settings.CommandFramesPerRender)) }, true)
@@ -30,7 +31,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(settings.TriangleDrawCount)) }, true)
 		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(settings.DrawCount)) }, true)
 
-		setupRow("Texture Viewer Table Row", func() {
+		setupRow("Texture Viewer", func() {
 			if settings.DebugTexture != 0 {
 				if imgui.Button("Toggle Texture Window") {
 					settings.ShowDebugTexture = !settings.ShowDebugTexture
@@ -61,6 +62,16 @@ func stats(app renderiface.App, renderContext RenderContext) {
 				}
 			}
 		}, true)
+		imgui.EndTable()
+	}
+	if imgui.CollapsingHeaderV("Server Stats", imgui.TreeNodeFlagsDefaultOpen) {
+		imgui.BeginTableV("Server Stats Table", 2, tableFlags, imgui.Vec2{}, 0)
+		initColumns()
+
+		stats := app.GetServerStats()
+		for _, stat := range stats.Data {
+			setupRow(stat.Name, func() { imgui.LabelText(stat.Name, stat.Value) }, true)
+		}
 		imgui.EndTable()
 	}
 }

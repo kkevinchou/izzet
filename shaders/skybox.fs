@@ -3,6 +3,10 @@
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out uint PickingColor;
 
+uniform int fog;
+uniform int fogDensity;
+uniform float far;
+
 in vec2 FragPos;
 float iTime = 7;
 uint maxUint = floatBitsToUint(uintBitsToFloat(0xFFFFFFFFu));
@@ -11,6 +15,10 @@ vec3 calc(float x, vec3 a, vec3 b, vec3 c, vec3 d)
 {
     // sin(1/x) suggested by Phillip Trudeau
     return (b - d) * sin(1. / (vec3(x) / c + 2. / radians(180.) - a)) + d;
+}
+
+float exponentialSquaredFog(float dist, float density) {
+    return 1 - pow(2, -pow(dist * density, 2));
 }
 
 void main()
@@ -44,7 +52,19 @@ void main()
     vec3 d = mix(p_dark[3], p_bright[3], x);
 
     vec3 col = calc(uv.y, a, b, c, d);
-    fragColor = vec4(col, 1.);
-    FragColor = fragColor;
+
+    FragColor = vec4(col, 1.0);
+    if (fog == 1) {
+        // vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
+        // float depth = texture(cameraDepthMap, textureCoords).r;
+        // float dist = depthValueToLinearDistance(depth);
+
+        float fogFactor = exponentialSquaredFog(2000, float(fogDensity) / 50000);
+        fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+        FragColor = vec4(mix(col, vec3(1,1,1), fogFactor), 1.0);
+    }
+
+
     PickingColor = maxUint;
 }

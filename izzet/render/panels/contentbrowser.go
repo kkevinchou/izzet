@@ -2,6 +2,7 @@ package panels
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -53,18 +55,32 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("Content") {
 			if imgui.Button("Import") {
+				err := os.MkdirAll(filepath.Join(settings.ProjectDirectory, "content"), os.ModePerm)
+				if err != nil {
+					panic(err)
+				}
+
+				// if _, err := os.Stat(settings.ProjectDirectory); os.IsNotExist(err) {
+				// 	err := os.Mkdir(settings.ProjectDirectory, os.ModeDir)
+				// 	if err != nil {
+				// 		panic(err)
+				// 	}
+				// }
 
 				// loading the asset
-				filename, err := dialog.File().Filter("GLTF file", "gltf").Load()
+				assetFilePath, err := dialog.File().Filter("GLTF file", "gltf").Load()
 				if err != nil {
 					if err != dialog.ErrCancelled {
 						panic(err)
 					}
 				} else {
-					name := strings.Split(filepath.Base(filename), ".")[0]
+					baseFileName := strings.Split(filepath.Base(assetFilePath), ".")[0]
 
-					if app.AssetManager().LoadDocument(name, filename) {
-						document := app.AssetManager().GetDocument(name)
+					project := app.GetProject()
+					project.AddContent(assetFilePath)
+
+					if app.AssetManager().LoadDocument(baseFileName, assetFilePath) {
+						document := app.AssetManager().GetDocument(baseFileName)
 						app.ModelLibrary().RegisterSingleEntityDocument(document)
 
 						// setting up thumbnail
@@ -72,7 +88,7 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 						textureName := "document"
 						assetTexture := app.AssetManager().GetTexture(textureName)
 						texture := CreateUserSpaceTextureHandle(assetTexture.ID)
-						items = append(items, ContentItem{texture: texture, name: name})
+						items = append(items, ContentItem{texture: texture, name: baseFileName})
 					}
 				}
 			}

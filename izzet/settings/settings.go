@@ -76,6 +76,7 @@ const (
 
 	FirstPersonCamera  bool    = true
 	CameraEntityOffset float64 = 100
+	ProjectDirectory   string  = ".project/"
 )
 
 // styles

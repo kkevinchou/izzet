@@ -550,7 +550,7 @@ func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableE
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
+	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.Renderable)
 }
 
 func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
@@ -564,10 +564,10 @@ func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableE
 		return
 	}
 
-	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
+	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.EmptyFilter)
 }
 
-func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
+func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity, filter entities.FilterFunction) {
 	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
 
@@ -575,7 +575,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil {
+		if !filter(entity) {
 			continue
 		}
 

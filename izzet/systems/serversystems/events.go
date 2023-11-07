@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
@@ -70,7 +71,12 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
 			handle := modellibrary.NewGlobalHandle("alpha")
-			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
+
+			visible := true
+			if settings.FirstPersonCamera {
+				visible = false
+			}
+			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: visible, ShadowCasting: true}
 			entity.Animation = entities.NewAnimationComponent("alpha", s.app.ModelLibrary())
 			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 

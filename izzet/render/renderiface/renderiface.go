@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/assets"
@@ -52,4 +53,5 @@ type App interface {
 	DisconnectClient()
 
 	GetServerStats() serverstats.ServerStats
+	GetProject() *project.Project
 }

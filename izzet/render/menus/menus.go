@@ -77,6 +77,10 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 			}
 		}
 
+		if imgui.Button("Save Project") {
+			app.GetProject().Save()
+		}
+
 		// if imgui.MenuItem("Bake Navigation Mesh") {
 		// 	app.NavMesh().BakeNavMesh()
 		// }

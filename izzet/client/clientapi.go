@@ -17,6 +17,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -416,4 +417,8 @@ func (g *Client) SetServerStats(stats serverstats.ServerStats) {
 
 func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
+}
+
+func (g *Client) GetProject() *project.Project {
+	return g.project
 }

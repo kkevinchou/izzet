@@ -18,6 +18,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -83,6 +84,7 @@ type Client struct {
 
 	frameInput  input.Input
 	serverStats serverstats.ServerStats
+	project     *project.Project
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
@@ -120,6 +122,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		modelLibrary:    modellibrary.New(true),
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
+		project:         project.NewProject(),
 	}
 
 	g.initSettings()

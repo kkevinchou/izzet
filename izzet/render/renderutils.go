@@ -695,6 +695,13 @@ func (r *Renderer) drawWithNDC(shaderManager *shaders.ShaderManager) {
 
 	shader := shaderManager.GetShaderProgram("skybox")
 	shader.Use()
+	var fog int32 = 0
+	if r.app.RuntimeConfig().FogDensity != 0 {
+		fog = 1
+	}
+	shader.SetUniformInt("fog", fog)
+	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
+	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
 	r.iztDrawArrays(0, int32(len(vertices)))
 }
 

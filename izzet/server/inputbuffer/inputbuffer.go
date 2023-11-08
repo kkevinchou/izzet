@@ -12,22 +12,22 @@ type BufferedInput struct {
 }
 
 type InputBuffer struct {
-	inputs map[int][]BufferedInput
-	cursor map[int]int
+	inputs      map[int][]BufferedInput
+	cursor      map[int]int
+	lastCursors map[int]int
 }
 
 func New() *InputBuffer {
 	return &InputBuffer{
-		inputs: map[int][]BufferedInput{}, // TOOD -  use a ring buffer of inputs
-		cursor: map[int]int{},
+		inputs:      map[int][]BufferedInput{}, // TOOD -  use a ring buffer of inputs
+		cursor:      map[int]int{},
+		lastCursors: map[int]int{},
 	}
 }
 
 func (i *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input) {
 	i.inputs[playerID] = append(i.inputs[playerID], BufferedInput{Input: frameInput, LocalCommandFrame: localCommandFrame})
 }
-
-var lastCursor int = 0
 
 func (i *InputBuffer) PullInput(playerID int) BufferedInput {
 	cursor := i.cursor[playerID]
@@ -39,10 +39,10 @@ func (i *InputBuffer) PullInput(playerID int) BufferedInput {
 		return BufferedInput{}
 	}
 
-	if cursor == lastCursor {
+	if cursor == i.lastCursors[playerID] {
 		fmt.Printf("player %d reading same cursor\n", playerID)
 	}
-	lastCursor = cursor
+	i.lastCursors[playerID] = cursor
 
 	bufferedInput := i.inputs[playerID][cursor]
 	i.cursor[playerID] += 1 // todo - should we skip incrementing if we pull an input that matches the last frame? i.e. if we detect that we have a late input?

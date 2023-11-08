@@ -21,13 +21,13 @@ type Content struct {
 // }
 
 type Project struct {
-	Content map[string]Content
+	Content []Content
 	// ContentBrowser ContentBrowser
 	// World          world.GameWorld
 }
 
 func NewProject() *Project {
-	return &Project{Content: map[string]Content{}}
+	return &Project{Content: []Content{}}
 }
 
 func (p *Project) AddContent(sourceFile string) {
@@ -44,7 +44,7 @@ func (p *Project) AddContent(sourceFile string) {
 		panic(err)
 	}
 
-	outFile, err := os.OpenFile(path.Join(settings.ProjectDirectory, "content", baseFileName+filepath.Ext(sourceFile)), os.O_CREATE|os.O_WRONLY, 0644)
+	outFile, err := os.OpenFile(path.Join("content", baseFileName+filepath.Ext(sourceFile)), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +55,7 @@ func (p *Project) AddContent(sourceFile string) {
 		panic(err)
 	}
 
-	p.Content[baseFileName] = Content{Name: baseFileName, Filepath: outFile.Name()}
+	p.Content = append(p.Content, Content{Name: baseFileName, Filepath: outFile.Name()})
 }
 
 func (p *Project) Save() {
@@ -68,8 +68,3 @@ func (p *Project) Save() {
 	encoder := json.NewEncoder(f)
 	encoder.Encode(p)
 }
-
-// 1. Save the project file
-// 		The current level
-// 		The content browser
-// 2. Load the project file

@@ -54,4 +54,5 @@ type App interface {
 
 	GetServerStats() serverstats.ServerStats
 	GetProject() *project.Project
+	SaveProject()
 }

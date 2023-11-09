@@ -422,3 +422,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 func (g *Client) GetProject() *project.Project {
 	return g.project
 }
+
+func (g *Client) SaveProject() {
+	g.project.Save()
+}

@@ -44,7 +44,7 @@ func (p *Project) AddContent(sourceFile string) {
 		panic(err)
 	}
 
-	outFile, err := os.OpenFile(path.Join("content", baseFileName+filepath.Ext(sourceFile)), os.O_CREATE|os.O_WRONLY, 0644)
+	outFile, err := os.OpenFile(path.Join(settings.ProjectDirectory, "content", baseFileName+filepath.Ext(sourceFile)), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}

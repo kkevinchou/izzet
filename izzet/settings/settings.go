@@ -74,9 +74,9 @@ const (
 	MaxCommandFrameBufferSize int = 100000
 	MaxStateBufferSize        int = 100
 
-	FirstPersonCamera  bool    = true
+	FirstPersonCamera  bool    = false
 	CameraEntityOffset float64 = 100
-	ProjectDirectory   string  = ".project/"
+	ProjectsDirectory  string  = ".project/"
 )
 
 // styles

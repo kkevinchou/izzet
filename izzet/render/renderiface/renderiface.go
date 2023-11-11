@@ -36,8 +36,7 @@ type App interface {
 	ShowImguiDemo() bool
 
 	Serializer() *serialization.Serializer
-	LoadWorld(string) bool
-	SaveWorld(string)
+	LoadProject(name string) bool
 
 	CollisionObserver() *observers.CollisionObserver
 	RuntimeConfig() *app.RuntimeConfig
@@ -55,4 +54,7 @@ type App interface {
 	GetServerStats() serverstats.ServerStats
 	GetProject() *project.Project
 	SaveProject()
+	SaveProjectAs(name string)
+
+	GetPlayerEntity() *entities.Entity
 }

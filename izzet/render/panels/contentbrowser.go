@@ -55,7 +55,7 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("Content") {
 			if imgui.Button("Import") {
-				err := os.MkdirAll(filepath.Join(settings.ProjectDirectory, "content"), os.ModePerm)
+				err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, "content"), os.ModePerm)
 				if err != nil {
 					panic(err)
 				}

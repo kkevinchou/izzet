@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
+	"path"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
@@ -23,6 +27,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
@@ -74,19 +79,24 @@ func (g *Client) Serializer() *serialization.Serializer {
 	return g.serializer
 }
 
-func (g *Client) SaveWorld(name string) {
-	g.serializer.WriteToFile(g.world, fmt.Sprintf("./%s.json", name))
+func (g *Client) saveWorld(name string) {
+	err := g.serializer.WriteToFile(g.world, path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name)))
+	if err != nil {
+		panic(err)
+	}
 }
 
-func (g *Client) LoadWorld(name string) bool {
-	if name == "" {
+func (g *Client) loadWorld(filepath string) bool {
+	if filepath == "" {
 		return false
 	}
 
-	filename := fmt.Sprintf("./%s.json", name)
-	world, err := g.serializer.ReadFromFile(filename)
+	// filename := path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name))
+	// filename := fmt.Sprintf("./%s.json", name)
+
+	world, err := g.serializer.ReadFromFile(filepath)
 	if err != nil {
-		fmt.Println("failed to load world", filename, err)
+		fmt.Println("failed to load world", filepath, err)
 		panic(err)
 	}
 
@@ -423,6 +433,59 @@ func (g *Client) GetProject() *project.Project {
 	return g.project
 }
 
+func (g *Client) LoadProject(name string) bool {
+	g.project.Name = name
+	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
+}
+
 func (g *Client) SaveProject() {
-	g.project.Save()
+	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.project.Name), os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	g.saveWorld(g.project.Name)
+
+	for i := range g.project.Content {
+		content := &g.project.Content[i]
+		baseFileName := strings.Split(filepath.Base(content.InFilePath), ".")[0]
+
+		importedFile, err := os.Open(content.InFilePath)
+		if err != nil {
+			panic(err)
+		}
+		defer importedFile.Close()
+
+		fileBytes, err := io.ReadAll(importedFile)
+		if err != nil {
+			panic(err)
+		}
+
+		outFilePath := path.Join(settings.ProjectsDirectory, g.project.Name, "content", baseFileName+filepath.Ext(content.OutFilepath))
+		content.OutFilepath = outFilePath
+
+		outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		defer outFile.Close()
+
+		_, err = outFile.Write(fileBytes)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, g.project.Name, "main_project.izt"), os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	encoder := json.NewEncoder(f)
+	encoder.Encode(g.project)
+}
+
+func (g *Client) SaveProjectAs(name string) {
+	g.project.Name = name
+	g.SaveProject()
 }

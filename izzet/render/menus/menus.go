@@ -8,6 +8,7 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	izzetapp "github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 var (
@@ -22,7 +23,7 @@ var worldName string = "scene"
 var selectedWorldName string = ""
 
 func SetupMenuBar(app renderiface.App) imgui.Vec2 {
-	settings := app.RuntimeConfig()
+	runtimeConfig := app.RuntimeConfig()
 
 	imgui.BeginMainMenuBar()
 	size := imgui.WindowSize()
@@ -34,10 +35,10 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 		imgui.SameLine()
 		if imgui.Button("Save") {
 			fmt.Println("Save to", worldName)
-			app.SaveWorld(worldName)
+			app.SaveProjectAs(worldName)
 		}
 
-		files, err := os.ReadDir(".")
+		files, err := os.ReadDir(settings.ProjectsDirectory)
 		if err != nil {
 			panic(err)
 		}
@@ -45,9 +46,9 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 		var savedWorlds []string
 		for _, file := range files {
 			extension := filepath.Ext(file.Name())
-			if extension != ".json" {
-				continue
-			}
+			// if extension != ".json" {
+			// 	continue
+			// }
 
 			if _, ok := ignoredJsonFiles[file.Name()]; ok {
 				continue
@@ -72,7 +73,7 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 		imgui.SameLine()
 		if imgui.Button("Load") {
 			fmt.Println("Load from", selectedWorldName)
-			if app.LoadWorld(selectedWorldName) {
+			if app.LoadProject(selectedWorldName) {
 				worldName = selectedWorldName
 			}
 		}
@@ -102,12 +103,12 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("View") {
-		if imgui.MenuItemV("Show Colliders", "", settings.RenderColliders, true) {
-			settings.RenderColliders = !settings.RenderColliders
+		if imgui.MenuItemV("Show Colliders", "", runtimeConfig.RenderColliders, true) {
+			runtimeConfig.RenderColliders = !runtimeConfig.RenderColliders
 		}
 
-		if imgui.MenuItemV("Show UI", "", settings.UIEnabled, true) {
-			settings.UIEnabled = !settings.UIEnabled
+		if imgui.MenuItemV("Show UI", "", runtimeConfig.UIEnabled, true) {
+			runtimeConfig.UIEnabled = !runtimeConfig.UIEnabled
 		}
 
 		if imgui.MenuItemV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {

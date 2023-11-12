@@ -327,13 +327,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 
 	if entity != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-			startStatus := gizmo.TranslationGizmo.Active
-			delta := g.calculateGizmoDelta(gizmo.TranslationGizmo, frameInput, entity.WorldPosition())
-			endStatus := gizmo.TranslationGizmo.Active
-
-			activated := startStatus == false && endStatus == true
-			completed := startStatus == true && endStatus == false
-
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, entity)
 			if delta != nil {
 				if entity.Parent != nil {
 					// the computed position is in world space but entity.LocalPosition is in local space
@@ -351,23 +345,17 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				} else {
 					entities.SetLocalPosition(entity, entity.LocalPosition.Add(*delta))
 				}
-			} else if completed {
+			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
 					edithistory.NewPositionEdit(gizmo.TranslationGizmo.ActivationPosition, entities.GetLocalPosition(entity), entity),
 				)
 			}
-			if activated {
+			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.TranslationGizmo.ActivationPosition = entities.GetLocalPosition(entity)
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-			startStatus := gizmo.RotationGizmo.Active
-			delta := g.calculateGizmoDelta(gizmo.RotationGizmo, frameInput, entity.WorldPosition())
-			endStatus := gizmo.RotationGizmo.Active
-
-			activated := startStatus == false && endStatus == true
-			completed := startStatus == true && endStatus == false
-
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity)
 			if delta != nil {
 				var magnitude float64 = 0
 
@@ -398,23 +386,17 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				} else {
 					entities.SetLocalRotation(entity, newRotationAdjustment.Mul(entities.GetLocalRotation(entity)))
 				}
-			} else if completed {
+			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
 					edithistory.NewRotationEdit(gizmo.TranslationGizmo.ActivationRotation, entities.GetLocalRotation(entity), entity),
 				)
 			}
-			if activated {
+			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.RotationGizmo.ActivationRotation = entities.GetLocalRotation(entity)
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-			startStatus := gizmo.ScaleGizmo.Active
-			delta := g.calculateGizmoDelta(gizmo.ScaleGizmo, frameInput, entity.WorldPosition())
-			endStatus := gizmo.ScaleGizmo.Active
-
-			activated := startStatus == false && endStatus == true
-			completed := startStatus == true && endStatus == false
-
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity)
 			if delta != nil {
 				magnitude := 0.05
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
@@ -422,12 +404,12 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				}
 				scale := entities.GetLocalScale(entity)
 				entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
-			} else if completed {
+			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
 					edithistory.NewScaleEdit(gizmo.ScaleGizmo.ActivationScale, entities.GetLocalScale(entity), entity),
 				)
 			}
-			if activated {
+			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.ScaleGizmo.ActivationScale = entities.GetLocalScale(entity)
 			}
 			gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
@@ -537,4 +519,12 @@ func InteractingWithUI() bool {
 	anyPopup := imgui.IsPopupOpenV("", imgui.PopupFlagsAnyPopup)
 	anyWindow := imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow)
 	return anyPopup || anyWindow
+}
+
+func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity) (*mgl64.Vec3, gizmo.GizmoEvent) {
+	mouseInput := frameInput.MouseInput
+	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
+	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.WorldPosition(), g.camera.Position, nearPlanePos, colorPickingID)
+	return delta, gizmoEvent
 }

@@ -16,6 +16,14 @@ func New() *EditHistory {
 	}
 }
 
+// func (eh *EditHistory) SetActivationPosition(entity *entities.Entity) {
+// 	eh.activationPosition = entities.GetLocalPosition(entity)
+// }
+
+// func (eh *EditHistory) AppendPositionUpdate(entity *entities.Entity) {
+// 	eh.Append(NewPositionEdit(eh.activationPosition, entities.GetLocalPosition(entity), entity))
+// }
+
 func (eh *EditHistory) Append(e Edit) {
 	// remove edits that appear after the cursor
 	eh.editList = eh.editList[:eh.cursor+1]

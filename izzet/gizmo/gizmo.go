@@ -2,6 +2,8 @@ package gizmo
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/kitolib/collision/checks"
+	"github.com/kkevinchou/kitolib/input"
 )
 
 const (
@@ -61,81 +63,97 @@ type Gizmo struct {
 	ActivationRotation mgl64.Quat
 }
 
-// func calculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3, cameraViewDirection mgl64.Vec3, cameraPosition mgl64.Vec3) *mgl64.Vec3 {
-// 	// startStatus := targetGizmo.Active
-// 	mouseInput := frameInput.MouseInput
+type GizmoEvent string
 
-// 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position, g.height)
-// 	if colorPickingID != nil {
-// 		if _, ok := targetGizmo.EntityIDToAxis[*colorPickingID]; ok {
-// 			if !mouseInput.Buttons[0] {
-// 				targetGizmo.HoveredEntityID = *colorPickingID
-// 			}
-// 		} else {
-// 			colorPickingID = nil
-// 		}
-// 	}
+const (
+	GizmoEventActivated GizmoEvent = "ACTIVATED"
+	GizmoEventCompleted GizmoEvent = "COMPLETED"
+	GizmoEventNone      GizmoEvent = "NONE"
+)
 
-// 	if colorPickingID != nil {
-// 		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-// 			axis := targetGizmo.EntityIDToAxis[*colorPickingID]
-// 			if axis.DistanceBasedDelta {
-// 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-// 			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, cameraPosition.Add(cameraViewDirection), gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
-// 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-// 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-// 			} else if !nonParallel && *colorPickingID == GizmoAllAxisPickingID {
-// 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-// 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-// 			} else {
-// 				panic("parallel")
-// 			}
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int) (*mgl64.Vec3, GizmoEvent) {
+	gizmoEvent := GizmoEventNone
+	startStatus := targetGizmo.Active
+	mouseInput := frameInput.MouseInput
 
-// 			targetGizmo.Active = true
-// 		}
-// 	} else if !targetGizmo.Active {
-// 		// specifically check that the gizmo is not active before reseting.
-// 		// this supports the scenario where we initially click and drag a gizmo
-// 		// to the point where the mouse leaves the range of any axes
-// 		targetGizmo.Reset()
-// 	}
+	if hoveredEntityID != nil {
+		if _, ok := targetGizmo.EntityIDToAxis[*hoveredEntityID]; ok {
+			if !mouseInput.Buttons[0] {
+				targetGizmo.HoveredEntityID = *hoveredEntityID
+			}
+		} else {
+			hoveredEntityID = nil
+		}
+	}
 
-// 	if !targetGizmo.Active {
-// 		return nil
-// 	}
+	if hoveredEntityID != nil {
+		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+			axis := targetGizmo.EntityIDToAxis[*hoveredEntityID]
+			if axis.DistanceBasedDelta {
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
+				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			} else if !nonParallel && *hoveredEntityID == GizmoAllAxisPickingID {
+				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			} else {
+				panic("parallel")
+			}
 
-// 	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-// 		targetGizmo.Reset()
-// 	}
+			targetGizmo.Active = true
+		}
+	} else if !targetGizmo.Active {
+		// specifically check that the gizmo is not active before reseting.
+		// this supports the scenario where we initially click and drag a gizmo
+		// to the point where the mouse leaves the range of any axes
+		targetGizmo.Reset()
+	}
 
-// 	var gizmoDelta *mgl64.Vec3
+	if !targetGizmo.Active {
+		return nil, gizmoEvent
+	}
 
-// 	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-// 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
+	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
+		targetGizmo.Reset()
+	}
 
-// 		if axis.DistanceBasedDelta {
-// 			// mouse position based deltas, store the x,y mouse delta in the return value with 0 for the z value
-// 			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
-// 			gizmoDelta = &mouseDelta
-// 			targetGizmo.LastFrameMousePosition = mouseInput.Position
-// 		} else if targetGizmo.HoveredEntityID == GizmoAllAxisPickingID {
-// 			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
-// 			magnitude := (mouseDelta[0] - mouseDelta[1])
-// 			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
-// 			gizmoDelta = &delta
-// 			targetGizmo.LastFrameMousePosition = mouseInput.Position
-// 		} else {
-// 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, cameraPosition.Add(cameraViewDirection), gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
-// 				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
-// 				gizmoDelta = &delta
-// 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-// 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-// 			}
-// 		}
-// 	}
+	var gizmoDelta *mgl64.Vec3
 
-// 	return gizmoDelta
-// }
+	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
+
+		if axis.DistanceBasedDelta {
+			// mouse position based deltas, store the x,y mouse delta in the return value with 0 for the z value
+			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
+			gizmoDelta = &mouseDelta
+			targetGizmo.LastFrameMousePosition = mouseInput.Position
+		} else if targetGizmo.HoveredEntityID == GizmoAllAxisPickingID {
+			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
+			magnitude := (mouseDelta[0] - mouseDelta[1])
+			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
+			gizmoDelta = &delta
+			targetGizmo.LastFrameMousePosition = mouseInput.Position
+		} else {
+			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
+				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
+				gizmoDelta = &delta
+				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			}
+		}
+	}
+
+	endStatus := targetGizmo.Active
+
+	if startStatus == false && endStatus == true {
+		gizmoEvent = GizmoEventActivated
+	} else if startStatus == true && endStatus == false {
+		gizmoEvent = GizmoEventCompleted
+	}
+
+	return gizmoDelta, gizmoEvent
+}
 
 func setupTranslationGizmo() *Gizmo {
 	return &Gizmo{

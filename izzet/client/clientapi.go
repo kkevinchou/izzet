@@ -445,6 +445,11 @@ func (g *Client) SaveProject() {
 	}
 	g.saveWorld(g.project.Name)
 
+	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.project.Name, "content"), os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
 	for i := range g.project.Content {
 		content := &g.project.Content[i]
 		baseFileName := strings.Split(filepath.Base(content.InFilePath), ".")[0]
@@ -460,7 +465,7 @@ func (g *Client) SaveProject() {
 			panic(err)
 		}
 
-		outFilePath := path.Join(settings.ProjectsDirectory, g.project.Name, "content", baseFileName+filepath.Ext(content.OutFilepath))
+		outFilePath := path.Join(settings.ProjectsDirectory, g.project.Name, "content", baseFileName+filepath.Ext(content.InFilePath))
 		content.OutFilepath = outFilePath
 
 		outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)

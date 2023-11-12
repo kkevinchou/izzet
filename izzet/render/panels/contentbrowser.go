@@ -2,7 +2,6 @@ package panels
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -55,10 +53,10 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("Content") {
 			if imgui.Button("Import") {
-				err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, "content"), os.ModePerm)
-				if err != nil {
-					panic(err)
-				}
+				// err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, "content"), os.ModePerm)
+				// if err != nil {
+				// 	panic(err)
+				// }
 
 				// if _, err := os.Stat(settings.ProjectDirectory); os.IsNotExist(err) {
 				// 	err := os.Mkdir(settings.ProjectDirectory, os.ModeDir)

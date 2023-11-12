@@ -990,7 +990,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	position := entity.WorldPosition()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat2"), position)
+		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
 		r.drawCircleGizmo(&viewerContext, position, renderContext)
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {

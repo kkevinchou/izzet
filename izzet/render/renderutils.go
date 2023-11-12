@@ -873,14 +873,14 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
-func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2, height int) *int {
+func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(height)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(r.height)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {

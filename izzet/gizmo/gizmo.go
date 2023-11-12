@@ -32,6 +32,9 @@ const (
 	GizmoYAxisPickingID   int = 1000000001
 	GizmoZAxisPickingID   int = 1000000002
 	GizmoAllAxisPickingID int = 1000000003
+	GizmoXZAxisPickingID  int = 1000000004
+	GizmoXYAxisPickingID  int = 1000000005
+	GizmoYZAxisPickingID  int = 1000000006
 
 	GizmoXDistancePickingID int = 1000000004
 	GizmoYDistancePickingID int = 1000000005

@@ -43,6 +43,10 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 
 		r.drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
+
+	// handle XZ
+	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXZAxisPickingID))
+
 }
 
 func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {

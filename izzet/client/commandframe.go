@@ -14,7 +14,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
-	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -432,87 +431,6 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			panels.SelectEntity(clickedEntity)
 		}
 	}
-
-}
-
-// activated := startStatus == false && endStatus == true
-// completed := startStatus == true && endStatus == false
-
-func (g *Client) calculateGizmoDelta(targetGizmo *gizmo.Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3) *mgl64.Vec3 {
-	// startStatus := targetGizmo.Active
-	mouseInput := frameInput.MouseInput
-
-	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
-	if colorPickingID != nil {
-		if _, ok := targetGizmo.EntityIDToAxis[*colorPickingID]; ok {
-			if !mouseInput.Buttons[0] {
-				targetGizmo.HoveredEntityID = *colorPickingID
-			}
-		} else {
-			colorPickingID = nil
-		}
-	}
-
-	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
-	if colorPickingID != nil {
-		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-			axis := targetGizmo.EntityIDToAxis[*colorPickingID]
-			if axis.DistanceBasedDelta {
-				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
-				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else if !nonParallel && *colorPickingID == gizmo.GizmoAllAxisPickingID {
-				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else {
-				panic("parallel")
-			}
-
-			targetGizmo.Active = true
-		}
-	} else if !targetGizmo.Active {
-		// specifically check that the gizmo is not active before reseting.
-		// this supports the scenario where we initially click and drag a gizmo
-		// to the point where the mouse leaves the range of any axes
-		targetGizmo.Reset()
-	}
-
-	if !targetGizmo.Active {
-		return nil
-	}
-
-	if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventUp {
-		targetGizmo.Reset()
-	}
-
-	var gizmoDelta *mgl64.Vec3
-
-	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
-		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
-
-		if axis.DistanceBasedDelta {
-			// mouse position based deltas, store the x,y mouse delta in the return value with 0 for the z value
-			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
-			gizmoDelta = &mouseDelta
-			targetGizmo.LastFrameMousePosition = mouseInput.Position
-		} else if targetGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
-			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
-			magnitude := (mouseDelta[0] - mouseDelta[1])
-			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
-			gizmoDelta = &delta
-			targetGizmo.LastFrameMousePosition = mouseInput.Position
-		} else {
-			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(g.camera.Position, nearPlanePos, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
-				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
-				gizmoDelta = &delta
-				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			}
-		}
-	}
-
-	return gizmoDelta
 }
 
 func InteractingWithUI() bool {

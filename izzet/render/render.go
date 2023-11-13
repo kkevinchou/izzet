@@ -403,7 +403,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		if entity.HasBoundingBox() {
 			r.drawAABB(
 				viewerContext,
-				shaderManager.GetShaderProgram("flat"),
 				mgl64.Vec3{.2, 0, .7},
 				entity.BoundingBox(),
 				0.5,
@@ -417,8 +416,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			lightInfo := entity.LightInfo
 			if lightInfo != nil {
 				if lightInfo.Type == 0 {
-					shader := shaderManager.GetShaderProgram("flat")
-					color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
 
 					direction3F := lightInfo.Direction3F
 					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
@@ -429,6 +426,14 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 							entity.WorldPosition().Add(dir),
 						},
 					}
+
+					shader := shaderManager.GetShaderProgram("flat")
+					color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+					shader.Use()
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
 					r.drawLines(viewerContext, shader, lines, 0.5, color)
 				}
 			}
@@ -436,7 +441,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	}
 
 	if r.app.RuntimeConfig().EnableSpatialPartition && r.app.RuntimeConfig().RenderSpatialPartition {
-		r.drawSpatialPartition(viewerContext, r.shaderManager.GetShaderProgram("flat"), mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
+		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
 	}
 
 	// modelMatrix := entities.WorldTransform(entity)
@@ -480,7 +485,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	// 				}
 	// 			}
 
-	// 			drawLines(viewerContext, jointShader, jointLines, 0.5, color)
+	// 			drawLines_old(viewerContext, jointShader, jointLines, 0.5, color)
 	// 		}
 
 	// 	nm := r.app.NavMesh()
@@ -746,7 +751,14 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				lines := [][]mgl64.Vec3{
 					{start, entity.WorldPosition().Add(entity.CharacterControllerComponent.WebVector)},
 				}
-				r.drawLines(viewerContext, shaderManager.GetShaderProgram("flat"), lines, 1, mgl64.Vec3{1, 1, 1})
+
+				shader := shaderManager.GetShaderProgram("flat")
+				shader.Use()
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+				r.drawLines(viewerContext, shader, lines, 1, mgl64.Vec3{1, 1, 1})
 			}
 		}
 	}
@@ -849,8 +861,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		if r.app.RuntimeConfig().RenderColliders {
 			capsuleCollider := entity.Collider.CapsuleCollider
 			if capsuleCollider != nil {
-				shader := shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
 
 				transform := entities.WorldTransform(entity)
 				capsuleCollider := capsuleCollider.Transform(transform)
@@ -909,6 +919,13 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
 					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
 				}
+
+				shader := shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
+				shader.Use()
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 				r.drawLines(viewerContext, shader, lines, 0.5, color)
 			}

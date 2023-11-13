@@ -41,7 +41,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 			color = mgl64.Vec3{1, 1, 0}
 		}
 
-		r.drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+		r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 
 	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
@@ -128,7 +128,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 
 		if entityID != gizmo.GizmoAllAxisPickingID {
 			lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
-			r.drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+			r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 		}
 
 		cubePosition := renderPosition.Add(axis.Direction)

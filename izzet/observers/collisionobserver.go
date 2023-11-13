@@ -72,3 +72,19 @@ func (o *CollisionObserver) Clear() {
 		o.BoundingBoxCheck[k] = 0
 	}
 }
+
+var NullCollisionExplorer nullCollisionObserverType
+
+type nullCollisionObserverType struct {
+}
+
+func (o nullCollisionObserverType) OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity) {
+}
+func (o nullCollisionObserverType) OnSpatialQuery(entityID int, count int) {
+}
+func (o nullCollisionObserverType) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
+}
+func (o nullCollisionObserverType) OnCollisionResolution(entityID int) {
+}
+func (o nullCollisionObserverType) Clear() {
+}

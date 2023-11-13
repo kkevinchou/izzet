@@ -3,6 +3,7 @@ package gizmo
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/checks"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 )
 
@@ -97,8 +98,19 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else if !nonParallel && *hoveredEntityID == GizmoAllAxisPickingID {
+			} else if !nonParallel && (*hoveredEntityID == GizmoAllAxisPickingID) {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
+				targetGizmo.LastFrameMousePosition = mouseInput.Position
+			} else if !nonParallel && (*hoveredEntityID == GizmoXZAxisPickingID) {
+				plane := collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}}
+				ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
+
+				position, hit := checks.IntersectRayPlane(ray, plane)
+				if !hit {
+					panic("wat")
+				}
+
+				targetGizmo.LastFrameClosestPoint = position
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
 			} else {
 				panic("parallel")
@@ -137,6 +149,17 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
 			gizmoDelta = &delta
 			targetGizmo.LastFrameMousePosition = mouseInput.Position
+		} else if targetGizmo.HoveredEntityID == GizmoXZAxisPickingID {
+			plane := collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}}
+			ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
+			position, hit := checks.IntersectRayPlane(ray, plane)
+			if !hit {
+				panic("wat")
+			}
+
+			mouseDelta := position.Sub(targetGizmo.LastFrameClosestPoint)
+			gizmoDelta = &mouseDelta
+			targetGizmo.LastFrameClosestPoint = position
 		} else {
 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
@@ -162,9 +185,10 @@ func setupTranslationGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			GizmoXAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
-			GizmoYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
-			GizmoZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+			GizmoXAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
+			GizmoXZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
 		},
 	}
 }

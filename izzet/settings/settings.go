@@ -1,6 +1,8 @@
 package settings
 
-import "github.com/inkyblackness/imgui-go/v4"
+import (
+	"github.com/inkyblackness/imgui-go/v4"
+)
 
 type GameMode string
 

@@ -44,7 +44,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 		r.drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 
-	planeColor := mgl32.Vec3{225.0 / 255, 138.0 / 255, 30.0 / 255}
+	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
 
 	// handle XZ
 	color := planeColor

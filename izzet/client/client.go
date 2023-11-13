@@ -377,7 +377,6 @@ func (g *Client) initSettings() {
 		BloomThreshold:         0.8,
 		BloomUpsamplingScale:   1.0,
 		Color:                  [3]float32{1, 1, 1},
-		ColorIntensity:         20.0,
 		RenderSpatialPartition: false,
 		EnableSpatialPartition: true,
 		FPS:                    0,

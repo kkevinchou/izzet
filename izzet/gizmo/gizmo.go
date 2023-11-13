@@ -107,7 +107,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 
 				position, hit := checks.IntersectRayPlane(ray, plane)
 				if !hit {
-					panic("wat")
+					panic("wat, clicking on the plane should always return a hit")
 				}
 
 				targetGizmo.LastFrameClosestPoint = position
@@ -154,13 +154,12 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 			ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
 
 			position, hit := checks.IntersectRayPlane(ray, plane)
-			if !hit {
-				panic("wat")
+			if hit {
+				mouseDelta := position.Sub(targetGizmo.LastFrameClosestPoint)
+				gizmoDelta = &mouseDelta
+				targetGizmo.LastFrameClosestPoint = position
 			}
 
-			mouseDelta := position.Sub(targetGizmo.LastFrameClosestPoint)
-			gizmoDelta = &mouseDelta
-			targetGizmo.LastFrameClosestPoint = position
 		} else {
 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)

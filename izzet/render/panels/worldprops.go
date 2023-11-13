@@ -33,18 +33,18 @@ var (
 )
 
 func worldProps(app renderiface.App, renderContext RenderContext) {
-	settings := app.RuntimeConfig()
+	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 
 		setupRow("Camera Position", func() {
-			imgui.LabelText("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", settings.CameraPosition[0], settings.CameraPosition[1], settings.CameraPosition[2]))
+			imgui.LabelText("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", runtimeConfig.CameraPosition[0], runtimeConfig.CameraPosition[1], runtimeConfig.CameraPosition[2]))
 		}, true)
 
 		setupRow("Camera Viewing Direction", func() {
-			viewDir := settings.CameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
+			viewDir := runtimeConfig.CameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
 
@@ -54,68 +54,72 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Lighting Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &settings.AmbientFactor, 0, 1) }, true)
-		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &settings.PointLightBias, 0, 1) }, true)
-		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &settings.EnableShadowMapping) }, true)
-		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &settings.ShadowFarFactor, 0, 10) }, true)
-		setupRow("Fog Density", func() { imgui.SliderInt("", &settings.FogDensity, 0, 100) }, true)
+		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &runtimeConfig.AmbientFactor, 0, 1) }, true)
+		setupRow("Point Light Bias", func() { imgui.SliderFloat("", &runtimeConfig.PointLightBias, 0, 1) }, true)
+		setupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &runtimeConfig.EnableShadowMapping) }, true)
+		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &runtimeConfig.ShadowFarFactor, 0, 10) }, true)
+		setupRow("Fog Density", func() { imgui.SliderInt("", &runtimeConfig.FogDensity, 0, 100) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("Bloom", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Enable Bloom", func() { imgui.Checkbox("", &settings.Bloom) }, true)
-		setupRow("Bloom Intensity", func() { imgui.SliderFloat("", &settings.BloomIntensity, 0, 1) }, true)
-		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &settings.BloomThresholdPasses, 0, 3) }, true)
-		setupRow("Bloom Threshold", func() { imgui.SliderFloat("", &settings.BloomThreshold, 0, 3) }, true)
-		setupRow("Upsampling Scale", func() { imgui.SliderFloat("", &settings.BloomUpsamplingScale, 0, 5.0) }, true)
+		setupRow("Enable Bloom", func() { imgui.Checkbox("", &runtimeConfig.Bloom) }, true)
+		setupRow("Bloom Intensity", func() { imgui.SliderFloat("", &runtimeConfig.BloomIntensity, 0, 1) }, true)
+		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &runtimeConfig.BloomThresholdPasses, 0, 3) }, true)
+		setupRow("Bloom Threshold", func() { imgui.SliderFloat("", &runtimeConfig.BloomThreshold, 0, 3) }, true)
+		setupRow("Upsampling Scale", func() { imgui.SliderFloat("", &runtimeConfig.BloomUpsamplingScale, 0, 5.0) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Far", func() { imgui.SliderFloat("", &settings.Far, 0, 100000) }, true)
-		setupRow("FovX", func() { imgui.SliderFloat("", &settings.FovX, 0, 170) }, true)
+		setupRow("Far", func() { imgui.SliderFloat("", &runtimeConfig.Far, 0, 100000) }, true)
+		setupRow("FovX", func() { imgui.SliderFloat("", &runtimeConfig.FovX, 0, 170) }, true)
+
+		setupRow("Color", func() {
+			imgui.ColorEdit3V("", &runtimeConfig.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+		}, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderV("NavMesh", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("NavMesh Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("NavMeshHSV", func() {
-			if imgui.Checkbox("NavMeshHSV", &settings.NavMeshHSV) {
+			if imgui.Checkbox("NavMeshHSV", &runtimeConfig.NavMeshHSV) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("NavMesh Region Threshold", func() {
-			if imgui.InputInt("", &settings.NavMeshRegionIDThreshold) {
+			if imgui.InputInt("", &runtimeConfig.NavMeshRegionIDThreshold) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("NavMesh Distance Field Threshold", func() {
-			if imgui.InputInt("", &settings.NavMeshDistanceFieldThreshold) {
+			if imgui.InputInt("", &runtimeConfig.NavMeshDistanceFieldThreshold) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("HSV Offset", func() {
-			if imgui.InputInt("", &settings.HSVOffset) {
+			if imgui.InputInt("", &runtimeConfig.HSVOffset) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Voxel Highlight X", func() {
-			if imgui.InputInt("Voxel Highlight X", &settings.VoxelHighlightX) {
+			if imgui.InputInt("Voxel Highlight X", &runtimeConfig.VoxelHighlightX) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Voxel Highlight Z", func() {
-			if imgui.InputInt("Voxel Highlight Z", &settings.VoxelHighlightZ) {
+			if imgui.InputInt("Voxel Highlight Z", &runtimeConfig.VoxelHighlightZ) {
 				app.ResetNavMeshVAO()
 			}
 		}, true)
 		setupRow("Highlight Distance Field", func() {
-			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", settings.VoxelHighlightDistanceField))
+			imgui.LabelText("voxel highlight distance field", fmt.Sprintf("%f", runtimeConfig.VoxelHighlightDistanceField))
 		}, true)
 		setupRow("Highlight Region ID", func() {
-			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", settings.VoxelHighlightRegionID))
+			imgui.LabelText("voxel highlight region field", fmt.Sprintf("%d", runtimeConfig.VoxelHighlightRegionID))
 		}, true)
 		imgui.EndTable()
 	}
@@ -123,9 +127,9 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
-		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &settings.EnableSpatialPartition) }, true)
-		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &settings.RenderSpatialPartition) }, true)
-		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &settings.SPNearPlaneOffset, 0, 1000) }, true)
+		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
+		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.RenderSpatialPartition) }, true)
+		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.SPNearPlaneOffset, 0, 1000) }, true)
 		imgui.EndTable()
 	}
 }

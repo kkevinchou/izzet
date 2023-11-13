@@ -33,7 +33,7 @@ func initSamplingTextures(widths, heights []int) []uint32 {
 		var texture uint32
 		gl.GenTextures(1, &texture)
 		gl.BindTexture(gl.TEXTURE_2D, texture)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R11F_G11F_B10F,
+		gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
 			int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)

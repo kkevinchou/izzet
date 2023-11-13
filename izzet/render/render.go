@@ -37,6 +37,7 @@ type GameWorld interface {
 const mipsCount int = 6
 const MaxBloomTextureWidth int = 1920
 const MaxBloomTextureHeight int = 1080
+const internalTextureColorFormat int32 = gl.RGB10_A2
 
 type Renderer struct {
 	app           renderiface.App
@@ -188,7 +189,7 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 }
 
 func (r *Renderer) initMainRenderFBO(width, height int) {
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{gl.R11F_G11F_B10F, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.colorPickingTexture = colorTextures[1]

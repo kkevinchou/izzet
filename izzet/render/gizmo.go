@@ -44,8 +44,10 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 		r.drawLines2(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 
+	planeColor := mgl32.Vec3{225.0 / 255, 138.0 / 255, 30.0 / 255}
+
 	// handle XZ
-	color := mgl32.Vec3{1, 0, 1}
+	color := planeColor
 	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXZAxisPickingID {
 		color = mgl32.Vec3{1, 1, 0}
 	}
@@ -58,6 +60,37 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXZAxisPickingID))
 	shader.SetUniformVec3("color", color)
 	quadVAO := getInternedQuadVAOPosition()
+	gl.BindVertexArray(quadVAO)
+	r.iztDrawArrays(0, 12)
+
+	// handle XY
+	color = planeColor
+	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXYAxisPickingID {
+		color = mgl32.Vec3{1, 1, 0}
+	}
+
+	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z()))
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
+
+	shader.SetUniformMat4("model", quadModelMatrix)
+	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXYAxisPickingID))
+	shader.SetUniformVec3("color", color)
+	gl.BindVertexArray(quadVAO)
+	r.iztDrawArrays(0, 12)
+
+	// handle YZ
+	color = planeColor
+	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoYZAxisPickingID {
+		color = mgl32.Vec3{1, 1, 0}
+	}
+
+	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z())+scaledSize)
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{0, 1, 0}).Mat4())
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
+
+	shader.SetUniformMat4("model", quadModelMatrix)
+	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoYZAxisPickingID))
+	shader.SetUniformVec3("color", color)
 	gl.BindVertexArray(quadVAO)
 	r.iztDrawArrays(0, 12)
 }

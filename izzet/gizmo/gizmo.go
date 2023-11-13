@@ -106,12 +106,10 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 				ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
 
 				position, hit := checks.IntersectRayPlane(ray, plane)
-				if !hit {
-					panic("wat, clicking on the plane should always return a hit")
+				if hit {
+					targetGizmo.LastFrameClosestPoint = position
+					targetGizmo.LastFrameMousePosition = mouseInput.Position
 				}
-
-				targetGizmo.LastFrameClosestPoint = position
-				targetGizmo.LastFrameMousePosition = mouseInput.Position
 			} else {
 				panic("parallel")
 			}

@@ -7,10 +7,10 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-var internedQuadVAO uint32
+var internedQuadVAOPositionUV uint32
 
-func getInternedQuadVAO() uint32 {
-	if internedQuadVAO == 0 {
+func getInternedQuadVAOPositionUV() uint32 {
+	if internedQuadVAOPositionUV == 0 {
 		var internedQuadVBO uint32
 		var internedQuadVertices = []float32{
 			-1, -1, 0, 0.0, 0.0,
@@ -37,9 +37,9 @@ func getInternedQuadVAO() uint32 {
 
 		// var vbo, dtqVao uint32
 		gl.GenBuffers(1, &internedQuadVBO)
-		gl.GenVertexArrays(1, &internedQuadVAO)
+		gl.GenVertexArrays(1, &internedQuadVAOPositionUV)
 
-		gl.BindVertexArray(internedQuadVAO)
+		gl.BindVertexArray(internedQuadVAOPositionUV)
 		gl.BindBuffer(gl.ARRAY_BUFFER, internedQuadVBO)
 		gl.BufferData(gl.ARRAY_BUFFER, len(internedQuadVertices)*4, gl.Ptr(internedQuadVertices), gl.STATIC_DRAW)
 
@@ -50,11 +50,54 @@ func getInternedQuadVAO() uint32 {
 		gl.EnableVertexAttribArray(1)
 	}
 
-	return internedQuadVAO
+	return internedQuadVAOPositionUV
+}
+
+var internedQuadVAOPosition uint32
+
+func getInternedQuadVAOPosition() uint32 {
+	if internedQuadVAOPosition == 0 {
+		var internedQuadVBO uint32
+		var internedQuadVertices = []float32{
+			-1, -1, 0,
+			1, -1, 0,
+			1, 1, 0,
+			1, 1, 0,
+			-1, 1, 0,
+			-1, -1, 0,
+		}
+
+		var backVertices []float32 = []float32{
+			1, 1, 0,
+			1, -1, 0,
+			-1, -1, 0,
+			-1, -1, 0,
+			-1, 1, 0,
+			1, 1, 0,
+		}
+
+		// always add the double sided vertices
+		// when a draw request comes in, if doubleSided is false we only draw the first half of the vertices
+		// this is wasteful for scenarios where we don't need all vertices
+		internedQuadVertices = append(internedQuadVertices, backVertices...)
+
+		// var vbo, dtqVao uint32
+		gl.GenBuffers(1, &internedQuadVBO)
+		gl.GenVertexArrays(1, &internedQuadVAOPosition)
+
+		gl.BindVertexArray(internedQuadVAOPosition)
+		gl.BindBuffer(gl.ARRAY_BUFFER, internedQuadVBO)
+		gl.BufferData(gl.ARRAY_BUFFER, len(internedQuadVertices)*4, gl.Ptr(internedQuadVertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+		gl.EnableVertexAttribArray(0)
+	}
+
+	return internedQuadVAOPosition
 }
 
 func (r *Renderer) drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
-	vao := getInternedQuadVAO()
+	vao := getInternedQuadVAOPositionUV()
 
 	gl.BindVertexArray(vao)
 	gl.ActiveTexture(gl.TEXTURE0)

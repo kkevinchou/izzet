@@ -508,26 +508,6 @@ func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
 
-func (r *Renderer) drawLines2(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
-	var points []mgl64.Vec3
-	for _, line := range lines {
-		start := line[0]
-		end := line[1]
-		length := end.Sub(start).Len()
-
-		dir := end.Sub(start).Normalize()
-		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
-
-		for _, dp := range linePoints(thickness, length) {
-			newEnd := q.Rotate(dp).Add(start)
-			points = append(points, newEnd)
-		}
-	}
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-	shader.SetUniformFloat("intensity", 1.0)
-	r.drawTris(points)
-}
-
 func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var points []mgl64.Vec3
 	for _, line := range lines {
@@ -543,10 +523,6 @@ func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.Shader
 			points = append(points, newEnd)
 		}
 	}
-	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("intensity", 1.0)
 	r.drawTris(points)
@@ -951,7 +927,7 @@ var (
 	spatialPartitionLineCache [][]mgl64.Vec3
 )
 
-func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
+func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
 	var allLines [][]mgl64.Vec3
 
 	if len(spatialPartitionLineCache) == 0 {
@@ -999,6 +975,12 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, shader *sha
 	}
 	allLines = spatialPartitionLineCache
 
+	shader := r.shaderManager.GetShaderProgram("flat")
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
 	r.drawLines(
 		viewerContext,
 		shader,
@@ -1008,7 +990,7 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, shader *sha
 	)
 }
 
-func (r *Renderer) drawAABB(viewerContext ViewerContext, shader *shaders.ShaderProgram, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
+func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
 	var allLines [][]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)
@@ -1047,6 +1029,12 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, shader *shaders.ShaderP
 			)
 		}
 	}
+
+	shader := r.shaderManager.GetShaderProgram("flat")
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	r.drawLines(
 		viewerContext,

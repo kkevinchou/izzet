@@ -101,8 +101,8 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 			} else if !nonParallel && (*hoveredEntityID == GizmoAllAxisPickingID) {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 				targetGizmo.LastFrameMousePosition = mouseInput.Position
-			} else if !nonParallel && (*hoveredEntityID == GizmoXZAxisPickingID) {
-				plane := collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}}
+			} else if !nonParallel && (*hoveredEntityID == GizmoXZAxisPickingID || *hoveredEntityID == GizmoXYAxisPickingID || *hoveredEntityID == GizmoYZAxisPickingID) {
+				plane := planeFromAxis(targetGizmo.HoveredEntityID, gizmoPosition)
 				ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
 
 				position, hit := checks.IntersectRayPlane(ray, plane)
@@ -149,9 +149,10 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
 			gizmoDelta = &delta
 			targetGizmo.LastFrameMousePosition = mouseInput.Position
-		} else if targetGizmo.HoveredEntityID == GizmoXZAxisPickingID {
-			plane := collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}}
+		} else if targetGizmo.HoveredEntityID == GizmoXZAxisPickingID || targetGizmo.HoveredEntityID == GizmoXYAxisPickingID || targetGizmo.HoveredEntityID == GizmoYZAxisPickingID {
+			plane := planeFromAxis(targetGizmo.HoveredEntityID, gizmoPosition)
 			ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
+
 			position, hit := checks.IntersectRayPlane(ray, plane)
 			if !hit {
 				panic("wat")
@@ -189,6 +190,8 @@ func setupTranslationGizmo() *Gizmo {
 			GizmoYAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
 			GizmoZAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
 			GizmoXZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
+			GizmoXYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
+			GizmoYZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
 		},
 	}
 }
@@ -219,4 +222,16 @@ func setupScaleGizmo() *Gizmo {
 func (g *Gizmo) Reset() {
 	g.HoveredEntityID = -1
 	g.Active = false
+}
+
+func planeFromAxis(hoveredEntityID int, gizmoPosition mgl64.Vec3) collider.Plane {
+	var plane collider.Plane
+	if hoveredEntityID == GizmoXZAxisPickingID {
+		plane = collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}}
+	} else if hoveredEntityID == GizmoXYAxisPickingID {
+		plane = collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 0, 1}}
+	} else if hoveredEntityID == GizmoYZAxisPickingID {
+		plane = collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{1, 0, 0}}
+	}
+	return plane
 }

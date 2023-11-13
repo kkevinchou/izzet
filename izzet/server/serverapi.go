@@ -10,6 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -159,4 +160,8 @@ func (g *Server) SerializeWorld() []byte {
 	var buffer bytes.Buffer
 	g.serializer.Write(g.world, &buffer)
 	return buffer.Bytes()
+}
+
+func (g *Server) CollisionObserver() *observers.CollisionObserver {
+	return nil
 }

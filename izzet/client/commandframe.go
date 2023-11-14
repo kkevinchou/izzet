@@ -351,6 +351,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.TranslationGizmo.ActivationPosition = entities.GetLocalPosition(entity)
+				gizmo.TranslationGizmo.LastSnapPosition = entities.GetLocalPosition(entity)
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
@@ -443,6 +444,8 @@ func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e
 	mouseInput := frameInput.MouseInput
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
-	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.WorldPosition(), g.camera.Position, nearPlanePos, colorPickingID)
+
+	snapSize := int(g.runtimeConfig.SnapSize)
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.WorldPosition(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

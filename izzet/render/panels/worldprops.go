@@ -132,6 +132,19 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.SPNearPlaneOffset, 0, 1000) }, true)
 		imgui.EndTable()
 	}
+	if imgui.CollapsingHeaderV("Editing", imgui.TreeNodeFlagsNone) {
+		imgui.BeginTableV("Editing Table", 2, tableFlags, imgui.Vec2{}, 0)
+		initColumns()
+		setupRow("Grid Snapping Size", func() {
+			if imgui.InputIntV("", &runtimeConfig.SnapSize, 0, 0, imgui.InputTextFlagsNone) {
+				if runtimeConfig.SnapSize < 1 {
+					runtimeConfig.SnapSize = 1
+				}
+			}
+		}, true)
+
+		imgui.EndTable()
+	}
 }
 
 func formatNumber(number int) string {

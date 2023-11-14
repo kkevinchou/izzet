@@ -1,6 +1,8 @@
 package gizmo
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -62,6 +64,9 @@ type Gizmo struct {
 	LastFrameClosestPoint  mgl64.Vec3
 	LastFrameMousePosition mgl64.Vec2
 
+	AccumulatedDelta mgl64.Vec3
+	LastSnapPosition mgl64.Vec3
+
 	ActivationPosition mgl64.Vec3
 	ActivationScale    mgl64.Vec3
 	ActivationRotation mgl64.Quat
@@ -75,7 +80,11 @@ const (
 	GizmoEventNone      GizmoEvent = "NONE"
 )
 
-func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int) (*mgl64.Vec3, GizmoEvent) {
+type Positionable interface {
+	Position() mgl64.Vec3
+}
+
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
 	gizmoEvent := GizmoEventNone
 	startStatus := targetGizmo.Active
 	mouseInput := frameInput.MouseInput
@@ -153,17 +162,48 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 
 			position, hit := checks.IntersectRayPlane(ray, plane)
 			if hit {
-				mouseDelta := position.Sub(targetGizmo.LastFrameClosestPoint)
-				gizmoDelta = &mouseDelta
+				delta := position.Sub(targetGizmo.LastFrameClosestPoint)
 				targetGizmo.LastFrameClosestPoint = position
-			}
 
+				gizmoDelta = &delta
+			}
 		} else {
 			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
-				gizmoDelta = &delta
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-				targetGizmo.LastFrameMousePosition = mouseInput.Position
+
+				targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
+				calculatedPosition := targetGizmo.LastSnapPosition.Add(targetGizmo.AccumulatedDelta)
+
+				snappedXPosition := math.Trunc(calculatedPosition.X()/float64(snapSize)) * float64(snapSize)
+				snappedYPosition := math.Trunc(calculatedPosition.Y()/float64(snapSize)) * float64(snapSize)
+				snappedZPosition := math.Trunc(calculatedPosition.Z()/float64(snapSize)) * float64(snapSize)
+
+				var snappedDelta mgl64.Vec3
+				if math.Trunc(targetGizmo.LastSnapPosition.X()) != snappedXPosition {
+					snapDeltaX := float64(snappedXPosition) - targetGizmo.LastSnapPosition.X()
+					snappedDelta[0] = snapDeltaX
+
+					gizmoDelta = &snappedDelta
+					targetGizmo.AccumulatedDelta[0] -= snapDeltaX
+					targetGizmo.LastSnapPosition[0] += snapDeltaX
+				}
+				if math.Trunc(targetGizmo.LastSnapPosition.Y()) != snappedYPosition {
+					snapDeltaY := float64(snappedYPosition) - targetGizmo.LastSnapPosition.Y()
+					snappedDelta[1] = snapDeltaY
+
+					gizmoDelta = &snappedDelta
+					targetGizmo.AccumulatedDelta[1] -= snapDeltaY
+					targetGizmo.LastSnapPosition[1] += snapDeltaY
+				}
+				if math.Trunc(targetGizmo.LastSnapPosition.Z()) != snappedZPosition {
+					snapDeltaZ := float64(snappedZPosition) - targetGizmo.LastSnapPosition.Z()
+					snappedDelta[2] = snapDeltaZ
+
+					gizmoDelta = &snappedDelta
+					targetGizmo.AccumulatedDelta[2] -= snapDeltaZ
+					targetGizmo.LastSnapPosition[2] += snapDeltaZ
+				}
 			}
 		}
 	}
@@ -174,6 +214,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 		gizmoEvent = GizmoEventActivated
 	} else if startStatus == true && endStatus == false {
 		gizmoEvent = GizmoEventCompleted
+		targetGizmo.AccumulatedDelta = mgl64.Vec3{}
 	}
 
 	return gizmoDelta, gizmoEvent

@@ -21,7 +21,6 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 	size := imgui.WindowSize()
 
 	file(app)
-	edit(app)
 	view(app)
 	multiplayer(app)
 

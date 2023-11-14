@@ -403,5 +403,7 @@ func (g *Client) initSettings() {
 		VoxelHighlightRegionID:        -1,
 
 		UIEnabled: true,
+
+		SnapSize: 16,
 	}
 }

@@ -63,7 +63,7 @@ type RuntimeConfig struct {
 	PhysicsConfirmedCollisionCount int32
 
 	// Editing
-	SnapToGrid bool
+	SnapSize int32
 
 	UIEnabled bool
 }

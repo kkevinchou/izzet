@@ -18,8 +18,7 @@ var (
 	}
 )
 
-var worldName string = "scene"
-
+var worldName string = settings.DefaultProject
 var selectedWorldName string = ""
 
 func SetupMenuBar(app renderiface.App) imgui.Vec2 {
@@ -78,13 +77,6 @@ func SetupMenuBar(app renderiface.App) imgui.Vec2 {
 			}
 		}
 
-		if imgui.Button("Save Project") {
-			app.SaveProject()
-		}
-
-		// if imgui.MenuItem("Bake Navigation Mesh") {
-		// 	app.NavMesh().BakeNavMesh()
-		// }
 		imgui.EndMenu()
 	}
 

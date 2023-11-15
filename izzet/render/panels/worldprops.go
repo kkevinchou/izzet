@@ -61,6 +61,20 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 				}
 			}
 		}, true)
+		setupRow("Rotation Snapping Size", func() {
+			if imgui.InputIntV("", &runtimeConfig.RotationSnapSize, 0, 0, imgui.InputTextFlagsNone) {
+				if runtimeConfig.RotationSnapSize < 1 {
+					runtimeConfig.RotationSnapSize = 1
+				}
+			}
+		}, true)
+		setupRow("Rotation Sensitivity", func() {
+			if imgui.InputIntV("", &runtimeConfig.RotationSensitivity, 0, 0, imgui.InputTextFlagsNone) {
+				if runtimeConfig.RotationSensitivity < 1 {
+					runtimeConfig.RotationSensitivity = 1
+				}
+			}
+		}, true)
 
 		imgui.EndTable()
 	}

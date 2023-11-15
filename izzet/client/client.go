@@ -360,50 +360,6 @@ func (g *Client) mousePosToNearPlane(mouseInput input.MouseInput, width, height 
 }
 
 func (g *Client) initSettings() {
-	g.runtimeConfig = &app.RuntimeConfig{
-		DirectionalLightDir:    [3]float32{-1, -1, -1},
-		Roughness:              0.55,
-		Metallic:               1.0,
-		PointLightBias:         1,
-		MaterialOverride:       false,
-		EnableShadowMapping:    true,
-		ShadowFarFactor:        1,
-		SPNearPlaneOffset:      300,
-		BloomIntensity:         0.04,
-		Exposure:               1.0,
-		AmbientFactor:          0.1,
-		Bloom:                  true,
-		BloomThresholdPasses:   1,
-		BloomThreshold:         0.8,
-		BloomUpsamplingScale:   1.0,
-		Color:                  [3]float32{1, 1, 1},
-		RenderSpatialPartition: false,
-		EnableSpatialPartition: true,
-		FPS:                    0,
-
-		Near: 1,
-		Far:  3000,
-		FovX: 105,
-
-		FogStart:   200,
-		FogEnd:     1000,
-		FogDensity: 1,
-		FogEnabled: true,
-
-		TriangleDrawCount: 0,
-		DrawCount:         0,
-
-		NavMeshHSV:                    true,
-		NavMeshRegionIDThreshold:      3000,
-		NavMeshDistanceFieldThreshold: 23,
-		HSVOffset:                     11,
-		VoxelHighlightX:               0,
-		VoxelHighlightZ:               0,
-		VoxelHighlightDistanceField:   -1,
-		VoxelHighlightRegionID:        -1,
-
-		UIEnabled: true,
-
-		SnapSize: 16,
-	}
+	config := app.DefaultRuntimeConfig()
+	g.runtimeConfig = &config
 }

@@ -65,7 +65,7 @@ type Gizmo struct {
 	LastFrameMousePosition mgl64.Vec2
 
 	AccumulatedDelta mgl64.Vec3
-	LastSnapPosition mgl64.Vec3
+	LastSnapVector   mgl64.Vec3
 
 	ActivationPosition mgl64.Vec3
 	ActivationScale    mgl64.Vec3
@@ -147,9 +147,41 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 
 		if axis.DistanceBasedDelta {
 			// mouse position based deltas, store the x,y mouse delta in the return value with 0 for the z value
-			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
-			gizmoDelta = &mouseDelta
+			delta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
 			targetGizmo.LastFrameMousePosition = mouseInput.Position
+
+			targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
+			calculatedPosition := targetGizmo.LastSnapVector.Add(targetGizmo.AccumulatedDelta)
+
+			snappedXPosition := math.Trunc(calculatedPosition.X()/float64(snapSize)) * float64(snapSize)
+			snappedYPosition := math.Trunc(calculatedPosition.Y()/float64(snapSize)) * float64(snapSize)
+			snappedZPosition := math.Trunc(calculatedPosition.Z()/float64(snapSize)) * float64(snapSize)
+
+			var snappedDelta mgl64.Vec3
+			if math.Trunc(targetGizmo.LastSnapVector.X()) != snappedXPosition {
+				snapDeltaX := float64(snappedXPosition) - targetGizmo.LastSnapVector.X()
+				snappedDelta[0] = snapDeltaX
+
+				gizmoDelta = &snappedDelta
+				targetGizmo.AccumulatedDelta[0] -= snapDeltaX
+				targetGizmo.LastSnapVector[0] += snapDeltaX
+			}
+			if math.Trunc(targetGizmo.LastSnapVector.Y()) != snappedYPosition {
+				snapDeltaY := float64(snappedYPosition) - targetGizmo.LastSnapVector.Y()
+				snappedDelta[1] = snapDeltaY
+
+				gizmoDelta = &snappedDelta
+				targetGizmo.AccumulatedDelta[1] -= snapDeltaY
+				targetGizmo.LastSnapVector[1] += snapDeltaY
+			}
+			if math.Trunc(targetGizmo.LastSnapVector.Z()) != snappedZPosition {
+				snapDeltaZ := float64(snappedZPosition) - targetGizmo.LastSnapVector.Z()
+				snappedDelta[2] = snapDeltaZ
+
+				gizmoDelta = &snappedDelta
+				targetGizmo.AccumulatedDelta[2] -= snapDeltaZ
+				targetGizmo.LastSnapVector[2] += snapDeltaZ
+			}
 		} else if targetGizmo.HoveredEntityID == GizmoAllAxisPickingID {
 			mouseDelta := mouseInput.Position.Sub(targetGizmo.LastFrameMousePosition)
 			magnitude := (mouseDelta[0] - mouseDelta[1])
@@ -173,36 +205,36 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 
 				targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
-				calculatedPosition := targetGizmo.LastSnapPosition.Add(targetGizmo.AccumulatedDelta)
+				calculatedPosition := targetGizmo.LastSnapVector.Add(targetGizmo.AccumulatedDelta)
 
 				snappedXPosition := math.Trunc(calculatedPosition.X()/float64(snapSize)) * float64(snapSize)
 				snappedYPosition := math.Trunc(calculatedPosition.Y()/float64(snapSize)) * float64(snapSize)
 				snappedZPosition := math.Trunc(calculatedPosition.Z()/float64(snapSize)) * float64(snapSize)
 
 				var snappedDelta mgl64.Vec3
-				if math.Trunc(targetGizmo.LastSnapPosition.X()) != snappedXPosition {
-					snapDeltaX := float64(snappedXPosition) - targetGizmo.LastSnapPosition.X()
+				if math.Trunc(targetGizmo.LastSnapVector.X()) != snappedXPosition {
+					snapDeltaX := float64(snappedXPosition) - targetGizmo.LastSnapVector.X()
 					snappedDelta[0] = snapDeltaX
 
 					gizmoDelta = &snappedDelta
 					targetGizmo.AccumulatedDelta[0] -= snapDeltaX
-					targetGizmo.LastSnapPosition[0] += snapDeltaX
+					targetGizmo.LastSnapVector[0] += snapDeltaX
 				}
-				if math.Trunc(targetGizmo.LastSnapPosition.Y()) != snappedYPosition {
-					snapDeltaY := float64(snappedYPosition) - targetGizmo.LastSnapPosition.Y()
+				if math.Trunc(targetGizmo.LastSnapVector.Y()) != snappedYPosition {
+					snapDeltaY := float64(snappedYPosition) - targetGizmo.LastSnapVector.Y()
 					snappedDelta[1] = snapDeltaY
 
 					gizmoDelta = &snappedDelta
 					targetGizmo.AccumulatedDelta[1] -= snapDeltaY
-					targetGizmo.LastSnapPosition[1] += snapDeltaY
+					targetGizmo.LastSnapVector[1] += snapDeltaY
 				}
-				if math.Trunc(targetGizmo.LastSnapPosition.Z()) != snappedZPosition {
-					snapDeltaZ := float64(snappedZPosition) - targetGizmo.LastSnapPosition.Z()
+				if math.Trunc(targetGizmo.LastSnapVector.Z()) != snappedZPosition {
+					snapDeltaZ := float64(snappedZPosition) - targetGizmo.LastSnapVector.Z()
 					snappedDelta[2] = snapDeltaZ
 
 					gizmoDelta = &snappedDelta
 					targetGizmo.AccumulatedDelta[2] -= snapDeltaZ
-					targetGizmo.LastSnapPosition[2] += snapDeltaZ
+					targetGizmo.LastSnapVector[2] += snapDeltaZ
 				}
 			}
 		}

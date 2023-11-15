@@ -215,7 +215,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 		rotation = r.app.GetEditorCameraRotation()
 	} else {
 		camera := r.app.GetPlayerCamera()
-		position = camera.WorldPosition()
+		position = camera.Position()
 		rotation = camera.WorldRotation()
 	}
 
@@ -422,8 +422,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 					// directional light arrow
 					lines := [][]mgl64.Vec3{
 						[]mgl64.Vec3{
-							entity.WorldPosition(),
-							entity.WorldPosition().Add(dir),
+							entity.Position(),
+							entity.Position().Add(dir),
 						},
 					}
 
@@ -630,7 +630,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.depthCubeMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	position := pointLight.WorldPosition()
+	position := pointLight.Position()
 	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, settings.DepthCubeMapFar)
 
 	shader := r.shaderManager.GetShaderProgram("point_shadow")
@@ -706,7 +706,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 						shader := shaderManager.GetShaderProgram("world_space_quad")
 						shader.Use()
 
-						position := entity.WorldPosition()
+						position := entity.Position()
 						modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 						scale := entity.ImageInfo.Scale
 						modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
@@ -747,9 +747,9 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				// there's probably away to get the right vector directly rather than going crossing the up vector :D
 				rightVector := forwardVector.Cross(upVector)
 
-				start := entity.WorldPosition().Add(rightVector.Mul(10)).Add(mgl64.Vec3{0, 30, 0})
+				start := entity.Position().Add(rightVector.Mul(10)).Add(mgl64.Vec3{0, 30, 0})
 				lines := [][]mgl64.Vec3{
-					{start, entity.WorldPosition().Add(entity.CharacterControllerComponent.WebVector)},
+					{start, entity.Position().Add(entity.CharacterControllerComponent.WebVector)},
 				}
 
 				shader := shaderManager.GetShaderProgram("flat")
@@ -1005,7 +1005,7 @@ func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext Rende
 	}
 
 	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
-	position := entity.WorldPosition()
+	position := entity.Position()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)

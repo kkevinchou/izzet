@@ -83,7 +83,7 @@ func (e *Entity) WorldRotation() mgl64.Quat {
 	return r
 }
 
-func (e *Entity) WorldPosition() mgl64.Vec3 {
+func (e *Entity) Position() mgl64.Vec3 {
 	m := WorldTransform(e)
 	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
 }

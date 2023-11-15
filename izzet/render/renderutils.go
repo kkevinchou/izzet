@@ -368,7 +368,7 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 		shader.SetUniformInt(fmt.Sprintf("lights[%d].type", i), int32(lightInfo.Type))
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].dir", i), lightInfo.Direction3F)
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].diffuse", i), diffuse)
-		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.WorldPosition()))
+		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.Position()))
 		shader.SetUniformFloat(fmt.Sprintf("lights[%d].range", i), lightInfo.Range)
 	}
 }

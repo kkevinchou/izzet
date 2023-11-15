@@ -326,7 +326,8 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 
 	if entity != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, entity)
+			snapSize := int(g.runtimeConfig.SnapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, entity, snapSize)
 			if delta != nil {
 				if entity.Parent != nil {
 					// the computed position is in world space but entity.LocalPosition is in local space
@@ -351,11 +352,12 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.TranslationGizmo.ActivationPosition = entities.GetLocalPosition(entity)
-				gizmo.TranslationGizmo.LastSnapPosition = entities.GetLocalPosition(entity)
+				gizmo.TranslationGizmo.LastSnapVector = entities.GetLocalPosition(entity)
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity)
+			snapSize := int(g.runtimeConfig.RotationSnapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity, snapSize)
 			if delta != nil {
 				var magnitude float64 = 0
 
@@ -364,7 +366,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				} else {
 					magnitude = delta.Y()
 				}
-				magnitude *= 0.01
+				magnitude *= math.Pi / float64(g.runtimeConfig.RotationSensitivity)
 
 				var newRotationAdjustment mgl64.Quat
 				if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoXDistancePickingID {
@@ -393,10 +395,12 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.RotationGizmo.ActivationRotation = entities.GetLocalRotation(entity)
+				// gizmo.TranslationGizmo.LastSnapVector = mgl64.Vec3{}
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity)
+			snapSize := int(g.runtimeConfig.SnapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity, snapSize)
 			if delta != nil {
 				magnitude := 0.05
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
@@ -440,12 +444,11 @@ func InteractingWithUI() bool {
 	return anyPopup || anyWindow
 }
 
-func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity) (*mgl64.Vec3, gizmo.GizmoEvent) {
+func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl64.Vec3, gizmo.GizmoEvent) {
 	mouseInput := frameInput.MouseInput
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 
-	snapSize := int(g.runtimeConfig.SnapSize)
 	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.WorldPosition(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

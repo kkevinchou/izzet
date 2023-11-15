@@ -17,7 +17,7 @@ func (s *MovementSystem) Update(delta time.Duration, world GameWorld) {
 
 			if mc.PatrolConfig != nil {
 				target := mc.PatrolConfig.Points[mc.PatrolConfig.Index]
-				startPosition := entity.WorldPosition()
+				startPosition := entity.Position()
 				if startPosition.Sub(target).Len() < 5 {
 					mc.PatrolConfig.Index = (mc.PatrolConfig.Index + 1) % len(mc.PatrolConfig.Points)
 					target = mc.PatrolConfig.Points[mc.PatrolConfig.Index]

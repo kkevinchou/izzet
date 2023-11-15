@@ -338,7 +338,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 					transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
 
 					// take the new world position and convert it to local space
-					worldPosition := entity.WorldPosition().Add(*delta)
+					worldPosition := entity.Position().Add(*delta)
 					newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(worldPosition.Vec4(1)).Vec3()
 
 					entities.SetLocalPosition(entity, newPositionInLocalSpace)
@@ -449,6 +449,6 @@ func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e
 	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 	nearPlanePos := g.mousePosToNearPlane(mouseInput, g.width, g.height)
 
-	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.WorldPosition(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

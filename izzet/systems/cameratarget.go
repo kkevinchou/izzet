@@ -38,7 +38,7 @@ func update(delta time.Duration, world GameWorld, camera *entities.Entity) {
 
 	// swivel around target
 	target := world.GetEntityByID(*camera.CameraComponent.Target)
-	targetPosition := target.WorldPosition().Add(camera.CameraComponent.TargetPositionOffset)
+	targetPosition := target.Position().Add(camera.CameraComponent.TargetPositionOffset)
 
 	cameraOffset := settings.CameraEntityOffset
 	if settings.FirstPersonCamera {

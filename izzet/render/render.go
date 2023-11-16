@@ -87,7 +87,8 @@ type Renderer struct {
 	cubeVAOs     map[float32]uint32
 	triangleVAOs map[string]uint32
 
-	width, height int
+	width, height     int
+	gameWindowHovered bool
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
@@ -339,7 +340,12 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
-	r.renderImgui(renderContext)
+	r.renderImgui(renderContext, finalRenderTexture)
+}
+
+func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
+	handle := 1<<63 | uint64(texture)
+	return imgui.TextureID(handle)
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -933,67 +939,88 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 }
 
-func (r *Renderer) renderImgui(renderContext RenderContext) {
+func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture uint32) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.app.Platform().NewFrame()
 	imgui.NewFrame()
 
-	menuBarSize := menus.SetupMenuBar(r.app)
-	if r.app.RuntimeConfig().UIEnabled {
-		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
-		imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-		// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
-		// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
-		imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-		// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
-		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-		imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
-		imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
-		imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
-		imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
-		imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
-		imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
-		imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-		imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
-		imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
+	r.gameWindowHovered = false
+	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar) {
+		regionSize := imgui.ContentRegionAvail()
+		imageWidth := regionSize.X
 
-		panels.BuildContentBrowser(
-			r.app,
-			r.world,
-			renderContext,
-			menuBarSize,
-			r.app.Prefabs(),
-		)
+		// if imgui.BeginChild("Game Window") {
+		var gameWindowRatio float32 = 0.75
+		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio()) * gameWindowRatio}
+		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNone) {
+			texture := CreateUserSpaceTextureHandle(finalRenderTexture)
+			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+		}
+		imgui.EndChild()
 
-		panels.BuildTabsSet(
-			r.app,
-			r.world,
-			renderContext,
-			menuBarSize,
-			r.app.Prefabs(),
-		)
+		imgui.SameLine()
 
-		imgui.PopStyleColorV(20)
-		imgui.PopStyleVarV(7)
+		menuBarSize := menus.SetupMenuBar(r.app)
+		if r.app.RuntimeConfig().UIEnabled {
+			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
+			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
+			// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
+			// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
+			imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
+			// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
+			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+			imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
+			imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
+			imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
+			imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+			imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
+			imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
-		if r.app.ShowImguiDemo() {
-			imgui.ShowDemoWindow(nil)
+			// panels.BuildContentBrowser(
+			// 	r.app,
+			// 	r.world,
+			// 	renderContext,
+			// 	menuBarSize,
+			// 	r.app.Prefabs(),
+			// )
+
+			panels.BuildTabsSet(
+				r.app,
+				r.world,
+				renderContext,
+				menuBarSize,
+				r.app.Prefabs(),
+			)
+
+			imgui.PopStyleColorV(20)
+			imgui.PopStyleVarV(7)
+
+			if r.app.ShowImguiDemo() {
+				imgui.ShowDemoWindow(nil)
+			}
 		}
 	}
+	if imgui.IsWindowHovered() {
+		r.gameWindowHovered = true
+	}
+	imgui.End()
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.RenderedDrawData())
@@ -1022,4 +1049,8 @@ func triangleVAOKey(triangle entities.Triangle) string {
 
 func (r *Renderer) SetWorld(world *world.GameWorld) {
 	r.world = world
+}
+
+func (r *Renderer) GameWindowHovered() bool {
+	return r.gameWindowHovered
 }

@@ -85,7 +85,7 @@ func sceneHierarchy(app renderiface.App, world GameWorld) {
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube") {
-				entity := entities.CreateCube(app.ModelLibrary(), 100)
+				entity := entities.CreateCube(app.ModelLibrary(), 1)
 
 				meshHandle := entity.MeshComponent.MeshHandle
 				primitives := app.ModelLibrary().GetPrimitives(meshHandle)

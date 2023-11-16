@@ -71,7 +71,7 @@ func New(processVisuals bool) *ModelLibrary {
 
 	if processVisuals {
 		handle := m.GetCubeMeshHandle()
-		m.RegisterMeshWithHandle(handle, cubeMesh())
+		m.RegisterMeshWithHandle(handle, cubeMesh(100))
 	}
 
 	return m

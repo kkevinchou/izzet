@@ -493,3 +493,7 @@ func (g *Client) SaveProjectAs(name string) {
 	g.project.Name = name
 	g.SaveProject()
 }
+
+func (g *Client) Shutdown() {
+	g.gameOver = true
+}

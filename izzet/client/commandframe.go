@@ -77,9 +77,18 @@ func (g *Client) handleSpatialPartition() {
 var copiedEntity []byte
 
 func (g *Client) handleInputCommands(frameInput input.Input) {
+	for _, cmd := range frameInput.Commands {
+		if c, ok := cmd.(input.FileDropCommand); ok {
+			fmt.Println("received drop file command", c.File)
+		} else if _, ok := cmd.(input.QuitCommand); ok {
+			g.Shutdown()
+		}
+	}
+
 	mouseInput := frameInput.MouseInput
-	// shutdown
 	keyboardInput := frameInput.KeyboardInput
+
+	// shutdown
 	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {
 		if g.AppMode() == app.AppModeEditor {
 			g.Shutdown()

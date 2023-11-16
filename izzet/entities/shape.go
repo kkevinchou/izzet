@@ -43,7 +43,7 @@ type ShapeData struct {
 	Triangle *Triangle
 }
 
-func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
+func CreateCube(ml *modellibrary.ModelLibrary, length float64) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
 	entity.Material = &MaterialComponent{
 		PBR: types.PBR{
@@ -53,8 +53,9 @@ func CreateCube(ml *modellibrary.ModelLibrary, length int) *Entity {
 			DiffuseIntensity: 1,
 		},
 	}
+	entity.LocalScale = mgl64.Vec3{length, length, length}
 
-	handle := ml.GetOrCreateCubeMeshHandle(length)
+	handle := ml.GetCubeMeshHandle()
 	entity.MeshComponent = &MeshComponent{
 		MeshHandle:    handle,
 		Transform:     mgl64.Ident4(),

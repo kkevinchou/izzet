@@ -75,7 +75,6 @@ func (g *Client) handleSpatialPartition() {
 }
 
 var copiedEntity []byte
-var copiedEntityHasTriMesh bool
 
 func (g *Client) handleInputCommands(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
@@ -145,7 +144,6 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 					if entity := panels.SelectedEntity(); entity != nil {
 						var err error
 						copiedEntity, err = json.Marshal(entity)
-						copiedEntityHasTriMesh = entity.Collider != nil && entity.Collider.TriMeshCollider != nil
 						if err != nil {
 							panic(err)
 						}
@@ -168,7 +166,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 					id := entities.GetNextIDAndAdvance()
 					newEntity.ID = id
 
-					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary(), copiedEntityHasTriMesh)
+					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
 
 					g.world.AddEntity(&newEntity)
 					panels.SelectEntity(&newEntity)

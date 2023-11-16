@@ -89,6 +89,9 @@ type Renderer struct {
 
 	width, height     int
 	gameWindowHovered bool
+	gameWindowWidth   float32
+	gameWindowHeight  float32
+	menuBarHeight     float32
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
@@ -338,7 +341,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
+	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
 	r.renderImgui(renderContext, finalRenderTexture)
 }
@@ -941,26 +944,41 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture uint32) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.app.Platform().NewFrame()
+	fwidth, fheight := r.app.Platform().NewFrame()
 	imgui.NewFrame()
+	_, _ = fwidth, fheight
 
 	r.gameWindowHovered = false
-	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar) {
+	menuBarSize := menus.SetupMenuBar(r.app)
+	r.menuBarHeight = menuBarSize.Y
+
+	width := fwidth + 1 // weirdly the width is always 1 pixel off
+	height := fheight - menuBarSize.Y
+
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)
+	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize) {
 		regionSize := imgui.ContentRegionAvail()
 		imageWidth := regionSize.X
 
-		// if imgui.BeginChild("Game Window") {
-		var gameWindowRatio float32 = 0.75
+		var gameWindowRatio float32 = 0.80
 		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio()) * gameWindowRatio}
+		r.gameWindowWidth = size.X
+		r.gameWindowHeight = size.Y
+
 		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNone) {
 			texture := CreateUserSpaceTextureHandle(finalRenderTexture)
 			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
+
+		if imgui.IsWindowHovered() {
+			r.gameWindowHovered = true
+		}
+
 		imgui.EndChild()
 
 		imgui.SameLine()
 
-		menuBarSize := menus.SetupMenuBar(r.app)
 		if r.app.RuntimeConfig().UIEnabled {
 			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
@@ -1017,10 +1035,8 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 			}
 		}
 	}
-	if imgui.IsWindowHovered() {
-		r.gameWindowHovered = true
-	}
 	imgui.End()
+	imgui.PopStyleVarV(1)
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.RenderedDrawData())

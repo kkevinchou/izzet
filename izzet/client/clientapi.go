@@ -430,6 +430,9 @@ func (g *Client) GetProject() *project.Project {
 }
 
 func (g *Client) LoadProject(name string) bool {
+	if name == "" {
+		return false
+	}
 	g.project.Name = name
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
 }

@@ -6,13 +6,8 @@ import (
 	"os"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
-
-type App interface {
-	ModelLibrary() *modellibrary.ModelLibrary
-}
 
 type GameWorld interface {
 	Entities() []*entities.Entity
@@ -29,11 +24,10 @@ type WorldIR struct {
 }
 
 type Serializer struct {
-	app App
 }
 
-func New(app App) *Serializer {
-	return &Serializer{app: app}
+func New() *Serializer {
+	return &Serializer{}
 }
 
 func (s *Serializer) WriteToFile(world GameWorld, filepath string) error {
@@ -95,15 +89,9 @@ func (s *Serializer) ReadFromFile(filepath string) (*world.GameWorld, error) {
 }
 
 func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
-	// bytes, err := io.ReadAll(reader)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	var worldIR WorldIR
 	decoder := json.NewDecoder(reader)
 	err := decoder.Decode(&worldIR)
-	// err = json.Unmarshal(bytes, &worldIR)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +99,6 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	entityMap := map[int]*entities.Entity{}
 	for _, entity := range worldIR.Entities {
 		entityMap[entity.ID] = entity
-		InitDeserializedEntity(entity, s.app.ModelLibrary())
 	}
 
 	// rebuild relations

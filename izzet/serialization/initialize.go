@@ -25,3 +25,9 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 		}
 	}
 }
+
+func InitDeserializedEntities(entitySlice []*entities.Entity, ml *modellibrary.ModelLibrary) {
+	for _, entity := range entitySlice {
+		InitDeserializedEntity(entity, ml)
+	}
+}

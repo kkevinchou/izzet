@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
+	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
@@ -33,6 +34,7 @@ func (g *Server) LoadWorld(name string) bool {
 		fmt.Println("failed to load world", filename, err)
 		panic(err)
 	}
+	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
 
 	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()

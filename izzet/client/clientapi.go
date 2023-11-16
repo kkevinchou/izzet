@@ -238,7 +238,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&playerEntity, g.ModelLibrary(), false)
+	serialization.InitDeserializedEntity(&playerEntity, g.ModelLibrary())
 	g.world.AddEntity(&playerEntity)
 
 	var camera entities.Entity
@@ -246,7 +246,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&camera, g.ModelLibrary(), false)
+	serialization.InitDeserializedEntity(&camera, g.ModelLibrary())
 	g.world.AddEntity(&camera)
 
 	g.SetPlayerCamera(&camera)

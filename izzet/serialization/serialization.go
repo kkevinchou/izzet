@@ -8,7 +8,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type App interface {
@@ -25,9 +24,8 @@ type Relation struct {
 }
 
 type WorldIR struct {
-	Entities   []*entities.Entity
-	Relations  []Relation
-	HasTriMesh map[int]bool
+	Entities  []*entities.Entity
+	Relations []Relation
 }
 
 type Serializer struct {
@@ -58,16 +56,12 @@ func (s *Serializer) Write(world GameWorld, writer io.Writer) error {
 	entities := world.Entities()
 
 	worldIR := WorldIR{
-		Entities:   entities,
-		HasTriMesh: map[int]bool{},
+		Entities: entities,
 	}
 
 	for _, entity := range entities {
 		if entity.Parent != nil {
 			worldIR.Relations = append(worldIR.Relations, Relation{Parent: entity.Parent.ID, Child: entity.ID})
-		}
-		if entity.Collider != nil && entity.Collider.TriMeshCollider != nil {
-			worldIR.HasTriMesh[entity.GetID()] = true
 		}
 	}
 
@@ -117,8 +111,7 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	entityMap := map[int]*entities.Entity{}
 	for _, entity := range worldIR.Entities {
 		entityMap[entity.ID] = entity
-
-		InitDeserializedEntity(entity, s.app.ModelLibrary(), worldIR.HasTriMesh[entity.GetID()])
+		InitDeserializedEntity(entity, s.app.ModelLibrary())
 	}
 
 	// rebuild relations
@@ -133,22 +126,4 @@ func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
 	}
 
 	return world.New(entityMap), nil
-}
-
-func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibrary, hasTriMesh bool) {
-	// set dirty flags
-	entity.DirtyTransformFlag = true
-
-	// rebuild animation player
-	if entity.Animation != nil {
-		handle := entity.Animation.AnimationHandle
-		entity.Animation = entities.NewAnimationComponent(handle, ml)
-	}
-
-	// rebuild trimesh collider
-	if hasTriMesh {
-		meshHandle := entity.MeshComponent.MeshHandle
-		primitives := ml.GetPrimitives(meshHandle)
-		entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
-	}
 }

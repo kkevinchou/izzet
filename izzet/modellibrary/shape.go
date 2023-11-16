@@ -5,8 +5,8 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-func cubeMesh(length int) *modelspec.MeshSpecification {
-	primitive := createCubePrimitive(length)
+func cubeMesh() *modelspec.MeshSpecification {
+	primitive := createCubePrimitive(1)
 	mesh := &modelspec.MeshSpecification{ID: nextGlobalID, Primitives: []*modelspec.PrimitiveSpecification{primitive}}
 	nextGlobalID += 1
 	return mesh

@@ -13,8 +13,6 @@ var nextGlobalID int
 
 const (
 	NamespaceGlobal = "global"
-
-	HandleTypeCube HandleType = "cube"
 )
 
 type HandleType string
@@ -22,9 +20,6 @@ type HandleType string
 type Handle struct {
 	Namespace string
 	ID        string
-
-	Type         HandleType
-	IntTypeParam int
 }
 
 type ModelConfig struct {
@@ -74,17 +69,16 @@ func New(processVisuals bool) *ModelLibrary {
 		processVisuals: processVisuals,
 	}
 
+	if processVisuals {
+		handle := m.GetCubeMeshHandle()
+		m.RegisterMeshWithHandle(handle, cubeMesh())
+	}
+
 	return m
 }
 
-func (m *ModelLibrary) GetOrCreateCubeMeshHandle(length int) Handle {
-	handle := NewHandle("global", fmt.Sprintf("cube-%d", length))
-	handle.Type = HandleTypeCube
-	handle.IntTypeParam = length
-	if _, ok := m.Primitives[handle]; ok {
-		return handle
-	}
-	return m.RegisterMeshWithHandle(handle, cubeMesh(length))
+func (m *ModelLibrary) GetCubeMeshHandle() Handle {
+	return NewHandle("global", fmt.Sprintf("cube"))
 }
 
 // TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
@@ -193,12 +187,7 @@ func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.Anima
 
 func (m *ModelLibrary) GetPrimitives(handle Handle) []Primitive {
 	if _, ok := m.Primitives[handle]; !ok {
-		if handle.Type == HandleTypeCube {
-			newHandle := m.GetOrCreateCubeMeshHandle(handle.IntTypeParam)
-			handle = newHandle
-		} else {
-			return nil
-		}
+		return nil
 	}
 	return m.Primitives[handle]
 }

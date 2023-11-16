@@ -20,7 +20,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/render"
-	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -48,7 +47,6 @@ type Client struct {
 	prefabs map[int]*prefabs.Prefab
 
 	renderer    *render.Renderer
-	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
 
 	relativeMouseOrigin [2]int32

@@ -6,7 +6,6 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -21,12 +20,11 @@ type App interface {
 
 type Replicator struct {
 	app         App
-	serializer  *serialization.Serializer
 	accumulator int
 }
 
-func NewReplicator(app App, serializer *serialization.Serializer) *Replicator {
-	return &Replicator{app: app, serializer: serializer}
+func NewReplicator(app App) *Replicator {
+	return &Replicator{app: app}
 }
 
 var count int

@@ -23,14 +23,7 @@ type WorldIR struct {
 	Relations []Relation
 }
 
-type Serializer struct {
-}
-
-func New() *Serializer {
-	return &Serializer{}
-}
-
-func (s *Serializer) WriteToFile(world GameWorld, filepath string) error {
+func WriteToFile(world GameWorld, filepath string) error {
 	f, err := os.Create(filepath)
 	if err != nil {
 		return err
@@ -38,7 +31,7 @@ func (s *Serializer) WriteToFile(world GameWorld, filepath string) error {
 
 	defer f.Close()
 
-	err = s.Write(world, f)
+	err = Write(world, f)
 	if err != nil {
 		return err
 	}
@@ -46,7 +39,7 @@ func (s *Serializer) WriteToFile(world GameWorld, filepath string) error {
 	return nil
 }
 
-func (s *Serializer) Write(world GameWorld, writer io.Writer) error {
+func Write(world GameWorld, writer io.Writer) error {
 	entities := world.Entities()
 
 	worldIR := WorldIR{
@@ -72,7 +65,7 @@ func (s *Serializer) Write(world GameWorld, writer io.Writer) error {
 	return nil
 }
 
-func (s *Serializer) ReadFromFile(filepath string) (*world.GameWorld, error) {
+func ReadFromFile(filepath string) (*world.GameWorld, error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -80,7 +73,7 @@ func (s *Serializer) ReadFromFile(filepath string) (*world.GameWorld, error) {
 
 	defer f.Close()
 
-	gameWorld, err := s.Read(f)
+	gameWorld, err := Read(f)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +81,7 @@ func (s *Serializer) ReadFromFile(filepath string) (*world.GameWorld, error) {
 	return gameWorld, err
 }
 
-func (s *Serializer) Read(reader io.Reader) (*world.GameWorld, error) {
+func Read(reader io.Reader) (*world.GameWorld, error) {
 	var worldIR WorldIR
 	decoder := json.NewDecoder(reader)
 	err := decoder.Decode(&worldIR)

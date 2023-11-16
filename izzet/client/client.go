@@ -167,7 +167,6 @@ func (g *Client) Start() {
 		currentLoopCommandFrames := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			input := g.platform.PollInput()
-			g.HandleInput(input)
 			start := time.Now()
 			g.frameInput = input
 

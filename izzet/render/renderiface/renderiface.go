@@ -8,7 +8,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/project"
-	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -35,7 +34,6 @@ type App interface {
 	SetShowImguiDemo(bool)
 	ShowImguiDemo() bool
 
-	Serializer() *serialization.Serializer
 	LoadProject(name string) bool
 
 	CollisionObserver() *observers.CollisionObserver

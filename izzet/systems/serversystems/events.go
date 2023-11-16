@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -34,12 +33,11 @@ type App interface {
 }
 
 type EventsSystem struct {
-	app        App
-	serializer *serialization.Serializer
+	app App
 }
 
-func NewEventsSystem(app App, serializer *serialization.Serializer) *EventsSystem {
-	return &EventsSystem{app: app, serializer: serializer}
+func NewEventsSystem(app App) *EventsSystem {
+	return &EventsSystem{app: app}
 }
 
 func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {

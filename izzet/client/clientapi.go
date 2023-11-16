@@ -75,12 +75,8 @@ func (g *Client) Platform() *input.SDLPlatform {
 	return g.platform
 }
 
-func (g *Client) Serializer() *serialization.Serializer {
-	return g.serializer
-}
-
 func (g *Client) saveWorld(name string) {
-	err := g.serializer.WriteToFile(g.world, path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name)))
+	err := serialization.WriteToFile(g.world, path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name)))
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +87,7 @@ func (g *Client) loadWorld(filepath string) bool {
 		return false
 	}
 
-	world, err := g.serializer.ReadFromFile(filepath)
+	world, err := serialization.ReadFromFile(filepath)
 	if err != nil {
 		fmt.Println("failed to load world", filepath, err)
 		panic(err)
@@ -158,12 +154,12 @@ func (g *Client) StartLiveWorld() {
 	g.editorWorld = g.world
 
 	var buffer bytes.Buffer
-	err := g.serializer.Write(g.world, &buffer)
+	err := serialization.Write(g.world, &buffer)
 	if err != nil {
 		panic(err)
 	}
 
-	liveWorld, err := g.serializer.Read(&buffer)
+	liveWorld, err := serialization.Read(&buffer)
 	if err != nil {
 		panic(err)
 	}
@@ -253,7 +249,7 @@ func (g *Client) Connect() error {
 
 	fmt.Println("CLIENT player id", playerEntity.GetID(), "camera id", camera.GetID())
 
-	world, err := g.serializer.Read(bytes.NewReader(message.Snapshot))
+	world, err := serialization.Read(bytes.NewReader(message.Snapshot))
 	if err != nil {
 		return err
 	}
@@ -346,12 +342,12 @@ func (g *Client) StartAsyncServer() {
 
 	go func() {
 		var worldBytes bytes.Buffer
-		err := g.serializer.Write(g.world, &worldBytes)
+		err := serialization.Write(g.world, &worldBytes)
 		if err != nil {
 			panic(err)
 		}
 
-		world, err := g.serializer.Read(&worldBytes)
+		world, err := serialization.Read(&worldBytes)
 		if err != nil {
 			panic(err)
 		}
@@ -403,7 +399,6 @@ func (g *Client) initialize() {
 		Rotation: mgl64.QuatIdent(),
 	}
 
-	g.serializer = serialization.New()
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()

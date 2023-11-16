@@ -33,7 +33,6 @@ type Server struct {
 
 	entities map[int]*entities.Entity
 
-	serializer  *serialization.Serializer
 	editHistory *edithistory.EditHistory
 
 	metricsRegistry *metrics.MetricsRegistry
@@ -58,7 +57,7 @@ type Server struct {
 
 func NewWithFile(assetsDirectory string, filepath string) *Server {
 	s := NewWithWorld(assetsDirectory, nil)
-	world, err := s.serializer.ReadFromFile(filepath)
+	world, err := serialization.ReadFromFile(filepath)
 	if err != nil {
 		panic(err)
 	}
@@ -89,12 +88,11 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	dataFilePath := "izzet_data.json"
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
-	g.serializer = serialization.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
 
 	g.newConnections = make(chan NewConnection, 100)
-	g.replicator = NewReplicator(g, g.serializer)
+	g.replicator = NewReplicator(g)
 
 	// THINGS TO DELETE AFTER DEBUGGING
 	g.editHistory = edithistory.New()
@@ -108,7 +106,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.systems = append(g.systems, systems.NewCollisionSystem(g))
 	g.systems = append(g.systems, systems.NewAnimationSystem(g))
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
-	g.systems = append(g.systems, serversystems.NewEventsSystem(g, g.serializer))
+	g.systems = append(g.systems, serversystems.NewEventsSystem(g))
 
 	fmt.Println(time.Since(start), "to start up systems")
 

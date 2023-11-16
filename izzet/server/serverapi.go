@@ -29,7 +29,7 @@ func (g *Server) LoadWorld(name string) bool {
 	}
 
 	filename := fmt.Sprintf("./%s.json", name)
-	world, err := g.serializer.ReadFromFile(filename)
+	world, err := serialization.ReadFromFile(filename)
 	if err != nil {
 		fmt.Println("failed to load world", filename, err)
 		panic(err)
@@ -160,7 +160,7 @@ func (g *Server) GetPlayerCamera() *entities.Entity {
 
 func (g *Server) SerializeWorld() []byte {
 	var buffer bytes.Buffer
-	g.serializer.Write(g.world, &buffer)
+	serialization.Write(g.world, &buffer)
 	return buffer.Bytes()
 }
 

@@ -62,6 +62,7 @@ func NewWithFile(assetsDirectory string, filepath string) *Server {
 	if err != nil {
 		panic(err)
 	}
+	serialization.InitDeserializedEntities(world.Entities(), s.modelLibrary)
 	s.world = world
 	return s
 }
@@ -88,7 +89,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	dataFilePath := "izzet_data.json"
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
-	g.serializer = serialization.New(g)
+	g.serializer = serialization.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()
 

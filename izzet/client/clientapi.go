@@ -91,14 +91,12 @@ func (g *Client) loadWorld(filepath string) bool {
 		return false
 	}
 
-	// filename := path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name))
-	// filename := fmt.Sprintf("./%s.json", name)
-
 	world, err := g.serializer.ReadFromFile(filepath)
 	if err != nil {
 		fmt.Println("failed to load world", filepath, err)
 		panic(err)
 	}
+	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
 
 	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()
@@ -169,6 +167,7 @@ func (g *Client) StartLiveWorld() {
 	if err != nil {
 		panic(err)
 	}
+	serialization.InitDeserializedEntities(liveWorld.Entities(), g.modelLibrary)
 
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	panels.SelectEntity(nil)
@@ -258,6 +257,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		return err
 	}
+	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
 
 	for _, entity := range world.Entities() {
 		if entity.GetID() == camera.GetID() || entity.GetID() == playerEntity.GetID() {
@@ -355,6 +355,7 @@ func (g *Client) StartAsyncServer() {
 		if err != nil {
 			panic(err)
 		}
+		serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
 
 		serverApp := server.NewWithWorld("_assets", world)
 		serverApp.Start(started, g.asyncServerDone)
@@ -402,7 +403,7 @@ func (g *Client) initialize() {
 		Rotation: mgl64.QuatIdent(),
 	}
 
-	g.serializer = serialization.New(g)
+	g.serializer = serialization.New()
 	g.editHistory = edithistory.New()
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = observers.NewCollisionObserver()

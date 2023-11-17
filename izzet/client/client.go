@@ -203,8 +203,7 @@ func (g *Client) Start() {
 			start := time.Now()
 			frameCount++
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			renderContext := render.NewRenderContext(g.width, g.height, float64(g.RuntimeConfig().FovX))
-			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
+			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
 			g.window.GLSwap()
 			renderTime := time.Since(start).Milliseconds()
 			g.MetricsRegistry().Inc("render_time", float64(renderTime))

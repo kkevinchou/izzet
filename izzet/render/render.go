@@ -89,6 +89,8 @@ type Renderer struct {
 
 	width, height     int
 	gameWindowHovered bool
+	gameWindowX       float32
+	gameWindowY       float32
 	gameWindowWidth   float32
 	gameWindowHeight  float32
 	menuBarHeight     float32
@@ -123,8 +125,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	r.cubeVAOs = map[float32]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.initMainRenderFBO(width, height)
-	r.initDepthMapFBO(width, height)
+	r.Resized(width, height)
 
 	// circles for the rotation gizmo
 
@@ -149,7 +150,6 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	// new textures are binded when we're in the process of blooming
 	r.blendFBO, _ = r.initFBOAndTexture(width, height)
 
-	r.initCompositeFBO(width, height)
 	r.renderCircle()
 
 	return r
@@ -157,9 +157,26 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 func (r *Renderer) Resized(width, height int) {
 	r.width, r.height = width, height
-	r.initMainRenderFBO(width, height)
-	r.initCompositeFBO(width, height)
-	r.initDepthMapFBO(width, height)
+
+	if r.app.RuntimeConfig().UIEnabled && r.gameWindowWidth != 0 && r.gameWindowHeight != 0 {
+		width = int(r.gameWindowWidth)
+		height = int(r.gameWindowHeight)
+		// 1639
+		// 1051
+		width = 1639
+		height = 1051
+		r.initMainRenderFBO(width, height)
+		r.initCompositeFBO(width, height)
+		r.initDepthMapFBO(width, height)
+	} else {
+		r.initMainRenderFBO(width, height)
+		r.initCompositeFBO(width, height)
+		r.initDepthMapFBO(width, height)
+	}
+}
+
+func (r *Renderer) ReinitializeFrameBuffers() {
+	r.Resized(r.width, r.height)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
@@ -288,7 +305,7 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	renderEntities := r.fetchRenderableEntities(position, rotation, renderContext)
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
-	r.drawSkybox(renderContext)
+	// r.drawSkybox(renderContext)
 	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
@@ -686,8 +703,12 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
+	if r.app.RuntimeConfig().UIEnabled {
+		gl.Viewport(0, 0, int32(r.gameWindowWidth), int32(r.gameWindowHeight))
+	} else {
+		gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	}
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
 
 	shaderManager := r.shaderManager
@@ -946,14 +967,13 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	fwidth, fheight := r.app.Platform().NewFrame()
 	imgui.NewFrame()
-	_, _ = fwidth, fheight
 
 	r.gameWindowHovered = false
 	menuBarSize := menus.SetupMenuBar(r.app)
 	r.menuBarHeight = menuBarSize.Y
 
 	width := fwidth + 1 // weirdly the width is always 1 pixel off
-	height := fheight - menuBarSize.Y
+	height := fheight - r.menuBarHeight
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)
@@ -961,8 +981,14 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 		regionSize := imgui.ContentRegionAvail()
 		imageWidth := regionSize.X
 
-		var gameWindowRatio float32 = 0.80
-		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio()) * gameWindowRatio}
+		var gameWindowRatio float32 = 1
+		if r.app.RuntimeConfig().UIEnabled {
+			gameWindowRatio = 0.8
+		}
+
+		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth/float32(renderContext.AspectRatio()) - 30}
+		r.gameWindowX = 0
+		r.gameWindowY = r.menuBarHeight
 		r.gameWindowWidth = size.X
 		r.gameWindowHeight = size.Y
 

@@ -497,3 +497,7 @@ func (g *Client) SaveProjectAs(name string) {
 func (g *Client) Shutdown() {
 	g.gameOver = true
 }
+
+func (g *Client) ReinitializeFrameBuffers() {
+	g.renderer.ReinitializeFrameBuffers()
+}

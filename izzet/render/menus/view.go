@@ -15,6 +15,7 @@ func view(app renderiface.App) {
 
 		if imgui.MenuItemV("Show UI", "", runtimeConfig.UIEnabled, true) {
 			runtimeConfig.UIEnabled = !runtimeConfig.UIEnabled
+			app.ReinitializeFrameBuffers()
 		}
 
 		if imgui.MenuItemV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {

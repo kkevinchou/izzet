@@ -89,15 +89,17 @@ type Renderer struct {
 
 	width, height     int
 	gameWindowHovered bool
-	gameWindowX       float32
-	gameWindowY       float32
-	gameWindowWidth   float32
-	gameWindowHeight  float32
+	gameWindowWidth   int
+	gameWindowHeight  int
 	menuBarHeight     float32
+
+	resizedThisFrame       bool
+	resizedThisFrameWidth  int
+	resizedThisFrameHeight int
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app, world: world, width: width, height: height}
+	r := &Renderer{app: app, world: world, width: width, height: height, gameWindowWidth: width, gameWindowHeight: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -156,23 +158,36 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 }
 
 func (r *Renderer) Resized(width, height int) {
-	r.width, r.height = width, height
+	r.resizedThisFrame = true
+	r.resizedThisFrameWidth = width
+	r.resizedThisFrameHeight = height
 
-	if r.app.RuntimeConfig().UIEnabled && r.gameWindowWidth != 0 && r.gameWindowHeight != 0 {
-		width = int(r.gameWindowWidth)
-		height = int(r.gameWindowHeight)
-		// 1639
-		// 1051
-		width = 1639
-		height = 1051
-		r.initMainRenderFBO(width, height)
-		r.initCompositeFBO(width, height)
-		r.initDepthMapFBO(width, height)
-	} else {
-		r.initMainRenderFBO(width, height)
-		r.initCompositeFBO(width, height)
-		r.initDepthMapFBO(width, height)
+	r.width, r.height = width, height
+}
+
+// this is necessary because calulating the fbo sizes requires knowledge
+// of how much size the UI takes up
+func (r *Renderer) postFrameResize() {
+	if r.resizedThisFrame {
+		r.width, r.height = r.resizedThisFrameWidth, r.resizedThisFrameHeight
+		width := r.width
+		height := r.height
+
+		height = r.gameWindowHeight
+		if r.app.RuntimeConfig().UIEnabled {
+			width = r.gameWindowWidth
+			r.initMainRenderFBO(width, height)
+			r.initCompositeFBO(width, height)
+			r.initDepthMapFBO(width, height)
+			fmt.Println("FBO INIT", width, height)
+		} else {
+			r.initMainRenderFBO(width, height)
+			r.initCompositeFBO(width, height)
+			r.initDepthMapFBO(width, height)
+			fmt.Println("FBO INIT", width, height)
+		}
 	}
+	r.resizedThisFrame = false
 }
 
 func (r *Renderer) ReinitializeFrameBuffers() {
@@ -223,7 +238,8 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 
 func (r *Renderer) Render(delta time.Duration) {
 	initOpenGLRenderSettings()
-	renderContext := NewRenderContext(r.width, r.height, float64(r.app.RuntimeConfig().FovX))
+	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
+	fmt.Println("RENDER CALL RENDER CONTEXT", renderContext.width, renderContext.height)
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
 
@@ -362,6 +378,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
 	r.renderImgui(renderContext, finalRenderTexture)
+	r.postFrameResize()
 }
 
 func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
@@ -705,11 +722,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
-	if r.app.RuntimeConfig().UIEnabled {
-		gl.Viewport(0, 0, int32(r.gameWindowWidth), int32(r.gameWindowHeight))
-	} else {
-		gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	}
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
 
 	shaderManager := r.shaderManager
@@ -987,11 +1000,10 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 			gameWindowRatio = 0.8
 		}
 
-		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth/float32(renderContext.AspectRatio()) - 30}
-		r.gameWindowX = 0
-		r.gameWindowY = r.menuBarHeight
-		r.gameWindowWidth = size.X
-		r.gameWindowHeight = size.Y
+		// size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio())}
+		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: regionSize.Y}
+		r.gameWindowWidth = int(size.X)
+		r.gameWindowHeight = int(size.Y)
 
 		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNone) {
 			texture := CreateUserSpaceTextureHandle(finalRenderTexture)

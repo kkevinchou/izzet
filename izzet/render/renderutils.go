@@ -849,8 +849,7 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
-func (r *Renderer) GetEntityByPixelPosition(gameWindowPixelPosition mgl64.Vec2) *int {
-	pixelPosition := r.ScreenToColorPickingPosition(gameWindowPixelPosition)
+func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
@@ -866,17 +865,6 @@ func (r *Renderer) GetEntityByPixelPosition(gameWindowPixelPosition mgl64.Vec2) 
 
 	id := int(uintID)
 	return &id
-}
-
-func (r *Renderer) ScreenToColorPickingPosition(screenPixelPosition mgl64.Vec2) mgl64.Vec2 {
-	// gameWindowPixelPosition = gameWindowPixelPosition.Add(mgl64.Vec2{0, float64(r.menuBarHeight)})
-	// TODO - this should take the game window position into account as well
-	// this currently assumes a fixed game window position
-	w := screenPixelPosition.X() / float64(r.gameWindowWidth)
-	h := (screenPixelPosition.Y() - float64(r.menuBarHeight)) / float64(r.gameWindowHeight)
-
-	v := mgl64.Vec2{float64(r.width) * w, float64(r.height) * h}
-	return v
 }
 
 func (r *Renderer) ReadAllPixels() {

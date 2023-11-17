@@ -997,6 +997,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)
+	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: r.menuBarHeight})
 	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize) {
 		regionSize := imgui.ContentRegionAvail()
 		imageWidth := regionSize.X

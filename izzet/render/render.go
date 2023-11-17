@@ -162,6 +162,12 @@ func (r *Renderer) Resized(width, height int) {
 	r.resizedThisFrameWidth = width
 	r.resizedThisFrameHeight = height
 
+	if r.app.RuntimeConfig().UIEnabled {
+		fmt.Println("RESIZE GUESS", float64(r.resizedThisFrameWidth)*0.8)
+	} else {
+		fmt.Println("RESIZE GUESS", float64(r.resizedThisFrameWidth))
+	}
+
 	r.width, r.height = width, height
 }
 

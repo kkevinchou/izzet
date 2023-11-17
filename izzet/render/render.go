@@ -221,8 +221,9 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
 }
 
-func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
+func (r *Renderer) Render(delta time.Duration) {
 	initOpenGLRenderSettings()
+	renderContext := NewRenderContext(r.width, r.height, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
 

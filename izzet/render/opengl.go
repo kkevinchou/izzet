@@ -12,7 +12,8 @@ type Platform interface {
 }
 
 func initOpenGLRenderSettings() {
-	gl.ClearColor(0.0, 0.5, 0.5, 0.0)
+	// gl.ClearColor(0.0, 0.5, 0.5, 0.0)
+	gl.ClearColor(1, 1, 1, 1)
 	gl.ClearDepth(1)
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LEQUAL)

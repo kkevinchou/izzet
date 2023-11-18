@@ -209,6 +209,7 @@ func (g *Client) Connect() error {
 	}
 
 	g.runtimeConfig.UIEnabled = false
+	g.ReinitializeFrameBuffers()
 
 	g.StartLiveWorld()
 
@@ -379,6 +380,7 @@ func (g *Client) DisconnectClient() {
 		g.commandFrameHistory.Reset()
 		g.StopLiveWorld()
 		g.runtimeConfig.UIEnabled = true
+		g.ReinitializeFrameBuffers()
 	}
 }
 
@@ -496,4 +498,8 @@ func (g *Client) SaveProjectAs(name string) {
 
 func (g *Client) Shutdown() {
 	g.gameOver = true
+}
+
+func (g *Client) ReinitializeFrameBuffers() {
+	g.renderer.ReinitializeFrameBuffers()
 }

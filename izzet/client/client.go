@@ -38,6 +38,7 @@ type Client struct {
 	platform      *input.SDLPlatform
 	width, height int
 	client        network.IzzetClient
+	aspectRatio   float64
 
 	assetManager *assets.AssetManager
 	modelLibrary *modellibrary.ModelLibrary
@@ -105,7 +106,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 
 	imgui.CreateContext(nil)
 	imguiIO := imgui.CurrentIO()
-	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
+	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
 
 	w, h := window.GetSize()
 
@@ -121,6 +122,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		project:         project.NewProject(),
+		aspectRatio:     float64(config.Width) / float64(config.Height),
 	}
 
 	g.initSettings()
@@ -201,8 +203,7 @@ func (g *Client) Start() {
 			start := time.Now()
 			frameCount++
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			renderContext := render.NewRenderContext(g.width, g.height, float64(g.RuntimeConfig().FovX))
-			g.renderer.Render(time.Duration(msPerFrame)*time.Millisecond, renderContext)
+			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
 			g.window.GLSwap()
 			renderTime := time.Since(start).Milliseconds()
 			g.MetricsRegistry().Inc("render_time", float64(renderTime))

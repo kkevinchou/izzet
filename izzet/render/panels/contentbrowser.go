@@ -48,7 +48,9 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	// imgui.SetNextWindowPosV(imgui.Vec2{}, imgui.ConditionNone, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
-	imgui.BeginV("Content Browser", nil, imgui.WindowFlagsNone)
+
+	// imgui.BeginV("Content Browser", nil, imgui.WindowFlagsNone)
+	imgui.BeginChild("Content Browser")
 
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("Content") {
@@ -133,5 +135,5 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 		imgui.EndTabBar()
 	}
 
-	imgui.End()
+	imgui.EndChild()
 }

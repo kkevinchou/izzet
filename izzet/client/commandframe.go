@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -33,7 +32,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	if frameInput.WindowEvent.Resized {
 		w, h := g.window.GetSize()
 		g.width, g.height = int(w), int(h)
-		g.renderer.Resized(g.width, g.height)
+		g.renderer.WindowResized(g.width, g.height)
 	}
 
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
@@ -97,7 +96,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	if !InteractingWithUI() {
+	if g.renderer.GameWindowHovered() {
 		if g.relativeMouseActive {
 			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
 		}
@@ -427,7 +426,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 		}
 	}
 
-	if !gizmoHovered && !InteractingWithUI() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+	if !gizmoHovered && g.renderer.GameWindowHovered() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
 			panels.SelectEntity(nil)
@@ -443,12 +442,6 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			panels.SelectEntity(clickedEntity)
 		}
 	}
-}
-
-func InteractingWithUI() bool {
-	anyPopup := imgui.IsPopupOpenV("", imgui.PopupFlagsAnyPopup)
-	anyWindow := imgui.IsWindowHoveredV(imgui.HoveredFlagsAnyWindow)
-	return anyPopup || anyWindow
 }
 
 func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl64.Vec3, gizmo.GizmoEvent) {

@@ -65,7 +65,7 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	imgui.BeginV("Content Browser", &open, flags)
 
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
-		if imgui.BeginTabItem("Content") {
+		if imgui.BeginTabItem("Content Browser") {
 			if imgui.IsItemClicked() {
 				*expanded = true
 				*height = maxContentBrowserHeight
@@ -145,6 +145,13 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 					imgui.EndPopup()
 				}
 				imgui.PopID()
+
+				if imgui.BeginDragDropSource(imgui.DragDropFlagsSourceAllowNullID) {
+					imgui.SetDragDropPayload("content_browser_item", []byte(item.name), imgui.ConditionNone)
+					imgui.EndDragDropSource()
+					fmt.Println("START DRAGGING", item.name)
+				}
+
 				imgui.Text(item.name)
 				imgui.EndGroup()
 				imgui.SameLine()

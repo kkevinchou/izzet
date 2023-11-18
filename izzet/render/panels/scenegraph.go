@@ -49,11 +49,13 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world Ga
 		imgui.PopID()
 
 		if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
+			fmt.Println("BEGIN DRAG DROP")
 			str := fmt.Sprintf("%d", entity.ID)
 			imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
 			imgui.EndDragDropSource()
 		}
 		if imgui.BeginDragDropTarget() {
+			fmt.Println("END DRAG DROP")
 			if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
 				childID, err := strconv.Atoi(string(payload))
 				if err != nil {

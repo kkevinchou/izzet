@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -21,6 +22,7 @@ import (
 	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -994,6 +996,33 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
 			texture := CreateUserSpaceTextureHandle(finalRenderTexture)
 			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+		}
+		if imgui.BeginDragDropTarget() {
+			if payload := imgui.AcceptDragDropPayload("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
+				fmt.Println("END DRAGGING", string(payload))
+				itemName := string(payload)
+				document := r.app.AssetManager().GetDocument(itemName)
+				handle := modellibrary.NewGlobalHandle(itemName)
+				if len(document.Scenes) != 1 {
+					panic("single entity asset loading only supports a singular scene")
+				}
+
+				scene := document.Scenes[0]
+				node := scene.Nodes[0]
+
+				entity := entities.InstantiateEntity(document.Name)
+				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+				var vertices []modelspec.Vertex
+				entities.VerticesFromNode(node, document, &vertices)
+				entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+				entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+				entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+				entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+				r.world.AddEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
+			imgui.EndDragDropTarget()
 		}
 
 		if imgui.IsWindowHovered() {

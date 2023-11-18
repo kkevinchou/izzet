@@ -91,6 +91,7 @@ func Read(reader io.Reader) (*world.GameWorld, error) {
 
 	entityMap := map[int]*entities.Entity{}
 	for _, entity := range worldIR.Entities {
+		entity.Children = make(map[int]*entities.Entity)
 		entityMap[entity.ID] = entity
 	}
 
@@ -98,9 +99,6 @@ func Read(reader io.Reader) (*world.GameWorld, error) {
 	for _, relation := range worldIR.Relations {
 		parent := entityMap[relation.Parent]
 		child := entityMap[relation.Child]
-		if len(parent.Children) == 0 {
-			parent.Children = make(map[int]*entities.Entity)
-		}
 		parent.Children[relation.Child] = child
 		child.Parent = parent
 	}

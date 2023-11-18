@@ -3,7 +3,6 @@ package panels
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strconv"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -187,12 +186,12 @@ func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) b
 	return popup
 }
 
-func sortedIDs(m map[int]*entities.Entity) []int {
-	var ids []int
-	for id, _ := range m {
-		ids = append(ids, id)
-	}
+// func sortedIDs(m map[int]*entities.Entity) []int {
+// 	var ids []int
+// 	for id, _ := range m {
+// 		ids = append(ids, id)
+// 	}
 
-	sort.Ints(ids)
-	return ids
-}
+// 	sort.Ints(ids)
+// 	return ids
+// }

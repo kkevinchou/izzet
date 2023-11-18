@@ -34,7 +34,7 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 	// imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
-	imgui.BeginChild("Right Window")
+	imgui.BeginChildV("Right Window", imgui.Vec2{}, false, imgui.WindowFlagsNoBringToFrontOnFocus)
 
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 	if imgui.BeginTabBar("Main") {
@@ -46,8 +46,12 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 			entityProps(SelectedEntity(), app)
 			imgui.EndTabItem()
 		}
-		if imgui.BeginTabItem("Prefabs") {
-			prefabsUI(app, world, ps)
+		if imgui.BeginTabItem("Scene Graph") {
+			sceneGraph(app, world)
+			imgui.EndTabItem()
+		}
+		if imgui.BeginTabItem("Stats") {
+			stats(app, renderContext)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Animation") {
@@ -59,8 +63,8 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 			}
 			imgui.EndTabItem()
 		}
-		if imgui.BeginTabItem("Stats") {
-			stats(app, renderContext)
+		if imgui.BeginTabItem("Prefabs") {
+			prefabsUI(app, world, ps)
 			imgui.EndTabItem()
 		}
 		imgui.EndTabBar()

@@ -40,6 +40,7 @@ const (
 	MaxBloomTextureHeight      int     = 1080
 	internalTextureColorFormat int32   = gl.RGB10_A2
 	uiWidthRatio               float32 = 0.2
+	contentBrowserHeight       float32 = 300
 )
 
 type Renderer struct {
@@ -157,9 +158,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 }
 
 func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
-	style := imgui.CurrentStyle()
-	menuBarSize := settings.FontSize + style.FramePadding().Y*2
-
+	menuBarSize := CalculateMenuBarSize()
 	r.windowWidth, r.windowHeight = windowWidth, windowHeight
 
 	width := windowWidth
@@ -987,7 +986,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 		r.gameWindowWidth = int(size.X)
 		r.gameWindowHeight = int(size.Y)
 
-		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNone) {
+		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
 			texture := CreateUserSpaceTextureHandle(finalRenderTexture)
 			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
@@ -1032,20 +1031,23 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 			imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
 			imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
 
-			// panels.BuildContentBrowser(
-			// 	r.app,
-			// 	r.world,
-			// 	renderContext,
-			// 	menuBarSize,
-			// 	r.app.Prefabs(),
-			// )
-
 			panels.BuildTabsSet(
 				r.app,
 				r.world,
 				renderContext,
 				menuBarSize,
 				r.app.Prefabs(),
+			)
+
+			panels.BuildContentBrowser(
+				r.app,
+				r.world,
+				renderContext,
+				menuBarSize,
+				r.app.Prefabs(),
+				0,
+				float32(r.windowHeight)-contentBrowserHeight,
+				contentBrowserHeight,
 			)
 
 			imgui.PopStyleColorV(20)

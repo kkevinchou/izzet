@@ -41,16 +41,20 @@ type ContentItem struct {
 	name    string
 }
 
-func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
+func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab, x, y, height float32) {
 	// rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 
-	imgui.SetNextWindowBgAlpha(0.8)
+	imgui.SetNextWindowBgAlpha(1)
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
-	// imgui.SetNextWindowPosV(imgui.Vec2{}, imgui.ConditionNone, imgui.Vec2{})
+	// imgui.SetNextWindowFocus()
+	r := imgui.ContentRegionAvail()
+	imgui.SetNextWindowPosV(imgui.Vec2{x, y}, imgui.ConditionNone, imgui.Vec2{})
+	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: height})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 
 	// imgui.BeginV("Content Browser", nil, imgui.WindowFlagsNone)
-	imgui.BeginChild("Content Browser")
+	var open bool = true
+	imgui.BeginV("Content Browser", &open, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoTitleBar)
 
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("Content") {
@@ -135,5 +139,9 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 		imgui.EndTabBar()
 	}
 
-	imgui.EndChild()
+	if imgui.IsWindowHovered() {
+		fmt.Println("HOVERED")
+	}
+
+	imgui.End()
 }

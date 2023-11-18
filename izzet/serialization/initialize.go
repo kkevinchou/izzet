@@ -17,7 +17,7 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 	}
 
 	// rebuild trimesh collider
-	if entity.MeshComponent != nil {
+	if entity.MeshComponent != nil && entity.Collider != nil {
 		meshHandle := entity.MeshComponent.MeshHandle
 		primitives := ml.GetPrimitives(meshHandle)
 		if len(primitives) > 0 {

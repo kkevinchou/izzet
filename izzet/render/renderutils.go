@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
@@ -1227,4 +1228,9 @@ func (r *Renderer) renderCircle() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	shader.SetUniformVec4("color", mgl32.Vec4{1, 1, 0, 1})
 	r.drawCircle()
+}
+
+func CalculateMenuBarSize() float32 {
+	style := imgui.CurrentStyle()
+	return settings.FontSize + style.FramePadding().Y*2
 }

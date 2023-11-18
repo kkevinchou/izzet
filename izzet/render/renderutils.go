@@ -856,7 +856,7 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(r.height)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(r.windowHeight)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {
@@ -881,7 +881,7 @@ func (r *Renderer) ReadAllPixels() {
 	var dataType uint32 = gl.FLOAT                 // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
 
 	// Calculate the size of the buffer
-	bufferSize := int(r.width * r.height * 4) // Assuming 4 components per pixel (RGBA)
+	bufferSize := int(r.windowWidth * r.windowHeight * 4) // Assuming 4 components per pixel (RGBA)
 
 	// Allocate memory for the pixel data
 	pixelData := make([]byte, bufferSize)
@@ -894,7 +894,7 @@ func (r *Renderer) ReadAllPixels() {
 
 	start := time.Now()
 	// Print a few pixels as an example
-	for i := 0; i < r.width*r.height*4-4; i++ {
+	for i := 0; i < r.windowWidth*r.windowHeight*4-4; i++ {
 		r := pixelData[i]
 		g := pixelData[i+1]
 		b := pixelData[i+2]

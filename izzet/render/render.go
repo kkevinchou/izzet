@@ -92,17 +92,16 @@ type Renderer struct {
 	cubeVAOs     map[float32]uint32
 	triangleVAOs map[string]uint32
 
-	windowWidth, windowHeight int
-	gameWindowHovered         bool
-	gameWindowWidth           int
-	gameWindowHeight          int
-	menuBarHeight             float32
-	contentBrowserHeight      float32
-	contentBrowserExpanded    bool
+	gameWindowHovered      bool
+	gameWindowWidth        int
+	gameWindowHeight       int
+	menuBarHeight          float32
+	contentBrowserHeight   float32
+	contentBrowserExpanded bool
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app, world: world, windowWidth: width, windowHeight: height, gameWindowWidth: width, gameWindowHeight: height}
+	r := &Renderer{app: app, world: world, gameWindowWidth: width, gameWindowHeight: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -162,10 +161,11 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	return r
 }
 
-func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
+func (r *Renderer) ReinitializeFrameBuffers() {
 	menuBarSize := CalculateMenuBarSize()
 	footerSize := r.CalculateFooterSize()
-	r.windowWidth, r.windowHeight = windowWidth, windowHeight
+
+	windowWidth, windowHeight := r.app.WindowSize()
 
 	width := windowWidth
 	height := windowHeight - int(menuBarSize) - int(footerSize)
@@ -177,10 +177,6 @@ func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
 	r.initMainRenderFBO(width, height)
 	r.initCompositeFBO(width, height)
 	r.initDepthMapFBO(width, height)
-}
-
-func (r *Renderer) ReinitializeFrameBuffers() {
-	r.WindowResized(r.windowWidth, r.windowHeight)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
@@ -583,7 +579,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(r.windowWidth), int32(r.windowHeight))
+	windowWidth, windowHeight := r.app.WindowSize()
+	gl.Viewport(0, 0, int32(windowWidth), int32(windowHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
@@ -822,8 +819,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
-	shader.SetUniformInt("width", int32(r.windowWidth))
-	shader.SetUniformInt("height", int32(r.windowHeight))
+	// TODO - this should probably be game window size?
+	windowWidth, windowHeight := r.app.WindowSize()
+	shader.SetUniformInt("width", int32(windowWidth))
+	shader.SetUniformInt("height", int32(windowHeight))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -1076,13 +1075,14 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 				r.app.Prefabs(),
 			)
 
+			_, windowHeight := r.app.WindowSize()
 			panels.BuildContentBrowser(
 				r.app,
 				r.world,
 				renderContext,
 				r.app.Prefabs(),
 				0,
-				float32(r.windowHeight)-r.contentBrowserHeight,
+				float32(windowHeight)-r.contentBrowserHeight,
 				&r.contentBrowserHeight,
 				&r.contentBrowserExpanded,
 			)

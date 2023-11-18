@@ -40,7 +40,6 @@ const (
 	MaxBloomTextureHeight      int     = 1080
 	internalTextureColorFormat int32   = gl.RGB10_A2
 	uiWidthRatio               float32 = 0.2
-	contentBrowserHeight       float32 = 300
 )
 
 type Renderer struct {
@@ -96,6 +95,8 @@ type Renderer struct {
 	gameWindowWidth           int
 	gameWindowHeight          int
 	menuBarHeight             float32
+	contentBrowserHeight      float32
+	contentBrowserExpanded    bool
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
@@ -129,6 +130,8 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 	r.ReinitializeFrameBuffers()
 
+	r.contentBrowserHeight = CalculateFooterSize()
+
 	// circles for the rotation gizmo
 
 	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
@@ -159,10 +162,11 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
 	menuBarSize := CalculateMenuBarSize()
+	footerSize := CalculateFooterSize()
 	r.windowWidth, r.windowHeight = windowWidth, windowHeight
 
 	width := windowWidth
-	height := windowHeight - int(menuBarSize)
+	height := windowHeight - int(menuBarSize) - int(footerSize)
 
 	if r.app.RuntimeConfig().UIEnabled {
 		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
@@ -964,14 +968,15 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 	imgui.NewFrame()
 
 	r.gameWindowHovered = false
-	menuBarSize := menus.SetupMenuBar(r.app)
-	r.menuBarHeight = menuBarSize.Y
+	menus.SetupMenuBar(r.app)
+	menuBarHeight := CalculateMenuBarSize()
+	footerHeight := CalculateFooterSize()
 	width := fwidth + 1 // weirdly the width is always 1 pixel off
-	height := fheight - r.menuBarHeight
+	height := fheight - menuBarHeight - footerHeight
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)
-	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: r.menuBarHeight})
+	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: menuBarHeight})
 	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize) {
 		regionSize := imgui.ContentRegionAvail()
 		imageWidth := regionSize.X
@@ -993,6 +998,10 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 
 		if imgui.IsWindowHovered() {
 			r.gameWindowHovered = true
+		}
+
+		if imgui.IsWindowHovered() && imgui.IsMouseClicked(0) {
+			r.GameWindowClicked()
 		}
 
 		imgui.EndChild()
@@ -1035,7 +1044,6 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 				r.app,
 				r.world,
 				renderContext,
-				menuBarSize,
 				r.app.Prefabs(),
 			)
 
@@ -1043,11 +1051,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 				r.app,
 				r.world,
 				renderContext,
-				menuBarSize,
 				r.app.Prefabs(),
 				0,
-				float32(r.windowHeight)-contentBrowserHeight,
-				contentBrowserHeight,
+				float32(r.windowHeight)-r.contentBrowserHeight,
+				&r.contentBrowserHeight,
+				&r.contentBrowserExpanded,
 			)
 
 			imgui.PopStyleColorV(20)

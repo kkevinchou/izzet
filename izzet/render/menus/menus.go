@@ -16,15 +16,14 @@ var (
 var worldName string = settings.DefaultProject
 var selectedWorldName string = ""
 
-func SetupMenuBar(app renderiface.App) imgui.Vec2 {
-	// imgui.SetNextWindowSize(imgui.Vec2{imgui.WindowSize().X, 400})
+func SetupMenuBar(app renderiface.App) {
 	imgui.BeginMainMenuBar()
-	size := imgui.WindowSize()
+	// size := imgui.WindowSize()
 
 	file(app)
 	view(app)
 	multiplayer(app)
 
 	imgui.EndMainMenuBar()
-	return size
+	// return size
 }

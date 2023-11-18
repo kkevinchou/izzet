@@ -1234,3 +1234,13 @@ func CalculateMenuBarSize() float32 {
 	style := imgui.CurrentStyle()
 	return settings.FontSize + style.FramePadding().Y*2
 }
+
+func CalculateFooterSize() float32 {
+	style := imgui.CurrentStyle()
+	return settings.FontSize + style.FramePadding().Y*2
+}
+
+func (r *Renderer) GameWindowClicked() {
+	r.contentBrowserHeight = CalculateFooterSize()
+	r.contentBrowserExpanded = false
+}

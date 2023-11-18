@@ -132,7 +132,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 	r.ReinitializeFrameBuffers()
 
-	r.contentBrowserHeight = CalculateFooterSize()
+	r.contentBrowserHeight = r.CalculateFooterSize()
 
 	// circles for the rotation gizmo
 
@@ -164,7 +164,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
 	menuBarSize := CalculateMenuBarSize()
-	footerSize := CalculateFooterSize()
+	footerSize := r.CalculateFooterSize()
 	r.windowWidth, r.windowHeight = windowWidth, windowHeight
 
 	width := windowWidth
@@ -972,7 +972,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 	r.gameWindowHovered = false
 	menus.SetupMenuBar(r.app)
 	menuBarHeight := CalculateMenuBarSize()
-	footerHeight := CalculateFooterSize()
+	footerHeight := r.CalculateFooterSize()
 	width := fwidth + 1 // weirdly the width is always 1 pixel off
 	height := fheight - menuBarHeight - footerHeight
 

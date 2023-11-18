@@ -18,12 +18,10 @@ var selectedWorldName string = ""
 
 func SetupMenuBar(app renderiface.App) {
 	imgui.BeginMainMenuBar()
-	// size := imgui.WindowSize()
 
 	file(app)
 	view(app)
 	multiplayer(app)
 
 	imgui.EndMainMenuBar()
-	// return size
 }

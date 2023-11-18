@@ -180,6 +180,7 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
+	fmt.Println("CAMERA DEPTH DIMENSION", width, height)
 	var storedFBO int32
 	gl.GetIntegerv(gl.FRAMEBUFFER_BINDING, &storedFBO)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(storedFBO))
@@ -579,8 +580,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	windowWidth, windowHeight := r.app.WindowSize()
-	gl.Viewport(0, 0, int32(windowWidth), int32(windowHeight))
+	gl.Viewport(0, 0, int32(r.gameWindowWidth), int32(r.gameWindowHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
@@ -820,9 +820,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
 	// TODO - this should probably be game window size?
-	windowWidth, windowHeight := r.app.WindowSize()
-	shader.SetUniformInt("width", int32(windowWidth))
-	shader.SetUniformInt("height", int32(windowHeight))
+	shader.SetUniformInt("width", int32(r.gameWindowWidth))
+	shader.SetUniformInt("height", int32(r.gameWindowHeight))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))

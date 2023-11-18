@@ -56,4 +56,5 @@ type App interface {
 
 	GetPlayerEntity() *entities.Entity
 	ConfigureUI(enabled bool)
+	WindowSize() (int, int)
 }

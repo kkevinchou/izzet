@@ -855,9 +855,10 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	gl.ReadBuffer(r.colorPickingAttachment)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
+	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(r.windowHeight)-int32(pixelPosition[1])-int32(r.CalculateFooterSize()), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-int32(r.CalculateFooterSize()), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {
@@ -868,61 +869,61 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	return &id
 }
 
-func (r *Renderer) ReadAllPixels() {
-	// start := time.Now()
+// func (r *Renderer) ReadAllPixels() {
+// 	// start := time.Now()
 
-	// Specify the texture target
-	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
+// 	// Specify the texture target
+// 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
 
-	// Allocate memory to store the pixel data
-	// var internalFormat uint32 = gl.RGBA    // The format of the texture data (e.g., gl.RGBA)
-	// var dataType uint32 = gl.UNSIGNED_BYTE // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
+// 	// Allocate memory to store the pixel data
+// 	// var internalFormat uint32 = gl.RGBA    // The format of the texture data (e.g., gl.RGBA)
+// 	// var dataType uint32 = gl.UNSIGNED_BYTE // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
 
-	var internalFormat uint32 = gl.DEPTH_COMPONENT // The format of the texture data (e.g., gl.RGBA)
-	var dataType uint32 = gl.FLOAT                 // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
+// 	var internalFormat uint32 = gl.DEPTH_COMPONENT // The format of the texture data (e.g., gl.RGBA)
+// 	var dataType uint32 = gl.FLOAT                 // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
 
-	// Calculate the size of the buffer
-	bufferSize := int(r.windowWidth * r.windowHeight * 4) // Assuming 4 components per pixel (RGBA)
+// 	// Calculate the size of the buffer
+// 	bufferSize := int(r.windowWidth * r.windowHeight * 4) // Assuming 4 components per pixel (RGBA)
 
-	// Allocate memory for the pixel data
-	pixelData := make([]byte, bufferSize)
+// 	// Allocate memory for the pixel data
+// 	pixelData := make([]byte, bufferSize)
 
-	// Read the texture data into the pixelData slice
-	gl.GetTexImage(gl.TEXTURE_2D, 0, internalFormat, dataType, gl.Ptr(pixelData))
+// 	// Read the texture data into the pixelData slice
+// 	gl.GetTexImage(gl.TEXTURE_2D, 0, internalFormat, dataType, gl.Ptr(pixelData))
 
-	// Now, pixelData contains the pixel data of the texture.
-	// You can process it or save it as needed.
+// 	// Now, pixelData contains the pixel data of the texture.
+// 	// You can process it or save it as needed.
 
-	start := time.Now()
-	// Print a few pixels as an example
-	for i := 0; i < r.windowWidth*r.windowHeight*4-4; i++ {
-		r := pixelData[i]
-		g := pixelData[i+1]
-		b := pixelData[i+2]
-		a := pixelData[i+3]
+// 	start := time.Now()
+// 	// Print a few pixels as an example
+// 	for i := 0; i < r.windowWidth*r.windowHeight*4-4; i++ {
+// 		r := pixelData[i]
+// 		g := pixelData[i+1]
+// 		b := pixelData[i+2]
+// 		a := pixelData[i+3]
 
-		if r != 0 {
-			a := 5
-			_ = a
-		}
-		if g != 0 {
-			a := 5
-			_ = a
-		}
-		if b != 0 {
-			a := 5
-			_ = a
-		}
-		if a != 0 {
-			a := 5
-			_ = a
-		}
-		// fmt.Printf("Pixel %d: R=%d, G=%d, B=%d, A=%d\n", i/4, r, g, b, a)
-	}
-	fmt.Println(time.Since(start))
+// 		if r != 0 {
+// 			a := 5
+// 			_ = a
+// 		}
+// 		if g != 0 {
+// 			a := 5
+// 			_ = a
+// 		}
+// 		if b != 0 {
+// 			a := 5
+// 			_ = a
+// 		}
+// 		if a != 0 {
+// 			a := 5
+// 			_ = a
+// 		}
+// 		// fmt.Printf("Pixel %d: R=%d, G=%d, B=%d, A=%d\n", i/4, r, g, b, a)
+// 	}
+// 	fmt.Println(time.Since(start))
 
-	// fmt.Println(time.Since(start))
-}
+// 	// fmt.Println(time.Since(start))
+// }
 
 var (
 	spatialPartitionLineCache [][]mgl64.Vec3

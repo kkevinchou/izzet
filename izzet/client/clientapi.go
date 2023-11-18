@@ -502,3 +502,11 @@ func (g *Client) ConfigureUI(enabled bool) {
 	g.runtimeConfig.UIEnabled = enabled
 	g.renderer.ConfigureUI()
 }
+
+func (g *Client) SetWindowSize(width, height int) {
+	g.width, g.height = width, height
+}
+
+func (g *Client) WindowSize() (int, int) {
+	return g.width, g.height
+}

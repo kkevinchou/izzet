@@ -1241,6 +1241,7 @@ func CalculateFooterSize() float32 {
 }
 
 func (r *Renderer) GameWindowClicked() {
+	// dismiss the content browser
 	r.contentBrowserHeight = CalculateFooterSize()
 	r.contentBrowserExpanded = false
 }

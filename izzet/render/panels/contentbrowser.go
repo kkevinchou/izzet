@@ -17,6 +17,10 @@ import (
 	"github.com/sqweek/dialog"
 )
 
+const (
+	maxContentBrowserHeight float32 = 300
+)
+
 // TODO
 // 1 - Create materials
 // 2 - Load 3d meshes
@@ -41,7 +45,7 @@ type ContentItem struct {
 	name    string
 }
 
-func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab, x, y, height float32) {
+func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext RenderContext, ps []*prefabs.Prefab, x, y float32, height *float32, expanded *bool) {
 	// rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 
 	imgui.SetNextWindowBgAlpha(1)
@@ -49,15 +53,24 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 	// imgui.SetNextWindowFocus()
 	r := imgui.ContentRegionAvail()
 	imgui.SetNextWindowPosV(imgui.Vec2{x, y}, imgui.ConditionNone, imgui.Vec2{})
-	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: height})
+	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: *height})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 
 	// imgui.BeginV("Content Browser", nil, imgui.WindowFlagsNone)
 	var open bool = true
-	imgui.BeginV("Content Browser", &open, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoTitleBar)
+	flags := imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar
+	if !*expanded {
+		flags |= imgui.WindowFlagsNoScrollbar
+	}
+	imgui.BeginV("Content Browser", &open, flags)
 
 	if imgui.BeginTabBarV("Content Browser Tab Bar", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 		if imgui.BeginTabItem("Content") {
+			if imgui.IsItemClicked() {
+				*expanded = true
+				*height = maxContentBrowserHeight
+			}
+
 			if imgui.Button("Import") {
 				// err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, "content"), os.ModePerm)
 				// if err != nil {
@@ -96,6 +109,7 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 					}
 				}
 			}
+
 			imgui.EndTabItem()
 
 			for i, item := range items {
@@ -139,8 +153,9 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 		imgui.EndTabBar()
 	}
 
-	if imgui.IsWindowHovered() {
-		fmt.Println("HOVERED")
+	if imgui.IsWindowHovered() && imgui.IsMouseClicked(0) {
+		*expanded = true
+		*height = maxContentBrowserHeight
 	}
 
 	imgui.End()

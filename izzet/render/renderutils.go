@@ -857,7 +857,7 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(r.windowHeight)-int32(pixelPosition[1])-int32(CalculateFooterSize()), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(r.windowHeight)-int32(pixelPosition[1])-int32(r.CalculateFooterSize()), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {
@@ -1235,13 +1235,21 @@ func CalculateMenuBarSize() float32 {
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
-func CalculateFooterSize() float32 {
+func (r *Renderer) CalculateFooterSize() float32 {
+	if !r.app.RuntimeConfig().UIEnabled {
+		return 0
+	}
 	style := imgui.CurrentStyle()
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
 func (r *Renderer) GameWindowClicked() {
 	// dismiss the content browser
-	r.contentBrowserHeight = CalculateFooterSize()
+	r.contentBrowserHeight = r.CalculateFooterSize()
 	r.contentBrowserExpanded = false
+}
+
+func (r *Renderer) ConfigureUI() {
+	r.ReinitializeFrameBuffers()
+	r.contentBrowserHeight = r.CalculateFooterSize()
 }

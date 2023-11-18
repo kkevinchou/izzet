@@ -208,8 +208,7 @@ func (g *Client) Connect() error {
 		return err
 	}
 
-	g.runtimeConfig.UIEnabled = false
-	g.ReinitializeFrameBuffers()
+	g.ConfigureUI(false)
 
 	g.StartLiveWorld()
 
@@ -379,8 +378,7 @@ func (g *Client) DisconnectClient() {
 		g.clientConnected = false
 		g.commandFrameHistory.Reset()
 		g.StopLiveWorld()
-		g.runtimeConfig.UIEnabled = true
-		g.ReinitializeFrameBuffers()
+		g.ConfigureUI(true)
 	}
 }
 
@@ -500,6 +498,7 @@ func (g *Client) Shutdown() {
 	g.gameOver = true
 }
 
-func (g *Client) ReinitializeFrameBuffers() {
-	g.renderer.ReinitializeFrameBuffers()
+func (g *Client) ConfigureUI(enabled bool) {
+	g.runtimeConfig.UIEnabled = enabled
+	g.renderer.ConfigureUI()
 }

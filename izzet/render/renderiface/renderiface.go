@@ -55,5 +55,5 @@ type App interface {
 	SaveProjectAs(name string)
 
 	GetPlayerEntity() *entities.Entity
-	ReinitializeFrameBuffers()
+	ConfigureUI(enabled bool)
 }

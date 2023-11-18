@@ -9,31 +9,35 @@ import (
 var open bool
 
 func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderContext, menuBarSize imgui.Vec2, ps []*prefabs.Prefab) {
-	rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
-	width := rect.X * 0.20
-	height := rect.Y * 0.5
+	// rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
+	// width := rect.X * 0.20
+	// height := rect.Y * 0.5
 
-	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionFirstUseEver, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
+	// imgui.SetNextWindowBgAlpha(0.8)
+	// imgui.SetNextWindowPosV(imgui.Vec2{Y: menuBarSize.Y}, imgui.ConditionFirstUseEver, imgui.Vec2{})
+	// imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionFirstUseEver)
 
 	// imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoCollapse)
-	imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar)
-	if imgui.BeginTabBar("Scene") {
-		if imgui.BeginTabItem("Scene Hierarchy") {
-			sceneUI(app, world)
-			imgui.EndTabItem()
-		}
-		imgui.EndTabBar()
-	}
-	imgui.End()
+	// imgui.BeginV("Fixed Tab Set", nil, imgui.WindowFlagsNoTitleBar)
 
-	imgui.SetNextWindowBgAlpha(0.8)
-	imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
-	imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
+	// imgui.BeginChild("Fixed Tab Set")
+	// if imgui.BeginTabBar("Scene") {
+	// 	if imgui.BeginTabItem("Scene Hierarchy") {
+	// 		sceneUI(app, world)
+	// 		imgui.EndTabItem()
+	// 	}
+	// 	imgui.EndTabBar()
+	// }
+	// imgui.EndChild()
 
-	if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
+	// imgui.SetNextWindowBgAlpha(0.8)
+	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
+	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
+	// imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
+	imgui.BeginChild("Right Window")
+
+	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
+	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("World") {
 			worldProps(app, renderContext)
 			imgui.EndTabItem()
@@ -62,5 +66,5 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 		imgui.EndTabBar()
 	}
 
-	imgui.End()
+	imgui.EndChild()
 }

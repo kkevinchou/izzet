@@ -34,10 +34,13 @@ type GameWorld interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
-const mipsCount int = 6
-const MaxBloomTextureWidth int = 1920
-const MaxBloomTextureHeight int = 1080
-const internalTextureColorFormat int32 = gl.RGB10_A2
+const (
+	mipsCount                  int     = 6
+	MaxBloomTextureWidth       int     = 1920
+	MaxBloomTextureHeight      int     = 1080
+	internalTextureColorFormat int32   = gl.RGB10_A2
+	uiWidthRatio               float32 = 0.2
+)
 
 type Renderer struct {
 	app           renderiface.App
@@ -87,11 +90,15 @@ type Renderer struct {
 	cubeVAOs     map[float32]uint32
 	triangleVAOs map[string]uint32
 
-	width, height int
+	windowWidth, windowHeight int
+	gameWindowHovered         bool
+	gameWindowWidth           int
+	gameWindowHeight          int
+	menuBarHeight             float32
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app, world: world, width: width, height: height}
+	r := &Renderer{app: app, world: world, windowWidth: width, windowHeight: height, gameWindowWidth: width, gameWindowHeight: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -119,8 +126,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	r.cubeVAOs = map[float32]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.initMainRenderFBO(width, height)
-	r.initDepthMapFBO(width, height)
+	r.ReinitializeFrameBuffers()
 
 	// circles for the rotation gizmo
 
@@ -145,17 +151,31 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	// new textures are binded when we're in the process of blooming
 	r.blendFBO, _ = r.initFBOAndTexture(width, height)
 
-	r.initCompositeFBO(width, height)
 	r.renderCircle()
 
 	return r
 }
 
-func (r *Renderer) Resized(width, height int) {
-	r.width, r.height = width, height
+func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
+	style := imgui.CurrentStyle()
+	menuBarSize := settings.FontSize + style.FramePadding().Y*2
+
+	r.windowWidth, r.windowHeight = windowWidth, windowHeight
+
+	width := windowWidth
+	height := windowHeight - int(menuBarSize)
+
+	if r.app.RuntimeConfig().UIEnabled {
+		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
+	}
+
 	r.initMainRenderFBO(width, height)
 	r.initCompositeFBO(width, height)
 	r.initDepthMapFBO(width, height)
+}
+
+func (r *Renderer) ReinitializeFrameBuffers() {
+	r.WindowResized(r.windowWidth, r.windowHeight)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
@@ -200,8 +220,9 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
 }
 
-func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
+func (r *Renderer) Render(delta time.Duration) {
 	initOpenGLRenderSettings()
+	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
 
@@ -337,9 +358,14 @@ func (r *Renderer) Render(delta time.Duration, renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
+	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
-	r.renderImgui(renderContext)
+	r.renderImgui(renderContext, finalRenderTexture)
+}
+
+func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
+	handle := 1<<63 | uint64(texture)
+	return imgui.TextureID(handle)
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -552,7 +578,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(r.width), int32(r.height))
+	gl.Viewport(0, 0, int32(r.windowWidth), int32(r.windowHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
@@ -677,8 +703,8 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
 
 	shaderManager := r.shaderManager
@@ -791,8 +817,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
-	shader.SetUniformInt("width", int32(r.width))
-	shader.SetUniformInt("height", int32(r.height))
+	shader.SetUniformInt("width", int32(r.windowWidth))
+	shader.SetUniformInt("height", int32(r.windowHeight))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -933,67 +959,105 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 }
 
-func (r *Renderer) renderImgui(renderContext RenderContext) {
+func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture uint32) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.app.Platform().NewFrame()
+	fwidth, fheight := r.app.Platform().NewFrame()
 	imgui.NewFrame()
 
+	r.gameWindowHovered = false
 	menuBarSize := menus.SetupMenuBar(r.app)
-	if r.app.RuntimeConfig().UIEnabled {
-		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
-		imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-		// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
-		// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
-		imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
-		imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-		// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
-		imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-		imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
-		imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
-		imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
-		imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
-		imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
-		imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
-		imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-		imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
-		imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
-		imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
-		imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
+	r.menuBarHeight = menuBarSize.Y
+	width := fwidth + 1 // weirdly the width is always 1 pixel off
+	height := fheight - r.menuBarHeight
 
-		panels.BuildContentBrowser(
-			r.app,
-			r.world,
-			renderContext,
-			menuBarSize,
-			r.app.Prefabs(),
-		)
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)
+	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: r.menuBarHeight})
+	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize) {
+		regionSize := imgui.ContentRegionAvail()
+		imageWidth := regionSize.X
 
-		panels.BuildTabsSet(
-			r.app,
-			r.world,
-			renderContext,
-			menuBarSize,
-			r.app.Prefabs(),
-		)
+		var gameWindowRatio float32 = 1
+		if r.app.RuntimeConfig().UIEnabled {
+			gameWindowRatio = 1 - uiWidthRatio
+		}
 
-		imgui.PopStyleColorV(20)
-		imgui.PopStyleVarV(7)
+		// size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio())}
+		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: regionSize.Y}
+		r.gameWindowWidth = int(size.X)
+		r.gameWindowHeight = int(size.Y)
 
-		if r.app.ShowImguiDemo() {
-			imgui.ShowDemoWindow(nil)
+		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNone) {
+			texture := CreateUserSpaceTextureHandle(finalRenderTexture)
+			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+		}
+
+		if imgui.IsWindowHovered() {
+			r.gameWindowHovered = true
+		}
+
+		imgui.EndChild()
+
+		imgui.SameLine()
+
+		if r.app.RuntimeConfig().UIEnabled {
+			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
+			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
+			// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
+			// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
+			imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
+			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
+			// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
+			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+			imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
+			imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
+			imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
+			imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+			imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
+			imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
+
+			// panels.BuildContentBrowser(
+			// 	r.app,
+			// 	r.world,
+			// 	renderContext,
+			// 	menuBarSize,
+			// 	r.app.Prefabs(),
+			// )
+
+			panels.BuildTabsSet(
+				r.app,
+				r.world,
+				renderContext,
+				menuBarSize,
+				r.app.Prefabs(),
+			)
+
+			imgui.PopStyleColorV(20)
+			imgui.PopStyleVarV(7)
+
+			if r.app.ShowImguiDemo() {
+				imgui.ShowDemoWindow(nil)
+			}
 		}
 	}
+	imgui.End()
+	imgui.PopStyleVarV(1)
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.RenderedDrawData())
@@ -1022,4 +1086,8 @@ func triangleVAOKey(triangle entities.Triangle) string {
 
 func (r *Renderer) SetWorld(world *world.GameWorld) {
 	r.world = world
+}
+
+func (r *Renderer) GameWindowHovered() bool {
+	return r.gameWindowHovered
 }

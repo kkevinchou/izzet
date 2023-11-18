@@ -17,6 +17,7 @@ var worldName string = settings.DefaultProject
 var selectedWorldName string = ""
 
 func SetupMenuBar(app renderiface.App) imgui.Vec2 {
+	// imgui.SetNextWindowSize(imgui.Vec2{imgui.WindowSize().X, 400})
 	imgui.BeginMainMenuBar()
 	size := imgui.WindowSize()
 

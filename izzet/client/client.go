@@ -106,7 +106,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 
 	imgui.CreateContext(nil)
 	imguiIO := imgui.CurrentIO()
-	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", 20)
+	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
 
 	w, h := window.GetSize()
 

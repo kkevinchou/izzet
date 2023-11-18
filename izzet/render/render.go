@@ -34,10 +34,13 @@ type GameWorld interface {
 	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
-const mipsCount int = 6
-const MaxBloomTextureWidth int = 1920
-const MaxBloomTextureHeight int = 1080
-const internalTextureColorFormat int32 = gl.RGB10_A2
+const (
+	mipsCount                  int     = 6
+	MaxBloomTextureWidth       int     = 1920
+	MaxBloomTextureHeight      int     = 1080
+	internalTextureColorFormat int32   = gl.RGB10_A2
+	uiWidthRatio               float32 = 0.2
+)
 
 type Renderer struct {
 	app           renderiface.App
@@ -87,19 +90,15 @@ type Renderer struct {
 	cubeVAOs     map[float32]uint32
 	triangleVAOs map[string]uint32
 
-	width, height     int
-	gameWindowHovered bool
-	gameWindowWidth   int
-	gameWindowHeight  int
-	menuBarHeight     float32
-
-	resizedThisFrame       bool
-	resizedThisFrameWidth  int
-	resizedThisFrameHeight int
+	windowWidth, windowHeight int
+	gameWindowHovered         bool
+	gameWindowWidth           int
+	gameWindowHeight          int
+	menuBarHeight             float32
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app, world: world, width: width, height: height, gameWindowWidth: width, gameWindowHeight: height}
+	r := &Renderer{app: app, world: world, windowWidth: width, windowHeight: height, gameWindowWidth: width, gameWindowHeight: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -127,7 +126,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	r.cubeVAOs = map[float32]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.Resized(width, height)
+	r.ReinitializeFrameBuffers()
 
 	// circles for the rotation gizmo
 
@@ -157,47 +156,26 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	return r
 }
 
-func (r *Renderer) Resized(width, height int) {
-	r.resizedThisFrame = true
-	r.resizedThisFrameWidth = width
-	r.resizedThisFrameHeight = height
+func (r *Renderer) WindowResized(windowWidth, windowHeight int) {
+	style := imgui.CurrentStyle()
+	menuBarSize := settings.FontSize + style.FramePadding().Y*2
+
+	r.windowWidth, r.windowHeight = windowWidth, windowHeight
+
+	width := windowWidth
+	height := windowHeight - int(menuBarSize)
 
 	if r.app.RuntimeConfig().UIEnabled {
-		fmt.Println("RESIZE GUESS", float64(r.resizedThisFrameWidth)*0.8)
-	} else {
-		fmt.Println("RESIZE GUESS", float64(r.resizedThisFrameWidth))
+		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
 	}
 
-	r.width, r.height = width, height
-}
-
-// this is necessary because calulating the fbo sizes requires knowledge
-// of how much size the UI takes up
-func (r *Renderer) postFrameResize() {
-	if r.resizedThisFrame {
-		r.width, r.height = r.resizedThisFrameWidth, r.resizedThisFrameHeight
-		width := r.width
-		height := r.height
-
-		height = r.gameWindowHeight
-		if r.app.RuntimeConfig().UIEnabled {
-			width = r.gameWindowWidth
-			r.initMainRenderFBO(width, height)
-			r.initCompositeFBO(width, height)
-			r.initDepthMapFBO(width, height)
-			fmt.Println("FBO INIT", width, height)
-		} else {
-			r.initMainRenderFBO(width, height)
-			r.initCompositeFBO(width, height)
-			r.initDepthMapFBO(width, height)
-			fmt.Println("FBO INIT", width, height)
-		}
-	}
-	r.resizedThisFrame = false
+	r.initMainRenderFBO(width, height)
+	r.initCompositeFBO(width, height)
+	r.initDepthMapFBO(width, height)
 }
 
 func (r *Renderer) ReinitializeFrameBuffers() {
-	r.Resized(r.width, r.height)
+	r.WindowResized(r.windowWidth, r.windowHeight)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
@@ -245,7 +223,6 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 func (r *Renderer) Render(delta time.Duration) {
 	initOpenGLRenderSettings()
 	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
-	fmt.Println("RENDER CALL RENDER CONTEXT", renderContext.width, renderContext.height)
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
 
@@ -384,7 +361,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
 	r.renderImgui(renderContext, finalRenderTexture)
-	r.postFrameResize()
 }
 
 func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
@@ -602,7 +578,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(r.width), int32(r.height))
+	gl.Viewport(0, 0, int32(r.windowWidth), int32(r.windowHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
@@ -841,8 +817,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
-	shader.SetUniformInt("width", int32(r.width))
-	shader.SetUniformInt("height", int32(r.height))
+	shader.SetUniformInt("width", int32(r.windowWidth))
+	shader.SetUniformInt("height", int32(r.windowHeight))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -991,7 +967,6 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 	r.gameWindowHovered = false
 	menuBarSize := menus.SetupMenuBar(r.app)
 	r.menuBarHeight = menuBarSize.Y
-
 	width := fwidth + 1 // weirdly the width is always 1 pixel off
 	height := fheight - r.menuBarHeight
 
@@ -1004,7 +979,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 
 		var gameWindowRatio float32 = 1
 		if r.app.RuntimeConfig().UIEnabled {
-			gameWindowRatio = 0.8
+			gameWindowRatio = 1 - uiWidthRatio
 		}
 
 		// size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio())}

@@ -158,7 +158,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	// new textures are binded when we're in the process of blooming
 	r.blendFBO, _ = r.initFBOAndTexture(width, height)
 
-	r.renderCircle()
+	r.initializeCircleTextures()
 
 	return r
 }

@@ -756,7 +756,6 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 					fmt.Println("couldn't find texture", "light")
 				}
 			}
-
 			particles := entity.Particles
 			if particles != nil {
 				texture := r.app.AssetManager().GetTexture("light").ID

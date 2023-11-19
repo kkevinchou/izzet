@@ -1240,8 +1240,7 @@ func (r *Renderer) CalculateFooterSize() float32 {
 	if !r.app.RuntimeConfig().UIEnabled {
 		return 0
 	}
-	style := imgui.CurrentStyle()
-	return settings.FontSize + style.FramePadding().Y*2
+	return 34
 }
 
 func (r *Renderer) GameWindowClicked() {

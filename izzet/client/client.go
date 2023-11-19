@@ -38,7 +38,6 @@ type Client struct {
 	platform      *input.SDLPlatform
 	width, height int
 	client        network.IzzetClient
-	aspectRatio   float64
 
 	assetManager *assets.AssetManager
 	modelLibrary *modellibrary.ModelLibrary
@@ -122,7 +121,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		project:         project.NewProject(),
-		aspectRatio:     float64(config.Width) / float64(config.Height),
 	}
 
 	g.initSettings()

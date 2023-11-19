@@ -345,9 +345,9 @@ func initializeOpenGL(config settings.Config) (*sdl.Window, error) {
 	return window, nil
 }
 
-func (g *Client) mousePosToNearPlane(mouseInput input.MouseInput, width, height int) mgl64.Vec3 {
-	x := mouseInput.Position.X()
-	y := mouseInput.Position.Y()
+func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int) mgl64.Vec3 {
+	x := mousePosition.X()
+	y := mousePosition.Y()
 
 	// -1 for the near plane
 	ndcP := mgl64.Vec4{((x / float64(width)) - 0.5) * 2, ((y / float64(height)) - 0.5) * -2, -1, 1}

@@ -84,10 +84,11 @@ type Positionable interface {
 	Position() mgl64.Vec3
 }
 
-func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, mousePosition mgl64.Vec2, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
 	gizmoEvent := GizmoEventNone
 	startStatus := targetGizmo.Active
 	mouseInput := frameInput.MouseInput
+	mousePosition := mouseInput.Position
 
 	if hoveredEntityID != nil {
 		if _, ok := targetGizmo.EntityIDToAxis[*hoveredEntityID]; ok {

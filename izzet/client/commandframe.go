@@ -427,8 +427,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 
 	if !gizmoHovered && g.renderer.GameWindowHovered() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		gameWindowMousePosition := g.CalculateGameWindowMousePosition(mouseInput)
-		entityID := g.renderer.GetEntityByPixelPosition(gameWindowMousePosition)
+		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
 			panels.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
@@ -447,12 +446,11 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 
 func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl64.Vec3, gizmo.GizmoEvent) {
 	mouseInput := frameInput.MouseInput
-	gameWindowMousePosition := g.CalculateGameWindowMousePosition(mouseInput)
-	colorPickingID := g.renderer.GetEntityByPixelPosition(gameWindowMousePosition)
+	colorPickingID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 
 	gameWindowWidth, gameWindowHeight := g.renderer.GameWindowSize()
-	nearPlanePos := g.mousePosToNearPlane(gameWindowMousePosition, gameWindowWidth, gameWindowHeight)
+	nearPlanePos := g.mousePosToNearPlane(mouseInput.Position, gameWindowWidth, gameWindowHeight)
 
-	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, gameWindowMousePosition, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

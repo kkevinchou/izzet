@@ -319,8 +319,8 @@ func initializeOpenGL(config settings.Config) (*sdl.Window, error) {
 		}
 		config.Width = int(dm.W)
 		config.Height = int(dm.H)
-		windowFlags |= sdl.WINDOW_MAXIMIZED
-		// windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
+		// windowFlags |= sdl.WINDOW_MAXIMIZED
+		windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
 		// windowFlags |= sdl.WINDOW_FULLSCREEN
 	}
 

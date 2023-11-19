@@ -858,7 +858,16 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+
+	var footerSize int32 = 0
+	if r.app.RuntimeConfig().UIEnabled {
+		footerSize = int32(r.CalculateFooterSize())
+
+	}
+
+	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
+	// SDL, on the other hand, has the mouse origin in the top left corner
+	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize, 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {

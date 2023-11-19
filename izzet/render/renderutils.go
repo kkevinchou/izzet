@@ -858,7 +858,7 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	data := make([]byte, 4)
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-int32(r.CalculateFooterSize()), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1]), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
 	uintID := binary.LittleEndian.Uint32(data)
 	if uintID == settings.EmptyColorPickingID {

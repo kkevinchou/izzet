@@ -452,30 +452,40 @@ func (g *Client) SaveProject() {
 	for i := range g.project.Content {
 		content := &g.project.Content[i]
 		baseFileName := strings.Split(filepath.Base(content.InFilePath), ".")[0]
+		parentDirectory := filepath.Dir(content.InFilePath)
 
-		importedFile, err := os.Open(content.InFilePath)
-		if err != nil {
-			panic(err)
-		}
-		defer importedFile.Close()
-
-		fileBytes, err := io.ReadAll(importedFile)
-		if err != nil {
-			panic(err)
+		var fileNames []string
+		fileNames = append(fileNames, baseFileName+filepath.Ext(content.InFilePath))
+		for _, fileName := range content.PeripheralFiles {
+			fileNames = append(fileNames, fileName)
 		}
 
-		outFilePath := path.Join(settings.ProjectsDirectory, g.project.Name, "content", baseFileName+filepath.Ext(content.InFilePath))
+		outFilePath := filepath.Join(settings.ProjectsDirectory, g.project.Name, "content", baseFileName+filepath.Ext(content.InFilePath))
 		content.OutFilepath = outFilePath
 
-		outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			panic(err)
-		}
-		defer outFile.Close()
+		for _, fileName := range fileNames {
+			importedFile, err := os.Open(filepath.Join(parentDirectory, fileName))
+			if err != nil {
+				panic(err)
+			}
+			defer importedFile.Close()
 
-		_, err = outFile.Write(fileBytes)
-		if err != nil {
-			panic(err)
+			fileBytes, err := io.ReadAll(importedFile)
+			if err != nil {
+				panic(err)
+			}
+
+			outFilePath := path.Join(settings.ProjectsDirectory, g.project.Name, "content", fileName)
+			outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				panic(err)
+			}
+			defer outFile.Close()
+
+			_, err = outFile.Write(fileBytes)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 

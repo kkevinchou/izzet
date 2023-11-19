@@ -1210,7 +1210,8 @@ func (r *Renderer) iztDrawElements(count int32) {
 }
 
 // setup reusale circle textures
-func (r *Renderer) renderCircle() {
+func (r *Renderer) initializeCircleTextures() {
+	gl.Viewport(0, 0, 1024, 1024)
 	shaderManager := r.shaderManager
 	shader := shaderManager.GetShaderProgram("unit_circle")
 	shader.Use()

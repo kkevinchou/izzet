@@ -38,16 +38,16 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 	if imgui.BeginTabBar("Main") {
-		if imgui.BeginTabItem("World") {
-			worldProps(app, renderContext)
-			imgui.EndTabItem()
-		}
 		if imgui.BeginTabItem("Details") {
 			entityProps(SelectedEntity(), app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Scene Graph") {
 			sceneGraph(app, world)
+			imgui.EndTabItem()
+		}
+		if imgui.BeginTabItem("World") {
+			worldProps(app, renderContext)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Stats") {

@@ -1254,3 +1254,7 @@ func (r *Renderer) ConfigureUI() {
 	r.ReinitializeFrameBuffers()
 	r.contentBrowserHeight = r.CalculateFooterSize()
 }
+
+func (r *Renderer) GameWindowSize() (int, int) {
+	return r.gameWindowWidth, r.gameWindowHeight
+}

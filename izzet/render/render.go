@@ -180,7 +180,6 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
-	fmt.Println("CAMERA DEPTH DIMENSION", width, height)
 	var storedFBO int32
 	gl.GetIntegerv(gl.FRAMEBUFFER_BINDING, &storedFBO)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(storedFBO))

@@ -84,7 +84,7 @@ type Positionable interface {
 	Position() mgl64.Vec3
 }
 
-func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, convertedMousePosition mgl64.Vec2, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, mousePosition mgl64.Vec2, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
 	gizmoEvent := GizmoEventNone
 	startStatus := targetGizmo.Active
 	mouseInput := frameInput.MouseInput
@@ -103,13 +103,13 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, convertedMo
 		if mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 			axis := targetGizmo.EntityIDToAxis[*hoveredEntityID]
 			if axis.DistanceBasedDelta {
-				targetGizmo.LastFrameMousePosition = convertedMousePosition
+				targetGizmo.LastFrameMousePosition = mousePosition
 			} else if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-				targetGizmo.LastFrameMousePosition = convertedMousePosition
+				targetGizmo.LastFrameMousePosition = mousePosition
 			} else if !nonParallel && (*hoveredEntityID == GizmoAllAxisPickingID) {
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
-				targetGizmo.LastFrameMousePosition = convertedMousePosition
+				targetGizmo.LastFrameMousePosition = mousePosition
 			} else if !nonParallel && (*hoveredEntityID == GizmoXZAxisPickingID || *hoveredEntityID == GizmoXYAxisPickingID || *hoveredEntityID == GizmoYZAxisPickingID) {
 				plane := planeFromAxis(targetGizmo.HoveredEntityID, gizmoPosition)
 				ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
@@ -117,7 +117,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, convertedMo
 				position, hit := checks.IntersectRayPlane(ray, plane)
 				if hit {
 					targetGizmo.LastFrameClosestPoint = position
-					targetGizmo.LastFrameMousePosition = convertedMousePosition
+					targetGizmo.LastFrameMousePosition = mousePosition
 				}
 			} else {
 				panic("parallel")
@@ -147,8 +147,8 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, convertedMo
 
 		if axis.DistanceBasedDelta {
 			// mouse position based deltas, store the x,y mouse delta in the return value with 0 for the z value
-			delta := convertedMousePosition.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
-			targetGizmo.LastFrameMousePosition = convertedMousePosition
+			delta := mousePosition.Sub(targetGizmo.LastFrameMousePosition).Vec3(0)
+			targetGizmo.LastFrameMousePosition = mousePosition
 
 			targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
 			calculatedPosition := targetGizmo.LastSnapVector.Add(targetGizmo.AccumulatedDelta)
@@ -183,11 +183,11 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, convertedMo
 				targetGizmo.LastSnapVector[2] += snapDeltaZ
 			}
 		} else if targetGizmo.HoveredEntityID == GizmoAllAxisPickingID {
-			mouseDelta := convertedMousePosition.Sub(targetGizmo.LastFrameMousePosition)
+			mouseDelta := mousePosition.Sub(targetGizmo.LastFrameMousePosition)
 			magnitude := (mouseDelta[0] - mouseDelta[1])
 			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
 			gizmoDelta = &delta
-			targetGizmo.LastFrameMousePosition = convertedMousePosition
+			targetGizmo.LastFrameMousePosition = mousePosition
 		} else if targetGizmo.HoveredEntityID == GizmoXZAxisPickingID || targetGizmo.HoveredEntityID == GizmoXYAxisPickingID || targetGizmo.HoveredEntityID == GizmoYZAxisPickingID {
 			plane := planeFromAxis(targetGizmo.HoveredEntityID, gizmoPosition)
 			ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}

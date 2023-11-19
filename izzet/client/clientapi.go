@@ -510,3 +510,7 @@ func (g *Client) SetWindowSize(width, height int) {
 func (g *Client) WindowSize() (int, int) {
 	return g.width, g.height
 }
+
+func (g *Client) CalculateGameWindowMousePosition(mouseInput input.MouseInput) mgl64.Vec2 {
+	return mgl64.Vec2{mouseInput.Position.X(), mouseInput.Position.Y() + float64(g.renderer.CalculateFooterSize())}
+}

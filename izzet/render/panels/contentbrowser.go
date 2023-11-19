@@ -94,10 +94,10 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 					baseFileName := strings.Split(filepath.Base(assetFilePath), ".")[0]
 
 					project := app.GetProject()
-					project.AddContent(assetFilePath)
 
 					if app.AssetManager().LoadDocument(baseFileName, assetFilePath) {
 						document := app.AssetManager().GetDocument(baseFileName)
+						project.AddGLTFContent(assetFilePath, document)
 						app.ModelLibrary().RegisterSingleEntityDocument(document)
 
 						// setting up thumbnail
@@ -105,7 +105,10 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 						textureName := "document"
 						assetTexture := app.AssetManager().GetTexture(textureName)
 						texture := CreateUserSpaceTextureHandle(assetTexture.ID)
-						items = append(items, ContentItem{texture: texture, name: baseFileName})
+						items = append(items, ContentItem{
+							texture: texture,
+							name:    baseFileName,
+						})
 					}
 				}
 			}

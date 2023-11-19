@@ -449,8 +449,10 @@ func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e
 	mouseInput := frameInput.MouseInput
 	convertedMousePosition := mgl64.Vec2{mouseInput.Position.X(), mouseInput.Position.Y() + float64(g.renderer.CalculateFooterSize())}
 	colorPickingID := g.renderer.GetEntityByPixelPosition(convertedMousePosition)
-	nearPlanePos := g.mousePosToNearPlane(convertedMousePosition, g.width, g.height)
 
-	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
+	gameWindowWidth, gameWindowHeight := g.renderer.GameWindowSize()
+	nearPlanePos := g.mousePosToNearPlane(convertedMousePosition, gameWindowWidth, gameWindowHeight)
+
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, convertedMousePosition, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

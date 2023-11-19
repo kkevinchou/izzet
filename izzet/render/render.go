@@ -72,6 +72,7 @@ type Renderer struct {
 	mainColorTexture       uint32
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
+	imguiMainColorTexture  imgui.TextureID
 
 	downSampleFBO      uint32
 	xyTextureVAO       uint32
@@ -81,8 +82,9 @@ type Renderer struct {
 	upSampleTextures    []uint32
 	blendTargetTextures []uint32
 
-	compositeFBO     uint32
-	compositeTexture uint32
+	compositeFBO          uint32
+	compositeTexture      uint32
+	imguiCompositeTexture imgui.TextureID
 
 	blendFBO uint32
 
@@ -213,12 +215,14 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
+	r.imguiMainColorTexture = CreateUserSpaceTextureHandle(r.mainColorTexture)
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *Renderer) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+	r.imguiCompositeTexture = CreateUserSpaceTextureHandle(r.compositeTexture)
 }
 
 func (r *Renderer) Render(delta time.Duration) {
@@ -321,10 +325,12 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.renderGizmos(cameraViewerContext, renderContext)
 
 	var finalRenderTexture uint32
+	var imguiFinalRenderTexture imgui.TextureID
 	if r.app.RuntimeConfig().Bloom {
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
+		imguiFinalRenderTexture = r.imguiCompositeTexture
 		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
@@ -340,6 +346,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
+		imguiFinalRenderTexture = r.imguiMainColorTexture
 		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
@@ -361,7 +368,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
-	r.renderImgui(renderContext, finalRenderTexture)
+	r.renderImgui(renderContext, imguiFinalRenderTexture)
 }
 
 func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
@@ -961,7 +968,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 }
 
-func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture uint32) {
+func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	fwidth, fheight := r.app.Platform().NewFrame()
 	imgui.NewFrame()
@@ -991,8 +998,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, finalRenderTexture u
 		r.gameWindowHeight = int(size.Y)
 
 		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
-			texture := CreateUserSpaceTextureHandle(finalRenderTexture)
-			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
 		if imgui.BeginDragDropTarget() {
 			if payload := imgui.AcceptDragDropPayload("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {

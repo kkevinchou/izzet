@@ -11,6 +11,7 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
+	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
@@ -18,7 +19,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -82,7 +82,9 @@ type Client struct {
 
 	frameInput  input.Input
 	serverStats serverstats.ServerStats
-	project     *project.Project
+
+	projectName    string
+	contentBrowser *contentbrowser.ContentBrowser
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
@@ -120,7 +122,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		modelLibrary:    modellibrary.New(true),
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
-		project:         project.NewProject(),
+		contentBrowser:  &contentbrowser.ContentBrowser{},
 	}
 
 	g.initSettings()

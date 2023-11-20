@@ -1,6 +1,9 @@
 package apputils
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 )
@@ -10,6 +13,10 @@ import (
 func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
 	handle := 1<<63 | uint64(texture)
 	return imgui.TextureID(handle)
+}
+
+func NameFromAssetFilePath(assetFilePath string) string {
+	return strings.Split(filepath.Base(assetFilePath), ".")[0]
 }
 
 var ZeroVec = mgl64.Vec3{}

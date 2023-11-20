@@ -3,11 +3,11 @@ package renderiface
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -50,11 +50,12 @@ type App interface {
 	DisconnectClient()
 
 	GetServerStats() serverstats.ServerStats
-	GetProject() *project.Project
 	SaveProject()
 	SaveProjectAs(name string)
 
 	GetPlayerEntity() *entities.Entity
 	ConfigureUI(enabled bool)
 	WindowSize() (int, int)
+	ContentBrowser() *contentbrowser.ContentBrowser
+	ImportToContentBrowser(assetFilePath string)
 }

@@ -14,14 +14,15 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
+	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
-	"github.com/kkevinchou/izzet/izzet/project"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -75,8 +76,8 @@ func (g *Client) Platform() *input.SDLPlatform {
 	return g.platform
 }
 
-func (g *Client) saveWorld(name string) {
-	err := serialization.WriteToFile(g.world, path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name)))
+func (g *Client) saveWorld(worldFilePath string) {
+	err := serialization.WriteToFile(g.world, worldFilePath)
 	if err != nil {
 		panic(err)
 	}
@@ -425,43 +426,85 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-func (g *Client) GetProject() *project.Project {
-	return g.project
+// registerSingleEntity registers the asset found at assetFilePath with the model library and asset manager
+func (g *Client) registerSingleEntity(assetFilePath string) bool {
+	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
+	if g.AssetManager().LoadDocument(baseFileName, assetFilePath) {
+		document := g.AssetManager().GetDocument(baseFileName)
+		g.ModelLibrary().RegisterSingleEntityDocument(document)
+		return true
+	}
+	return false
+}
+
+// TODO - import props? single vs multiple entities, animation, material, etc
+// ImportToContentBrowser registers the asset found at assetFilePath with the model library and asset manager
+// then, the asset is registered with the content browser
+func (g *Client) ImportToContentBrowser(assetFilePath string) {
+	if g.registerSingleEntity(assetFilePath) {
+		baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
+		document := g.AssetManager().GetDocument(baseFileName)
+		g.contentBrowser.AddGLTFModel(assetFilePath, document)
+	}
 }
 
 func (g *Client) LoadProject(name string) bool {
 	if name == "" {
 		return false
 	}
-	g.project.Name = name
+
+	f, err := os.Open(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	var project Project
+	decoder := json.NewDecoder(f)
+	err = decoder.Decode(&project)
+	if err != nil {
+		panic(err)
+	}
+
+	g.projectName = project.Name
+	g.contentBrowser = &project.ContentBrowser
+
+	for _, item := range g.contentBrowser.Items {
+		g.registerSingleEntity(item.InFilePath)
+	}
+
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
 }
 
 func (g *Client) SaveProject() {
-	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.project.Name), os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-	g.saveWorld(g.project.Name)
-
-	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.project.Name, "content"), os.ModePerm)
+	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.projectName), os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
 
-	for i := range g.project.Content {
-		content := &g.project.Content[i]
-		baseFileName := strings.Split(filepath.Base(content.InFilePath), ".")[0]
-		parentDirectory := filepath.Dir(content.InFilePath)
+	worldFilePath := path.Join(settings.ProjectsDirectory, g.projectName, fmt.Sprintf("./%s.json", g.projectName))
+	g.saveWorld(worldFilePath)
 
-		var fileNames []string
-		fileNames = append(fileNames, baseFileName+filepath.Ext(content.InFilePath))
-		for _, fileName := range content.PeripheralFiles {
-			fileNames = append(fileNames, fileName)
+	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.projectName, "content"), os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
+	items := g.contentBrowser.Items
+	for i := range items {
+		// this has already been saved, skip
+		if items[i].SavedToProjectFolder {
+			continue
 		}
 
-		outFilePath := filepath.Join(settings.ProjectsDirectory, g.project.Name, "content", baseFileName+filepath.Ext(content.InFilePath))
-		content.OutFilepath = outFilePath
+		baseFileName := strings.Split(filepath.Base(items[i].InFilePath), ".")[0]
+		parentDirectory := filepath.Dir(items[i].InFilePath)
+
+		var fileNames []string
+		fileNames = append(fileNames, baseFileName+filepath.Ext(items[i].InFilePath))
+		for _, fileName := range items[i].PeripheralFiles {
+			fileNames = append(fileNames, fileName)
+		}
 
 		for _, fileName := range fileNames {
 			importedFile, err := os.Open(filepath.Join(parentDirectory, fileName))
@@ -475,7 +518,7 @@ func (g *Client) SaveProject() {
 				panic(err)
 			}
 
-			outFilePath := path.Join(settings.ProjectsDirectory, g.project.Name, "content", fileName)
+			outFilePath := path.Join(settings.ProjectsDirectory, g.projectName, "content", fileName)
 			outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
 				panic(err)
@@ -487,20 +530,30 @@ func (g *Client) SaveProject() {
 				panic(err)
 			}
 		}
+
+		// overwrite in file path to be the asset copy in in the project folder
+		items[i].SavedToProjectFolder = true
+		items[i].InFilePath = filepath.Join(settings.ProjectsDirectory, g.projectName, "content", baseFileName+filepath.Ext(items[i].InFilePath))
 	}
 
-	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, g.project.Name, "main_project.izt"), os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, g.projectName, "main_project.izt"), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
+	project := Project{
+		Name:           g.projectName,
+		WorldFile:      worldFilePath,
+		ContentBrowser: *g.contentBrowser,
+	}
+
 	encoder := json.NewEncoder(f)
-	encoder.Encode(g.project)
+	encoder.Encode(project)
 }
 
 func (g *Client) SaveProjectAs(name string) {
-	g.project.Name = name
+	g.projectName = name
 	g.SaveProject()
 }
 
@@ -519,4 +572,8 @@ func (g *Client) SetWindowSize(width, height int) {
 
 func (g *Client) WindowSize() (int, int) {
 	return g.width, g.height
+}
+
+func (g *Client) ContentBrowser() *contentbrowser.ContentBrowser {
+	return g.contentBrowser
 }

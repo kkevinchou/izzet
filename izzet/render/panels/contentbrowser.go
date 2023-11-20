@@ -2,8 +2,6 @@ package panels
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
@@ -38,12 +36,7 @@ const (
 // - render thumbnail to content browser
 // - drag and drop from content browser to world space (otherwise, just right click -> instantiate)
 
-var items []ContentItem
-
-type ContentItem struct {
-	texture imgui.TextureID
-	name    string
-}
+var documentTexture *imgui.TextureID
 
 func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext RenderContext, ps []*prefabs.Prefab, x, y float32, height *float32, expanded *bool) {
 	// rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
@@ -72,18 +65,6 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 			}
 
 			if imgui.Button("Import") {
-				// err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, "content"), os.ModePerm)
-				// if err != nil {
-				// 	panic(err)
-				// }
-
-				// if _, err := os.Stat(settings.ProjectDirectory); os.IsNotExist(err) {
-				// 	err := os.Mkdir(settings.ProjectDirectory, os.ModeDir)
-				// 	if err != nil {
-				// 		panic(err)
-				// 	}
-				// }
-
 				// loading the asset
 				assetFilePath, err := dialog.File().Filter("GLTF file", "gltf").Load()
 				if err != nil {
@@ -91,41 +72,30 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 						panic(err)
 					}
 				} else {
-					baseFileName := strings.Split(filepath.Base(assetFilePath), ".")[0]
-
-					project := app.GetProject()
-
-					if app.AssetManager().LoadDocument(baseFileName, assetFilePath) {
-						document := app.AssetManager().GetDocument(baseFileName)
-						project.AddGLTFContent(assetFilePath, document)
-						app.ModelLibrary().RegisterSingleEntityDocument(document)
-
-						// setting up thumbnail
-
-						textureName := "document"
-						assetTexture := app.AssetManager().GetTexture(textureName)
-						texture := CreateUserSpaceTextureHandle(assetTexture.ID)
-						items = append(items, ContentItem{
-							texture: texture,
-							name:    baseFileName,
-						})
-					}
+					app.ImportToContentBrowser(assetFilePath)
 				}
 			}
 
 			imgui.EndTabItem()
 
-			for i, item := range items {
+			for i, item := range app.ContentBrowser().Items {
 				size := imgui.Vec2{X: 100, Y: 100}
 				// invert the Y axis since opengl vs texture coordinate systems differ
 				// https://learnopengl.com/Getting-started/Textures
 				imgui.BeginGroup()
 				imgui.PushID(fmt.Sprintf("image %d", i))
-				imgui.ImageV(item.texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+
+				if documentTexture == nil {
+					t := app.AssetManager().GetTexture("document")
+					texture := CreateUserSpaceTextureHandle(t.ID)
+					documentTexture = &texture
+				}
+
+				imgui.ImageV(*documentTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 				if imgui.BeginPopupContextItem() {
 					if imgui.Button("Instantiate") {
-						document := app.AssetManager().GetDocument(item.name)
-						handle := modellibrary.NewGlobalHandle(item.name)
+						document := app.AssetManager().GetDocument(item.Name)
+						handle := modellibrary.NewGlobalHandle(item.Name)
 						if len(document.Scenes) != 1 {
 							panic("single entity asset loading only supports a singular scene")
 						}
@@ -150,12 +120,12 @@ func BuildContentBrowser(app renderiface.App, world GameWorld, renderContext Ren
 				imgui.PopID()
 
 				if imgui.BeginDragDropSource(imgui.DragDropFlagsSourceAllowNullID) {
-					imgui.SetDragDropPayload("content_browser_item", []byte(item.name), imgui.ConditionNone)
+					imgui.SetDragDropPayload("content_browser_item", []byte(item.Name), imgui.ConditionNone)
 					imgui.EndDragDropSource()
-					fmt.Println("START DRAGGING", item.name)
+					fmt.Println("START DRAGGING", item.Name)
 				}
 
-				imgui.Text(item.name)
+				imgui.Text(item.Name)
 				imgui.EndGroup()
 				imgui.SameLine()
 			}

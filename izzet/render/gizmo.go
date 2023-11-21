@@ -51,7 +51,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXZAxisPickingID {
 		color = mgl32.Vec3{1, 1, 0}
 	}
-	var scaledSize float32 = 0.25
+	var scaledSize float32 = 0.2
 	quadModelMatrix := mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y()), float32(renderPosition.Z())+scaledSize)
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{1, 0, 0}).Mat4())
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))

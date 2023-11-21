@@ -44,55 +44,55 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 		r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 
-	// planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
+	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
 
-	// // handle XZ
-	// color := planeColor
-	// if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXZAxisPickingID {
-	// 	color = mgl32.Vec3{1, 1, 0}
-	// }
-	// var scaledSize float32 = 0.25
-	// quadModelMatrix := mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y()), float32(renderPosition.Z())+scaledSize)
-	// quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{1, 0, 0}).Mat4())
-	// quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
+	// handle XZ
+	color := planeColor
+	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXZAxisPickingID {
+		color = mgl32.Vec3{1, 1, 0}
+	}
+	var scaledSize float32 = 0.25
+	quadModelMatrix := mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y()), float32(renderPosition.Z())+scaledSize)
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{1, 0, 0}).Mat4())
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
 
-	// shader.SetUniformMat4("model", quadModelMatrix)
-	// shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXZAxisPickingID))
-	// shader.SetUniformVec3("color", color)
-	// quadVAO := getInternedQuadVAOPosition()
-	// gl.BindVertexArray(quadVAO)
-	// r.iztDrawArrays(0, 12)
+	shader.SetUniformMat4("model", quadModelMatrix)
+	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXZAxisPickingID))
+	shader.SetUniformVec3("color", color)
+	quadVAO := getInternedQuadVAOPosition()
+	gl.BindVertexArray(quadVAO)
+	r.iztDrawArrays(0, 12)
 
-	// // handle XY
-	// color = planeColor
-	// if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXYAxisPickingID {
-	// 	color = mgl32.Vec3{1, 1, 0}
-	// }
+	// handle XY
+	color = planeColor
+	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXYAxisPickingID {
+		color = mgl32.Vec3{1, 1, 0}
+	}
 
-	// quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z()))
-	// quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
+	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z()))
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
 
-	// shader.SetUniformMat4("model", quadModelMatrix)
-	// shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXYAxisPickingID))
-	// shader.SetUniformVec3("color", color)
-	// gl.BindVertexArray(quadVAO)
-	// r.iztDrawArrays(0, 12)
+	shader.SetUniformMat4("model", quadModelMatrix)
+	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXYAxisPickingID))
+	shader.SetUniformVec3("color", color)
+	gl.BindVertexArray(quadVAO)
+	r.iztDrawArrays(0, 12)
 
-	// // handle YZ
-	// color = planeColor
-	// if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoYZAxisPickingID {
-	// 	color = mgl32.Vec3{1, 1, 0}
-	// }
+	// handle YZ
+	color = planeColor
+	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoYZAxisPickingID {
+		color = mgl32.Vec3{1, 1, 0}
+	}
 
-	// quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z())+scaledSize)
-	// quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{0, 1, 0}).Mat4())
-	// quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
+	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z())+scaledSize)
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{0, 1, 0}).Mat4())
+	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
 
-	// shader.SetUniformMat4("model", quadModelMatrix)
-	// shader.SetUniformUInt("entityID", uint32(gizmo.GizmoYZAxisPickingID))
-	// shader.SetUniformVec3("color", color)
-	// gl.BindVertexArray(quadVAO)
-	// r.iztDrawArrays(0, 12)
+	shader.SetUniformMat4("model", quadModelMatrix)
+	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoYZAxisPickingID))
+	shader.SetUniformVec3("color", color)
+	gl.BindVertexArray(quadVAO)
+	r.iztDrawArrays(0, 12)
 }
 
 func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {

@@ -451,6 +451,7 @@ func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e
 	gameWindowWidth, gameWindowHeight := g.renderer.GameWindowSize()
 	nearPlanePos := g.mousePosToNearPlane(mouseInput.Position, gameWindowWidth, gameWindowHeight)
 
-	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
+	cameraViewDir := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, cameraViewDir, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

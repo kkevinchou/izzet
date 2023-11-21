@@ -54,15 +54,15 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 			stats(app, renderContext)
 			imgui.EndTabItem()
 		}
-		if imgui.BeginTabItem("Animation") {
-			entity := SelectedEntity()
-			if entity != nil && entity.Animation != nil {
-				animationUI(app, entity)
-			} else {
-				imgui.Text("<select an entity with animations>")
-			}
-			imgui.EndTabItem()
-		}
+		// if imgui.BeginTabItem("Animation") {
+		// 	entity := SelectedEntity()
+		// 	if entity != nil && entity.Animation != nil {
+		// 		animationUI(app, entity)
+		// 	} else {
+		// 		imgui.Text("<select an entity with animations>")
+		// 	}
+		// 	imgui.EndTabItem()
+		// }
 		if imgui.BeginTabItem("Prefabs") {
 			prefabsUI(app, world, ps)
 			imgui.EndTabItem()

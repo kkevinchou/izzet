@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
@@ -42,7 +43,7 @@ func (r *Renderer) drawTris(points []mgl64.Vec3) {
 	}
 
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)
@@ -77,7 +78,7 @@ func (r *Renderer) drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh
 			vertices := r.generateNavMeshVertexAttributes(navmesh)
 
 			var vbo, vao uint32
-			gl.GenBuffers(1, &vbo)
+			apputils.GenBuffers(1, &vbo)
 			gl.GenVertexArrays(1, &vao)
 
 			gl.BindVertexArray(vao)
@@ -659,7 +660,7 @@ func (r *Renderer) drawWithNDC(shaderManager *shaders.ShaderManager) {
 	}
 
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)
@@ -699,7 +700,7 @@ func (r *Renderer) drawBillboardTexture(
 		}
 
 		var vbo, vao uint32
-		gl.GenBuffers(1, &vbo)
+		apputils.GenBuffers(1, &vbo)
 		gl.GenVertexArrays(1, &vao)
 
 		gl.BindVertexArray(vao)
@@ -736,7 +737,7 @@ func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *sha
 	}
 
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)
@@ -1123,7 +1124,7 @@ func (r *Renderer) initCubeVAO(length float32) uint32 {
 		-ht, -ht, ht,
 	}
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)
@@ -1154,7 +1155,7 @@ func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	}
 
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 )
 
 // OpenGL4 implements a renderer based on github.com/go-gl/gl (v4.1-core).
@@ -286,8 +287,8 @@ void main()
 	renderer.attribLocationUV = gl.GetAttribLocation(renderer.shaderHandle, gl.Str("UV"+"\x00"))
 	renderer.attribLocationColor = gl.GetAttribLocation(renderer.shaderHandle, gl.Str("Color"+"\x00"))
 
-	gl.GenBuffers(1, &renderer.vboHandle)
-	gl.GenBuffers(1, &renderer.elementsHandle)
+	apputils.GenBuffers(1, &renderer.vboHandle)
+	apputils.GenBuffers(1, &renderer.elementsHandle)
 
 	renderer.createFontsTexture()
 

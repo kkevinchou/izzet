@@ -30,6 +30,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		setupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &settings.ShadowFarFactor, 0, 10) }, true)
 		setupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(settings.TriangleDrawCount)) }, true)
 		setupRow("Draw Count", func() { imgui.LabelText("", formatNumber(settings.DrawCount)) }, true)
+		setupRow("gl.GenBuffers() count", func() { imgui.LabelText("", fmt.Sprintf("%0.f", mr.GetOneSecondSum("gen_buffers"))) }, true)
 
 		setupRow("Texture Viewer", func() {
 			if settings.DebugTexture != 0 {

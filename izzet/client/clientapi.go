@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
@@ -401,7 +402,7 @@ func (g *Client) initialize() {
 	}
 
 	g.editHistory = edithistory.New()
-	g.metricsRegistry = metrics.New()
+	globals.SetClientMetricsRegistry(g.metricsRegistry)
 	g.collisionObserver = observers.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
 }

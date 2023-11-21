@@ -8,5 +8,4 @@ type Project struct {
 	WorldFile      string
 	Name           string
 	ContentBrowser contentbrowser.ContentBrowser
-	// World          world.GameWorld
 }

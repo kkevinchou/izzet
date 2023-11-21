@@ -969,15 +969,16 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	fwidth, fheight := r.app.Platform().NewFrame()
+	r.app.Platform().NewFrame()
 	imgui.NewFrame()
+	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
 	menus.SetupMenuBar(r.app)
 	menuBarHeight := CalculateMenuBarSize()
 	footerHeight := r.CalculateFooterSize()
-	width := fwidth + 1 // weirdly the width is always 1 pixel off
-	height := fheight - menuBarHeight - footerHeight
+	width := float32(windowWidth) + 1 // weirdly the width is always 1 pixel off
+	height := float32(windowHeight) - menuBarHeight - footerHeight
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)

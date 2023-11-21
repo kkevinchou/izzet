@@ -1,16 +1,13 @@
 package gizmo
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
-)
-
-const (
-	ActivationRadius = 10
 )
 
 type GizmoMode string
@@ -42,6 +39,8 @@ const (
 	GizmoXDistancePickingID int = 1000000004
 	GizmoYDistancePickingID int = 1000000005
 	GizmoZDistancePickingID int = 1000000006
+
+	planeSelectionSensitivity float64 = 0.8
 )
 
 func init() {
@@ -84,12 +83,14 @@ type Positionable interface {
 	Position() mgl64.Vec3
 }
 
-func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewDir mgl64.Vec3, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
 	gizmoEvent := GizmoEventNone
 	startStatus := targetGizmo.Active
 	mouseInput := frameInput.MouseInput
 	mousePosition := mouseInput.Position
 
+	// check if we're hovering an actual axis and not some other random entity
+	// set to nil if we are hovering a non axis entity
 	if hoveredEntityID != nil {
 		if _, ok := targetGizmo.EntityIDToAxis[*hoveredEntityID]; ok {
 			if !mouseInput.Buttons[0] {
@@ -143,7 +144,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 
 	var gizmoDelta *mgl64.Vec3
 
-	if mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+	if targetGizmo.HoveredEntityID != -1 && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
 
 		if axis.DistanceBasedDelta {
@@ -201,7 +202,35 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 				gizmoDelta = &delta
 			}
 		} else {
-			if _, closestPointOnAxis, nonParallel := checks.ClosestPointsInfiniteLines(cameraPosition, nearPlanePosition, gizmoPosition, gizmoPosition.Add(axis.Direction)); nonParallel {
+			planes := [3]collider.Plane{
+				{Point: gizmoPosition, Normal: mgl64.Vec3{1, 0, 0}},
+				{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}},
+				{Point: gizmoPosition, Normal: mgl64.Vec3{0, 0, 1}},
+			}
+
+			var plane collider.Plane
+			if targetGizmo.HoveredEntityID == GizmoXAxisPickingID {
+				plane = planes[1]
+				if math.Abs(cameraViewDir.Z()) > planeSelectionSensitivity {
+					plane = planes[2]
+				}
+			} else if targetGizmo.HoveredEntityID == GizmoYAxisPickingID {
+				plane = planes[0]
+				if math.Abs(cameraViewDir.Z()) > math.Abs(cameraViewDir.X()) {
+					plane = planes[2]
+				}
+			} else if targetGizmo.HoveredEntityID == GizmoZAxisPickingID {
+				plane = planes[1]
+				if math.Abs(cameraViewDir.X()) > planeSelectionSensitivity {
+					plane = planes[0]
+				}
+			} else {
+				panic("wat")
+			}
+
+			ray := collider.Ray{Origin: cameraPosition, Direction: nearPlanePosition.Sub(cameraPosition).Normalize()}
+			if point, hit := checks.IntersectRayPlane(ray, plane); hit {
+				closestPointOnAxis := checks.ClosestPointOnLineToPoint(gizmoPosition.Sub(axis.Direction.Mul(50000)), gizmoPosition.Add(axis.Direction.Mul(50000)), point)
 				delta := closestPointOnAxis.Sub(targetGizmo.LastFrameClosestPoint)
 				targetGizmo.LastFrameClosestPoint = closestPointOnAxis
 
@@ -250,6 +279,10 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, gizmoPositi
 		targetGizmo.AccumulatedDelta = mgl64.Vec3{}
 	}
 
+	if gizmoDelta != nil && math.IsNaN(gizmoDelta.X()) {
+		fmt.Println("HI")
+	}
+
 	return gizmoDelta, gizmoEvent
 }
 
@@ -257,12 +290,12 @@ func setupTranslationGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			GizmoXAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
-			GizmoYAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
-			GizmoZAxisPickingID:  GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
-			GizmoXZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
-			GizmoXYAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
-			GizmoYZAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
+			GizmoXAxisPickingID:  {Direction: mgl64.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID:  {Direction: mgl64.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID:  {Direction: mgl64.Vec3{0, 0, 1}},
+			GizmoXZAxisPickingID: {Direction: mgl64.Vec3{}},
+			GizmoXYAxisPickingID: {Direction: mgl64.Vec3{}},
+			GizmoYZAxisPickingID: {Direction: mgl64.Vec3{}},
 		},
 	}
 }
@@ -271,9 +304,9 @@ func setupRotationGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			GizmoXDistancePickingID: GizmoAxis{DistanceBasedDelta: true},
-			GizmoYDistancePickingID: GizmoAxis{DistanceBasedDelta: true},
-			GizmoZDistancePickingID: GizmoAxis{DistanceBasedDelta: true},
+			GizmoXDistancePickingID: {DistanceBasedDelta: true},
+			GizmoYDistancePickingID: {DistanceBasedDelta: true},
+			GizmoZDistancePickingID: {DistanceBasedDelta: true},
 		},
 	}
 }
@@ -282,10 +315,10 @@ func setupScaleGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			GizmoXAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{1, 0, 0}},
-			GizmoYAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 1, 0}},
-			GizmoZAxisPickingID:   GizmoAxis{Direction: mgl64.Vec3{0, 0, 1}},
-			GizmoAllAxisPickingID: GizmoAxis{Direction: mgl64.Vec3{}},
+			GizmoXAxisPickingID:   {Direction: mgl64.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID:   {Direction: mgl64.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID:   {Direction: mgl64.Vec3{0, 0, 1}},
+			GizmoAllAxisPickingID: {Direction: mgl64.Vec3{}},
 		},
 	}
 }

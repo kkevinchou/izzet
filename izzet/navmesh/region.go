@@ -140,10 +140,6 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	var next *Voxel
 	seen := map[VoxelPosition]bool{}
 
-	if startVoxel.RegionID == 1 {
-		fmt.Println("HI")
-	}
-
 	// initialization
 	neighbors := getNeighborsOrdered(startVoxel.X, startVoxel.Y, startVoxel.Z, voxelField, reachField, dimensions, traceNeighborDirs, 0)
 	for _, neighbor := range neighbors {
@@ -320,9 +316,6 @@ func markBorderVoxels(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimens
 		for y := 0; y < dimensions[1]; y++ {
 			for z := 0; z < dimensions[2]; z++ {
 				voxel := &voxelField[x][y][z]
-				if voxel.RegionID == 1 && x == 46 && z == 40 {
-					fmt.Println("HI")
-				}
 				neighbors := getNeighborsOrdered(voxel.X, voxel.Y, voxel.Z, voxelField, reachField, dimensions, borderNeighborDirs, 0)
 				if len(neighbors) != 8 {
 					voxel.Border = true

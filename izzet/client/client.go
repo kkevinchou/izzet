@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -111,6 +112,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 
 	w, h := window.GetSize()
 
+	metricsRegistry := metrics.New()
+	globals.SetClientMetricsRegistry(metricsRegistry)
 	g := &Client{
 		asyncServerDone: make(chan bool),
 		window:          window,
@@ -123,6 +126,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		contentBrowser:  &contentbrowser.ContentBrowser{},
+		metricsRegistry: metricsRegistry,
 	}
 
 	g.initSettings()

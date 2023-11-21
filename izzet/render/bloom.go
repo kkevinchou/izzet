@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 )
 
 func createSamplingDimensions(startWidth int, startHeight int, count int) ([]int, []int) {
@@ -73,7 +74,7 @@ func (r *Renderer) init2f2fVAO() uint32 {
 	}
 
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)

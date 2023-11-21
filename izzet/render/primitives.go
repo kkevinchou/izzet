@@ -3,6 +3,7 @@ package render
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -36,7 +37,7 @@ func getInternedQuadVAOPositionUV() uint32 {
 		internedQuadVertices = append(internedQuadVertices, backVertices...)
 
 		// var vbo, dtqVao uint32
-		gl.GenBuffers(1, &internedQuadVBO)
+		apputils.GenBuffers(1, &internedQuadVBO)
 		gl.GenVertexArrays(1, &internedQuadVAOPositionUV)
 
 		gl.BindVertexArray(internedQuadVAOPositionUV)
@@ -82,7 +83,7 @@ func getInternedQuadVAOPosition() uint32 {
 		internedQuadVertices = append(internedQuadVertices, backVertices...)
 
 		// var vbo, dtqVao uint32
-		gl.GenBuffers(1, &internedQuadVBO)
+		apputils.GenBuffers(1, &internedQuadVBO)
 		gl.GenVertexArrays(1, &internedQuadVAOPosition)
 
 		gl.BindVertexArray(internedQuadVAOPosition)

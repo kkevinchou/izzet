@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -53,7 +54,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 
 			// lay out the position, normal, texture (index 0 and 1) coords in a VBO
 			var vbo uint32
-			gl.GenBuffers(1, &vbo)
+			apputils.GenBuffers(1, &vbo)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 			gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
 
@@ -84,7 +85,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 
 			// lay out the joint IDs in a VBO
 			var vboJointIDs uint32
-			gl.GenBuffers(1, &vboJointIDs)
+			apputils.GenBuffers(1, &vboJointIDs)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
 			gl.VertexAttribIPointer(4, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
@@ -92,7 +93,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 
 			// lay out the joint weights in a VBO
 			var vboJointWeights uint32
-			gl.GenBuffers(1, &vboJointWeights)
+			apputils.GenBuffers(1, &vboJointWeights)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
 			gl.VertexAttribPointer(5, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
@@ -101,7 +102,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 			// set up the EBO, each triplet of indices point to three vertices
 			// that form a triangle.
 			var ebo uint32
-			gl.GenBuffers(1, &ebo)
+			apputils.GenBuffers(1, &ebo)
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 			gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(p.VertexIndices)*4, gl.Ptr(p.VertexIndices), gl.STATIC_DRAW)
 		}
@@ -146,7 +147,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 
 			// lay out the position, normal, texture (index 0 and 1) coords in a VBO
 			var vbo uint32
-			gl.GenBuffers(1, &vbo)
+			apputils.GenBuffers(1, &vbo)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 			gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
 
@@ -160,7 +161,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 
 			// lay out the joint IDs in a VBO
 			var vboJointIDs uint32
-			gl.GenBuffers(1, &vboJointIDs)
+			apputils.GenBuffers(1, &vboJointIDs)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
 			gl.VertexAttribIPointer(1, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
@@ -168,7 +169,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 
 			// lay out the joint weights in a VBO
 			var vboJointWeights uint32
-			gl.GenBuffers(1, &vboJointWeights)
+			apputils.GenBuffers(1, &vboJointWeights)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
 			gl.VertexAttribPointer(2, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
@@ -177,7 +178,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 			// set up the EBO, each triplet of indices point to three vertices
 			// that form a triangle.
 			var ebo uint32
-			gl.GenBuffers(1, &ebo)
+			apputils.GenBuffers(1, &ebo)
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 			gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(p.VertexIndices)*4, gl.Ptr(p.VertexIndices), gl.STATIC_DRAW)
 		}

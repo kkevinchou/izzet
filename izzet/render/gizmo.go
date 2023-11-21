@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -189,7 +190,7 @@ func (r *Renderer) drawCircle() {
 	}
 
 	var vbo, vao uint32
-	gl.GenBuffers(1, &vbo)
+	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
 
 	gl.BindVertexArray(vao)

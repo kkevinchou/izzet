@@ -16,12 +16,16 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 		entity.Animation = entities.NewAnimationComponent(handle, ml)
 	}
 
-	// rebuild trimesh collider
 	if entity.MeshComponent != nil && entity.Collider != nil {
-		meshHandle := entity.MeshComponent.MeshHandle
-		primitives := ml.GetPrimitives(meshHandle)
-		if len(primitives) > 0 {
-			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+		// kinda hacky, but right now we only support one collider type per entity.
+		// only if all other colliders aren't present do we construct a tri mesh collider
+		if entity.Collider.CapsuleCollider == nil {
+			// rebuild trimesh collider
+			meshHandle := entity.MeshComponent.MeshHandle
+			primitives := ml.GetPrimitives(meshHandle)
+			if len(primitives) > 0 {
+				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+			}
 		}
 	}
 }

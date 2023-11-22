@@ -31,7 +31,7 @@ func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext
 	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: height})
 
 	var open bool = true
-	flags := imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar
+	flags := imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
 	if !drawerExpanded {
 		flags |= imgui.WindowFlagsNoScrollbar
 	}

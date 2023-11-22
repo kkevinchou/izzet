@@ -25,7 +25,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
-	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -107,7 +106,7 @@ func (g *Client) loadWorld(filepath string) bool {
 	}
 	entities.SetNextID(maxID + 1)
 
-	panels.SelectEntity(nil)
+	g.SelectEntity(nil)
 	g.SetWorld(world)
 	return true
 }
@@ -168,7 +167,7 @@ func (g *Client) StartLiveWorld() {
 	serialization.InitDeserializedEntities(liveWorld.Entities(), g.modelLibrary)
 
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
-	panels.SelectEntity(nil)
+	g.SelectEntity(nil)
 	g.SetWorld(liveWorld)
 }
 
@@ -178,7 +177,7 @@ func (g *Client) StopLiveWorld() {
 	}
 	g.appMode = app.AppModeEditor
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
-	panels.SelectEntity(nil)
+	g.SelectEntity(nil)
 	g.SetWorld(g.editorWorld)
 }
 
@@ -585,4 +584,12 @@ func (g *Client) WindowFocused() bool {
 
 func (g *Client) ContentBrowser() *contentbrowser.ContentBrowser {
 	return g.contentBrowser
+}
+
+func (g *Client) SelectEntity(entity *entities.Entity) {
+	g.selectedEntity = entity
+}
+
+func (g *Client) SelectedEntity() *entities.Entity {
+	return g.selectedEntity
 }

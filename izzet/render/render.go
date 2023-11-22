@@ -16,6 +16,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
+	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -435,7 +436,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	shaderManager := r.shaderManager
 
 	// joint rendering for the selected entity
-	entity := panels.SelectedEntity()
+	entity := r.app.SelectedEntity()
 	if entity != nil {
 		// draw bounding box
 		if entity.HasBoundingBox() {
@@ -1084,7 +1085,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			)
 
 			_, windowHeight := r.app.WindowSize()
-			panels.BuildContentBrowser(
+			drawer.BuildDrawer(
 				r.app,
 				r.world,
 				renderContext,
@@ -1111,11 +1112,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {
-	if panels.SelectedEntity() == nil {
+	if r.app.SelectedEntity() == nil {
 		return
 	}
 
-	entity := r.world.GetEntityByID(panels.SelectedEntity().ID)
+	entity := r.world.GetEntityByID(r.app.SelectedEntity().ID)
 	position := entity.Position()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {

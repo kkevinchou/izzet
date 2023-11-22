@@ -11,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
@@ -139,8 +138,8 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	// delete entity
 	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
 		if event.Event == input.KeyboardEventUp {
-			g.world.DeleteEntity(panels.SelectedEntity())
-			panels.SelectEntity(nil)
+			g.world.DeleteEntity(g.SelectedEntity())
+			g.SelectEntity(nil)
 		}
 	}
 
@@ -149,7 +148,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		if ctrlEvent.Event == input.KeyboardEventDown {
 			if cEvent, ok := keyboardInput[input.KeyboardKeyC]; ok {
 				if cEvent.Event == input.KeyboardEventUp {
-					if entity := panels.SelectedEntity(); entity != nil {
+					if entity := g.SelectedEntity(); entity != nil {
 						var err error
 						copiedEntity, err = json.Marshal(entity)
 						if err != nil {
@@ -177,7 +176,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
 
 					g.world.AddEntity(&newEntity)
-					panels.SelectEntity(&newEntity)
+					g.SelectEntity(&newEntity)
 				}
 			}
 		}
@@ -313,7 +312,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 
 	// set gizmo mode
-	if panels.SelectedEntity() != nil {
+	if g.SelectedEntity() != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeNone {
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeTranslation
 		}
@@ -328,7 +327,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 
 	var gizmoHovered bool = false
-	entity := panels.SelectedEntity()
+	entity := g.SelectedEntity()
 
 	if entity != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
@@ -429,17 +428,17 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	if !gizmoHovered && g.renderer.GameWindowHovered() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
 		entityID := g.renderer.GetEntityByPixelPosition(mouseInput.Position)
 		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
-			panels.SelectEntity(nil)
+			g.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 		} else {
 			clickedEntity := g.world.GetEntityByID(*entityID)
-			currentSelection := panels.SelectedEntity()
+			currentSelection := g.SelectedEntity()
 
 			if currentSelection != nil && currentSelection.ID != clickedEntity.ID {
 				gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
 			}
 
-			panels.SelectEntity(clickedEntity)
+			g.SelectEntity(clickedEntity)
 		}
 	}
 }

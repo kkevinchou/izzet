@@ -26,13 +26,13 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world Ga
 	if len(entity.Children) == 0 {
 		nodeFlags |= imgui.TreeNodeFlagsLeaf
 	}
-	if SelectedEntity() != nil && entity.ID == SelectedEntity().ID {
+	if app.SelectedEntity() != nil && entity.ID == app.SelectedEntity().ID {
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}
 
 	if imgui.TreeNodeV(entity.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
-			SelectEntity(entity)
+			app.SelectEntity(entity)
 		}
 
 		imgui.PushID(entity.NameID())

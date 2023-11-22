@@ -87,6 +87,7 @@ type Client struct {
 
 	projectName    string
 	contentBrowser *contentbrowser.ContentBrowser
+	selectedEntity *entities.Entity
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {

@@ -60,4 +60,18 @@ type App interface {
 	WindowFocused() bool
 	ContentBrowser() *contentbrowser.ContentBrowser
 	ImportToContentBrowser(assetFilePath string)
+	SelectEntity(entity *entities.Entity)
+	SelectedEntity() *entities.Entity
+}
+
+type RenderContext interface {
+	Width() int
+	Height() int
+	AspectRatio() float64
+}
+
+type GameWorld interface {
+	Entities() []*entities.Entity
+	AddEntity(entity *entities.Entity)
+	GetEntityByID(id int) *entities.Entity
 }

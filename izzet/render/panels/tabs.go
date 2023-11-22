@@ -39,7 +39,7 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("Details") {
-			entityProps(SelectedEntity(), app)
+			entityProps(app.SelectedEntity(), app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Scene Graph") {
@@ -63,10 +63,6 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 		// 	}
 		// 	imgui.EndTabItem()
 		// }
-		if imgui.BeginTabItem("Prefabs") {
-			prefabsUI(app, world, ps)
-			imgui.EndTabItem()
-		}
 		imgui.EndTabBar()
 	}
 

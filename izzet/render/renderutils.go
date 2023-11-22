@@ -852,6 +852,10 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 }
 
 func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+	if r.app.Minimized() || !r.app.WindowFocused() {
+		return nil
+	}
+
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
@@ -864,8 +868,6 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	if r.app.RuntimeConfig().UIEnabled {
 		footerSize = int32(r.CalculateFooterSize())
 	}
-
-	fmt.Println(pixelPosition)
 
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner

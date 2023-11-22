@@ -575,6 +575,14 @@ func (g *Client) WindowSize() (int, int) {
 	return g.width, g.height
 }
 
+func (g *Client) Minimized() bool {
+	return g.window.Minimized()
+}
+
+func (g *Client) WindowFocused() bool {
+	return g.window.WindowFocused()
+}
+
 func (g *Client) ContentBrowser() *contentbrowser.ContentBrowser {
 	return g.contentBrowser
 }

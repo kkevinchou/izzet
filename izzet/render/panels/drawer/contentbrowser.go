@@ -15,17 +15,8 @@ import (
 	"github.com/sqweek/dialog"
 )
 
-func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
-	clicked := false
+func contentBrowser(app renderiface.App, world renderiface.GameWorld) {
 	if imgui.BeginTabItem("Content Browser") {
-		if imgui.IsItemFocused() {
-			clicked = true
-		}
-
-		if imgui.IsItemClicked() {
-			clicked = true
-		}
-
 		if imgui.Button("Import") {
 			// loading the asset
 			assetFilePath, err := dialog.File().Filter("GLTF file", "gltf").Load()
@@ -92,5 +83,4 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			imgui.SameLine()
 		}
 	}
-	return clicked
 }

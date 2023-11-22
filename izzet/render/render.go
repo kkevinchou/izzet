@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
@@ -134,7 +135,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 	r.ReinitializeFrameBuffers()
 
-	r.contentBrowserHeight = r.CalculateFooterSize()
+	r.contentBrowserHeight = apputils.CalculateFooterSize(true)
 
 	// circles for the rotation gizmo
 
@@ -166,7 +167,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 
 func (r *Renderer) ReinitializeFrameBuffers() {
 	menuBarSize := CalculateMenuBarSize()
-	footerSize := r.CalculateFooterSize()
+	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 
 	windowWidth, windowHeight := r.app.WindowSize()
 
@@ -981,7 +982,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	r.gameWindowHovered = false
 	menus.SetupMenuBar(r.app)
 	menuBarHeight := CalculateMenuBarSize()
-	footerHeight := r.CalculateFooterSize()
+	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 1 // weirdly the width is always 1 pixel off
 	height := float32(windowHeight) - menuBarHeight - footerHeight
 
@@ -1037,10 +1038,6 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			r.gameWindowHovered = true
 		}
 
-		if imgui.IsWindowHovered() && imgui.IsMouseClicked(0) {
-			r.GameWindowClicked()
-		}
-
 		imgui.EndChild()
 
 		imgui.SameLine()
@@ -1093,7 +1090,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 				0,
 				float32(windowHeight)-r.contentBrowserHeight,
 				&r.contentBrowserHeight,
-				&r.contentBrowserExpanded,
+				// &r.contentBrowserExpanded,
 			)
 
 			imgui.PopStyleColorV(20)

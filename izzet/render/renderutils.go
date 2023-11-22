@@ -866,7 +866,7 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 
 	var footerSize int32 = 0
 	if r.app.RuntimeConfig().UIEnabled {
-		footerSize = int32(r.CalculateFooterSize())
+		footerSize = int32(apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled))
 	}
 
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
@@ -1251,22 +1251,9 @@ func CalculateMenuBarSize() float32 {
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
-func (r *Renderer) CalculateFooterSize() float32 {
-	if !r.app.RuntimeConfig().UIEnabled {
-		return 0
-	}
-	return 34
-}
-
-func (r *Renderer) GameWindowClicked() {
-	// dismiss the content browser
-	r.contentBrowserHeight = r.CalculateFooterSize()
-	r.contentBrowserExpanded = false
-}
-
 func (r *Renderer) ConfigureUI() {
 	r.ReinitializeFrameBuffers()
-	r.contentBrowserHeight = r.CalculateFooterSize()
+	r.contentBrowserHeight = apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 }
 
 func (r *Renderer) GameWindowSize() (int, int) {

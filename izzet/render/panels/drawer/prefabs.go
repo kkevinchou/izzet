@@ -13,12 +13,8 @@ var prefabsSelectIndex = -1
 
 const prefabsContextItemID = "prefabsContextItem"
 
-func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.Prefab) bool {
-	clicked := false
+func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.Prefab) {
 	if imgui.BeginTabItem("Prefabs") {
-		if imgui.IsItemClicked() {
-			clicked = true
-		}
 		for i, prefab := range ps {
 			nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 
@@ -51,7 +47,6 @@ func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.P
 		}
 		imgui.EndTabItem()
 	}
-	return clicked
 }
 
 func beginPrefabDragDrop(id int) {

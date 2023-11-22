@@ -41,3 +41,10 @@ func Vec4ApproxEqualThreshold(v1 mgl64.Vec4, v2 mgl64.Vec4, threshold float64) b
 		return math.Abs(a-b) < threshold
 	})
 }
+
+func CalculateFooterSize(uiEnabled bool) float32 {
+	if !uiEnabled {
+		return 0
+	}
+	return 34
+}

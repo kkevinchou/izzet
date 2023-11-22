@@ -31,7 +31,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 
 	if frameInput.WindowEvent.Resized {
 		w, h := g.window.GetSize()
-		g.SetWindowSize(int(w), int(h))
+		g.SetWindowSize(w, h)
 		g.renderer.ReinitializeFrameBuffers()
 	}
 

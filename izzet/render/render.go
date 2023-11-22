@@ -226,6 +226,10 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
+	if r.app.Minimized() || !r.app.WindowFocused() {
+		return
+	}
+
 	initOpenGLRenderSettings()
 	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0

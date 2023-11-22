@@ -11,6 +11,7 @@ import (
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
+	"github.com/kkevinchou/izzet/izzet/client/window"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -35,7 +36,7 @@ import (
 
 type Client struct {
 	gameOver      bool
-	window        *sdl.Window
+	window        window.Window
 	platform      *input.SDLPlatform
 	width, height int
 	client        network.IzzetClient
@@ -91,7 +92,7 @@ type Client struct {
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
 	initSeed()
 
-	window, err := initializeOpenGL(config)
+	window, sdlWindow, err := initializeOpenGL(config)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +105,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	// prevent load screen flashbang
 	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	window.GLSwap()
+	window.Swap()
 
 	imgui.CreateContext(nil)
 	imguiIO := imgui.CurrentIO()
@@ -118,9 +119,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		asyncServerDone: make(chan bool),
 		window:          window,
 		appMode:         app.AppModeEditor,
-		platform:        input.NewSDLPlatform(window, imguiIO),
-		width:           int(w),
-		height:          int(h),
+		platform:        input.NewSDLPlatform(sdlWindow, imguiIO),
+		width:           w,
+		height:          h,
 		assetManager:    assets.NewAssetManager(assetsDirectory, true),
 		modelLibrary:    modellibrary.New(true),
 		world:           world.New(map[int]*entities.Entity{}),
@@ -189,7 +190,7 @@ func (g *Client) Start() {
 			}
 		}
 
-		if g.window.GetFlags()&sdl.WINDOW_MINIMIZED > 0 {
+		if g.window.Minimized() {
 			msPerFrame = float64(1000) / float64(30)
 		} else {
 			msPerFrame = float64(1000) / float64(settings.FPS)
@@ -208,7 +209,7 @@ func (g *Client) Start() {
 			frameCount++
 			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
-			g.window.GLSwap()
+			g.window.Swap()
 			renderTime := time.Since(start).Milliseconds()
 			g.MetricsRegistry().Inc("render_time", float64(renderTime))
 
@@ -296,57 +297,18 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	}
 }
 
-func initializeOpenGL(config settings.Config) (*sdl.Window, error) {
-	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-		return nil, fmt.Errorf("failed to init SDL %s", err)
-	}
-
-	// Enable hints for multisampling which allows opengl to use the default
-	// multisampling algorithms implemented by the OpenGL rasterizer
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
-
-	// sdl.GLSetAttribute(sdl.GL_RED_SIZE, 10)
-	// sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 10)
-	// sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 10)
-	// sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 2)
-
-	sdl.SetRelativeMouseMode(false)
-
-	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
-	if config.Fullscreen {
-		dm, err := sdl.GetCurrentDisplayMode(0)
-		if err != nil {
-			panic(err)
-		}
-		config.Width = int(dm.W)
-		config.Height = int(dm.H)
-		// windowFlags |= sdl.WINDOW_MAXIMIZED
-		windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
-		// windowFlags |= sdl.WINDOW_FULLSCREEN
-	}
-
-	window, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(config.Width), int32(config.Height), uint32(windowFlags))
+func initializeOpenGL(config settings.Config) (window.Window, *sdl.Window, error) {
+	win, sdlWin, err := window.NewSDLWindow(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create window %s", err)
-	}
-
-	_, err = window.GLCreateContext()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create context %s", err)
+		return nil, nil, err
 	}
 
 	if err := gl.Init(); err != nil {
-		return nil, fmt.Errorf("failed to init OpenGL %s", err)
+		return nil, nil, fmt.Errorf("failed to init OpenGL %s", err)
 	}
-
 	fmt.Println("Open GL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
 
-	return window, nil
+	return win, sdlWin, nil
 }
 
 func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int) mgl64.Vec3 {

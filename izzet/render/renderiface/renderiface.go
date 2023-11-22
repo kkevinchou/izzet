@@ -56,6 +56,8 @@ type App interface {
 	GetPlayerEntity() *entities.Entity
 	ConfigureUI(enabled bool)
 	WindowSize() (int, int)
+	Minimized() bool
+	WindowFocused() bool
 	ContentBrowser() *contentbrowser.ContentBrowser
 	ImportToContentBrowser(assetFilePath string)
 }

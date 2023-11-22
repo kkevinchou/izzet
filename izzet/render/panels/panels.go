@@ -18,21 +18,10 @@ type RenderContext interface {
 	AspectRatio() float64
 }
 
-// var HierarchySelection int
-var selectedEntity *entities.Entity
-
 type GameWorld interface {
 	Entities() []*entities.Entity
 	AddEntity(entity *entities.Entity)
 	GetEntityByID(id int) *entities.Entity
-}
-
-func SelectEntity(entity *entities.Entity) {
-	selectedEntity = entity
-}
-
-func SelectedEntity() *entities.Entity {
-	return selectedEntity
 }
 
 // createUserSpaceTextureHandle creates a handle to a user space texture

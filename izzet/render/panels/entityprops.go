@@ -326,7 +326,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	imgui.PopID()
 	imgui.SameLine()
 	if imgui.Button("Add Component") {
-		entity := SelectedEntity()
+		entity := app.SelectedEntity()
 		if entity != nil {
 			if SelectedComponentComboOption == MaterialComboOption {
 				entity.Material = &entities.MaterialComponent{

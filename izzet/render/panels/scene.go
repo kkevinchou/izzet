@@ -33,7 +33,7 @@ func sceneUI(app renderiface.App, world GameWorld) {
 			}
 
 			if len(entities) > 0 {
-				SelectEntity(entities[0])
+				app.SelectEntity(entities[0])
 			}
 		}
 		imgui.EndDragDropTarget()
@@ -80,7 +80,7 @@ func sceneHierarchy(app renderiface.App, world GameWorld) {
 				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
 				world.AddEntity(entity)
-				SelectEntity(entity)
+				app.SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube") {
@@ -92,25 +92,25 @@ func sceneHierarchy(app renderiface.App, world GameWorld) {
 				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 
 				world.AddEntity(entity)
-				SelectEntity(entity)
+				app.SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Point Light") {
 				light := entities.CreatePointLight()
 				world.AddEntity(light)
-				SelectEntity(light)
+				app.SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Directional Light") {
 				light := entities.CreateDirectionalLight()
 				world.AddEntity(light)
-				SelectEntity(light)
+				app.SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Empty Entity") {
 				entity := entities.InstantiateEntity("empty-entity")
 				world.AddEntity(entity)
-				SelectEntity(entity)
+				app.SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Camera") {
@@ -119,7 +119,7 @@ func sceneHierarchy(app renderiface.App, world GameWorld) {
 				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
 				entity.Billboard = true
 				world.AddEntity(entity)
-				SelectEntity(entity)
+				app.SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()
@@ -134,13 +134,13 @@ func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) b
 	if len(entity.Children) == 0 {
 		nodeFlags |= imgui.TreeNodeFlagsLeaf
 	}
-	if SelectedEntity() != nil && entity.ID == SelectedEntity().ID {
+	if app.SelectedEntity() != nil && entity.ID == app.SelectedEntity().ID {
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}
 
 	if imgui.TreeNodeV(entity.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
-			SelectEntity(entity)
+			app.SelectEntity(entity)
 		}
 
 		imgui.PushID(entity.NameID())

@@ -11,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/observers"
-	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -51,7 +50,6 @@ func (g *Server) LoadWorld(name string) bool {
 		entities.SetNextID(maxID + 1)
 	}
 
-	panels.SelectEntity(nil)
 	g.SetWorld(world)
 	return true
 }

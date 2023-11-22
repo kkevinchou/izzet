@@ -865,6 +865,8 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 		footerSize = int32(r.CalculateFooterSize())
 	}
 
+	fmt.Println(pixelPosition)
+
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner
 	var weirdOffset float32 = -1 // Weirdge

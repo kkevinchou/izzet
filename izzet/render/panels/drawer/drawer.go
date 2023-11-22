@@ -32,6 +32,9 @@ func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext
 
 	var open bool = true
 	flags := imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar
+	if !drawerExpanded {
+		flags |= imgui.WindowFlagsNoScrollbar
+	}
 	imgui.BeginV("Drawer", &open, flags)
 	drawerExpanded = imgui.IsWindowFocused()
 

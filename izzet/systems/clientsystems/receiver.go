@@ -3,10 +3,9 @@ package clientsystems
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -76,7 +75,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					panic(err)
 				}
 				state := cf.PostCFState
-				if Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
+				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
 					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 				} else {
@@ -112,10 +111,4 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 			return
 		}
 	}
-}
-
-func Vec3ApproxEqualThreshold(v1 mgl64.Vec3, v2 mgl64.Vec3, threshold float64) bool {
-	return v1.ApproxFuncEqual(v2, func(a, b float64) bool {
-		return math.Abs(a-b) < threshold
-	})
 }

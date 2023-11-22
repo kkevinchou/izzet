@@ -1081,16 +1081,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 				r.app.Prefabs(),
 			)
 
-			_, windowHeight := r.app.WindowSize()
 			drawer.BuildDrawer(
 				r.app,
 				r.world,
 				renderContext,
 				r.app.Prefabs(),
-				0,
-				float32(windowHeight)-r.contentBrowserHeight,
-				&r.contentBrowserHeight,
-				// &r.contentBrowserExpanded,
 			)
 
 			imgui.PopStyleColorV(20)

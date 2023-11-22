@@ -13,21 +13,27 @@ const (
 
 var documentTexture *imgui.TextureID
 
+var (
+	drawerExpanded bool
+)
+
 // func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext renderiface.RenderContext, ps []*prefabs.Prefab, x, y float32, height *float32, expanded *bool) {
-func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext renderiface.RenderContext, ps []*prefabs.Prefab, x, y float32, height *float32) {
+func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext renderiface.RenderContext, ps []*prefabs.Prefab) {
+	_, windowHeight := app.WindowSize()
+	var height = maxContentBrowserHeight
+	if !drawerExpanded {
+		height = apputils.CalculateFooterSize(app.RuntimeConfig().UIEnabled)
+	}
+
 	imgui.SetNextWindowBgAlpha(1)
 	r := imgui.ContentRegionAvail()
-	imgui.SetNextWindowPosV(imgui.Vec2{x, y}, imgui.ConditionNone, imgui.Vec2{})
-	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: *height})
+	imgui.SetNextWindowPosV(imgui.Vec2{X: 0, Y: float32(windowHeight) - height}, imgui.ConditionNone, imgui.Vec2{})
+	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: height})
 
 	var open bool = true
 	flags := imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar
 	imgui.BeginV("Drawer", &open, flags)
-	if imgui.IsWindowFocused() {
-		*height = maxContentBrowserHeight
-	} else {
-		*height = apputils.CalculateFooterSize(app.RuntimeConfig().UIEnabled)
-	}
+	drawerExpanded = imgui.IsWindowFocused()
 
 	if imgui.BeginTabBarV("Drawer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
 		contentBrowser(app, world)

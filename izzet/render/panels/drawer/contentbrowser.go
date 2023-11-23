@@ -15,7 +15,8 @@ import (
 	"github.com/sqweek/dialog"
 )
 
-func contentBrowser(app renderiface.App, world renderiface.GameWorld) {
+func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
+	var menuOpen bool
 	if imgui.BeginTabItem("Content Browser") {
 		if imgui.Button("Import") {
 			// loading the asset
@@ -46,6 +47,7 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) {
 
 			imgui.ImageV(*documentTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 			if imgui.BeginPopupContextItem() {
+				menuOpen = true
 				if imgui.Button("Instantiate") {
 					document := app.AssetManager().GetDocument(item.Name)
 					handle := modellibrary.NewGlobalHandle(item.Name)
@@ -83,4 +85,5 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) {
 			imgui.SameLine()
 		}
 	}
+	return menuOpen
 }

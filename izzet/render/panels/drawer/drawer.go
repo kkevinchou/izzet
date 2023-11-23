@@ -36,13 +36,20 @@ func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext
 		flags |= imgui.WindowFlagsNoScrollbar
 	}
 	imgui.BeginV("Drawer", &open, flags)
-	drawerExpanded = imgui.IsWindowFocused()
+	windowFocused := imgui.IsWindowFocused()
 
+	var menuOpen bool
 	if imgui.BeginTabBarV("Drawer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
-		contentBrowser(app, world)
-		prefabsUI(app, world, ps)
+		if contentBrowser(app, world) {
+			menuOpen = true
+		}
+		if prefabsUI(app, world, ps) {
+			menuOpen = true
+		}
 		imgui.EndTabBar()
 	}
+
+	drawerExpanded = windowFocused || menuOpen
 
 	imgui.End()
 }

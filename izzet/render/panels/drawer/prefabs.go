@@ -13,7 +13,8 @@ var prefabsSelectIndex = -1
 
 const prefabsContextItemID = "prefabsContextItem"
 
-func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.Prefab) {
+func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.Prefab) bool {
+	var menuOpen bool
 	if imgui.BeginTabItem("Prefabs") {
 		for i, prefab := range ps {
 			nodeFlags := imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
@@ -21,7 +22,7 @@ func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.P
 			open := imgui.TreeNodeV(prefab.Name, nodeFlags)
 
 			if prefabsSelectIndex == -1 || prefabsSelectIndex == i {
-				prefabsBeginPopupContextItem(app, world, i, prefab)
+				menuOpen = prefabsBeginPopupContextItem(app, world, i, prefab)
 			}
 
 			if open {
@@ -47,6 +48,7 @@ func prefabsUI(app renderiface.App, world renderiface.GameWorld, ps []*prefabs.P
 		}
 		imgui.EndTabItem()
 	}
+	return menuOpen
 }
 
 func beginPrefabDragDrop(id int) {
@@ -57,8 +59,10 @@ func beginPrefabDragDrop(id int) {
 	}
 }
 
-func prefabsBeginPopupContextItem(app renderiface.App, world renderiface.GameWorld, index int, prefab *prefabs.Prefab) {
+func prefabsBeginPopupContextItem(app renderiface.App, world renderiface.GameWorld, index int, prefab *prefabs.Prefab) bool {
+	var menuOpen bool
 	if imgui.BeginPopupContextItemV(prefabsContextItemID, imgui.PopupFlagsMouseButtonRight) {
+		menuOpen = true
 		if imgui.Button("Instantiate") {
 			entities := entities.InstantiateFromPrefab(prefab, app.ModelLibrary())
 			for _, entity := range entities {
@@ -76,4 +80,5 @@ func prefabsBeginPopupContextItem(app renderiface.App, world renderiface.GameWor
 		}
 		imgui.EndPopup()
 	}
+	return menuOpen
 }

@@ -2,21 +2,102 @@ package panels
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 func sceneGraph(app renderiface.App, world GameWorld) {
 	entityPopup := false
+	imgui.BeginChildV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
 			popup := drawSceneGraphEntity(entity, app, world)
 			entityPopup = entityPopup || popup
 		}
+	}
+	imgui.EndChild()
+
+	if !entityPopup {
+		imgui.PushID("sceneHierarchy")
+		if imgui.BeginPopupContextItem() {
+			if imgui.Button("Add Player") {
+				var radius float64 = 40
+				var length float64 = 80
+				entity := entities.InstantiateEntity("player")
+				entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
+				entity.Collider = &entities.ColliderComponent{
+					CapsuleCollider: &collider.Capsule{
+						Radius: radius,
+						Top:    mgl64.Vec3{0, radius + length, 0},
+						Bottom: mgl64.Vec3{0, radius, 0},
+					},
+					ColliderGroup: entities.ColliderGroupFlagPlayer,
+					CollisionMask: entities.ColliderGroupFlagTerrain,
+				}
+				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200}
+
+				capsule := entity.Collider.CapsuleCollider
+				entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
+
+				handle := modellibrary.NewGlobalHandle("alpha")
+				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
+				entity.Animation = entities.NewAnimationComponent("alpha", app.ModelLibrary())
+				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
+
+				world.AddEntity(entity)
+				app.SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Cube") {
+				entity := entities.CreateCube(app.ModelLibrary(), 1)
+
+				meshHandle := entity.MeshComponent.MeshHandle
+				primitives := app.ModelLibrary().GetPrimitives(meshHandle)
+				entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
+				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+
+				world.AddEntity(entity)
+				app.SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Point Light") {
+				light := entities.CreatePointLight()
+				world.AddEntity(light)
+				app.SelectEntity(light)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Directional Light") {
+				light := entities.CreateDirectionalLight()
+				world.AddEntity(light)
+				app.SelectEntity(light)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Empty Entity") {
+				entity := entities.InstantiateEntity("empty-entity")
+				world.AddEntity(entity)
+				app.SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
+			if imgui.Button("Add Camera") {
+				entity := entities.InstantiateEntity("camera")
+				entity.CameraComponent = &entities.CameraComponent{}
+				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
+				entity.Billboard = true
+				world.AddEntity(entity)
+				app.SelectEntity(entity)
+				imgui.CloseCurrentPopup()
+			}
+			imgui.EndPopup()
+		}
+		imgui.PopID()
 	}
 }
 

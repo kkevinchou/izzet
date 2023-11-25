@@ -33,9 +33,6 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("modelpbr", "model", "pbr", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("color_pbr", "flat_pbr", "pbr", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
 		panic(err)
 	}

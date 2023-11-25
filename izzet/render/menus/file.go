@@ -22,6 +22,10 @@ func file(app renderiface.App) {
 			app.SaveProjectAs(worldName)
 		}
 
+		err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory), os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
 		files, err := os.ReadDir(settings.ProjectsDirectory)
 		if err != nil {
 			panic(err)

@@ -35,18 +35,25 @@ type Vertex struct {
 // 	HalfEdge *HalfEdge
 // }
 
-// collect all vertices
-// compute Q for each tri (which defines a plane)
-//	this can be reused for 3 other vertices
-// collect all Qi from each tri incident to a vertex
-// sum all Qi as Q and assign to the vertex
-// compute the optimal contraction between v1 and v2 as vHat
-//	vHat quadric is (Q1 + Q2)
-// put all pairs in a heap
-// iteratively remove pairs.
-//	contract the pair
-// 	update the error cost for all vertices connected to vHat
-// stop after some number of contractions
+// INITIALIZING
+
+// sum all Qi (producing Q) and assign to the vertex
+// create pairs of vertices if they meet at least one of the conditions:
+//     1. each vertex in the pair are incident to each other
+//     2. the vertices in the pair are within some distance threshold to another
+// compute Q = Q1 + Q2
+// find the optimal contraction between v1 and v2 (producing vhat)
+//     if the determinant of Q is undefined, choose the best vertex between v1, v2, ()v1 + v2 / 2)
+// place the error score and vertex pair in the contraction heap
+
+// PROCESSING - processing the contraction heap
+
+// pop from the contraction heap
+// contract the pair
+// update the position of v1 to vhat
+// update the error cost for all vertices connected to vhat
+//
+// stop after we've reached a target number of triangles/ stop after some number of contractions
 
 func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *HalfEdgeSurface {
 	for _, p := range primitives {

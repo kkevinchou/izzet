@@ -33,7 +33,9 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for entityID, axis := range gizmo.TranslationGizmo.EntityIDToAxis {
+	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID}
+	for _, entityID := range axisEntityIDs {
+		axis := gizmo.TranslationGizmo.EntityIDToAxis[entityID]
 		shader.SetUniformUInt("entityID", uint32(entityID))
 		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
 		color := colors[entityID]
@@ -118,7 +120,9 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 
 	cubeVAO := r.getCubeVAO(0.25)
 
-	for entityID, axis := range gizmo.ScaleGizmo.EntityIDToAxis {
+	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID}
+	for _, entityID := range axisEntityIDs {
+		axis := gizmo.TranslationGizmo.EntityIDToAxis[entityID]
 		shader.SetUniformUInt("entityID", uint32(entityID))
 		shader.SetUniformMat4("model", mgl32.Ident4())
 

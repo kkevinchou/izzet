@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/globals"
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 // createUserSpaceTextureHandle creates a handle to a user space texture
@@ -47,4 +48,8 @@ func CalculateFooterSize(uiEnabled bool) float32 {
 		return 0
 	}
 	return 34
+}
+
+func PathToProjectFile(projectName string) string {
+	return filepath.Join(settings.ProjectsDirectory, projectName, "main_project.izt")
 }

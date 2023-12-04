@@ -11,6 +11,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/client"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -89,7 +90,7 @@ func main() {
 		go func() {
 			<-started
 		}()
-		serverApp := server.NewWithFile("_assets", defaultProject)
+		serverApp := server.NewWithFile("_assets", apputils.PathToProjectFile(defaultProject))
 		serverApp.Start(started, make(chan bool))
 	} else if mode == "CLIENT" {
 		config.Fullscreen = false

@@ -453,7 +453,7 @@ func (g *Client) LoadProject(name string) bool {
 		return false
 	}
 
-	f, err := os.Open(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"))
+	f, err := os.Open(apputils.PathToProjectFile(name))
 	if err != nil {
 		panic(err)
 	}
@@ -518,7 +518,7 @@ func (g *Client) SaveProject() {
 				panic(err)
 			}
 
-			outFilePath := path.Join(settings.ProjectsDirectory, g.projectName, "content", fileName)
+			outFilePath := filepath.Join(settings.ProjectsDirectory, g.projectName, "content", fileName)
 			outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
 				panic(err)

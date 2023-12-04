@@ -448,7 +448,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 				0.5,
 			)
 		}
-
 	}
 
 	if r.app.AppMode() == app.AppModeEditor {

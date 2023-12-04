@@ -638,38 +638,34 @@ func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 	return linePoints
 }
 
-func (r *Renderer) drawWithNDC(shaderManager *shaders.ShaderManager) {
-	// triangle
-	// var vertices []float32 = []float32{
-	// 	-0.5, -0.5, 1,
-	// 	0.5, -0.5, 1,
-	// 	0.0, 0.5, 1,
-	// }
+var backgroundVAO *uint32
+var back float32 = 1
+var backgroundVertices []float32 = []float32{
+	-1, 1, back,
+	-1, -1, back,
+	1, -1, back,
 
-	var back float32 = 1
+	1, -1, back,
+	1, 1, back,
+	-1, 1, back,
+}
 
-	// full screen
-	var vertices []float32 = []float32{
-		-1, 1, back,
-		-1, -1, back,
-		1, -1, back,
+func (r *Renderer) drawBackground(shaderManager *shaders.ShaderManager) {
+	if backgroundVAO == nil {
+		var vbo, vao uint32
+		apputils.GenBuffers(1, &vbo)
+		gl.GenVertexArrays(1, &vao)
 
-		1, -1, back,
-		1, 1, back,
-		-1, 1, back,
+		gl.BindVertexArray(vao)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(backgroundVertices)*4, gl.Ptr(backgroundVertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+		gl.EnableVertexAttribArray(0)
+		backgroundVAO = &vao
 	}
 
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-	gl.BindVertexArray(vao)
+	gl.BindVertexArray(*backgroundVAO)
 
 	shader := shaderManager.GetShaderProgram("skybox")
 	shader.Use()
@@ -680,7 +676,7 @@ func (r *Renderer) drawWithNDC(shaderManager *shaders.ShaderManager) {
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-	r.iztDrawArrays(0, int32(len(vertices)))
+	r.iztDrawArrays(0, int32(len(backgroundVertices)))
 }
 
 var singleSidedQuadVAO uint32
@@ -844,7 +840,7 @@ func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
 
 func (r *Renderer) drawSkybox(renderContext RenderContext) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	r.drawWithNDC(r.shaderManager)
+	r.drawBackground(r.shaderManager)
 }
 
 func (r *Renderer) CameraViewerContext() ViewerContext {

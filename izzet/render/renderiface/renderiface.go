@@ -2,6 +2,7 @@ package renderiface
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -10,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/assets"
-	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
 
@@ -29,7 +29,7 @@ type App interface {
 
 	// for panels
 	GetPrefabByID(id int) *prefabs.Prefab
-	Platform() *input.SDLPlatform
+	Platform() platforms.Platform
 
 	SetShowImguiDemo(bool)
 	ShowImguiDemo() bool

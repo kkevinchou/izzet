@@ -1,7 +1,7 @@
 package drawer
 
 import (
-	"github.com/inkyblackness/imgui-go/v4"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -27,11 +27,11 @@ func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext
 
 	imgui.SetNextWindowBgAlpha(1)
 	r := imgui.ContentRegionAvail()
-	imgui.SetNextWindowPosV(imgui.Vec2{X: 0, Y: float32(windowHeight) - height}, imgui.ConditionNone, imgui.Vec2{})
+	imgui.SetNextWindowPosV(imgui.Vec2{X: 0, Y: float32(windowHeight) - height}, imgui.CondNone, imgui.Vec2{})
 	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: height})
 
 	var open bool = true
-	flags := imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
+	var flags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse | imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
 	if !drawerExpanded {
 		flags |= imgui.WindowFlagsNoScrollbar
 	}

@@ -5,15 +5,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/inkyblackness/imgui-go/v4"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
-		imgui.PushID("World Name")
-		imgui.InputText("", &worldName)
+		imgui.PushIDStr("World Name")
+		// imgui.InputText("", &worldName)
+		imgui.LabelText("asdfasdf", "Aaasdfasdfasdf")
 		imgui.PopID()
 
 		imgui.SameLine()
@@ -50,9 +51,9 @@ func file(app renderiface.App) {
 			savedWorlds = append(savedWorlds, selectedWorldName)
 		}
 
-		if imgui.BeginCombo("", selectedWorldName) {
+		if imgui.BeginCombo("##", selectedWorldName) {
 			for _, worldName := range savedWorlds {
-				if imgui.Selectable(worldName) {
+				if imgui.SelectableBool(worldName) {
 					selectedWorldName = worldName
 				}
 			}

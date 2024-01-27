@@ -218,7 +218,7 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	if g.relativeMouseActive {
 		var xRel, yRel float64
 		var mouseSensitivity float64 = 0.003
-		if mouseInput.Buttons[1] && !mouseInput.MouseMotionEvent.IsZero() {
+		if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {
 			xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 			yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 		}
@@ -247,7 +247,7 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 
 	// keyboardInput := frameInput.KeyboardInput
 	// controlVector := getControlVector(keyboardInput)
-	if !frameInput.MouseInput.Buttons[1] {
+	if !frameInput.MouseInput.MouseButtonState[1] {
 		controlVector = mgl64.Vec3{}
 	}
 

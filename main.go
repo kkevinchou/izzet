@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"runtime"
 	"strings"
 
+	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
+	_ "github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/client"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"

@@ -1,12 +1,13 @@
 module github.com/kkevinchou/izzet
 
-go 1.18
+go 1.21.6
 
 require (
+	github.com/AllenDang/cimgui-go v0.0.0-20231219093052-24bd5dc22643
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
-	github.com/go-gl/mathgl v1.0.0
-	github.com/inkyblackness/imgui-go/v4 v4.6.0
-	github.com/kkevinchou/kitolib v0.0.0-20231104093503-cc78ceb7e874
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3
+	github.com/go-gl/mathgl v1.1.0
+	github.com/kkevinchou/kitolib v0.0.0-20231204063328-423636421b03
 	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf
 	github.com/veandco/go-sdl2 v0.4.38
 )

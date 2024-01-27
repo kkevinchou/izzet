@@ -6,9 +6,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/client/window"
@@ -37,7 +38,7 @@ import (
 type Client struct {
 	gameOver      bool
 	window        window.Window
-	platform      *input.SDLPlatform
+	platform      platforms.Platform
 	width, height int
 	client        network.IzzetClient
 
@@ -93,10 +94,19 @@ type Client struct {
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
 	initSeed()
 
-	window, sdlWindow, err := initializeOpenGL(config)
+	imgui.CreateContext()
+	imguiIO := imgui.CurrentIO()
+	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
+
+	sdlPlatform, window, err := platforms.NewSDLPlatform(imguiIO)
 	if err != nil {
 		panic(err)
 	}
+
+	if err := gl.Init(); err != nil {
+		panic(fmt.Errorf("failed to init OpenGL %s", err))
+	}
+	fmt.Println("Open GL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
 
 	err = ttf.Init()
 	if err != nil {
@@ -108,19 +118,16 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	window.Swap()
 
-	imgui.CreateContext(nil)
-	imguiIO := imgui.CurrentIO()
-	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
-
 	w, h := window.GetSize()
 
 	metricsRegistry := metrics.New()
 	globals.SetClientMetricsRegistry(metricsRegistry)
+
 	g := &Client{
 		asyncServerDone: make(chan bool),
 		window:          window,
 		appMode:         app.AppModeEditor,
-		platform:        input.NewSDLPlatform(sdlWindow, imguiIO),
+		platform:        sdlPlatform,
 		width:           w,
 		height:          h,
 		assetManager:    assets.NewAssetManager(assetsDirectory, true),
@@ -174,9 +181,14 @@ func (g *Client) Start() {
 
 		currentLoopCommandFrames := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
-			input := g.platform.PollInput()
+			inputCollector := input.NewInputCollector()
+			g.platform.ProcessEvents(inputCollector)
+			if g.platform.ShouldStop() {
+				g.Shutdown()
+			}
+
 			start := time.Now()
-			g.frameInput = input
+			g.frameInput = inputCollector.GetInput()
 
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
@@ -296,20 +308,6 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
 		g.world.AddEntity(e)
 	}
-}
-
-func initializeOpenGL(config settings.Config) (window.Window, *sdl.Window, error) {
-	win, sdlWin, err := window.NewSDLWindow(config)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if err := gl.Init(); err != nil {
-		return nil, nil, fmt.Errorf("failed to init OpenGL %s", err)
-	}
-	fmt.Println("Open GL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
-
-	return win, sdlWin, nil
 }
 
 func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int) mgl64.Vec3 {

@@ -7,10 +7,10 @@ import (
 	"math"
 	"time"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"

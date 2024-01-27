@@ -3,12 +3,11 @@ package drawer
 import (
 	"fmt"
 
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/render/renderutils"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -37,11 +36,11 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			// invert the Y axis since opengl vs texture coordinate systems differ
 			// https://learnopengl.com/Getting-started/Textures
 			imgui.BeginGroup()
-			imgui.PushID(fmt.Sprintf("image %d", i))
+			imgui.PushIDStr(fmt.Sprintf("image %d", i))
 
 			if documentTexture == nil {
 				t := app.AssetManager().GetTexture("document")
-				texture := renderutils.CreateUserSpaceTextureHandle(t.ID)
+				texture := imgui.TextureID(uintptr(t.ID))
 				documentTexture = &texture
 			}
 
@@ -74,11 +73,11 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			}
 			imgui.PopID()
 
-			if imgui.BeginDragDropSource(imgui.DragDropFlagsSourceAllowNullID) {
-				imgui.SetDragDropPayload("content_browser_item", []byte(item.Name), imgui.ConditionNone)
-				imgui.EndDragDropSource()
-				fmt.Println("START DRAGGING", item.Name)
-			}
+			// if imgui.BeginDragDropSource(imgui.DragDropFlagsSourceAllowNullID) {
+			// 	imgui.SetDragDropPayload("content_browser_item", []byte(item.Name), imgui.ConditionNone)
+			// 	imgui.EndDragDropSource()
+			// 	fmt.Println("START DRAGGING", item.Name)
+			// }
 
 			imgui.Text(item.Name)
 			imgui.EndGroup()

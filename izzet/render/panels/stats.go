@@ -3,16 +3,15 @@ package panels
 import (
 	"fmt"
 
-	"github.com/inkyblackness/imgui-go/v4"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/render/renderutils"
 )
 
 func stats(app renderiface.App, renderContext RenderContext) {
 	settings := app.RuntimeConfig()
 	mr := app.MetricsRegistry()
 
-	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Bloom Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		// imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
@@ -40,11 +39,11 @@ func stats(app renderiface.App, renderContext RenderContext) {
 				}
 
 				if settings.ShowDebugTexture {
-					imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.ConditionFirstUseEver)
+					imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
 					if imgui.BeginV("Texture Viewer", &settings.ShowDebugTexture, imgui.WindowFlagsNone) {
 						if imgui.BeginCombo("", string(SelectedComboOption)) {
 							for _, option := range comboOptions {
-								if imgui.Selectable(string(option)) {
+								if imgui.SelectableBool(string(option)) {
 									SelectedComboOption = option
 								}
 							}
@@ -54,7 +53,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 						regionSize := imgui.ContentRegionAvail()
 						imageWidth := regionSize.X
 
-						texture := renderutils.CreateUserSpaceTextureHandle(settings.DebugTexture)
+						texture := imgui.TextureID(uintptr(settings.DebugTexture))
 						size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
 						// invert the Y axis since opengl vs texture coordinate systems differ
 						// https://learnopengl.com/Getting-started/Textures
@@ -66,7 +65,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		}, true)
 		imgui.EndTable()
 	}
-	if imgui.CollapsingHeaderV("Server Stats", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Server Stats", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Server Stats Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 

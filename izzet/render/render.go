@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/renderutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib"
@@ -217,14 +218,14 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
-	r.imguiMainColorTexture = CreateUserSpaceTextureHandle(r.mainColorTexture)
+	r.imguiMainColorTexture = renderutils.CreateUserSpaceTextureHandle(r.mainColorTexture)
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *Renderer) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
-	r.imguiCompositeTexture = CreateUserSpaceTextureHandle(r.compositeTexture)
+	r.imguiCompositeTexture = renderutils.CreateUserSpaceTextureHandle(r.compositeTexture)
 }
 
 func (r *Renderer) Render(delta time.Duration) {
@@ -375,11 +376,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
 	r.renderImgui(renderContext, imguiFinalRenderTexture)
-}
-
-func CreateUserSpaceTextureHandle(texture uint32) imgui.TextureID {
-	handle := 1<<63 | uint64(texture)
-	return imgui.TextureID(handle)
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -1053,25 +1049,25 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
 			// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-			imgui.PushStyleColor(imgui.StyleColorHeader, settings.HeaderColor)
-			imgui.PushStyleColor(imgui.StyleColorHeaderActive, settings.HeaderColor)
-			imgui.PushStyleColor(imgui.StyleColorHeaderHovered, settings.HoveredHeaderColor)
-			imgui.PushStyleColor(imgui.StyleColorTitleBg, settings.TitleColor)
-			imgui.PushStyleColor(imgui.StyleColorTitleBgActive, settings.TitleColor)
-			imgui.PushStyleColor(imgui.StyleColorSliderGrab, settings.InActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, settings.ActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorFrameBg, settings.InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorFrameBgActive, settings.ActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, settings.HoverColorBg)
+			imgui.PushStyleColor(imgui.StyleColorHeader, HeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorHeaderActive, HeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorHeaderHovered, HoveredHeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorTitleBg, TitleColor)
+			imgui.PushStyleColor(imgui.StyleColorTitleBgActive, TitleColor)
+			imgui.PushStyleColor(imgui.StyleColorSliderGrab, InActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, ActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorFrameBg, InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorFrameBgActive, ActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, HoverColorBg)
 			imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-			imgui.PushStyleColor(imgui.StyleColorButton, settings.InActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorButtonActive, settings.ActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorButtonHovered, settings.HoverColorControl)
-			imgui.PushStyleColor(imgui.StyleColorTabActive, settings.ActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTabUnfocused, settings.InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, settings.InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTab, settings.InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTabHovered, settings.HoveredHeaderColor)
+			imgui.PushStyleColor(imgui.StyleColorButton, InActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorButtonActive, ActiveColorControl)
+			imgui.PushStyleColor(imgui.StyleColorButtonHovered, HoverColorControl)
+			imgui.PushStyleColor(imgui.StyleColorTabActive, ActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabUnfocused, InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTab, InActiveColorBg)
+			imgui.PushStyleColor(imgui.StyleColorTabHovered, HoveredHeaderColor)
 
 			panels.BuildTabsSet(
 				r.app,
@@ -1130,3 +1126,15 @@ func (r *Renderer) SetWorld(world *world.GameWorld) {
 func (r *Renderer) GameWindowHovered() bool {
 	return r.gameWindowHovered
 }
+
+var (
+	InActiveColorBg      imgui.Vec4 = imgui.Vec4{X: .1, Y: .1, Z: 0.1, W: 1}
+	ActiveColorBg        imgui.Vec4 = imgui.Vec4{X: .3, Y: .3, Z: 0.3, W: 1}
+	HoverColorBg         imgui.Vec4 = imgui.Vec4{X: .25, Y: .25, Z: 0.25, W: 1}
+	InActiveColorControl imgui.Vec4 = imgui.Vec4{X: .4, Y: .4, Z: 0.4, W: 1}
+	HoverColorControl    imgui.Vec4 = imgui.Vec4{X: .45, Y: .45, Z: 0.45, W: 1}
+	ActiveColorControl   imgui.Vec4 = imgui.Vec4{X: .5, Y: .5, Z: 0.5, W: 1}
+	HeaderColor          imgui.Vec4 = imgui.Vec4{X: 0.3, Y: 0.3, Z: 0.3, W: 1}
+	HoveredHeaderColor   imgui.Vec4 = imgui.Vec4{X: 0.4, Y: 0.4, Z: 0.4, W: 1}
+	TitleColor           imgui.Vec4 = imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 1}
+)

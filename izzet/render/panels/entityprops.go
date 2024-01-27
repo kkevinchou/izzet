@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strconv"
 
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -27,7 +27,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 }
 
 func entityProps(entity *entities.Entity, app renderiface.App) {
-	if imgui.CollapsingHeaderV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
 		entityIDStr := ""
 		entityNameStr := ""
 		localRotationStr := ""
@@ -77,7 +77,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		setupRow("Local Position", func() {
 			if entity != nil {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
-				imgui.PushID("position x")
+				imgui.PushIDStr("position x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[0] = float64(x)
@@ -86,7 +86,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 				imgui.PopID()
 				imgui.SameLine()
-				imgui.PushID("position y")
+				imgui.PushIDStr("position y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[1] = float64(y)
@@ -95,7 +95,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 				imgui.PopID()
 				imgui.SameLine()
-				imgui.PushID("position z")
+				imgui.PushIDStr("position z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[2] = float64(z)
@@ -121,7 +121,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	if entity.CameraComponent != nil {
-		if imgui.CollapsingHeaderV("Camera Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Camera Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -134,7 +134,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 
 			setupRow("Target Position Offset", func() {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
-				imgui.PushID("position x")
+				imgui.PushIDStr("position x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[0] = float64(x)
@@ -143,7 +143,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 				imgui.PopID()
 				imgui.SameLine()
-				imgui.PushID("position y")
+				imgui.PushIDStr("position y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[1] = float64(y)
@@ -152,7 +152,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 				imgui.PopID()
 				imgui.SameLine()
-				imgui.PushID("position z")
+				imgui.PushIDStr("position z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[2] = float64(z)
@@ -181,7 +181,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	if entity.LightInfo != nil {
-		if imgui.CollapsingHeaderV("Light Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Light Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -205,7 +205,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				setupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) }, true)
 			}
 			imgui.EndTable()
-			imgui.PushID("remove light")
+			imgui.PushIDStr("remove light")
 			if imgui.Button("Remove") {
 				entity.LightInfo = nil
 			}
@@ -214,7 +214,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	if entity.Material != nil {
-		if imgui.CollapsingHeaderV("Material Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Material Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -232,7 +232,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
 			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
 			imgui.EndTable()
-			imgui.PushID("remove material")
+			imgui.PushIDStr("remove material")
 			if imgui.Button("Remove") {
 				entity.Material = nil
 			}
@@ -241,7 +241,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	if entity.MeshComponent != nil {
-		if imgui.CollapsingHeaderV("Mesh Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Mesh Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 			setupRow("Visible", func() { imgui.Checkbox("", &entity.MeshComponent.Visible) }, true)
@@ -253,28 +253,28 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	if entity.Physics != nil {
 		physicsComponent := entity.Physics
 		velocity := &physicsComponent.Velocity
-		if imgui.CollapsingHeaderV("Physics Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Physics Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
 			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
 
 			setupRow("Velocity X", func() {
-				imgui.PushID("velocity x")
+				imgui.PushIDStr("velocity x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[0] = float64(x)
 				}
 				imgui.PopID()
 			}, true)
 			setupRow("Velocity Y", func() {
-				imgui.PushID("velocity y")
+				imgui.PushIDStr("velocity y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[1] = float64(y)
 				}
 				imgui.PopID()
 			}, true)
 			setupRow("Velocity Z", func() {
-				imgui.PushID("velocity z")
+				imgui.PushIDStr("velocity z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[2] = float64(z)
 				}
@@ -285,7 +285,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			}, true)
 			setupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
 			imgui.EndTable()
-			imgui.PushID("remove phys")
+			imgui.PushIDStr("remove phys")
 			if imgui.Button("Remove") {
 				entity.Physics = nil
 			}
@@ -294,7 +294,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	if entity.Collider != nil {
-		if imgui.CollapsingHeaderV("Collider Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Collider Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -314,10 +314,10 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		}
 	}
 
-	imgui.PushID("Component Combo")
+	imgui.PushIDStr("Component Combo")
 	if imgui.BeginCombo("", string(SelectedComponentComboOption)) {
 		for _, option := range componentComboOptions {
-			if imgui.Selectable(string(option)) {
+			if imgui.SelectableBool(string(option)) {
 				SelectedComponentComboOption = option
 			}
 		}
@@ -351,7 +351,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	if entity.Collider != nil {
-		if imgui.CollapsingHeaderV("Debugging Properties", imgui.TreeNodeFlagsNone) {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Debugging Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 
@@ -409,10 +409,10 @@ func uiTableInputRow(label string, text *string, cb imgui.InputTextCallback) boo
 	imgui.Text(label)
 	imgui.TableSetColumnIndex(1)
 
-	// imgui.PushItemWidth(imgui.WindowWidth())
-	v := imgui.InputTextV("", text, imgui.ImGuiInputTextFlagsCallbackEdit|imgui.InputTextFlagsEnterReturnsTrue, cb)
-	// v := imgui.InputTextV("", text, imgui.InputTextFlagsNone, cb)
-	// imgui.PopItemWidth()
+	// v := imgui.InputTextV("", text, imgui.ImGuiInputTextFlagsCallbackEdit|imgui.InputTextFlagsEnterReturnsTrue, cb)
+	v := false
+	imgui.LabelText("asdfasdf", "asdfasdfasdfs")
+
 	return v
 }
 

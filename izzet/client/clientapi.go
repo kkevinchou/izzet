@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
@@ -72,7 +73,7 @@ func (g *Client) GetEditorCameraRotation() mgl64.Quat {
 	return g.camera.Rotation
 }
 
-func (g *Client) Platform() *input.SDLPlatform {
+func (g *Client) Platform() platforms.Platform {
 	return g.platform
 }
 

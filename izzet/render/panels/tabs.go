@@ -1,7 +1,7 @@
 package panels
 
 import (
-	"github.com/inkyblackness/imgui-go/v4"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
@@ -34,7 +34,7 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 	// imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
-	imgui.BeginChildV("Right Window", imgui.Vec2{}, false, imgui.WindowFlagsNoBringToFrontOnFocus)
+	imgui.BeginChildStrV("Right Window", imgui.Vec2{}, false, imgui.WindowFlagsNoBringToFrontOnFocus)
 
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 	if imgui.BeginTabBar("Main") {

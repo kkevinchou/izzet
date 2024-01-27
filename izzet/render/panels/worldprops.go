@@ -3,8 +3,8 @@ package panels
 import (
 	"fmt"
 
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
@@ -35,7 +35,7 @@ var (
 func worldProps(app renderiface.App, renderContext RenderContext) {
 	runtimeConfig := app.RuntimeConfig()
 
-	if imgui.CollapsingHeaderV("General", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 
@@ -51,7 +51,7 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderV("Editing", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Editing", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Editing Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Grid Snapping Size", func() {
@@ -79,7 +79,7 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderV("Lighting", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Lighting", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Lighting Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Ambient Factor", func() { imgui.SliderFloat("", &runtimeConfig.AmbientFactor, 0, 1) }, true)
@@ -94,7 +94,7 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		setupRow("Bloom Upsampling Scale", func() { imgui.SliderFloat("", &runtimeConfig.BloomUpsamplingScale, 0, 5.0) }, true)
 		imgui.EndTable()
 	}
-	if imgui.CollapsingHeaderV("Rendering", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Far", func() { imgui.SliderFloat("", &runtimeConfig.Far, 0, 100000) }, true)
@@ -106,7 +106,7 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderV("Other", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)

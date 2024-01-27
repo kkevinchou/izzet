@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/inkyblackness/imgui-go/v4"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/modelspec"
@@ -41,7 +41,7 @@ func animationUI(app renderiface.App, entity *entities.Entity) {
 	sort.Strings(anims)
 
 	imgui.Text(entity.NameID())
-	if imgui.ListBox("animations", &currentItem, anims) {
+	if imgui.ListBoxStrarr("animations", &currentItem, anims, int32(len(anims))) {
 		entity.Animation.AnimationPlayer.PlayAnimation(anims[currentItem])
 		entity.Animation.AnimationPlayer.UpdateTo(0)
 	}
@@ -54,7 +54,6 @@ func animationUI(app renderiface.App, entity *entities.Entity) {
 		LoopAnimation = false
 	}
 
-	imgui.InputText("some input text", &inputText)
 	if imgui.Button("Add Annotation") {
 		inputText = ""
 	}
@@ -76,15 +75,15 @@ func animationUI(app renderiface.App, entity *entities.Entity) {
 }
 
 func drawJointTree(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
-	nodeFlags := imgui.TreeNodeFlagsNone
+	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
 
 	if len(joint.Children) == 0 {
 		nodeFlags = nodeFlags | imgui.TreeNodeFlagsLeaf
 	}
 
-	opened := imgui.TreeNodeV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags)
+	opened := imgui.TreeNodeExStrV(fmt.Sprintf("[%d] %s", joint.ID, joint.Name), nodeFlags)
 
-	imgui.PushID(joint.Name)
+	imgui.PushIDStr(joint.Name)
 	setupMenu(app, parent, joint)
 	imgui.PopID()
 	if imgui.IsItemHovered() {
@@ -100,8 +99,8 @@ func drawJointTree(app renderiface.App, parent *entities.Entity, joint *modelspe
 }
 
 func setupMenu(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
-	imgui.PushStyleColor(imgui.StyleColorButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
-	imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+	imgui.PushStyleColorVec4(imgui.ColButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
+	imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 	if imgui.BeginPopupContextItem() {
 		if imgui.Button("Create Socket") {
 			// socket := entities.CreateSocket()
@@ -118,7 +117,7 @@ func setupMenu(app renderiface.App, parent *entities.Entity, joint *modelspec.Jo
 			// 		socketCount++
 
 			// 		isParented := entity.ParentJoint != nil && entity.ParentJoint.ID == joint.ID
-			// 		if imgui.MenuItemV(entity.NameID(), "", isParented, true) {
+			// 		if imgui.MenuItemBoolV(entity.NameID(), "", isParented, true) {
 			// 			// toggle parented status
 			// 			if isParented {
 			// 				entities.RemoveParent(entity)

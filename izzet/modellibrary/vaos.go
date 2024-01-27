@@ -3,7 +3,7 @@ package modellibrary
 import (
 	"sort"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/kitolib/modelspec"
 )

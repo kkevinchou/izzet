@@ -1,7 +1,7 @@
 package panels
 
 import (
-	"github.com/inkyblackness/imgui-go/v4"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
@@ -29,7 +29,7 @@ func setupRow(label string, item func(), fillWidth bool) {
 	imgui.TableNextColumn()
 	imgui.Text(label)
 	imgui.TableNextColumn()
-	imgui.PushID(label)
+	imgui.PushIDStr(label)
 	if fillWidth {
 		imgui.PushItemWidth(-1)
 	}

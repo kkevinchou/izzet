@@ -1,13 +1,11 @@
 package panels
 
 import (
-	"fmt"
 	"math"
 	"sort"
-	"strconv"
 
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -16,7 +14,7 @@ import (
 
 func sceneGraph(app renderiface.App, world GameWorld) {
 	entityPopup := false
-	imgui.BeginChildV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
 			popup := drawSceneGraphEntity(entity, app, world)
@@ -26,7 +24,7 @@ func sceneGraph(app renderiface.App, world GameWorld) {
 	imgui.EndChild()
 
 	if !entityPopup {
-		imgui.PushID("sceneHierarchy")
+		imgui.PushIDStr("sceneHierarchy")
 		if imgui.BeginPopupContextItem() {
 			if imgui.Button("Add Player") {
 				var radius float64 = 40
@@ -103,7 +101,7 @@ func sceneGraph(app renderiface.App, world GameWorld) {
 
 func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world GameWorld) bool {
 	popup := false
-	nodeFlags := imgui.TreeNodeFlagsNone
+	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
 	if len(entity.Children) == 0 {
 		nodeFlags |= imgui.TreeNodeFlagsLeaf
 	}
@@ -111,12 +109,12 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world Ga
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}
 
-	if imgui.TreeNodeV(entity.NameID(), nodeFlags) {
+	if imgui.TreeNodeExStrV(entity.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
 			app.SelectEntity(entity)
 		}
 
-		imgui.PushID(entity.NameID())
+		imgui.PushIDStr(entity.NameID())
 		if imgui.BeginPopupContextItem() {
 			popup = true
 			if entity.Parent != nil {
@@ -129,25 +127,25 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world Ga
 		}
 		imgui.PopID()
 
-		if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
-			fmt.Println("BEGIN DRAG DROP")
-			str := fmt.Sprintf("%d", entity.ID)
-			imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
-			imgui.EndDragDropSource()
-		}
-		if imgui.BeginDragDropTarget() {
-			fmt.Println("END DRAG DROP")
-			if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
-				childID, err := strconv.Atoi(string(payload))
-				if err != nil {
-					panic(err)
-				}
-				child := world.GetEntityByID(childID)
-				parent := world.GetEntityByID(entity.ID)
-				entities.BuildRelation(parent, child)
-			}
-			imgui.EndDragDropTarget()
-		}
+		// if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
+		// 	fmt.Println("BEGIN DRAG DROP")
+		// 	str := fmt.Sprintf("%d", entity.ID)
+		// 	imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
+		// 	imgui.EndDragDropSource()
+		// }
+		// if imgui.BeginDragDropTarget() {
+		// 	fmt.Println("END DRAG DROP")
+		// 	if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
+		// 		childID, err := strconv.Atoi(string(payload))
+		// 		if err != nil {
+		// 			panic(err)
+		// 		}
+		// 		child := world.GetEntityByID(childID)
+		// 		parent := world.GetEntityByID(entity.ID)
+		// 		entities.BuildRelation(parent, child)
+		// 	}
+		// 	imgui.EndDragDropTarget()
+		// }
 
 		childIDs := sortedIDs(entity.Children)
 		for _, id := range childIDs {

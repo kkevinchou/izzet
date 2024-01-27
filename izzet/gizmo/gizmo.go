@@ -93,7 +93,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 	// set to nil if we are hovering a non axis entity
 	if hoveredEntityID != nil {
 		if _, ok := targetGizmo.EntityIDToAxis[*hoveredEntityID]; ok {
-			if !mouseInput.Buttons[0] {
+			if !mouseInput.MouseButtonState[0] {
 				targetGizmo.HoveredEntityID = *hoveredEntityID
 			}
 		} else {
@@ -144,7 +144,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 
 	var gizmoDelta *mgl64.Vec3
 
-	if targetGizmo.HoveredEntityID != -1 && mouseInput.Buttons[0] && !mouseInput.MouseMotionEvent.IsZero() {
+	if targetGizmo.HoveredEntityID != -1 && mouseInput.MouseButtonState[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
 
 		if axis.DistanceBasedDelta {

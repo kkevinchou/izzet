@@ -6,26 +6,24 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/inkyblackness/imgui-go/v4"
+	"github.com/kkevinchou/izzet/internal/renderers"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/render/renderutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -53,7 +51,7 @@ type Renderer struct {
 	shaderManager *shaders.ShaderManager
 
 	shadowMap           *ShadowMap
-	imguiRenderer       *ImguiOpenGL4Renderer
+	imguiRenderer       *renderers.OpenGL3
 	depthCubeMapTexture uint32
 	depthCubeMapFBO     uint32
 
@@ -111,7 +109,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	compileShaders(r.shaderManager)
 
 	imguiIO := imgui.CurrentIO()
-	imguiRenderer, err := NewImguiOpenGL4Renderer(imguiIO)
+	imguiRenderer, err := renderers.NewOpenGL3(imguiIO)
 	if err != nil {
 		panic(err)
 	}
@@ -218,14 +216,14 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
-	r.imguiMainColorTexture = renderutils.CreateUserSpaceTextureHandle(r.mainColorTexture)
+	r.imguiMainColorTexture = imgui.TextureID(uintptr(r.mainColorTexture))
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *Renderer) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
-	r.imguiCompositeTexture = renderutils.CreateUserSpaceTextureHandle(r.compositeTexture)
+	r.imguiCompositeTexture = imgui.TextureID(uintptr(r.compositeTexture))
 }
 
 func (r *Renderer) Render(delta time.Duration) {
@@ -982,7 +980,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	height := float32(windowHeight) - menuBarHeight - footerHeight
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.ConditionNone)
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.CondNone)
 	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: menuBarHeight})
 	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize) {
 		regionSize := imgui.ContentRegionAvail()
@@ -998,36 +996,36 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 		r.gameWindowWidth = int(size.X)
 		r.gameWindowHeight = int(size.Y)
 
-		if imgui.BeginChildV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
+		if imgui.BeginChildStrV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
 			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
-		if imgui.BeginDragDropTarget() {
-			if payload := imgui.AcceptDragDropPayload("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
-				fmt.Println("END DRAGGING", string(payload))
-				itemName := string(payload)
-				document := r.app.AssetManager().GetDocument(itemName)
-				handle := modellibrary.NewGlobalHandle(itemName)
-				if len(document.Scenes) != 1 {
-					panic("single entity asset loading only supports a singular scene")
-				}
+		// if imgui.BeginDragDropTarget() {
+		// 	if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
+		// 		fmt.Println("END DRAGGING", string(payload))
+		// 		itemName := string(payload)
+		// 		document := r.app.AssetManager().GetDocument(itemName)
+		// 		handle := modellibrary.NewGlobalHandle(itemName)
+		// 		if len(document.Scenes) != 1 {
+		// 			panic("single entity asset loading only supports a singular scene")
+		// 		}
 
-				scene := document.Scenes[0]
-				node := scene.Nodes[0]
+		// 		scene := document.Scenes[0]
+		// 		node := scene.Nodes[0]
 
-				entity := entities.InstantiateEntity(document.Name)
-				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-				var vertices []modelspec.Vertex
-				entities.VerticesFromNode(node, document, &vertices)
-				entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-				entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-				entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-				entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+		// 		entity := entities.InstantiateEntity(document.Name)
+		// 		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+		// 		var vertices []modelspec.Vertex
+		// 		entities.VerticesFromNode(node, document, &vertices)
+		// 		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+		// 		entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+		// 		entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+		// 		entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
 
-				r.world.AddEntity(entity)
-				imgui.CloseCurrentPopup()
-			}
-			imgui.EndDragDropTarget()
-		}
+		// 		r.world.AddEntity(entity)
+		// 		imgui.CloseCurrentPopup()
+		// 	}
+		// 	imgui.EndDragDropTarget()
+		// }
 
 		if imgui.IsWindowHovered() {
 			r.gameWindowHovered = true
@@ -1048,26 +1046,26 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
 			// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
-			imgui.PushStyleColor(imgui.StyleColorText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-			imgui.PushStyleColor(imgui.StyleColorHeader, HeaderColor)
-			imgui.PushStyleColor(imgui.StyleColorHeaderActive, HeaderColor)
-			imgui.PushStyleColor(imgui.StyleColorHeaderHovered, HoveredHeaderColor)
-			imgui.PushStyleColor(imgui.StyleColorTitleBg, TitleColor)
-			imgui.PushStyleColor(imgui.StyleColorTitleBgActive, TitleColor)
-			imgui.PushStyleColor(imgui.StyleColorSliderGrab, InActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorSliderGrabActive, ActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorFrameBg, InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorFrameBgActive, ActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorFrameBgHovered, HoverColorBg)
-			imgui.PushStyleColor(imgui.StyleColorCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-			imgui.PushStyleColor(imgui.StyleColorButton, InActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorButtonActive, ActiveColorControl)
-			imgui.PushStyleColor(imgui.StyleColorButtonHovered, HoverColorControl)
-			imgui.PushStyleColor(imgui.StyleColorTabActive, ActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTabUnfocused, InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTabUnfocusedActive, InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTab, InActiveColorBg)
-			imgui.PushStyleColor(imgui.StyleColorTabHovered, HoveredHeaderColor)
+			imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+			imgui.PushStyleColorVec4(imgui.ColHeader, HeaderColor)
+			imgui.PushStyleColorVec4(imgui.ColHeaderActive, HeaderColor)
+			imgui.PushStyleColorVec4(imgui.ColHeaderHovered, HoveredHeaderColor)
+			imgui.PushStyleColorVec4(imgui.ColTitleBg, TitleColor)
+			imgui.PushStyleColorVec4(imgui.ColTitleBgActive, TitleColor)
+			imgui.PushStyleColorVec4(imgui.ColSliderGrab, InActiveColorControl)
+			imgui.PushStyleColorVec4(imgui.ColSliderGrabActive, ActiveColorControl)
+			imgui.PushStyleColorVec4(imgui.ColFrameBg, InActiveColorBg)
+			imgui.PushStyleColorVec4(imgui.ColFrameBgActive, ActiveColorBg)
+			imgui.PushStyleColorVec4(imgui.ColFrameBgHovered, HoverColorBg)
+			imgui.PushStyleColorVec4(imgui.ColCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
+			imgui.PushStyleColorVec4(imgui.ColButton, InActiveColorControl)
+			imgui.PushStyleColorVec4(imgui.ColButtonActive, ActiveColorControl)
+			imgui.PushStyleColorVec4(imgui.ColButtonHovered, HoverColorControl)
+			imgui.PushStyleColorVec4(imgui.ColTabActive, ActiveColorBg)
+			imgui.PushStyleColorVec4(imgui.ColTabUnfocused, InActiveColorBg)
+			imgui.PushStyleColorVec4(imgui.ColTabUnfocusedActive, InActiveColorBg)
+			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
+			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
 			panels.BuildTabsSet(
 				r.app,
@@ -1087,7 +1085,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PopStyleVarV(7)
 
 			if r.app.ShowImguiDemo() {
-				imgui.ShowDemoWindow(nil)
+				imgui.ShowDemoWindow()
 			}
 		}
 	}
@@ -1095,7 +1093,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	imgui.PopStyleVarV(1)
 
 	imgui.Render()
-	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.RenderedDrawData())
+	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {

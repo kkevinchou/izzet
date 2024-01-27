@@ -5,6 +5,7 @@ import (
 
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/renderutils"
 )
 
 func stats(app renderiface.App, renderContext RenderContext) {
@@ -53,7 +54,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 						regionSize := imgui.ContentRegionAvail()
 						imageWidth := regionSize.X
 
-						texture := CreateUserSpaceTextureHandle(settings.DebugTexture)
+						texture := renderutils.CreateUserSpaceTextureHandle(settings.DebugTexture)
 						size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
 						// invert the Y axis since opengl vs texture coordinate systems differ
 						// https://learnopengl.com/Getting-started/Textures

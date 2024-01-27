@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/inkyblackness/imgui-go/v4"
-	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/renderutils"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -41,7 +41,7 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 
 			if documentTexture == nil {
 				t := app.AssetManager().GetTexture("document")
-				texture := apputils.CreateUserSpaceTextureHandle(t.ID)
+				texture := renderutils.CreateUserSpaceTextureHandle(t.ID)
 				documentTexture = &texture
 			}
 

@@ -3,12 +3,12 @@ module github.com/kkevinchou/izzet
 go 1.18
 
 require (
-	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6
+	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
 	github.com/go-gl/mathgl v1.0.0
 	github.com/inkyblackness/imgui-go/v4 v4.6.0
 	github.com/kkevinchou/kitolib v0.0.0-20231104093503-cc78ceb7e874
 	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf
-	github.com/veandco/go-sdl2 v0.4.25
+	github.com/veandco/go-sdl2 v0.4.38
 )
 
 require (

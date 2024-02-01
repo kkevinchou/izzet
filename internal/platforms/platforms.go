@@ -23,6 +23,7 @@ type Platform interface {
 
 	SetRelativeMouse(bool)
 	MoveMouse(int32, int32)
+	Resized() bool
 }
 
 type InputCollector interface {

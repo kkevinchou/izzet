@@ -181,6 +181,7 @@ func (g *Client) Start() {
 
 		currentLoopCommandFrames := 0
 		for accumulator >= float64(settings.MSPerCommandFrame) {
+			g.platform.NewFrame()
 			inputCollector := input.NewInputCollector()
 			g.platform.ProcessEvents(inputCollector)
 			if g.platform.ShouldStop() {

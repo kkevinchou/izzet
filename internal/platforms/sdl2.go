@@ -15,6 +15,7 @@ type SDLPlatform struct {
 	window     *sdl.Window
 	shouldStop bool
 	time       uint64
+	resized    bool
 }
 
 func NewSDLPlatform(imguiIO *imgui.IO) (*SDLPlatform, *SDLWindow, error) {
@@ -103,33 +104,35 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 				inputCollector.SetMouseButtonDown(i, false)
 			}
 		}
-		// case sdl.TEXTINPUT:
-		// 	inputEvent := event.(*sdl.TextInputEvent)
-		// 	platform.imguiIO.AddInputCharacters(string(inputEvent.Text[:]))
-		// case sdl.KEYDOWN:
-		// 	keyEvent := event.(*sdl.KeyboardEvent)
-		// 	platform.imguiIO.KeyPress(int(keyEvent.Keysym.Scancode))
-		// 	platform.updateKeyModifier()
-		// case sdl.KEYUP:
-		// 	keyEvent := event.(*sdl.KeyboardEvent)
-		// 	platform.imguiIO.KeyRelease(int(keyEvent.Keysym.Scancode))
-		// 	platform.updateKeyModifier()
+	// case sdl.TEXTINPUT:
+	// 	inputEvent := event.(*sdl.TextInputEvent)
+	// 	platform.imguiIO.AddInputCharacters(string(inputEvent.Text[:]))
+	// case sdl.KEYDOWN:
+	// 	keyEvent := event.(*sdl.KeyboardEvent)
+	// 	platform.imguiIO.KeyPress(int(keyEvent.Keysym.Scancode))
+	// 	platform.updateKeyModifier()
+	// case sdl.KEYUP:
+	// 	keyEvent := event.(*sdl.KeyboardEvent)
+	// 	platform.imguiIO.KeyRelease(int(keyEvent.Keysym.Scancode))
+	// 	platform.updateKeyModifier()
 
-		// 	key := KeyboardKey(sdl.GetScancodeName(keyEvent.Keysym.Scancode))
-		// 	platform.currentFrameInput.KeyboardInput[key] = KeyState{
-		// 		Key:   key,
-		// 		Event: KeyboardEventUp,
-		// 	}
-		// case sdl.WINDOWEVENT:
-		// 	windowEvent := event.(*sdl.WindowEvent)
-		// 	event := windowEvent.Event
-		// 	if event == sdl.WINDOWEVENT_RESIZED {
-		// 		platform.currentFrameInput.WindowEvent.Resized = true
-		// 	}
+	// 	key := KeyboardKey(sdl.GetScancodeName(keyEvent.Keysym.Scancode))
+	// 	platform.currentFrameInput.KeyboardInput[key] = KeyState{
+	// 		Key:   key,
+	// 		Event: KeyboardEventUp,
+	// 	}
+	case sdl.WINDOWEVENT:
+		windowEvent := event.(*sdl.WindowEvent)
+		event := windowEvent.Event
+		if event == sdl.WINDOWEVENT_RESIZED {
+			platform.resized = true
+		}
 	}
 }
 
 func (platform *SDLPlatform) NewFrame() {
+	platform.resized = false
+
 	// Setup display size (every frame to accommodate for window resizing)
 	displaySize := platform.DisplaySize()
 	platform.imguiIO.SetDisplaySize(imgui.Vec2{X: displaySize[0], Y: displaySize[1]})
@@ -284,4 +287,8 @@ func (platform *SDLPlatform) PostRender() {
 
 func (platform *SDLPlatform) ShouldStop() bool {
 	return platform.shouldStop
+}
+
+func (platform *SDLPlatform) Resized() bool {
+	return platform.resized
 }

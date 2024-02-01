@@ -12,10 +12,7 @@ import (
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
-		imgui.PushIDStr("World Name")
-		// imgui.InputText("", &worldName)
-		imgui.LabelText("asdfasdf", "Aaasdfasdfasdf")
-		imgui.PopID()
+		imgui.InputTextWithHint("##WorldName", "", &worldName, imgui.InputTextFlagsNone, nil)
 
 		imgui.SameLine()
 		if imgui.Button("Save") {

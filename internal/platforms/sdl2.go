@@ -48,7 +48,7 @@ func (platform *SDLPlatform) ProcessEvents(inputCollector InputCollector) {
 	inputCollector.SetMousePosition(float64(x), float64(y))
 	for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 		enabled := mouseState&sdl.Button(button) != 0
-		inputCollector.SetMouseButtonDown(i, enabled)
+		inputCollector.SetMouseButtonState(i, enabled)
 	}
 
 	// key state is more reliable than key down events since they dont' fire for every polling cycle every frame
@@ -96,7 +96,7 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
 				inputCollector.SetMouseButtonEvent(i, true)
-				inputCollector.SetMouseButtonDown(i, true)
+				inputCollector.SetMouseButtonState(i, true)
 			}
 		}
 	case sdl.MOUSEBUTTONUP:
@@ -104,7 +104,7 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
 				inputCollector.SetMouseButtonEvent(i, false)
-				inputCollector.SetMouseButtonDown(i, false)
+				inputCollector.SetMouseButtonState(i, false)
 			}
 		}
 	case sdl.TEXTINPUT:

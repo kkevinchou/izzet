@@ -5,7 +5,6 @@ import (
 	"math"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/kkevinchou/kitolib/input"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -96,7 +95,7 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		buttonEvent := event.(*sdl.MouseButtonEvent)
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
-				inputCollector.SetMouseButtonEvent(i, input.MouseButtonEventDown)
+				inputCollector.SetMouseButtonEvent(i, true)
 				inputCollector.SetMouseButtonDown(i, true)
 			}
 		}
@@ -104,7 +103,7 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		buttonEvent := event.(*sdl.MouseButtonEvent)
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
-				inputCollector.SetMouseButtonEvent(i, input.MouseButtonEventUp)
+				inputCollector.SetMouseButtonEvent(i, false)
 				inputCollector.SetMouseButtonDown(i, false)
 			}
 		}

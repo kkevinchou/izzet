@@ -24,8 +24,7 @@ func sceneGraph(app renderiface.App, world GameWorld) {
 	imgui.EndChild()
 
 	if !entityPopup {
-		imgui.PushIDStr("sceneHierarchy")
-		if imgui.BeginPopupContextItem() {
+		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			if imgui.Button("Add Player") {
 				var radius float64 = 40
 				var length float64 = 80
@@ -95,7 +94,6 @@ func sceneGraph(app renderiface.App, world GameWorld) {
 			}
 			imgui.EndPopup()
 		}
-		imgui.PopID()
 	}
 }
 

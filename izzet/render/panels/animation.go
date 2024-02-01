@@ -101,7 +101,7 @@ func drawJointTree(app renderiface.App, parent *entities.Entity, joint *modelspe
 func setupMenu(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
 	imgui.PushStyleColorVec4(imgui.ColButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
 	imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-	if imgui.BeginPopupContextItem() {
+	if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Create Socket") {
 			// socket := entities.CreateSocket()
 			// app.AddEntity(socket)

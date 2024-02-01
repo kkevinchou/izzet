@@ -104,9 +104,9 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 				inputCollector.SetMouseButtonDown(i, false)
 			}
 		}
-	// case sdl.TEXTINPUT:
-	// 	inputEvent := event.(*sdl.TextInputEvent)
-	// 	platform.imguiIO.AddInputCharacters(string(inputEvent.Text[:]))
+	case sdl.TEXTINPUT:
+		inputEvent := event.(*sdl.TextInputEvent)
+		platform.imguiIO.AddInputCharactersUTF8(string(inputEvent.Text[:]))
 	// case sdl.KEYDOWN:
 	// 	keyEvent := event.(*sdl.KeyboardEvent)
 	// 	platform.imguiIO.KeyPress(int(keyEvent.Keysym.Scancode))

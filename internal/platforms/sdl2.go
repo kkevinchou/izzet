@@ -96,7 +96,6 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
 				inputCollector.SetMouseButtonEvent(i, true)
-				inputCollector.SetMouseButtonState(i, true)
 			}
 		}
 	case sdl.MOUSEBUTTONUP:
@@ -104,7 +103,6 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 			if uint32(buttonEvent.Button) == button {
 				inputCollector.SetMouseButtonEvent(i, false)
-				inputCollector.SetMouseButtonState(i, false)
 			}
 		}
 	case sdl.TEXTINPUT:

@@ -39,7 +39,7 @@ func CalculateFooterSize(uiEnabled bool) float32 {
 	if !uiEnabled {
 		return 0
 	}
-	return 34
+	return 31
 }
 
 func PathToProjectFile(projectName string) string {

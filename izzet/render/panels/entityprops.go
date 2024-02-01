@@ -409,9 +409,7 @@ func uiTableInputRow(label string, text *string, cb imgui.InputTextCallback) boo
 	imgui.Text(label)
 	imgui.TableSetColumnIndex(1)
 
-	// v := imgui.InputTextV("", text, imgui.ImGuiInputTextFlagsCallbackEdit|imgui.InputTextFlagsEnterReturnsTrue, cb)
-	v := false
-	imgui.LabelText("asdfasdf", "asdfasdfasdfs")
+	v := imgui.InputTextWithHint(fmt.Sprintf("##UITableInputRow_%s", label), "", text, imgui.InputTextFlagsCallbackEdit|imgui.InputTextFlagsEnterReturnsTrue, cb)
 
 	return v
 }

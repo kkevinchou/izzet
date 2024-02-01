@@ -57,8 +57,7 @@ func (platform *SDLPlatform) ProcessEvents(inputCollector InputCollector) {
 		if v <= 0 {
 			continue
 		}
-
-		inputCollector.SetKeyState(sdl.GetScancodeName(sdl.Scancode(k)))
+		inputCollector.SetKeyStateEnabled(sdl.GetScancodeName(sdl.Scancode(k)))
 	}
 
 	// return platform.currentFrameInput
@@ -111,9 +110,11 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 	case sdl.KEYDOWN:
 		keyEvent := event.(*sdl.KeyboardEvent)
 		platform.addKeyEvent(keyEvent, true)
+		inputCollector.AddKeyEvent(sdl.GetScancodeName(keyEvent.Keysym.Scancode), true)
 	case sdl.KEYUP:
 		keyEvent := event.(*sdl.KeyboardEvent)
 		platform.addKeyEvent(keyEvent, false)
+		inputCollector.AddKeyEvent(sdl.GetScancodeName(keyEvent.Keysym.Scancode), false)
 	case sdl.WINDOWEVENT:
 		windowEvent := event.(*sdl.WindowEvent)
 		event := windowEvent.Event

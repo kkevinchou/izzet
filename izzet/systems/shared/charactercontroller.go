@@ -36,10 +36,8 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 
 	c.WebVector = mgl64.Vec3{}
 	viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
-	if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
-		if event.Event == input.KeyboardEventDown {
-			c.WebVector = viewVector.Mul(webSpeed)
-		}
+	if _, ok := keyboardInput[input.KeyboardKeyF]; ok {
+		c.WebVector = viewVector.Mul(webSpeed)
 	}
 
 	emptyVec := mgl64.Vec3{}

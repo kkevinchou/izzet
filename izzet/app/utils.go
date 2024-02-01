@@ -13,22 +13,22 @@ func IsZeroVec(v mgl64.Vec3) bool {
 
 func GetControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {
 	var controlVector mgl64.Vec3
-	if key, ok := keyboardInput[input.KeyboardKeyW]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyW]; ok {
 		controlVector[2]++
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyS]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyS]; ok {
 		controlVector[2]--
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyA]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyA]; ok {
 		controlVector[0]--
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyD]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyD]; ok {
 		controlVector[0]++
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyLShift]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyLShift]; ok {
 		controlVector[1]--
 	}
-	if key, ok := keyboardInput[input.KeyboardKeySpace]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeySpace]; ok {
 		controlVector[1]++
 	}
 

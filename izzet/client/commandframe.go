@@ -144,16 +144,14 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	}
 
 	// copy entity
-	if ctrlEvent, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
-		if ctrlEvent.Event == input.KeyboardEventDown {
-			if cEvent, ok := keyboardInput[input.KeyboardKeyC]; ok {
-				if cEvent.Event == input.KeyboardEventUp {
-					if entity := g.SelectedEntity(); entity != nil {
-						var err error
-						copiedEntity, err = json.Marshal(entity)
-						if err != nil {
-							panic(err)
-						}
+	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
+		if cEvent, ok := keyboardInput[input.KeyboardKeyC]; ok {
+			if cEvent.Event == input.KeyboardEventUp {
+				if entity := g.SelectedEntity(); entity != nil {
+					var err error
+					copiedEntity, err = json.Marshal(entity)
+					if err != nil {
+						panic(err)
 					}
 				}
 			}
@@ -161,23 +159,21 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	}
 
 	// paste entity
-	if ctrlEvent, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
-		if ctrlEvent.Event == input.KeyboardEventDown {
-			if vEvent, ok := keyboardInput[input.KeyboardKeyV]; ok {
-				if vEvent.Event == input.KeyboardEventUp {
-					var newEntity entities.Entity
-					err := json.Unmarshal(copiedEntity, &newEntity)
-					if err != nil {
-						panic(err)
-					}
-					id := entities.GetNextIDAndAdvance()
-					newEntity.ID = id
-
-					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
-
-					g.world.AddEntity(&newEntity)
-					g.SelectEntity(&newEntity)
+	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
+		if vEvent, ok := keyboardInput[input.KeyboardKeyV]; ok {
+			if vEvent.Event == input.KeyboardEventUp {
+				var newEntity entities.Entity
+				err := json.Unmarshal(copiedEntity, &newEntity)
+				if err != nil {
+					panic(err)
 				}
+				id := entities.GetNextIDAndAdvance()
+				newEntity.ID = id
+
+				serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
+
+				g.world.AddEntity(&newEntity)
+				g.SelectEntity(&newEntity)
 			}
 		}
 	}
@@ -292,16 +288,16 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 
 	g.camera.Position = g.camera.Position.Add(movementDelta).Add(g.camera.Drift)
 
-	if key, ok := keyboardInput[input.KeyboardKeyUp]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyUp]; ok {
 		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyDown]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyDown]; ok {
 		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(-slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyLeft]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyLeft]; ok {
 		g.camera.Position = g.camera.Position.Add(rightVector.Mul(-slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
-	if key, ok := keyboardInput[input.KeyboardKeyRight]; ok && key.Event == input.KeyboardEventDown {
+	if _, ok := keyboardInput[input.KeyboardKeyRight]; ok {
 		g.camera.Position = g.camera.Position.Add(rightVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
 

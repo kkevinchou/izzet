@@ -28,7 +28,8 @@ type InputCollector interface {
 	SetMousePosition(x float64, y float64)
 	SetMouseButtonState(i int, value bool)
 	SetMouseButtonEvent(i int, down bool)
-	SetKeyState(key string)
+	SetKeyStateEnabled(key string)
+	AddKeyEvent(key string, down bool)
 	AddMouseWheelDelta(x float64, y float64)
 	AddMouseMotion(x float64, y float64)
 }

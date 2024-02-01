@@ -1,7 +1,5 @@
 package platforms
 
-import "github.com/kkevinchou/kitolib/input"
-
 // Platform covers mouse/keyboard/gamepad inputs, cursor shape, timing, windowing.
 type Platform interface {
 	// ShouldStop is regularly called as the abort condition for the program loop.
@@ -29,7 +27,7 @@ type Platform interface {
 type InputCollector interface {
 	SetMousePosition(x float64, y float64)
 	SetMouseButtonDown(i int, value bool)
-	SetMouseButtonEvent(i int, event input.MouseButtonEvent)
+	SetMouseButtonEvent(i int, down bool)
 	SetKeyState(key string)
 	AddMouseWheelDelta(x float64, y float64)
 	AddMouseMotion(x float64, y float64)

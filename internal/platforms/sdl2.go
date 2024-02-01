@@ -244,11 +244,6 @@ func InitSDL() (*sdl.Window, error) {
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 2)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
 
-	// sdl.GLSetAttribute(sdl.GL_RED_SIZE, 10)
-	// sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 10)
-	// sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 10)
-	// sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 2)
-
 	sdl.SetRelativeMouseMode(false)
 
 	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE

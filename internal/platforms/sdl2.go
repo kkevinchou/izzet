@@ -15,7 +15,9 @@ type SDLPlatform struct {
 	window     *sdl.Window
 	shouldStop bool
 	time       uint64
-	resized    bool
+
+	resized bool
+	keyMap  map[sdl.Scancode]imgui.Key
 }
 
 func NewSDLPlatform(imguiIO *imgui.IO) (*SDLPlatform, *SDLWindow, error) {
@@ -28,7 +30,9 @@ func NewSDLPlatform(imguiIO *imgui.IO) (*SDLPlatform, *SDLWindow, error) {
 		window:  window,
 		imguiIO: imguiIO,
 	}
-	// platform.setKeyMapping()
+
+	platform.setKeyMapping()
+
 	return platform, &SDLWindow{window: window}, nil
 }
 
@@ -107,20 +111,12 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 	case sdl.TEXTINPUT:
 		inputEvent := event.(*sdl.TextInputEvent)
 		platform.imguiIO.AddInputCharactersUTF8(string(inputEvent.Text[:]))
-	// case sdl.KEYDOWN:
-	// 	keyEvent := event.(*sdl.KeyboardEvent)
-	// 	platform.imguiIO.KeyPress(int(keyEvent.Keysym.Scancode))
-	// 	platform.updateKeyModifier()
-	// case sdl.KEYUP:
-	// 	keyEvent := event.(*sdl.KeyboardEvent)
-	// 	platform.imguiIO.KeyRelease(int(keyEvent.Keysym.Scancode))
-	// 	platform.updateKeyModifier()
-
-	// 	key := KeyboardKey(sdl.GetScancodeName(keyEvent.Keysym.Scancode))
-	// 	platform.currentFrameInput.KeyboardInput[key] = KeyState{
-	// 		Key:   key,
-	// 		Event: KeyboardEventUp,
-	// 	}
+	case sdl.KEYDOWN:
+		keyEvent := event.(*sdl.KeyboardEvent)
+		platform.addKeyEvent(keyEvent, true)
+	case sdl.KEYUP:
+		keyEvent := event.(*sdl.KeyboardEvent)
+		platform.addKeyEvent(keyEvent, false)
 	case sdl.WINDOWEVENT:
 		windowEvent := event.(*sdl.WindowEvent)
 		event := windowEvent.Event
@@ -176,45 +172,45 @@ func (platform *SDLPlatform) FramebufferSize() [2]float32 {
 	return [2]float32{float32(w), float32(h)}
 }
 
-func (platform *SDLPlatform) updateKeyModifier() {
-	modState := sdl.GetModState()
+func (platform *SDLPlatform) setKeyMapping() {
+	platform.keyMap = map[sdl.Scancode]imgui.Key{
+		sdl.SCANCODE_TAB:   imgui.KeyTab,
+		sdl.SCANCODE_LEFT:  imgui.KeyLeftArrow,
+		sdl.SCANCODE_RIGHT: imgui.KeyRightArrow,
+		sdl.SCANCODE_UP:    imgui.KeyUpArrow,
+		sdl.SCANCODE_DOWN:  imgui.KeyDownArrow,
 
-	mapModifier := func(lMask sdl.Keymod, rMask sdl.Keymod) bool {
-		if (modState&lMask) != 0 || (modState&rMask) != 0 {
-			return true
-		}
-		return false
+		sdl.SCANCODE_LCTRL:     imgui.ModCtrl,
+		sdl.SCANCODE_RCTRL:     imgui.ModCtrl,
+		sdl.SCANCODE_LALT:      imgui.ModAlt,
+		sdl.SCANCODE_RALT:      imgui.ModAlt,
+		sdl.SCANCODE_LSHIFT:    imgui.ModShift,
+		sdl.SCANCODE_RSHIFT:    imgui.ModShift,
+		sdl.SCANCODE_PAGEUP:    imgui.KeyPageUp,
+		sdl.SCANCODE_PAGEDOWN:  imgui.KeyPageDown,
+		sdl.SCANCODE_HOME:      imgui.KeyHome,
+		sdl.SCANCODE_END:       imgui.KeyEnd,
+		sdl.SCANCODE_INSERT:    imgui.KeyInsert,
+		sdl.SCANCODE_DELETE:    imgui.KeyDelete,
+		sdl.SCANCODE_BACKSPACE: imgui.KeyBackspace,
+		sdl.SCANCODE_SPACE:     imgui.KeySpace,
+		sdl.SCANCODE_RETURN:    imgui.KeyEnter,
+		sdl.SCANCODE_ESCAPE:    imgui.KeyEscape,
 	}
 
-	platform.imguiIO.SetKeyShift(mapModifier(sdl.KMOD_LSHIFT, sdl.KMOD_RSHIFT))
-	platform.imguiIO.SetKeyCtrl(mapModifier(sdl.KMOD_LCTRL, sdl.KMOD_RCTRL))
-	platform.imguiIO.SetKeyAlt(mapModifier(sdl.KMOD_LALT, sdl.KMOD_RALT))
+	// letters A -> Z
+	for i := 0; i < 30; i++ {
+		platform.keyMap[sdl.Scancode(uint32(i))] = imgui.Key(542 + i)
+	}
 }
 
-// func (platform *SDLPlatform) setKeyMapping() {
-// 	keys := map[int]int{
-// 		imgui.KeyTab:        sdl.SCANCODE_TAB,
-// 		imgui.KeyLeftArrow:  sdl.SCANCODE_LEFT,
-// 		imgui.KeyRightArrow: sdl.SCANCODE_RIGHT,
-// 		imgui.KeyUpArrow:    sdl.SCANCODE_UP,
-// 		imgui.KeyDownArrow:  sdl.SCANCODE_DOWN,
-// 		imgui.KeyPageUp:     sdl.SCANCODE_PAGEUP,
-// 		imgui.KeyPageDown:   sdl.SCANCODE_PAGEDOWN,
-// 		imgui.KeyHome:       sdl.SCANCODE_HOME,
-// 		imgui.KeyEnd:        sdl.SCANCODE_END,
-// 		imgui.KeyInsert:     sdl.SCANCODE_INSERT,
-// 		imgui.KeyDelete:     sdl.SCANCODE_DELETE,
-// 		imgui.KeyBackspace:  sdl.SCANCODE_BACKSPACE,
-// 		imgui.KeySpace:      sdl.SCANCODE_SPACE,
-// 		imgui.KeyEnter:      sdl.SCANCODE_RETURN,
-// 		imgui.KeyEscape:     sdl.SCANCODE_ESCAPE,
-// 	}
-
-// 	// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
-// 	for imguiKey, nativeKey := range keys {
-// 		platform.imguiIO.KeyMap(imguiKey, nativeKey)
-// 	}
-// }
+// key events for imgui actions. these keys powers things like copy/paste from input text, esc to lose focus, etc
+func (platform *SDLPlatform) addKeyEvent(keyEvent *sdl.KeyboardEvent, active bool) {
+	scanCode := keyEvent.Keysym.Scancode
+	if mapped, ok := platform.keyMap[scanCode]; ok {
+		platform.imguiIO.AddKeyEvent(mapped, active)
+	}
+}
 
 // ClipboardText returns the current clipboard text, if available.
 func (platform *SDLPlatform) ClipboardText() (string, error) {

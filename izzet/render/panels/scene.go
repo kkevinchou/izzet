@@ -52,7 +52,7 @@ func sceneHierarchy(app renderiface.App, world GameWorld) {
 
 	if !entityPopup {
 		imgui.PushIDStr("sceneHierarchy")
-		if imgui.BeginPopupContextItem() {
+		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			if imgui.Button("Add Player") {
 				var radius float64 = 40
 				var length float64 = 80
@@ -142,7 +142,7 @@ func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) b
 		}
 
 		imgui.PushIDStr(entity.NameID())
-		if imgui.BeginPopupContextItem() {
+		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			popup = true
 			if entity.Parent != nil {
 				if imgui.Button("Remove Parent") {

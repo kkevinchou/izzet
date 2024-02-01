@@ -113,7 +113,7 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world Ga
 		}
 
 		imgui.PushIDStr(entity.NameID())
-		if imgui.BeginPopupContextItem() {
+		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			popup = true
 			if entity.Parent != nil {
 				if imgui.Button("Remove Parent") {

@@ -45,7 +45,7 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			}
 
 			imgui.ImageV(*documentTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-			if imgui.BeginPopupContextItem() {
+			if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 				menuOpen = true
 				if imgui.Button("Instantiate") {
 					document := app.AssetManager().GetDocument(item.Name)

@@ -120,9 +120,9 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 
 	cubeVAO := r.getCubeVAO(0.25)
 
-	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID}
+	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID, gizmo.GizmoAllAxisPickingID}
 	for _, entityID := range axisEntityIDs {
-		axis := gizmo.TranslationGizmo.EntityIDToAxis[entityID]
+		axis := gizmo.ScaleGizmo.EntityIDToAxis[entityID]
 		shader.SetUniformUInt("entityID", uint32(entityID))
 		shader.SetUniformMat4("model", mgl32.Ident4())
 

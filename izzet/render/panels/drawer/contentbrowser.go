@@ -65,6 +65,15 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 					entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 					entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
 					entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+					entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
+
+					primitives := app.ModelLibrary().GetPrimitives(handle)
+					if len(primitives) > 0 {
+						entity.Collider = &entities.ColliderComponent{
+							ColliderGroup:   entities.ColliderGroupMap[entities.ColliderGroupTerrain],
+							TriMeshCollider: collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives)),
+						}
+					}
 
 					world.AddEntity(entity)
 					imgui.CloseCurrentPopup()

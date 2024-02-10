@@ -60,7 +60,7 @@ func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *Half
 		numVertices := len(p.UniqueVertices)
 		// numFaces := len(p.VertexIndices) / 3
 		// numEdges := (len(p.VertexIndices) + numFaces - 2) / 2
-		numEdges := 1000000
+		numEdges := 100000
 		numHalfEdges := numEdges * 2
 
 		halfEdgeCache := map[string][2]*HalfEdge{}

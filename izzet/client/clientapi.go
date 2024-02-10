@@ -31,10 +31,12 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
+	"github.com/kkevinchou/izzet/lib/geometry"
 	"github.com/kkevinchou/izzet/lib/platforms"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
+	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 func (g *Client) GetPrefabByID(id int) *prefabs.Prefab {
@@ -446,6 +448,14 @@ func (g *Client) ImportToContentBrowser(assetFilePath string) {
 		baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 		document := g.AssetManager().GetDocument(baseFileName)
 		g.contentBrowser.AddGLTFModel(assetFilePath, document)
+
+		var primitiveSpecs []*modelspec.PrimitiveSpecification
+		for _, mesh := range document.Meshes {
+			primitiveSpecs = append(primitiveSpecs, mesh.Primitives...)
+
+		}
+		surface := geometry.CreateHalfEdgeSurface(primitiveSpecs)
+		fmt.Println(surface)
 	}
 }
 

@@ -31,7 +31,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/izzet/lib/geometry"
 	"github.com/kkevinchou/izzet/lib/platforms"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -454,8 +453,6 @@ func (g *Client) ImportToContentBrowser(assetFilePath string) {
 			primitiveSpecs = append(primitiveSpecs, mesh.Primitives...)
 
 		}
-		surface := geometry.CreateHalfEdgeSurface(primitiveSpecs)
-		fmt.Println(surface)
 	}
 }
 

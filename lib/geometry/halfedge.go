@@ -56,6 +56,8 @@ type Vertex struct {
 // stop after we've reached a target number of triangles/ stop after some number of contractions
 
 func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *HalfEdgeSurface {
+	var halfEdgeCursor int
+
 	for _, p := range primitives {
 		numVertices := len(p.UniqueVertices)
 		// numFaces := len(p.VertexIndices) / 3
@@ -80,9 +82,9 @@ func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *Half
 		vertIndices := p.VertexIndices
 
 		for i := 0; i < len(vertIndices); i += 3 {
-			h1 := createOrLookupHalfEdges(int(vertIndices[i]), int(vertIndices[i+1]), surface, halfEdgeCache)
-			h2 := createOrLookupHalfEdges(int(vertIndices[i+1]), int(vertIndices[i+2]), surface, halfEdgeCache)
-			h3 := createOrLookupHalfEdges(int(vertIndices[i+2]), int(vertIndices[i]), surface, halfEdgeCache)
+			h1 := createOrLookupHalfEdges(int(vertIndices[i]), int(vertIndices[i+1]), surface, halfEdgeCache, &halfEdgeCursor)
+			h2 := createOrLookupHalfEdges(int(vertIndices[i+1]), int(vertIndices[i+2]), surface, halfEdgeCache, &halfEdgeCursor)
+			h3 := createOrLookupHalfEdges(int(vertIndices[i+2]), int(vertIndices[i]), surface, halfEdgeCache, &halfEdgeCursor)
 
 			h1.Next = h2
 			h2.Next = h3
@@ -98,9 +100,7 @@ func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *Half
 // 	return Edge{}, Face{}
 // }
 
-var halfEdgeCursor int
-
-func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache map[string][2]*HalfEdge) *HalfEdge {
+func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache map[string][2]*HalfEdge, halfEdgeCursor *int) *HalfEdge {
 	// if v1 == 11409 || v1 == 11430 {
 	// if v1 == 11409 || v2 == 11409 {
 	// 	fmt.Println(v1, v2)
@@ -114,7 +114,7 @@ func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache
 	twinKey := edgeHash(v2, v1)
 	var mainHalfEdge *HalfEdge
 	if _, ok := halfEdgeCache[twinKey]; !ok {
-		halfEdge, twin := createHalfEdges(v1, v2, surface)
+		halfEdge, twin := createHalfEdges(v1, v2, surface, halfEdgeCursor)
 		halfEdgeArray := [2]*HalfEdge{
 			halfEdge,
 			twin,
@@ -130,7 +130,7 @@ func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache
 	return mainHalfEdge
 }
 
-func createHalfEdges(v1, v2 int, surface *HalfEdgeSurface) (*HalfEdge, *HalfEdge) {
+func createHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCursor *int) (*HalfEdge, *HalfEdge) {
 	h1 := &HalfEdge{
 		Vertex: v1,
 	}
@@ -141,9 +141,9 @@ func createHalfEdges(v1, v2 int, surface *HalfEdgeSurface) (*HalfEdge, *HalfEdge
 	h1.Twin = h2
 	h2.Twin = h2
 
-	surface.HalfEdges[halfEdgeCursor] = h1
-	surface.HalfEdges[halfEdgeCursor+1] = h2
-	halfEdgeCursor += 2
+	surface.HalfEdges[*halfEdgeCursor] = h1
+	surface.HalfEdges[*halfEdgeCursor+1] = h2
+	*halfEdgeCursor += 2
 
 	return h1, h2
 }

@@ -3,6 +3,7 @@ package serialization
 import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/lib/geometry"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -25,6 +26,8 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 			primitives := ml.GetPrimitives(meshHandle)
 			if len(primitives) > 0 {
 				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+				surface := geometry.CreateHalfEdgeSurface(entities.MLPrimitivesTospecPrimitive(primitives))
+				entity.Collider.TriMeshCollider.HalfEdgeSurface = surface
 			}
 		}
 	}

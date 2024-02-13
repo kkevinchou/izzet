@@ -1,6 +1,8 @@
 package app
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 type RuntimeConfig struct {
 	CameraPosition mgl64.Vec3
@@ -67,7 +69,12 @@ type RuntimeConfig struct {
 	RotationSnapSize    int32
 	RotationSensitivity int32
 
-	UIEnabled bool
+	UIEnabled               bool
+	SimplifyMeshIterations  int32
+	SimplifiedTriangleCount int32
+	OriginalTriangleCount   int32
+
+	ShowSelectionBoundingBox bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -118,5 +125,9 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		SnapSize:            1,
 		RotationSnapSize:    20,
 		RotationSensitivity: 200,
+
+		SimplifyMeshIterations: 1000,
+
+		ShowSelectionBoundingBox: true,
 	}
 }

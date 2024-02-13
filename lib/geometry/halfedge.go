@@ -8,16 +8,19 @@ import (
 )
 
 type HalfEdgeSurface struct {
-	HalfEdges []*HalfEdge
-	Vertices  []Vertex
+	HalfEdges       []*HalfEdge
+	Vertices        []Vertex
+	VertsToHalfEdge map[int][]*HalfEdge
+	NumHalfEdges    int
 	// Edges    []Edge
 	// Faces    []Face
 }
 
 type HalfEdge struct {
-	Next   *HalfEdge
-	Twin   *HalfEdge
-	Vertex int
+	Next       *HalfEdge
+	Twin       *HalfEdge
+	Vertex     int
+	NextVertex int
 	// Edge   Edge
 	// Face   Face
 }
@@ -57,58 +60,105 @@ type Vertex struct {
 
 func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *HalfEdgeSurface {
 	var halfEdgeCursor int
+	p := primitives[0]
 
-	for _, p := range primitives {
-		numVertices := len(p.UniqueVertices)
-		// numFaces := len(p.VertexIndices) / 3
-		// numEdges := (len(p.VertexIndices) + numFaces - 2) / 2
-		numEdges := 100000
-		numHalfEdges := numEdges * 2
+	numVertices := len(p.UniqueVertices)
+	numEdges := len(p.Vertices)
+	upperboundNumHalfEdges := numEdges * 2 // upperbound on the number of half edges, if you have two edges A -> B and B -> A then that'd only generate two half edges
 
-		halfEdgeCache := map[string][2]*HalfEdge{}
+	halfEdgeCache := map[string][2]*HalfEdge{}
 
-		surface := &HalfEdgeSurface{
-			Vertices: make([]Vertex, numVertices),
-			// Edges:     make([]Edge, numEdges),
-			// Faces:     make([]Face, numFaces),
-			HalfEdges: make([]*HalfEdge, numHalfEdges),
-		}
-
-		for i, v := range p.UniqueVertices {
-			surface.Vertices[i].Position = v.Position
-		}
-
-		// verts := p.UniqueVertices
-		vertIndices := p.VertexIndices
-
-		for i := 0; i < len(vertIndices); i += 3 {
-			h1 := createOrLookupHalfEdges(int(vertIndices[i]), int(vertIndices[i+1]), surface, halfEdgeCache, &halfEdgeCursor)
-			h2 := createOrLookupHalfEdges(int(vertIndices[i+1]), int(vertIndices[i+2]), surface, halfEdgeCache, &halfEdgeCursor)
-			h3 := createOrLookupHalfEdges(int(vertIndices[i+2]), int(vertIndices[i]), surface, halfEdgeCache, &halfEdgeCursor)
-
-			h1.Next = h2
-			h2.Next = h3
-			h3.Next = h1
-		}
-		return surface
+	surface := &HalfEdgeSurface{
+		Vertices:        make([]Vertex, numVertices),
+		HalfEdges:       make([]*HalfEdge, upperboundNumHalfEdges),
+		VertsToHalfEdge: make(map[int][]*HalfEdge),
 	}
-	return nil
+
+	for i, v := range p.UniqueVertices {
+		surface.Vertices[i].Position = v.Position
+	}
+
+	vertIndices := p.VertexIndices
+
+	for i := 0; i < len(vertIndices); i += 3 {
+		h1 := createOrLookupHalfEdges(int(vertIndices[i]), int(vertIndices[i+1]), surface, halfEdgeCache, &halfEdgeCursor)
+		h2 := createOrLookupHalfEdges(int(vertIndices[i+1]), int(vertIndices[i+2]), surface, halfEdgeCache, &halfEdgeCursor)
+		h3 := createOrLookupHalfEdges(int(vertIndices[i+2]), int(vertIndices[i]), surface, halfEdgeCache, &halfEdgeCursor)
+
+		h1.Next = h2
+		h2.Next = h3
+		h3.Next = h1
+
+		// if h1.Vertex == 7149 {
+		// 	fmt.Println(h1.Vertex, "->", h1.NextVertex, "->", h1.Next.Next.Vertex)
+		// } else if h2.Vertex == 7149 {
+		// 	fmt.Println(h2.Vertex, "->", h2.NextVertex, "->", h2.Next.Next.Vertex)
+		// } else if h3.Vertex == 7149 {
+		// 	fmt.Println(h3.Vertex, "->", h3.NextVertex, "->", h3.Next.Next.Vertex)
+		// }
+		// if h1.Vertex == 7192 {
+		// 	fmt.Println("h1")
+		// } else if h2.Vertex == 7192 {
+		// 	fmt.Println("h2")
+		// } else if h3.Vertex == 7192 {
+		// 	fmt.Println("h3")
+		// }
+
+		surface.VertsToHalfEdge[h1.Vertex] = append(surface.VertsToHalfEdge[h1.Vertex], h1)
+		surface.VertsToHalfEdge[h2.Vertex] = append(surface.VertsToHalfEdge[h2.Vertex], h2)
+		surface.VertsToHalfEdge[h3.Vertex] = append(surface.VertsToHalfEdge[h3.Vertex], h3)
+	}
+	surface.NumHalfEdges = halfEdgeCursor
+
+	createBoundaryHalfEdge(surface, p, halfEdgeCursor)
+
+	return surface
 }
 
-// // returns a face, half edges
-// func process(vertices []Vertex, i, j, k int) (Edge, Face) {
-// 	return Edge{}, Face{}
-// }
+func createBoundaryHalfEdge(surface *HalfEdgeSurface, primitive *modelspec.PrimitiveSpecification, halfEdgeCount int) {
+	halfEdgesWithNilNext := map[int][]*HalfEdge{}
+	for i := 0; i < halfEdgeCount; i++ {
+		he := surface.HalfEdges[i]
+		if he.Next != nil {
+			continue
+		}
+
+		halfEdgesWithNilNext[he.Vertex] = append(halfEdgesWithNilNext[he.Vertex], he)
+	}
+
+	for _, halfEdges := range halfEdgesWithNilNext {
+		for _, he := range halfEdges {
+			if len(halfEdgesWithNilNext[he.NextVertex]) > 1 {
+				// fmt.Println(he.Vertex, "->", he.NextVertex, "------------ more than 1")
+				// for _, j := range halfEdgesWithNilNext[he.NextVertex] {
+				// 	fmt.Println("\t", j.Vertex, "->", j.NextVertex)
+				// }
+			} else {
+				he.Next = halfEdgesWithNilNext[he.NextVertex][0]
+			}
+		}
+	}
+
+	fmt.Println("--------------TWO VERTICES FOR NEXT")
+	count := 0
+	for i := 0; i < halfEdgeCount; i++ {
+		he := surface.HalfEdges[i]
+		if he.Next != nil {
+			continue
+		}
+		fmt.Println(he.Vertex, he.NextVertex)
+		count += 1
+	}
+	fmt.Println("---------------", count)
+
+	// sort half edges by start
+	// binary search to find the next half edge to connect
+}
 
 func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache map[string][2]*HalfEdge, halfEdgeCursor *int) *HalfEdge {
-	// if v1 == 11409 || v1 == 11430 {
-	// if v1 == 11409 || v2 == 11409 {
-	// 	fmt.Println(v1, v2)
-	// }
-
 	k := edgeHash(v1, v2)
 	if _, ok := halfEdgeCache[k]; ok {
-		fmt.Println(k, "found twice")
+		panic("found twice")
 	}
 
 	twinKey := edgeHash(v2, v1)
@@ -120,8 +170,7 @@ func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache
 			twin,
 		}
 
-		currentHashKey := edgeHash(v1, v2)
-		halfEdgeCache[currentHashKey] = halfEdgeArray
+		halfEdgeCache[k] = halfEdgeArray
 		mainHalfEdge = halfEdge
 	} else {
 		// if the twin key was found, then this half edge has already been created, return it
@@ -132,10 +181,12 @@ func createOrLookupHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCache
 
 func createHalfEdges(v1, v2 int, surface *HalfEdgeSurface, halfEdgeCursor *int) (*HalfEdge, *HalfEdge) {
 	h1 := &HalfEdge{
-		Vertex: v1,
+		Vertex:     v1,
+		NextVertex: v2,
 	}
 	h2 := &HalfEdge{
-		Vertex: v2,
+		Vertex:     v2,
+		NextVertex: v1,
 	}
 
 	h1.Twin = h2

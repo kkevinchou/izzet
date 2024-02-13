@@ -1,6 +1,8 @@
 package geometry
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 type Plane struct {
 	A, B, C, D float64
@@ -25,15 +27,19 @@ func ComputeErrorQuadric(plane Plane) mgl64.Mat4 {
 	return quadric
 }
 
-func PlaneFromVerts(verts [3]mgl64.Vec3) Plane {
+func PlaneFromVerts(verts [3]mgl64.Vec3) (Plane, bool) {
 	v1 := verts[1].Sub(verts[0])
 	v2 := verts[2].Sub(verts[1])
 
-	normal := v1.Cross(v2).Normalize()
+	normal := v1.Cross(v2)
+	if normal.Len() == 0 {
+		return Plane{}, false
+	}
+	normal = normal.Normalize()
 
 	samplePoint := verts[0]
 	d := -(samplePoint[0]*normal[0] + samplePoint[1]*normal[1] + samplePoint[2]*normal[2])
-	return Plane{A: normal[0], B: normal[1], C: normal[2], D: d}
+	return Plane{A: normal[0], B: normal[1], C: normal[2], D: d}, true
 }
 
 func ComputeQEM(v mgl64.Vec4, q mgl64.Mat4) float64 {

@@ -45,9 +45,10 @@ type ColliderComponent struct {
 	// Contacts marks which entities it collided with in the current frame
 	Contacts []collision.Contact
 
-	CapsuleCollider     *collider.Capsule
-	TriMeshCollider     *collider.TriMesh `json:"-"`
-	BoundingBoxCollider *collider.BoundingBox
+	CapsuleCollider           *collider.Capsule
+	TriMeshCollider           *collider.TriMesh `json:"-"`
+	SimplifiedTriMeshCollider *collider.TriMesh `json:"-"`
+	BoundingBoxCollider       *collider.BoundingBox
 
 	// stores the transformed collider (e.g. if the entity moves)
 	TransformedCapsuleCollider     *collider.Capsule     `json:"-"`

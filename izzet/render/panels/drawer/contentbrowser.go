@@ -2,6 +2,8 @@ package drawer
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
@@ -19,7 +21,15 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 	if imgui.BeginTabItem("Content Browser") {
 		if imgui.Button("Import") {
 			// loading the asset
-			assetFilePath, err := dialog.File().Filter("GLTF file", "gltf").Load()
+			d := dialog.File()
+			currentDir, err := os.Getwd()
+			if err != nil {
+				panic(err)
+			}
+			d = d.SetStartDir(filepath.Join(currentDir, "_assets", "gltf"))
+			d = d.Filter("GLTF file", "gltf")
+
+			assetFilePath, err := d.Load()
 			if err != nil {
 				if err != dialog.ErrCancelled {
 					panic(err)

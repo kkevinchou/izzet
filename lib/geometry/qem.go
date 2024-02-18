@@ -68,18 +68,10 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		}
 	}
 
-	// fmt.Println("-------------------------------------")
-	// for _, element := range heap.Slice {
-	// 	fmt.Println(*element)
-
-	// }
-	// fmt.Println("-------------------------------------")
 	var bad bool
 
 	// 5. Iteratively remove the pair (v1, v2) of least cost from the heap, contract this pair, and update the costs of all valid pairs involving v1.
-	fmt.Println("==========================================")
 	for heap.Len() > 0 {
-		fmt.Println("ITERATION", iterations)
 		edgeContraction := heap.Pop()
 		if !edgeContraction.Valid {
 			continue
@@ -95,9 +87,6 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 
 		iterations--
 
-		// fmt.Println("EDGE CONTRACTION ---------------", edgeContraction.Idx1, edgeContraction.Idx2)
-
-		// TODO - this is cringe
 		var trisToDelete []int
 		v1 := edgeContraction.Idx1
 		v2 := edgeContraction.Idx2
@@ -117,9 +106,6 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 			if bad {
 				break
 			}
-			// t := triangles[trisToDelete[0]]
-			// for _, v := range t {
-			// }
 			k := 1
 			_ = k
 			_ = bad
@@ -129,40 +115,24 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		// fmt.Println("NEW VERTEX", newVertexIndex, edgeContraction.NewVertex)
 		allVertPositions = append(allVertPositions, edgeContraction.NewVertex)
 
-		if allVertPositions[16].ApproxEqual(mgl64.Vec3{-89.0464071100546, 10.18005028104585, 109.24355311115617}) {
-			bad = true
-			fmt.Println("")
-		}
-
 		// mark edges incident to v1 and v2 as invalid
 
-		// fmt.Println("v1 mark")
 		v1Neighbors := vertNeighbors(v1, v2t, triangles)
 		for _, neighbor := range v1Neighbors {
 			hash := minEdgeHash(v1, neighbor)
 			edgeContraction := validEdges[hash]
-			if edgeContraction == nil {
-				// fmt.Println("")
-			}
-			// fmt.Println("MARK INVALID", hash)
 			edgeContraction.Valid = false
 		}
 
-		// fmt.Println("v2 mark")
 		v2Neighbors := vertNeighbors(v2, v2t, triangles)
 		for _, neighbor := range v2Neighbors {
 			hash := minEdgeHash(v2, neighbor)
 			edgeContraction := validEdges[hash]
-			if edgeContraction == nil {
-				// fmt.Println("")
-			}
-			// fmt.Println("MARK INVALID", hash)
 			edgeContraction.Valid = false
 		}
 
 		for _, triToDelete := range trisToDelete {
 			// delete the triangles
-			// fmt.Println("delete", triToDelete, "---", triangles[triToDelete])
 			for _, vert := range triangles[triToDelete] {
 				v2t[vert] = slices.DeleteFunc(v2t[vert], func(t int) bool { return t == triToDelete })
 			}
@@ -170,13 +140,12 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		}
 
 		// recalculate Q for all vNeighbors
-		// - needs all triangles incident to the vertex
 
 		// update triangles that were incident to v1 v2 to now point to vHat instead
 		replaceVertex(v1, newVertexIndex, v2t, triangles, validEdges)
 		replaceVertex(v2, newVertexIndex, v2t, triangles, validEdges)
 
-		// need to create Q for vHat
+		// create Q for vHat
 		q := createQuadricForVertex(newVertexIndex, allVertPositions, v2t, triangles)
 		quadrics[newVertexIndex] = q
 
@@ -186,13 +155,11 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 			q := createQuadricForVertex(neighbor, allVertPositions, v2t, triangles)
 			quadrics[neighbor] = q
 
-			if newVertexIndex == 16 && neighbor == 12 {
-				fmt.Println("")
-			}
 			// push an edge contraction onto the heap for each vHat vNeighbor pair
 			edgeContraction := createEdgeContraction(newVertexIndex, neighbor, quadrics[newVertexIndex], quadrics[neighbor], allVertPositions[newVertexIndex], allVertPositions[neighbor])
 			if edgeContraction.NewVertex.X() > 30 {
-				fmt.Println("")
+				asdf := 1
+				_ = asdf
 			}
 
 			hash := minEdgeHash(newVertexIndex, neighbor)
@@ -364,9 +331,6 @@ func createEdgeContraction(v1, v2 int, v1Quadric, v2Quadric mgl64.Mat4, v1Positi
 
 		cost = ComputeQEM(vHatV4, QHat)
 		vHat = vHatV4.Vec3()
-		if (math.Abs(vHat.X()) > 500) || (math.Abs(vHat.Y()) > 500) || (math.Abs(vHat.Z()) > 500) {
-			fmt.Println("")
-		}
 	} else {
 		// cost = 0
 		// vHat = v1Position.Add(v2Position).Mul(1.0 / 2.0)
@@ -381,13 +345,6 @@ func createEdgeContraction(v1, v2 int, v1Quadric, v2Quadric mgl64.Mat4, v1Positi
 			cost = v2Cost
 			vHat = v2Position
 		}
-		if (math.Abs(vHat.X()) > 500) || (math.Abs(vHat.Y()) > 500) || (math.Abs(vHat.Z()) > 500) {
-			fmt.Println("")
-		}
-	}
-
-	if (math.Abs(vHat.X()) > 500) || (math.Abs(vHat.Y()) > 500) || (math.Abs(vHat.Z()) > 500) {
-		fmt.Println("")
 	}
 
 	return &EdgeContraction{Idx1: idx1, Idx2: idx2, NewVertex: vHat, Quadric: QHat, Cost: cost, Valid: true}

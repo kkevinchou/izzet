@@ -241,32 +241,20 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		}
 	}
 
+	originalMeshTriCount := 0
+	for _, primitive := range app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle) {
+		originalMeshTriCount += len(primitive.Primitive.VertexIndices) / 3
+	}
+
 	if entity.MeshComponent != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Mesh Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()
 			setupRow("Visible", func() { imgui.Checkbox("", &entity.MeshComponent.Visible) }, true)
 			setupRow("Shadow Casting", func() { imgui.Checkbox("", &entity.MeshComponent.ShadowCasting) }, true)
-			uiTableRow("Original Triangle Count", app.RuntimeConfig().OriginalTriangleCount)
-			uiTableRow("Simplified Triangle Count", app.RuntimeConfig().SimplifiedTriangleCount)
-			imgui.EndTable()
 
-			entity := app.SelectedEntity()
-			if entity != nil {
-				iterations := app.RuntimeConfig().SimplifyMeshIterations
-				if imgui.InputIntV("##SimplifyMeshIterations", &iterations, 0, 0, imgui.InputTextFlagsNone) {
-					app.RuntimeConfig().SimplifyMeshIterations = iterations
-				}
-				if imgui.Button("Simplify Mesh") {
-					primitives := app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
-					specPrimitives := entities.MLPrimitivesTospecPrimitive(primitives)
-					entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(specPrimitives[0], int(app.RuntimeConfig().SimplifyMeshIterations))
-					entity.SimplifiedTriMeshIterations = int(app.RuntimeConfig().SimplifyMeshIterations)
-					app.RuntimeConfig().OriginalTriangleCount = int32(len(specPrimitives[0].VertexIndices) / 3)
-					app.RuntimeConfig().SimplifiedTriangleCount = int32(len(entity.Collider.SimplifiedTriMeshCollider.Triangles))
-				}
-				// setupRow("Simplified Triangles", func() { imgui.Checkbox("", &entit }, true)
-			}
+			uiTableRow("Original Triangle Count", originalMeshTriCount)
+			imgui.EndTable()
 		}
 	}
 
@@ -330,7 +318,24 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			setupRow("Bounding Box", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.BoundingBoxCollider != nil))
 			}, true)
+
+			simplifiedMeshTriCount := originalMeshTriCount
+			if entity.Collider.SimplifiedTriMeshCollider != nil {
+				simplifiedMeshTriCount = len(entity.Collider.SimplifiedTriMeshCollider.Triangles)
+			}
+
+			uiTableRow("Triangle Count", simplifiedMeshTriCount)
 			imgui.EndTable()
+			iterations := app.RuntimeConfig().SimplifyMeshIterations
+			if imgui.InputIntV("##SimplifyMeshIterations", &iterations, 0, 0, imgui.InputTextFlagsNone) {
+				app.RuntimeConfig().SimplifyMeshIterations = iterations
+			}
+			if imgui.Button("Simplify Mesh") {
+				primitives := app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+				specPrimitives := entities.MLPrimitivesTospecPrimitive(primitives)
+				entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(specPrimitives[0], int(app.RuntimeConfig().SimplifyMeshIterations))
+				entity.SimplifiedTriMeshIterations = int(app.RuntimeConfig().SimplifyMeshIterations)
+			}
 		}
 	}
 

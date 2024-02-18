@@ -69,11 +69,9 @@ type RuntimeConfig struct {
 	RotationSnapSize    int32
 	RotationSensitivity int32
 
-	UIEnabled               bool
-	SimplifyMeshIterations  int32
-	SimplifiedTriangleCount int32
-	OriginalTriangleCount   int32
-
+	// Other
+	UIEnabled                bool
+	SimplifyMeshIterations   int32
 	ShowSelectionBoundingBox bool
 }
 
@@ -125,8 +123,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		SnapSize:            1,
 		RotationSnapSize:    20,
 		RotationSensitivity: 200,
-
-		SimplifyMeshIterations: 1000,
 
 		ShowSelectionBoundingBox: true,
 	}

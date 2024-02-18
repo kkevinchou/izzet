@@ -16,22 +16,23 @@ import (
 var id int
 
 type Entity struct {
-	ID                  int
-	Name                string
-	Billboard           bool
-	Physics             *PhysicsComponent
-	Collider            *ColliderComponent
-	Movement            *MovementComponent
-	Particles           *ParticleGenerator
-	IsSocket            bool
-	LightInfo           *LightInfo
-	ImageInfo           *ImageInfo
-	ShapeData           []*ShapeData
-	Material            *MaterialComponent
-	Animation           *AnimationComponent
-	CameraComponent     *CameraComponent
-	Static              bool
-	ClientSidePredicted bool
+	ID                          int
+	Name                        string
+	Billboard                   bool
+	Physics                     *PhysicsComponent
+	Collider                    *ColliderComponent
+	Movement                    *MovementComponent
+	Particles                   *ParticleGenerator
+	IsSocket                    bool
+	LightInfo                   *LightInfo
+	ImageInfo                   *ImageInfo
+	ShapeData                   []*ShapeData
+	Material                    *MaterialComponent
+	Animation                   *AnimationComponent
+	CameraComponent             *CameraComponent
+	Static                      bool
+	ClientSidePredicted         bool
+	SimplifiedTriMeshIterations int
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`

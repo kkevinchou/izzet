@@ -430,17 +430,18 @@ func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotatio
 func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
-	// joint rendering for the selected entity
-	entity := r.app.SelectedEntity()
-	if entity != nil {
-		// draw bounding box
-		if entity.HasBoundingBox() {
-			r.drawAABB(
-				viewerContext,
-				mgl64.Vec3{.2, 0, .7},
-				entity.BoundingBox(),
-				0.5,
-			)
+	if r.app.RuntimeConfig().ShowSelectionBoundingBox {
+		entity := r.app.SelectedEntity()
+		if entity != nil {
+			// draw bounding box
+			if entity.HasBoundingBox() {
+				r.drawAABB(
+					viewerContext,
+					mgl64.Vec3{.2, 0, .7},
+					entity.BoundingBox(),
+					0.5,
+				)
+			}
 		}
 	}
 
@@ -884,6 +885,54 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			r.app.ModelLibrary(),
 			entity,
 		)
+
+		_ = animationPlayer
+
+	}
+
+	shader = shaderManager.GetShaderProgram("flat")
+	shader.Use()
+	for _, entity := range renderableEntities {
+		if entity == nil || entity.MeshComponent == nil {
+			continue
+		}
+
+		if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
+			continue
+		}
+
+		modelMatrix := entities.WorldTransform(entity)
+
+		if entity.Collider != nil && entity.Collider.SimplifiedTriMeshCollider != nil {
+			var lines [][]mgl64.Vec3
+			for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
+				lines = append(lines, []mgl64.Vec3{
+					triangles.Points[0],
+					triangles.Points[1],
+				})
+				lines = append(lines, []mgl64.Vec3{
+					triangles.Points[1],
+					triangles.Points[2],
+				})
+				lines = append(lines, []mgl64.Vec3{
+					triangles.Points[2],
+					triangles.Points[0],
+				})
+			}
+
+			fmt.Println(modelMatrix.Mul4x1(mgl64.Vec4{-89, 10.18, 105.2, 1}))
+			fmt.Println(modelMatrix.Mul4x1(mgl64.Vec4{-107.2, 14.3, 105.57, 1}))
+			fmt.Println(modelMatrix.Mul4x1(mgl64.Vec4{34.07, 17.03, 100.57, 1}))
+
+			if len(lines) > 0 {
+				// fmt.Println(nonNilCount, nilCount)
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+				// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
+				r.drawLines(viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
+			}
+		}
 	}
 
 	for _, entity := range renderableEntities {

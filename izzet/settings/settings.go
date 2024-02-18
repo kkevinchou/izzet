@@ -57,7 +57,7 @@ const (
 	DepthCubeMapWidth  float32 = 4096
 	DepthCubeMapHeight float32 = 4096
 	DepthCubeMapNear   float64 = 1
-	DepthCubeMapFar    float64 = 800
+	DepthCubeMapFar    float64 = 1000
 
 	// shadow map properties
 	ShadowmapZOffset float64 = 600 // Z offset relative to the light's view. if this is too small, objects behind a camera may fail to cast shadows
@@ -75,7 +75,7 @@ const (
 	FirstPersonCamera  bool    = false
 	CameraEntityOffset float64 = 100
 	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "default2"
+	DefaultProject     string  = "default"
 )
 
 // styles

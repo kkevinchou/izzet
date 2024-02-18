@@ -7,10 +7,14 @@ import (
 
 func view(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
-	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
+	imgui.SetNextWindowSize(imgui.Vec2{X: 300})
 	if imgui.BeginMenu("View") {
 		if imgui.MenuItemBoolV("Show Colliders", "", runtimeConfig.RenderColliders, true) {
 			runtimeConfig.RenderColliders = !runtimeConfig.RenderColliders
+		}
+
+		if imgui.MenuItemBoolV("Show Selection Bounding Box", "", runtimeConfig.ShowSelectionBoundingBox, true) {
+			runtimeConfig.ShowSelectionBoundingBox = !runtimeConfig.ShowSelectionBoundingBox
 		}
 
 		if imgui.MenuItemBoolV("Show UI", "", runtimeConfig.UIEnabled, true) {

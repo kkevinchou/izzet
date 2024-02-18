@@ -1,7 +1,6 @@
 package geometry_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/kkevinchou/izzet/lib/geometry"
@@ -11,7 +10,7 @@ import (
 
 func TestHalfEdgeSurfaceGeneration(t *testing.T) {
 	config := &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL}
-	doc, err := gltf.ParseGLTF("model", "../../_assets/test/dude.gltf", config)
+	doc, err := gltf.ParseGLTF("model", "../../_assets/test/stall_manifold.gltf", config)
 	// doc, err := gltf.ParseGLTF("model", "../../_assets/gltf/alpha.gltf", config)
 	if err != nil {
 		t.Fail()
@@ -23,5 +22,6 @@ func TestHalfEdgeSurfaceGeneration(t *testing.T) {
 		primitives = append(primitives, m.Primitives...)
 	}
 	surface := geometry.CreateHalfEdgeSurface(primitives)
-	fmt.Println(surface)
+	_ = surface
+	// fmt.Println(surface)
 }

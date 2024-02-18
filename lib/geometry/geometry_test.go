@@ -14,7 +14,10 @@ func TestZeroError(t *testing.T) {
 	point2 := mgl64.Vec3{2, 1, 1}
 	point3 := mgl64.Vec3{1.5, 1, -1}
 
-	plane := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	plane, ok := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	if !ok {
+		t.Fail()
+	}
 	v := mgl64.Vec4{5, 1, 0, 1}
 
 	q := geometry.ComputeErrorQuadric(plane)
@@ -32,7 +35,10 @@ func TestErrorIsSquared(t *testing.T) {
 	point2 := mgl64.Vec3{2, 1, 1}
 	point3 := mgl64.Vec3{1.5, 1, -1}
 
-	plane := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	plane, ok := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	if !ok {
+		t.Fail()
+	}
 	v := mgl64.Vec4{5, 3, 0, 1}
 
 	q := geometry.ComputeErrorQuadric(plane)
@@ -50,7 +56,10 @@ func TestPlaneWithXNormal(t *testing.T) {
 	point2 := mgl64.Vec3{1, 1, -1}
 	point3 := mgl64.Vec3{1, 2, -1}
 
-	plane := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	plane, ok := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	if !ok {
+		t.Fail()
+	}
 	v := mgl64.Vec4{5, 0, 0, 1}
 
 	q := geometry.ComputeErrorQuadric(plane)
@@ -69,19 +78,28 @@ func TestFindMinimumVertex(t *testing.T) {
 	point2 := mgl64.Vec3{2, 0, 0}
 	point3 := mgl64.Vec3{1.5, 1, 0}
 
-	plane1 := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	plane1, ok := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	if !ok {
+		t.Fail()
+	}
 
 	point1 = mgl64.Vec3{1, 0, 0}
 	point2 = mgl64.Vec3{1, 0, -1}
 	point3 = mgl64.Vec3{1, 1, -1}
 
-	plane2 := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	plane2, ok := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	if !ok {
+		t.Fail()
+	}
 
 	point1 = mgl64.Vec3{1, 0, 0}
 	point2 = mgl64.Vec3{2, 0, 0}
 	point3 = mgl64.Vec3{1.5, 0, -1}
 
-	plane3 := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	plane3, ok := geometry.PlaneFromVerts([3]mgl64.Vec3{point1, point2, point3})
+	if !ok {
+		t.Fail()
+	}
 
 	q1 := geometry.ComputeErrorQuadric(plane1)
 	q2 := geometry.ComputeErrorQuadric(plane2)

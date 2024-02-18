@@ -890,7 +890,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 	}
 
-	if r.app.RuntimeConfig().ShowSimplifiedTriMesh {
+	if r.app.RuntimeConfig().RenderColliders {
 		shader := shaderManager.GetShaderProgram("flat")
 		shader.Use()
 		for _, entity := range renderableEntities {

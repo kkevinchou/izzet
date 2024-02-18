@@ -13,10 +13,6 @@ func view(app renderiface.App) {
 			runtimeConfig.RenderColliders = !runtimeConfig.RenderColliders
 		}
 
-		if imgui.MenuItemBoolV("Show Simplified Tri Mesh", "", runtimeConfig.ShowSimplifiedTriMesh, true) {
-			runtimeConfig.ShowSimplifiedTriMesh = !runtimeConfig.ShowSimplifiedTriMesh
-		}
-
 		if imgui.MenuItemBoolV("Show Selection Bounding Box", "", runtimeConfig.ShowSelectionBoundingBox, true) {
 			runtimeConfig.ShowSelectionBoundingBox = !runtimeConfig.ShowSelectionBoundingBox
 		}

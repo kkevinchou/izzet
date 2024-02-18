@@ -327,9 +327,14 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			uiTableRow("Triangle Count", simplifiedMeshTriCount)
 			imgui.EndTable()
 			iterations := app.RuntimeConfig().SimplifyMeshIterations
+
+			parentWidth := imgui.ContentRegionAvail().X
+			imgui.PushItemWidth(parentWidth / 2)
 			if imgui.InputIntV("##SimplifyMeshIterations", &iterations, 0, 0, imgui.InputTextFlagsNone) {
 				app.RuntimeConfig().SimplifyMeshIterations = iterations
 			}
+			imgui.PopItemWidth()
+			imgui.SameLine()
 			if imgui.Button("Simplify Mesh") {
 				primitives := app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
 				specPrimitives := entities.MLPrimitivesTospecPrimitive(primitives)

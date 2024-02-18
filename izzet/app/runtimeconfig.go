@@ -73,7 +73,6 @@ type RuntimeConfig struct {
 	UIEnabled                bool
 	SimplifyMeshIterations   int32
 	ShowSelectionBoundingBox bool
-	ShowSimplifiedTriMesh    bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -126,6 +125,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		RotationSensitivity: 200,
 
 		ShowSelectionBoundingBox: true,
-		ShowSimplifiedTriMesh:    true,
+		RenderColliders:          true,
 	}
 }

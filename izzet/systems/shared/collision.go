@@ -184,7 +184,11 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 			// localPosition := entities.GetLocalPosition(e)
 			// transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
 			transformMatrix := entities.WorldTransform(e)
+			// triMesh := cc.TriMeshCollider.Transform(transformMatrix)
 			triMesh := cc.TriMeshCollider.Transform(transformMatrix)
+			if cc.SimplifiedTriMeshCollider != nil {
+				triMesh = cc.SimplifiedTriMeshCollider.Transform(transformMatrix)
+			}
 			cc.TransformedTriMeshCollider = &triMesh
 		}
 	}

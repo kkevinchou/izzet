@@ -15,7 +15,7 @@ var ShadowCasting = func(entity *Entity) bool {
 }
 
 var Renderable = func(entity *Entity) bool {
-	return entity.MeshComponent != nil && entity.MeshComponent.Visible
+	return entity.MeshComponent != nil
 }
 
 var EmptyFilter = func(entity *Entity) bool {

@@ -26,8 +26,9 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 			primitives := ml.GetPrimitives(meshHandle)
 			if len(primitives) > 0 {
 				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
-				surface := geometry.CreateHalfEdgeSurface(entities.MLPrimitivesTospecPrimitive(primitives))
-				entity.Collider.TriMeshCollider.HalfEdgeSurface = surface
+				if entity.SimplifiedTriMeshIterations > 0 {
+					entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(entities.MLPrimitivesTospecPrimitive(primitives)[0], entity.SimplifiedTriMeshIterations)
+				}
 			}
 		}
 	}

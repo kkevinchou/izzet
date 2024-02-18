@@ -35,6 +35,8 @@ func genLineKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
+var testVAO uint32
+
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func (r *Renderer) drawTris(points []mgl64.Vec3) {
 	var vertices []float32
@@ -42,6 +44,26 @@ func (r *Renderer) drawTris(points []mgl64.Vec3) {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
 	}
 
+	if len(points) > 200000 {
+		if testVAO == 0 {
+			var vbo, vao uint32
+			apputils.GenBuffers(1, &vbo)
+			gl.GenVertexArrays(1, &vao)
+
+			gl.BindVertexArray(vao)
+			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+			gl.EnableVertexAttribArray(0)
+
+			testVAO = vao
+		}
+
+		gl.BindVertexArray(testVAO)
+		r.iztDrawArrays(0, int32(len(vertices)))
+		return
+	}
 	var vbo, vao uint32
 	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)

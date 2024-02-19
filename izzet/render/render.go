@@ -893,8 +893,9 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	if r.app.RuntimeConfig().RenderColliders {
 		shader := shaderManager.GetShaderProgram("flat")
 		shader.Use()
+
 		for _, entity := range renderableEntities {
-			if entity == nil || entity.MeshComponent == nil {
+			if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
 				continue
 			}
 
@@ -904,33 +905,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 			modelMatrix := entities.WorldTransform(entity)
 
-			// if entity.Collider != nil && entity.Collider.SimplifiedTriMeshCollider != nil {
-			// 	var lines [][]mgl64.Vec3
-			// 	for _ = range 2000 {
-			// 		lines = append(lines, []mgl64.Vec3{
-			// 			mgl64.Vec3{0, 0, 0},
-			// 			mgl64.Vec3{100, 0, 0},
-			// 		})
-			// 		lines = append(lines, []mgl64.Vec3{
-			// 			mgl64.Vec3{100, 0, 0},
-			// 			mgl64.Vec3{50, 100, 0},
-			// 		})
-			// 		lines = append(lines, []mgl64.Vec3{
-			// 			mgl64.Vec3{50, 100, 0},
-			// 			mgl64.Vec3{0, 0, 0},
-			// 		})
-			// 	}
-			// 	if len(lines) > 0 {
-			// 		// fmt.Println(nonNilCount, nilCount)
-			// 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-			// 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			// 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			// 		// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
-			// 		r.drawLines(viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
-			// 	}
-			// }
-
-			if entity.Collider != nil && entity.Collider.SimplifiedTriMeshCollider != nil {
+			if entity.Collider.SimplifiedTriMeshCollider != nil {
 				var lines [][]mgl64.Vec3
 				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
 					lines = append(lines, []mgl64.Vec3{
@@ -957,19 +932,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
 				}
 			}
-		}
-	}
 
-	for _, entity := range renderableEntities {
-		if entity == nil || entity.Material != nil || entity.Collider == nil {
-			continue
-		}
-
-		if r.app.RuntimeConfig().RenderColliders {
-			capsuleCollider := entity.Collider.CapsuleCollider
-			if capsuleCollider != nil {
+			if entity.Collider.CapsuleCollider != nil {
 				transform := entities.WorldTransform(entity)
-				capsuleCollider := capsuleCollider.Transform(transform)
+				capsuleCollider := entity.Collider.CapsuleCollider.Transform(transform)
 
 				top := capsuleCollider.Top
 				bottom := capsuleCollider.Bottom
@@ -1037,6 +1003,14 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			}
 		}
 	}
+
+	// for _, entity := range renderableEntities {
+	// 	if entity == nil || entity.Material != nil || entity.Collider == nil {
+	// 		continue
+	// 	}
+
+	// 	if r.app.RuntimeConfig().RenderColliders {
+	// }
 }
 
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {

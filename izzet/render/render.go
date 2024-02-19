@@ -468,7 +468,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-					r.drawLines(viewerContext, shader, lines, 0.5, color)
+					r.drawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), viewerContext, shader, lines, 0.5, color)
 				}
 			}
 		}
@@ -953,7 +953,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
-					r.drawLines(viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
+					// r.drawLines(viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
+					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
 				}
 			}
 		}

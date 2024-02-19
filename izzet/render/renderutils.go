@@ -26,44 +26,29 @@ import (
 )
 
 var lineCache map[string][]mgl64.Vec3
+var triangleVAOCache map[string]TriangleVAO
+
+type TriangleVAO struct {
+	VAO    uint32
+	length int
+}
 
 func init() {
 	lineCache = map[string][]mgl64.Vec3{}
+	triangleVAOCache = map[string]TriangleVAO{}
 }
 
 func genLineKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
-var testVAO uint32
-
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func (r *Renderer) drawTris(points []mgl64.Vec3) {
+func (r *Renderer) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
 	}
 
-	if len(points) > 200000 {
-		if testVAO == 0 {
-			var vbo, vao uint32
-			apputils.GenBuffers(1, &vbo)
-			gl.GenVertexArrays(1, &vao)
-
-			gl.BindVertexArray(vao)
-			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-			gl.EnableVertexAttribArray(0)
-
-			testVAO = vao
-		}
-
-		gl.BindVertexArray(testVAO)
-		r.iztDrawArrays(0, int32(len(vertices)))
-		return
-	}
 	var vbo, vao uint32
 	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
@@ -75,8 +60,13 @@ func (r *Renderer) drawTris(points []mgl64.Vec3) {
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
 	gl.EnableVertexAttribArray(0)
 
+	return vao, len(vertices)
+}
+
+func (r *Renderer) drawTris(points []mgl64.Vec3) {
+	vao, length := r.generateTrisVAO(points)
 	gl.BindVertexArray(vao)
-	r.iztDrawArrays(0, int32(len(vertices)))
+	r.iztDrawArrays(0, int32(length))
 }
 
 var navMeshTrisVAO uint32
@@ -234,16 +224,8 @@ func (r *Renderer) generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField
 		mgl64.Vec3{0, 0, -1},
 	}
 
-	// color := []float32{3.0 / 255, 185.0 / 255, 5.0 / 255}
-	// if voxel.DistanceField == 0 {
-	// 	color = []float32{0.8, 0, 0}
-	// }
-
 	color := mgl32.Vec3{1.0, 0, 0}
 
-	// if len(voxel.Neighbors) == 4 {
-	// 	color = mgl32.Vec3{0, 1, 0}
-	// } else if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
 	if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
 		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
 		color = HSVtoRGB(hsv)
@@ -256,7 +238,6 @@ func (r *Renderer) generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField
 			color = mgl32.Vec3{1, 0, 1}
 		} else if r.app.RuntimeConfig().NavMeshHSV {
 			if voxel.RegionID != -1 && voxel.RegionID <= int(r.app.RuntimeConfig().NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(r.app.RuntimeConfig().NavMeshDistanceFieldThreshold) {
-				// if voxel.RegionID != -1 {
 				hsv = mgl32.Vec3{float32((voxel.RegionID * int(r.app.RuntimeConfig().HSVOffset)) % 255), 1, 1}
 				color = HSVtoRGB(hsv)
 			}
@@ -266,11 +247,6 @@ func (r *Renderer) generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField
 			color = color.Mul(*voxel.DEBUGCOLORFACTOR)
 		}
 	}
-
-	// if voxel.DistanceField == 0 {
-	// 	colorVal := float32(1)
-	// 	color = []float32{colorVal, colorVal, colorVal}
-	// }
 
 	for i := 0; i < len(verts); i++ {
 		vertexAttributes = append(vertexAttributes,
@@ -530,6 +506,40 @@ func (r *Renderer) drawModel(
 
 func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
+}
+
+func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+	var vao uint32
+	var length int
+
+	if _, ok := triangleVAOCache[name]; !ok {
+		var points []mgl64.Vec3
+		for _, line := range lines {
+			start := line[0]
+			end := line[1]
+			length := end.Sub(start).Len()
+
+			dir := end.Sub(start).Normalize()
+			q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+
+			for _, dp := range linePoints(thickness, length) {
+				newEnd := q.Rotate(dp).Add(start)
+				points = append(points, newEnd)
+			}
+		}
+		vao, length = r.generateTrisVAO(points)
+		item := TriangleVAO{VAO: vao, length: length}
+		triangleVAOCache[name] = item
+	}
+
+	item := triangleVAOCache[name]
+	vao = item.VAO
+	length = item.length
+
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformFloat("intensity", 1.0)
+	gl.BindVertexArray(vao)
+	r.iztDrawArrays(0, int32(length))
 }
 
 func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
@@ -1070,13 +1080,7 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb 
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	r.drawLines(
-		viewerContext,
-		shader,
-		allLines,
-		thickness,
-		color,
-	)
+	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), viewerContext, shader, allLines, thickness, color)
 }
 
 func (r *Renderer) getCubeVAO(length float32) uint32 {
@@ -1155,9 +1159,6 @@ func (r *Renderer) initCubeVAO(length float32) uint32 {
 
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
 	gl.EnableVertexAttribArray(0)
-
-	// gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, nil)
-	// gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(len(vertices))/3)

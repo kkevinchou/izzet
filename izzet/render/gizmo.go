@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
@@ -44,7 +45,8 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 			color = mgl64.Vec3{1, 1, 0}
 		}
 
-		r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+		// r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+		r.drawLineGroup(fmt.Sprintf("%d_%v", entityID, renderPosition), *viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 
 	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}

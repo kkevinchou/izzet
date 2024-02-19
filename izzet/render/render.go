@@ -1003,14 +1003,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			}
 		}
 	}
-
-	// for _, entity := range renderableEntities {
-	// 	if entity == nil || entity.Material != nil || entity.Collider == nil {
-	// 		continue
-	// 	}
-
-	// 	if r.app.RuntimeConfig().RenderColliders {
-	// }
 }
 
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {

@@ -22,6 +22,7 @@ func SetupMenuBar(app renderiface.App) {
 	file(app)
 	view(app)
 	multiplayer(app)
+	other(app)
 
 	imgui.EndMainMenuBar()
 }

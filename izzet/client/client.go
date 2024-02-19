@@ -169,7 +169,6 @@ func (g *Client) Start() {
 		panic(err)
 	}
 
-	frameCount := 0
 	commandFrameCountBeforeRender := 0
 	for !g.gameOver {
 		now := float64(time.Now().UnixNano()) / 1000000
@@ -206,27 +205,15 @@ func (g *Client) Start() {
 
 		if g.window.Minimized() {
 			msPerFrame = float64(1000) / float64(30)
+		} else if g.RuntimeConfig().LockRenderingToCommandFrameRate {
+			msPerFrame = float64(settings.MSPerCommandFrame)
 		} else {
 			msPerFrame = float64(1000) / float64(settings.FPS)
 		}
 
 		if renderAccumulator >= msPerFrame {
-			g.MetricsRegistry().Inc("fps", 1)
-
-			g.RuntimeConfig().FPS = g.MetricsRegistry().GetOneSecondSum("fps")
-			g.RuntimeConfig().CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
-			g.RuntimeConfig().RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
-			g.RuntimeConfig().CommandFramesPerRender = commandFrameCountBeforeRender
-			commandFrameCountBeforeRender = 0
-
-			start := time.Now()
-			frameCount++
-			// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-			g.renderer.Render(time.Duration(msPerFrame) * time.Millisecond)
-			g.window.Swap()
-			renderTime := time.Since(start).Milliseconds()
-			g.MetricsRegistry().Inc("render_time", float64(renderTime))
-
+			delta := time.Duration(msPerFrame) * time.Millisecond
+			g.render(delta)
 			// don't try to accumulate time to point where we render back to back loop iterations.
 			// it's unlikely the game state has changed much from one step to the next.
 			for renderAccumulator > msPerFrame {
@@ -234,6 +221,22 @@ func (g *Client) Start() {
 			}
 		}
 	}
+}
+
+func (g *Client) render(delta time.Duration) {
+	g.MetricsRegistry().Inc("fps", 1)
+
+	g.RuntimeConfig().FPS = g.MetricsRegistry().GetOneSecondSum("fps")
+	g.RuntimeConfig().CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
+	g.RuntimeConfig().RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
+
+	start := time.Now()
+	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
+	g.renderer.Render(delta)
+	g.window.Swap()
+	renderTime := time.Since(start).Milliseconds()
+	g.MetricsRegistry().Inc("render_time", float64(renderTime))
+
 }
 
 func initSeed() {

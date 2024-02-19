@@ -17,7 +17,6 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		// imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed, tableColumn0Width, 0)
 
 		// Frame Profiling
-		setupRow("Command Frames Before Render", func() { imgui.LabelText("", fmt.Sprintf("%d", settings.CommandFramesPerRender)) }, true)
 		setupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", settings.RenderTime)) }, true)
 		setupRow("Command Frame Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", settings.CommandFrameTime)) }, true)
 		setupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", settings.FPS)) }, true)

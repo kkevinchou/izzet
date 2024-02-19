@@ -31,10 +31,9 @@ type RuntimeConfig struct {
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
-	RenderTime             float64
-	FPS                    float64
-	CommandFrameTime       float64
-	CommandFramesPerRender int
+	RenderTime       float64
+	FPS              float64
+	CommandFrameTime float64
 
 	FovX float32
 	Near float32
@@ -70,9 +69,10 @@ type RuntimeConfig struct {
 	RotationSensitivity int32
 
 	// Other
-	UIEnabled                bool
-	SimplifyMeshIterations   int32
-	ShowSelectionBoundingBox bool
+	UIEnabled                       bool
+	SimplifyMeshIterations          int32
+	ShowSelectionBoundingBox        bool
+	LockRenderingToCommandFrameRate bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {

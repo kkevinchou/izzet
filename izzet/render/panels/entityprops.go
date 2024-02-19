@@ -242,11 +242,12 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	}
 
 	originalMeshTriCount := 0
-	for _, primitive := range app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle) {
-		originalMeshTriCount += len(primitive.Primitive.VertexIndices) / 3
-	}
 
 	if entity.MeshComponent != nil {
+		for _, primitive := range app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle) {
+			originalMeshTriCount += len(primitive.Primitive.VertexIndices) / 3
+		}
+
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Mesh Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			initColumns()

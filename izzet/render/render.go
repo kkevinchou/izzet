@@ -216,14 +216,14 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
-	r.imguiMainColorTexture = imgui.TextureID(uintptr(r.mainColorTexture))
+	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *Renderer) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
-	r.imguiCompositeTexture = imgui.TextureID(uintptr(r.compositeTexture))
+	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 
 func (r *Renderer) Render(delta time.Duration) {
@@ -1038,33 +1038,44 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 		if imgui.BeginChildStrV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
 			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
-		// if imgui.BeginDragDropTarget() {
-		// 	if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
-		// 		fmt.Println("END DRAGGING", string(payload))
-		// 		itemName := string(payload)
-		// 		document := r.app.AssetManager().GetDocument(itemName)
-		// 		handle := modellibrary.NewGlobalHandle(itemName)
-		// 		if len(document.Scenes) != 1 {
-		// 			panic("single entity asset loading only supports a singular scene")
-		// 		}
+		if imgui.BeginDragDropTarget() {
+			if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsAcceptPeekOnly); payload != nil {
+				// if payload.IsDelivery() {
+				fmt.Println("----------------------------------")
+				// fmt.Println(payload.Data())
+				// fmt.Println(*(*string)(payload.Data()))
+				// }
+			}
+			imgui.EndDragDropTarget()
+			// if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
+			// 	fmt.Println(payload)
+			// 	// data := payload.Data()
+			// 	// ptr := (*string)(data)
 
-		// 		scene := document.Scenes[0]
-		// 		node := scene.Nodes[0]
+			// 	// itemName := *ptr
+			// 	// document := r.app.AssetManager().GetDocument(itemName)
+			// 	// handle := modellibrary.NewGlobalHandle(itemName)
+			// 	// if len(document.Scenes) != 1 {
+			// 	// 	panic("single entity asset loading only supports a singular scene")
+			// 	// }
 
-		// 		entity := entities.InstantiateEntity(document.Name)
-		// 		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-		// 		var vertices []modelspec.Vertex
-		// 		entities.VerticesFromNode(node, document, &vertices)
-		// 		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		// 		entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-		// 		entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-		// 		entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+			// 	// scene := document.Scenes[0]
+			// 	// node := scene.Nodes[0]
 
-		// 		r.world.AddEntity(entity)
-		// 		imgui.CloseCurrentPopup()
-		// 	}
-		// 	imgui.EndDragDropTarget()
-		// }
+			// 	// entity := entities.InstantiateEntity(document.Name)
+			// 	// entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+			// 	// var vertices []modelspec.Vertex
+			// 	// entities.VerticesFromNode(node, document, &vertices)
+			// 	// entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+			// 	// entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+			// 	// entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+			// 	// entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+			// 	// r.world.AddEntity(entity)
+			// 	// imgui.CloseCurrentPopup()
+			// }
+			// imgui.EndDragDropTarget()
+		}
 
 		if imgui.IsWindowHovered() {
 			r.gameWindowHovered = true

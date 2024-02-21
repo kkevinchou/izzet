@@ -52,7 +52,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 						regionSize := imgui.ContentRegionAvail()
 						imageWidth := regionSize.X
 
-						texture := imgui.TextureID(uintptr(settings.DebugTexture))
+						texture := imgui.TextureID{Data: uintptr(settings.DebugTexture)}
 						size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
 						// invert the Y axis since opengl vs texture coordinate systems differ
 						// https://learnopengl.com/Getting-started/Textures

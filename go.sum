@@ -1,5 +1,7 @@
 github.com/AllenDang/cimgui-go v0.0.0-20231219093052-24bd5dc22643 h1:lhxdXiabL5kqRx5VEHOABr8T25J+IbwxNsbmmSLGrEY=
 github.com/AllenDang/cimgui-go v0.0.0-20231219093052-24bd5dc22643/go.mod h1:UH0IZCbsJKA1hAVQQU6AIDfamqTk0/d3VucaN8lp1Gs=
+github.com/AllenDang/cimgui-go v0.0.0-20240219164318-ef715f47b06e h1:ck8897n1951BU2VuJIAfuGVqMdfUliUTL/x9NyrCyjA=
+github.com/AllenDang/cimgui-go v0.0.0-20240219164318-ef715f47b06e/go.mod h1:e6feXR4FrATVY/UrWS3si3KCJOm0wruwbxVI/B85fUM=
 github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf h1:FPsprx82rdrX2jiKyS17BH6IrTmUBYqZa/CXT4uvb+I=
 github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf/go.mod h1:peYoMncQljjNS6tZwI9WVyQB3qZS6u79/N3mBOcnd3I=
 github.com/disintegration/imaging v1.6.2 h1:w1LecBlG2Lnp8B3jk5zSuNqd7b4DXhcjwek1ei82L+c=

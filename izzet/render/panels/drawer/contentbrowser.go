@@ -1,6 +1,7 @@
 package drawer
 
 import (
+	"C"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,6 +16,12 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 	"github.com/sqweek/dialog"
 )
+import "unsafe"
+
+var name []byte = []byte("bob")
+var someInt int = 15
+var someString string = "asdf"
+var someBytes [3]byte
 
 func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 	var menuOpen bool
@@ -50,7 +57,7 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 
 			if documentTexture == nil {
 				t := app.AssetManager().GetTexture("document")
-				texture := imgui.TextureID(uintptr(t.ID))
+				texture := imgui.TextureID{Data: uintptr(t.ID)}
 				documentTexture = &texture
 			}
 
@@ -92,12 +99,13 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			}
 			imgui.PopID()
 
-			// if imgui.BeginDragDropSource(imgui.DragDropFlagsSourceAllowNullID) {
-			// 	imgui.SetDragDropPayload("content_browser_item", []byte(item.Name), imgui.ConditionNone)
-			// 	imgui.EndDragDropSource()
-			// 	fmt.Println("START DRAGGING", item.Name)
-			// }
-
+			if imgui.BeginDragDropSourceV(imgui.DragDropFlagsSourceAllowNullID) {
+				s, done := imgui.WrapString(item.Name)
+				defer done()
+				ptr := unsafe.Pointer(&s)
+				imgui.SetDragDropPayloadV("content_browser_item", uintptr(ptr), uint64(len(item.Name)), imgui.CondOnce)
+				imgui.EndDragDropSource()
+			}
 			imgui.Text(item.Name)
 			imgui.EndGroup()
 			imgui.SameLine()

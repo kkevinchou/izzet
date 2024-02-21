@@ -175,10 +175,10 @@ func (renderer *OpenGL3) Render(displaySize [2]float32, framebufferSize [2]float
 				cmd.CallUserCallback(list)
 			} else {
 				tid := cmd.TextureId()
-				ptr := uintptr(tid)
+				ptr := tid.Data
 				_, _ = tid, ptr
 
-				gl.BindTexture(gl.TEXTURE_2D, uint32(uintptr(cmd.TextureId())))
+				gl.BindTexture(gl.TEXTURE_2D, uint32(cmd.TextureId().Data))
 
 				if ptr == uintptr(renderer.fontTexture) {
 					gl.Uniform1i(renderer.attribLocationIsFontTexture, 1)
@@ -296,7 +296,7 @@ func (renderer *OpenGL3) createFontsTexture() {
 		0, gl.RED, gl.UNSIGNED_BYTE, pixels)
 
 	// Store our identifier
-	io.Fonts().SetTexID(imgui.TextureID(uintptr(renderer.fontTexture)))
+	io.Fonts().SetTexID(imgui.TextureID{Data: uintptr(renderer.fontTexture)})
 
 	// Restore state
 	gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
@@ -335,7 +335,7 @@ func (renderer *OpenGL3) invalidateDeviceObjects() {
 
 	if renderer.fontTexture != 0 {
 		gl.DeleteTextures(1, &renderer.fontTexture)
-		imgui.CurrentIO().Fonts().SetTexID(nil)
+		imgui.CurrentIO().Fonts().SetTexID(imgui.TextureID{})
 		renderer.fontTexture = 0
 	}
 }

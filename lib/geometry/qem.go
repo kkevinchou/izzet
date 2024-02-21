@@ -2,7 +2,6 @@ package geometry
 
 import (
 	"fmt"
-	"math"
 	"slices"
 	"sort"
 
@@ -76,10 +75,11 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		if !edgeContraction.Valid {
 			continue
 		}
-		if math.Abs(edgeContraction.Cost) < 1 {
-			edgeContraction.Valid = false
-			continue
-		}
+
+		// if math.Abs(edgeContraction.Cost) < 1 {
+		// 	edgeContraction.Valid = false
+		// 	continue
+		// }
 
 		if iterations <= 0 {
 			break

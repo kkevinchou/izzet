@@ -931,6 +931,15 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					// r.drawLines(viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
 					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
 				}
+
+				var pointLines [][]mgl64.Vec3
+				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
+					// 0 length lines
+					pointLines = append(pointLines, []mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
+				}
+				if len(pointLines) > 0 {
+					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.1, mgl64.Vec3{0, 0, 1})
+				}
 			}
 
 			if entity.Collider.CapsuleCollider != nil {

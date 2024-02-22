@@ -68,6 +68,7 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 	}
 
 	var bad bool
+	var triMesh collider.TriMesh
 
 	// 5. Iteratively remove the pair (v1, v2) of least cost from the heap, contract this pair, and update the costs of all valid pairs involving v1.
 	for heap.Len() > 0 {
@@ -90,6 +91,7 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		var trisToDelete []int
 		v1 := edgeContraction.Idx1
 		v2 := edgeContraction.Idx2
+		triMesh.DebugPoints = append(triMesh.DebugPoints, allVertPositions[v1], allVertPositions[v2])
 
 		for _, triangleIdx := range v2t[v1] {
 			for _, vert := range triangles[triangleIdx] {
@@ -168,7 +170,6 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		}
 	}
 
-	var triMesh collider.TriMesh
 	for _, triangle := range sortedTriangles(triangles) {
 		triMesh.Triangles = append(triMesh.Triangles,
 			collider.NewTriangle(

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
@@ -27,7 +26,7 @@ func (s *CollisionSystem) Update(delta time.Duration, world GameWorld) {
 	} else {
 		worldEntities = world.Entities()
 		start := time.Now()
-		shared.ResolveCollisions(world, worldEntities, observers.NullCollisionExplorer)
+		shared.ResolveCollisions(world, worldEntities, shared.NullCollisionExplorer)
 
 		s.app.MetricsRegistry().Inc("collision_time", float64(time.Since(start).Microseconds())/1000)
 	}

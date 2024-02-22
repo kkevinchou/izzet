@@ -13,12 +13,12 @@ import (
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
+	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
@@ -41,7 +41,7 @@ type Server struct {
 
 	systems           []systems.System
 	appMode           app.AppMode
-	collisionObserver *observers.CollisionObserver
+	collisionObserver *shared.CollisionObserver
 
 	runtimeConfig *app.RuntimeConfig
 
@@ -89,7 +89,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.metricsRegistry = metrics.New()
-	g.collisionObserver = observers.NewCollisionObserver()
+	g.collisionObserver = shared.NewCollisionObserver()
 
 	g.newConnections = make(chan NewConnection, 100)
 	g.replicator = NewReplicator(g)

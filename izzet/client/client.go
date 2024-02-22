@@ -19,13 +19,13 @@ import (
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib/platforms"
 	"github.com/kkevinchou/kitolib/assets"
@@ -65,7 +65,7 @@ type Client struct {
 	playModeSystems   []systems.System
 	editorModeSystems []systems.System
 	appMode           app.AppMode
-	collisionObserver *observers.CollisionObserver
+	collisionObserver *shared.CollisionObserver
 	stateBuffer       *clientsystems.StateBuffer
 
 	runtimeConfig *app.RuntimeConfig

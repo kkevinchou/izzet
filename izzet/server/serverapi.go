@@ -10,9 +10,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
+	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -162,6 +162,6 @@ func (g *Server) SerializeWorld() []byte {
 	return buffer.Bytes()
 }
 
-func (g *Server) CollisionObserver() *observers.CollisionObserver {
+func (g *Server) CollisionObserver() *shared.CollisionObserver {
 	return nil
 }

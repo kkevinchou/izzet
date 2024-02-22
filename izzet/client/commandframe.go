@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -219,7 +220,7 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 			yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 		}
 		viewRotation = mgl64.Vec2{xRel, yRel}
-		controlVector = app.GetControlVector(keyboardInput)
+		controlVector = apputils.GetControlVector(keyboardInput)
 	}
 
 	forwardVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})

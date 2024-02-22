@@ -33,9 +33,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib/platforms"
 	"github.com/kkevinchou/kitolib/assets"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/modelspec"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 func (g *Client) GetPrefabByID(id int) *prefabs.Prefab {
@@ -600,4 +602,35 @@ func (g *Client) SelectEntity(entity *entities.Entity) {
 
 func (g *Client) SelectedEntity() *entities.Entity {
 	return g.selectedEntity
+}
+
+func (g *Client) InstantiateEntity(entityHandle string) {
+	document := g.AssetManager().GetDocument(entityHandle)
+	handle := modellibrary.NewGlobalHandle(entityHandle)
+	if len(document.Scenes) != 1 {
+		panic("single entity asset loading only supports a singular scene")
+	}
+
+	scene := document.Scenes[0]
+	node := scene.Nodes[0]
+
+	entity := entities.InstantiateEntity(document.Name)
+	entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+	var vertices []modelspec.Vertex
+	entities.VerticesFromNode(node, document, &vertices)
+	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+	entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+	entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+	// entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+	entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
+
+	primitives := g.ModelLibrary().GetPrimitives(handle)
+	if len(primitives) > 0 {
+		entity.Collider = &entities.ColliderComponent{
+			ColliderGroup:   entities.ColliderGroupMap[entities.ColliderGroupTerrain],
+			TriMeshCollider: collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives)),
+		}
+	}
+
+	g.world.AddEntity(entity)
 }

@@ -166,3 +166,61 @@ func sortedIDs(m map[int]*entities.Entity) []int {
 	sort.Ints(ids)
 	return ids
 }
+
+func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) bool {
+	popup := false
+	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
+	if len(entity.Children) == 0 {
+		nodeFlags |= imgui.TreeNodeFlagsLeaf
+	}
+	if app.SelectedEntity() != nil && entity.ID == app.SelectedEntity().ID {
+		nodeFlags |= imgui.TreeNodeFlagsSelected
+	}
+
+	if imgui.TreeNodeExStrV(entity.NameID(), nodeFlags) {
+		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
+			app.SelectEntity(entity)
+		}
+
+		imgui.PushIDStr(entity.NameID())
+		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
+			popup = true
+			if entity.Parent != nil {
+				if imgui.Button("Remove Parent") {
+					entities.RemoveParent(entity)
+					imgui.CloseCurrentPopup()
+				}
+			}
+			imgui.EndPopup()
+		}
+		imgui.PopID()
+
+		// if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
+		// 	str := fmt.Sprintf("%d", entity.ID)
+		// 	imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
+		// 	imgui.EndDragDropSource()
+		// }
+		// if imgui.BeginDragDropTarget() {
+		// 	if payload := imgui.AcceptDragDropPayload("childid", imgui.DragDropFlagsNone); payload != nil {
+		// 		childID, err := strconv.Atoi(string(payload))
+		// 		if err != nil {
+		// 			panic(err)
+		// 		}
+		// 		child := world.GetEntityByID(childID)
+		// 		parent := world.GetEntityByID(entity.ID)
+		// 		entities.BuildRelation(parent, child)
+		// 	}
+		// 	imgui.EndDragDropTarget()
+		// }
+
+		childIDs := sortedIDs(entity.Children)
+		for _, id := range childIDs {
+			child := entity.Children[id]
+			childPopup := drawEntity(child, app, world)
+			popup = popup || childPopup
+		}
+
+		imgui.TreePop()
+	}
+	return popup
+}

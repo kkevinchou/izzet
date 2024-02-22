@@ -614,15 +614,15 @@ func (g *Client) InstantiateEntity(entityHandle string) {
 	scene := document.Scenes[0]
 	node := scene.Nodes[0]
 
-	entity := entities.InstantiateEntity(document.Name)
+	entity := entities.InstantiateEntity(entityHandle)
 	entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
 	var vertices []modelspec.Vertex
 	entities.VerticesFromNode(node, document, &vertices)
 	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
 	entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
 	entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-	// entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-	entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
+	entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+	// entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
 
 	primitives := g.ModelLibrary().GetPrimitives(handle)
 	if len(primitives) > 0 {

@@ -6,7 +6,7 @@ import (
 )
 
 type MeshComponent struct {
-	MeshHandle             modellibrary.Handle
+	MeshHandle             modellibrary.MeshHandle
 	Transform              mgl64.Mat4
 	Visible                bool
 	InvisibleToPlayerOwner bool

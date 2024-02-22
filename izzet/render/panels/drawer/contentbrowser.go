@@ -7,13 +7,7 @@ import (
 	"path/filepath"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
 	"github.com/sqweek/dialog"
 )
 import "unsafe"
@@ -65,34 +59,7 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 				menuOpen = true
 				if imgui.Button("Instantiate") {
-					document := app.AssetManager().GetDocument(item.Name)
-					handle := modellibrary.NewGlobalHandle(item.Name)
-					if len(document.Scenes) != 1 {
-						panic("single entity asset loading only supports a singular scene")
-					}
-
-					scene := document.Scenes[0]
-					node := scene.Nodes[0]
-
-					entity := entities.InstantiateEntity(document.Name)
-					entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-					var vertices []modelspec.Vertex
-					entities.VerticesFromNode(node, document, &vertices)
-					entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-					entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-					entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-					entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-					entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
-
-					primitives := app.ModelLibrary().GetPrimitives(handle)
-					if len(primitives) > 0 {
-						entity.Collider = &entities.ColliderComponent{
-							ColliderGroup:   entities.ColliderGroupMap[entities.ColliderGroupTerrain],
-							TriMeshCollider: collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives)),
-						}
-					}
-
-					world.AddEntity(entity)
+					app.InstantiateEntity(item.Name)
 					imgui.CloseCurrentPopup()
 				}
 				imgui.EndPopup()

@@ -1,4 +1,4 @@
-package observers
+package shared
 
 import (
 	"github.com/kkevinchou/izzet/izzet/app"

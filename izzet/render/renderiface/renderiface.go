@@ -6,9 +6,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
+	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/lib/platforms"
 	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -36,7 +36,7 @@ type App interface {
 
 	LoadProject(name string) bool
 
-	CollisionObserver() *observers.CollisionObserver
+	CollisionObserver() *shared.CollisionObserver
 	RuntimeConfig() *app.RuntimeConfig
 	Connect() error
 	ConnectAndInitialize() error

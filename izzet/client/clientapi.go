@@ -22,7 +22,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -30,6 +29,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib/platforms"
 	"github.com/kkevinchou/kitolib/assets"
@@ -189,7 +189,7 @@ func (g *Client) AppMode() app.AppMode {
 	return g.appMode
 }
 
-func (g *Client) CollisionObserver() *observers.CollisionObserver {
+func (g *Client) CollisionObserver() *shared.CollisionObserver {
 	return g.collisionObserver
 }
 
@@ -406,7 +406,7 @@ func (g *Client) initialize() {
 
 	g.editHistory = edithistory.New()
 	globals.SetClientMetricsRegistry(g.metricsRegistry)
-	g.collisionObserver = observers.NewCollisionObserver()
+	g.collisionObserver = shared.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
 }
 

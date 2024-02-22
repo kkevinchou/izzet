@@ -5,7 +5,6 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/observers"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
@@ -39,7 +38,7 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 	}
 
 	// TODO: make this a dummy physics observer
-	observer := observers.NewCollisionObserver()
+	observer := shared.NewCollisionObserver()
 	for i := 1; i < len(commandFrames); i++ {
 		commandFrame := commandFrames[i]
 

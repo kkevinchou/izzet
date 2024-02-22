@@ -35,7 +35,6 @@ func (g *Server) LoadWorld(name string) bool {
 	}
 	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
 
-	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()
 
 	var maxID int

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/app"
-	"github.com/kkevinchou/izzet/izzet/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
@@ -32,8 +31,6 @@ type Server struct {
 	modelLibrary *modellibrary.ModelLibrary
 
 	entities map[int]*entities.Entity
-
-	editHistory *edithistory.EditHistory
 
 	metricsRegistry *metrics.MetricsRegistry
 
@@ -93,9 +90,6 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 
 	g.newConnections = make(chan NewConnection, 100)
 	g.replicator = NewReplicator(g)
-
-	// THINGS TO DELETE AFTER DEBUGGING
-	g.editHistory = edithistory.New()
 
 	g.systems = append(g.systems, serversystems.NewReceiverSystem(g))
 	g.systems = append(g.systems, serversystems.NewInputSystem(g))

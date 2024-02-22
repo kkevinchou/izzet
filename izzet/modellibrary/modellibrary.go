@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -15,26 +16,19 @@ const (
 	NamespaceGlobal = "global"
 )
 
-type HandleType string
-
-type MeshHandle struct {
-	Namespace string
-	ID        string
-}
-
 type ModelConfig struct {
 	MaxAnimationJointWeights int
 }
 
-func NewGlobalHandle(id string) MeshHandle {
-	return MeshHandle{Namespace: NamespaceGlobal, ID: id}
+func NewGlobalHandle(id string) types.MeshHandle {
+	return types.MeshHandle{Namespace: NamespaceGlobal, ID: id}
 }
 
-func NewHandle(namespace string, id string) MeshHandle {
-	return MeshHandle{Namespace: namespace, ID: id}
+func NewHandle(namespace string, id string) types.MeshHandle {
+	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
-func NewHandleFromMeshID(namespace string, meshID int) MeshHandle {
+func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
 	return NewHandle(namespace, fmt.Sprintf("%d", meshID))
 }
 
@@ -52,7 +46,7 @@ type Primitive struct {
 }
 
 type ModelLibrary struct {
-	Primitives map[MeshHandle][]Primitive
+	Primitives map[types.MeshHandle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
 	RootJoints map[string]int
@@ -62,7 +56,7 @@ type ModelLibrary struct {
 
 func New(processVisuals bool) *ModelLibrary {
 	m := &ModelLibrary{
-		Primitives:     map[MeshHandle][]Primitive{},
+		Primitives:     map[types.MeshHandle][]Primitive{},
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:         map[string]map[int]*modelspec.JointSpec{},
 		RootJoints:     map[string]int{},
@@ -77,7 +71,7 @@ func New(processVisuals bool) *ModelLibrary {
 	return m
 }
 
-func (m *ModelLibrary) GetCubeMeshHandle() MeshHandle {
+func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
 	return NewHandle("global", fmt.Sprintf("cube"))
 }
 
@@ -144,13 +138,13 @@ func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document
 	}
 }
 
-func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) MeshHandle {
+func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	handle := NewHandleFromMeshID(namespace, mesh.ID)
 	m.RegisterMeshWithHandle(handle, mesh)
 	return handle
 }
 
-func (m *ModelLibrary) RegisterMeshWithHandle(handle MeshHandle, mesh *modelspec.MeshSpecification) MeshHandle {
+func (m *ModelLibrary) RegisterMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
 	var vaos [][]uint32
@@ -185,7 +179,7 @@ func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.Anima
 	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
 }
 
-func (m *ModelLibrary) GetPrimitives(handle MeshHandle) []Primitive {
+func (m *ModelLibrary) GetPrimitives(handle types.MeshHandle) []Primitive {
 	if _, ok := m.Primitives[handle]; !ok {
 		return nil
 	}

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/input"
 )
@@ -20,7 +20,7 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 
 	c := entity.CharacterControllerComponent
 
-	c.ControlVector = app.GetControlVector(keyboardInput)
+	c.ControlVector = apputils.GetControlVector(keyboardInput)
 	if entity.Physics.Grounded {
 		entity.Physics.Velocity = mgl64.Vec3{}
 		if c.ControlVector.Y() > 0 {

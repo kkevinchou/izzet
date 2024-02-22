@@ -39,9 +39,9 @@ func (i *InputBuffer) PullInput(playerID int) BufferedInput {
 		return BufferedInput{}
 	}
 
-	if cursor == i.lastCursors[playerID] {
-		fmt.Printf("player %d reading same cursor\n", playerID)
-	}
+	// if cursor == i.lastCursors[playerID] {
+	// 	fmt.Printf("player %d reading same cursor\n", playerID)
+	// }
 	i.lastCursors[playerID] = cursor
 
 	bufferedInput := i.inputs[playerID][cursor]

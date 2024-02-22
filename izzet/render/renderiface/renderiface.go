@@ -62,6 +62,7 @@ type App interface {
 	ImportToContentBrowser(assetFilePath string)
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
+	InstantiateEntity(entityHandle string)
 }
 
 type RenderContext interface {

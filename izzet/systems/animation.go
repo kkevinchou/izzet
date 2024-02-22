@@ -3,7 +3,7 @@ package systems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 )
 
 type AnimationSystem struct {
@@ -28,7 +28,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				var animationName = "Walk"
 				if !entity.Physics.Grounded {
 					animationName = "Falling"
-				} else if !app.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
+				} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
 					animationName = "Walk"
 				} else {
 					animationName = "Idle"

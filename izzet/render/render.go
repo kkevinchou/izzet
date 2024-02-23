@@ -312,17 +312,17 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	r.clearMainFrameBuffer(renderContext)
 
-	renderEntities := r.fetchRenderableEntities(position, rotation, renderContext)
+	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
 	r.drawSkybox(renderContext)
 	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
-	r.drawToCameraDepthMap(cameraViewerContext, renderEntities)
+	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
 
 	// main color FBO
-	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderEntities)
+	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	// clear depth for gizmo rendering
@@ -890,7 +890,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 	}
 
-	if r.app.RuntimeConfig().RenderColliders {
+	if r.app.RuntimeConfig().ShowColliders {
 		shader := shaderManager.GetShaderProgram("flat")
 		shader.Use()
 

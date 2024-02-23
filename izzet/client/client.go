@@ -278,10 +278,10 @@ func (g *Client) setupSystems() {
 	// input system depends on the camera system to update the camera rotation
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
-	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g))
 	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g))
+	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, systems.NewAnimationSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))

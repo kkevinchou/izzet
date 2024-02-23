@@ -25,9 +25,11 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 		if transform.EntityID != entity.GetID() {
 			continue
 		}
+
 		entities.SetLocalPosition(entity, transform.Position)
 		entities.SetLocalRotation(entity, transform.Rotation)
 		entity.Physics.Velocity = transform.Velocity
+		entity.Physics.GravityEnabled = transform.GravityEnabled
 	}
 
 	cfHistory.Reset()

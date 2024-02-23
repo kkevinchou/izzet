@@ -6,11 +6,12 @@ import (
 )
 
 type EntityState struct {
-	EntityID  int
-	Position  mgl64.Vec3
-	Rotation  mgl64.Quat
-	Velocity  mgl64.Vec3
-	Animation string
+	EntityID       int
+	Position       mgl64.Vec3
+	Rotation       mgl64.Quat
+	Velocity       mgl64.Vec3
+	GravityEnabled bool
+	Animation      string
 }
 
 type GameStateUpdateMessage struct {

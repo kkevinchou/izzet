@@ -54,6 +54,7 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		}
 		if entity.Physics != nil {
 			t.Velocity = entity.Physics.Velocity
+			t.GravityEnabled = entity.Physics.GravityEnabled
 		}
 		if entity.Animation != nil {
 			t.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()

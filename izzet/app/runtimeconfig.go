@@ -58,7 +58,7 @@ type RuntimeConfig struct {
 	VoxelHighlightRegionID        int
 
 	// Physics / Collision
-	RenderColliders                bool
+	ShowColliders                  bool
 	PartitionEntityCount           int32
 	PhysicsCollisionCheckCount     int32
 	PhysicsConfirmedCollisionCount int32
@@ -125,6 +125,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		RotationSensitivity: 200,
 
 		ShowSelectionBoundingBox: true,
-		RenderColliders:          true,
+		ShowColliders:            false,
 	}
 }

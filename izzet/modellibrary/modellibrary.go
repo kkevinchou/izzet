@@ -34,6 +34,7 @@ type Primitive struct {
 }
 
 type ModelLibrary struct {
+	// all of this is already in asset manager right? why are we storing this again?
 	Primitives map[types.MeshHandle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
@@ -108,6 +109,7 @@ func (m *ModelLibrary) RegisterAnimations(handle string, document *modelspec.Doc
 	m.RootJoints[handle] = document.RootJoint.ID
 }
 
+// this should probably look up a document, and get the animations from there, rather than storing these locally
 func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
 	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
 }

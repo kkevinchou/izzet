@@ -146,6 +146,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		r.iztDrawArrays(0, 36)
 	}
 }
+
 func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {

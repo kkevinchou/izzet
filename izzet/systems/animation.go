@@ -26,10 +26,12 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			if entity.CharacterControllerComponent != nil {
 				animationPlayer := entity.Animation.AnimationPlayer
 				var animationName = "Walk"
-				if !entity.Physics.Grounded {
+				if !entity.Physics.GravityEnabled {
+					animationName = "Floating"
+				} else if !entity.Physics.Grounded {
 					animationName = "Falling"
 				} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
-					animationName = "Walk"
+					animationName = "Running"
 				} else {
 					animationName = "Idle"
 				}

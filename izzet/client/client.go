@@ -246,7 +246,7 @@ func initSeed() {
 }
 
 func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
-	// docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha"}
+	// docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha2"}
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 

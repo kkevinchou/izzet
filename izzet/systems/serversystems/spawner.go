@@ -43,9 +43,9 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			capsule := entity.Collider.CapsuleCollider
 			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
-			handle := modellibrary.NewGlobalHandle("alpha")
+			handle := modellibrary.NewGlobalHandle("alpha2")
 			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-			entity.Animation = entities.NewAnimationComponent("alpha", s.app.ModelLibrary())
+			entity.Animation = entities.NewAnimationComponent("alpha2", s.app.ModelLibrary())
 			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 			entities.SetLocalPosition(entity, mgl64.Vec3{0, 10, 0})
 			entity.Movement = &entities.MovementComponent{PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {-300, 10, 0}}}, Speed: 100}

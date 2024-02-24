@@ -20,18 +20,6 @@ type ModelConfig struct {
 	MaxAnimationJointWeights int
 }
 
-func NewGlobalHandle(id string) types.MeshHandle {
-	return types.MeshHandle{Namespace: NamespaceGlobal, ID: id}
-}
-
-func NewHandle(namespace string, id string) types.MeshHandle {
-	return types.MeshHandle{Namespace: namespace, ID: id}
-}
-
-func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
-	return NewHandle(namespace, fmt.Sprintf("%d", meshID))
-}
-
 type Primitive struct {
 	Primitive *modelspec.PrimitiveSpecification
 
@@ -65,14 +53,26 @@ func New(processVisuals bool) *ModelLibrary {
 
 	if processVisuals {
 		handle := m.GetCubeMeshHandle()
-		m.RegisterMeshWithHandle(handle, cubeMesh(100))
+		m.registerMeshWithHandle(handle, cubeMesh(100))
 	}
 
 	return m
 }
 
+func NewGlobalHandle(id string) types.MeshHandle {
+	return NewHandle(NamespaceGlobal, id)
+}
+
+func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
+	return NewHandle(namespace, fmt.Sprintf("%d", meshID))
+}
+
+func NewHandle(namespace string, id string) types.MeshHandle {
+	return types.MeshHandle{Namespace: namespace, ID: id}
+}
+
 func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
-	return NewHandle("global", fmt.Sprintf("cube"))
+	return NewHandle("global", "cube")
 }
 
 // TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
@@ -85,6 +85,39 @@ func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
 //		- then the config determines what handle we want to associate with each asset
 //			- Question, do I want to support selected instantiation of entities within a document?
 //			- e.g. from within demo_scene_samurai, instantiating one entity by name
+
+func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document) {
+	for _, scene := range document.Scenes {
+		for _, node := range scene.Nodes {
+			handle := NewGlobalHandle(document.Name)
+			primitives := m.getPrimitives(document, node)
+			m.Primitives[handle] = primitives
+		}
+	}
+}
+
+func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
+	handle := NewHandleFromMeshID(namespace, mesh.ID)
+	m.registerMeshWithHandle(handle, mesh)
+	return handle
+}
+
+func (m *ModelLibrary) RegisterAnimations(handle string, document *modelspec.Document) {
+	m.Animations[handle] = document.Animations
+	m.Joints[handle] = document.JointMap
+	m.RootJoints[handle] = document.RootJoint.ID
+}
+
+func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
+	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
+}
+
+func (m *ModelLibrary) GetPrimitives(handle types.MeshHandle) []Primitive {
+	if _, ok := m.Primitives[handle]; !ok {
+		return nil
+	}
+	return m.Primitives[handle]
+}
 
 func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
 	q := []*modelspec.Node{node}
@@ -128,23 +161,7 @@ func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.No
 	return result
 }
 
-func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document) {
-	for _, scene := range document.Scenes {
-		for _, node := range scene.Nodes {
-			handle := NewGlobalHandle(document.Name)
-			primitives := m.getPrimitives(document, node)
-			m.Primitives[handle] = primitives
-		}
-	}
-}
-
-func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
-	handle := NewHandleFromMeshID(namespace, mesh.ID)
-	m.RegisterMeshWithHandle(handle, mesh)
-	return handle
-}
-
-func (m *ModelLibrary) RegisterMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *ModelLibrary) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
 	var vaos [][]uint32
@@ -167,23 +184,6 @@ func (m *ModelLibrary) RegisterMeshWithHandle(handle types.MeshHandle, mesh *mod
 		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
-}
-
-func (m *ModelLibrary) RegisterAnimations(handle string, document *modelspec.Document) {
-	m.Animations[handle] = document.Animations
-	m.Joints[handle] = document.JointMap
-	m.RootJoints[handle] = document.RootJoint.ID
-}
-
-func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
-	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
-}
-
-func (m *ModelLibrary) GetPrimitives(handle types.MeshHandle) []Primitive {
-	if _, ok := m.Primitives[handle]; !ok {
-		return nil
-	}
-	return m.Primitives[handle]
 }
 
 // maybe this should be computed once and shared across all instances of the mesh?

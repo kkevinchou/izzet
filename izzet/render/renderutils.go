@@ -13,11 +13,9 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
-	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -401,17 +399,13 @@ type RenderData struct {
 func (r *Renderer) drawModel(
 	viewerContext ViewerContext,
 	lightContext LightContext,
-	shadowMap *ShadowMap,
 	shader *shaders.ShaderProgram,
-	assetManager *assets.AssetManager,
-	animationPlayer *animation.AnimationPlayer,
-	modelMatrix mgl64.Mat4,
-	pointLightDepthCubeMap uint32,
-	entityID int,
-	material *entities.MaterialComponent,
-	modelLibrary *modellibrary.ModelLibrary,
 	entity *entities.Entity,
 ) {
+	var animationPlayer *animation.AnimationPlayer
+	if entity.Animation != nil {
+		animationPlayer = entity.Animation.AnimationPlayer
+	}
 
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
 		shader.SetUniformInt("isAnimated", 1)
@@ -430,7 +424,8 @@ func (r *Renderer) drawModel(
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
+	material := entity.Material
+	primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
 	for _, p := range primitives {
 		if material == nil && p.Primitive.PBRMaterial == nil {
 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
@@ -441,7 +436,7 @@ func (r *Renderer) drawModel(
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
 			textureName := settings.DefaultTexture
-			texture := assetManager.GetTexture(textureName)
+			texture := r.app.AssetManager().GetTexture(textureName)
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		} else if material == nil {
@@ -470,7 +465,7 @@ func (r *Renderer) drawModel(
 			if p.Primitive.TextureName() != "" {
 				textureName = p.Primitive.TextureName()
 			}
-			texture := assetManager.GetTexture(textureName)
+			texture := r.app.AssetManager().GetTexture(textureName)
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		} else {
@@ -485,6 +480,7 @@ func (r *Renderer) drawModel(
 		}
 		shader.SetUniformFloat("ao", 1.0)
 
+		modelMatrix := entities.WorldTransform(entity)
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
 		shader.SetUniformMat4("model", modelMat)
 

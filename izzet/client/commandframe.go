@@ -370,13 +370,27 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				}
 				magnitude *= math.Pi / float64(g.runtimeConfig.RotationSensitivity)
 
+				forwardVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
+
 				var newRotationAdjustment mgl64.Quat
 				if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoXDistancePickingID {
-					newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, 1})
+					if forwardVector.Dot(mgl64.Vec3{0, 0, -1}) > 0 {
+						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, -1})
+					} else {
+						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, 1})
+					}
 				} else if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoYDistancePickingID {
-					newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{1, 0, 0})
+					if forwardVector.Dot(mgl64.Vec3{1, 0, 0}) > 0 {
+						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{1, 0, 0})
+					} else {
+						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{-1, 0, 0})
+					}
 				} else if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoZDistancePickingID {
-					newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 1, 0})
+					if forwardVector.Dot(mgl64.Vec3{0, -1, 0}) > 0 {
+						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, -1, 0})
+					} else {
+						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 1, 0})
+					}
 				} else {
 					panic("wat")
 				}

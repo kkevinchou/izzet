@@ -22,7 +22,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/izzet/lib"
 	"github.com/kkevinchou/izzet/lib/renderers"
-	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
@@ -863,31 +862,14 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			continue
 		}
 
-		modelMatrix := entities.WorldTransform(entity)
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
-
-		var animationPlayer *animation.AnimationPlayer
-		if entity.Animation != nil {
-			animationPlayer = entity.Animation.AnimationPlayer
-		}
 
 		r.drawModel(
 			viewerContext,
 			lightContext,
-			r.shadowMap,
 			shader,
-			r.app.AssetManager(),
-			animationPlayer,
-			modelMatrix,
-			r.depthCubeMapTexture,
-			entity.ID,
-			entity.Material,
-			r.app.ModelLibrary(),
 			entity,
 		)
-
-		_ = animationPlayer
-
 	}
 
 	if r.app.RuntimeConfig().ShowColliders {

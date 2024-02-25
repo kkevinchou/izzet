@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kkevinchou/izzet/lib/geometry"
+	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
 	"github.com/patrick-higgins/rtreego"
 )

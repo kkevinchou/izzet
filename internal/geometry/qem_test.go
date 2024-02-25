@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/izzet/lib/geometry"
+	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/modelspec"
 )

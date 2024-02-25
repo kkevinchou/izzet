@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/lib/geometry"
+	"github.com/kkevinchou/izzet/internal/geometry"
 )
 
 func TestZeroError(t *testing.T) {

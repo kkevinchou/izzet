@@ -1,9 +1,9 @@
 package serialization
 
 import (
+	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/lib/geometry"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 

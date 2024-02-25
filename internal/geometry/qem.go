@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/lib/gheap"
+	"github.com/kkevinchou/izzet/internal/gheap"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"

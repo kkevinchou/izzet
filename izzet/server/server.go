@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
@@ -19,7 +20,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/assets"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )

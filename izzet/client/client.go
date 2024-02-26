@@ -289,7 +289,7 @@ func (g *Client) setupSystems() {
 
 func (g *Client) setupEntities(data *izzetdata.Data) {
 	pointLight := entities.CreatePointLight()
-	pointLight.Movement = &entities.MovementComponent{
+	pointLight.AIComponent = &entities.AIComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
 		Speed:        100,
 	}

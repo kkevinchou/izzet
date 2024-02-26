@@ -14,7 +14,6 @@ type Entity struct {
 	Billboard                   bool
 	Physics                     *PhysicsComponent
 	Collider                    *ColliderComponent
-	Movement                    *MovementComponent
 	Particles                   *ParticleGenerator
 	IsSocket                    bool
 	LightInfo                   *LightInfo

@@ -51,9 +51,12 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 			entity.Animation = entities.NewAnimationComponent("vampire", s.app.ModelLibrary())
-			entity.AIComponent = &entities.AIComponent{}
 			entities.SetLocalPosition(entity, mgl64.Vec3{0, 10, 0})
-			entity.Movement = &entities.MovementComponent{PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {-300, 10, 0}}}, Speed: 100}
+			// entity.Movement = &entities.MovementComponent{PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {-300, 10, 0}}}, Speed: 100}
+			entity.AIComponent = &entities.AIComponent{
+				Speed:        100,
+				TargetConfig: &entities.TargetConfig{},
+			}
 
 			world.QueueEvent(events.EntitySpawnEvent{Entity: entity})
 		}

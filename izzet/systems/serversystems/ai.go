@@ -1,10 +1,11 @@
 package serversystems
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type AISystem struct {
@@ -17,24 +18,56 @@ func NewAISystemSystem(app App) *AISystem {
 
 func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, entity := range world.Entities() {
-		if entity.AIComponent == nil {
+		aiComponent := entity.AIComponent
+		if aiComponent == nil {
 			continue
 		}
 
-		for _, camera := range world.Entities() {
-			if camera.PlayerInput == nil {
-				continue
+		startPosition := entity.Position()
+
+		if aiComponent.PatrolConfig != nil {
+			target := aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
+			if startPosition.Sub(target).Len() < 5 {
+				aiComponent.PatrolConfig.Index = (aiComponent.PatrolConfig.Index + 1) % len(aiComponent.PatrolConfig.Points)
+				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
-
-			if camera.CameraComponent.Target == nil {
-				continue
-			}
-
-			target := world.GetEntityByID(*camera.CameraComponent.Target)
-
-			fmt.Println("target position", target.Position())
+			movementDirection := target.Sub(startPosition).Normalize()
+			newPosition := startPosition.Add(movementDirection.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+			entities.SetLocalPosition(entity, newPosition)
 		}
 
-		// s.app.GetPlayers()
+		if aiComponent.RotationConfig != nil {
+			r := entities.GetLocalRotation(entity)
+			finalRotation := aiComponent.RotationConfig.Quat.Mul(r)
+			frameRotation := utils.QInterpolate64(r, finalRotation, float64(delta.Milliseconds())/1000)
+			entities.SetLocalRotation(entity, frameRotation)
+		}
+
+		if aiComponent.TargetConfig != nil {
+			target := getTarget(world)
+			if target != nil {
+				dir := target.Position().Sub(entity.Position())
+				if dir.LenSqr() > 0 {
+					dir = dir.Normalize()
+					newPosition := startPosition.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+					entities.SetLocalPosition(entity, newPosition)
+				}
+			}
+		}
 	}
+}
+
+func getTarget(world systems.GameWorld) *entities.Entity {
+	var target *entities.Entity
+	for _, camera := range world.Entities() {
+		if camera.PlayerInput == nil {
+			continue
+		}
+		if camera.CameraComponent.Target == nil {
+			continue
+		}
+		target = world.GetEntityByID(*camera.CameraComponent.Target)
+		break
+	}
+	return target
 }

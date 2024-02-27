@@ -3,6 +3,8 @@ package serversystems
 import (
 	"time"
 
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/utils"
@@ -47,10 +49,16 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 			target := getTarget(world)
 			if target != nil {
 				dir := target.Position().Sub(entity.Position())
+				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
 					newPosition := startPosition.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
 					entities.SetLocalPosition(entity, newPosition)
+
+					if dir != apputils.ZeroVec {
+						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+						entities.SetLocalRotation(entity, newRotation)
+					}
 				}
 			}
 		}

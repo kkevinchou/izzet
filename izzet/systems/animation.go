@@ -36,6 +36,10 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					animationName = "Idle"
 				}
 				animationPlayer.PlayAnimation(animationName)
+			} else if entity.AIComponent != nil {
+				animationName := "Running"
+				animationPlayer := entity.Animation.AnimationPlayer
+				animationPlayer.PlayAnimation(animationName)
 			}
 		}
 

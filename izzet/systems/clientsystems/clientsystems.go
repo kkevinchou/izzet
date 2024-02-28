@@ -17,6 +17,8 @@ type App interface {
 	GetPlayerID() int
 	CommandFrame() int
 	IsConnected() bool
+	IsClient() bool
+	IsServer() bool
 	GetPlayerConnection() net.Conn
 	GetPlayerEntity() *entities.Entity
 	GetPlayerCamera() *entities.Entity

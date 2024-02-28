@@ -15,14 +15,22 @@ func (g *GameWorld) AddEntity(entity *entities.Entity) {
 	g.entities[entity.ID] = entity
 }
 
-func (g *GameWorld) DeleteEntity(entity *entities.Entity) {
+func (g *GameWorld) DestroyEntity(entityID int) {
+	if _, ok := g.entities[entityID]; !ok {
+		return
+	}
+	delete(g.entities, entityID)
+}
+
+func (g *GameWorld) DeleteEntity(entityID int) {
+	entity := g.GetEntityByID(entityID)
 	if entity == nil {
 		return
 	}
 
 	for _, child := range entity.Children {
 		entities.RemoveParent(child)
-		g.DeleteEntity(child)
+		g.DeleteEntity(child.GetID())
 	}
 
 	entities.RemoveParent(entity)

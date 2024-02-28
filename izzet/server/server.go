@@ -45,7 +45,6 @@ type Server struct {
 	players map[int]*network.Player
 
 	newConnections chan NewConnection
-	replicator     *Replicator
 
 	commandFrame int
 	inputBuffer  *inputbuffer.InputBuffer
@@ -89,7 +88,6 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.collisionObserver = shared.NewCollisionObserver()
 
 	g.newConnections = make(chan NewConnection, 100)
-	g.replicator = NewReplicator(g)
 
 	g.systems = append(g.systems, serversystems.NewReceiverSystem(g))
 	g.systems = append(g.systems, serversystems.NewInputSystem(g))
@@ -102,6 +100,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.systems = append(g.systems, &systems.CleanupSystem{})
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g))
+	g.systems = append(g.systems, serversystems.NewReplicationSystem(g))
 
 	fmt.Println(time.Since(start), "to start up systems")
 

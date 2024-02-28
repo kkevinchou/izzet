@@ -1,4 +1,4 @@
-package server
+package serversystems
 
 import (
 	"fmt"
@@ -9,27 +9,20 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
-type App interface {
-	GetPlayers() map[int]*network.Player
-	CommandFrame() int
-	MetricsRegistry() *metrics.MetricsRegistry
-}
-
-type Replicator struct {
+type ReplicationSystem struct {
 	app         App
 	accumulator int
 }
 
-func NewReplicator(app App) *Replicator {
-	return &Replicator{app: app}
+func NewReplicationSystem(app App) *ReplicationSystem {
+	return &ReplicationSystem{app: app}
 }
 
 var count int
 
-func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
+func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld) {
 	s.accumulator += int(delta.Milliseconds())
 	if s.accumulator < settings.MSPerGameStateUpdate {
 		return
@@ -39,7 +32,7 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 	players := s.app.GetPlayers()
 	count += 1
 
-	var transforms []network.EntityState
+	var entityStates []network.EntityState
 	for _, entity := range world.Entities() {
 		if entity.CameraComponent != nil {
 			continue
@@ -47,19 +40,20 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 		if entity.Static {
 			continue
 		}
-		t := network.EntityState{
+
+		entityState := network.EntityState{
 			EntityID: entity.ID,
 			Position: entities.GetLocalPosition(entity),
 			Rotation: entities.GetLocalRotation(entity),
 		}
 		if entity.Physics != nil {
-			t.Velocity = entity.Physics.Velocity
-			t.GravityEnabled = entity.Physics.GravityEnabled
+			entityState.Velocity = entity.Physics.Velocity
+			entityState.GravityEnabled = entity.Physics.GravityEnabled
 		}
 		if entity.Animation != nil {
-			t.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()
+			entityState.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()
 		}
-		transforms = append(transforms, t)
+		entityStates = append(entityStates, entityState)
 	}
 
 	stats := serverstats.ServerStats{
@@ -76,7 +70,7 @@ func (s *Replicator) Update(delta time.Duration, world systems.GameWorld) {
 	}
 
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
-		EntityStates:       transforms,
+		EntityStates:       entityStates,
 		GlobalCommandFrame: s.app.CommandFrame(),
 		ServerStats:        stats,
 	}

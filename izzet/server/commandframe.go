@@ -17,7 +17,6 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 	for _, s := range g.systems {
 		s.Update(delta, g.world)
 	}
-	g.replicator.Update(delta, g.world)
 }
 
 func (g *Server) handlePlayerConnections() {

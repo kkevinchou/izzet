@@ -10,7 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
-func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
+func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
 	commandFrames, err := cfHistory.GetAllFramesStartingFrom(gamestateUpdateMessage.LastInputCommandFrame)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func replay(entity *entities.Entity, gamestateUpdateMessage network.GameStateUpd
 
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
 		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
-		shared.ResolveCollisionsSingle(world, entity, observer)
+		shared.ResolveCollisionsSingle(app, world, entity, observer)
 		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, entity)
 	}
 	return nil

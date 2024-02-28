@@ -18,6 +18,7 @@ type System interface {
 type GameWorld interface {
 	Entities() []*entities.Entity
 	GetEntityByID(int) *entities.Entity
+	DeleteEntity(int)
 	SpatialPartition() *spatialpartition.SpatialPartition
 	GetEvents() []events.Event
 	QueueEvent(events.Event)

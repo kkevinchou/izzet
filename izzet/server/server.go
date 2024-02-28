@@ -99,6 +99,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.systems = append(g.systems, systems.NewCollisionSystem(g))
 	g.systems = append(g.systems, &systems.CameraTargetSystem{})
 	g.systems = append(g.systems, systems.NewAnimationSystem(g))
+	g.systems = append(g.systems, &systems.CleanupSystem{})
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g))
 
@@ -203,7 +204,6 @@ func (s *Server) listen() (net.Listener, error) {
 }
 
 func (g *Server) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
-	// docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha2"}
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 

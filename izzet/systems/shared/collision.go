@@ -10,6 +10,12 @@ import (
 	"github.com/kkevinchou/kitolib/collision"
 )
 
+type App interface {
+	CommandFrame() int
+	IsClient() bool
+	IsServer() bool
+}
+
 type ICollisionObserver interface {
 	OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity)
 	OnSpatialQuery(entityID int, count int)
@@ -23,11 +29,11 @@ const (
 	GroundedThreshold float64 = 0.85
 )
 
-func ResolveCollisionsSingle(world GameWorld, entity *entities.Entity, observer ICollisionObserver) {
-	ResolveCollisions(world, []*entities.Entity{entity}, observer)
+func ResolveCollisionsSingle(app App, world GameWorld, entity *entities.Entity, observer ICollisionObserver) {
+	ResolveCollisions(app, world, []*entities.Entity{entity}, observer)
 }
 
-func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observer ICollisionObserver) {
+func ResolveCollisions(app App, world GameWorld, worldEntities []*entities.Entity, observer ICollisionObserver) {
 	uniquePairMap := map[string]any{}
 	seen := map[int]bool{}
 
@@ -88,7 +94,6 @@ func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observ
 		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world, observer)
 	}
 
-	// reset contacts - TODO probably want to do this later in a separate system
 	for _, entity := range worldEntities {
 		if entity.Static || entity.Collider == nil {
 			continue
@@ -96,6 +101,26 @@ func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observ
 
 		if entity.Physics != nil {
 			entity.Physics.Grounded = false
+		}
+
+		for _, contact := range entity.Collider.Contacts {
+			e1ID := *contact.EntityID
+			e2ID := *contact.SourceEntityID
+
+			e1 := world.GetEntityByID(e1ID)
+			e2 := world.GetEntityByID(e2ID)
+
+			if e2.AIComponent != nil && e1.CharacterControllerComponent != nil {
+				if app.IsServer() {
+					fmt.Println(e2.GetID(), "died on server")
+				}
+				e2.Deadge = true
+			} else if e1.AIComponent != nil && e2.CharacterControllerComponent != nil {
+				if app.IsServer() {
+					fmt.Println(e1.GetID(), "died on server")
+				}
+				e1.Deadge = true
+			}
 		}
 
 		if entity.Collider.Contacts != nil && entity.Physics != nil {
@@ -106,8 +131,6 @@ func ResolveCollisions(world GameWorld, worldEntities []*entities.Entity, observ
 				}
 			}
 		}
-
-		entity.Collider.Contacts = nil
 	}
 }
 

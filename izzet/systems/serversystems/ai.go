@@ -25,6 +25,10 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 			continue
 		}
 
+		if entity.Deadge {
+			continue
+		}
+
 		startPosition := entity.Position()
 
 		if aiComponent.PatrolConfig != nil {

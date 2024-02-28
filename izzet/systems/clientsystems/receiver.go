@@ -80,7 +80,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 				} else {
 					mr.Inc("prediction_miss", 1)
-					replay(world.GetEntityByID(playerEntityID), gamestateUpdateMessage, cfHistory, world)
+					replay(s.app, world.GetEntityByID(playerEntityID), gamestateUpdateMessage, cfHistory, world)
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage

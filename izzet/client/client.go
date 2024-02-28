@@ -246,7 +246,6 @@ func initSeed() {
 }
 
 func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
-	// docNames := []string{"demo_scene_city", "demo_scene_samurai", "alpha2"}
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 
@@ -283,6 +282,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, systems.NewAnimationSystem(g))
+	g.playModeSystems = append(g.playModeSystems, &systems.CleanupSystem{})
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 }

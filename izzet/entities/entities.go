@@ -26,6 +26,8 @@ type Entity struct {
 	ClientSidePredicted         bool
 	SimplifiedTriMeshIterations int
 
+	Deadge bool
+
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
 	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity

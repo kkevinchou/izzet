@@ -139,7 +139,10 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	// delete entity
 	if event, ok := keyboardInput[input.KeyboardKeyX]; ok {
 		if event.Event == input.KeyboardEventUp {
-			g.world.DeleteEntity(g.SelectedEntity())
+			selectedEntity := g.SelectedEntity()
+			if selectedEntity != nil {
+				g.world.DeleteEntity(selectedEntity.ID)
+			}
 			g.SelectEntity(nil)
 		}
 	}

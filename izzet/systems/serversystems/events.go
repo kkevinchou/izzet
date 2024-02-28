@@ -68,10 +68,10 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			capsule := entity.Collider.CapsuleCollider
 			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
-			handle := modellibrary.NewGlobalHandle("alpha2")
+			handle := modellibrary.NewGlobalHandle("alpha3")
 
 			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-			entity.Animation = entities.NewAnimationComponent("alpha2", s.app.ModelLibrary())
+			entity.Animation = entities.NewAnimationComponent("alpha3", s.app.ModelLibrary())
 			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
 			camera := createCamera(e.PlayerID, entity.GetID())

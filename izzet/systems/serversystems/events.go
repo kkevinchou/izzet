@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"net"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -12,25 +11,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/input"
 )
-
-type App interface {
-	GetPlayers() map[int]*network.Player
-	RegisterPlayer(playerID int, connection net.Conn) *network.Player
-	InputBuffer() *inputbuffer.InputBuffer
-	CommandFrame() int
-	ModelLibrary() *modellibrary.ModelLibrary
-	GetPlayer(playerID int) *network.Player
-	GetPlayerInput(playerID int) input.Input
-	SetPlayerInput(playerID int, input input.Input)
-	DeregisterPlayer(playerID int)
-	SerializeWorld() []byte
-}
 
 type EventsSystem struct {
 	app App
@@ -88,22 +72,14 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 				panic(err)
 			}
 
-			world.QueueEvent(events.EntitySpawnEvent{Entity: camera})
-			world.QueueEvent(events.EntitySpawnEvent{Entity: entity})
+			s.spawnEntity(world, camera)
+			s.spawnEntity(world, entity)
 			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
 		case events.PlayerDisconnectEvent:
 			fmt.Printf("player %d disconnected\n", e.PlayerID)
 			s.app.DeregisterPlayer(e.PlayerID)
 		case events.EntitySpawnEvent:
-			world.AddEntity(e.Entity)
-			entityMessage, err := createEntityMessage(0, e.Entity)
-			if err != nil {
-				panic(err)
-			}
-			for _, player := range s.app.GetPlayers() {
-				player.Client.Send(entityMessage, s.app.CommandFrame())
-			}
-			fmt.Printf("spawned entity with ID %d\n", e.Entity.GetID())
+			s.spawnEntity(world, e.Entity)
 		default:
 		}
 		nextEventIndex += 1
@@ -111,6 +87,18 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	}
 
 	world.ClearEventQueue()
+}
+
+func (s *EventsSystem) spawnEntity(world systems.GameWorld, entity *entities.Entity) {
+	world.AddEntity(entity)
+	entityMessage, err := createEntityMessage(0, entity)
+	if err != nil {
+		panic(err)
+	}
+	for _, player := range s.app.GetPlayers() {
+		player.Client.Send(entityMessage, s.app.CommandFrame())
+	}
+	fmt.Printf("spawned entity with ID %d\n", entity.GetID())
 }
 
 func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateEntityMessage, error) {

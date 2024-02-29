@@ -18,3 +18,7 @@ type PlayerDisconnectEvent struct {
 type EntitySpawnEvent struct {
 	Entity *entities.Entity
 }
+
+type DestroyEntityEvent struct {
+	EntityID int
+}

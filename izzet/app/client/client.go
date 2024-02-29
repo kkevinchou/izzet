@@ -282,7 +282,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g))
 	g.playModeSystems = append(g.playModeSystems, &systems.CameraTargetSystem{})
 	g.playModeSystems = append(g.playModeSystems, systems.NewAnimationSystem(g))
-	g.playModeSystems = append(g.playModeSystems, &systems.CleanupSystem{})
+	g.playModeSystems = append(g.playModeSystems, systems.NewCleanupSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 }

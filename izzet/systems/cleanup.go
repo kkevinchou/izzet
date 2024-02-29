@@ -5,6 +5,11 @@ import (
 )
 
 type CleanupSystem struct {
+	app App
+}
+
+func NewCleanupSystem(app App) *CleanupSystem {
+	return &CleanupSystem{app: app}
 }
 
 func (s *CleanupSystem) Update(delta time.Duration, world GameWorld) {
@@ -13,8 +18,10 @@ func (s *CleanupSystem) Update(delta time.Duration, world GameWorld) {
 			entity.Collider.Contacts = nil
 		}
 
-		if entity.Deadge {
-			world.DeleteEntity(entity.ID)
+		if s.app.IsServer() {
+			if entity.Deadge {
+				world.DeleteEntity(entity.ID)
+			}
 		}
 	}
 }

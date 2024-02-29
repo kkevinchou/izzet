@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/kkevinchou/izzet/izzet/app/server/inputbuffer"
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/kitolib/input"
@@ -22,4 +23,5 @@ type App interface {
 	DeregisterPlayer(playerID int)
 	SerializeWorld() []byte
 	MetricsRegistry() *metrics.MetricsRegistry
+	EventsManager() *events.EventManager
 }

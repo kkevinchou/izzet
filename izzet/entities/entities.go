@@ -26,7 +26,8 @@ type Entity struct {
 	ClientSidePredicted         bool
 	SimplifiedTriMeshIterations int
 
-	Deadge bool
+	Deadge            bool
+	DeadgeEventQueued bool
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`

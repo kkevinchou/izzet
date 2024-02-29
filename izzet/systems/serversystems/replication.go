@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -12,15 +13,18 @@ import (
 )
 
 type ReplicationSystem struct {
-	app         App
-	accumulator int
+	app                   App
+	accumulator           int
+	destroyEntityConsumer *events.Consumer[events.DestroyEntityEvent]
 }
 
 func NewReplicationSystem(app App) *ReplicationSystem {
-	return &ReplicationSystem{app: app}
+	eventsManager := app.EventsManager()
+	return &ReplicationSystem{
+		app:                   app,
+		destroyEntityConsumer: events.NewConsumer(eventsManager.DestroyEntityTopic),
+	}
 }
-
-var count int
 
 func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld) {
 	s.accumulator += int(delta.Milliseconds())
@@ -30,7 +34,6 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 	s.accumulator = 0
 
 	players := s.app.GetPlayers()
-	count += 1
 
 	var entityStates []network.EntityState
 	for _, entity := range world.Entities() {
@@ -69,10 +72,16 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 		},
 	}
 
+	var destroyedEntityIDs []int
+	for _, e := range s.destroyEntityConsumer.ReadNewEvents() {
+		destroyedEntityIDs = append(destroyedEntityIDs, e.EntityID)
+	}
+
 	gamestateUpdateMessage := network.GameStateUpdateMessage{
 		EntityStates:       entityStates,
 		GlobalCommandFrame: s.app.CommandFrame(),
 		ServerStats:        stats,
+		DestroyedEntities:  destroyedEntityIDs,
 	}
 
 	for _, player := range players {

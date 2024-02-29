@@ -19,6 +19,7 @@ type GameStateUpdateMessage struct {
 	LastInputCommandFrame int
 	GlobalCommandFrame    int
 	ServerStats           serverstats.ServerStats
+	DestroyedEntities     []int
 }
 
 func (m GameStateUpdateMessage) Type() MessageType {

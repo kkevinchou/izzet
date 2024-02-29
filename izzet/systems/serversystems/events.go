@@ -18,7 +18,6 @@ import (
 
 type EventsSystem struct {
 	app                      App
-	lastPlayerJoinCursor     int
 	playerJoinConsumer       *events.Consumer[events.PlayerJoinEvent]
 	playerDisconnectConsumer *events.Consumer[events.PlayerDisconnectEvent]
 	entitySpawnConsumer      *events.Consumer[events.EntitySpawnEvent]
@@ -28,9 +27,9 @@ func NewEventsSystem(app App) *EventsSystem {
 	eventsManager := app.EventsManager()
 	return &EventsSystem{
 		app:                      app,
-		playerJoinConsumer:       events.NewConsumer[events.PlayerJoinEvent](eventsManager.PlayerJoinTopic),
-		playerDisconnectConsumer: events.NewConsumer[events.PlayerDisconnectEvent](eventsManager.PlayerDisconnectTopic),
-		entitySpawnConsumer:      events.NewConsumer[events.EntitySpawnEvent](eventsManager.EntitySpawnTopic),
+		playerJoinConsumer:       events.NewConsumer(eventsManager.PlayerJoinTopic),
+		playerDisconnectConsumer: events.NewConsumer(eventsManager.PlayerDisconnectTopic),
+		entitySpawnConsumer:      events.NewConsumer(eventsManager.EntitySpawnTopic),
 	}
 }
 

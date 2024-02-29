@@ -64,6 +64,10 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					}
 				}
 
+				if len(gamestateUpdateMessage.DestroyedEntities) > 0 {
+					fmt.Println("destroy", gamestateUpdateMessage.DestroyedEntities)
+				}
+
 				// entity interpolation
 				sb := s.app.StateBuffer()
 				sb.Push(gamestateUpdateMessage, s.app.CommandFrame())

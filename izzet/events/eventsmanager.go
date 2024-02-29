@@ -4,6 +4,7 @@ type EventManager struct {
 	PlayerJoinTopic       *Topic[PlayerJoinEvent]
 	PlayerDisconnectTopic *Topic[PlayerDisconnectEvent]
 	EntitySpawnTopic      *Topic[EntitySpawnEvent]
+	DestroyEntityTopic    *Topic[DestroyEntityEvent]
 }
 
 func NewEventManager() *EventManager {
@@ -11,6 +12,7 @@ func NewEventManager() *EventManager {
 		PlayerJoinTopic:       &Topic[PlayerJoinEvent]{},
 		PlayerDisconnectTopic: &Topic[PlayerDisconnectEvent]{},
 		EntitySpawnTopic:      &Topic[EntitySpawnEvent]{},
+		DestroyEntityTopic:    &Topic[DestroyEntityEvent]{},
 	}
 }
 
@@ -42,6 +44,9 @@ func (t *Topic[T]) ReadFrom(cursor int) ([]T, int) {
 // this means we preserve all history. i might revisit this decision later since this will eventually
 // run out of memory. but it's nice in that we could theoretically switch to a ring buffer in the future
 // and avoid resizing an array. however, i don't want to use a ring buffer yet, maybe later
+
+// also this is a kinda cool setup because it allows systems that don't run every frame (like replication)
+// to catch up on events that have piled up between frames.
 func (t *Topic[T]) Clear() {
 	t.events = nil
 	panic("first time calling clear")

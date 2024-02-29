@@ -39,7 +39,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					player.Client.Send(pingMessage, s.app.CommandFrame())
 				}
 			case <-player.DisconnectChannel:
-				world.QueueEvent(events.PlayerDisconnectEvent{PlayerID: player.ID})
+				s.app.EventsManager().PlayerDisconnectTopic.Write(events.PlayerDisconnectEvent{PlayerID: player.ID})
 			default:
 				noMessage = true
 			}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/app/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -163,4 +164,8 @@ func (g *Server) SerializeWorld() []byte {
 
 func (g *Server) CollisionObserver() *shared.CollisionObserver {
 	return nil
+}
+
+func (g *Server) EventsManager() *events.EventManager {
+	return g.eventManager
 }

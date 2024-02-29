@@ -22,7 +22,7 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 func (g *Server) handlePlayerConnections() {
 	select {
 	case connection := <-g.newConnections:
-		g.world.QueueEvent(events.PlayerJoinEvent{
+		g.eventManager.PlayerJoinTopic.Write(events.PlayerJoinEvent{
 			PlayerID:   connection.PlayerID,
 			Connection: connection.Connection,
 		})

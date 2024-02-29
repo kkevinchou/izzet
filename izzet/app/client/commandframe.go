@@ -9,7 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/app/apputils"
-	"github.com/kkevinchou/izzet/izzet/client/edithistory"
+	"github.com/kkevinchou/izzet/izzet/app/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/serialization"

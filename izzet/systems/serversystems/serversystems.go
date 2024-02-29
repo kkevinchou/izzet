@@ -3,9 +3,9 @@ package serversystems
 import (
 	"net"
 
+	"github.com/kkevinchou/izzet/izzet/app/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )

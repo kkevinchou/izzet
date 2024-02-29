@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/app/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -49,6 +50,7 @@ type Server struct {
 	commandFrame int
 	inputBuffer  *inputbuffer.InputBuffer
 	playerInput  map[int]input.Input
+	eventManager *events.EventManager
 }
 
 func NewWithFile(assetsDirectory string, filepath string) *Server {
@@ -65,9 +67,10 @@ func NewWithFile(assetsDirectory string, filepath string) *Server {
 func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	initSeed()
 	g := &Server{
-		players:     map[int]*network.Player{},
-		inputBuffer: inputbuffer.New(),
-		playerInput: map[int]input.Input{},
+		players:      map[int]*network.Player{},
+		inputBuffer:  inputbuffer.New(),
+		playerInput:  map[int]input.Input{},
+		eventManager: events.NewEventManager(),
 	}
 	g.initSettings()
 

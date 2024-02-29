@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
@@ -84,16 +83,4 @@ func (g *GameWorld) Lights() []*entities.Entity {
 
 func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
-}
-
-func (g *GameWorld) GetEvents() []events.Event {
-	return g.events
-}
-
-func (g *GameWorld) QueueEvent(event events.Event) {
-	g.events = append(g.events, event)
-}
-
-func (g *GameWorld) ClearEventQueue() {
-	g.events = nil
 }

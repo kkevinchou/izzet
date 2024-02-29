@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -20,9 +19,6 @@ type GameWorld interface {
 	GetEntityByID(int) *entities.Entity
 	DeleteEntity(int)
 	SpatialPartition() *spatialpartition.SpatialPartition
-	GetEvents() []events.Event
-	QueueEvent(events.Event)
-	ClearEventQueue()
 	AddEntity(*entities.Entity)
 }
 

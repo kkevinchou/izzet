@@ -59,7 +59,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 				TargetConfig: &entities.TargetConfig{},
 			}
 
-			world.QueueEvent(events.EntitySpawnEvent{Entity: entity})
+			s.app.EventsManager().EntitySpawnTopic.Write(events.EntitySpawnEvent{Entity: entity})
 		}
 	}
 }

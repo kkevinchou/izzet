@@ -17,76 +17,78 @@ import (
 )
 
 type EventsSystem struct {
-	app App
+	app                      App
+	lastPlayerJoinCursor     int
+	playerJoinConsumer       *events.Consumer[events.PlayerJoinEvent]
+	playerDisconnectConsumer *events.Consumer[events.PlayerDisconnectEvent]
+	entitySpawnConsumer      *events.Consumer[events.EntitySpawnEvent]
 }
 
 func NewEventsSystem(app App) *EventsSystem {
-	return &EventsSystem{app: app}
+	eventsManager := app.EventsManager()
+	return &EventsSystem{
+		app:                      app,
+		playerJoinConsumer:       events.NewConsumer[events.PlayerJoinEvent](eventsManager.PlayerJoinTopic),
+		playerDisconnectConsumer: events.NewConsumer[events.PlayerDisconnectEvent](eventsManager.PlayerDisconnectTopic),
+		entitySpawnConsumer:      events.NewConsumer[events.EntitySpawnEvent](eventsManager.EntitySpawnTopic),
+	}
 }
 
 func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
-	worldEvents := world.GetEvents()
-	var nextEventIndex = 0
+	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
+		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
-	for nextEventIndex < len(worldEvents) {
-		event := worldEvents[nextEventIndex]
-		switch e := event.(type) {
-		case events.PlayerJoinEvent:
-			player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
-
-			var radius float64 = 40
-			var length float64 = 80
-			entity := entities.InstantiateEntity("player")
-			entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
-			entity.Collider = &entities.ColliderComponent{
-				CapsuleCollider: &collider.Capsule{
-					Radius: radius,
-					Top:    mgl64.Vec3{0, radius + length, 0},
-					Bottom: mgl64.Vec3{0, radius, 0},
-				},
-				ColliderGroup: entities.ColliderGroupFlagPlayer,
-				CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
-			}
-			entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200, FlySpeed: 500}
-
-			capsule := entity.Collider.CapsuleCollider
-			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
-
-			handle := modellibrary.NewGlobalHandle("alpha3")
-
-			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-			entity.Animation = entities.NewAnimationComponent("alpha3", s.app.ModelLibrary())
-			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
-
-			camera := createCamera(e.PlayerID, entity.GetID())
-			world.AddEntity(camera)
-			world.AddEntity(entity)
-
-			worldBytes := s.app.SerializeWorld()
-			message, err := createAckPlayerJoinMessage(e.PlayerID, camera, entity, worldBytes)
-			if err != nil {
-				panic(err)
-			}
-			player.Client.Send(message, s.app.CommandFrame())
-			if err != nil {
-				panic(err)
-			}
-
-			s.spawnEntity(world, camera)
-			s.spawnEntity(world, entity)
-			fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
-		case events.PlayerDisconnectEvent:
-			fmt.Printf("player %d disconnected\n", e.PlayerID)
-			s.app.DeregisterPlayer(e.PlayerID)
-		case events.EntitySpawnEvent:
-			s.spawnEntity(world, e.Entity)
-		default:
+		var radius float64 = 40
+		var length float64 = 80
+		entity := entities.InstantiateEntity("player")
+		entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
+		entity.Collider = &entities.ColliderComponent{
+			CapsuleCollider: &collider.Capsule{
+				Radius: radius,
+				Top:    mgl64.Vec3{0, radius + length, 0},
+				Bottom: mgl64.Vec3{0, radius, 0},
+			},
+			ColliderGroup: entities.ColliderGroupFlagPlayer,
+			CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 		}
-		nextEventIndex += 1
-		worldEvents = world.GetEvents()
+		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200, FlySpeed: 500}
+
+		capsule := entity.Collider.CapsuleCollider
+		entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
+
+		handle := modellibrary.NewGlobalHandle("alpha3")
+
+		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
+		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.ModelLibrary())
+		entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
+
+		camera := createCamera(e.PlayerID, entity.GetID())
+		world.AddEntity(camera)
+		world.AddEntity(entity)
+
+		worldBytes := s.app.SerializeWorld()
+		message, err := createAckPlayerJoinMessage(e.PlayerID, camera, entity, worldBytes)
+		if err != nil {
+			panic(err)
+		}
+		player.Client.Send(message, s.app.CommandFrame())
+		if err != nil {
+			panic(err)
+		}
+
+		s.spawnEntity(world, camera)
+		s.spawnEntity(world, entity)
+		fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
 	}
 
-	world.ClearEventQueue()
+	for _, e := range s.playerDisconnectConsumer.ReadNewEvents() {
+		fmt.Printf("player %d disconnected\n", e.PlayerID)
+		s.app.DeregisterPlayer(e.PlayerID)
+	}
+
+	for _, e := range s.entitySpawnConsumer.ReadNewEvents() {
+		s.spawnEntity(world, e.Entity)
+	}
 }
 
 func (s *EventsSystem) spawnEntity(world systems.GameWorld, entity *entities.Entity) {

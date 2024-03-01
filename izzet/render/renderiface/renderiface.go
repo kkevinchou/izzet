@@ -62,7 +62,7 @@ type App interface {
 	ImportToContentBrowser(assetFilePath string)
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
-	InstantiateEntity(entityHandle string)
+	InstantiateEntity(entityHandle string) *entities.Entity
 }
 
 type RenderContext interface {

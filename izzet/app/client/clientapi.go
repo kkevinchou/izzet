@@ -604,7 +604,7 @@ func (g *Client) SelectedEntity() *entities.Entity {
 	return g.selectedEntity
 }
 
-func (g *Client) InstantiateEntity(entityHandle string) {
+func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	document := g.AssetManager().GetDocument(entityHandle)
 	handle := modellibrary.NewGlobalHandle(entityHandle)
 	if len(document.Scenes) != 1 {
@@ -633,4 +633,5 @@ func (g *Client) InstantiateEntity(entityHandle string) {
 	}
 
 	g.world.AddEntity(entity)
+	return entity
 }

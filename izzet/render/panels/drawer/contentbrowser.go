@@ -67,10 +67,10 @@ func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
 			imgui.PopID()
 
 			if imgui.BeginDragDropSourceV(imgui.DragDropFlagsSourceAllowNullID) {
-				s, done := imgui.WrapString(item.Name)
-				defer done()
+				s := item.Name
 				ptr := unsafe.Pointer(&s)
-				imgui.SetDragDropPayloadV("content_browser_item", uintptr(ptr), uint64(len(item.Name)), imgui.CondOnce)
+				size := uint64(unsafe.Sizeof(item.Name))
+				imgui.SetDragDropPayloadV("content_browser_item", uintptr(ptr), size, imgui.CondOnce)
 				imgui.EndDragDropSource()
 			}
 			imgui.Text(item.Name)

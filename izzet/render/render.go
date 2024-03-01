@@ -1030,12 +1030,10 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
 		if imgui.BeginDragDropTarget() {
-			if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsAcceptPeekOnly); payload != nil {
-				// if payload.IsDelivery() {
-				fmt.Println("----------------------------------")
-				// fmt.Println(payload.Data())
-				// fmt.Println(*(*string)(payload.Data()))
-				// }
+			if payload := imgui.AcceptDragDropPayload("content_browser_item"); payload != nil && payload.CData != nil {
+				entityName := *(*string)(payload.CData.Data)
+				entity := r.app.InstantiateEntity(entityName)
+				r.app.SelectEntity(entity)
 			}
 			imgui.EndDragDropTarget()
 			// if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {

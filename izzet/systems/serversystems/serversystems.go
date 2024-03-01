@@ -24,4 +24,5 @@ type App interface {
 	SerializeWorld() []byte
 	MetricsRegistry() *metrics.MetricsRegistry
 	EventsManager() *events.EventManager
+	SystemNames() []string
 }

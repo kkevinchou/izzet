@@ -14,6 +14,10 @@ func NewAnimationSystem(app App) *AnimationSystem {
 	return &AnimationSystem{app: app}
 }
 
+func (s *AnimationSystem) Name() string {
+	return "AnimationSystem"
+}
+
 func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 	for _, entity := range world.Entities() {
 		if entity.Animation == nil {

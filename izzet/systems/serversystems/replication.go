@@ -26,6 +26,10 @@ func NewReplicationSystem(app App) *ReplicationSystem {
 	}
 }
 
+func (s *ReplicationSystem) Name() string {
+	return "ReplicationSystem"
+}
+
 func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld) {
 	s.accumulator += int(delta.Milliseconds())
 	if s.accumulator < settings.MSPerGameStateUpdate {
@@ -70,6 +74,16 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 				Value: fmt.Sprintf("%.1f", s.app.MetricsRegistry().GetOneSecondAverage("collision_time")),
 			},
 		},
+	}
+
+	for _, systemName := range s.app.SystemNames() {
+		stats.Data = append(
+			stats.Data,
+			serverstats.Stat{
+				Name:  fmt.Sprintf("%s Time", systemName),
+				Value: fmt.Sprintf("%.2f", s.app.MetricsRegistry().GetOneSecondAverage(fmt.Sprintf("%s_runtime", systemName))),
+			},
+		)
 	}
 
 	var destroyedEntityIDs []int

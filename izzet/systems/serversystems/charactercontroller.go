@@ -16,6 +16,10 @@ func NewCharacterControllerSystem(app App) *CharacterControllerSystem {
 	return &CharacterControllerSystem{app: app}
 }
 
+func (s *CharacterControllerSystem) Name() string {
+	return "CharacterControllerSystem"
+}
+
 var moveCount int
 
 func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.GameWorld) {

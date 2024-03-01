@@ -15,6 +15,10 @@ func NewPostFrameSystem(app App) *PostFrameSystem {
 	return &PostFrameSystem{app: app}
 }
 
+func (s *PostFrameSystem) Name() string {
+	return "PostFrameSystem"
+}
+
 func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 	sb := s.app.StateBuffer()
 	if bi, ok := sb.Pull(s.app.CommandFrame()); ok {

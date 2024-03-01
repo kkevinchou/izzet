@@ -12,6 +12,7 @@ import (
 
 type System interface {
 	Update(time.Duration, GameWorld)
+	Name() string
 }
 
 type GameWorld interface {

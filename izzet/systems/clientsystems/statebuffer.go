@@ -25,6 +25,7 @@ type BufferedState struct {
 	EntityID int
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
+	Deadge   bool
 }
 
 func NewStateBuffer() *StateBuffer {
@@ -87,6 +88,15 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
 				Rotation: QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
 			}
+
+			bi.BufferedStates = append(bi.BufferedStates, bs)
+		}
+
+		for _, id := range gamestateUpdateMessage.DestroyedEntities {
+			bs := BufferedState{
+				EntityID: id,
+				Deadge:   true,
+			}
 			bi.BufferedStates = append(bi.BufferedStates, bs)
 		}
 
@@ -105,6 +115,9 @@ func (sb *StateBuffer) Pull(localCommandFrame int) (BufferedInterpolation, bool)
 	if sb.count == 0 || sb.bufferedInterpolations[sb.cursor].CommandFrame > localCommandFrame {
 		return BufferedInterpolation{}, false
 	}
+
+	// TODO - this should probably advance all command frames that are <= local command frame to quickly
+	// catch up
 
 	snapshot := sb.bufferedInterpolations[sb.cursor]
 	sb.cursor = (sb.cursor + 1) % settings.MaxStateBufferSize

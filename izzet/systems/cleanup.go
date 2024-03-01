@@ -17,11 +17,5 @@ func (s *CleanupSystem) Update(delta time.Duration, world GameWorld) {
 		if !entity.Static && entity.Collider != nil {
 			entity.Collider.Contacts = nil
 		}
-
-		if s.app.IsServer() {
-			if entity.Deadge {
-				world.DeleteEntity(entity.ID)
-			}
-		}
 	}
 }

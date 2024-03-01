@@ -69,10 +69,6 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 				Name:  "CFPS",
 				Value: fmt.Sprintf("%.0f", s.app.MetricsRegistry().GetOneSecondSum("command_frames")),
 			},
-			{
-				Name:  "Collision Time",
-				Value: fmt.Sprintf("%.1f", s.app.MetricsRegistry().GetOneSecondAverage("collision_time")),
-			},
 		},
 	}
 

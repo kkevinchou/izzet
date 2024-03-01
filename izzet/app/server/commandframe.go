@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/events"
@@ -15,7 +16,10 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 
 	g.handlePlayerConnections()
 	for _, s := range g.systems {
+		start := time.Now()
 		s.Update(delta, g.world)
+		metricName := fmt.Sprintf("%s_runtime", s.Name())
+		g.metricsRegistry.Inc(metricName, float64(time.Since(start).Milliseconds()))
 	}
 }
 

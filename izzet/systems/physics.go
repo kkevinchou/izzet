@@ -15,6 +15,10 @@ func NewPhysicsSystem(app App) *PhysicsSystem {
 	return &PhysicsSystem{app: app}
 }
 
+func (s *PhysicsSystem) Name() string {
+	return "PhysicsSystem"
+}
+
 func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
 	var worldEntities []*entities.Entity
 	if s.app.IsClient() {

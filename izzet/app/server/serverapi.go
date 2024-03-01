@@ -169,3 +169,11 @@ func (g *Server) CollisionObserver() *shared.CollisionObserver {
 func (g *Server) EventsManager() *events.EventManager {
 	return g.eventManager
 }
+
+func (g *Server) SystemNames() []string {
+	var names []string
+	for _, s := range g.systems {
+		names = append(names, s.Name())
+	}
+	return names
+}

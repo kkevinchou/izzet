@@ -15,6 +15,10 @@ func NewCollisionSystem(app App) *CollisionSystem {
 	return &CollisionSystem{app: app}
 }
 
+func (s *CollisionSystem) Name() string {
+	return "CollisionSystem"
+}
+
 func (s *CollisionSystem) Update(delta time.Duration, world GameWorld) {
 	var worldEntities []*entities.Entity
 

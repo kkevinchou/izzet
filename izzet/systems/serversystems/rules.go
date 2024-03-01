@@ -19,6 +19,10 @@ func NewRulesSystem(app App, world systems.GameWorld) *RulesSystem {
 	}
 }
 
+func (s *RulesSystem) Name() string {
+	return "RulesSystem"
+}
+
 func (s *RulesSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, e := range world.Entities() {
 		if !e.Deadge || e.DeadgeEventQueued {

@@ -16,6 +16,10 @@ func NewPingSystem(app App) *PingSystem {
 	return &PingSystem{app: app}
 }
 
+func (s *PingSystem) Name() string {
+	return "PingSystem"
+}
+
 func (s *PingSystem) Update(delta time.Duration, world systems.GameWorld) {
 	s.accumulator += delta.Milliseconds()
 	if s.accumulator <= 2000 {

@@ -11,6 +11,10 @@ import (
 type CameraTargetSystem struct {
 }
 
+func (s *CameraTargetSystem) Name() string {
+	return "CameraTargetSystem"
+}
+
 func (s *CameraTargetSystem) Update(delta time.Duration, world GameWorld) {
 	for _, entity := range world.Entities() {
 		if entity.CameraComponent == nil {

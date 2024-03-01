@@ -17,6 +17,10 @@ func NewReceiverSystem(app App) *ReceiverSystem {
 	return &ReceiverSystem{app: app}
 }
 
+func (s *ReceiverSystem) Name() string {
+	return "ReceiverSystem"
+}
+
 func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, player := range s.app.GetPlayers() {
 		noMessage := false

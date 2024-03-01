@@ -12,6 +12,10 @@ func NewCleanupSystem(app App) *CleanupSystem {
 	return &CleanupSystem{app: app}
 }
 
+func (s *CleanupSystem) Name() string {
+	return "CleanupSystem"
+}
+
 func (s *CleanupSystem) Update(delta time.Duration, world GameWorld) {
 	for _, entity := range world.Entities() {
 		if !entity.Static && entity.Collider != nil {

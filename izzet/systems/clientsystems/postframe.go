@@ -22,12 +22,18 @@ func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 			if bs.EntityID == s.app.GetPlayerEntity().ID {
 				continue
 			}
+
 			entity := world.GetEntityByID(bs.EntityID)
 			if entity == nil {
 				continue
 			}
-			entities.SetLocalPosition(entity, bs.Position)
-			entities.SetLocalRotation(entity, bs.Rotation)
+
+			if bs.Deadge {
+				world.DeleteEntity(bs.EntityID)
+			} else {
+				entities.SetLocalPosition(entity, bs.Position)
+				entities.SetLocalRotation(entity, bs.Rotation)
+			}
 		}
 	}
 

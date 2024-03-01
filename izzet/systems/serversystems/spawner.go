@@ -21,6 +21,10 @@ func NewSpawnerSystem(app App) *SpawnerSystem {
 	return &SpawnerSystem{app: app}
 }
 
+func (s *SpawnerSystem) Name() string {
+	return "SpawnerSystem"
+}
+
 func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 	// var radius float64 = 40
 	// var length float64 = 80

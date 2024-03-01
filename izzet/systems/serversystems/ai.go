@@ -18,6 +18,10 @@ func NewAISystemSystem(app App) *AISystem {
 	return &AISystem{app: app}
 }
 
+func (s *AISystem) Name() string {
+	return "AISystem"
+}
+
 func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, entity := range world.Entities() {
 		aiComponent := entity.AIComponent

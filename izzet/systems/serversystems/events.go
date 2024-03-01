@@ -33,6 +33,10 @@ func NewEventsSystem(app App) *EventsSystem {
 	}
 }
 
+func (s *EventsSystem) Name() string {
+	return "EventsSystem"
+}
+
 func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)

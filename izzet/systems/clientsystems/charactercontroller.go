@@ -15,7 +15,9 @@ func NewCharacterControllerSystem(app App) *CharacterControllerSystem {
 	return &CharacterControllerSystem{app: app}
 }
 
-var moveCount int
+func (s *CharacterControllerSystem) Name() string {
+	return "CharacterControllerSystem"
+}
 
 func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.GameWorld) {
 	camera := s.app.GetPlayerCamera()

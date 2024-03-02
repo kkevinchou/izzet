@@ -3,8 +3,8 @@ package clientsystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
+	"github.com/kkevinchou/izzet/app/systems"
+	"github.com/kkevinchou/izzet/app/systems/shared"
 )
 
 type CharacterControllerSystem struct {

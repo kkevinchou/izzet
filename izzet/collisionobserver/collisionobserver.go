@@ -1,7 +1,6 @@
-package shared
+package collisionobserver
 
 import (
-	"github.com/kkevinchou/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
@@ -39,9 +38,9 @@ func (o *CollisionObserver) OnSpatialQuery(entityID int, count int) {
 }
 func (o *CollisionObserver) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
 	o.CollisionCheck[e1.GetID()] += 1
-	if app.IsCapsuleCapsuleCollision(e1, e2) {
+	if IsCapsuleCapsuleCollision(e1, e2) {
 		o.CollisionCheckCapsule[e1.GetID()] += 1
-	} else if ok, _, _ := app.IsCapsuleTriMeshCollision(e1, e2); ok {
+	} else if ok, _, _ := IsCapsuleTriMeshCollision(e1, e2); ok {
 		o.CollisionCheckTriMesh[e1.GetID()] += 1
 		o.CollisionCheckTriangle[e1.GetID()] += len(e2.Collider.TriMeshCollider.Triangles)
 	}
@@ -87,4 +86,30 @@ func (o nullCollisionObserverType) OnCollisionCheck(e1 *entities.Entity, e2 *ent
 func (o nullCollisionObserverType) OnCollisionResolution(entityID int) {
 }
 func (o nullCollisionObserverType) Clear() {
+}
+
+func IsCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity, *entities.Entity) {
+	if e1.Collider.CapsuleCollider != nil {
+		if e2.Collider.TriMeshCollider != nil {
+			return true, e1, e2
+		}
+	}
+
+	if e2.Collider.CapsuleCollider != nil {
+		if e1.Collider.TriMeshCollider != nil {
+			return true, e2, e1
+		}
+	}
+
+	return false, nil, nil
+}
+
+func IsCapsuleCapsuleCollision(e1, e2 *entities.Entity) bool {
+	if e1.Collider.CapsuleCollider != nil {
+		if e2.Collider.CapsuleCollider != nil {
+			return true
+		}
+	}
+
+	return false
 }

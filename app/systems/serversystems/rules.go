@@ -3,8 +3,8 @@ package serversystems
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/app/systems"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/systems"
 )
 
 type RulesSystem struct {

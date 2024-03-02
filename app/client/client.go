@@ -13,8 +13,11 @@ import (
 	"github.com/kkevinchou/izzet/app/client/edithistory"
 	"github.com/kkevinchou/izzet/app/client/editorcamera"
 	"github.com/kkevinchou/izzet/app/client/window"
+	"github.com/kkevinchou/izzet/app/systems"
+	"github.com/kkevinchou/izzet/app/systems/clientsystems"
 	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/internal/platforms"
+	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -25,9 +28,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -65,7 +65,7 @@ type Client struct {
 	playModeSystems   []systems.System
 	editorModeSystems []systems.System
 	appMode           app.AppMode
-	collisionObserver *shared.CollisionObserver
+	collisionObserver *collisionobserver.CollisionObserver
 	stateBuffer       *clientsystems.StateBuffer
 
 	runtimeConfig *app.RuntimeConfig

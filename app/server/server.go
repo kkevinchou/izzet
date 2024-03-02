@@ -9,7 +9,10 @@ import (
 
 	"github.com/kkevinchou/izzet/app"
 	"github.com/kkevinchou/izzet/app/server/inputbuffer"
+	"github.com/kkevinchou/izzet/app/systems"
+	"github.com/kkevinchou/izzet/app/systems/serversystems"
 	"github.com/kkevinchou/izzet/internal/assets"
+	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
@@ -17,9 +20,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -39,7 +39,7 @@ type Server struct {
 
 	systems           []systems.System
 	appMode           app.AppMode
-	collisionObserver *shared.CollisionObserver
+	collisionObserver *collisionobserver.CollisionObserver
 
 	runtimeConfig *app.RuntimeConfig
 
@@ -88,7 +88,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)
 	g.metricsRegistry = metrics.New()
-	g.collisionObserver = shared.NewCollisionObserver()
+	g.collisionObserver = collisionobserver.NewCollisionObserver()
 
 	g.newConnections = make(chan NewConnection, 100)
 

@@ -18,8 +18,10 @@ import (
 	"github.com/kkevinchou/izzet/app/client/edithistory"
 	"github.com/kkevinchou/izzet/app/client/editorcamera"
 	"github.com/kkevinchou/izzet/app/server"
+	"github.com/kkevinchou/izzet/app/systems/clientsystems"
 	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/internal/platforms"
+	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -30,8 +32,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
@@ -189,7 +189,7 @@ func (g *Client) AppMode() app.AppMode {
 	return g.appMode
 }
 
-func (g *Client) CollisionObserver() *shared.CollisionObserver {
+func (g *Client) CollisionObserver() *collisionobserver.CollisionObserver {
 	return g.collisionObserver
 }
 
@@ -406,7 +406,7 @@ func (g *Client) initialize() {
 
 	g.editHistory = edithistory.New()
 	globals.SetClientMetricsRegistry(g.metricsRegistry)
-	g.collisionObserver = shared.NewCollisionObserver()
+	g.collisionObserver = collisionobserver.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
 }
 

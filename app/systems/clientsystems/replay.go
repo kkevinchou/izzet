@@ -3,11 +3,12 @@ package clientsystems
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/app/systems"
+	"github.com/kkevinchou/izzet/app/systems/shared"
+	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
 func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
@@ -40,7 +41,7 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 	}
 
 	// TODO: make this a dummy physics observer
-	observer := shared.NewCollisionObserver()
+	observer := collisionobserver.NewCollisionObserver()
 	for i := 1; i < len(commandFrames); i++ {
 		commandFrame := commandFrames[i]
 

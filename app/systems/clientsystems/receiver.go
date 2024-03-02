@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/app/apputils"
+	"github.com/kkevinchou/izzet/app/systems"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
-	"github.com/kkevinchou/izzet/izzet/systems"
 )
 
 type ReceiverSystem struct {

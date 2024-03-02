@@ -3,8 +3,9 @@ package systems
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/app/systems/shared"
+	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
 type CollisionSystem struct {
@@ -29,6 +30,6 @@ func (s *CollisionSystem) Update(delta time.Duration, world GameWorld) {
 		shared.ResolveCollisions(s.app, world, worldEntities, observer)
 	} else {
 		worldEntities = world.Entities()
-		shared.ResolveCollisions(s.app, world, worldEntities, shared.NullCollisionExplorer)
+		shared.ResolveCollisions(s.app, world, worldEntities, collisionobserver.NullCollisionExplorer)
 	}
 }

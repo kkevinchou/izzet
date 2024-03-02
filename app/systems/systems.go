@@ -3,9 +3,9 @@ package systems
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -31,5 +31,5 @@ type App interface {
 	GetPlayerEntity() *entities.Entity
 	GetPlayerCamera() *entities.Entity
 	MetricsRegistry() *metrics.MetricsRegistry
-	CollisionObserver() *shared.CollisionObserver
+	CollisionObserver() *collisionobserver.CollisionObserver
 }

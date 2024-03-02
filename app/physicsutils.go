@@ -1,6 +1,6 @@
 package app
 
-import "github.com/kkevinchou/izzet/izzet/entities"
+import "github.com/kkevinchou/izzet/app/entities"
 
 func IsCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity, *entities.Entity) {
 	if e1.Collider.CapsuleCollider != nil {

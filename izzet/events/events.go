@@ -3,7 +3,7 @@ package events
 import (
 	"net"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/app/entities"
 )
 
 type PlayerJoinEvent struct {

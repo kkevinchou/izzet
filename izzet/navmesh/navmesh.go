@@ -2,7 +2,7 @@ package navmesh
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )

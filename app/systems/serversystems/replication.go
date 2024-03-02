@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/app/systems"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"

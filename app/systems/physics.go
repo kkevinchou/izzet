@@ -3,8 +3,8 @@ package systems
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/app/systems/shared"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
 type PhysicsSystem struct {

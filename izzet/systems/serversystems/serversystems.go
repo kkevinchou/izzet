@@ -3,7 +3,7 @@ package serversystems
 import (
 	"net"
 
-	"github.com/kkevinchou/izzet/izzet/app/server/inputbuffer"
+	"github.com/kkevinchou/izzet/app/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"

@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
-	"github.com/kkevinchou/izzet/izzet/app/apputils"
+	"github.com/kkevinchou/izzet/app/apputils"
 )
 
 func createSamplingDimensions(startWidth int, startHeight int, count int) ([]int, []int) {

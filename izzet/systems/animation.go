@@ -3,7 +3,7 @@ package systems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/app/apputils"
+	"github.com/kkevinchou/izzet/app/apputils"
 )
 
 type AnimationSystem struct {

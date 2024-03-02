@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"github.com/kkevinchou/izzet/izzet/app"
+	"github.com/kkevinchou/izzet/app"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 

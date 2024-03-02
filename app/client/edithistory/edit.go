@@ -2,7 +2,7 @@ package edithistory
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/app/entities"
 )
 
 type PositionEdit struct {

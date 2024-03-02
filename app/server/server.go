@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/app"
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/app/server/inputbuffer"
 	"github.com/kkevinchou/izzet/app/systems"
 	"github.com/kkevinchou/izzet/app/systems/serversystems"
 	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"

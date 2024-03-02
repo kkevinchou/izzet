@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/app/apputils"
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/app/systems"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/kitolib/utils"
 )
 

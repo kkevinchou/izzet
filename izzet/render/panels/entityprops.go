@@ -8,8 +8,8 @@ import (
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/internal/geometry"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
 )

@@ -3,8 +3,8 @@ package clientsystems
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/app/systems"
-	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
 type PostFrameSystem struct {

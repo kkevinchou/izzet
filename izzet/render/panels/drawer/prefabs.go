@@ -2,7 +2,7 @@ package drawer
 
 import (
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )

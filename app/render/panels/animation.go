@@ -7,7 +7,7 @@ import (
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/app/entities"
-	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/app/render/renderiface"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 

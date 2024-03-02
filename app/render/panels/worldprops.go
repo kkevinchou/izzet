@@ -5,7 +5,7 @@ import (
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/app/render/renderiface"
 )
 
 type ComboOption string

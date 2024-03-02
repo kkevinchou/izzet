@@ -6,7 +6,7 @@ import (
 	"time"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/modelspec"
 )

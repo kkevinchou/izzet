@@ -41,6 +41,8 @@ type NavigationMesh struct {
 	voxelCount     int
 	voxelField     [][][]Voxel
 	voxelDimension float64
+
+	DebugVoxels []mgl64.Vec3
 }
 
 func New(app App, world World) *NavigationMesh {
@@ -55,7 +57,7 @@ func New(app App, world World) *NavigationMesh {
 		app:            app,
 		world:          world,
 	}
-	nm.BakeNavMesh()
+	// nm.BakeNavMesh()
 	// move the scene out of the way
 	// entity := app.GetEntityByID(3)
 	// entities.SetLocalPosition(entity, mgl64.Vec3{0, -1000, 0})

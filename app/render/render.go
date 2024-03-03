@@ -91,7 +91,7 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs     map[float32]uint32
+	cubeVAOs     map[string]uint32
 	triangleVAOs map[string]uint32
 
 	gameWindowHovered      bool
@@ -128,7 +128,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
-	r.cubeVAOs = map[float32]uint32{}
+	r.cubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
 	r.ReinitializeFrameBuffers()
@@ -533,6 +533,37 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			volume,
 			0.5,
 		)
+
+		shader := shaderManager.GetShaderProgram("modelpbr")
+		shader.Use()
+
+		shader.SetUniformInt("width", int32(r.gameWindowWidth))
+		shader.SetUniformInt("height", int32(r.gameWindowHeight))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformInt("cameraDepthMap", 29)
+		setupLightingUniforms(shader, lightContext.Lights)
+		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
+
+		shader.SetUniformFloat("roughness", .8)
+		shader.SetUniformFloat("metallic", 0)
+
+		for _, voxel := range nm.DebugVoxels {
+			cubeVAO := r.getCubeVAO(1, true)
+			gl.BindVertexArray(cubeVAO)
+			shader.SetUniformMat4("model", mgl32.Translate3D(float32(voxel.X()), float32(voxel.Y()), float32(voxel.Z())))
+			r.iztDrawArrays(0, 36)
+		}
 
 		// 		// draw navmesh
 		// 		if nm.VoxelCount() > 0 {

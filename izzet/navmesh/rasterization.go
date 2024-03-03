@@ -26,6 +26,40 @@ func (u MinXTriangles) Less(i, j int) bool {
 	return u[i].MinX < u[j].MinX
 }
 
+func (n *NavigationMesh) Voxelize2() {
+	v1 := mgl64.Vec3{0, 0, 0}
+	v2 := mgl64.Vec3{100, 25, 0}
+
+	dx := v2.X() - v1.X()
+	dy := v2.Y() - v1.Y()
+
+	steps := int(math.Abs(dx))
+	if math.Abs(dy) > math.Abs(dx) {
+		steps = int(math.Abs(dy))
+	}
+
+	xInc := float64(dx) / float64(steps)
+	yInc := float64(dy) / float64(steps)
+
+	var voxels []mgl64.Vec3
+
+	currentX := v1.X()
+	currentY := v1.Y()
+
+	for _ = range steps + 1 {
+		_, frac := math.Modf(currentY)
+		renderY := math.Floor(currentY)
+		if frac >= 0.5 {
+			renderY = math.Ceil(currentY)
+		}
+		voxels = append(voxels, mgl64.Vec3{currentX, renderY, 0})
+		currentX += xInc
+		currentY += yInc
+	}
+
+	n.DebugVoxels = voxels
+}
+
 // TODO: this method is fairly brute force and could be improved a lot, Recast does this more efficiently.
 // the current implementation considers all voxel positions in a region and does an intersection test with
 // geometry. This is quite wasteful as a lot of geometry will not be intersecting with the voxel but we will

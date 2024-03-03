@@ -523,65 +523,65 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 
 	// 	nm := r.app.NavMesh()
 
-	// 	if nm != nil {
-	// 		// draw bounding box
-	// 		volume := nm.Volume
-	// 		drawAABB(
-	// 			viewerContext,
-	// 			shaderManager.GetShaderProgram("flat"),
-	// 			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-	// 			&volume,
-	// 			0.5,
-	// 		)
+	nm := menus.NM
+	if nm != nil {
+		// draw bounding box
+		volume := nm.Volume
+		r.drawAABB(
+			viewerContext,
+			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+			volume,
+			0.5,
+		)
 
-	// 		// draw navmesh
-	// 		if nm.VoxelCount() > 0 {
-	// 			shader := shaderManager.GetShaderProgram("color_pbr")
-	// 			shader.Use()
+		// 		// draw navmesh
+		// 		if nm.VoxelCount() > 0 {
+		// 			shader := shaderManager.GetShaderProgram("color_pbr")
+		// 			shader.Use()
 
-	// 			if r.app.RuntimeConfig().Bloom {
-	// 				shader.SetUniformInt("applyToneMapping", 0)
-	// 			} else {
-	// 				// only tone map if we're not applying bloom, otherwise
-	// 				// we want to keep the HDR values and tone map later
-	// 				shader.SetUniformInt("applyToneMapping", 1)
-	// 			}
+		// 			if r.app.RuntimeConfig().Bloom {
+		// 				shader.SetUniformInt("applyToneMapping", 0)
+		// 			} else {
+		// 				// only tone map if we're not applying bloom, otherwise
+		// 				// we want to keep the HDR values and tone map later
+		// 				shader.SetUniformInt("applyToneMapping", 1)
+		// 			}
 
-	// 			shader.SetUniformMat4("model", mgl32.Ident4())
-	// 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	// 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-	// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	// 			shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-	// 			shader.SetUniformInt("shadowMap", 31)
-	// 			shader.SetUniformInt("depthCubeMap", 30)
-	// 			shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-	// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-	// 			shader.SetUniformInt("isAnimated", 0)
-	// 			shader.SetUniformInt("hasColorOverride", 1)
+		// 			shader.SetUniformMat4("model", mgl32.Ident4())
+		// 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		// 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		// 			shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+		// 			shader.SetUniformInt("shadowMap", 31)
+		// 			shader.SetUniformInt("depthCubeMap", 30)
+		// 			shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+		// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		// 			shader.SetUniformInt("isAnimated", 0)
+		// 			shader.SetUniformInt("hasColorOverride", 1)
 
-	// 			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
-	// 			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
-	// 			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
-	// 			shader.SetUniformVec3("albedo", color)
-	// 			shader.SetUniformInt("hasPBRMaterial", 1)
-	// 			shader.SetUniformFloat("ao", 1.0)
-	// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-	// 			shader.SetUniformFloat("roughness", r.app.RuntimeConfig().Roughness)
-	// 			shader.SetUniformFloat("metallic", r.app.RuntimeConfig().Metallic)
+		// 			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
+		// 			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
+		// 			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
+		// 			shader.SetUniformVec3("albedo", color)
+		// 			shader.SetUniformInt("hasPBRMaterial", 1)
+		// 			shader.SetUniformFloat("ao", 1.0)
+		// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		// 			shader.SetUniformFloat("roughness", r.app.RuntimeConfig().Roughness)
+		// 			shader.SetUniformFloat("metallic", r.app.RuntimeConfig().Metallic)
 
-	// 			setupLightingUniforms(shader, lightContext.Lights)
+		// 			setupLightingUniforms(shader, lightContext.Lights)
 
-	// 			gl.ActiveTexture(gl.TEXTURE30)
-	// 			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+		// 			gl.ActiveTexture(gl.TEXTURE30)
+		// 			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
 
-	// 			gl.ActiveTexture(gl.TEXTURE31)
-	// 			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+		// 			gl.ActiveTexture(gl.TEXTURE31)
+		// 			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-	// 			drawNavMeshTris(viewerContext, nm)
-	// 		}
-	// 	}
+		// 			drawNavMeshTris(viewerContext, nm)
+		// 		}
+	}
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {

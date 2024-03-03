@@ -3,6 +3,7 @@ package navmesh
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/app/entities"
+	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -24,6 +25,7 @@ const agentHeight int = 30
 const minimumHoleDimension int = 5
 
 type App interface {
+	ModelLibrary() *modellibrary.ModelLibrary
 }
 
 type World interface {

@@ -13,6 +13,7 @@ import (
 	"github.com/patrick-higgins/rtreego"
 )
 
+// TODO - we should check that a merged edge doesn't cause the mesh to be degenerate. if so, skip
 func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *collider.TriMesh {
 	allVertIndices, allVertPositions, v2t, triangles := mergeVerticesByDistance(primitive, 0.00001)
 

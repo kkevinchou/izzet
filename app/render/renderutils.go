@@ -1079,85 +1079,107 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb 
 	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), viewerContext, shader, allLines, thickness, color)
 }
 
-func (r *Renderer) getCubeVAO(length float32) uint32 {
-	if vao, ok := r.cubeVAOs[length]; !ok {
-		vao = r.initCubeVAO(length)
-		r.cubeVAOs[length] = vao
+func (r *Renderer) getCubeVAO(length float32, includeNormals bool) uint32 {
+	hash := fmt.Sprintf("%.2f_%t", length, includeNormals)
+	if _, ok := r.cubeVAOs[hash]; !ok {
+		vao := r.initCubeVAO(length, includeNormals)
+		r.cubeVAOs[hash] = vao
 	}
-	return r.cubeVAOs[length]
+	return r.cubeVAOs[hash]
 }
 
-func (r *Renderer) initCubeVAO(length float32) uint32 {
+func (r *Renderer) initCubeVAO(length float32, includeNormals bool) uint32 {
 	ht := length / 2
 
-	vertices := []float32{
+	allVertexAttribs := []float32{
 		// front
-		-ht, -ht, ht,
-		ht, -ht, ht,
-		ht, ht, ht,
+		-ht, -ht, ht, 0, 0, -1,
+		ht, -ht, ht, 0, 0, -1,
+		ht, ht, ht, 0, 0, -1,
 
-		ht, ht, ht,
-		-ht, ht, ht,
-		-ht, -ht, ht,
+		ht, ht, ht, 0, 0, -1,
+		-ht, ht, ht, 0, 0, -1,
+		-ht, -ht, ht, 0, 0, -1,
 
 		// back
-		ht, ht, -ht,
-		ht, -ht, -ht,
-		-ht, -ht, -ht,
+		ht, ht, -ht, 0, 0, 1,
+		ht, -ht, -ht, 0, 0, 1,
+		-ht, -ht, -ht, 0, 0, 1,
 
-		-ht, -ht, -ht,
-		-ht, ht, -ht,
-		ht, ht, -ht,
+		-ht, -ht, -ht, 0, 0, 1,
+		-ht, ht, -ht, 0, 0, 1,
+		ht, ht, -ht, 0, 0, 1,
 
 		// right
-		ht, -ht, ht,
-		ht, -ht, -ht,
-		ht, ht, -ht,
+		ht, -ht, ht, 1, 0, 0,
+		ht, -ht, -ht, 1, 0, 0,
+		ht, ht, -ht, 1, 0, 0,
 
-		ht, ht, -ht,
-		ht, ht, ht,
-		ht, -ht, ht,
+		ht, ht, -ht, 1, 0, 0,
+		ht, ht, ht, 1, 0, 0,
+		ht, -ht, ht, 1, 0, 0,
 
 		// left
-		-ht, ht, -ht,
-		-ht, -ht, -ht,
-		-ht, -ht, ht,
+		-ht, ht, -ht, -1, 0, 0,
+		-ht, -ht, -ht, -1, 0, 0,
+		-ht, -ht, ht, -1, 0, 0,
 
-		-ht, -ht, ht,
-		-ht, ht, ht,
-		-ht, ht, -ht,
+		-ht, -ht, ht, -1, 0, 0,
+		-ht, ht, ht, -1, 0, 0,
+		-ht, ht, -ht, -1, 0, 0,
 
 		// top
-		ht, ht, ht,
-		ht, ht, -ht,
-		-ht, ht, ht,
+		ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, ht, 0, 1, 0,
 
-		-ht, ht, ht,
-		ht, ht, -ht,
-		-ht, ht, -ht,
+		-ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, -ht, 0, 1, 0,
 
 		// bottom
-		-ht, -ht, ht,
-		ht, -ht, -ht,
-		ht, -ht, ht,
+		-ht, -ht, ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, ht, 0, -1, 0,
 
-		-ht, -ht, -ht,
-		ht, -ht, -ht,
-		-ht, -ht, ht,
+		-ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		-ht, -ht, ht, 0, -1, 0,
 	}
+
+	var vertices []float32
+
+	totalVertexAttributesSize := 6
+	actualVertexAttributesSize := totalVertexAttributesSize
+	if !includeNormals {
+		actualVertexAttributesSize -= 3
+	}
+
+	for i := 0; i < len(allVertexAttribs); i += totalVertexAttributesSize {
+		for j := range actualVertexAttributesSize {
+			vertices = append(vertices, allVertexAttribs[i+j])
+		}
+	}
+
 	var vbo, vao uint32
 	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
+
+	ptrOffset := 0
+	floatSize := 4
 
 	gl.BindVertexArray(vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), nil)
 	gl.EnableVertexAttribArray(0)
 
-	gl.BindVertexArray(vao)
-	r.iztDrawArrays(0, int32(len(vertices))/3)
+	if includeNormals {
+		ptrOffset += 3
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
+		gl.EnableVertexAttribArray(1)
+	}
 
 	return vao
 }

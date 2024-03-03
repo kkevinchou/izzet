@@ -17,6 +17,7 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 		if imgui.MenuItemBool("Build Navigation Mesh") {
 			fmt.Println("Build Navigation Mesh ")
 			NM = navmesh.New(app, world)
+			NM.Voxelize2()
 		}
 		imgui.EndMenu()
 	}

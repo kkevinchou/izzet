@@ -120,7 +120,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 	hoverColor := mgl64.Vec3{1, 1, 0}
 
-	cubeVAO := r.getCubeVAO(0.25)
+	cubeVAO := r.getCubeVAO(0.25, false)
 
 	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID, gizmo.GizmoAllAxisPickingID}
 	for _, entityID := range axisEntityIDs {

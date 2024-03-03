@@ -1003,7 +1003,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
-	menus.SetupMenuBar(r.app)
+	menus.SetupMenuBar(r.app, r.world)
 	menuBarHeight := CalculateMenuBarSize()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)

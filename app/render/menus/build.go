@@ -8,7 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 )
 
-var nm *navmesh.NavigationMesh
+var NM *navmesh.NavigationMesh
 
 func build(app renderiface.App, world renderiface.GameWorld) {
 	// runtimeConfig := app.RuntimeConfig()
@@ -16,7 +16,7 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 	if imgui.BeginMenu("Build") {
 		if imgui.MenuItemBool("Build Navigation Mesh") {
 			fmt.Println("Build Navigation Mesh ")
-			nm = navmesh.New(app, world)
+			NM = navmesh.New(app, world)
 		}
 		imgui.EndMenu()
 	}

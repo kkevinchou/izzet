@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/metrics"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 type App interface {
@@ -75,4 +76,5 @@ type GameWorld interface {
 	Entities() []*entities.Entity
 	AddEntity(entity *entities.Entity)
 	GetEntityByID(id int) *entities.Entity
+	SpatialPartition() *spatialpartition.SpatialPartition
 }

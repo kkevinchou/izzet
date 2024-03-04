@@ -453,8 +453,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 					direction3F := lightInfo.Direction3F
 					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
 					// directional light arrow
-					lines := [][]mgl64.Vec3{
-						[]mgl64.Vec3{
+					lines := [][2]mgl64.Vec3{
+						[2]mgl64.Vec3{
 							entity.Position(),
 							entity.Position().Add(dir),
 						},
@@ -537,10 +537,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader := shaderManager.GetShaderProgram("modelpbr")
 		shader.Use()
 
+		setupLightingUniforms(shader, lightContext.Lights)
 		shader.SetUniformInt("width", int32(r.gameWindowWidth))
-		shader.SetUniformInt("height", int32(r.gameWindowHeight))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
@@ -548,7 +546,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformInt("shadowMap", 31)
 		shader.SetUniformInt("depthCubeMap", 30)
 		shader.SetUniformInt("cameraDepthMap", 29)
-		setupLightingUniforms(shader, lightContext.Lights)
 		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
 		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
@@ -564,6 +561,9 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			shader.SetUniformMat4("model", mgl32.Translate3D(float32(voxel.X()), float32(voxel.Y()), float32(voxel.Z())))
 			r.iztDrawArrays(0, 36)
 		}
+
+		shader.SetUniformVec3("albedo", mgl32.Vec3{10, 10, 10})
+		r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, mgl64.Vec3{0, 0, 0})
 
 		// 		// draw navmesh
 		// 		if nm.VoxelCount() > 0 {
@@ -919,17 +919,17 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			modelMatrix := entities.WorldTransform(entity)
 
 			if entity.Collider.SimplifiedTriMeshCollider != nil {
-				var lines [][]mgl64.Vec3
+				var lines [][2]mgl64.Vec3
 				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
-					lines = append(lines, []mgl64.Vec3{
+					lines = append(lines, [2]mgl64.Vec3{
 						triangles.Points[0],
 						triangles.Points[1],
 					})
-					lines = append(lines, []mgl64.Vec3{
+					lines = append(lines, [2]mgl64.Vec3{
 						triangles.Points[1],
 						triangles.Points[2],
 					})
-					lines = append(lines, []mgl64.Vec3{
+					lines = append(lines, [2]mgl64.Vec3{
 						triangles.Points[2],
 						triangles.Points[0],
 					})
@@ -945,10 +945,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
 				}
 
-				var pointLines [][]mgl64.Vec3
+				var pointLines [][2]mgl64.Vec3
 				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
 					// 0 length lines
-					pointLines = append(pointLines, []mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
+					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
 				}
 				if len(pointLines) > 0 {
 					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.1, mgl64.Vec3{0, 0, 1})

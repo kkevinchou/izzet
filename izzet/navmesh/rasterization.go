@@ -26,35 +26,62 @@ func (u MinXTriangles) Less(i, j int) bool {
 	return u[i].MinX < u[j].MinX
 }
 
-func (n *NavigationMesh) Voxelize2() {
-	v1 := mgl64.Vec3{0, 0, 0}
-	v2 := mgl64.Vec3{100, 25, 0}
-
-	dx := v2.X() - v1.X()
-	dy := v2.Y() - v1.Y()
-
-	steps := int(math.Abs(dx))
-	if math.Abs(dy) > math.Abs(dx) {
-		steps = int(math.Abs(dy))
-	}
-
-	xInc := float64(dx) / float64(steps)
-	yInc := float64(dy) / float64(steps)
-
+func (n *NavigationMesh) Voxelize2(triangles []Triangle2) {
 	var voxels []mgl64.Vec3
+	for _, triangle := range triangles {
+		for i := range 3 {
+			v1 := triangle.Vertices[i]
+			v2 := triangle.Vertices[(i+1)%3]
+			n.DebugLines = append(n.DebugLines, [2]mgl64.Vec3{v1, v2})
 
-	currentX := v1.X()
-	currentY := v1.Y()
+			dx := v2.X() - v1.X()
+			dy := v2.Y() - v1.Y()
+			dz := v2.Z() - v1.Z()
 
-	for _ = range steps + 1 {
-		_, frac := math.Modf(currentY)
-		renderY := math.Floor(currentY)
-		if frac >= 0.5 {
-			renderY = math.Ceil(currentY)
+			steps := int(math.Abs(dx))
+			if math.Abs(dy) > math.Abs(dx) && math.Abs(dy) > math.Abs(dz) {
+				steps = int(math.Abs(dy))
+			} else if math.Abs(dz) > math.Abs(dx) && math.Abs(dz) > math.Abs(dy) {
+				steps = int(math.Abs(dz))
+			}
+
+			xInc := float64(dx) / float64(steps)
+			yInc := float64(dy) / float64(steps)
+			zInc := float64(dz) / float64(steps)
+
+			currentX := v1.X()
+			currentY := v1.Y()
+			currentZ := v1.Z()
+
+			for _ = range steps + 1 {
+				renderX := math.Round(currentX)
+				renderY := math.Round(currentY)
+				renderZ := math.Round(currentZ)
+				// _, fracY := math.Modf(currentY)
+				// renderY := math.Round(currentY)
+				// if fracY >= 0.5 {
+				// 	renderY = math.Ceil(currentY)
+				// }
+
+				// _, fracX := math.Modf(currentX)
+				// renderX := math.Floor(currentX)
+				// if math.Abs(fracX) >= 0.5 {
+				// 	renderX = math.Ceil(currentX)
+				// }
+
+				// _, fracZ := math.Modf(currentZ)
+				// renderZ := math.Floor(currentZ)
+				// if fracZ >= 0.5 {
+				// 	renderZ = math.Ceil(currentZ)
+				// }
+
+				voxels = append(voxels, mgl64.Vec3{renderX, renderY, renderZ})
+
+				currentX += xInc
+				currentY += yInc
+				currentZ += zInc
+			}
 		}
-		voxels = append(voxels, mgl64.Vec3{currentX, renderY, 0})
-		currentX += xInc
-		currentY += yInc
 	}
 
 	n.DebugVoxels = voxels

@@ -3,12 +3,12 @@ package navmesh
 const BufferDimension = 50
 const vxs, vys, vzs int = BufferDimension, BufferDimension, BufferDimension
 
-var lx [BufferDimension]int
-var ly [BufferDimension]int
-var lz [BufferDimension]int
-var rx [BufferDimension]int
-var ry [BufferDimension]int
-var rz [BufferDimension]int
+var LX [BufferDimension]int
+var LY [BufferDimension]int
+var LZ [BufferDimension]int
+var RX [BufferDimension]int
+var RY [BufferDimension]int
+var RZ [BufferDimension]int
 
 func Plinex(x0, y0, z0, x1, y1, z1 int) {
 	var i, n, cx, cy, cz, sx, sy, sz int
@@ -28,11 +28,11 @@ func Plinex(x0, y0, z0, x1, y1, z1 int) {
 		z0 = z1
 		z1 = i
 
-		by = &ly
-		bz = &lz
+		by = &LY
+		bz = &LZ
 	} else {
-		by = &ry
-		bz = &rz
+		by = &RY
+		bz = &RZ
 	}
 
 	// line DDA parameters
@@ -78,18 +78,18 @@ func Plinex(x0, y0, z0, x1, y1, z1 int) {
 
 	// single pixel (not a line)
 	if n == 0 {
-		if x0 >= 0 && x0 < len(ly) {
-			ly[x0] = y0
-			lz[x0] = z0
-			ry[x0] = y0
-			rz[x0] = z0
+		if x0 >= 0 && x0 < len(LY) {
+			LY[x0] = y0
+			LZ[x0] = z0
+			RY[x0] = y0
+			RZ[x0] = z0
 		}
 		return
 	}
 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if x0 >= 0 && x0 < len(ly) {
+		if x0 >= 0 && x0 < len(LY) {
 			by[x0] = y0
 			bz[x0] = z0
 		}
@@ -129,11 +129,11 @@ func Pliney(x0, y0, z0, x1, y1, z1 int) {
 		z0 = z1
 		z1 = i
 
-		bx = &lx
-		bz = &lz
+		bx = &LX
+		bz = &LZ
 	} else {
-		bx = &rx
-		bz = &rz
+		bx = &RX
+		bz = &RZ
 	}
 
 	// line DDA parameters
@@ -179,18 +179,18 @@ func Pliney(x0, y0, z0, x1, y1, z1 int) {
 
 	// single pixel (not a line)
 	if n == 0 {
-		if y0 >= 0 && y0 < len(lx) {
-			lx[y0] = x0
-			lz[y0] = z0
-			rx[y0] = x0
-			rz[y0] = z0
+		if y0 >= 0 && y0 < len(LX) {
+			LX[y0] = x0
+			LZ[y0] = z0
+			RX[y0] = x0
+			RZ[y0] = z0
 		}
 		return
 	}
 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if y0 >= 0 && y0 < len(lx) {
+		if y0 >= 0 && y0 < len(LX) {
 			bx[y0] = x0
 			bz[y0] = z0
 		}
@@ -230,11 +230,11 @@ func Plinez(x0, y0, z0, x1, y1, z1 int) {
 		z0 = z1
 		z1 = i
 
-		bx = &lx
-		by = &ly
+		bx = &LX
+		by = &LY
 	} else {
-		bx = &rx
-		by = &ry
+		bx = &RX
+		by = &RY
 	}
 
 	// line DDA parameters
@@ -280,18 +280,18 @@ func Plinez(x0, y0, z0, x1, y1, z1 int) {
 
 	// single pixel (not a line)
 	if n == 0 {
-		if z0 >= 0 && z0 < len(lx) {
-			lx[z0] = x0
-			ly[z0] = y0
-			rx[z0] = x0
-			ry[z0] = y0
+		if z0 >= 0 && z0 < len(LX) {
+			LX[z0] = x0
+			LY[z0] = y0
+			RX[z0] = x0
+			RY[z0] = y0
 		}
 		return
 	}
 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if z0 >= 0 && z0 < len(lx) {
+		if z0 >= 0 && z0 < len(LX) {
 			bx[z0] = x0
 			by[z0] = y0
 		}
@@ -453,10 +453,10 @@ func TriangleComp(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, c float32, vxs, vys, v
 			X1 = vxs - 1
 		}
 		for x = X0; x <= X1; x++ {
-			y0 = ly[x]
-			z0 = lz[x]
-			y1 = ry[x]
-			z1 = rz[x]
+			y0 = LY[x]
+			z0 = LZ[x]
+			y1 = RY[x]
+			z1 = RZ[x]
 			Line(x, y0, z0, x, y1, z1, c, vxs, vys, vzs, map3D)
 		}
 	} else if dy >= dx && dy >= dz { // y is major axis
@@ -473,10 +473,10 @@ func TriangleComp(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, c float32, vxs, vys, v
 			Y1 = vys - 1
 		}
 		for y = Y0; y <= Y1; y++ {
-			x0 = lx[y]
-			z0 = lz[y]
-			x1 = rx[y]
-			z1 = rz[y]
+			x0 = LX[y]
+			z0 = LZ[y]
+			x1 = RX[y]
+			z1 = RZ[y]
 			Line(x0, y, z0, x1, y, z1, c, vxs, vys, vzs, map3D)
 		}
 	} else if dz >= dx && dz >= dy { // z is major axis
@@ -493,10 +493,10 @@ func TriangleComp(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, c float32, vxs, vys, v
 			Z1 = vzs - 1
 		}
 		for z = Z0; z <= Z1; z++ {
-			x0 = lx[z]
-			y0 = ly[z]
-			x1 = rx[z]
-			y1 = ry[z]
+			x0 = LX[z]
+			y0 = LY[z]
+			x1 = RX[z]
+			y1 = RY[z]
 			Line(x0, y0, z, x1, y1, z, c, vxs, vys, vzs, map3D)
 		}
 	}

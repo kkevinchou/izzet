@@ -94,12 +94,11 @@ type Renderer struct {
 	cubeVAOs     map[string]uint32
 	triangleVAOs map[string]uint32
 
-	gameWindowHovered      bool
-	gameWindowWidth        int
-	gameWindowHeight       int
-	menuBarHeight          float32
-	contentBrowserHeight   float32
-	contentBrowserExpanded bool
+	gameWindowHovered    bool
+	gameWindowWidth      int
+	gameWindowHeight     int
+	menuBarHeight        float32
+	contentBrowserHeight float32
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
@@ -562,8 +561,13 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			r.iztDrawArrays(0, 36)
 		}
 
-		shader.SetUniformVec3("albedo", mgl32.Vec3{10, 10, 10})
-		r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, mgl64.Vec3{0, 0, 0})
+		shader = shaderManager.GetShaderProgram("flat")
+		color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+		shader.Use()
+		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
 
 		// 		// draw navmesh
 		// 		if nm.VoxelCount() > 0 {

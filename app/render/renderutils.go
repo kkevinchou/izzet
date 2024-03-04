@@ -504,7 +504,7 @@ func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
 
-func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var vao uint32
 	var length int
 
@@ -1031,25 +1031,25 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64
 }
 
 func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
-	var allLines [][]mgl64.Vec3
+	var allLines [][2]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)
 	xd := d.X()
 	yd := d.Y()
 	zd := d.Z()
 
-	baseHorizontalLines := [][]mgl64.Vec3{}
+	baseHorizontalLines := [][2]mgl64.Vec3{}
 	baseHorizontalLines = append(baseHorizontalLines,
-		[]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
-		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
-		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
-		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
+		[2]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
 	)
 
 	for i := 0; i < 2; i++ {
 		for _, b := range baseHorizontalLines {
 			allLines = append(allLines,
-				[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
+				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
 			)
 		}
 	}
@@ -1065,7 +1065,7 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb 
 	for i := 0; i < 2; i++ {
 		for _, b := range baseVerticalLines {
 			allLines = append(allLines,
-				[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
+				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
 			)
 		}
 	}

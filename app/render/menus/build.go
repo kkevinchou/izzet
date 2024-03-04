@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/app/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 )
@@ -17,7 +18,14 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 		if imgui.MenuItemBool("Build Navigation Mesh") {
 			fmt.Println("Build Navigation Mesh ")
 			NM = navmesh.New(app, world)
-			NM.Voxelize2()
+
+			triangles := []navmesh.Triangle2{{Vertices: [3]mgl64.Vec3{
+				{0, 0, 0},
+				{100, 5, -10},
+				{60, 100, -50},
+			}}}
+
+			NM.Voxelize2(triangles)
 		}
 		imgui.EndMenu()
 	}

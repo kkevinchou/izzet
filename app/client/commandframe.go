@@ -20,7 +20,7 @@ import (
 
 var (
 	maxCameraSpeed float64 = 400 // units per second
-	slowSpeed      float64 = 100 // units per second
+	slowSpeed      float64 = 50  // units per second
 )
 
 // Systems Context

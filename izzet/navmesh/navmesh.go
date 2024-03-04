@@ -43,6 +43,7 @@ type NavigationMesh struct {
 	voxelDimension float64
 
 	DebugVoxels []mgl64.Vec3
+	DebugLines  [][2]mgl64.Vec3
 }
 
 func New(app App, world World) *NavigationMesh {

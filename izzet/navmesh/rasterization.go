@@ -26,6 +26,15 @@ func (u MinXTriangles) Less(i, j int) bool {
 	return u[i].MinX < u[j].MinX
 }
 
+// v1, v2, v3 := triangle.Vertices[0], triangle.Vertices[1], triangle.Vertices[2]
+
+// minX := math.Min(math.Min(v1.X(), v2.X()), v3.X())
+// maxX := math.Max(math.Max(v1.X(), v2.X()), v3.X())
+// minY := math.Min(math.Min(v1.Y(), v2.Y()), v3.Y())
+// maxY := math.Max(math.Max(v1.Y(), v2.Y()), v3.Y())
+// minZ := math.Min(math.Min(v1.Z(), v2.Z()), v3.Z())
+// maxZ := math.Max(math.Max(v1.Z(), v2.Z()), v3.Z())
+
 func (n *NavigationMesh) Voxelize2(triangles []Triangle2) {
 	var voxels []mgl64.Vec3
 	for _, triangle := range triangles {

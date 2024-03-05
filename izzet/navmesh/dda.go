@@ -404,7 +404,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 	}
 }
 
-func TriangleComp(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float32) {
+func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float32) {
 	vxs := len(map3D)
 	vys := len(map3D[0])
 	vzs := len(map3D[0][0])

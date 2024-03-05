@@ -27,26 +27,37 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 
 			// NM.Voxelize2(triangles)
 
-			var map3D [navmesh.BufferDimension][navmesh.BufferDimension][navmesh.BufferDimension]float32
+			vxs := 200
+			vys := 200
+			vzs := 200
+
+			map3D := make([][][]float32, vxs)
+			for x := range vxs {
+				map3D[x] = make([][]float32, vys)
+				for y := range vys {
+					map3D[x][y] = make([]float32, vzs)
+				}
+			}
+
 			// navmesh.Plinex(0, 0, 0, 50, 50, 0)
 
-			v1 := mgl64.Vec3{0, 0, 0}
-			v2 := mgl64.Vec3{45, 10, 2}
-			v3 := mgl64.Vec3{10, 45, 20}
-			navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), 1, navmesh.BufferDimension, navmesh.BufferDimension, navmesh.BufferDimension, &map3D)
+			v1 := mgl64.Vec3{0, 0, 45}
+			v2 := mgl64.Vec3{45, 0, 45}
+			v3 := mgl64.Vec3{45, 0, 0}
+			navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), map3D)
 			NM.DebugLines = [][2]mgl64.Vec3{{v1, v2}, {v2, v3}, {v3, v1}}
 
-			v1 = mgl64.Vec3{45, 10, 2}
-			v2 = mgl64.Vec3{10, 45, 20}
-			v3 = mgl64.Vec3{50, 50, 5}
-			navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), 1, navmesh.BufferDimension, navmesh.BufferDimension, navmesh.BufferDimension, &map3D)
+			v1 = mgl64.Vec3{45, 0, 0}
+			v2 = mgl64.Vec3{0, 0, 0}
+			v3 = mgl64.Vec3{0, 0, 45}
+			navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), map3D)
 			NM.DebugLines = append(NM.DebugLines, [][2]mgl64.Vec3{{v1, v2}, {v2, v3}, {v3, v1}}...)
 
 			var debugVoxels []mgl64.Vec3
 
-			for i := range navmesh.BufferDimension {
-				for j := range navmesh.BufferDimension {
-					for k := range navmesh.BufferDimension {
+			for i := range vxs {
+				for j := range vys {
+					for k := range vzs {
 						if map3D[i][j][k] == 1 {
 							debugVoxels = append(debugVoxels, mgl64.Vec3{float64(i), float64(j), float64(k)})
 						}

@@ -533,41 +533,45 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			0.5,
 		)
 
-		shader := shaderManager.GetShaderProgram("modelpbr")
-		shader.Use()
+		if len(nm.DebugVoxels) > 0 {
+			shader := shaderManager.GetShaderProgram("modelpbr")
+			shader.Use()
 
-		setupLightingUniforms(shader, lightContext.Lights)
-		shader.SetUniformInt("width", int32(r.gameWindowWidth))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformInt("cameraDepthMap", 29)
-		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
+			setupLightingUniforms(shader, lightContext.Lights)
+			shader.SetUniformInt("width", int32(r.gameWindowWidth))
+			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+			shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+			shader.SetUniformInt("shadowMap", 31)
+			shader.SetUniformInt("depthCubeMap", 30)
+			shader.SetUniformInt("cameraDepthMap", 29)
+			shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+			shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+			shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+			shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
 
-		shader.SetUniformFloat("roughness", .8)
-		shader.SetUniformFloat("metallic", 0)
+			shader.SetUniformFloat("roughness", .8)
+			shader.SetUniformFloat("metallic", 0)
 
-		for _, voxel := range nm.DebugVoxels {
-			cubeVAO := r.getCubeVAO(1, true)
-			gl.BindVertexArray(cubeVAO)
-			shader.SetUniformMat4("model", mgl32.Translate3D(float32(voxel.X()), float32(voxel.Y()), float32(voxel.Z())))
-			r.iztDrawArrays(0, 36)
+			for _, voxel := range nm.DebugVoxels {
+				cubeVAO := r.getCubeVAO(1, true)
+				gl.BindVertexArray(cubeVAO)
+				shader.SetUniformMat4("model", mgl32.Translate3D(float32(voxel.X()), float32(voxel.Y()), float32(voxel.Z())))
+				r.iztDrawArrays(0, 36)
+			}
 		}
 
-		shader = shaderManager.GetShaderProgram("flat")
-		color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-		shader.Use()
-		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
+		if len(nm.DebugLines) > 0 {
+			shader := shaderManager.GetShaderProgram("flat")
+			color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+			shader.Use()
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+			r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
+		}
 
 		// 		// draw navmesh
 		// 		if nm.VoxelCount() > 0 {

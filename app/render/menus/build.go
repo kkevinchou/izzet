@@ -27,9 +27,9 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 
 			// NM.Voxelize2(triangles)
 
-			vxs := 200
-			vys := 200
-			vzs := 200
+			vxs := int(NM.Volume.MaxVertex.X() - NM.Volume.MinVertex.X())
+			vys := int(NM.Volume.MaxVertex.Y() - NM.Volume.MinVertex.Y())
+			vzs := int(NM.Volume.MaxVertex.Z() - NM.Volume.MinVertex.Z())
 
 			map3D := make([][][]float32, vxs)
 			for x := range vxs {
@@ -41,17 +41,17 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 
 			// navmesh.Plinex(0, 0, 0, 50, 50, 0)
 
-			v1 := mgl64.Vec3{0, 0, 45}
-			v2 := mgl64.Vec3{45, 0, 45}
-			v3 := mgl64.Vec3{45, 0, 0}
-			navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), map3D)
+			v1 := mgl64.Vec3{0, 0, 0}
+			v2 := mgl64.Vec3{50, 0, 0}
+			v3 := mgl64.Vec3{50, 0, 50}
+			navmesh.RasterizeTriangle(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), map3D)
 			NM.DebugLines = [][2]mgl64.Vec3{{v1, v2}, {v2, v3}, {v3, v1}}
 
-			v1 = mgl64.Vec3{45, 0, 0}
-			v2 = mgl64.Vec3{0, 0, 0}
-			v3 = mgl64.Vec3{0, 0, 45}
-			navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), map3D)
-			NM.DebugLines = append(NM.DebugLines, [][2]mgl64.Vec3{{v1, v2}, {v2, v3}, {v3, v1}}...)
+			// v1 = mgl64.Vec3{45, 0, 0}
+			// v2 = mgl64.Vec3{0, 0, 0}
+			// v3 = mgl64.Vec3{0, 0, 45}
+			// navmesh.TriangleComp(int(v1.X()), int(v1.Y()), int(v1.Z()), int(v2.X()), int(v2.Y()), int(v2.Z()), int(v3.X()), int(v3.Y()), int(v3.Z()), map3D)
+			// NM.DebugLines = append(NM.DebugLines, [][2]mgl64.Vec3{{v1, v2}, {v2, v3}, {v3, v1}}...)
 
 			var debugVoxels []mgl64.Vec3
 

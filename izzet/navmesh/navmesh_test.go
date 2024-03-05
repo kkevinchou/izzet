@@ -1,13 +1,18 @@
 package navmesh_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 )
 
 func TestMain(t *testing.T) {
-	navmesh.Plinex(0, 0, 0, 50, 50, 0)
+	navmesh.Plinex2(0, 0, 0, 50, 50, 0)
+	fmt.Println(navmesh.LY)
+	fmt.Println(navmesh.RY)
+	fmt.Println(navmesh.LZ)
+	fmt.Println(navmesh.RZ)
 
 	// var map3D [navmesh.BufferDimension][navmesh.BufferDimension][navmesh.BufferDimension]float32
 	// navmesh.TriangleComp(0, 0, 0, 45, 0, 0, 45, 45, 0, 1, navmesh.BufferDimension, navmesh.BufferDimension, navmesh.BufferDimension, &map3D)

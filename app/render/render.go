@@ -91,8 +91,9 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs     map[string]uint32
-	triangleVAOs map[string]uint32
+	cubeVAOs      map[string]uint32
+	batchCubeVAOs map[string]uint32
+	triangleVAOs  map[string]uint32
 
 	gameWindowHovered    bool
 	gameWindowWidth      int
@@ -128,6 +129,7 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[string]uint32{}
+	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
 	r.ReinitializeFrameBuffers()
@@ -555,10 +557,21 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			shader.SetUniformFloat("roughness", .8)
 			shader.SetUniformFloat("metallic", 0)
 
-			for _, voxel := range nm.DebugVoxels {
-				cubeVAO := r.getCubeVAO(1, true)
-				gl.BindVertexArray(cubeVAO)
-				shader.SetUniformMat4("model", mgl32.Translate3D(float32(voxel.X()), float32(voxel.Y()), float32(voxel.Z())))
+			// var positions []mgl32.Vec3
+			// for _, position := range nm.DebugVoxels {
+			// 	positions = append(positions, utils.Vec3F64ToF32(position))
+			// }
+
+			// vao := r.getBatchCubeVAOs("navmesh_cubes", 1, true, positions)
+			// gl.BindVertexArray(vao)
+			// shader.SetUniformMat4("model", mgl32.Ident4())
+			// r.iztDrawArrays(0, int32(len(nm.DebugVoxels)*36))
+
+			for _, position := range nm.DebugVoxels {
+				// vao := r.getBatchCubeVAOs("navmesh_cubes", 1, true, positions)
+				vao := r.getCubeVAO(1, true)
+				gl.BindVertexArray(vao)
+				shader.SetUniformMat4("model", mgl32.Translate3D(float32(position.X()), float32(position.Y()), float32(position.Z())))
 				r.iztDrawArrays(0, 36)
 			}
 		}

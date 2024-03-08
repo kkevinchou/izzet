@@ -1088,6 +1088,115 @@ func (r *Renderer) getCubeVAO(length float32, includeNormals bool) uint32 {
 	return r.cubeVAOs[hash]
 }
 
+func (r *Renderer) getBatchCubeVAOs(name string, length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
+	if _, ok := r.batchCubeVAOs[name]; !ok {
+		vao := r.initBatchCubeVAOs(length, includeNormals, positions)
+		r.batchCubeVAOs[name] = vao
+	}
+	return r.batchCubeVAOs[name]
+}
+
+func (r *Renderer) initBatchCubeVAOs(length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
+	ht := length / 2
+
+	var allVertexAttribs []float32
+
+	for _, position := range positions {
+		allVertexAttribs = append(
+			allVertexAttribs,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
+
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
+
+			// back
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+
+			// right
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 1, 0, 0,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 1, 0, 0,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 1, 0, 0,
+
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 1, 0, 0,
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 1, 0, 0,
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 1, 0, 0,
+
+			// left
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), -1, 0, 0,
+
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), -1, 0, 0,
+
+			// top
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
+
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
+
+			// bottom
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
+
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
+		)
+
+	}
+
+	var vertices []float32
+
+	totalVertexAttributesSize := 6
+	actualVertexAttributesSize := totalVertexAttributesSize
+	if !includeNormals {
+		actualVertexAttributesSize -= 3
+	}
+
+	for i := 0; i < len(allVertexAttribs); i += totalVertexAttributesSize {
+		for j := range actualVertexAttributesSize {
+			vertices = append(vertices, allVertexAttribs[i+j])
+		}
+	}
+
+	var vbo, vao uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	ptrOffset := 0
+	floatSize := 4
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), nil)
+	gl.EnableVertexAttribArray(0)
+
+	if includeNormals {
+		ptrOffset += 3
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
+		gl.EnableVertexAttribArray(1)
+	}
+
+	return vao
+}
+
 func (r *Renderer) initCubeVAO(length float32, includeNormals bool) uint32 {
 	ht := length / 2
 

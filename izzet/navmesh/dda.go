@@ -2,6 +2,8 @@ package navmesh
 
 import "math"
 
+var offset int = 100
+
 func Plinex(x0, y0, z0, x1, y1, z1 int, LY, LZ, RY, RZ []int, vxs int) {
 	var i, n, cx, cy, cz, sx, sy, sz int
 	var by, bz []int
@@ -76,7 +78,7 @@ func Plinex(x0, y0, z0, x1, y1, z1 int, LY, LZ, RY, RZ []int, vxs int) {
 
 	// single pixel (not a line)
 	if n == 0 {
-		if x0 >= 0 && x0 < len(LY) {
+		if x0 >= 0 && x0 < vxs {
 			LY[x0] = y0
 			LZ[x0] = z0
 			RY[x0] = y0
@@ -194,7 +196,7 @@ func Pliney(x0, y0, z0, x1, y1, z1 int, LX, LZ, RX, RZ []int, vys int) {
 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if y0 >= 0 && y0 < len(LX) {
+		if y0 >= 0 && y0 < vys {
 			bx[y0] = x0
 			bz[y0] = z0
 		}
@@ -301,7 +303,7 @@ func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if z0 >= 0 && z0 < len(LX) {
+		if z0 >= 0 && z0 < vzs {
 			bx[z0] = x0
 			by[z0] = y0
 		}
@@ -323,7 +325,7 @@ func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
 	}
 }
 
-func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]float32) {
+func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]Voxel2) int {
 	var i, n, cx, cy, cz, sx, sy, sz int
 
 	// line DDA parameters
@@ -373,18 +375,32 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 		n = z1
 	}
 
+	xOffset := vxs / 2
+	yOffset := vys / 2
+	zOffset := vzs / 2
+
+	count := 0
+
 	// single pixel (not a line)
 	if n == 0 {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			map3D[x0][y0][z0] = c
+			// map3D[x0][y0][z0] = Voxel{X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
+			if !map3D[x0][y0][z0].Filled {
+				count += 1
+			}
+
+			map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
 		}
-		return
+		return count
 	}
 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			map3D[x0][y0][z0] = c
+			if !map3D[x0][y0][z0].Filled {
+				count += 1
+			}
+			map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
 		}
 		cx -= x1
 		if cx <= 0 {
@@ -402,13 +418,19 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 			z0 += sz
 		}
 	}
+
+	return count
 }
 
-func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float32) {
+func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel2) int {
 	vxs := len(map3D)
 	vys := len(map3D[0])
 	vzs := len(map3D[0][0])
 	vsz := int(math.Max(math.Max(float64(vxs), float64(vys)), float64(vzs)))
+
+	xOffset := vxs / 2
+	yOffset := vys / 2
+	zOffset := vzs / 2
 
 	LX := make([]int, vsz)
 	LY := make([]int, vsz)
@@ -418,6 +440,18 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float
 	RZ := make([]int, vsz)
 
 	var X0, Y0, Z0, X1, Y1, Z1, dx, dy, dz, x, y, z int
+
+	x0 += xOffset
+	x1 += xOffset
+	x2 += xOffset
+
+	y0 += yOffset
+	y1 += yOffset
+	y2 += yOffset
+
+	z0 += zOffset
+	z1 += zOffset
+	z2 += zOffset
 
 	// BBOX
 	X0 = x0
@@ -467,11 +501,20 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float
 	dy = Y1 - Y0
 	dz = Z1 - Z0
 
+	var count int
+
 	if dx >= dy && dx >= dz { // x is major axis
 		// render circumference into left/right buffers
 		Plinex(x0, y0, z0, x1, y1, z1, LY, LZ, RY, RZ, vxs)
 		Plinex(x1, y1, z1, x2, y2, z2, LY, LZ, RY, RZ, vxs)
 		Plinex(x2, y2, z2, x0, y0, z0, LY, LZ, RY, RZ, vxs)
+
+		// Plinex(x0+50, y0, z0, x1+50, y1, z1, LY, LZ, RY, RZ, vxs)
+		// Plinex(x1+50, y1, z1, x2+50, y2, z2, LY, LZ, RY, RZ, vxs)
+		// Plinex(x2+50, y2, z2, x0+50, y0, z0, LY, LZ, RY, RZ, vxs)
+
+		// X0 += 50
+		// X1 += 50
 
 		// fill the triangle
 		if X0 < 0 {
@@ -480,12 +523,13 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float
 		if X1 >= vxs {
 			X1 = vxs - 1
 		}
+
 		for x = X0; x <= X1; x++ {
 			y0 = LY[x]
 			z0 = LZ[x]
 			y1 = RY[x]
 			z1 = RZ[x]
-			Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, map3D)
+			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, map3D)
 		}
 	} else if dy >= dx && dy >= dz { // y is major axis
 		// render circumference into left/right buffers
@@ -505,7 +549,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float
 			z0 = LZ[y]
 			x1 = RX[y]
 			z1 = RZ[y]
-			Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, map3D)
+			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, map3D)
 		}
 	} else if dz >= dx && dz >= dy { // z is major axis
 		// render circumference into left/right buffers
@@ -525,7 +569,13 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]float
 			y0 = LY[z]
 			x1 = RX[z]
 			y1 = RY[z]
-			Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, map3D)
+			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, map3D)
 		}
 	}
+	return count
+}
+
+type OffsetBuffer struct {
+	Data   []int
+	Offset int
 }

@@ -305,6 +305,11 @@ func fillHoles(voxelField [][][]Voxel, dimensions [3]int) {
 	}
 }
 
+type Voxel2 struct {
+	Filled  bool
+	X, Y, Z int
+}
+
 type Voxel struct {
 	Filled           bool
 	X, Y, Z          int

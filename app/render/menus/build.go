@@ -56,6 +56,8 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 				}
 			}
 
+			hf := navmesh.NewHeightField(vxs, vzs, minVertex, maxVertex)
+
 			count := 0
 			for _, entity := range world.Entities() {
 				if entity.MeshComponent == nil {
@@ -87,6 +89,7 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 							int(v3.Y()),
 							int(v3.Z()),
 							map3D,
+							hf,
 						)
 
 						count += c

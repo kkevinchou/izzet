@@ -61,10 +61,23 @@ func (hf *HeightField) Height() int {
 
 func (hf *HeightField) SpanCount() int {
 	count := 0
-	for _, span := range hf.spans {
-		for span != nil {
-			count += 1
-			span = span.next
+	// for _, span := range hf.spans {
+	// 	for span != nil {
+	// 		count += 1
+	// 		span = span.next
+	// 	}
+	// }
+
+	for x := range hf.width {
+		for z := range hf.height {
+			index := x + z*hf.width
+			span := hf.spans[index]
+			for span != nil {
+				count += 1
+				// fmt.Println(x, z, span.min, span.max)
+				span = span.next
+			}
+
 		}
 	}
 	return count
@@ -103,6 +116,10 @@ func (hf *HeightField) AddVoxel(x, y, z int) {
 				}
 				return
 			}
+		}
+
+		if currentSpan.max == y || currentSpan.min == y {
+			return
 		}
 
 		previousSpan = currentSpan

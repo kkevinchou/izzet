@@ -325,7 +325,7 @@ func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
 	}
 }
 
-func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]Voxel2, heightField *HeightField) int {
+func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField *HeightField) int {
 	var i, n, cx, cy, cz, sx, sy, sz int
 
 	// line DDA parameters
@@ -375,21 +375,16 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 		n = z1
 	}
 
-	xOffset := vxs / 2
-	yOffset := vys / 2
-	zOffset := vzs / 2
-
 	count := 0
 
 	// single pixel (not a line)
 	if n == 0 {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
 			// map3D[x0][y0][z0] = Voxel{X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
-			if !map3D[x0][y0][z0].Filled {
-				count += 1
-			}
-
-			map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
+			// if !map3D[x0][y0][z0].Filled {
+			// 	count += 1
+			// }
+			// map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
 			heightField.AddVoxel(x0, y0, z0)
 		}
 		return count
@@ -398,10 +393,10 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			if !map3D[x0][y0][z0].Filled {
-				count += 1
-			}
-			map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
+			// if !map3D[x0][y0][z0].Filled {
+			// 	count += 1
+			// }
+			// map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
 			heightField.AddVoxel(x0, y0, z0)
 		}
 		cx -= x1
@@ -424,15 +419,12 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 	return count
 }
 
-func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel2, heightField *HeightField) int {
-	vxs := len(map3D)
-	vys := len(map3D[0])
-	vzs := len(map3D[0][0])
-	vsz := int(math.Max(math.Max(float64(vxs), float64(vys)), float64(vzs)))
+func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *HeightField) int {
+	vxs := int(heightField.bMax.X() - heightField.bMin.X())
+	vys := int(heightField.bMax.Y() - heightField.bMin.Y())
+	vzs := int(heightField.bMax.Z() - heightField.bMin.Z())
 
-	xOffset := vxs / 2
-	yOffset := vys / 2
-	zOffset := vzs / 2
+	vsz := int(math.Max(math.Max(float64(vxs), float64(vys)), float64(vzs)))
 
 	LX := make([]int, vsz)
 	LY := make([]int, vsz)
@@ -443,17 +435,19 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 
 	var X0, Y0, Z0, X1, Y1, Z1, dx, dy, dz, x, y, z int
 
-	x0 += xOffset
-	x1 += xOffset
-	x2 += xOffset
+	bMin := heightField.BMin()
 
-	y0 += yOffset
-	y1 += yOffset
-	y2 += yOffset
+	x0 -= int(bMin.X())
+	x1 -= int(bMin.X())
+	x2 -= int(bMin.X())
 
-	z0 += zOffset
-	z1 += zOffset
-	z2 += zOffset
+	y0 -= int(bMin.Y())
+	y1 -= int(bMin.Y())
+	y2 -= int(bMin.Y())
+
+	z0 -= int(bMin.Z())
+	z1 -= int(bMin.Z())
+	z2 -= int(bMin.Z())
 
 	// BBOX
 	X0 = x0
@@ -531,7 +525,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 			z0 = LZ[x]
 			y1 = RY[x]
 			z1 = RZ[x]
-			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, map3D, heightField)
+			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, heightField)
 		}
 	} else if dy >= dx && dy >= dz { // y is major axis
 		// render circumference into left/right buffers
@@ -551,7 +545,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 			z0 = LZ[y]
 			x1 = RX[y]
 			z1 = RZ[y]
-			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, map3D, heightField)
+			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, heightField)
 		}
 	} else if dz >= dx && dz >= dy { // z is major axis
 		// render circumference into left/right buffers
@@ -571,7 +565,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 			y0 = LY[z]
 			x1 = RX[z]
 			y1 = RY[z]
-			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, map3D, heightField)
+			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, heightField)
 		}
 	}
 	return count

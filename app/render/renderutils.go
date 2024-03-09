@@ -24,6 +24,7 @@ import (
 )
 
 var lineCache map[string][]mgl64.Vec3
+var cubeCache map[string][]mgl64.Vec3
 var triangleVAOCache map[string]TriangleVAO
 
 type TriangleVAO struct {
@@ -33,10 +34,11 @@ type TriangleVAO struct {
 
 func init() {
 	lineCache = map[string][]mgl64.Vec3{}
+	cubeCache = map[string][]mgl64.Vec3{}
 	triangleVAOCache = map[string]TriangleVAO{}
 }
 
-func genLineKey(thickness, length float64) string {
+func genCacheKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
@@ -515,13 +517,22 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 			end := line[1]
 			length := end.Sub(start).Len()
 
-			dir := end.Sub(start).Normalize()
-			q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+			if length == 0 {
+				cp := cubePoints(thickness)
+				for _, p := range cp {
+					points = append(points, p.Add(start))
+				}
 
-			for _, dp := range linePoints(thickness, length) {
-				newEnd := q.Rotate(dp).Add(start)
-				points = append(points, newEnd)
+			} else {
+				dir := end.Sub(start).Normalize()
+				q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+
+				for _, dp := range linePoints(thickness, length) {
+					newEnd := q.Rotate(dp).Add(start)
+					points = append(points, newEnd)
+				}
 			}
+
 		}
 		vao, length = r.generateTrisVAO(points)
 		item := TriangleVAO{VAO: vao, length: length}
@@ -599,8 +610,75 @@ func cubeLines(length float64) [][]mgl64.Vec3 {
 	return lines
 }
 
+func cubePoints(thickness float64) []mgl64.Vec3 {
+	cacheKey := genCacheKey(thickness, 0)
+	if _, ok := cubeCache[cacheKey]; ok {
+		return cubeCache[cacheKey]
+	}
+
+	var ht float64 = thickness / 2
+	points := []mgl64.Vec3{
+		// front
+		{-ht, -ht, ht},
+		{ht, -ht, ht},
+		{ht, ht, ht},
+
+		{ht, ht, ht},
+		{-ht, ht, ht},
+		{-ht, -ht, ht},
+
+		// back
+		{ht, ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, -ht},
+
+		{-ht, -ht, -ht},
+		{-ht, ht, -ht},
+		{ht, ht, -ht},
+
+		// right
+		{ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, ht, -ht},
+
+		{ht, ht, -ht},
+		{ht, ht, ht},
+		{ht, -ht, ht},
+
+		// left
+		{-ht, ht, -ht},
+		{-ht, -ht, -ht},
+		{-ht, -ht, ht},
+
+		{-ht, -ht, ht},
+		{-ht, ht, ht},
+		{-ht, ht, -ht},
+
+		// top
+		{ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, ht},
+
+		{-ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, -ht},
+
+		// bottom
+		{-ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, -ht, ht},
+
+		{-ht, -ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, ht},
+	}
+
+	cubeCache[cacheKey] = points
+	return points
+}
+
 func linePoints(thickness float64, length float64) []mgl64.Vec3 {
-	cacheKey := genLineKey(thickness, length)
+	cacheKey := genCacheKey(thickness, length)
 	if _, ok := lineCache[cacheKey]; ok {
 		return lineCache[cacheKey]
 	}

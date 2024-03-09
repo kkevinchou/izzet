@@ -427,6 +427,8 @@ func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotatio
 	return renderEntities
 }
 
+var spanLines [][2]mgl64.Vec3
+
 func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
@@ -553,31 +555,32 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-		var lines [][2]mgl64.Vec3
-		for x := range hf.Width() {
-			for z := range hf.Height() {
-				span := hf.Spans()[x+z*hf.Width()]
-				for span != nil {
-					lines = append(lines,
-						[2]mgl64.Vec3{
-							{
-								float64(x) + hf.BMin().X(),
-								float64(span.Min()) + hf.BMin().Y(),
-								float64(z) + hf.BMin().Z(),
+		if len(spanLines) == 0 {
+			for x := range hf.Width() {
+				for z := range hf.Height() {
+					span := hf.Spans()[x+z*hf.Width()]
+					for span != nil {
+						spanLines = append(spanLines,
+							[2]mgl64.Vec3{
+								{
+									float64(x) + hf.BMin().X(),
+									float64(span.Min()) + hf.BMin().Y(),
+									float64(z) + hf.BMin().Z(),
+								},
+								{
+									float64(x) + hf.BMin().X(),
+									float64(span.Max()) + hf.BMin().Y(),
+									float64(z) + hf.BMin().Z(),
+								},
 							},
-							{
-								float64(x) + hf.BMin().X(),
-								float64(span.Max()) + hf.BMin().Y(),
-								float64(z) + hf.BMin().Z(),
-							},
-						},
-					)
-					span = span.Next()
+						)
+						span = span.Next()
+					}
 				}
 			}
 		}
 		color := mgl64.Vec3{255.0 / 255, 0, 0}
-		r.drawLineGroup("navmesh_spans", viewerContext, shader, lines, 1, color)
+		r.drawLineGroup("navmesh_spans", viewerContext, shader, spanLines, 1, color)
 
 		// var positions []mgl32.Vec3
 		// for _, position := range nm.DebugVoxels {

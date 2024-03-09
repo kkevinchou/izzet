@@ -325,7 +325,7 @@ func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
 	}
 }
 
-func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]Voxel2) int {
+func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]Voxel2, heightField *HeightField) int {
 	var i, n, cx, cy, cz, sx, sy, sz int
 
 	// line DDA parameters
@@ -390,6 +390,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 			}
 
 			map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
+			heightField.AddVoxel(x0, y0, z0)
 		}
 		return count
 	}
@@ -401,6 +402,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 				count += 1
 			}
 			map3D[x0][y0][z0] = Voxel2{Filled: true, X: x0 - xOffset, Y: y0 - yOffset, Z: z0 - zOffset}
+			heightField.AddVoxel(x0, y0, z0)
 		}
 		cx -= x1
 		if cx <= 0 {
@@ -422,7 +424,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, map3D [][][]
 	return count
 }
 
-func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel2) int {
+func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel2, heightField *HeightField) int {
 	vxs := len(map3D)
 	vys := len(map3D[0])
 	vzs := len(map3D[0][0])
@@ -529,7 +531,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 			z0 = LZ[x]
 			y1 = RY[x]
 			z1 = RZ[x]
-			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, map3D)
+			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, map3D, heightField)
 		}
 	} else if dy >= dx && dy >= dz { // y is major axis
 		// render circumference into left/right buffers
@@ -549,7 +551,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 			z0 = LZ[y]
 			x1 = RX[y]
 			z1 = RZ[y]
-			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, map3D)
+			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, map3D, heightField)
 		}
 	} else if dz >= dx && dz >= dy { // z is major axis
 		// render circumference into left/right buffers
@@ -569,7 +571,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, map3D [][][]Voxel
 			y0 = LY[z]
 			x1 = RX[z]
 			y1 = RY[z]
-			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, map3D)
+			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, map3D, heightField)
 		}
 	}
 	return count

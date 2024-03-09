@@ -17,6 +17,7 @@ require (
 	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/qmuntal/gltf v0.23.1 // indirect
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
 )
 

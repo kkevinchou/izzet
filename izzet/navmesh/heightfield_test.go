@@ -19,6 +19,8 @@ func TestHeightField(t *testing.T) {
 	//
 	//
 	// X
+
+	// first voxel
 	hf.AddVoxel(0, 0, 0)
 	count = hf.SpanCount()
 	if count != 1 {
@@ -42,6 +44,7 @@ func TestHeightField(t *testing.T) {
 	// X
 	// X
 
+	// no merge
 	hf.AddVoxel(0, 3, 0)
 	count = hf.SpanCount()
 	if count != 2 {
@@ -53,6 +56,7 @@ func TestHeightField(t *testing.T) {
 	// X
 	// X
 
+	// merge it all
 	hf.AddVoxel(0, 2, 0)
 	count = hf.SpanCount()
 	if count != 1 {

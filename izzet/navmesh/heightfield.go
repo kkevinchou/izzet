@@ -10,6 +10,18 @@ type Span struct {
 	next     *Span
 }
 
+func (s *Span) Min() int {
+	return s.min
+}
+
+func (s *Span) Max() int {
+	return s.max
+}
+
+func (s *Span) Next() *Span {
+	return s.next
+}
+
 type HeightField struct {
 	width, height int
 	bMin, bMax    mgl64.Vec3
@@ -27,8 +39,24 @@ func NewHeightField(width, height int, bMin, bMax mgl64.Vec3) *HeightField {
 	}
 }
 
+func (hf *HeightField) BMin() mgl64.Vec3 {
+	return hf.bMin
+}
+
+func (hf *HeightField) BMax() mgl64.Vec3 {
+	return hf.bMax
+}
+
 func (hf *HeightField) Spans() []*Span {
 	return hf.spans
+}
+
+func (hf *HeightField) Width() int {
+	return hf.width
+}
+
+func (hf *HeightField) Height() int {
+	return hf.height
 }
 
 func (hf *HeightField) SpanCount() int {

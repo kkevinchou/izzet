@@ -526,8 +526,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 
 	// 	nm := r.app.NavMesh()
 
-	hf := menus.NM.HeightField
-	if hf != nil {
+	if menus.NM != nil && menus.NM.HeightField != nil {
+		hf := menus.NM.HeightField
 		// shader := shaderManager.GetShaderProgram("modelpbr")
 		// shader.Use()
 

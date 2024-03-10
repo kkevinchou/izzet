@@ -526,8 +526,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 
 	// 	nm := r.app.NavMesh()
 
-	if menus.NM != nil && menus.NM.HeightField != nil {
-		hf := menus.NM.HeightField
+	if menus.NM != nil {
+		// hf := menus.NM.HeightField
 		// shader := shaderManager.GetShaderProgram("modelpbr")
 		// shader.Use()
 
@@ -549,6 +549,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		// shader.SetUniformFloat("roughness", .8)
 		// shader.SetUniformFloat("metallic", 0)
 
+		chf := menus.NM.CompactHeightField
+
 		shader := shaderManager.GetShaderProgram("flat")
 		shader.Use()
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
@@ -556,25 +558,28 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 		if len(spanLines) == 0 {
-			for x := range hf.Width() {
-				for z := range hf.Height() {
-					span := hf.Spans()[x+z*hf.Width()]
-					for span != nil && span.Valid() {
+			for x := range chf.Width() {
+				for z := range chf.Height() {
+					cell := chf.Cells()[x+z*chf.Width()]
+					spanIndex := cell.SpanIndex
+					spanCount := cell.SpanCount
+
+					for i := spanIndex; i < spanIndex+spanCount; i++ {
+						span := chf.Spans()[i]
 						spanLines = append(spanLines,
 							[2]mgl64.Vec3{
 								{
-									float64(x) + hf.BMin().X(),
-									float64(span.Min()) + hf.BMin().Y(),
-									float64(z) + hf.BMin().Z(),
+									float64(x) + chf.BMin().X(),
+									float64(span.Y()) + chf.BMin().Y(),
+									float64(z) + chf.BMin().Z(),
 								},
 								{
-									float64(x) + hf.BMin().X(),
-									float64(span.Max()) + hf.BMin().Y(),
-									float64(z) + hf.BMin().Z(),
+									float64(x) + chf.BMin().X(),
+									float64(span.Y()) + chf.BMin().Y(),
+									float64(z) + chf.BMin().Z(),
 								},
 							},
 						)
-						span = span.Next()
 					}
 				}
 			}

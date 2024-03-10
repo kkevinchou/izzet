@@ -105,3 +105,50 @@ func BuildDistanceField(chf *CompactHeightField) ([]int, int) {
 
 	return distances, maxDist
 }
+
+func BoxBlur(chf *CompactHeightField, distances []int) []int {
+	width := chf.width
+	height := chf.height
+
+	blurredDistances := make([]int, chf.spanCount)
+
+	for z := range height {
+		for x := range width {
+			cell := chf.cells[x+z*width]
+			spanIndex := cell.SpanIndex
+			spanCount := cell.SpanCount
+
+			for i := spanIndex; i < spanIndex+spanCount; i++ {
+				span := chf.spans[i]
+
+				if distances[i] <= vertHorizDistance {
+					// if we're close to a wall, or one away, skip blur
+					blurredDistances[i] = distances[i]
+					continue
+				}
+
+				totalDistance := distances[i]
+				for dir := range dirs {
+					neighborSpanIndex := span.neighbors[dir]
+					if neighborSpanIndex != -1 {
+						neighborSpan := chf.spans[neighborSpanIndex]
+						totalDistance += distances[neighborSpanIndex]
+
+						diagNeighborDir := (dir + 1) % 3
+						diagNeighborSpanIndex := neighborSpan.neighbors[diagNeighborDir]
+						if diagNeighborSpanIndex != -1 {
+							totalDistance += distances[diagNeighborSpanIndex]
+						} else {
+							totalDistance += vertHorizDistance
+						}
+					} else {
+						totalDistance += 2 * vertHorizDistance
+					}
+				}
+
+				blurredDistances[i] = (totalDistance + 5) / 9
+			}
+		}
+	}
+	return blurredDistances
+}

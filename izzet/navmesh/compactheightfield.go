@@ -104,7 +104,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 						if top-bottom >= walkableHeight && Abs(neighborSpan.y-span.y) <= walkableClimb {
 							layerIndex := j - neighborCell.SpanIndex
 							if layerIndex < 0 || layerIndex > maxLayers {
-								panic("too many layers? could do a continue here to keep processing")
+								panic("too many layers. could do a continue here to keep processing")
 								// continue
 							}
 							span.neighbors[dir] = j

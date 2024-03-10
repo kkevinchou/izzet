@@ -82,7 +82,9 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 		}
 	}
 
-	navmesh.FilterLowHeightSpans(500, hf)
+	navmesh.NewCompactHeightField(1, 1, hf)
+
+	// navmesh.FilterLowHeightSpans(500, hf)
 
 	return &navmesh.NavigationMesh{
 		HeightField: hf,

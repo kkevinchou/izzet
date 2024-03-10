@@ -7,6 +7,7 @@ import (
 )
 
 const maxHeight int = 0xffff
+const maxDistance int = 0xffff
 
 // match what recast uses, they also reserve 63 as unconnected but we don't use that
 const maxLayers int = 62
@@ -14,6 +15,11 @@ const maxLayers int = 62
 var dirs [4]int = [4]int{0, 1, 2, 3}
 var xDirs [4]int = [4]int{-1, 0, 1, 0}
 var zDirs [4]int = [4]int{0, 1, 0, -1}
+
+const dirLeft int = 0
+const dirDown int = 1
+const dirRight int = 2
+const dirUp int = 3
 
 type NavigationMesh struct {
 	HeightField *HeightField
@@ -28,7 +34,7 @@ func Min[T cmp.Ordered](a T, b T) T {
 }
 
 func Max[T cmp.Ordered](a T, b T) T {
-	if a < b {
+	if a > b {
 		return a
 	}
 	return b

@@ -62,4 +62,23 @@ func TestHeightField(t *testing.T) {
 	if count != 1 {
 		t.Fatalf("count %d != 1", count)
 	}
+
+	// X
+	// X
+	// X
+	// X
+
+	// nothing happens at the top
+	hf.AddVoxel(0, 3, 0)
+	count = hf.SpanCount()
+	if count != 1 {
+		t.Fatalf("count %d != 1", count)
+	}
+
+	// nothing happens at the bottom
+	hf.AddVoxel(0, 0, 0)
+	count = hf.SpanCount()
+	if count != 1 {
+		t.Fatalf("count %d != 1", count)
+	}
 }

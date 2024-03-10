@@ -426,7 +426,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *Heig
 
 	var X0, Y0, Z0, X1, Y1, Z1, dx, dy, dz, x, y, z int
 
-	bMin := heightField.BMin()
+	bMin := heightField.bMin
 
 	x0 -= int(bMin.X())
 	x1 -= int(bMin.X())

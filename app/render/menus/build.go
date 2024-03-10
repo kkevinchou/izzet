@@ -9,14 +9,11 @@ import (
 	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/app/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-var NM *navmesh.NavigationMesh
-
-var HeightField *navmesh.HeightField
-
-var map3D [][][]navmesh.Voxel2
+var NM *navmesh.NavigationMesh2
 
 func build(app renderiface.App, world renderiface.GameWorld) {
 	// runtimeConfig := app.RuntimeConfig()
@@ -26,9 +23,9 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 			fmt.Println("Build Navigation Mesh ")
 			start := time.Now()
 			nm := buildNavMesh(app, world)
-			HeightField = nm.HeightField
+			NM = nm
 			fmt.Println("rasterized voxels in", time.Since(start).Seconds())
-			fmt.Printf("rasterized %d spans\n", HeightField.SpanCount())
+			fmt.Printf("rasterized %d spans\n", nm.HeightField.SpanCount())
 		}
 
 		imgui.EndMenu()
@@ -38,7 +35,6 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.NavigationMesh2 {
 	minVertex := mgl64.Vec3{-500, -250, -500}
 	maxVertex := mgl64.Vec3{500, 250, 500}
-	NM = navmesh.New(app, world, minVertex, maxVertex)
 
 	vxs := int(maxVertex.X() - minVertex.X())
 	vzs := int(maxVertex.Z() - minVertex.Z())
@@ -86,5 +82,10 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 		}
 	}
 
-	return &navmesh.NavigationMesh2{HeightField: hf}
+	navmesh.FilterLowHeightSpans(500, hf)
+
+	return &navmesh.NavigationMesh2{
+		HeightField: hf,
+		Volume:      collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex},
+	}
 }

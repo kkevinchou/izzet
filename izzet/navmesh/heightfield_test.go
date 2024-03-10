@@ -82,3 +82,25 @@ func TestHeightField(t *testing.T) {
 		t.Fatalf("count %d != 1", count)
 	}
 }
+
+func TestFilterLowHeightSpans(t *testing.T) {
+	walkableHeight := 5
+	hf := navmesh.NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf.AddVoxel(0, 0, 0)
+
+	// okay
+	hf.AddVoxel(0, 5, 0)
+	navmesh.FilterLowHeightSpans(walkableHeight, hf)
+
+	if !hf.Spans()[0].Valid() {
+		t.Fatalf("span should be valid")
+	}
+
+	// not okay
+	hf.AddVoxel(0, 4, 0)
+	navmesh.FilterLowHeightSpans(5, hf)
+
+	if hf.Spans()[0].Valid() {
+		t.Fatalf("span should be invalid")
+	}
+}

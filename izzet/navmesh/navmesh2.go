@@ -33,7 +33,7 @@ type World interface {
 	GetEntityByID(id int) *entities.Entity
 }
 
-type NavigationMesh struct {
+type NavigationMesh2 struct {
 	Volume collider.BoundingBox
 	app    App
 	world  World
@@ -46,8 +46,8 @@ type NavigationMesh struct {
 	DebugLines  [][2]mgl64.Vec3
 }
 
-func New(app App, world World, minVertex, maxVertex mgl64.Vec3) *NavigationMesh {
-	nm := &NavigationMesh{
+func New(app App, world World, minVertex, maxVertex mgl64.Vec3) *NavigationMesh2 {
+	nm := &NavigationMesh2{
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{75, -50, -200}, MaxVertex: mgl64.Vec3{350, 25, -50}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{-150, -25, -150}, MaxVertex: mgl64.Vec3{150, 150, 0}},
 		// Volume: collider.BoundingBox{MinVertex: mgl64.Vec3{0, -25, -100}, MaxVertex: mgl64.Vec3{150, 100, 0}},
@@ -65,7 +65,7 @@ func New(app App, world World, minVertex, maxVertex mgl64.Vec3) *NavigationMesh 
 	return nm
 }
 
-func (n *NavigationMesh) BakeNavMesh() {
+func (n *NavigationMesh2) BakeNavMesh() {
 	delta := n.Volume.MaxVertex.Sub(n.Volume.MinVertex)
 	var dimensions [3]int = [3]int{int(delta[0] / n.voxelDimension), int(delta[1] / n.voxelDimension), int(delta[2] / n.voxelDimension)}
 

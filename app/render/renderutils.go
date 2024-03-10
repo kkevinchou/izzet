@@ -78,7 +78,7 @@ var ResetNavMeshVAO bool = false
 var lastMeshUpdate time.Time = time.Now()
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func (r *Renderer) drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
+func (r *Renderer) drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh2) {
 	if navmesh.VoxelCount() != lastVoxelCount || ResetNavMeshVAO {
 		if time.Since(lastMeshUpdate) > 5*time.Second || ResetNavMeshVAO {
 			ResetNavMeshVAO = false
@@ -120,7 +120,7 @@ func (r *Renderer) drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh
 	r.iztDrawArrays(0, int32(lastVertexCount))
 }
 
-func (r *Renderer) generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 {
+func (r *Renderer) generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh2) []float32 {
 	delta := navmesh.Volume.MaxVertex.Sub(navmesh.Volume.MinVertex)
 	voxelDimension := navmesh.VoxelDimension()
 	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}

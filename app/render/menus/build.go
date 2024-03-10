@@ -13,7 +13,7 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-var NM *navmesh.NavigationMesh2
+var NM *navmesh.NavigationMesh
 
 func build(app renderiface.App, world renderiface.GameWorld) {
 	// runtimeConfig := app.RuntimeConfig()
@@ -32,7 +32,7 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 	}
 }
 
-func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.NavigationMesh2 {
+func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.NavigationMesh {
 	minVertex := mgl64.Vec3{-500, -250, -500}
 	maxVertex := mgl64.Vec3{500, 250, 500}
 
@@ -84,7 +84,7 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 
 	navmesh.FilterLowHeightSpans(500, hf)
 
-	return &navmesh.NavigationMesh2{
+	return &navmesh.NavigationMesh{
 		HeightField: hf,
 		Volume:      collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex},
 	}

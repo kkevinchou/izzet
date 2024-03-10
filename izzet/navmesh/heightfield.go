@@ -2,13 +2,11 @@ package navmesh
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"golang.org/x/exp/constraints"
 )
 
 type Span struct {
 	min, max int
 	next     *Span
-	walkable bool
 
 	invalid bool
 }
@@ -181,21 +179,5 @@ func (hf *HeightField) AddSpan(x, z, min, max int) {
 	} else {
 		newSpan.next = hf.spans[columnIndex]
 		hf.spans[columnIndex] = newSpan
-	}
-}
-
-func zmin[T constraints.Ordered](a, b T) T {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func zmax[T constraints.Ordered](a, b T) T {
-	if a > b {
-		return a
-	} else {
-		return b
 	}
 }

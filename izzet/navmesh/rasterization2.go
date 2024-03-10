@@ -35,7 +35,7 @@ func (u MinXTriangles) Less(i, j int) bool {
 // minZ := math.Min(math.Min(v1.Z(), v2.Z()), v3.Z())
 // maxZ := math.Max(math.Max(v1.Z(), v2.Z()), v3.Z())
 
-func (n *NavigationMesh) Voxelize2(triangles []Triangle2) {
+func (n *NavigationMesh2) Voxelize2(triangles []Triangle2) {
 	var voxels []mgl64.Vec3
 	for _, triangle := range triangles {
 		for i := range 3 {
@@ -104,7 +104,7 @@ func (n *NavigationMesh) Voxelize2(triangles []Triangle2) {
 // this file is named), which in starts with taking the geometry and finding all voxels that it intersects with.
 // Starting from the geometry allows us to quickly fill in a large amount of voxels with minimal intersection
 // checks which is the expensive part of voxelization.
-func (n *NavigationMesh) voxelize() [][][]Voxel {
+func (n *NavigationMesh2) voxelize() [][][]Voxel {
 	start := time.Now()
 	spatialPartition := n.world.SpatialPartition()
 	sEntities := spatialPartition.QueryEntities(n.Volume)

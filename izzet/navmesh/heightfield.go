@@ -44,6 +44,7 @@ func NewHeightField(width, height int, bMin, bMax mgl64.Vec3) *HeightField {
 	}
 }
 
+// public methods just used for rendering
 func (hf *HeightField) BMin() mgl64.Vec3 {
 	return hf.bMin
 }
@@ -66,15 +67,8 @@ func (hf *HeightField) Height() int {
 
 func (hf *HeightField) SpanCount() int {
 	count := 0
-	// for _, span := range hf.spans {
-	// 	for span != nil {
-	// 		count += 1
-	// 		span = span.next
-	// 	}
-	// }
-
-	for x := range hf.width {
-		for z := range hf.height {
+	for z := range hf.height {
+		for x := range hf.width {
 			index := x + z*hf.width
 			span := hf.spans[index]
 			for span != nil {

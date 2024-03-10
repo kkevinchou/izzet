@@ -1,14 +1,13 @@
-package navmesh_test
+package navmesh
 
 import (
 	"testing"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
 )
 
 func TestHeightField(t *testing.T) {
-	hf := navmesh.NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
 	count := hf.SpanCount()
 	if count != 0 {
@@ -85,22 +84,22 @@ func TestHeightField(t *testing.T) {
 
 func TestFilterLowHeightSpans(t *testing.T) {
 	walkableHeight := 5
-	hf := navmesh.NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 	hf.AddVoxel(0, 0, 0)
 
 	// okay
 	hf.AddVoxel(0, 5, 0)
-	navmesh.FilterLowHeightSpans(walkableHeight, hf)
+	FilterLowHeightSpans(walkableHeight, hf)
 
-	if !hf.Spans()[0].Valid() {
+	if !hf.spans[0].Valid() {
 		t.Fatalf("span should be valid")
 	}
 
 	// not okay
 	hf.AddVoxel(0, 4, 0)
-	navmesh.FilterLowHeightSpans(5, hf)
+	FilterLowHeightSpans(5, hf)
 
-	if hf.Spans()[0].Valid() {
+	if hf.spans[0].Valid() {
 		t.Fatalf("span should be invalid")
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 const maxHeight int = 0xffff
 const maxDistance int = 0xffff
+const vertHorizDistance int = 2
 
 // match what recast uses, they also reserve 63 as unconnected but we don't use that
 const maxLayers int = 62
@@ -22,8 +23,10 @@ const dirRight int = 2
 const dirUp int = 3
 
 type NavigationMesh struct {
-	HeightField *HeightField
-	Volume      collider.BoundingBox
+	HeightField        *HeightField
+	CompactHeightField *CompactHeightField
+	Volume             collider.BoundingBox
+	BlurredDistances   []int
 }
 
 func Min[T cmp.Ordered](a T, b T) T {

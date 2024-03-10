@@ -15,6 +15,10 @@ type CompactSpan struct {
 	h int
 }
 
+func (s CompactSpan) Y() int {
+	return s.y
+}
+
 type CompactHeightField struct {
 	width          int
 	height         int
@@ -44,10 +48,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 
 	// initialize initial neighbor indices as negative to signal abscence of neighbors
 	for i := 0; i < chf.spanCount; i++ {
-		chf.spans[i].neighbors[0] = -1
-		chf.spans[i].neighbors[1] = -1
-		chf.spans[i].neighbors[2] = -1
-		chf.spans[i].neighbors[3] = -1
+		chf.spans[i].neighbors = [4]int{-1, -1, -1, -1}
 	}
 
 	currentSpanIndex := 0
@@ -116,4 +117,28 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 	}
 
 	return chf
+}
+
+func (chf *CompactHeightField) Width() int {
+	return chf.width
+}
+
+func (chf *CompactHeightField) Height() int {
+	return chf.height
+}
+
+func (chf *CompactHeightField) BMin() mgl64.Vec3 {
+	return chf.bMin
+}
+
+func (chf *CompactHeightField) BMax() mgl64.Vec3 {
+	return chf.bMax
+}
+
+func (chf *CompactHeightField) Cells() []CompactCell {
+	return chf.cells
+}
+
+func (chf *CompactHeightField) Spans() []CompactSpan {
+	return chf.spans
 }

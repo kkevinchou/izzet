@@ -8,6 +8,9 @@ import (
 type Span struct {
 	min, max int
 	next     *Span
+	walkable bool
+
+	invalid bool
 }
 
 func (s *Span) Min() int {
@@ -20,6 +23,10 @@ func (s *Span) Max() int {
 
 func (s *Span) Next() *Span {
 	return s.next
+}
+
+func (s *Span) Valid() bool {
+	return !s.invalid
 }
 
 type HeightField struct {

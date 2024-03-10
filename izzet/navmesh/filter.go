@@ -1,17 +1,19 @@
 package navmesh
 
-func FilterLowHangingWalkableObstacles(walkableClimb int, hf *HeightField) {
+func FilterLowHeightSpans(walkableHeight int, hf *HeightField) {
 	xSize := hf.width
 	zSize := hf.height
 
 	for z := range zSize {
 		for x := range xSize {
-			// var previousSpan *Span
-			// var previousWalkable bool
-
 			for span := hf.spans[x+z*xSize]; span != nil; span = span.next {
-
-				// previousSpan = span
+				if span.next != nil {
+					floor := span.max
+					ceiling := span.next.min
+					if ceiling-floor < walkableHeight {
+						span.invalid = true
+					}
+				}
 			}
 		}
 	}

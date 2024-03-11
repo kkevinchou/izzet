@@ -95,7 +95,6 @@ func TestDistanceFieldBlur(t *testing.T) {
 	chf := NewCompactHeightField(1, 1, hf)
 	distances, _ := BuildDistanceField(chf)
 	blurredDistances := BoxBlur(chf, distances)
-	// blurredDistances = distances
 
 	twoCostCount := 0
 	threeCostCount := 0

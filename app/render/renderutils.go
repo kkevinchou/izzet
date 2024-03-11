@@ -36,6 +36,7 @@ func init() {
 	lineCache = map[string][]mgl64.Vec3{}
 	cubeCache = map[string][]mgl64.Vec3{}
 	triangleVAOCache = map[string]TriangleVAO{}
+	navmeshVAOCache = map[string]uint32{}
 }
 
 func genCacheKey(thickness, length float64) string {

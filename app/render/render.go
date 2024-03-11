@@ -549,43 +549,62 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		// shader.SetUniformFloat("roughness", .8)
 		// shader.SetUniformFloat("metallic", 0)
 
-		chf := menus.NM.CompactHeightField
-
-		shader := shaderManager.GetShaderProgram("flat")
+		shader := shaderManager.GetShaderProgram("navmesh")
 		shader.Use()
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-		if len(spanLines) == 0 {
-			for x := range chf.Width() {
-				for z := range chf.Height() {
-					cell := chf.Cells()[x+z*chf.Width()]
-					spanIndex := cell.SpanIndex
-					spanCount := cell.SpanCount
+		setupLightingUniforms(shader, lightContext.Lights)
+		shader.SetUniformInt("width", int32(r.gameWindowWidth))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformInt("cameraDepthMap", 29)
+		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
 
-					for i := spanIndex; i < spanIndex+spanCount; i++ {
-						span := chf.Spans()[i]
-						spanLines = append(spanLines,
-							[2]mgl64.Vec3{
-								{
-									float64(x) + chf.BMin().X(),
-									float64(span.Y()) + chf.BMin().Y(),
-									float64(z) + chf.BMin().Z(),
-								},
-								{
-									float64(x) + chf.BMin().X(),
-									float64(span.Y()) + chf.BMin().Y(),
-									float64(z) + chf.BMin().Z(),
-								},
-							},
-						)
-					}
-				}
-			}
-		}
-		color := mgl64.Vec3{255.0 / 255, 0, 0}
-		r.drawLineGroup("navmesh_spans", viewerContext, shader, spanLines, 1, color)
+		shader.SetUniformFloat("roughness", .8)
+		shader.SetUniformFloat("metallic", 0)
+
+		r.drawCompactHeightField("navmesh", viewerContext, shader, menus.NM.CompactHeightField, menus.NM.BlurredDistances)
+
+		// if len(spanLines) == 0 {
+		// 	for x := range chf.Width() {
+		// 		for z := range chf.Height() {
+		// 			cell := chf.Cells()[x+z*chf.Width()]
+		// 			spanIndex := cell.SpanIndex
+		// 			spanCount := cell.SpanCount
+
+		// 			for i := spanIndex; i < spanIndex+spanCount; i++ {
+		// 				span := chf.Spans()[i]
+		// 				spanLines = append(spanLines,
+		// 					[2]mgl64.Vec3{
+		// 						{
+		// 							float64(x) + chf.BMin().X(),
+		// 							float64(span.Y()) + chf.BMin().Y(),
+		// 							float64(z) + chf.BMin().Z(),
+		// 						},
+		// 						{
+		// 							float64(x) + chf.BMin().X(),
+		// 							float64(span.Y()) + chf.BMin().Y(),
+		// 							float64(z) + chf.BMin().Z(),
+		// 						},
+		// 					},
+		// 				)
+		// 			}
+		// 		}
+		// 	}
+		// }
+
+		// color := mgl64.Vec3{255.0 / 255, 0, 0}
+		// r.drawLineGroup("navmesh_spans", viewerContext, shader, spanLines, 1, color)
 
 		// var positions []mgl32.Vec3
 		// for _, position := range nm.DebugVoxels {

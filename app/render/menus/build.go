@@ -40,6 +40,7 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 	vzs := int(maxVertex.Z() - minVertex.Z())
 
 	hf := navmesh.NewHeightField(vxs, vzs, minVertex, maxVertex)
+	var debugLines [][2]mgl64.Vec3
 
 	for _, entity := range world.Entities() {
 		if entity.MeshComponent == nil {
@@ -56,6 +57,10 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 				v1 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i].Position.Vec4(1)).Vec3())
 				v2 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3())
 				v3 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3())
+
+				debugLines = append(debugLines, [2]mgl64.Vec3{v1, v2})
+				debugLines = append(debugLines, [2]mgl64.Vec3{v2, v3})
+				debugLines = append(debugLines, [2]mgl64.Vec3{v3, v1})
 
 				tv1 := v2.Sub(v1)
 				tv2 := v3.Sub(v2)
@@ -92,5 +97,6 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 		CompactHeightField: chf,
 		Volume:             collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex},
 		BlurredDistances:   blurredDistances,
+		DebugLines:         debugLines,
 	}
 }

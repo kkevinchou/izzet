@@ -88,8 +88,6 @@ func (hf *HeightField) AddVoxel(x, y, z int) {
 	currentSpan := hf.spans[columnIndex]
 	var previousSpan *Span
 
-	// newSpan := &Span{min: min, max: max}
-
 	for currentSpan != nil {
 		if currentSpan.min > y {
 			if currentSpan.min == y+1 {

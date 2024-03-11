@@ -3,6 +3,7 @@ package navmesh
 import (
 	"cmp"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -27,6 +28,7 @@ type NavigationMesh struct {
 	CompactHeightField *CompactHeightField
 	Volume             collider.BoundingBox
 	BlurredDistances   []int
+	DebugLines         [][2]mgl64.Vec3
 }
 
 func Min[T cmp.Ordered](a T, b T) T {

@@ -617,15 +617,15 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			0.5,
 		)
 
-		// if len(nm.DebugLines) > 0 {
-		// 	shader := shaderManager.GetShaderProgram("flat")
-		// 	color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-		// 	shader.Use()
-		// 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		// 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		// 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		// 	r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
-		// }
+		if len(nm.DebugLines) > 0 {
+			shader := shaderManager.GetShaderProgram("flat")
+			color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+			shader.Use()
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+			r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
+		}
 
 		// 		// draw navmesh
 		// 		if nm.VoxelCount() > 0 {

@@ -29,6 +29,17 @@ func Plinex(x0, y0, z0, x1, y1, z1 int, LY, LZ, RY, RZ []int, vxs int) {
 		bz = RZ
 	}
 
+	// line is perpendicular to x axis
+	if x0 == x1 {
+		if x0 >= 0 && x0 < vxs {
+			LY[x0] = y0
+			LZ[x0] = z0
+			RY[x0] = y1
+			RZ[x0] = z1
+			return
+		}
+	}
+
 	// line DDA parameters
 	x1 -= x0
 	sx = 0
@@ -136,6 +147,17 @@ func Pliney(x0, y0, z0, x1, y1, z1 int, LX, LZ, RX, RZ []int, vys int) {
 		bz = RZ
 	}
 
+	// line is perpendicular to y axis
+	if y0 == y1 {
+		if y0 >= 0 && y0 < vys {
+			LX[y0] = x0
+			LZ[y0] = z0
+			RX[y0] = x1
+			RZ[y0] = z1
+			return
+		}
+	}
+
 	// line DDA parameters
 	x1 -= x0
 	sx = 0
@@ -241,6 +263,17 @@ func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
 	} else {
 		bx = RX
 		by = RY
+	}
+
+	// line is perpendicular to z axis
+	if z0 == z1 {
+		if z0 >= 0 && z0 < vzs {
+			LX[z0] = x0
+			LY[z0] = y0
+			RX[z0] = x1
+			RY[z0] = y1
+			return
+		}
 	}
 
 	// line DDA parameters

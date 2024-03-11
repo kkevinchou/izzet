@@ -1,8 +1,6 @@
 package navmesh
 
 import (
-	"fmt"
-
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -87,9 +85,6 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 			spanCount := cell.SpanCount
 
 			for i := spanIndex; i < spanIndex+spanCount; i++ {
-				if i == spanIndex+1 {
-					fmt.Println("HI")
-				}
 				span := &chf.spans[i]
 				for _, dir := range dirs {
 					neighborX := x + xDirs[dir]

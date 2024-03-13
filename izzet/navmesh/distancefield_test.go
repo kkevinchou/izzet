@@ -25,10 +25,10 @@ func TestDistanceField(t *testing.T) {
 
 	chf := NewCompactHeightField(1, 1, hf)
 
-	_, maxDist := BuildDistanceField(chf)
+	BuildDistanceField(chf)
 
-	if maxDist != 2 {
-		t.Fatalf("max dist was %d instead of 2", maxDist)
+	if chf.maxDistance != 2 {
+		t.Fatalf("max dist was %d instead of 2", chf.maxDistance)
 	}
 }
 
@@ -50,10 +50,10 @@ func TestDistanceFieldAllBorders(t *testing.T) {
 
 	chf := NewCompactHeightField(1, 1, hf)
 
-	_, maxDist := BuildDistanceField(chf)
+	BuildDistanceField(chf)
 
-	if maxDist != 0 {
-		t.Fatalf("max dist was %d instead of 0", maxDist)
+	if chf.maxDistance != 0 {
+		t.Fatalf("max dist was %d instead of 0", chf.maxDistance)
 	}
 }
 
@@ -93,16 +93,16 @@ func TestDistanceFieldBlur(t *testing.T) {
 	hf.AddVoxel(4, 0, 4)
 
 	chf := NewCompactHeightField(1, 1, hf)
-	distances, _ := BuildDistanceField(chf)
-	blurredDistances := BoxBlur(chf, distances)
+	BuildDistanceField(chf)
+	BoxBlur(chf, chf.distances)
 
 	twoCostCount := 0
 	threeCostCount := 0
 
-	for i := 0; i < len(blurredDistances); i++ {
-		if blurredDistances[i] == 2 {
+	for i := 0; i < len(chf.distances); i++ {
+		if chf.distances[i] == 2 {
 			twoCostCount++
-		} else if blurredDistances[i] == 3 {
+		} else if chf.distances[i] == 3 {
 			threeCostCount++
 		}
 	}

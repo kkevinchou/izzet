@@ -144,3 +144,7 @@ func (chf *CompactHeightField) Cells() []CompactCell {
 func (chf *CompactHeightField) Spans() []CompactSpan {
 	return chf.spans
 }
+
+func (chf *CompactHeightField) Distances() []int {
+	return chf.distances
+}

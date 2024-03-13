@@ -564,6 +564,13 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformInt("shadowMap", 31)
 		shader.SetUniformInt("depthCubeMap", 30)
 		shader.SetUniformInt("cameraDepthMap", 29)
+		if !r.app.RuntimeConfig().Bloom {
+			// only tone map if we're not applying bloom, otherwise
+			// we want to keep the HDR values and tone map later
+			shader.SetUniformInt("applyToneMapping", 1)
+		} else {
+			shader.SetUniformInt("applyToneMapping", 0)
+		}
 		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
 		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)

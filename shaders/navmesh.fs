@@ -250,8 +250,8 @@ void main()
     // reflectance equation
     vec3 Lo = vec3(0.0);
 
-    float colorScaleFactor = fs_in.Distance / 500.0;
-    vec3 in_albedo = mix(vec3(1, 0, 0), vec3(0, 0, 1), colorScaleFactor);
+    float colorScaleFactor = (fs_in.Distance / 500.0);
+    vec3 in_albedo = mix(vec3(0, 0, 0), vec3(0.1, 0.1, 0.1), colorScaleFactor);
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
     if (lightCount > MAX_LIGHTS) {

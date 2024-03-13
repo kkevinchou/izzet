@@ -1,6 +1,6 @@
 package navmesh
 
-func BuildDistanceField(chf *CompactHeightField) ([]int, int) {
+func BuildDistanceField(chf *CompactHeightField) {
 	width := chf.width
 	height := chf.height
 
@@ -103,7 +103,8 @@ func BuildDistanceField(chf *CompactHeightField) ([]int, int) {
 		maxDist = Max(distances[i], maxDist)
 	}
 
-	return distances, maxDist
+	chf.distances = BoxBlur(chf, distances)
+	chf.maxDistance = maxDist
 }
 
 func BoxBlur(chf *CompactHeightField, distances []int) []int {

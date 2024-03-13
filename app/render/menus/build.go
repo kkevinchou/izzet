@@ -89,14 +89,13 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 
 	chf := navmesh.NewCompactHeightField(1, 1, hf)
 	// navmesh.FilterLowHeightSpans(500, hf)
-	df, _ := navmesh.BuildDistanceField(chf)
-	blurredDistances := navmesh.BoxBlur(chf, df)
+	navmesh.BuildDistanceField(chf)
 
 	return &navmesh.NavigationMesh{
 		HeightField:        hf,
 		CompactHeightField: chf,
 		Volume:             collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex},
-		BlurredDistances:   blurredDistances,
+		BlurredDistances:   chf.Distances(),
 		DebugLines:         debugLines,
 	}
 }

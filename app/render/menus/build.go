@@ -20,9 +20,9 @@ func build(app renderiface.App, world renderiface.GameWorld) {
 	// imgui.SetNextWindowSize(imgui.Vec2{X: 300})
 	if imgui.BeginMenu("Build") {
 		if imgui.MenuItemBool("Build Navigation Mesh") {
-			fmt.Println("Build Navigation Mesh ")
 			start := time.Now()
 			nm := buildNavMesh(app, world)
+			nm.Invalidated = true
 			NM = nm
 			fmt.Println("rasterized voxels in", time.Since(start).Seconds())
 			fmt.Printf("rasterized %d spans\n", nm.HeightField.SpanCount())
@@ -87,9 +87,10 @@ func buildNavMesh(app renderiface.App, world renderiface.GameWorld) *navmesh.Nav
 		}
 	}
 
-	chf := navmesh.NewCompactHeightField(1, 1, hf)
 	// navmesh.FilterLowHeightSpans(500, hf)
+	chf := navmesh.NewCompactHeightField(1, 1, hf)
 	navmesh.BuildDistanceField(chf)
+	navmesh.BuildRegions(chf)
 
 	return &navmesh.NavigationMesh{
 		HeightField:        hf,

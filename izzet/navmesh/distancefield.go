@@ -16,7 +16,7 @@ func BuildDistanceField(chf *CompactHeightField) {
 			spanIndex := cell.SpanIndex
 			spanCount := cell.SpanCount
 
-			for i := spanIndex; i < spanIndex+spanCount; i++ {
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				span := chf.spans[i]
 				for _, neighborIndex := range span.neighbors {
 					if neighborIndex == -1 {
@@ -35,7 +35,7 @@ func BuildDistanceField(chf *CompactHeightField) {
 			spanIndex := cell.SpanIndex
 			spanCount := cell.SpanCount
 
-			for i := spanIndex; i < spanIndex+spanCount; i++ {
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				span := chf.spans[i]
 
 				// (-1, 0)
@@ -70,7 +70,7 @@ func BuildDistanceField(chf *CompactHeightField) {
 			spanIndex := cell.SpanIndex
 			spanCount := cell.SpanCount
 
-			for i := spanIndex; i < spanIndex+spanCount; i++ {
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				span := chf.spans[i]
 
 				// (1, 0)
@@ -119,7 +119,7 @@ func BoxBlur(chf *CompactHeightField, distances []int) []int {
 			spanIndex := cell.SpanIndex
 			spanCount := cell.SpanCount
 
-			for i := spanIndex; i < spanIndex+spanCount; i++ {
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				span := chf.spans[i]
 
 				if distances[i] <= vertHorizDistance {
@@ -135,7 +135,7 @@ func BoxBlur(chf *CompactHeightField, distances []int) []int {
 						neighborSpan := chf.spans[neighborSpanIndex]
 						totalDistance += distances[neighborSpanIndex]
 
-						diagNeighborDir := (dir + 1) % 3
+						diagNeighborDir := (dir + 1) % 4
 						diagNeighborSpanIndex := neighborSpan.neighbors[diagNeighborDir]
 						if diagNeighborSpanIndex != -1 {
 							totalDistance += distances[diagNeighborSpanIndex]

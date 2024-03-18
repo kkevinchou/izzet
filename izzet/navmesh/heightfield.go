@@ -7,8 +7,7 @@ import (
 type Span struct {
 	min, max int
 	next     *Span
-
-	invalid bool
+	area     AREA_TYPE
 }
 
 func (s *Span) Min() int {
@@ -21,10 +20,6 @@ func (s *Span) Max() int {
 
 func (s *Span) Next() *Span {
 	return s.next
-}
-
-func (s *Span) Valid() bool {
-	return !s.invalid
 }
 
 type HeightField struct {
@@ -72,11 +67,11 @@ func (hf *HeightField) SpanCount() int {
 			index := x + z*hf.width
 			span := hf.spans[index]
 			for span != nil {
-				count += 1
-				// fmt.Println(x, z, span.min, span.max)
+				if span.area != NULL_AREA {
+					count += 1
+				}
 				span = span.next
 			}
-
 		}
 	}
 	return count
@@ -95,7 +90,7 @@ func (hf *HeightField) AddVoxel(x, y, z int) {
 				currentSpan.min -= 1
 			} else {
 				// create a new span
-				newSpan := &Span{min: y, max: y}
+				newSpan := &Span{min: y, max: y, area: WALKABLE_AREA}
 				newSpan.next = currentSpan
 				hf.spans[columnIndex] = newSpan
 			}
@@ -124,10 +119,10 @@ func (hf *HeightField) AddVoxel(x, y, z int) {
 	}
 
 	if previousSpan != nil {
-		newSpan := &Span{min: y, max: y}
+		newSpan := &Span{min: y, max: y, area: WALKABLE_AREA}
 		previousSpan.next = newSpan
 	} else {
-		newSpan := &Span{min: y, max: y}
+		newSpan := &Span{min: y, max: y, area: WALKABLE_AREA}
 		hf.spans[columnIndex] = newSpan
 	}
 }

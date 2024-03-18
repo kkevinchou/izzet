@@ -5,7 +5,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 var (
@@ -13,8 +12,12 @@ var (
 	numVertices     int32
 )
 
-func (r *Renderer) drawCompactHeightField(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, chf *navmesh.CompactHeightField, distances []int) {
-	if _, ok := navmeshVAOCache[name]; !ok {
+func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
+	chf := nm.CompactHeightField
+	distances := nm.BlurredDistances
+	name := "navmesh"
+
+	if _, ok := navmeshVAOCache[name]; !ok || nm.Invalidated {
 		var positions []mgl32.Vec3
 		var ds []int32
 		var rs []int32
@@ -25,7 +28,7 @@ func (r *Renderer) drawCompactHeightField(name string, viewerContext ViewerConte
 				spanIndex := cell.SpanIndex
 				spanCount := cell.SpanCount
 
-				for i := spanIndex; i < spanIndex+spanCount; i++ {
+				for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
 					span := chf.Spans()[i]
 					position := mgl32.Vec3{
 						float32(x) + float32(chf.BMin().X()),
@@ -34,7 +37,7 @@ func (r *Renderer) drawCompactHeightField(name string, viewerContext ViewerConte
 					}
 					positions = append(positions, position)
 					ds = append(ds, int32(distances[i]))
-					rs = append(rs, int32(0))
+					rs = append(rs, int32(span.RegionID()))
 				}
 			}
 		}
@@ -42,6 +45,7 @@ func (r *Renderer) drawCompactHeightField(name string, viewerContext ViewerConte
 		numVertices = int32(len(positions))
 		vao := cubeAttributes(positions, ds, rs)
 		navmeshVAOCache[name] = vao
+		nm.Invalidated = false
 	}
 
 	gl.BindVertexArray(navmeshVAOCache[name])

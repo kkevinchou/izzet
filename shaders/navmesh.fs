@@ -243,6 +243,34 @@ float exponentialSquaredFog(float dist, float density) {
     return 1 - pow(2, -pow(dist * density, 2));
 }
 
+vec3 hsvToRgb(vec3 hsv) {
+    float h = hsv.x;
+    float s = hsv.y;
+    float v = hsv.z;
+
+    float c = v * s;
+    float x = c * (1.0 - abs(mod(h / 60.0, 2.0) - 1.0));
+    float m = v - c;
+
+    vec3 rgb;
+
+    if (h >= 0.0 && h < 60.0) {
+        rgb = vec3(c, x, 0.0);
+    } else if (h >= 60.0 && h < 120.0) {
+        rgb = vec3(x, c, 0.0);
+    } else if (h >= 120.0 && h < 180.0) {
+        rgb = vec3(0.0, c, x);
+    } else if (h >= 180.0 && h < 240.0) {
+        rgb = vec3(0.0, x, c);
+    } else if (h >= 240.0 && h < 300.0) {
+        rgb = vec3(x, 0.0, c);
+    } else {
+        rgb = vec3(c, 0.0, x);
+    }
+
+    return rgb + vec3(m);
+}
+
 void main()
 {		
     vec3 normal = normalize(fs_in.Normal);
@@ -250,8 +278,11 @@ void main()
     // reflectance equation
     vec3 Lo = vec3(0.0);
 
-    float colorScaleFactor = (fs_in.Distance / 500.0);
-    vec3 in_albedo = mix(vec3(0, 0, 0), vec3(0.1, 0.1, 0.1), colorScaleFactor);
+    // float colorScaleFactor = (fs_in.Distance / 500.0);
+    // vec3 in_albedo = mix(vec3(0, 0, 0), vec3(0.1, 0.1, 0.1), colorScaleFactor);
+
+    vec3 hsv = vec3(mod((11 * fs_in.RegionID), 360), 1, 1);
+    vec3 in_albedo = hsvToRgb(hsv);
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
     if (lightCount > MAX_LIGHTS) {

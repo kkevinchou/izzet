@@ -11,6 +11,11 @@ const maxHeight int = 0xffff
 const maxDistance int = 0xffff
 const vertHorizDistance int = 2
 
+type AREA_TYPE int
+
+const NULL_AREA AREA_TYPE = 0
+const WALKABLE_AREA AREA_TYPE = 63
+
 // match what recast uses, they also reserve 63 as unconnected but we don't use that
 const maxLayers int = 62
 
@@ -24,6 +29,8 @@ const dirRight int = 2
 const dirUp int = 3
 
 type NavigationMesh struct {
+	Invalidated bool
+
 	HeightField        *HeightField
 	CompactHeightField *CompactHeightField
 	Volume             collider.BoundingBox

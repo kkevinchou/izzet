@@ -580,7 +580,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformFloat("roughness", .8)
 		shader.SetUniformFloat("metallic", 0)
 
-		r.drawCompactHeightField("navmesh", viewerContext, shader, menus.NM.CompactHeightField, menus.NM.BlurredDistances)
+		r.drawNavmesh(menus.NM)
 
 		// if len(spanLines) == 0 {
 		// 	for x := range chf.Width() {

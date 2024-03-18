@@ -7,12 +7,13 @@ func FilterLowHeightSpans(walkableHeight int, hf *HeightField) {
 	for z := range zSize {
 		for x := range xSize {
 			for span := hf.spans[x+z*xSize]; span != nil; span = span.next {
+				floor := span.max
+				ceiling := maxHeight
 				if span.next != nil {
-					floor := span.max
-					ceiling := span.next.min
-					if ceiling-floor < walkableHeight {
-						span.invalid = true
-					}
+					ceiling = span.next.min
+				}
+				if ceiling-floor < walkableHeight {
+					span.area = NULL_AREA
 				}
 			}
 		}

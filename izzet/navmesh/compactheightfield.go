@@ -5,20 +5,24 @@ import (
 )
 
 type CompactCell struct {
-	SpanIndex int
+	SpanIndex SpanIndex
 	SpanCount int
 }
 
 type CompactSpan struct {
 	y         int
 	regionID  int
-	neighbors [4]int
+	neighbors [4]SpanIndex
 
 	h int
 }
 
 func (s CompactSpan) Y() int {
 	return s.y
+}
+
+func (s CompactSpan) RegionID() int {
+	return s.regionID
 }
 
 type CompactHeightField struct {
@@ -31,6 +35,7 @@ type CompactHeightField struct {
 	cells          []CompactCell
 	spans          []CompactSpan
 	distances      []int
+	areas          []AREA_TYPE
 	maxDistance    int
 }
 
@@ -47,13 +52,14 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 	chf.bMax[1] += float64(walkableHeight)
 	chf.cells = make([]CompactCell, chf.width*chf.height)
 	chf.spans = make([]CompactSpan, chf.spanCount)
+	chf.areas = make([]AREA_TYPE, chf.spanCount)
 
 	// initialize initial neighbor indices as negative to signal abscence of neighbors
 	for i := 0; i < chf.spanCount; i++ {
-		chf.spans[i].neighbors = [4]int{-1, -1, -1, -1}
+		chf.spans[i].neighbors = [4]SpanIndex{-1, -1, -1, -1}
 	}
 
-	currentSpanIndex := 0
+	var currentSpanIndex SpanIndex
 	numColumns := chf.width * chf.height
 
 	for columnIndex := range numColumns {
@@ -65,7 +71,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 		cell := &chf.cells[columnIndex]
 		cell.SpanIndex = currentSpanIndex
 
-		for ; span != nil && span.Valid(); span = span.next {
+		for ; span != nil && span.area != NULL_AREA; span = span.next {
 			bottom := span.max
 			top := maxHeight
 			if span.next != nil {
@@ -73,10 +79,14 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 			}
 			chf.spans[currentSpanIndex].y = Clamp(bottom, 0, maxHeight)
 			chf.spans[currentSpanIndex].h = Clamp(top-bottom, 0, maxHeight)
+			chf.areas[currentSpanIndex] = span.area
+			// set areas
 			currentSpanIndex++
 			cell.SpanCount++
 		}
 	}
+
+	// setup neighbors
 
 	for z := range chf.height {
 		for x := range chf.width {
@@ -84,7 +94,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 			spanIndex := cell.SpanIndex
 			spanCount := cell.SpanCount
 
-			for i := spanIndex; i < spanIndex+spanCount; i++ {
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				span := &chf.spans[i]
 				for _, dir := range dirs {
 					neighborX := x + xDirs[dir]
@@ -98,14 +108,14 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 					neighborSpanIndex := neighborCell.SpanIndex
 					neighborSpanCount := neighborCell.SpanCount
 
-					for j := neighborSpanIndex; j < neighborSpanIndex+neighborSpanCount; j++ {
+					for j := neighborSpanIndex; j < neighborSpanIndex+SpanIndex(neighborSpanCount); j++ {
 						neighborSpan := &chf.spans[j]
 
 						bottom := Max(span.y, neighborSpan.y)
 						top := Min(span.y+span.h, neighborSpan.y+neighborSpan.h)
 
 						if top-bottom >= walkableHeight && Abs(neighborSpan.y-span.y) <= walkableClimb {
-							layerIndex := j - neighborCell.SpanIndex
+							layerIndex := int(j - neighborCell.SpanIndex)
 							if layerIndex < 0 || layerIndex > maxLayers {
 								panic("too many layers. could do a continue here to keep processing")
 								// continue

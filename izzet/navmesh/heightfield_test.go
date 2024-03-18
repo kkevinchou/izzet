@@ -91,7 +91,7 @@ func TestFilterLowHeightSpans(t *testing.T) {
 	hf.AddVoxel(0, 5, 0)
 	FilterLowHeightSpans(walkableHeight, hf)
 
-	if !hf.spans[0].Valid() {
+	if hf.spans[0].area == NULL_AREA {
 		t.Fatalf("span should be valid")
 	}
 
@@ -99,7 +99,7 @@ func TestFilterLowHeightSpans(t *testing.T) {
 	hf.AddVoxel(0, 4, 0)
 	FilterLowHeightSpans(5, hf)
 
-	if hf.spans[0].Valid() {
+	if hf.spans[0].area == WALKABLE_AREA {
 		t.Fatalf("span should be invalid")
 	}
 }

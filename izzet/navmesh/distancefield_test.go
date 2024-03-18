@@ -60,7 +60,7 @@ func TestDistanceFieldAllBorders(t *testing.T) {
 func TestDistanceFieldBlur(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	// 3x3 voxels on xz plane
+	// 5x5 voxels on xz plane
 
 	hf.AddVoxel(0, 0, 0)
 	hf.AddVoxel(1, 0, 0)

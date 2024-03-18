@@ -1,6 +1,8 @@
 package render
 
 import (
+	"fmt"
+
 	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/app/apputils"
@@ -22,6 +24,10 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 		var ds []int32
 		var rs []int32
 
+		regionCount := map[int]int{}
+		regionMap := map[int]int{}
+		nextRegionID := 0
+
 		for x := range chf.Width() {
 			for z := range chf.Height() {
 				cell := chf.Cells()[x+z*chf.Width()]
@@ -37,9 +43,21 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 					}
 					positions = append(positions, position)
 					ds = append(ds, int32(distances[i]))
-					rs = append(rs, int32(span.RegionID()))
+					// rs = append(rs, int32(span.RegionID()))
+
+					if _, ok := regionCount[span.RegionID()]; !ok {
+						regionMap[span.RegionID()] = nextRegionID
+						nextRegionID++
+					}
+					regionCount[span.RegionID()]++
+
+					rs = append(rs, int32(regionMap[span.RegionID()]))
 				}
 			}
+		}
+
+		for k, v := range regionCount {
+			fmt.Println("ID:", k, "COUNT:", v)
 		}
 
 		numVertices = int32(len(positions))

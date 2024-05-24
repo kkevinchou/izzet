@@ -73,6 +73,8 @@ type RuntimeConfig struct {
 	SimplifyMeshIterations          int32
 	ShowSelectionBoundingBox        bool
 	LockRenderingToCommandFrameRate bool
+
+	NavigationMeshIterations int32
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {

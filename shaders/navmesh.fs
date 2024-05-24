@@ -279,10 +279,18 @@ void main()
     vec3 Lo = vec3(0.0);
 
     // float colorScaleFactor = (fs_in.Distance / 500.0);
+    // // if (fs_in.Distance > 90) {
+    // //     colorScaleFactor = 1;
+    // // } else {
+    // //     colorScaleFactor = 0;
+    // // }
     // vec3 in_albedo = mix(vec3(0, 0, 0), vec3(0.1, 0.1, 0.1), colorScaleFactor);
 
     vec3 hsv = vec3(mod((83 * int(fs_in.RegionID)), 360), 1, 1);
     vec3 in_albedo = hsvToRgb(hsv);
+    if (fs_in.RegionID == 0) {
+        in_albedo = vec3(0);
+    }
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
     if (lightCount > MAX_LIGHTS) {

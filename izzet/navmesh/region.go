@@ -214,9 +214,9 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 		}
 	}
 
-	failed := 0
 	iter := 0
-	for failed < len(stack) && iter < maxIter {
+	for len(stack) > 0 {
+		var failed = 0
 		var dirtyEntries []DirtyEntry
 
 		for j := 0; j < len(stack); j++ {
@@ -263,7 +263,16 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 			distances[idx] = entry.distance
 		}
 
+		if failed == len(stack) {
+			break
+		}
+
 		iter++
+		if level > 0 {
+			if iter >= maxIter {
+				break
+			}
+		}
 	}
 }
 

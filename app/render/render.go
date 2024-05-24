@@ -526,7 +526,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 
 	// 	nm := r.app.NavMesh()
 
-	if menus.NM != nil {
+	nm := r.app.NavMesh()
+	if nm != nil {
 		// hf := menus.NM.HeightField
 		// shader := shaderManager.GetShaderProgram("modelpbr")
 		// shader.Use()
@@ -580,7 +581,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformFloat("roughness", .8)
 		shader.SetUniformFloat("metallic", 0)
 
-		r.drawNavmesh(menus.NM)
+		r.drawNavmesh(nm)
 
 		// if len(spanLines) == 0 {
 		// 	for x := range chf.Width() {
@@ -632,7 +633,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		// }
 	}
 
-	nm := menus.NM
 	if nm != nil {
 		// draw bounding box
 		volume := nm.Volume

@@ -21,7 +21,6 @@ func SetupMenuBar(app renderiface.App, world renderiface.GameWorld) {
 
 	file(app)
 	view(app)
-	build(app, world)
 	multiplayer(app)
 	other(app)
 

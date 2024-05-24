@@ -1,6 +1,6 @@
 package navmesh
 
-func BuildRegions(chf *CompactHeightField) {
+func BuildRegions(chf *CompactHeightField, iterationCount int) {
 	const maxStacks int = 8
 
 	level := (chf.maxDistance + 1) & ^1
@@ -10,6 +10,8 @@ func BuildRegions(chf *CompactHeightField) {
 	regions := make([]int, chf.spanCount)
 	distances := make([]int, chf.spanCount)
 	regionID := 1
+
+	currentIterationCount := 0
 
 	for level > 0 {
 		level -= 2
@@ -24,6 +26,11 @@ func BuildRegions(chf *CompactHeightField) {
 			appendStacks(stacks[stackID-1], &stacks[stackID], regions)
 		}
 
+		currentIterationCount++
+		if currentIterationCount >= iterationCount {
+			break
+		}
+
 		expandRegions(8, level, chf, stacks[stackID], distances, regions, false)
 
 		for _, entry := range stacks[stackID] {
@@ -35,6 +42,11 @@ func BuildRegions(chf *CompactHeightField) {
 					regionID++
 				}
 			}
+		}
+
+		currentIterationCount++
+		if currentIterationCount >= iterationCount {
+			break
 		}
 	}
 
@@ -56,7 +68,6 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 	var queue []LevelStackEntry
 	queue = append(queue, LevelStackEntry{x: x, z: z, spanIndex: spanIndex})
 
-	var differingNeighborRegion int
 	var count int
 	area := chf.areas[spanIndex]
 
@@ -68,6 +79,7 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 		// cz := entry.z
 		spanIndex := entry.spanIndex
 		span := chf.spans[spanIndex]
+		var differingNeighborRegion int
 
 		for _, dir := range dirs {
 			neighborSpanIndex := span.neighbors[dir]
@@ -121,7 +133,7 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 			if chf.distances[neighborSpanIndex] >= lev && regions[neighborSpanIndex] == 0 {
 				regions[neighborSpanIndex] = regionID
 				distances[neighborSpanIndex] = 0
-				queue = append(queue, LevelStackEntry{x: x + xDirs[dir], z: z + zDirs[dir], spanIndex: neighborSpanIndex})
+				queue = append(queue, LevelStackEntry{x: x + xDirs[dir], z: z + zDirs[dir], spanIndex: neighborSpanIndex, distance: chf.distances[neighborSpanIndex]})
 			}
 		}
 	}
@@ -162,7 +174,7 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 					stackID = 0
 				}
 
-				stacks[stackID] = append(stacks[stackID], LevelStackEntry{x: x, z: z, spanIndex: i})
+				stacks[stackID] = append(stacks[stackID], LevelStackEntry{x: x, z: z, spanIndex: i, distance: chf.distances[i]})
 			}
 		}
 	}
@@ -260,6 +272,7 @@ type SpanIndex int
 type LevelStackEntry struct {
 	x, z      int
 	spanIndex SpanIndex
+	distance  int
 }
 
 type DirtyEntry struct {

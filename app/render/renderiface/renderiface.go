@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -64,6 +65,8 @@ type App interface {
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
 	InstantiateEntity(entityHandle string) *entities.Entity
+	BuildNavMesh(App, GameWorld, int)
+	NavMesh() *navmesh.NavigationMesh
 }
 
 type RenderContext interface {

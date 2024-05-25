@@ -26,12 +26,12 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 			appendStacks(stacks[stackID-1], &stacks[stackID], regions)
 		}
 
+		expandRegions(8, level, chf, stacks[stackID], distances, regions, false)
+
 		currentIterationCount++
 		if currentIterationCount >= iterationCount {
 			break
 		}
-
-		expandRegions(8, level, chf, stacks[stackID], distances, regions, false)
 
 		for _, entry := range stacks[stackID] {
 			if entry.spanIndex >= 0 && regions[entry.spanIndex] == 0 {
@@ -50,7 +50,7 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 		}
 	}
 
-	expandRegions(64, 0, chf, nil, distances, regions, true)
+	// expandRegions(64, 0, chf, nil, distances, regions, true)
 
 	// merge and filter regions
 
@@ -59,6 +59,9 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 	}
 }
 
+// floodRegion creates new seed regions (distance 0)
+// find all the neighboring spans of the current level and set their region id
+// if a span has a neighbor that has a different region id than itself, unset its span id
 func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *CompactHeightField, regions, distances []int) bool {
 	lev := level - 2
 	if lev < 0 {
@@ -75,11 +78,9 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 		entry := queue[0]
 		queue = queue[1:]
 
-		// cx := entry.x
-		// cz := entry.z
 		spanIndex := entry.spanIndex
 		span := chf.spans[spanIndex]
-		var differingNeighborRegion int
+		differingNeighborRegion := false
 
 		for _, dir := range dirs {
 			neighborSpanIndex := span.neighbors[dir]
@@ -92,7 +93,7 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 			}
 
 			if regions[neighborSpanIndex] != 0 && regions[neighborSpanIndex] != regions[spanIndex] {
-				differingNeighborRegion = regions[neighborSpanIndex]
+				differingNeighborRegion = true
 				break
 			}
 
@@ -108,12 +109,12 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 			}
 
 			if regions[neighborSpanIndex2] != 0 && regions[neighborSpanIndex2] != regions[spanIndex] {
-				differingNeighborRegion = regions[neighborSpanIndex2]
+				differingNeighborRegion = true
 				break
 			}
 		}
 
-		if differingNeighborRegion != 0 {
+		if differingNeighborRegion {
 			regions[spanIndex] = 0
 			continue
 		}
@@ -143,6 +144,7 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 
 const levelCoalescing int = 4
 
+// second run of this e.g. set iterations to 17 = 2 runs. the second run has so many more entries in the stack, is that expected?
 func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, maxStacks int, stacks [][]LevelStackEntry) {
 	startLevel = startLevel / levelCoalescing
 
@@ -157,7 +159,6 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 			spanCount := cell.SpanCount
 
 			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
-				// span := chf.spans[i]
 				// skip spans that have a region assigned already
 				if regions[i] != 0 && chf.areas[i] == 0 {
 					continue
@@ -190,8 +191,9 @@ func appendStacks(src []LevelStackEntry, dest *[]LevelStackEntry, regions []int)
 }
 
 // expandRegions iterates through each entry in the current stack and assigns a region
-// to it based on the region of its closest neighbor
+// to it based on the neighbor that has the smallest distance from a region seed
 func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []LevelStackEntry, distances []int, regions []int, fill bool) {
+	totalSpans := 0
 	if fill {
 		stack = nil
 		for z := range chf.height {
@@ -199,6 +201,7 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 				cell := &chf.cells[x+z*chf.width]
 				spanIndex := cell.SpanIndex
 				spanCount := cell.SpanCount
+				totalSpans += spanCount
 				for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 					if chf.distances[i] >= level && regions[i] == 0 && chf.areas[i] != NULL_AREA {
 						stack = append(stack, LevelStackEntry{x: x, z: z, spanIndex: i})
@@ -257,10 +260,18 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 			}
 		}
 
-		for _, entry := range dirtyEntries {
-			idx := entry.spanIndex
-			regions[idx] = entry.regionID
-			distances[idx] = entry.distance
+		if fill {
+			for _, entry := range dirtyEntries {
+				idx := entry.spanIndex
+				regions[idx] = entry.regionID
+				distances[idx] = entry.distance
+			}
+		} else {
+			for _, entry := range dirtyEntries {
+				idx := entry.spanIndex
+				regions[idx] = entry.regionID
+				distances[idx] = entry.distance
+			}
 		}
 
 		if failed == len(stack) {

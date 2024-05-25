@@ -24,9 +24,13 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 		var ds []int32
 		var rs []int32
 
-		regionCount := map[int]int{}
+		// assign the render id 0 to the unassigned region. this keeps the colors consistent
+		// when we color in all regions
+		regionRenderID := map[int]int{
+			0: 0,
+		}
 		regionMap := map[int]int{}
-		nextRegionID := 0
+		nextRegionRenderID := 1
 
 		for x := range chf.Width() {
 			for z := range chf.Height() {
@@ -43,22 +47,24 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 					}
 					positions = append(positions, position)
 					ds = append(ds, int32(distances[i]))
-					// rs = append(rs, int32(span.RegionID()))
 
-					if _, ok := regionCount[span.RegionID()]; !ok {
-						regionMap[span.RegionID()] = nextRegionID
-						nextRegionID++
+					if _, ok := regionRenderID[span.RegionID()]; !ok {
+						regionMap[span.RegionID()] = nextRegionRenderID
+						nextRegionRenderID++
 					}
-					regionCount[span.RegionID()]++
+					regionRenderID[span.RegionID()]++
 
 					rs = append(rs, int32(regionMap[span.RegionID()]))
 				}
 			}
 		}
 
-		for k, v := range regionCount {
+		totalCount := 0
+		for k, v := range regionRenderID {
 			fmt.Println("ID:", k, "COUNT:", v)
+			totalCount += v
 		}
+		fmt.Println("TOTAL COUNT", totalCount)
 
 		numVertices = int32(len(positions))
 		vao := cubeAttributes(positions, ds, rs)
@@ -70,7 +76,7 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 	r.iztDrawElements(numVertices * 36)
 }
 
-func cubeAttributes(positions []mgl32.Vec3, distances []int32, regionIDs []int32) uint32 {
+func cubeAttributes(positions []mgl32.Vec3, distances []int32, regionRenderIDs []int32) uint32 {
 	var ht float32 = 1.0 / 2
 
 	var vertexAttributes []float32
@@ -137,11 +143,11 @@ func cubeAttributes(positions []mgl32.Vec3, distances []int32, regionIDs []int32
 	totalAttributeSize := 6
 
 	// spanAttributes := make([]int32, len(vertexAttributes)/totalAttributeSize*2)
-	spanAttributes := make([]int32, (len(distances)+len(regionIDs))*36)
+	spanAttributes := make([]int32, (len(distances)+len(regionRenderIDs))*36)
 	for i := 0; i < len(distances); i++ {
 		for j := 0; j < 36; j++ {
 			spanAttributes[i+j] = 500
-			spanAttributes[i+j+1] = regionIDs[i]
+			spanAttributes[i+j+1] = regionRenderIDs[i]
 		}
 	}
 
@@ -149,7 +155,7 @@ func cubeAttributes(positions []mgl32.Vec3, distances []int32, regionIDs []int32
 	for i := 0; i < len(spanAttributes); i += 72 {
 		for j := 0; j < 72; j += 2 {
 			spanAttributes[i+j] = distances[distRegionIndex]
-			spanAttributes[i+j+1] = regionIDs[distRegionIndex]
+			spanAttributes[i+j+1] = regionRenderIDs[distRegionIndex]
 		}
 		distRegionIndex++
 	}

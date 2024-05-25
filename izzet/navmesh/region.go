@@ -1,5 +1,7 @@
 package navmesh
 
+import "fmt"
+
 func BuildRegions(chf *CompactHeightField, iterationCount int) {
 	const maxStacks int = 8
 
@@ -22,11 +24,18 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 
 		if stackID == 0 {
 			sortCellsByLevel(level, chf, regions, maxStacks, stacks)
+			var minDist int = 9999999
+			var maxDist int = -999999
+			for i := 0; i < len(stacks[0]); i++ {
+				minDist = min(minDist, stacks[0][i].distance)
+				maxDist = max(maxDist, stacks[0][i].distance)
+			}
+			fmt.Println("NEW SORT MIN", minDist, "MAX", maxDist)
 		} else {
 			appendStacks(stacks[stackID-1], &stacks[stackID], regions)
 		}
 
-		expandRegions(8, level, chf, stacks[stackID], distances, regions, false)
+		expandRegions(8999, level, chf, stacks[stackID], distances, regions, false)
 
 		currentIterationCount++
 		if currentIterationCount >= iterationCount {
@@ -48,7 +57,37 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 		if currentIterationCount >= iterationCount {
 			break
 		}
+
+		count := 0
+		total := 0
+		for i := 0; i < len(stacks[stackID]); i++ {
+			idx := stacks[stackID][i].spanIndex
+			if idx == -1 {
+				continue
+			}
+
+			total++
+			if regions[idx] != 0 {
+				count++
+			}
+		}
+		fmt.Printf("\t %d/%d entries assigned a region\n", count, len(stacks[stackID]))
 	}
+
+	count := 0
+	total := 0
+	for i := 0; i < len(stacks[stackID]); i++ {
+		idx := stacks[stackID][i].spanIndex
+		if idx == -1 {
+			continue
+		}
+
+		total++
+		if regions[idx] != 0 {
+			count++
+		}
+	}
+	fmt.Printf("\t %d/%d entries assigned a region\n", count, len(stacks[stackID]))
 
 	// expandRegions(64, 0, chf, nil, distances, regions, true)
 
@@ -70,6 +109,8 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 
 	var queue []LevelStackEntry
 	queue = append(queue, LevelStackEntry{x: x, z: z, spanIndex: spanIndex})
+	regions[spanIndex] = regionID
+	distances[spanIndex] = 0
 
 	var count int
 	area := chf.areas[spanIndex]
@@ -144,7 +185,6 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 
 const levelCoalescing int = 4
 
-// second run of this e.g. set iterations to 17 = 2 runs. the second run has so many more entries in the stack, is that expected?
 func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, maxStacks int, stacks [][]LevelStackEntry) {
 	startLevel = startLevel / levelCoalescing
 
@@ -217,11 +257,19 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 		}
 	}
 
+	failed := 0
 	iter := 0
-	for len(stack) > 0 {
-		var failed = 0
-		var dirtyEntries []DirtyEntry
+	var dirtyEntries []DirtyEntry
 
+	for len(stack) > 0 {
+		dirtyEntries = nil
+		failed = 0
+
+		// repeatedly go through the entire stack and attempt to assign regions to each span
+		// if all spans fail to assign a region, we're done.
+		// NOTE: does the order in which spans are assigned regions matter?
+		// 	seems like if we assign a region early on, we don't have the opportunity to assign
+		// 	a closer region at a later iteration
 		for j := 0; j < len(stack); j++ {
 			spanIndex := stack[j].spanIndex
 			if spanIndex < 0 {
@@ -260,26 +308,18 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 			}
 		}
 
-		if fill {
-			for _, entry := range dirtyEntries {
-				idx := entry.spanIndex
-				regions[idx] = entry.regionID
-				distances[idx] = entry.distance
-			}
-		} else {
-			for _, entry := range dirtyEntries {
-				idx := entry.spanIndex
-				regions[idx] = entry.regionID
-				distances[idx] = entry.distance
-			}
+		for _, entry := range dirtyEntries {
+			idx := entry.spanIndex
+			regions[idx] = entry.regionID
+			distances[idx] = entry.distance
 		}
 
 		if failed == len(stack) {
 			break
 		}
 
-		iter++
 		if level > 0 {
+			iter++
 			if iter >= maxIter {
 				break
 			}

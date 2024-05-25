@@ -29,8 +29,6 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 		regionRenderID := map[int]int{
 			0: 0,
 		}
-		regionMap := map[int]int{}
-		nextRegionRenderID := 1
 
 		for x := range chf.Width() {
 			for z := range chf.Height() {
@@ -47,14 +45,8 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 					}
 					positions = append(positions, position)
 					ds = append(ds, int32(distances[i]))
-
-					if _, ok := regionRenderID[span.RegionID()]; !ok {
-						regionMap[span.RegionID()] = nextRegionRenderID
-						nextRegionRenderID++
-					}
+					rs = append(rs, int32(span.RegionID()))
 					regionRenderID[span.RegionID()]++
-
-					rs = append(rs, int32(regionMap[span.RegionID()]))
 				}
 			}
 		}

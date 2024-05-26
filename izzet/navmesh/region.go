@@ -35,7 +35,7 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 			appendStacks(stacks[stackID-1], &stacks[stackID], regions)
 		}
 
-		expandRegions(8999, level, chf, stacks[stackID], distances, regions, false)
+		expandRegions(level, chf, stacks[stackID], distances, regions, false)
 
 		currentIterationCount++
 		if currentIterationCount >= iterationCount {
@@ -232,7 +232,7 @@ func appendStacks(src []LevelStackEntry, dest *[]LevelStackEntry, regions []int)
 
 // expandRegions iterates through each entry in the current stack and assigns a region
 // to it based on the neighbor that has the smallest distance from a region seed
-func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []LevelStackEntry, distances []int, regions []int, fill bool) {
+func expandRegions(level int, chf *CompactHeightField, stack []LevelStackEntry, distances []int, regions []int, fill bool) {
 	totalSpans := 0
 	if fill {
 		stack = nil
@@ -258,7 +258,6 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 	}
 
 	failed := 0
-	iter := 0
 	var dirtyEntries []DirtyEntry
 
 	for len(stack) > 0 {
@@ -316,13 +315,6 @@ func expandRegions(maxIter int, level int, chf *CompactHeightField, stack []Leve
 
 		if failed == len(stack) {
 			break
-		}
-
-		if level > 0 {
-			iter++
-			if iter >= maxIter {
-				break
-			}
 		}
 	}
 }

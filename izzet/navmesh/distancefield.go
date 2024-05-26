@@ -1,5 +1,9 @@
 package navmesh
 
+const (
+	blurSkipDistance = 2
+)
+
 func BuildDistanceField(chf *CompactHeightField) {
 	width := chf.width
 	height := chf.height
@@ -120,15 +124,16 @@ func BoxBlur(chf *CompactHeightField, distances []int) []int {
 			spanCount := cell.SpanCount
 
 			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
+				cellDistance := distances[i]
 				span := chf.spans[i]
 
-				if distances[i] <= vertHorizDistance {
-					// if we're close to a wall, or one away, skip blur
-					blurredDistances[i] = distances[i]
+				if cellDistance <= blurSkipDistance {
+					// if we're close to a wall, skip blur
+					blurredDistances[i] = cellDistance
 					continue
 				}
 
-				totalDistance := distances[i]
+				totalDistance := cellDistance
 				for dir := range dirs {
 					neighborSpanIndex := span.neighbors[dir]
 					if neighborSpanIndex != -1 {
@@ -140,10 +145,10 @@ func BoxBlur(chf *CompactHeightField, distances []int) []int {
 						if diagNeighborSpanIndex != -1 {
 							totalDistance += distances[diagNeighborSpanIndex]
 						} else {
-							totalDistance += vertHorizDistance
+							totalDistance += cellDistance
 						}
 					} else {
-						totalDistance += 2 * vertHorizDistance
+						totalDistance += 2 * cellDistance
 					}
 				}
 

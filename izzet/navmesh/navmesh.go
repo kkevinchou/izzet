@@ -9,7 +9,6 @@ import (
 
 const maxHeight int = 0xffff
 const maxDistance int = 0xffff
-const vertHorizDistance int = 2
 
 type AREA_TYPE int
 

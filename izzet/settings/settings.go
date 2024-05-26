@@ -75,7 +75,7 @@ const (
 	FirstPersonCamera  bool    = false
 	CameraEntityOffset float64 = 100
 	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "navmesh"
+	DefaultProject     string  = "scatter_region"
 )
 
 // styles

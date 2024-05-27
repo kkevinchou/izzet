@@ -1,10 +1,13 @@
 package navmesh
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func BuildRegions(chf *CompactHeightField, iterationCount int) {
 	const maxStacks int = 8
 
+	// round the level up to the nearest even number
 	level := (chf.maxDistance + 1) & ^1
 	stackID := -1
 	stacks := make([][]LevelStackEntry, maxStacks)
@@ -24,13 +27,6 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 
 		if stackID == 0 {
 			sortCellsByLevel(level, chf, regions, maxStacks, stacks)
-			var minDist int = 9999999
-			var maxDist int = -999999
-			for i := 0; i < len(stacks[0]); i++ {
-				minDist = min(minDist, stacks[0][i].distance)
-				maxDist = max(maxDist, stacks[0][i].distance)
-			}
-			fmt.Println("NEW SORT MIN", minDist, "MAX", maxDist)
 		} else {
 			appendStacks(stacks[stackID-1], &stacks[stackID], regions)
 		}
@@ -183,10 +179,10 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 	return count > 0
 }
 
-const levelCoalescing int = 4
+const logLevelsPerStack int = 1
 
 func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, maxStacks int, stacks [][]LevelStackEntry) {
-	startLevel = startLevel / levelCoalescing
+	startLevel = startLevel >> logLevelsPerStack
 
 	for i := range maxStacks {
 		stacks[i] = nil
@@ -204,7 +200,7 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 					continue
 				}
 
-				level := chf.distances[i] / levelCoalescing
+				level := chf.distances[i] >> logLevelsPerStack
 				stackID := startLevel - level
 
 				if stackID >= maxStacks {

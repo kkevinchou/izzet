@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+const (
+	levelStepSize = 2
+)
+
 func BuildRegions(chf *CompactHeightField, iterationCount int) {
 	const maxStacks int = 8
 
@@ -19,7 +23,7 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 	currentIterationCount := 0
 
 	for level > 0 {
-		level -= 2
+		level -= levelStepSize
 		if level < 0 {
 			level = 0
 		}
@@ -98,7 +102,7 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 // find all the neighboring spans of the current level and set their region id
 // if a span has a neighbor that has a different region id than itself, unset its span id
 func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *CompactHeightField, regions, distances []int) bool {
-	lev := level - 2
+	lev := level - levelStepSize
 	if lev < 0 {
 		lev = 0
 	}
@@ -179,10 +183,8 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 	return count > 0
 }
 
-const logLevelsPerStack int = 1
-
 func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, maxStacks int, stacks [][]LevelStackEntry) {
-	startLevel = startLevel >> logLevelsPerStack
+	startLevel = startLevel / levelStepSize
 
 	for i := range maxStacks {
 		stacks[i] = nil
@@ -200,7 +202,7 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 					continue
 				}
 
-				level := chf.distances[i] >> logLevelsPerStack
+				level := chf.distances[i] / levelStepSize
 				stackID := startLevel - level
 
 				if stackID >= maxStacks {

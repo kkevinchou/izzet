@@ -698,7 +698,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	// navmesh.FilterLowHeightSpans(500, hf)
 	chf := navmesh.NewCompactHeightField(1, 1, hf)
 	navmesh.BuildDistanceField(chf)
-	navmesh.BuildRegions(chf, iterationCount)
+	navmesh.BuildRegions(chf, iterationCount, 1, 1)
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:        hf,

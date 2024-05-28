@@ -8,7 +8,7 @@ const (
 	levelStepSize = 2
 )
 
-func BuildRegions(chf *CompactHeightField, iterationCount int) {
+func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int, mergeRegionSize int) {
 	const maxStacks int = 8
 
 	// round the level up to the nearest even number
@@ -74,24 +74,9 @@ func BuildRegions(chf *CompactHeightField, iterationCount int) {
 		fmt.Printf("\t %d/%d entries assigned a region\n", count, len(stacks[stackID]))
 	}
 
-	count := 0
-	total := 0
-	for i := 0; i < len(stacks[stackID]); i++ {
-		idx := stacks[stackID][i].spanIndex
-		if idx == -1 {
-			continue
-		}
-
-		total++
-		if regions[idx] != 0 {
-			count++
-		}
-	}
-	fmt.Printf("\t %d/%d entries assigned a region\n", count, len(stacks[stackID]))
-
 	// expandRegions(64, 0, chf, nil, distances, regions, true)
 
-	// merge and filter regions
+	mergeAndFilterRegions(chf, regions, minRegionArea, mergeRegionSize)
 
 	for i := range chf.spanCount {
 		chf.spans[i].regionID = regions[i]
@@ -315,6 +300,10 @@ func expandRegions(level int, chf *CompactHeightField, stack []LevelStackEntry, 
 			break
 		}
 	}
+}
+
+func mergeAndFilterRegions(chf *CompactHeightField, regions []int, minRegionArea int, mergeRegionSize int) int {
+	return 0
 }
 
 type SpanIndex int

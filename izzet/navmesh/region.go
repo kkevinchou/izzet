@@ -354,6 +354,54 @@ func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionAr
 
 	// remove regions that are too small
 
+	var stack []int
+	var trace []int
+
+	for _, region := range regions {
+		if region.id == 0 {
+			continue
+		}
+		if region.spanCount == 0 {
+			continue
+		}
+		if region.visited {
+			continue
+		}
+
+		stack = nil
+		trace = nil
+		spanCount := 0
+		region.visited = true
+
+		for len(stack) > 0 {
+			currentRegionID := stack[len(stack)-1]
+			currentRegion := regions[currentRegionID]
+
+			spanCount += currentRegion.spanCount
+			trace = append(trace, currentRegionID)
+
+			for _, conn := range currentRegion.connections {
+				neighborRegion := regions[conn]
+				if neighborRegion.visited {
+					continue
+				}
+				if neighborRegion.id == 0 {
+					continue
+				}
+				stack = append(stack, neighborRegion.id)
+				neighborRegion.visited = true
+			}
+		}
+
+		// remove clusters of regions that are too small
+		if spanCount < minRegionArea {
+			for _, regionID := range trace {
+				regions[regionID].spanCount = 0
+				regions[regionID].id = 0
+			}
+		}
+	}
+
 	// merge small regions to neighbor regions
 
 	// compress region IDs

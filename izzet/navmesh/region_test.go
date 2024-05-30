@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-func TestBuildRegion(t *testing.T) {
+func setupCHF() *CompactHeightField {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
 	// 5x5 voxels on xz plane
@@ -41,7 +41,12 @@ func TestBuildRegion(t *testing.T) {
 	hf.AddVoxel(3, 0, 4)
 	hf.AddVoxel(4, 0, 4)
 
-	chf := NewCompactHeightField(1, 1, hf)
+	return NewCompactHeightField(1, 1, hf)
+}
+
+func TestBuildRegion(t *testing.T) {
+	chf := setupCHF()
+
 	BuildDistanceField(chf)
 	BoxBlur(chf, chf.distances)
 

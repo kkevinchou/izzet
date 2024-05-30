@@ -95,7 +95,7 @@ func traceRegionContours(voxelField [][][]Voxel, reachField [][][]ReachInfo, dim
 	}
 }
 
-type Contour struct {
+type Contour2 struct {
 }
 
 var movementRight [2]int = [2]int{1, 0}
@@ -136,7 +136,7 @@ func init() {
 		to form the actual traversible geometry for pathfinding
 	 TODO: decide how we want to handle holes in regions (if any)
 */
-func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, startVoxel *Voxel) Contour {
+func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, startVoxel *Voxel) Contour2 {
 	var next *Voxel
 	seen := map[VoxelPosition]bool{}
 
@@ -154,7 +154,7 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 	}
 
 	if next == nil {
-		return Contour{}
+		return Contour2{}
 	}
 	firstNextVoxel := next
 
@@ -213,7 +213,7 @@ func traceRegionContour(voxelField [][][]Voxel, reachField [][][]ReachInfo, dime
 		startVoxel.DEBUGCOLORFACTOR = &c
 	}
 
-	return Contour{}
+	return Contour2{}
 }
 
 func getNextContourCell(voxelField [][][]Voxel, reachField [][][]ReachInfo, dimensions [3]int, regionMap map[int][]VoxelPosition, startVoxel *Voxel) {

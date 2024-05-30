@@ -330,7 +330,7 @@ func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionAr
 						continue
 					}
 					if floorID == regionID {
-						regions[i].overlap = true
+						region.overlap = true
 					}
 					addUniqueFloorRegion(region, floorID)
 				}

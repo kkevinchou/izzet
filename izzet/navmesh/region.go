@@ -1,9 +1,5 @@
 package navmesh
 
-import (
-	"fmt"
-)
-
 const (
 	levelStepSize = 2
 )
@@ -71,12 +67,13 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 				count++
 			}
 		}
-		fmt.Printf("\t %d/%d entries assigned a region\n", count, len(stacks[stackID]))
 	}
+	// we pre-emptively increment regionID so when we're done we should decrement it
+	regionID--
 
-	// expandRegions(64, 0, chf, nil, distances, regions, true)
+	expandRegions(0, chf, nil, distances, regions, true)
 
-	mergeAndFilterRegions(chf, regions, minRegionArea, mergeRegionSize)
+	mergeAndFilterRegions(chf, regions, minRegionArea, mergeRegionSize, regionID)
 
 	for i := range chf.spanCount {
 		chf.spans[i].regionID = regions[i]
@@ -302,8 +299,175 @@ func expandRegions(level int, chf *CompactHeightField, stack []LevelStackEntry, 
 	}
 }
 
-func mergeAndFilterRegions(chf *CompactHeightField, regions []int, minRegionArea int, mergeRegionSize int) int {
+func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionArea int, mergeRegionSize int, maxRegionID int) int {
+	numRegions := maxRegionID + 1
+	regions := make([]Region, numRegions)
+	for i := 0; i < numRegions; i++ {
+		regions[i].id = i
+	}
+
+	// find the edge of a region and find connections around the contour
+	for z := range chf.height {
+		for x := range chf.width {
+			cell := &chf.cells[x+z*chf.width]
+			spanIndex := cell.SpanIndex
+			spanCount := cell.SpanCount
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
+				regionID := regionIDs[i]
+				region := &regions[regionID]
+				if regionID == 0 || regionID >= numRegions {
+					continue
+				}
+
+				region.spanCount++
+
+				for j := spanIndex; j < spanIndex+SpanIndex(spanCount); j++ {
+					if i == j {
+						continue
+					}
+					floorID := regionIDs[j]
+					if floorID == 0 || floorID >= numRegions {
+						continue
+					}
+					if floorID == regionID {
+						regions[i].overlap = true
+					}
+					addUniqueFloorRegion(region, floorID)
+				}
+
+				region.areaType = chf.areas[i]
+
+				edgeDir := -1
+				for _, dir := range dirs {
+					if isSolidEdge(chf, regionIDs, spanIndex, dir) {
+						edgeDir = dir
+						break
+					}
+				}
+
+				if edgeDir != -1 {
+					region.connections = walkContour(chf, spanIndex, edgeDir, regionIDs)
+				}
+			}
+		}
+	}
+
+	// remove regions that are too small
+
+	// merge small regions to neighbor regions
+
+	// compress region IDs
+
+	// remap regions
+
+	// return overlapping regions
+
 	return 0
+}
+
+func walkContour(chf *CompactHeightField, spanIndex SpanIndex, dir int, regionIDs []int) []int {
+	startDir := dir
+	startIndex := spanIndex
+
+	currentRegion := 0
+
+	span := chf.spans[spanIndex]
+	neighborSpanIndex := span.neighbors[dir]
+	if neighborSpanIndex != -1 {
+		currentRegion = regionIDs[neighborSpanIndex]
+	}
+
+	neighboringRegionIDs := []int{currentRegion}
+
+	iter := 0
+	for iter < 40000 {
+		span := chf.spans[spanIndex]
+		regionID := -1
+		if isSolidEdge(chf, regionIDs, spanIndex, dir) {
+			neighborSpanIndex := span.neighbors[dir]
+			if neighborSpanIndex != -1 {
+				// neighborSpan := chf.spans[neighborSpanIndex]
+				regionID = regionIDs[neighborSpanIndex]
+			}
+			if regionID != currentRegion {
+				currentRegion = regionID
+				neighboringRegionIDs = append(neighboringRegionIDs, regionID)
+			}
+			// rotate CW
+			dir = (dir + 3) % 4
+		} else {
+			spanIndex = span.neighbors[dir]
+			if spanIndex == -1 {
+				// this index should always be valid since we'd otherwise have found a solid edge
+				panic("unexpected invalid index")
+			}
+
+			// rotate CCW
+			dir = (dir + 1) % 4
+		}
+
+		if startIndex == spanIndex && startDir == dir {
+			break
+		}
+
+		iter++
+	}
+
+	if len(neighboringRegionIDs) > 1 {
+		for i := 0; i < len(neighboringRegionIDs); {
+			j := (i + 1) % len(neighboringRegionIDs)
+			if neighboringRegionIDs[i] == neighboringRegionIDs[j] {
+				for k := i; k < len(neighboringRegionIDs)-1; k++ {
+					neighboringRegionIDs[k] = neighboringRegionIDs[k+1]
+				}
+				neighboringRegionIDs = neighboringRegionIDs[:len(neighboringRegionIDs)-1]
+			} else {
+				i += 1
+			}
+		}
+
+	}
+
+	return neighboringRegionIDs
+}
+
+func isSolidEdge(chf *CompactHeightField, regionIDs []int, spanIndex SpanIndex, dir int) bool {
+	span := chf.spans[spanIndex]
+
+	neighborSpanIndex := span.neighbors[dir]
+	if neighborSpanIndex == -1 {
+		return true
+	}
+
+	if regionIDs[spanIndex] == regionIDs[neighborSpanIndex] {
+		return false
+	}
+	return true
+}
+
+func addUniqueFloorRegion(region *Region, floorNum int) {
+	for _, floor := range region.floors {
+		if floor == floorNum {
+			return
+		}
+	}
+	region.floors = append(region.floors, floorNum)
+}
+
+type Region struct {
+	spanCount        int
+	id               int
+	areaType         AREA_TYPE
+	remap            bool
+	visited          bool
+	overlap          bool
+	connectsToBorder bool
+	yMin, yMax       int
+	connections      []int
+	floors           []int
+}
+
+type Contour struct {
 }
 
 type SpanIndex int

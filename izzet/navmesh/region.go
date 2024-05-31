@@ -12,7 +12,7 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 	stackID := -1
 	stacks := make([][]LevelStackEntry, maxStacks)
 
-	regions := make([]int, chf.spanCount)
+	regionIDs := make([]int, chf.spanCount)
 	distances := make([]int, chf.spanCount)
 	regionID := 1
 
@@ -26,12 +26,12 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 		stackID = (stackID + 1) % maxStacks
 
 		if stackID == 0 {
-			sortCellsByLevel(level, chf, regions, maxStacks, stacks)
+			sortCellsByLevel(level, chf, regionIDs, maxStacks, stacks)
 		} else {
-			appendStacks(stacks[stackID-1], &stacks[stackID], regions)
+			appendStacks(stacks[stackID-1], &stacks[stackID], regionIDs)
 		}
 
-		expandRegions(level, chf, stacks[stackID], distances, regions, false)
+		expandRegions(level, chf, stacks[stackID], distances, regionIDs, false)
 
 		currentIterationCount++
 		if currentIterationCount >= iterationCount {
@@ -39,8 +39,8 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 		}
 
 		for _, entry := range stacks[stackID] {
-			if entry.spanIndex >= 0 && regions[entry.spanIndex] == 0 {
-				if floodRegion(entry.x, entry.z, entry.spanIndex, level, regionID, chf, regions, distances) {
+			if entry.spanIndex >= 0 && regionIDs[entry.spanIndex] == 0 {
+				if floodRegion(entry.x, entry.z, entry.spanIndex, level, regionID, chf, regionIDs, distances) {
 					if regionID == 0xFFFFF {
 						panic("HIT MAX REGIONS")
 					}
@@ -63,20 +63,20 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 			}
 
 			total++
-			if regions[idx] != 0 {
+			if regionIDs[idx] != 0 {
 				count++
 			}
 		}
 	}
 	// we pre-emptively increment regionID so when we're done we should decrement it
-	regionID--
+	maxRegionID := regionID - 1
 
 	// expandRegions(0, chf, nil, distances, regions, true)
 
-	mergeAndFilterRegions(chf, regions, minRegionArea, mergeRegionSize, regionID)
+	mergeAndFilterRegions(chf, regionIDs, minRegionArea, mergeRegionSize, &maxRegionID)
 
 	for i := range chf.spanCount {
-		chf.spans[i].regionID = regions[i]
+		chf.spans[i].regionID = regionIDs[i]
 	}
 }
 
@@ -180,7 +180,7 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 
 			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				// skip spans that have a region assigned already
-				if regions[i] != 0 && chf.areas[i] == 0 {
+				if regions[i] != 0 || chf.areas[i] == NULL_AREA {
 					continue
 				}
 
@@ -299,8 +299,9 @@ func expandRegions(level int, chf *CompactHeightField, stack []LevelStackEntry, 
 	}
 }
 
-func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionArea int, mergeRegionSize int, maxRegionID int) int {
-	numRegions := maxRegionID + 1
+// mergeAndFilterRegions mutates regionIDs and maxRegionID
+func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionArea int, mergeRegionSize int, maxRegionID *int) int {
+	numRegions := *maxRegionID + 1
 	regions := make([]Region, numRegions)
 	for i := 0; i < numRegions; i++ {
 		regions[i].id = i
@@ -368,20 +369,21 @@ func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionAr
 			continue
 		}
 
-		stack = nil
+		stack = []int{region.id}
 		trace = nil
 		spanCount := 0
 		region.visited = true
 
 		for len(stack) > 0 {
 			currentRegionID := stack[len(stack)-1]
-			currentRegion := regions[currentRegionID]
+			stack = stack[:len(stack)-1]
+			currentRegion := &regions[currentRegionID]
 
 			spanCount += currentRegion.spanCount
 			trace = append(trace, currentRegionID)
 
 			for _, conn := range currentRegion.connections {
-				neighborRegion := regions[conn]
+				neighborRegion := &regions[conn]
 				if neighborRegion.visited {
 					continue
 				}
@@ -405,6 +407,40 @@ func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionAr
 	// merge small regions to neighbor regions
 
 	// compress region IDs
+
+	// mark valid regions we want to remap to the front
+	for i := range numRegions {
+		region := &regions[i]
+		region.remap = false
+		if region.id == 0 {
+			continue
+		}
+		region.remap = true
+	}
+
+	regionIDGen := 0
+	for i := range numRegions {
+		region := &regions[i]
+		if !region.remap {
+			continue
+		}
+
+		oldID := region.id
+		regionIDGen++
+		newID := regionIDGen
+
+		for j := i; j < numRegions; j++ {
+			curRegion := &regions[j]
+			if curRegion.id == oldID {
+				curRegion.id = newID
+				curRegion.remap = false
+			}
+		}
+	}
+	*maxRegionID = regionIDGen
+	for i := range chf.spanCount {
+		regionIDs[i] = regions[regionIDs[i]].id
+	}
 
 	// remap regions
 
@@ -436,10 +472,10 @@ func walkContour(chf *CompactHeightField, spanIndex SpanIndex, dir int, regionID
 			if neighborSpanIndex != -1 {
 				// neighborSpan := chf.spans[neighborSpanIndex]
 				regionID = regionIDs[neighborSpanIndex]
-			}
-			if regionID != currentRegion {
-				currentRegion = regionID
-				neighboringRegionIDs = append(neighboringRegionIDs, regionID)
+				if regionID != currentRegion {
+					currentRegion = regionID
+					neighboringRegionIDs = append(neighboringRegionIDs, regionID)
+				}
 			}
 			// rotate CW
 			dir = (dir + 3) % 4

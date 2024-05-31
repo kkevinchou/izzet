@@ -1,8 +1,6 @@
 package render
 
 import (
-	"fmt"
-
 	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/app/apputils"
@@ -22,7 +20,7 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 	if _, ok := navmeshVAOCache[name]; !ok || nm.Invalidated {
 		var positions []mgl32.Vec3
 		var ds []int32
-		var rs []int32
+		var regionIDs []int32
 
 		// assign the render id 0 to the unassigned region. this keeps the colors consistent
 		// when we color in all regions
@@ -45,21 +43,14 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 					}
 					positions = append(positions, position)
 					ds = append(ds, int32(distances[i]))
-					rs = append(rs, int32(span.RegionID()))
+					regionIDs = append(regionIDs, int32(span.RegionID()))
 					regionRenderID[span.RegionID()]++
 				}
 			}
 		}
 
-		totalCount := 0
-		for k, v := range regionRenderID {
-			fmt.Println("ID:", k, "COUNT:", v)
-			totalCount += v
-		}
-		fmt.Println("TOTAL COUNT", totalCount)
-
 		numVertices = int32(len(positions))
-		vao := cubeAttributes(positions, ds, rs)
+		vao := cubeAttributes(positions, ds, regionIDs)
 		navmeshVAOCache[name] = vao
 		nm.Invalidated = false
 	}

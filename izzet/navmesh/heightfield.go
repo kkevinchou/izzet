@@ -8,6 +8,7 @@ type Span struct {
 	min, max int
 	next     *Span
 	area     AREA_TYPE
+	x, z     int
 }
 
 func (s *Span) Min() int {
@@ -78,36 +79,19 @@ func (hf *HeightField) SpanCount() int {
 }
 
 // AddVoxel adds a voxel to the heightfield, either extending an existing span, or creating a new one
-func (hf *HeightField) AddVoxel(x, y, z int) {
+func (hf *HeightField) AddVoxel(x, y, z int, walkable bool) {
+	area := NULL_AREA
+	if walkable {
+		area = WALKABLE_AREA
+	}
 	columnIndex := x + z*hf.width
 	currentSpan := hf.spans[columnIndex]
 	var previousSpan *Span
 
+	// find where to insert
 	for currentSpan != nil {
 		if currentSpan.min > y {
-			if currentSpan.min == y+1 {
-				// attach to the current span
-				currentSpan.min -= 1
-			} else {
-				// create a new span
-				newSpan := &Span{min: y, max: y, area: WALKABLE_AREA}
-				newSpan.next = currentSpan
-				hf.spans[columnIndex] = newSpan
-			}
-			return
-		}
-
-		if currentSpan.max < y {
-			// attach to the current span
-			if currentSpan.max == y-1 {
-				currentSpan.max += 1
-				if currentSpan.next != nil && currentSpan.next.min == currentSpan.max+1 {
-					// merge agane
-					currentSpan.max = currentSpan.next.max
-					currentSpan.next = nil
-				}
-				return
-			}
+			break
 		}
 
 		if currentSpan.max == y || currentSpan.min == y {
@@ -119,11 +103,31 @@ func (hf *HeightField) AddVoxel(x, y, z int) {
 	}
 
 	if previousSpan != nil {
-		newSpan := &Span{min: y, max: y, area: WALKABLE_AREA}
-		previousSpan.next = newSpan
+		if previousSpan.max == y-1 {
+			// merge with prevous
+			previousSpan.max += 1
+		} else {
+			// add new span
+			newSpan := &Span{min: y, max: y, area: area, x: x, z: z}
+			newSpan.next = previousSpan.next
+			previousSpan.next = newSpan
+			previousSpan = newSpan
+		}
 	} else {
-		newSpan := &Span{min: y, max: y, area: WALKABLE_AREA}
+		// no previous span means this is the lowest span
+		newSpan := &Span{min: y, max: y, area: area, x: x, z: z}
+		newSpan.next = currentSpan
 		hf.spans[columnIndex] = newSpan
+		previousSpan = newSpan
+	}
+
+	nextSpan := previousSpan.next
+	if nextSpan != nil {
+		// merge with next span
+		if previousSpan.max == nextSpan.min-1 {
+			previousSpan.max = nextSpan.max
+			previousSpan.next = nextSpan.next
+		}
 	}
 }
 

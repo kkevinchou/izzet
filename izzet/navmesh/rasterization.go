@@ -358,7 +358,7 @@ func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
 	}
 }
 
-func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField *HeightField) int {
+func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField *HeightField, walkable bool) int {
 	var i, n, cx, cy, cz, sx, sy, sz int
 
 	// line DDA parameters
@@ -413,7 +413,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField 
 	// single pixel (not a line)
 	if n == 0 {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			heightField.AddVoxel(x0, y0, z0)
+			heightField.AddVoxel(x0, y0, z0, walkable)
 		}
 		return count
 	}
@@ -421,7 +421,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField 
 	// ND DDA algo i is parameter
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			heightField.AddVoxel(x0, y0, z0)
+			heightField.AddVoxel(x0, y0, z0, walkable)
 		}
 		cx -= x1
 		if cx <= 0 {
@@ -443,7 +443,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField 
 	return count
 }
 
-func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *HeightField) int {
+func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *HeightField, walkable bool) int {
 	vxs := int(heightField.bMax.X() - heightField.bMin.X())
 	vys := int(heightField.bMax.Y() - heightField.bMin.Y())
 	vzs := int(heightField.bMax.Z() - heightField.bMin.Z())
@@ -542,7 +542,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *Heig
 			z0 = LZ[x]
 			y1 = RY[x]
 			z1 = RZ[x]
-			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, heightField)
+			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, heightField, walkable)
 		}
 	} else if dy >= dx && dy >= dz { // y is major axis
 		// render circumference into left/right buffers
@@ -562,7 +562,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *Heig
 			z0 = LZ[y]
 			x1 = RX[y]
 			z1 = RZ[y]
-			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, heightField)
+			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, heightField, walkable)
 		}
 	} else if dz >= dx && dz >= dy { // z is major axis
 		// render circumference into left/right buffers
@@ -582,7 +582,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *Heig
 			y0 = LY[z]
 			x1 = RX[z]
 			y1 = RY[z]
-			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, heightField)
+			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, heightField, walkable)
 		}
 	}
 	return count

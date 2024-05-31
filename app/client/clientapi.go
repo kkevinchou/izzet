@@ -641,6 +641,9 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 
 func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, iterationCount int) {
 	start := time.Now()
+	defer func() {
+		fmt.Println("BuildNavMesh completed in", time.Since(start))
+	}()
 	minVertex := mgl64.Vec3{-500, -250, -500}
 	maxVertex := mgl64.Vec3{500, 250, 500}
 
@@ -693,7 +696,14 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 				if normal.LenSqr() > 0 {
 					normal = normal.Normalize()
 				}
-				if normal.Dot(up) > 0.8 {
+				isUp := normal.Dot(up) > 0.8
+				isDown := normal.Dot(up) < -0.8
+				_, _ = isUp, isDown
+				walkable := isUp
+				// if (isUp && entity.GetID() < 3) || ((isDown || isUp) && entity.GetID() >= 3) {
+				// if (isUp && entity.GetID() < 3) || (isUp && entity.GetID() >= 3) {
+				// if (isUp && entity.GetID() < 3) || (isDown && entity.GetID() >= 3) {
+				if isUp || entity.GetID() >= 3 {
 					navmesh.RasterizeTriangle(
 						int(v1.X()),
 						int(v1.Y()),
@@ -705,16 +715,23 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 						int(v3.Y()),
 						int(v3.Z()),
 						hf,
+						walkable,
 					)
 				}
+				// }
 			}
 		}
 	}
 
-	// navmesh.FilterLowHeightSpans(500, hf)
-	chf := navmesh.NewCompactHeightField(1, 1, hf)
+	walkableHeight := 100
+	climbableHeight := 10
+	minRegionArea := 2
+	navmesh.FilterLowHeightSpans(walkableHeight, hf)
+	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
+	// chf := navmesh.NewCompactHeightField(1, 1, hf)
 	navmesh.BuildDistanceField(chf)
-	navmesh.BuildRegions(chf, iterationCount, 1, 1)
+	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
+	// navmesh.BuildContours(chf, iterationCount, 1, 1)
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:        hf,
@@ -726,9 +743,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	}
 
 	g.navMesh = nm
-
-	fmt.Println("rasterized voxels in", time.Since(start).Seconds())
-	fmt.Printf("rasterized %d spans\n", nm.HeightField.SpanCount())
 }
 
 func (g *Client) NavMesh() *navmesh.NavigationMesh {

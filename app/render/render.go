@@ -480,76 +480,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
 	}
 
-	// modelMatrix := entities.WorldTransform(entity)
-	// TODO: optimize this - can probably cache some of these computations
-
-	// 		// draw joint
-	// 		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-	// 			jointShader := shaderManager.GetShaderProgram("flat")
-	// 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
-
-	// 			var jointLines [][]mgl64.Vec3
-	// 			model := entity.Model
-	// 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
-
-	// 			for _, jid := range panels.JointsToRender {
-	// 				jointTransform := animationTransforms[jid]
-	// 				lines := cubeLines(15)
-	// 				jt := utils.Mat4F32ToF64(jointTransform)
-	// 				for _, line := range lines {
-	// 					points := line
-	// 					for i := 0; i < len(points); i++ {
-	// 						bindTransform := model.JointMap()[jid].FullBindTransform
-	// 						// The calculated joint transforms apply to joints in bind space
-	// 						// 		i.e. the calculated transforms are computed as:
-	// 						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
-	// 						//
-	// 						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
-	// 						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
-	// 						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
-	// 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
-	// 						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
-	// 					}
-	// 				}
-	// 				jointLines = append(jointLines, lines...)
-	// 			}
-
-	// 			for _, line := range jointLines {
-	// 				points := line
-	// 				for i := 0; i < len(points); i++ {
-	// 					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
-	// 				}
-	// 			}
-
-	// 			drawLines_old(viewerContext, jointShader, jointLines, 0.5, color)
-	// 		}
-
-	// 	nm := r.app.NavMesh()
-
 	nm := r.app.NavMesh()
 	if nm != nil {
-		// hf := menus.NM.HeightField
-		// shader := shaderManager.GetShaderProgram("modelpbr")
-		// shader.Use()
-
-		// setupLightingUniforms(shader, lightContext.Lights)
-		// shader.SetUniformInt("width", int32(r.gameWindowWidth))
-		// shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		// shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-		// shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		// shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-		// shader.SetUniformInt("shadowMap", 31)
-		// shader.SetUniformInt("depthCubeMap", 30)
-		// shader.SetUniformInt("cameraDepthMap", 29)
-		// shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-		// shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-		// shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		// shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-		// shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
-
-		// shader.SetUniformFloat("roughness", .8)
-		// shader.SetUniformFloat("metallic", 0)
-
 		shader := shaderManager.GetShaderProgram("navmesh")
 		shader.Use()
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
@@ -582,55 +514,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformFloat("metallic", 0)
 
 		r.drawNavmesh(nm)
-
-		// if len(spanLines) == 0 {
-		// 	for x := range chf.Width() {
-		// 		for z := range chf.Height() {
-		// 			cell := chf.Cells()[x+z*chf.Width()]
-		// 			spanIndex := cell.SpanIndex
-		// 			spanCount := cell.SpanCount
-
-		// 			for i := spanIndex; i < spanIndex+spanCount; i++ {
-		// 				span := chf.Spans()[i]
-		// 				spanLines = append(spanLines,
-		// 					[2]mgl64.Vec3{
-		// 						{
-		// 							float64(x) + chf.BMin().X(),
-		// 							float64(span.Y()) + chf.BMin().Y(),
-		// 							float64(z) + chf.BMin().Z(),
-		// 						},
-		// 						{
-		// 							float64(x) + chf.BMin().X(),
-		// 							float64(span.Y()) + chf.BMin().Y(),
-		// 							float64(z) + chf.BMin().Z(),
-		// 						},
-		// 					},
-		// 				)
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-		// color := mgl64.Vec3{255.0 / 255, 0, 0}
-		// r.drawLineGroup("navmesh_spans", viewerContext, shader, spanLines, 1, color)
-
-		// var positions []mgl32.Vec3
-		// for _, position := range nm.DebugVoxels {
-		// 	positions = append(positions, utils.Vec3F64ToF32(position))
-		// }
-
-		// vao := r.getBatchCubeVAOs("navmesh_cubes", 1, true, positions)
-		// gl.BindVertexArray(vao)
-		// shader.SetUniformMat4("model", mgl32.Ident4())
-		// r.iztDrawArrays(0, int32(len(nm.DebugVoxels)*36))
-
-		// for _, position := range nm.DebugVoxels {
-		// 	// vao := r.getBatchCubeVAOs("navmesh_cubes", 1, true, positions)
-		// 	vao := r.getCubeVAO(1, true)
-		// 	gl.BindVertexArray(vao)
-		// 	shader.SetUniformMat4("model", mgl32.Translate3D(float32(position.X()), float32(position.Y()), float32(position.Z())))
-		// 	r.iztDrawArrays(0, 36)
-		// }
 	}
 
 	if nm != nil {
@@ -643,63 +526,15 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			0.5,
 		)
 
-		if len(nm.DebugLines) > 0 {
-			shader := shaderManager.GetShaderProgram("flat")
-			color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-			shader.Use()
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
-		}
-
-		// 		// draw navmesh
-		// 		if nm.VoxelCount() > 0 {
-		// 			shader := shaderManager.GetShaderProgram("color_pbr")
-		// 			shader.Use()
-
-		// 			if r.app.RuntimeConfig().Bloom {
-		// 				shader.SetUniformInt("applyToneMapping", 0)
-		// 			} else {
-		// 				// only tone map if we're not applying bloom, otherwise
-		// 				// we want to keep the HDR values and tone map later
-		// 				shader.SetUniformInt("applyToneMapping", 1)
-		// 			}
-
-		// 			shader.SetUniformMat4("model", mgl32.Ident4())
-		// 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		// 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-		// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		// 			shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-		// 			shader.SetUniformInt("shadowMap", 31)
-		// 			shader.SetUniformInt("depthCubeMap", 30)
-		// 			shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-		// 			shader.SetUniformInt("isAnimated", 0)
-		// 			shader.SetUniformInt("hasColorOverride", 1)
-
-		// 			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
-		// 			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
-		// 			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
-		// 			shader.SetUniformVec3("albedo", color)
-		// 			shader.SetUniformInt("hasPBRMaterial", 1)
-		// 			shader.SetUniformFloat("ao", 1.0)
-		// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-		// 			shader.SetUniformFloat("roughness", r.app.RuntimeConfig().Roughness)
-		// 			shader.SetUniformFloat("metallic", r.app.RuntimeConfig().Metallic)
-
-		// 			setupLightingUniforms(shader, lightContext.Lights)
-
-		// 			gl.ActiveTexture(gl.TEXTURE30)
-		// 			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
-
-		// 			gl.ActiveTexture(gl.TEXTURE31)
-		// 			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
-
-		// 			drawNavMeshTris(viewerContext, nm)
-		// 		}
+		// if len(nm.DebugLines) > 0 {
+		// 	shader := shaderManager.GetShaderProgram("flat")
+		// 	color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+		// 	shader.Use()
+		// 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+		// 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		// 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		// 	r.drawLineGroup("navmesh_debuglines", viewerContext, shader, nm.DebugLines, 0.1, color)
+		// }
 	}
 }
 

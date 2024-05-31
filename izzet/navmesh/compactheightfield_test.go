@@ -9,8 +9,8 @@ import (
 func TestCompactHeightField(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0)
-	hf.AddVoxel(1, 0, 0)
+	hf.AddVoxel(0, 0, 0, true)
+	hf.AddVoxel(1, 0, 0, true)
 
 	chf := NewCompactHeightField(1, 0, hf)
 
@@ -25,10 +25,10 @@ func TestCompactHeightField(t *testing.T) {
 func TestClimbableHeight(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0)
-	hf.AddVoxel(0, 1, 0)
+	hf.AddVoxel(0, 0, 0, true)
+	hf.AddVoxel(0, 1, 0, true)
 
-	hf.AddVoxel(1, 0, 0)
+	hf.AddVoxel(1, 0, 0, true)
 
 	chf := NewCompactHeightField(1, 1, hf)
 
@@ -44,11 +44,11 @@ func TestClimbableHeight(t *testing.T) {
 func TestNotClimbableHeight(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0)
-	hf.AddVoxel(0, 1, 0)
-	hf.AddVoxel(0, 2, 0)
+	hf.AddVoxel(0, 0, 0, true)
+	hf.AddVoxel(0, 1, 0, true)
+	hf.AddVoxel(0, 2, 0, true)
 
-	hf.AddVoxel(1, 0, 0)
+	hf.AddVoxel(1, 0, 0, true)
 
 	chf := NewCompactHeightField(1, 1, hf)
 
@@ -61,10 +61,10 @@ func TestNotClimbableHeight(t *testing.T) {
 func TestNotWalkableHeight(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0)
+	hf.AddVoxel(0, 0, 0, true)
 
-	hf.AddVoxel(1, 0, 0)
-	hf.AddVoxel(1, 2, 0)
+	hf.AddVoxel(1, 0, 0, true)
+	hf.AddVoxel(1, 2, 0, true)
 
 	chf := NewCompactHeightField(3, 0, hf)
 

@@ -1,12 +1,4 @@
 {
     "entity_assets": {
-        "alpha2": {"single_entity": true},
-        "alpha3": {"single_entity": true},
-        "vampire": {"single_entity": true},
-        "vampire2": {"single_entity": true},
-        "scene": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
-        "demo_scene_city": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
-        "demo_scene_battleroyale": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
-        "adventure_demo_scene": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} }
     }
 }

@@ -37,6 +37,7 @@ type CompactHeightField struct {
 	distances      []int
 	areas          []AREA_TYPE
 	maxDistance    int
+	maxRegions     int
 }
 
 func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *CompactHeightField {
@@ -71,18 +72,20 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 		cell := &chf.cells[columnIndex]
 		cell.SpanIndex = currentSpanIndex
 
-		for ; span != nil && span.area != NULL_AREA; span = span.next {
-			bottom := span.max
-			top := maxHeight
-			if span.next != nil {
-				top = span.next.min
+		for ; span != nil; span = span.next {
+			if span.area != NULL_AREA {
+				bottom := span.max
+				top := maxHeight
+				if span.next != nil {
+					top = span.next.min
+				}
+				chf.spans[currentSpanIndex].y = Clamp(bottom, 0, maxHeight)
+				chf.spans[currentSpanIndex].h = Clamp(top-bottom, 0, maxHeight)
+				chf.areas[currentSpanIndex] = span.area
+				// set areas
+				currentSpanIndex++
+				cell.SpanCount++
 			}
-			chf.spans[currentSpanIndex].y = Clamp(bottom, 0, maxHeight)
-			chf.spans[currentSpanIndex].h = Clamp(top-bottom, 0, maxHeight)
-			chf.areas[currentSpanIndex] = span.area
-			// set areas
-			currentSpanIndex++
-			cell.SpanCount++
 		}
 	}
 

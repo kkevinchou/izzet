@@ -71,7 +71,7 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 	// we pre-emptively increment regionID so when we're done we should decrement it
 	regionID--
 
-	expandRegions(0, chf, nil, distances, regions, true)
+	// expandRegions(0, chf, nil, distances, regions, true)
 
 	mergeAndFilterRegions(chf, regions, minRegionArea, mergeRegionSize, regionID)
 

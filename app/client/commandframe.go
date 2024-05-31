@@ -168,16 +168,15 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 			if vEvent.Event == input.KeyboardEventUp {
 				var newEntity entities.Entity
 				err := json.Unmarshal(copiedEntity, &newEntity)
-				if err != nil {
-					panic(err)
+				if err == nil {
+					id := entities.GetNextIDAndAdvance()
+					newEntity.ID = id
+
+					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
+
+					g.world.AddEntity(&newEntity)
+					g.SelectEntity(&newEntity)
 				}
-				id := entities.GetNextIDAndAdvance()
-				newEntity.ID = id
-
-				serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
-
-				g.world.AddEntity(&newEntity)
-				g.SelectEntity(&newEntity)
 			}
 		}
 	}

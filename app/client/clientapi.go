@@ -646,12 +646,28 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 
 	vxs := int(maxVertex.X() - minVertex.X())
 	vzs := int(maxVertex.Z() - minVertex.Z())
+	nmbb := collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex}
 
 	hf := navmesh.NewHeightField(vxs, vzs, minVertex, maxVertex)
 	var debugLines [][2]mgl64.Vec3
 
 	for _, entity := range world.Entities() {
 		if entity.MeshComponent == nil {
+			continue
+		}
+		if !entity.HasBoundingBox() {
+			continue
+		}
+
+		ebb := entity.BoundingBox()
+
+		if ebb.MaxVertex.X() < nmbb.MinVertex.X() || ebb.MinVertex.X() > nmbb.MaxVertex.X() {
+			continue
+		}
+		if ebb.MaxVertex.Y() < nmbb.MinVertex.Y() || ebb.MinVertex.Y() > nmbb.MaxVertex.Y() {
+			continue
+		}
+		if ebb.MaxVertex.Z() < nmbb.MinVertex.Z() || ebb.MinVertex.Z() > nmbb.MaxVertex.Z() {
 			continue
 		}
 
@@ -703,7 +719,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	nm := &navmesh.NavigationMesh{
 		HeightField:        hf,
 		CompactHeightField: chf,
-		Volume:             collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex},
+		Volume:             nmbb,
 		BlurredDistances:   chf.Distances(),
 		DebugLines:         debugLines,
 		Invalidated:        true,

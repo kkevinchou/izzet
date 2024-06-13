@@ -24,6 +24,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -89,6 +90,8 @@ type Client struct {
 	projectName    string
 	contentBrowser *contentbrowser.ContentBrowser
 	selectedEntity *entities.Entity
+
+	navMesh *navmesh.NavigationMesh
 }
 
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {

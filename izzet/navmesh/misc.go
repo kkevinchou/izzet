@@ -1,14 +1,14 @@
 package navmesh
 
-func (n *NavigationMesh) VoxelDimension() float64 {
+func (n *NavigationMesh2) VoxelDimension() float64 {
 	return n.voxelDimension
 }
 
-func (n *NavigationMesh) VoxelField() [][][]Voxel {
+func (n *NavigationMesh2) VoxelField() [][][]Voxel {
 	return n.voxelField
 }
 
-func (n *NavigationMesh) VoxelCount() int {
+func (n *NavigationMesh2) VoxelCount() int {
 	return n.voxelCount
 }
 

@@ -253,3 +253,7 @@ type Triangle struct {
 	MinX       float64
 	V1, V2, V3 mgl64.Vec3
 }
+
+type Triangle2 struct {
+	Vertices [3]mgl64.Vec3
+}

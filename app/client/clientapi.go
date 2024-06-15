@@ -731,7 +731,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	// chf := navmesh.NewCompactHeightField(1, 1, hf)
 	navmesh.BuildDistanceField(chf)
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
-	// navmesh.BuildContours(chf, iterationCount, 1, 1)
+	navmesh.BuildContours(chf, 1, 1)
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:        hf,

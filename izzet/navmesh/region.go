@@ -480,7 +480,7 @@ func walkContour(chf *CompactHeightField, spanIndex SpanIndex, dir int, regionID
 				}
 			}
 			// rotate CW
-			dir = (dir + 3) % 4
+			dir = (dir + 1) % 4
 		} else {
 			spanIndex = span.neighbors[dir]
 			if spanIndex == -1 {
@@ -489,7 +489,7 @@ func walkContour(chf *CompactHeightField, spanIndex SpanIndex, dir int, regionID
 			}
 
 			// rotate CCW
-			dir = (dir + 1) % 4
+			dir = (dir + 3) % 4
 		}
 
 		if startIndex == spanIndex && startDir == dir {

@@ -686,9 +686,9 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 				v2 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3())
 				v3 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3())
 
-				debugLines = append(debugLines, [2]mgl64.Vec3{v1, v2})
-				debugLines = append(debugLines, [2]mgl64.Vec3{v2, v3})
-				debugLines = append(debugLines, [2]mgl64.Vec3{v3, v1})
+				// debugLines = append(debugLines, [2]mgl64.Vec3{v1, v2})
+				// debugLines = append(debugLines, [2]mgl64.Vec3{v2, v3})
+				// debugLines = append(debugLines, [2]mgl64.Vec3{v3, v1})
 
 				tv1 := v2.Sub(v1)
 				tv2 := v3.Sub(v2)
@@ -731,14 +731,32 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 
 	walkableHeight := 100
 	climbableHeight := 10
-	minRegionArea := 2
+	minRegionArea := 1
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()
 	navmesh.BuildDistanceField(chf)
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
-	navmesh.BuildContours(chf, 1, 1)
+	contourSet := navmesh.BuildContours(chf, 1, 1)
+
+	for _, contour := range contourSet.Contours {
+		// for i := 0; i < len(contour.Verts); i++ {
+		// 	v1 := contour.Verts[i]
+		// 	v2 := contour.Verts[(i+1)%len(contour.Verts)]
+		// 	v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 1), float64(v1.Z)}.Add(minVertex)
+		// 	v264 := mgl64.Vec3{float64(v2.X), float64(v2.Y + 1), float64(v2.Z)}.Add(minVertex)
+
+		// 	debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
+		// }
+		for i := 0; i < len(contour.CellVerts); i++ {
+			v1 := contour.CellVerts[i]
+			v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y), float64(v1.Z)}.Add(minVertex)
+			v264 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 3), float64(v1.Z)}.Add(minVertex)
+
+			debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
+		}
+	}
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:        hf,

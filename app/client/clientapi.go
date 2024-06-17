@@ -707,21 +707,21 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 				// if (isUp && entity.GetID() < 3) || ((isDown || isUp) && entity.GetID() >= 3) {
 				// if (isUp && entity.GetID() < 3) || (isUp && entity.GetID() >= 3) {
 				// if (isUp && entity.GetID() < 3) || (isDown && entity.GetID() >= 3) {
-				// if isUp {
-				navmesh.RasterizeTriangle(
-					int(v1.X()),
-					int(v1.Y()),
-					int(v1.Z()),
-					int(v2.X()),
-					int(v2.Y()),
-					int(v2.Z()),
-					int(v3.X()),
-					int(v3.Y()),
-					int(v3.Z()),
-					hf,
-					isUp,
-				)
-				// }
+				if isUp {
+					navmesh.RasterizeTriangle(
+						int(v1.X()),
+						int(v1.Y()),
+						int(v1.Z()),
+						int(v2.X()),
+						int(v2.Y()),
+						int(v2.Z()),
+						int(v3.X()),
+						int(v3.Y()),
+						int(v3.Z()),
+						hf,
+						isUp,
+					)
+				}
 				// }
 			}
 		}

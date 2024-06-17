@@ -535,8 +535,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", len(nm.DebugLines)), viewerContext, shader, nm.DebugLines, 0.1, color)
-
-			r.drawLineGroup("origin_line", viewerContext, shader, [][2]mgl64.Vec3{{{0, 0, 0}, {0, 5, 0}}}, 0.1, color)
 		}
 	}
 }

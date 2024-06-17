@@ -60,66 +60,64 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 }
 
 func cubeAttributes(positions []mgl32.Vec3, distances []int32, regionRenderIDs []int32) uint32 {
-	var ht float32 = 1.0 / 2
-
 	var vertexAttributes []float32
 
 	for _, position := range positions {
 		x, y, z := position.X(), position.Y(), position.Z()
 		vertexAttributes = append(vertexAttributes, []float32{
 			// front
-			-ht + x, -ht + y, ht + z, 0, 0, -1,
-			ht + x, -ht + y, ht + z, 0, 0, -1,
-			ht + x, ht + y, ht + z, 0, 0, -1,
+			x, y, 1 + z, 0, 0, -1,
+			1 + x, y, 1 + z, 0, 0, -1,
+			1 + x, 1 + y, 1 + z, 0, 0, -1,
 
-			ht + x, ht + y, ht + z, 0, 0, -1,
-			-ht + x, ht + y, ht + z, 0, 0, -1,
-			-ht + x, -ht + y, ht + z, 0, 0, -1,
+			1 + x, 1 + y, 1 + z, 0, 0, -1,
+			x, 1 + y, 1 + z, 0, 0, -1,
+			x, y, 1 + z, 0, 0, -1,
 
 			// back
-			ht + x, ht + y, -ht + z, 0, 0, 1,
-			ht + x, -ht + y, -ht + z, 0, 0, 1,
-			-ht + x, -ht + y, -ht + z, 0, 0, 1,
+			1 + x, 1 + y, z, 0, 0, 1,
+			1 + x, y, z, 0, 0, 1,
+			x, y, z, 0, 0, 1,
 
-			-ht + x, -ht + y, -ht + z, 0, 0, 1,
-			-ht + x, ht + y, -ht + z, 0, 0, 1,
-			ht + x, ht + y, -ht + z, 0, 0, 1,
+			x, y, z, 0, 0, 1,
+			x, 1 + y, z, 0, 0, 1,
+			1 + x, 1 + y, z, 0, 0, 1,
 
-			// right
-			ht + x, -ht + y, ht + z, 1, 0, 0,
-			ht + x, -ht + y, -ht + z, 1, 0, 0,
-			ht + x, ht + y, -ht + z, 1, 0, 0,
+			// rig1
+			1 + x, y, 1 + z, 1, 0, 0,
+			1 + x, y, z, 1, 0, 0,
+			1 + x, 1 + y, z, 1, 0, 0,
 
-			ht + x, ht + y, -ht + z, 1, 0, 0,
-			ht + x, ht + y, ht + z, 1, 0, 0,
-			ht + x, -ht + y, ht + z, 1, 0, 0,
+			1 + x, 1 + y, z, 1, 0, 0,
+			1 + x, 1 + y, 1 + z, 1, 0, 0,
+			1 + x, y, 1 + z, 1, 0, 0,
 
 			// left
-			-ht + x, ht + y, -ht + z, -1, 0, 0,
-			-ht + x, -ht + y, -ht + z, -1, 0, 0,
-			-ht + x, -ht + y, ht + z, -1, 0, 0,
+			x, 1 + y, z, -1, 0, 0,
+			x, y, z, -1, 0, 0,
+			x, y, 1 + z, -1, 0, 0,
 
-			-ht + x, -ht + y, ht + z, -1, 0, 0,
-			-ht + x, ht + y, ht + z, -1, 0, 0,
-			-ht + x, ht + y, -ht + z, -1, 0, 0,
+			x, y, 1 + z, -1, 0, 0,
+			x, 1 + y, 1 + z, -1, 0, 0,
+			x, 1 + y, z, -1, 0, 0,
 
 			// top
-			ht + x, ht + y, ht + z, 0, 1, 0,
-			ht + x, ht + y, -ht + z, 0, 1, 0,
-			-ht + x, ht + y, ht + z, 0, 1, 0,
+			1 + x, 1 + y, 1 + z, 0, 1, 0,
+			1 + x, 1 + y, z, 0, 1, 0,
+			x, 1 + y, 1 + z, 0, 1, 0,
 
-			-ht + x, ht + y, ht + z, 0, 1, 0,
-			ht + x, ht + y, -ht + z, 0, 1, 0,
-			-ht + x, ht + y, -ht + z, 0, 1, 0,
+			x, 1 + y, 1 + z, 0, 1, 0,
+			1 + x, 1 + y, z, 0, 1, 0,
+			x, 1 + y, z, 0, 1, 0,
 
 			// bottom
-			-ht + x, -ht + y, ht + z, 0, -1, 0,
-			ht + x, -ht + y, -ht + z, 0, -1, 0,
-			ht + x, -ht + y, ht + z, 0, -1, 0,
+			x, y, 1 + z, 0, -1, 0,
+			1 + x, y, z, 0, -1, 0,
+			1 + x, y, 1 + z, 0, -1, 0,
 
-			-ht + x, -ht + y, -ht + z, 0, -1, 0,
-			ht + x, -ht + y, -ht + z, 0, -1, 0,
-			-ht + x, -ht + y, ht + z, 0, -1, 0,
+			x, y, z, 0, -1, 0,
+			1 + x, y, z, 0, -1, 0,
+			x, y, 1 + z, 0, -1, 0,
 		}...)
 	}
 

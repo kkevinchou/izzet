@@ -741,21 +741,21 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	contourSet := navmesh.BuildContours(chf, 1, 1)
 
 	for _, contour := range contourSet.Contours {
-		// for i := 0; i < len(contour.Verts); i++ {
-		// 	v1 := contour.Verts[i]
-		// 	v2 := contour.Verts[(i+1)%len(contour.Verts)]
-		// 	v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 1), float64(v1.Z)}.Add(minVertex)
-		// 	v264 := mgl64.Vec3{float64(v2.X), float64(v2.Y + 1), float64(v2.Z)}.Add(minVertex)
-
-		// 	debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
-		// }
-		for i := 0; i < len(contour.CellVerts); i++ {
-			v1 := contour.CellVerts[i]
-			v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y), float64(v1.Z)}.Add(minVertex)
-			v264 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 3), float64(v1.Z)}.Add(minVertex)
+		for i := 0; i < len(contour.Verts); i++ {
+			v1 := contour.Verts[i]
+			v2 := contour.Verts[(i+1)%len(contour.Verts)]
+			v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 1), float64(v1.Z)}.Add(minVertex)
+			v264 := mgl64.Vec3{float64(v2.X), float64(v2.Y + 1), float64(v2.Z)}.Add(minVertex)
 
 			debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
 		}
+		// for i := 0; i < len(contour.CellVerts); i++ {
+		// 	v1 := contour.CellVerts[i]
+		// 	v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y), float64(v1.Z)}.Add(minVertex)
+		// 	v264 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 3), float64(v1.Z)}.Add(minVertex)
+
+		// 	debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
+		// }
 	}
 
 	nm := &navmesh.NavigationMesh{

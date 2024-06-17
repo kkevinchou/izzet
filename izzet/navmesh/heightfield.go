@@ -1,8 +1,6 @@
 package navmesh
 
 import (
-	"fmt"
-
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -185,9 +183,6 @@ func (hf *HeightField) Test() {
 			index := x + z*hf.width
 			span := hf.Spans()[index]
 			for span != nil {
-				if span.x == 550 {
-					fmt.Println("HI")
-				}
 				if span.x > maxX {
 					maxZ = span.z
 				}
@@ -199,9 +194,4 @@ func (hf *HeightField) Test() {
 			}
 		}
 	}
-
-	idx := 550 + (550 * 1000)
-	fmt.Println(idx)
-
-	fmt.Println("HI")
 }

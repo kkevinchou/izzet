@@ -1,8 +1,6 @@
 package navmesh
 
 import (
-	"fmt"
-
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -167,9 +165,6 @@ func (chf *CompactHeightField) Distances() []int {
 func (chf *CompactHeightField) Test() {
 	for z := range chf.height {
 		for x := range chf.width {
-			if z == 550 && x == 550 {
-				fmt.Println("HI")
-			}
 			cell := &chf.cells[x+z*chf.width]
 			spanIndex := cell.SpanIndex
 			spanCount := cell.SpanCount

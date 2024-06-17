@@ -677,6 +677,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 		primitives := app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
 		transform := utils.Mat4F64ToF32(entities.WorldTransform(entity))
 		up := mgl64.Vec3{0, 1, 0}
+		right := mgl64.Vec3{1, 0, 0}
 
 		// rasterize triangles
 		for _, p := range primitives {
@@ -696,40 +697,46 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 				if normal.LenSqr() > 0 {
 					normal = normal.Normalize()
 				}
-				isUp := normal.Dot(up) > 0.8
-				isDown := normal.Dot(up) < -0.8
-				_, _ = isUp, isDown
-				walkable := isUp
+				isUp := normal.Dot(up) > 0.7
+				isDown := normal.Dot(up) < -0.7
+				isRight := normal.Dot(right) > 0.7
+				isLeft := normal.Dot(right) < -0.7
+				_, _, _, _ = isUp, isDown, isRight, isLeft
+
+				// walkable := isUp
 				// if (isUp && entity.GetID() < 3) || ((isDown || isUp) && entity.GetID() >= 3) {
 				// if (isUp && entity.GetID() < 3) || (isUp && entity.GetID() >= 3) {
 				// if (isUp && entity.GetID() < 3) || (isDown && entity.GetID() >= 3) {
-				if isUp || entity.GetID() >= 3 {
-					navmesh.RasterizeTriangle(
-						int(v1.X()),
-						int(v1.Y()),
-						int(v1.Z()),
-						int(v2.X()),
-						int(v2.Y()),
-						int(v2.Z()),
-						int(v3.X()),
-						int(v3.Y()),
-						int(v3.Z()),
-						hf,
-						walkable,
-					)
-				}
+				// if isUp {
+				navmesh.RasterizeTriangle(
+					int(v1.X()),
+					int(v1.Y()),
+					int(v1.Z()),
+					int(v2.X()),
+					int(v2.Y()),
+					int(v2.Z()),
+					int(v3.X()),
+					int(v3.Y()),
+					int(v3.Z()),
+					hf,
+					isUp,
+				)
+				// }
 				// }
 			}
 		}
 	}
+
+	hf.Test()
 
 	walkableHeight := 100
 	climbableHeight := 10
 	minRegionArea := 2
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
-	// chf := navmesh.NewCompactHeightField(1, 1, hf)
+	chf.Test()
 	navmesh.BuildDistanceField(chf)
+
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
 	navmesh.BuildContours(chf, 1, 1)
 

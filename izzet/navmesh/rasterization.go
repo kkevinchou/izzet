@@ -422,6 +422,7 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField 
 	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
 		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
 			heightField.AddVoxel(x0, y0, z0, walkable)
+			count++
 		}
 		cx -= x1
 		if cx <= 0 {

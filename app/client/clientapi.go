@@ -730,20 +730,22 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	hf.Test()
 
 	walkableHeight := 100
-	climbableHeight := 10
+	climbableHeight := 5
 	minRegionArea := 1
+	maxError := 0
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()
 	navmesh.BuildDistanceField(chf)
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
-	contourSet := navmesh.BuildContours(chf, 1, 1)
+	contourSet := navmesh.BuildContours(chf, float64(maxError), 1)
 
 	for _, contour := range contourSet.Contours {
-		for i := 0; i < len(contour.Verts); i++ {
-			v1 := contour.Verts[i]
-			v2 := contour.Verts[(i+1)%len(contour.Verts)]
+		verts := contour.Verts
+		for i := 0; i < len(verts); i++ {
+			v1 := verts[i]
+			v2 := verts[(i+1)%len(verts)]
 			v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 2), float64(v1.Z)}.Add(minVertex)
 			v264 := mgl64.Vec3{float64(v2.X), float64(v2.Y + 2), float64(v2.Z)}.Add(minVertex)
 

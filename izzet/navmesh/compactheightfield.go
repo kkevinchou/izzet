@@ -1,8 +1,6 @@
 package navmesh
 
 import (
-	"fmt"
-
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -130,9 +128,6 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 							span.neighbors[dir] = j
 						}
 					}
-				}
-				if count == 4 {
-					fmt.Println("HI")
 				}
 			}
 		}

@@ -732,7 +732,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	walkableHeight := 100
 	climbableHeight := 5
 	minRegionArea := 1
-	maxError := 1
+	maxError := 0
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()

@@ -36,14 +36,6 @@ func NewSDLPlatform(imguiIO *imgui.IO) (*SDLPlatform, *SDLWindow, error) {
 }
 
 func (platform *SDLPlatform) ProcessEvents(inputCollector InputCollector) {
-	// platform.currentFrameInput = Input{
-	// 	WindowEvent:    WindowEvent{},
-	// 	MouseInput:     MouseInput{},
-	// 	KeyboardInput:  KeyboardInput{},
-	// 	CameraRotation: mgl64.QuatIdent(),
-	// 	Commands:       []any{},
-	// }
-
 	x, y, mouseState := sdl.GetMouseState()
 	inputCollector.SetMousePosition(float64(x), float64(y))
 	for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {

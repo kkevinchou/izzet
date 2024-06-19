@@ -1,6 +1,8 @@
 package navmesh
 
 import (
+	"fmt"
+
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -99,6 +101,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 
 			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
 				span := &chf.spans[i]
+				var count int
 				for _, dir := range dirs {
 					neighborX := x + xDirs[dir]
 					neighborZ := z + zDirs[dir]
@@ -123,9 +126,13 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 								panic("too many layers. could do a continue here to keep processing")
 								// continue
 							}
+							count++
 							span.neighbors[dir] = j
 						}
 					}
+				}
+				if count == 4 {
+					fmt.Println("HI")
 				}
 			}
 		}

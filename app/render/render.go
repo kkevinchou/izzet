@@ -91,15 +91,15 @@ type Renderer struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs     map[float32]uint32
-	triangleVAOs map[string]uint32
+	cubeVAOs      map[string]uint32
+	batchCubeVAOs map[string]uint32
+	triangleVAOs  map[string]uint32
 
-	gameWindowHovered      bool
-	gameWindowWidth        int
-	gameWindowHeight       int
-	menuBarHeight          float32
-	contentBrowserHeight   float32
-	contentBrowserExpanded bool
+	gameWindowHovered    bool
+	gameWindowWidth      int
+	gameWindowHeight     int
+	menuBarHeight        float32
+	contentBrowserHeight float32
 }
 
 func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
@@ -128,7 +128,8 @@ func New(app renderiface.App, world GameWorld, shaderDirectory string, width, he
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.xyTextureVAO = r.init2f2fVAO()
-	r.cubeVAOs = map[float32]uint32{}
+	r.cubeVAOs = map[string]uint32{}
+	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
 	r.ReinitializeFrameBuffers()
@@ -426,6 +427,8 @@ func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotatio
 	return renderEntities
 }
 
+var spanLines [][2]mgl64.Vec3
+
 func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
@@ -453,8 +456,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 					direction3F := lightInfo.Direction3F
 					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
 					// directional light arrow
-					lines := [][]mgl64.Vec3{
-						[]mgl64.Vec3{
+					lines := [][2]mgl64.Vec3{
+						[2]mgl64.Vec3{
 							entity.Position(),
 							entity.Position().Add(dir),
 						},
@@ -477,111 +480,63 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
 	}
 
-	// modelMatrix := entities.WorldTransform(entity)
-	// TODO: optimize this - can probably cache some of these computations
+	nm := r.app.NavMesh()
+	if nm != nil {
+		shader := shaderManager.GetShaderProgram("navmesh")
+		shader.Use()
+		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	// 		// draw joint
-	// 		if len(panels.JointsToRender) > 0 && entity.AnimationPlayer != nil && entity.AnimationPlayer.CurrentAnimation() != "" {
-	// 			jointShader := shaderManager.GetShaderProgram("flat")
-	// 			color := mgl64.Vec3{0 / 255, 255.0 / 255, 85.0 / 255}
+		setupLightingUniforms(shader, lightContext.Lights)
+		shader.SetUniformInt("width", int32(r.gameWindowWidth))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformInt("cameraDepthMap", 29)
+		if !r.app.RuntimeConfig().Bloom {
+			// only tone map if we're not applying bloom, otherwise
+			// we want to keep the HDR values and tone map later
+			shader.SetUniformInt("applyToneMapping", 1)
+		} else {
+			shader.SetUniformInt("applyToneMapping", 0)
+		}
+		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
 
-	// 			var jointLines [][]mgl64.Vec3
-	// 			model := entity.Model
-	// 			animationTransforms := entity.AnimationPlayer.AnimationTransforms()
+		shader.SetUniformFloat("roughness", .8)
+		shader.SetUniformFloat("metallic", 0)
 
-	// 			for _, jid := range panels.JointsToRender {
-	// 				jointTransform := animationTransforms[jid]
-	// 				lines := cubeLines(15)
-	// 				jt := utils.Mat4F32ToF64(jointTransform)
-	// 				for _, line := range lines {
-	// 					points := line
-	// 					for i := 0; i < len(points); i++ {
-	// 						bindTransform := model.JointMap()[jid].FullBindTransform
-	// 						// The calculated joint transforms apply to joints in bind space
-	// 						// 		i.e. the calculated transforms are computed as:
-	// 						// 			parent3 transform * parent2 transform * parent1 transform * local joint transform * inverse bind transform * vertex
-	// 						//
-	// 						// so, to bring the cube into the joint's bind space (i.e. 0,0,0 is right where the joint is positioned rather than the world origin),
-	// 						// we need to multiply by the full bind transform. this is composed of each parent's bind transform. however, GLTF already exports the
-	// 						// inverse bind matrix which is the inverse of it. so we can just inverse the inverse (which we store as FullBindTransform)
-	// 						points[i] = jt.Mul4(utils.Mat4F32ToF64(bindTransform)).Mul4x1(points[i].Vec4(1)).Vec3()
-	// 						// points[i] = jt.Mul4x1(points[i].Vec4(1)).Vec3()
-	// 					}
-	// 				}
-	// 				jointLines = append(jointLines, lines...)
-	// 			}
+		r.drawNavmesh(nm)
+	}
 
-	// 			for _, line := range jointLines {
-	// 				points := line
-	// 				for i := 0; i < len(points); i++ {
-	// 					points[i] = modelMatrix.Mul4x1(points[i].Vec4(1)).Vec3()
-	// 				}
-	// 			}
+	if nm != nil {
+		// draw bounding box
+		volume := nm.Volume
+		r.drawAABB(
+			viewerContext,
+			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+			volume,
+			0.5,
+		)
 
-	// 			drawLines_old(viewerContext, jointShader, jointLines, 0.5, color)
-	// 		}
-
-	// 	nm := r.app.NavMesh()
-
-	// 	if nm != nil {
-	// 		// draw bounding box
-	// 		volume := nm.Volume
-	// 		drawAABB(
-	// 			viewerContext,
-	// 			shaderManager.GetShaderProgram("flat"),
-	// 			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-	// 			&volume,
-	// 			0.5,
-	// 		)
-
-	// 		// draw navmesh
-	// 		if nm.VoxelCount() > 0 {
-	// 			shader := shaderManager.GetShaderProgram("color_pbr")
-	// 			shader.Use()
-
-	// 			if r.app.RuntimeConfig().Bloom {
-	// 				shader.SetUniformInt("applyToneMapping", 0)
-	// 			} else {
-	// 				// only tone map if we're not applying bloom, otherwise
-	// 				// we want to keep the HDR values and tone map later
-	// 				shader.SetUniformInt("applyToneMapping", 1)
-	// 			}
-
-	// 			shader.SetUniformMat4("model", mgl32.Ident4())
-	// 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	// 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	// 			shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	// 			shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-	// 			shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	// 			shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-	// 			shader.SetUniformInt("shadowMap", 31)
-	// 			shader.SetUniformInt("depthCubeMap", 30)
-	// 			shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-	// 			shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
-	// 			shader.SetUniformInt("isAnimated", 0)
-	// 			shader.SetUniformInt("hasColorOverride", 1)
-
-	// 			// color := mgl32.Vec3{9.0 / 255, 235.0 / 255, 47.0 / 255}
-	// 			color := mgl32.Vec3{3.0 / 255, 185.0 / 255, 5.0 / 255}
-	// 			// color := mgl32.Vec3{200.0 / 255, 1000.0 / 255, 200.0 / 255}
-	// 			shader.SetUniformVec3("albedo", color)
-	// 			shader.SetUniformInt("hasPBRMaterial", 1)
-	// 			shader.SetUniformFloat("ao", 1.0)
-	// 			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-	// 			shader.SetUniformFloat("roughness", r.app.RuntimeConfig().Roughness)
-	// 			shader.SetUniformFloat("metallic", r.app.RuntimeConfig().Metallic)
-
-	// 			setupLightingUniforms(shader, lightContext.Lights)
-
-	// 			gl.ActiveTexture(gl.TEXTURE30)
-	// 			gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
-
-	// 			gl.ActiveTexture(gl.TEXTURE31)
-	// 			gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
-
-	// 			drawNavMeshTris(viewerContext, nm)
-	// 		}
-	// 	}
+		if len(nm.DebugLines) > 0 {
+			shader := shaderManager.GetShaderProgram("flat")
+			// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+			color := mgl64.Vec3{1, 0, 0}
+			shader.Use()
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", r.app.RuntimeConfig().NavigationMeshIterations), viewerContext, shader, nm.DebugLines, 0.5, color)
+		}
+	}
 }
 
 func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
@@ -888,17 +843,17 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			modelMatrix := entities.WorldTransform(entity)
 
 			if entity.Collider.SimplifiedTriMeshCollider != nil {
-				var lines [][]mgl64.Vec3
+				var lines [][2]mgl64.Vec3
 				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
-					lines = append(lines, []mgl64.Vec3{
+					lines = append(lines, [2]mgl64.Vec3{
 						triangles.Points[0],
 						triangles.Points[1],
 					})
-					lines = append(lines, []mgl64.Vec3{
+					lines = append(lines, [2]mgl64.Vec3{
 						triangles.Points[1],
 						triangles.Points[2],
 					})
-					lines = append(lines, []mgl64.Vec3{
+					lines = append(lines, [2]mgl64.Vec3{
 						triangles.Points[2],
 						triangles.Points[0],
 					})
@@ -914,10 +869,10 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
 				}
 
-				var pointLines [][]mgl64.Vec3
+				var pointLines [][2]mgl64.Vec3
 				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
 					// 0 length lines
-					pointLines = append(pointLines, []mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
+					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
 				}
 				if len(pointLines) > 0 {
 					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.1, mgl64.Vec3{0, 0, 1})
@@ -1003,7 +958,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
-	menus.SetupMenuBar(r.app)
+	menus.SetupMenuBar(r.app, r.world)
 	menuBarHeight := CalculateMenuBarSize()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)

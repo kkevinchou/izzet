@@ -3,6 +3,7 @@ package panels
 import (
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/app/entities"
+	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 const (
@@ -22,6 +23,7 @@ type GameWorld interface {
 	Entities() []*entities.Entity
 	AddEntity(entity *entities.Entity)
 	GetEntityByID(id int) *entities.Entity
+	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
 func setupRow(label string, item func(), fillWidth bool) {

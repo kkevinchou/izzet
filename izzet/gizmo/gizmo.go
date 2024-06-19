@@ -1,7 +1,6 @@
 package gizmo
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -277,10 +276,6 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 	} else if startStatus == true && endStatus == false {
 		gizmoEvent = GizmoEventCompleted
 		targetGizmo.AccumulatedDelta = mgl64.Vec3{}
-	}
-
-	if gizmoDelta != nil && math.IsNaN(gizmoDelta.X()) {
-		fmt.Println("HI")
 	}
 
 	return gizmoDelta, gizmoEvent

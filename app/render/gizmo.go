@@ -38,7 +38,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	for _, entityID := range axisEntityIDs {
 		axis := gizmo.TranslationGizmo.EntityIDToAxis[entityID]
 		shader.SetUniformUInt("entityID", uint32(entityID))
-		lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
+		lines := [][2]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
 		color := colors[entityID]
 
 		if gizmo.TranslationGizmo.HoveredEntityID == entityID {
@@ -120,7 +120,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 	hoverColor := mgl64.Vec3{1, 1, 0}
 
-	cubeVAO := r.getCubeVAO(0.25)
+	cubeVAO := r.getCubeVAO(0.25, false)
 
 	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID, gizmo.GizmoAllAxisPickingID}
 	for _, entityID := range axisEntityIDs {

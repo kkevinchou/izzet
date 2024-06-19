@@ -47,7 +47,7 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("World") {
-			worldProps(app, renderContext)
+			worldProps(app, world, renderContext)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Stats") {

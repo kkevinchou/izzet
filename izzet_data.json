@@ -1,5 +1,6 @@
 {
     "entity_assets": {
+        "alpha": {"single_entity": true},
         "alpha2": {"single_entity": true},
         "alpha3": {"single_entity": true},
         "vampire": {"single_entity": true},

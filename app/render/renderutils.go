@@ -13,7 +13,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/app/apputils"
 	"github.com/kkevinchou/izzet/app/entities"
-	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -24,6 +23,7 @@ import (
 )
 
 var lineCache map[string][]mgl64.Vec3
+var cubeCache map[string][]mgl64.Vec3
 var triangleVAOCache map[string]TriangleVAO
 
 type TriangleVAO struct {
@@ -33,10 +33,12 @@ type TriangleVAO struct {
 
 func init() {
 	lineCache = map[string][]mgl64.Vec3{}
+	cubeCache = map[string][]mgl64.Vec3{}
 	triangleVAOCache = map[string]TriangleVAO{}
+	navmeshVAOCache = map[string]uint32{}
 }
 
-func genLineKey(thickness, length float64) string {
+func genCacheKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
@@ -74,194 +76,6 @@ var lastVertexCount = 0
 var ResetNavMeshVAO bool = false
 
 var lastMeshUpdate time.Time = time.Now()
-
-// drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func (r *Renderer) drawNavMeshTris(viewerContext ViewerContext, navmesh *navmesh.NavigationMesh) {
-	if navmesh.VoxelCount() != lastVoxelCount || ResetNavMeshVAO {
-		if time.Since(lastMeshUpdate) > 5*time.Second || ResetNavMeshVAO {
-			ResetNavMeshVAO = false
-			vaos := []uint32{navMeshTrisVAO}
-			gl.DeleteVertexArrays(1, &vaos[0])
-			vbos := []uint32{navMeshVBO}
-			gl.DeleteBuffers(1, &vbos[0])
-
-			vertices := r.generateNavMeshVertexAttributes(navmesh)
-
-			var vbo, vao uint32
-			apputils.GenBuffers(1, &vbo)
-			gl.GenVertexArrays(1, &vao)
-
-			gl.BindVertexArray(vao)
-			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-			gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-			var stride int32 = 9
-
-			gl.VertexAttribPointer(0, 3, gl.FLOAT, false, stride*4, nil)
-			gl.EnableVertexAttribArray(0)
-
-			gl.VertexAttribPointer(1, 3, gl.FLOAT, false, stride*4, gl.PtrOffset(3*4))
-			gl.EnableVertexAttribArray(1)
-
-			gl.VertexAttribPointer(2, 3, gl.FLOAT, false, stride*4, gl.PtrOffset(6*4))
-			gl.EnableVertexAttribArray(2)
-
-			navMeshTrisVAO = vao
-			navMeshVBO = vbo
-			lastVoxelCount = navmesh.VoxelCount()
-			lastVertexCount = len(vertices) / int(stride)
-			lastMeshUpdate = time.Now()
-		}
-	}
-
-	gl.BindVertexArray(navMeshTrisVAO)
-	r.iztDrawArrays(0, int32(lastVertexCount))
-}
-
-func (r *Renderer) generateNavMeshVertexAttributes(navmesh *navmesh.NavigationMesh) []float32 {
-	delta := navmesh.Volume.MaxVertex.Sub(navmesh.Volume.MinVertex)
-	voxelDimension := navmesh.VoxelDimension()
-	var runs [3]int = [3]int{int(delta[0] / voxelDimension), int(delta[1] / voxelDimension), int(delta[2] / voxelDimension)}
-
-	voxelField := navmesh.VoxelField()
-	var vertexAttributes []float32
-
-	for i := 0; i < runs[0]; i++ {
-		for j := 0; j < runs[1]; j++ {
-			for k := 0; k < runs[2]; k++ {
-				voxel := voxelField[i][j][k]
-				if !voxel.Filled {
-					continue
-				}
-
-				bb := collider.BoundingBox{
-					MinVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i), float64(j), float64(k)}.Mul(voxelDimension)),
-					MaxVertex: navmesh.Volume.MinVertex.Add(mgl64.Vec3{float64(i + 1), float64(j + 1), float64(k + 1)}.Mul(voxelDimension)),
-				}
-				vertexAttributes = append(vertexAttributes, r.generateVoxelVertexAttributes(voxel, voxelField, bb)...)
-			}
-		}
-	}
-	return vertexAttributes
-}
-
-func (r *Renderer) generateVoxelVertexAttributes(voxel navmesh.Voxel, voxelField [][][]navmesh.Voxel, bb collider.BoundingBox) []float32 {
-	min := bb.MinVertex
-	max := bb.MaxVertex
-	delta := max.Sub(min)
-	var vertexAttributes []float32
-
-	verts := []mgl64.Vec3{
-		// top
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		max,
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-		max,
-
-		// bottom
-		min,
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-
-		min,
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-
-		// left
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min,
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-
-		min,
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-
-		// right
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-
-		// front
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], 0, delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-
-		min.Add(mgl64.Vec3{0, 0, delta[2]}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], delta[2]}),
-		min.Add(mgl64.Vec3{0, delta[1], delta[2]}),
-
-		// back
-		min,
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-		min.Add(mgl64.Vec3{delta[0], 0, 0}),
-
-		min,
-		min.Add(mgl64.Vec3{0, delta[1], 0}),
-		min.Add(mgl64.Vec3{delta[0], delta[1], 0}),
-	}
-
-	normals := []mgl64.Vec3{
-		// top
-		mgl64.Vec3{0, 1, 0},
-		// bottom
-		mgl64.Vec3{0, -1, 0},
-		// left
-		mgl64.Vec3{-1, 0, 0},
-		// right
-		mgl64.Vec3{1, 0, 0},
-		// front
-		mgl64.Vec3{0, 0, 1},
-		// back
-		mgl64.Vec3{0, 0, -1},
-	}
-
-	color := mgl32.Vec3{1.0, 0, 0}
-
-	if voxel.DistanceField < navmesh.MaxDistanceFieldValue {
-		hsv := mgl32.Vec3{0, 0, float32(voxel.DistanceField) / 100}
-		color = HSVtoRGB(hsv)
-
-		if voxel.X == int(r.app.RuntimeConfig().VoxelHighlightX) && voxel.Z == int(r.app.RuntimeConfig().VoxelHighlightZ) && voxel.Y < 50 {
-			r.app.RuntimeConfig().VoxelHighlightDistanceField = float32(voxel.DistanceField)
-			r.app.RuntimeConfig().VoxelHighlightRegionID = voxel.RegionID
-			color = mgl32.Vec3{10, 10, 10}
-		} else if voxel.Seed {
-			color = mgl32.Vec3{1, 0, 1}
-		} else if r.app.RuntimeConfig().NavMeshHSV {
-			if voxel.RegionID != -1 && voxel.RegionID <= int(r.app.RuntimeConfig().NavMeshRegionIDThreshold) && voxel.DistanceField >= float64(r.app.RuntimeConfig().NavMeshDistanceFieldThreshold) {
-				hsv = mgl32.Vec3{float32((voxel.RegionID * int(r.app.RuntimeConfig().HSVOffset)) % 255), 1, 1}
-				color = HSVtoRGB(hsv)
-			}
-		}
-
-		if voxel.DEBUGCOLORFACTOR != nil {
-			color = color.Mul(*voxel.DEBUGCOLORFACTOR)
-		}
-	}
-
-	for i := 0; i < len(verts); i++ {
-		vertexAttributes = append(vertexAttributes,
-			float32(verts[i].X()),
-			float32(verts[i].Y()),
-			float32(verts[i].Z()),
-			float32(normals[i/6].X()),
-			float32(normals[i/6].Y()),
-			float32(normals[i/6].Z()),
-			color[0],
-			color[1],
-			color[2],
-		)
-	}
-
-	return vertexAttributes
-}
 
 func RGBtoHSV(rgb mgl32.Vec3) mgl32.Vec3 {
 	// Normalize RGB values to be between 0 and 1
@@ -504,7 +318,7 @@ func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
 
-func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var vao uint32
 	var length int
 
@@ -515,13 +329,22 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 			end := line[1]
 			length := end.Sub(start).Len()
 
-			dir := end.Sub(start).Normalize()
-			q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+			if length == 0 {
+				cp := cubePoints(thickness)
+				for _, p := range cp {
+					points = append(points, p.Add(start))
+				}
 
-			for _, dp := range linePoints(thickness, length) {
-				newEnd := q.Rotate(dp).Add(start)
-				points = append(points, newEnd)
+			} else {
+				dir := end.Sub(start).Normalize()
+				q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+
+				for _, dp := range linePoints(thickness, length) {
+					newEnd := q.Rotate(dp).Add(start)
+					points = append(points, newEnd)
+				}
 			}
+
 		}
 		vao, length = r.generateTrisVAO(points)
 		item := TriangleVAO{VAO: vao, length: length}
@@ -599,8 +422,75 @@ func cubeLines(length float64) [][]mgl64.Vec3 {
 	return lines
 }
 
+func cubePoints(thickness float64) []mgl64.Vec3 {
+	cacheKey := genCacheKey(thickness, 0)
+	if _, ok := cubeCache[cacheKey]; ok {
+		return cubeCache[cacheKey]
+	}
+
+	var ht float64 = thickness / 2
+	points := []mgl64.Vec3{
+		// front
+		{-ht, -ht, ht},
+		{ht, -ht, ht},
+		{ht, ht, ht},
+
+		{ht, ht, ht},
+		{-ht, ht, ht},
+		{-ht, -ht, ht},
+
+		// back
+		{ht, ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, -ht},
+
+		{-ht, -ht, -ht},
+		{-ht, ht, -ht},
+		{ht, ht, -ht},
+
+		// right
+		{ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, ht, -ht},
+
+		{ht, ht, -ht},
+		{ht, ht, ht},
+		{ht, -ht, ht},
+
+		// left
+		{-ht, ht, -ht},
+		{-ht, -ht, -ht},
+		{-ht, -ht, ht},
+
+		{-ht, -ht, ht},
+		{-ht, ht, ht},
+		{-ht, ht, -ht},
+
+		// top
+		{ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, ht},
+
+		{-ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, -ht},
+
+		// bottom
+		{-ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, -ht, ht},
+
+		{-ht, -ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, ht},
+	}
+
+	cubeCache[cacheKey] = points
+	return points
+}
+
 func linePoints(thickness float64, length float64) []mgl64.Vec3 {
-	cacheKey := genLineKey(thickness, length)
+	cacheKey := genCacheKey(thickness, length)
 	if _, ok := lineCache[cacheKey]; ok {
 		return lineCache[cacheKey]
 	}
@@ -1031,25 +921,25 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64
 }
 
 func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
-	var allLines [][]mgl64.Vec3
+	var allLines [][2]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)
 	xd := d.X()
 	yd := d.Y()
 	zd := d.Z()
 
-	baseHorizontalLines := [][]mgl64.Vec3{}
+	baseHorizontalLines := [][2]mgl64.Vec3{}
 	baseHorizontalLines = append(baseHorizontalLines,
-		[]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
-		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
-		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
-		[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
+		[2]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
 	)
 
 	for i := 0; i < 2; i++ {
 		for _, b := range baseHorizontalLines {
 			allLines = append(allLines,
-				[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
+				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
 			)
 		}
 	}
@@ -1065,7 +955,7 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb 
 	for i := 0; i < 2; i++ {
 		for _, b := range baseVerticalLines {
 			allLines = append(allLines,
-				[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
+				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
 			)
 		}
 	}
@@ -1079,85 +969,216 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb 
 	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), viewerContext, shader, allLines, thickness, color)
 }
 
-func (r *Renderer) getCubeVAO(length float32) uint32 {
-	if vao, ok := r.cubeVAOs[length]; !ok {
-		vao = r.initCubeVAO(length)
-		r.cubeVAOs[length] = vao
+func (r *Renderer) getCubeVAO(length float32, includeNormals bool) uint32 {
+	hash := fmt.Sprintf("%.2f_%t", length, includeNormals)
+	if _, ok := r.cubeVAOs[hash]; !ok {
+		vao := r.initCubeVAO(length, includeNormals)
+		r.cubeVAOs[hash] = vao
 	}
-	return r.cubeVAOs[length]
+	return r.cubeVAOs[hash]
 }
 
-func (r *Renderer) initCubeVAO(length float32) uint32 {
+func (r *Renderer) getBatchCubeVAOs(name string, length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
+	if _, ok := r.batchCubeVAOs[name]; !ok {
+		vao := r.initBatchCubeVAOs(length, includeNormals, positions)
+		r.batchCubeVAOs[name] = vao
+	}
+	return r.batchCubeVAOs[name]
+}
+
+func (r *Renderer) initBatchCubeVAOs(length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
 	ht := length / 2
 
-	vertices := []float32{
-		// front
-		-ht, -ht, ht,
-		ht, -ht, ht,
-		ht, ht, ht,
+	var allVertexAttribs []float32
 
-		ht, ht, ht,
-		-ht, ht, ht,
-		-ht, -ht, ht,
+	for _, position := range positions {
+		allVertexAttribs = append(
+			allVertexAttribs,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
 
-		// back
-		ht, ht, -ht,
-		ht, -ht, -ht,
-		-ht, -ht, -ht,
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
 
-		-ht, -ht, -ht,
-		-ht, ht, -ht,
-		ht, ht, -ht,
+			// back
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
 
-		// right
-		ht, -ht, ht,
-		ht, -ht, -ht,
-		ht, ht, -ht,
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
 
-		ht, ht, -ht,
-		ht, ht, ht,
-		ht, -ht, ht,
+			// right
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 1, 0, 0,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 1, 0, 0,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 1, 0, 0,
 
-		// left
-		-ht, ht, -ht,
-		-ht, -ht, -ht,
-		-ht, -ht, ht,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 1, 0, 0,
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 1, 0, 0,
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 1, 0, 0,
 
-		-ht, -ht, ht,
-		-ht, ht, ht,
-		-ht, ht, -ht,
+			// left
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), -1, 0, 0,
 
-		// top
-		ht, ht, ht,
-		ht, ht, -ht,
-		-ht, ht, ht,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), -1, 0, 0,
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), -1, 0, 0,
 
-		-ht, ht, ht,
-		ht, ht, -ht,
-		-ht, ht, -ht,
+			// top
+			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
 
-		// bottom
-		-ht, -ht, ht,
-		ht, -ht, -ht,
-		ht, -ht, ht,
+			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
+			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
+			-ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
 
-		-ht, -ht, -ht,
-		ht, -ht, -ht,
-		-ht, -ht, ht,
+			// bottom
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
+			ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
+
+			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
+			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
+			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
+		)
+
 	}
+
+	var vertices []float32
+
+	totalVertexAttributesSize := 6
+	actualVertexAttributesSize := totalVertexAttributesSize
+	if !includeNormals {
+		actualVertexAttributesSize -= 3
+	}
+
+	for i := 0; i < len(allVertexAttribs); i += totalVertexAttributesSize {
+		for j := range actualVertexAttributesSize {
+			vertices = append(vertices, allVertexAttribs[i+j])
+		}
+	}
+
 	var vbo, vao uint32
 	apputils.GenBuffers(1, &vbo)
 	gl.GenVertexArrays(1, &vao)
+
+	ptrOffset := 0
+	floatSize := 4
 
 	gl.BindVertexArray(vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), nil)
 	gl.EnableVertexAttribArray(0)
 
+	if includeNormals {
+		ptrOffset += 3
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
+		gl.EnableVertexAttribArray(1)
+	}
+
+	return vao
+}
+
+func (r *Renderer) initCubeVAO(length float32, includeNormals bool) uint32 {
+	ht := length / 2
+
+	allVertexAttribs := []float32{
+		// front
+		-ht, -ht, ht, 0, 0, -1,
+		ht, -ht, ht, 0, 0, -1,
+		ht, ht, ht, 0, 0, -1,
+
+		ht, ht, ht, 0, 0, -1,
+		-ht, ht, ht, 0, 0, -1,
+		-ht, -ht, ht, 0, 0, -1,
+
+		// back
+		ht, ht, -ht, 0, 0, 1,
+		ht, -ht, -ht, 0, 0, 1,
+		-ht, -ht, -ht, 0, 0, 1,
+
+		-ht, -ht, -ht, 0, 0, 1,
+		-ht, ht, -ht, 0, 0, 1,
+		ht, ht, -ht, 0, 0, 1,
+
+		// right
+		ht, -ht, ht, 1, 0, 0,
+		ht, -ht, -ht, 1, 0, 0,
+		ht, ht, -ht, 1, 0, 0,
+
+		ht, ht, -ht, 1, 0, 0,
+		ht, ht, ht, 1, 0, 0,
+		ht, -ht, ht, 1, 0, 0,
+
+		// left
+		-ht, ht, -ht, -1, 0, 0,
+		-ht, -ht, -ht, -1, 0, 0,
+		-ht, -ht, ht, -1, 0, 0,
+
+		-ht, -ht, ht, -1, 0, 0,
+		-ht, ht, ht, -1, 0, 0,
+		-ht, ht, -ht, -1, 0, 0,
+
+		// top
+		ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, ht, 0, 1, 0,
+
+		-ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, -ht, 0, 1, 0,
+
+		// bottom
+		-ht, -ht, ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, ht, 0, -1, 0,
+
+		-ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		-ht, -ht, ht, 0, -1, 0,
+	}
+
+	var vertices []float32
+
+	totalVertexAttributesSize := 6
+	actualVertexAttributesSize := totalVertexAttributesSize
+	if !includeNormals {
+		actualVertexAttributesSize -= 3
+	}
+
+	for i := 0; i < len(allVertexAttribs); i += totalVertexAttributesSize {
+		for j := range actualVertexAttributesSize {
+			vertices = append(vertices, allVertexAttribs[i+j])
+		}
+	}
+
+	var vbo, vao uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	ptrOffset := 0
+	floatSize := 4
+
 	gl.BindVertexArray(vao)
-	r.iztDrawArrays(0, int32(len(vertices))/3)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), nil)
+	gl.EnableVertexAttribArray(0)
+
+	if includeNormals {
+		ptrOffset += 3
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
+		gl.EnableVertexAttribArray(1)
+	}
 
 	return vao
 }

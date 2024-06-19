@@ -32,7 +32,7 @@ var (
 	}
 )
 
-func worldProps(app renderiface.App, renderContext RenderContext) {
+func worldProps(app renderiface.App, world renderiface.GameWorld, renderContext RenderContext) {
 	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
@@ -106,12 +106,19 @@ func worldProps(app renderiface.App, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.RenderSpatialPartition) }, true)
 		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.SPNearPlaneOffset, 0, 1000) }, true)
+		setupRow("Navigatiton Mesh", func() {
+			var i int32 = runtimeConfig.NavigationMeshIterations
+			if imgui.InputInt("", &i) {
+				runtimeConfig.NavigationMeshIterations = i
+				app.BuildNavMesh(app, world, int(runtimeConfig.NavigationMeshIterations))
+			}
+		}, true)
 		imgui.EndTable()
 	}
 }

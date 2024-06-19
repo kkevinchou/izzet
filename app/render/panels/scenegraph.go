@@ -44,9 +44,9 @@ func sceneGraph(app renderiface.App, world GameWorld) {
 				capsule := entity.Collider.CapsuleCollider
 				entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
-				handle := modellibrary.NewGlobalHandle("alpha3")
+				handle := modellibrary.NewGlobalHandle("alpha")
 				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-				entity.Animation = entities.NewAnimationComponent("alpha3", app.ModelLibrary())
+				entity.Animation = entities.NewAnimationComponent("alpha", app.ModelLibrary())
 				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
 				world.AddEntity(entity)

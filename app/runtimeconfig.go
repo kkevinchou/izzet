@@ -128,5 +128,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		ShowSelectionBoundingBox: true,
 		ShowColliders:            false,
+
+		NavigationMeshIterations: 2000,
 	}
 }

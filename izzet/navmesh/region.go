@@ -79,7 +79,6 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 	for i := range chf.spanCount {
 		chf.spans[i].regionID = regionIDs[i]
 	}
-
 }
 
 // floodRegion creates new seed regions (distance 0)
@@ -439,12 +438,12 @@ func mergeAndFilterRegions(chf *CompactHeightField, regionIDs []int, minRegionAr
 			}
 		}
 	}
+
+	// remap regions
 	*maxRegionID = regionIDGen
 	for i := range chf.spanCount {
 		regionIDs[i] = regions[regionIDs[i]].id
 	}
-
-	// remap regions
 
 	// return overlapping regions
 

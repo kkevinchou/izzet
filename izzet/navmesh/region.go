@@ -69,11 +69,11 @@ func BuildRegions(chf *CompactHeightField, iterationCount int, minRegionArea int
 		}
 	}
 	// we pre-emptively increment regionID so when we're done we should decrement it
-	chf.maxRegions = regionID - 1
+	chf.maxRegionID = regionID - 1
 
 	// expandRegions(0, chf, nil, distances, regions, true)
 
-	mergeAndFilterRegions(chf, regionIDs, minRegionArea, mergeRegionSize, &chf.maxRegions)
+	mergeAndFilterRegions(chf, regionIDs, minRegionArea, mergeRegionSize, &chf.maxRegionID)
 
 	// update the region id for each span
 	for i := range chf.spanCount {

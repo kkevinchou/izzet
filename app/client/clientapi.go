@@ -732,7 +732,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	walkableHeight := 100
 	climbableHeight := 5
 	minRegionArea := 1000
-	var maxError float64 = 0
+	var maxError float64 = 1
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()
@@ -751,14 +751,14 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 
 			debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
 		}
-		// for i := 0; i < len(contour.CellVerts); i++ {
-		// 	v1 := contour.CellVerts[i]
-		// 	v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y), float64(v1.Z)}.Add(minVertex)
-		// 	v264 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 3), float64(v1.Z)}.Add(minVertex)
-
-		// 	debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
-		// }
 	}
+
+	// lines don't join properly at mgl64.Vec3{267, 173, 129}
+	// debugLines = [][2]mgl64.Vec3{
+	// 	// [2]mgl64.Vec3{mgl64.Vec3{266, 173, -28}, mgl64.Vec3{267, 173, 129}},
+	// 	[2]mgl64.Vec3{mgl64.Vec3{267, 173, 129}, mgl64.Vec3{266, 173, -28}},
+	// 	[2]mgl64.Vec3{mgl64.Vec3{267, 173, 129}, mgl64.Vec3{209, 173, 302}},
+	// }
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:        hf,

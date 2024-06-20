@@ -37,7 +37,7 @@ type CompactHeightField struct {
 	distances      []int
 	areas          []AREA_TYPE
 	maxDistance    int
-	maxRegions     int
+	maxRegionID    int
 }
 
 func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *CompactHeightField {

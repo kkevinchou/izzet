@@ -124,10 +124,39 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 
 	// Merge holes
 	if len(contourSet.Contours) > 0 {
+		var numHoles int
 
+		winding := make([]int, len(contourSet.Contours))
+
+		for i := range len(contourSet.Contours) {
+			contour := &contourSet.Contours[i]
+			area := calcAreaOfPolygon2D(contour.Verts)
+			winding[i] = 1
+			if area < 0 {
+				winding[i] = -1
+				numHoles++
+			}
+
+		}
+
+		if numHoles > 0 {
+			panic("holes detected")
+			// numRegions := chf.maxRegionID + 1
+		}
 	}
 
 	return contourSet
+}
+
+func calcAreaOfPolygon2D(verts []SimplifiedVertex) int {
+	area := 0
+	for i := 0; i < len(verts); i++ {
+		j := (i + 1) % len(verts)
+		vi := verts[i]
+		vj := verts[j]
+		area += (vi.X * vj.Z) - (vi.Z * vj.X)
+	}
+	return (area + 1) / 2
 }
 
 func getContourPoints(x, z, i int, chf *CompactHeightField, flags []int) []Vertex {

@@ -133,10 +133,10 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		ShowSelectionBoundingBox: true,
 		ShowColliders:            false,
 
-		NavigationMeshIterations:     2000,
+		NavigationMeshIterations:     500,
 		NavigationMeshWalkableHeight: 100,
-		NavigationMeshClimbaleHeight: 5,
-		NavigationMeshMinRegionArea:  1000,
+		NavigationMeshClimbaleHeight: 1,
+		NavigationMeshMinRegionArea:  1,
 		NavigationmeshMaxError:       1,
 	}
 }

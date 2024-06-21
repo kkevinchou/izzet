@@ -763,7 +763,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 		BlurredDistances:     chf.Distances(),
 		DebugLines:           debugLines,
 		Invalidated:          true,
-		InvalidatedTimestamp: time.Now().Second(),
+		InvalidatedTimestamp: int(time.Now().Unix()),
 	}
 
 	g.navMesh = nm

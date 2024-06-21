@@ -514,9 +514,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformFloat("metallic", 0)
 
 		r.drawNavmesh(nm)
-	}
 
-	if nm != nil {
 		// draw bounding box
 		volume := nm.Volume
 		r.drawAABB(
@@ -534,8 +532,10 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", r.app.RuntimeConfig().NavigationMeshIterations), viewerContext, shader, nm.DebugLines, 0.5, color)
+			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), viewerContext, shader, nm.DebugLines, 0.5, color)
 		}
+
+		nm.Invalidated = false
 	}
 }
 

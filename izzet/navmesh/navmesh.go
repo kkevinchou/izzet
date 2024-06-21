@@ -28,7 +28,8 @@ const dirRight int = 2
 const dirDown int = 3
 
 type NavigationMesh struct {
-	Invalidated bool
+	Invalidated          bool
+	InvalidatedTimestamp int
 
 	HeightField        *HeightField
 	CompactHeightField *CompactHeightField

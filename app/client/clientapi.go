@@ -639,7 +639,7 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	return entity
 }
 
-func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, iterationCount int) {
+func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, maxError float64) {
 	start := time.Now()
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
@@ -729,10 +729,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 
 	hf.Test()
 
-	walkableHeight := 100
-	climbableHeight := 5
-	minRegionArea := 1000
-	var maxError float64 = 1
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()
@@ -761,12 +757,13 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	// }
 
 	nm := &navmesh.NavigationMesh{
-		HeightField:        hf,
-		CompactHeightField: chf,
-		Volume:             nmbb,
-		BlurredDistances:   chf.Distances(),
-		DebugLines:         debugLines,
-		Invalidated:        true,
+		HeightField:          hf,
+		CompactHeightField:   chf,
+		Volume:               nmbb,
+		BlurredDistances:     chf.Distances(),
+		DebugLines:           debugLines,
+		Invalidated:          true,
+		InvalidatedTimestamp: time.Now().Second(),
 	}
 
 	g.navMesh = nm

@@ -65,7 +65,7 @@ type App interface {
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
 	InstantiateEntity(entityHandle string) *entities.Entity
-	BuildNavMesh(App, GameWorld, int)
+	BuildNavMesh(App, GameWorld, int, int, int, int, float64)
 	NavMesh() *navmesh.NavigationMesh
 }
 

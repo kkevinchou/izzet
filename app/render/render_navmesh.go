@@ -52,7 +52,6 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 		numVertices = int32(len(positions))
 		vao := cubeAttributes(positions, ds, regionIDs)
 		navmeshVAOCache[name] = vao
-		nm.Invalidated = false
 	}
 
 	gl.BindVertexArray(navmeshVAOCache[name])

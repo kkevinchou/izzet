@@ -106,19 +106,55 @@ func worldProps(app renderiface.App, world renderiface.GameWorld, renderContext 
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Navigation Mesh", imgui.TreeNodeFlagsDefaultOpen) {
+		imgui.BeginTableV("Navigation Mesh Table", 2, tableFlags, imgui.Vec2{}, 0)
+		setupRow("Iterations", func() {
+			var i int32 = runtimeConfig.NavigationMeshIterations
+			if imgui.InputInt("", &i) {
+				runtimeConfig.NavigationMeshIterations = i
+			}
+		}, true)
+		setupRow("Walkable Height", func() {
+			var i int32 = runtimeConfig.NavigationMeshWalkableHeight
+			if imgui.InputInt("", &i) {
+				runtimeConfig.NavigationMeshWalkableHeight = i
+			}
+		}, true)
+		setupRow("Climbable Height", func() {
+			var i int32 = runtimeConfig.NavigationMeshClimbaleHeight
+			if imgui.InputInt("", &i) {
+				runtimeConfig.NavigationMeshClimbaleHeight = i
+			}
+		}, true)
+		setupRow("Min Region Area", func() {
+			var i int32 = runtimeConfig.NavigationMeshMinRegionArea
+			if imgui.InputInt("", &i) {
+				runtimeConfig.NavigationMeshMinRegionArea = i
+			}
+		}, true)
+		setupRow("Max Error", func() {
+			var f float32 = float32(runtimeConfig.NavigationmeshMaxError)
+			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+				runtimeConfig.NavigationmeshMaxError = f
+			}
+		}, true)
+		if imgui.Button("Build") {
+			iterations := int(runtimeConfig.NavigationMeshIterations)
+			walkableHeight := int(runtimeConfig.NavigationMeshWalkableHeight)
+			climbableHeight := int(runtimeConfig.NavigationMeshClimbaleHeight)
+			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
+			maxError := float64(runtimeConfig.NavigationmeshMaxError)
+			app.BuildNavMesh(app, world, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)
+		}
+		imgui.EndTable()
+	}
+
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
 		initColumns()
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.RenderSpatialPartition) }, true)
 		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.SPNearPlaneOffset, 0, 1000) }, true)
-		setupRow("Navigatiton Mesh", func() {
-			var i int32 = runtimeConfig.NavigationMeshIterations
-			if imgui.InputInt("", &i) {
-				runtimeConfig.NavigationMeshIterations = i
-				app.BuildNavMesh(app, world, int(runtimeConfig.NavigationMeshIterations))
-			}
-		}, true)
 		imgui.EndTable()
 	}
 }

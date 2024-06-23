@@ -30,8 +30,6 @@ type SimplifiedVertex struct {
 }
 
 type Contour struct {
-	//
-	//
 	regionID int
 	area     AREA_TYPE
 	Verts    []SimplifiedVertex
@@ -82,7 +80,7 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 					}
 				}
 
-				flags[i] = res ^ 0xf // flags tracks which directions are not connect
+				flags[i] = res ^ 0xf // flags tracks which directions are not connected
 			}
 		}
 	}
@@ -156,6 +154,12 @@ func calcAreaOfPolygon2D(verts []SimplifiedVertex) int {
 		vj := verts[j]
 		area += (vi.X * vj.Z) - (vi.Z * vj.X)
 	}
+	// for i := 0; i < len(verts); i++ {
+	// 	j := (i - 1 + len(verts)) % len(verts)
+	// 	vi := verts[i]
+	// 	vj := verts[j]
+	// 	area += (vi.X * -vj.Z) - (-vi.Z * vj.X)
+	// }
 	return (area + 1) / 2
 }
 

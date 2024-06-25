@@ -34,7 +34,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 		if frameInput.KeyboardInput[input.KeyboardKeyJ].Event == input.KeyboardEventUp {
 			handle := modellibrary.NewGlobalHandle("vampire2")
 			entity := entities.InstantiateEntity("vampire2")
-			entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, OrientOnVelocity: true}
+			entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: true}
 			entity.Collider = &entities.ColliderComponent{
 				ColliderGroup: entities.ColliderGroupFlagPlayer,
 				CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,

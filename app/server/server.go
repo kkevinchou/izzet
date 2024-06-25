@@ -123,7 +123,6 @@ func (g *Server) Start(started chan bool, done chan bool) {
 	// msPerFrame := float64(1000) / float64(60)
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
 
-	commandFrameCountBeforeRender := 0
 	for !g.gameOver {
 		now := float64(time.Now().UnixNano()) / 1000000
 		delta := now - previousTimeStamp
@@ -139,7 +138,6 @@ func (g *Server) Start(started chan bool, done chan bool) {
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
 			g.MetricsRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
-			commandFrameCountBeforeRender += 1
 
 			accumulator -= float64(settings.MSPerCommandFrame)
 			currentLoopCommandFrames++

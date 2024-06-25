@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -65,8 +66,9 @@ type App interface {
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
 	InstantiateEntity(entityHandle string) *entities.Entity
-	BuildNavMesh(App, GameWorld, int, int, int, int, float64)
+	BuildNavMesh(App, int, int, int, int, float64)
 	NavMesh() *navmesh.NavigationMesh
+	World() *world.GameWorld
 }
 
 type RenderContext interface {

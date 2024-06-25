@@ -17,7 +17,7 @@ var someInt int = 15
 var someString string = "asdf"
 var someBytes [3]byte
 
-func contentBrowser(app renderiface.App, world renderiface.GameWorld) bool {
+func contentBrowser(app renderiface.App) bool {
 	var menuOpen bool
 	if imgui.BeginTabItem("Content Browser") {
 		if imgui.Button("Import") {

@@ -32,7 +32,7 @@ var (
 	}
 )
 
-func worldProps(app renderiface.App, world renderiface.GameWorld, renderContext RenderContext) {
+func worldProps(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
@@ -144,7 +144,7 @@ func worldProps(app renderiface.App, world renderiface.GameWorld, renderContext 
 			climbableHeight := int(runtimeConfig.NavigationMeshClimbaleHeight)
 			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
-			app.BuildNavMesh(app, world, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)
+			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)
 		}
 		imgui.EndTable()
 	}

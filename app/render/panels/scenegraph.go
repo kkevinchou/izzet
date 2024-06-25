@@ -12,12 +12,13 @@ import (
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
-func sceneGraph(app renderiface.App, world GameWorld) {
+func sceneGraph(app renderiface.App) {
+	world := app.World()
 	entityPopup := false
 	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
-			popup := drawSceneGraphEntity(entity, app, world)
+			popup := drawSceneGraphEntity(entity, app)
 			entityPopup = entityPopup || popup
 		}
 	}
@@ -97,7 +98,7 @@ func sceneGraph(app renderiface.App, world GameWorld) {
 	}
 }
 
-func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world GameWorld) bool {
+func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App) bool {
 	popup := false
 	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
 	if len(entity.Children) == 0 {
@@ -148,7 +149,7 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App, world Ga
 		childIDs := sortedIDs(entity.Children)
 		for _, id := range childIDs {
 			child := entity.Children[id]
-			childPopup := drawEntity(child, app, world)
+			childPopup := drawEntity(child, app)
 			popup = popup || childPopup
 		}
 
@@ -167,7 +168,7 @@ func sortedIDs(m map[int]*entities.Entity) []int {
 	return ids
 }
 
-func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) bool {
+func drawEntity(entity *entities.Entity, app renderiface.App) bool {
 	popup := false
 	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
 	if len(entity.Children) == 0 {
@@ -216,7 +217,7 @@ func drawEntity(entity *entities.Entity, app renderiface.App, world GameWorld) b
 		childIDs := sortedIDs(entity.Children)
 		for _, id := range childIDs {
 			child := entity.Children[id]
-			childPopup := drawEntity(child, app, world)
+			childPopup := drawEntity(child, app)
 			popup = popup || childPopup
 		}
 

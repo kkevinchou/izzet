@@ -99,7 +99,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.systems = append(g.systems, systems.NewPhysicsSystem(g))
 	g.systems = append(g.systems, systems.NewCollisionSystem(g))
 	g.systems = append(g.systems, &systems.CameraTargetSystem{})
-	g.systems = append(g.systems, serversystems.NewRulesSystem(g, g.world))
+	g.systems = append(g.systems, serversystems.NewRulesSystem(g))
 	g.systems = append(g.systems, systems.NewAnimationSystem(g))
 	g.systems = append(g.systems, systems.NewCleanupSystem(g))
 	g.systems = append(g.systems, serversystems.NewSpawnerSystem(g))

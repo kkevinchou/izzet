@@ -16,7 +16,7 @@ var (
 var worldName string = settings.DefaultProject
 var selectedWorldName string = ""
 
-func SetupMenuBar(app renderiface.App, world renderiface.GameWorld) {
+func SetupMenuBar(app renderiface.App) {
 	imgui.BeginMainMenuBar()
 
 	file(app)

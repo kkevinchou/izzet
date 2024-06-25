@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -32,4 +33,5 @@ type App interface {
 	GetPlayerCamera() *entities.Entity
 	MetricsRegistry() *metrics.MetricsRegistry
 	CollisionObserver() *collisionobserver.CollisionObserver
+	World() *world.GameWorld
 }

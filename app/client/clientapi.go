@@ -639,7 +639,7 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	return entity
 }
 
-func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, maxError float64) {
+func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, maxError float64) {
 	start := time.Now()
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
@@ -654,6 +654,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 	hf := navmesh.NewHeightField(vxs, vzs, minVertex, maxVertex)
 	var debugLines [][2]mgl64.Vec3
 
+	world := app.World()
 	for _, entity := range world.Entities() {
 		if entity.MeshComponent == nil {
 			continue

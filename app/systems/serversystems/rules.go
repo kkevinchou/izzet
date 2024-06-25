@@ -12,10 +12,9 @@ type RulesSystem struct {
 	world systems.GameWorld
 }
 
-func NewRulesSystem(app App, world systems.GameWorld) *RulesSystem {
+func NewRulesSystem(app App) *RulesSystem {
 	return &RulesSystem{
-		app:   app,
-		world: world,
+		app: app,
 	}
 }
 

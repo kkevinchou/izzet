@@ -17,8 +17,8 @@ var (
 	drawerExpanded bool
 )
 
-// func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext renderiface.RenderContext, ps []*prefabs.Prefab, x, y float32, height *float32, expanded *bool) {
-func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext renderiface.RenderContext, ps []*prefabs.Prefab) {
+// func BuildDrawer(app renderiface.App, renderContext renderiface.RenderContext, ps []*prefabs.Prefab, x, y float32, height *float32, expanded *bool) {
+func BuildDrawer(app renderiface.App, renderContext renderiface.RenderContext, ps []*prefabs.Prefab) {
 	_, windowHeight := app.WindowSize()
 	var height = maxContentBrowserHeight
 	if !drawerExpanded {
@@ -40,10 +40,10 @@ func BuildDrawer(app renderiface.App, world renderiface.GameWorld, renderContext
 
 	var menuOpen bool
 	if imgui.BeginTabBarV("Drawer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
-		if contentBrowser(app, world) {
+		if contentBrowser(app) {
 			menuOpen = true
 		}
-		if prefabsUI(app, world, ps) {
+		if prefabsUI(app, ps) {
 			menuOpen = true
 		}
 		imgui.EndTabBar()

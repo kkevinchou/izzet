@@ -142,7 +142,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	}
 
 	g.initSettings()
-	g.renderer = render.New(g, g.world, shaderDirectory, g.width, g.height)
+	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
 
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, g.modelLibrary, data)

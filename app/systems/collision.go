@@ -27,9 +27,9 @@ func (s *CollisionSystem) Update(delta time.Duration, world GameWorld) {
 		worldEntities = []*entities.Entity{s.app.GetPlayerEntity()}
 		observer := s.app.CollisionObserver()
 		observer.Clear()
-		shared.ResolveCollisions(s.app, world, worldEntities, observer)
+		shared.ResolveCollisions(s.app, worldEntities, observer)
 	} else {
 		worldEntities = world.Entities()
-		shared.ResolveCollisions(s.app, world, worldEntities, collisionobserver.NullCollisionExplorer)
+		shared.ResolveCollisions(s.app, worldEntities, collisionobserver.NullCollisionExplorer)
 	}
 }

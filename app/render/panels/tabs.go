@@ -8,7 +8,7 @@ import (
 
 var open bool
 
-func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderContext, ps []*prefabs.Prefab) {
+func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefabs.Prefab) {
 	// rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 	// width := rect.X * 0.20
 	// height := rect.Y * 0.5
@@ -43,11 +43,11 @@ func BuildTabsSet(app renderiface.App, world GameWorld, renderContext RenderCont
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Scene Graph") {
-			sceneGraph(app, world)
+			sceneGraph(app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("World") {
-			worldProps(app, world, renderContext)
+			worldProps(app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Stats") {

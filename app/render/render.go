@@ -102,8 +102,8 @@ type Renderer struct {
 	contentBrowserHeight float32
 }
 
-func New(app renderiface.App, world GameWorld, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app, world: world, gameWindowWidth: width, gameWindowHeight: height}
+func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
+	r := &Renderer{app: app, gameWindowWidth: width, gameWindowHeight: height}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -958,7 +958,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
-	menus.SetupMenuBar(r.app, r.world)
+	menus.SetupMenuBar(r.app)
 	menuBarHeight := CalculateMenuBarSize()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)
@@ -1063,14 +1063,12 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 
 			panels.BuildTabsSet(
 				r.app,
-				r.world,
 				renderContext,
 				r.app.Prefabs(),
 			)
 
 			drawer.BuildDrawer(
 				r.app,
-				r.world,
 				renderContext,
 				r.app.Prefabs(),
 			)

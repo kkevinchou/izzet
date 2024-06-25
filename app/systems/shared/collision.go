@@ -7,6 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/app"
 	"github.com/kkevinchou/izzet/app/entities"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision"
 )
 
@@ -14,6 +15,7 @@ type App interface {
 	CommandFrame() int
 	IsClient() bool
 	IsServer() bool
+	World() *world.GameWorld
 }
 
 type ICollisionObserver interface {
@@ -29,11 +31,12 @@ const (
 	GroundedThreshold float64 = 0.85
 )
 
-func ResolveCollisionsSingle(app App, world GameWorld, entity *entities.Entity, observer ICollisionObserver) {
-	ResolveCollisions(app, world, []*entities.Entity{entity}, observer)
+func ResolveCollisionsSingle(app App, entity *entities.Entity, observer ICollisionObserver) {
+	ResolveCollisions(app, []*entities.Entity{entity}, observer)
 }
 
-func ResolveCollisions(app App, world GameWorld, worldEntities []*entities.Entity, observer ICollisionObserver) {
+func ResolveCollisions(app App, worldEntities []*entities.Entity, observer ICollisionObserver) {
+	world := app.World()
 	uniquePairMap := map[string]any{}
 	seen := map[int]bool{}
 

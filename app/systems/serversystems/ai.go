@@ -42,8 +42,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
 			movementDirection := target.Sub(startPosition).Normalize()
-			newPosition := startPosition.Add(movementDirection.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
-			entities.SetLocalPosition(entity, newPosition)
+			entity.Physics.Velocity = movementDirection.Mul(aiComponent.Speed)
 		}
 
 		if aiComponent.RotationConfig != nil {

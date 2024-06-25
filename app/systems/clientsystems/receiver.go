@@ -88,7 +88,29 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 				} else {
 					mr.Inc("prediction_miss", 1)
-					replay(s.app, world.GetEntityByID(playerEntityID), gamestateUpdateMessage, cfHistory, world)
+					player := s.app.GetPlayerEntity()
+
+					// position := entities.GetLocalPosition(player)
+					// rotation := entities.GetLocalRotation(player)
+					// velocity := player.Physics.Velocity
+					// gravityEnabled := player.Physics.GravityEnabled
+
+					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
+
+					// correctedPosition := entities.GetLocalPosition(player)
+					// // correctedRotation := entities.GetLocalRotation(player)
+					// // correctedVelocity := player.Physics.Velocity
+					// // correctedGravityEnabled := player.Physics.GravityEnabled
+					// if !player.PositionSync.Active {
+					// 	player.PositionSync.Active = true
+					// 	player.PositionSync.StartTime = time.Now()
+					// 	player.PositionSync.Goal = correctedPosition
+					// }
+
+					// entities.SetLocalPosition(player, position)
+					// entities.SetLocalRotation(player, rotation)
+					// player.Physics.Velocity = velocity
+					// player.Physics.GravityEnabled = gravityEnabled
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage

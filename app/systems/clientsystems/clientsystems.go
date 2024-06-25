@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -29,4 +30,5 @@ type App interface {
 	GetFrameInput() input.Input
 	GetFrameInputPtr() *input.Input
 	SetServerStats(stats serverstats.ServerStats)
+	World() *world.GameWorld
 }

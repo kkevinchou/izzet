@@ -52,10 +52,10 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			entity.Animation = entities.NewAnimationComponent("vampire2", s.app.ModelLibrary())
 			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 			entities.SetLocalPosition(entity, mgl64.Vec3{0, 10, 0})
-			// entity.Movement = &entities.MovementComponent{PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {-300, 10, 0}}}, Speed: 100}
 			entity.AIComponent = &entities.AIComponent{
-				Speed:        100,
-				TargetConfig: &entities.TargetConfig{},
+				Speed: 100,
+				// TargetConfig: &entities.TargetConfig{},
+				PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {100, 10, 0}}},
 			}
 
 			s.app.EventsManager().EntitySpawnTopic.Write(events.EntitySpawnEvent{Entity: entity})

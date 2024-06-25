@@ -1,11 +1,9 @@
 package serversystems
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/kkevinchou/izzet/app/systems"
-	"github.com/kkevinchou/kitolib/input"
 )
 
 type InputSystem struct {
@@ -25,9 +23,6 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, player := range s.app.GetPlayers() {
 		bufferedInput := inputBuffer.PullInput(player.ID)
 		s.app.SetPlayerInput(player.ID, bufferedInput.Input)
-		if bufferedInput.Input.KeyboardInput[input.KeyboardKeyJ].Event == input.KeyboardEventUp {
-			fmt.Println("received J")
-		}
 		player := s.app.GetPlayer(player.ID)
 		player.LastInputLocalCommandFrame = bufferedInput.LocalCommandFrame
 	}

@@ -26,8 +26,7 @@ type Entity struct {
 	ClientSidePredicted         bool
 	SimplifiedTriMeshIterations int
 
-	Deadge            bool
-	DeadgeEventQueued bool
+	Deadge bool
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
@@ -51,6 +50,7 @@ type Entity struct {
 	AIComponent *AIComponent
 
 	SpawnPointComponent *SpawnPoint
+	PositionSync        *PositionSync
 }
 
 func (e *Entity) GetID() int {

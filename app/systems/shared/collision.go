@@ -103,25 +103,25 @@ func ResolveCollisions(app App, world GameWorld, worldEntities []*entities.Entit
 			entity.Physics.Grounded = false
 		}
 
-		for _, contact := range entity.Collider.Contacts {
-			e1ID := *contact.EntityID
-			e2ID := *contact.SourceEntityID
+		// for _, contact := range entity.Collider.Contacts {
+		// 	e1ID := *contact.EntityID
+		// 	e2ID := *contact.SourceEntityID
 
-			e1 := world.GetEntityByID(e1ID)
-			e2 := world.GetEntityByID(e2ID)
+		// 	e1 := world.GetEntityByID(e1ID)
+		// 	e2 := world.GetEntityByID(e2ID)
 
-			if e2.AIComponent != nil && e1.CharacterControllerComponent != nil {
-				if app.IsServer() {
-					fmt.Println(e2.GetID(), "died on server")
-				}
-				e2.Deadge = true
-			} else if e1.AIComponent != nil && e2.CharacterControllerComponent != nil {
-				if app.IsServer() {
-					fmt.Println(e1.GetID(), "died on server")
-				}
-				e1.Deadge = true
-			}
-		}
+		// 	if e2.AIComponent != nil && e1.CharacterControllerComponent != nil {
+		// 		if app.IsServer() {
+		// 			fmt.Println(e2.GetID(), "died on server")
+		// 		}
+		// 		e2.Deadge = true
+		// 	} else if e1.AIComponent != nil && e2.CharacterControllerComponent != nil {
+		// 		if app.IsServer() {
+		// 			fmt.Println(e1.GetID(), "died on server")
+		// 		}
+		// 		e1.Deadge = true
+		// 	}
+		// }
 
 		if entity.Collider.Contacts != nil && entity.Physics != nil {
 			for _, contact := range entity.Collider.Contacts {

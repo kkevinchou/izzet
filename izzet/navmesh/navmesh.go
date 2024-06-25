@@ -19,6 +19,8 @@ const WALKABLE_AREA AREA_TYPE = 63
 const maxLayers int = 62
 
 var dirs [4]int = [4]int{0, 1, 2, 3}
+
+// CW ordering
 var xDirs [4]int = [4]int{-1, 0, 1, 0}
 var zDirs [4]int = [4]int{0, -1, 0, 1}
 
@@ -26,6 +28,15 @@ const dirLeft int = 0
 const dirUp int = 1
 const dirRight int = 2
 const dirDown int = 3
+
+// // CCW ordering
+// var xDirs [4]int = [4]int{-1, 0, 1, 0}
+// var zDirs [4]int = [4]int{0, 1, 0, -1}
+
+// const dirLeft int = 0
+// const dirUp int = 3
+// const dirRight int = 2
+// const dirDown int = 1
 
 type NavigationMesh struct {
 	Invalidated          bool

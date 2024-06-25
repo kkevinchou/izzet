@@ -30,8 +30,6 @@ type SimplifiedVertex struct {
 }
 
 type Contour struct {
-	//
-	//
 	regionID int
 	area     AREA_TYPE
 	Verts    []SimplifiedVertex
@@ -82,7 +80,7 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 					}
 				}
 
-				flags[i] = res ^ 0xf // flags tracks which directions are not connect
+				flags[i] = res ^ 0xf // flags tracks which directions are not connected
 			}
 		}
 	}
@@ -106,6 +104,8 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 				area := chf.areas[i]
 				verts := getContourPoints(x, z, int(i), chf, flags)
 				simplified := simplifyContour(verts, maxError, maxEdgeLength)
+
+				// TODO - implement
 				simplified = removeDegenderateSegments(simplified)
 
 				if len(simplified) >= 3 {
@@ -125,7 +125,6 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 	// Merge holes
 	if len(contourSet.Contours) > 0 {
 		var numHoles int
-
 		winding := make([]int, len(contourSet.Contours))
 
 		for i := range len(contourSet.Contours) {
@@ -139,6 +138,7 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 
 		}
 
+		// TODO - merge holes
 		if numHoles > 0 {
 			panic("holes detected")
 			// numRegions := chf.maxRegionID + 1
@@ -156,6 +156,12 @@ func calcAreaOfPolygon2D(verts []SimplifiedVertex) int {
 		vj := verts[j]
 		area += (vi.X * vj.Z) - (vi.Z * vj.X)
 	}
+	// for i := 0; i < len(verts); i++ {
+	// 	j := (i - 1 + len(verts)) % len(verts)
+	// 	vi := verts[i]
+	// 	vj := verts[j]
+	// 	area += (vi.X * -vj.Z) - (-vi.Z * vj.X)
+	// }
 	return (area + 1) / 2
 }
 

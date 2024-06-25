@@ -736,6 +736,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, world renderiface.GameWorld, 
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
 	contourSet := navmesh.BuildContours(chf, maxError, 1)
+	navmesh.BuildPolyMesh(contourSet)
 
 	for _, contour := range contourSet.Contours {
 		verts := contour.Verts

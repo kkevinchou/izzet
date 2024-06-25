@@ -49,6 +49,8 @@ type Entity struct {
 
 	PlayerInput *PlayerInputComponent
 	AIComponent *AIComponent
+
+	SpawnPointComponent *SpawnPoint
 }
 
 func (e *Entity) GetID() int {

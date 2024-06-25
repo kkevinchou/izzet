@@ -65,6 +65,15 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.ModelLibrary())
 		entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
+		world := s.app.World()
+		for _, e := range world.Entities() {
+			if e.SpawnPointComponent != nil {
+				entities.SetLocalPosition(entity, e.Position())
+				fmt.Println("FOUND SPAWN POINT AT", e.Position())
+				break
+			}
+		}
+
 		camera := createCamera(e.PlayerID, entity.GetID())
 		world.AddEntity(camera)
 		world.AddEntity(entity)

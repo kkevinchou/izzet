@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -25,4 +26,5 @@ type App interface {
 	MetricsRegistry() *metrics.MetricsRegistry
 	EventsManager() *events.EventManager
 	SystemNames() []string
+	World() *world.GameWorld
 }

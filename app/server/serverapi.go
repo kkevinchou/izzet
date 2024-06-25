@@ -79,12 +79,6 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 	}
 
 	go func(client network.IzzetClient, id int, ch chan network.MessageTransport, discCh chan bool) {
-		// f, err := os.OpenFile("serverlog.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// defer f.Close()
-
 		for {
 			message, err := g.players[playerID].Client.Recv()
 			if err != nil {
@@ -104,11 +98,6 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 				}
 				continue
 			}
-			// _, err = f.Write([]byte(fmt.Sprintf("%s - %d - %s\n", time.Now().Format("2006-01-02 15:04:05"), message.CommandFrame, string(message.Body))))
-			// if err != nil {
-			// 	fmt.Println("failed to write to server log")
-			// }
-
 			ch <- message
 		}
 	}(c, playerID, inMessageChannel, disconnectChannel)
@@ -176,4 +165,8 @@ func (g *Server) SystemNames() []string {
 		names = append(names, s.Name())
 	}
 	return names
+}
+
+func (g *Server) World() *world.GameWorld {
+	return g.world
 }

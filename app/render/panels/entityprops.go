@@ -19,12 +19,14 @@ type ComponentComboOption string
 var MaterialComboOption ComponentComboOption = "Material Component"
 var PhysicsComboOption ComponentComboOption = "Physics Component"
 var LightComboOption ComponentComboOption = "Light Component"
+var SpawnPointComboOption ComponentComboOption = "Spawn Point Component"
 var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
 var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	MaterialComboOption,
 	PhysicsComboOption,
 	LightComboOption,
+	SpawnPointComboOption,
 }
 
 func entityProps(entity *entities.Entity, app renderiface.App) {
@@ -377,6 +379,8 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 			} else if SelectedComponentComboOption == PhysicsComboOption {
 				entity.Physics = &entities.PhysicsComponent{}
+			} else if SelectedComponentComboOption == SpawnPointComboOption {
+				entity.SpawnPointComponent = &entities.SpawnPoint{}
 			}
 		}
 	}

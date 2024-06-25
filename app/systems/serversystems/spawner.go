@@ -36,11 +36,6 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			entity := entities.InstantiateEntity("vampire2")
 			entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
 			entity.Collider = &entities.ColliderComponent{
-				// CapsuleCollider: &collider.Capsule{
-				// 	Radius: radius,
-				// 	Top:    mgl64.Vec3{0, radius + length, 0},
-				// 	Bottom: mgl64.Vec3{0, radius, 0},
-				// },
 				ColliderGroup: entities.ColliderGroupFlagPlayer,
 				CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 			}

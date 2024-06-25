@@ -2,7 +2,81 @@ package navmesh
 
 import "testing"
 
-func TestPolyMesh(t *testing.T) {
+func TestBuildMeshAdjacency(t *testing.T) {
+	polygons := []Polygon{
+		{
+			verts:      []int{0, 1, 2},
+			vertToPoly: []int{-1, -1, -1},
+		},
+		{
+			verts:      []int{1, 0, 3},
+			vertToPoly: []int{-1, -1, -1},
+		},
+	}
+
+	buildMeshAdjacency(polygons, 999999)
+}
+
+func TestBuildPolyMesh(t *testing.T) {
+	contourSet := &ContourSet{
+		Contours: []Contour{
+			Contour{
+				Verts: []SimplifiedVertex{
+					{X: 100, Y: 0, Z: 0},
+					{X: 100, Y: 0, Z: -100},
+					{X: 50, Y: 0, Z: -150},
+					{X: 0, Y: 0, Z: -100},
+					{X: 0, Y: 0, Z: 0},
+				},
+			},
+		},
+	}
+
+	mesh := BuildPolyMesh(contourSet)
+	if mesh == nil {
+		t.Fail()
+	}
+
+	if len(mesh.vertices) != 5 {
+		t.Errorf("expected 5 vertices but found %d", len(mesh.vertices))
+	}
+}
+
+func TestBuildPolyMeshWithOverlappingVerts(t *testing.T) {
+	contourSet := &ContourSet{
+		Contours: []Contour{
+			Contour{
+				Verts: []SimplifiedVertex{
+					{X: 100, Y: 0, Z: 0},
+					{X: 100, Y: 0, Z: -100},
+					{X: 50, Y: 0, Z: -150},
+					{X: 0, Y: 0, Z: -100},
+					{X: 0, Y: 0, Z: 0},
+				},
+			},
+			Contour{
+				Verts: []SimplifiedVertex{
+					{X: 100, Y: 0, Z: 0},
+					{X: 100, Y: 0, Z: -100},
+					{X: 50, Y: 0, Z: -150},
+					{X: 0, Y: 0, Z: -100},
+					{X: 0, Y: 0, Z: 0},
+				},
+			},
+		},
+	}
+
+	mesh := BuildPolyMesh(contourSet)
+	if mesh == nil {
+		t.Fail()
+	}
+
+	if len(mesh.vertices) != 5 {
+		t.Errorf("expected 5 vertices but found %d", len(mesh.vertices))
+	}
+}
+
+func TestTriangulate(t *testing.T) {
 	// counter clockwise
 	vertices := []SimplifiedVertex{
 		{X: 100, Y: 0, Z: 0},

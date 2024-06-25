@@ -1,6 +1,14 @@
 package navmesh
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
+
+const (
+	vertexBucketCount = (1 << 12)
+	nvp               = 1000 // max verts per poly
+)
 
 type Index struct {
 	index     int
@@ -13,14 +21,194 @@ type RCTriangle struct {
 	c int
 }
 
-func BuildPolyMesh(contourSet *ContourSet) {
+type MeshVertex struct {
+	x, y, z int
+}
+
+type PolyVertex struct {
+	X, Y, Z int
+}
+
+type Polygon struct {
+	// index to the vertices owned by Mesh that make up this polygon
+	verts []int
+	// vertToPoly[i] stores the polygon index sharing the edge i, i+1
+	vertToPoly []int
+}
+
+type Mesh struct {
+	vertices  []PolyVertex
+	polygons  []Polygon
+	regionIDs []int
+	areas     []AREA_TYPE
+}
+
+func BuildPolyMesh(contourSet *ContourSet) *Mesh {
+	mesh := &Mesh{}
+
+	maxVertices := 0
+	maxTris := 0
+	maxVertsPerContour := 0
+
+	for _, contour := range contourSet.Contours {
+		if len(contour.Verts) < 3 {
+			continue
+		}
+		maxVertices += len(contour.Verts)
+		maxTris += len(contour.Verts) - 2
+		maxVertsPerContour = max(maxVertsPerContour, len(contour.Verts))
+	}
+
+	firstVert := make([]int, vertexBucketCount)
+	for i := range firstVert {
+		firstVert[i] = -1
+	}
+	nextVert := make([]int, maxVertices)
+
 	for _, contour := range contourSet.Contours {
 		if len(contour.Verts) < 3 {
 			continue
 		}
 
-		triangulate(contour.Verts)
+		tris := triangulate(contour.Verts)
+		if len(tris) <= 0 {
+			fmt.Println("bad triangulation")
+		}
+
+		var indices []int
+		for j := 0; j < len(contour.Verts); j++ {
+			v := contour.Verts[j]
+			indices = append(indices, mesh.addVertex(v.X, v.Y, v.Z, firstVert, nextVert))
+		}
+
+		var polygons []Polygon
+
+		for j := 0; j < len(tris); j++ {
+			t := tris[j]
+			if t.a != t.b && t.a != t.c && t.b != t.c {
+				polygons = append(polygons, Polygon{
+					verts:      []int{indices[t.a], indices[t.b], indices[t.c]},
+					vertToPoly: []int{-1, -1, -1},
+				})
+			}
+		}
+
+		if len(polygons) == 0 {
+			continue
+		}
+
+		// TODO - merge polygons
+
+		// store polygons
+
+		for _, polygon := range polygons {
+			mesh.regionIDs = append(mesh.regionIDs, contour.regionID)
+			mesh.areas = append(mesh.areas, contour.area)
+			mesh.polygons = append(mesh.polygons, polygon)
+			if len(mesh.polygons) > maxTris {
+				panic(fmt.Sprintf("too many polygons %d, max: %d", len(mesh.polygons), maxTris))
+			}
+		}
 	}
+
+	// TODO - remove edge vertices
+
+	// calculate adjacency
+	buildMeshAdjacency(mesh.polygons, len(mesh.vertices))
+
+	// TODO - find portal edges
+
+	return mesh
+}
+
+type Edge struct {
+	vert     [2]int
+	poly     [2]int
+	polyEdge [2]int
+}
+
+func buildMeshAdjacency(polygons []Polygon, numVerts int) {
+	maxEdgeCount := len(polygons) * nvp
+
+	firstEdge := make([]int, numVerts)
+	nextEdge := make([]int, maxEdgeCount)
+
+	for i := range firstEdge {
+		firstEdge[i] = -1
+	}
+	for i := range nextEdge {
+		nextEdge[i] = -1
+	}
+
+	var edgeCount int
+	var edges []Edge
+
+	for i, polygon := range polygons {
+		for j := 0; j < len(polygon.verts); j++ {
+			v0 := polygon.verts[j]
+			v1 := polygon.verts[(j+1)%len(polygon.verts)]
+			if v0 < v1 {
+				edge := Edge{
+					vert:     [2]int{v0, v1},
+					poly:     [2]int{i, i},
+					polyEdge: [2]int{j, 0},
+				}
+				edges = append(edges, edge)
+
+				nextEdge[edgeCount] = firstEdge[v0]
+				firstEdge[v0] = edgeCount
+				edgeCount++
+			}
+		}
+	}
+
+	for i, polygon := range polygons {
+		for j := 0; j < len(polygon.verts); j++ {
+			v0 := polygon.verts[j]
+			v1 := polygon.verts[(j+1)%len(polygon.verts)]
+			if v0 > v1 {
+				for e := firstEdge[v1]; e != -1; e = nextEdge[e] {
+					edge := &edges[e]
+					if edge.vert[1] == v0 && edge.poly[0] == edge.poly[1] {
+						edge.poly[1] = i
+						edge.polyEdge[1] = j
+						break
+					}
+				}
+			}
+		}
+	}
+
+	for i := range edgeCount {
+		edge := &edges[i]
+		if edge.poly[0] != edge.poly[1] {
+			p0 := &polygons[edge.poly[0]]
+			p1 := &polygons[edge.poly[1]]
+
+			p0.vertToPoly[edge.polyEdge[0]] = edge.poly[1]
+			p1.vertToPoly[edge.polyEdge[1]] = edge.poly[0]
+		}
+	}
+}
+
+func (m *Mesh) addVertex(x, y, z int, firstVert, nextVert []int) int {
+	bucket := computeVertexHash(x, y, z)
+	i := firstVert[bucket]
+
+	for i != -1 {
+		v := m.vertices[i]
+		if v.X == x && (math.Abs(float64(v.Y-y)) <= 2) && v.Z == z {
+			return i
+		}
+		i = nextVert[i]
+	}
+
+	i = len(m.vertices)
+	m.vertices = append(m.vertices, PolyVertex{X: x, Y: y, Z: z})
+	nextVert[i] = firstVert[bucket]
+	firstVert[bucket] = i
+
+	return i
 }
 
 func triangulate(vertices []SimplifiedVertex) []RCTriangle {
@@ -205,4 +393,14 @@ func area2(a, b, c SimplifiedVertex) int {
 	q := (c.X - a.X) * (b.Z - a.Z)
 	value := p - q
 	return value
+}
+
+func computeVertexHash(x, y, z int) int {
+	h1 := 0x8da6b343 // Large multiplicative constants;
+	h2 := 0xd8163841 // here arbitrarily chosen primes
+	h3 := 0xcb1ab31f
+	n := h1*x + h2*y + h3*z
+
+	// ensure hash is always positive
+	return (((n % vertexBucketCount) + vertexBucketCount) % vertexBucketCount)
 }

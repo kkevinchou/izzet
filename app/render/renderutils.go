@@ -241,11 +241,37 @@ func (r *Renderer) drawModel(
 	material := entity.Material
 	primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
 	for _, p := range primitives {
-		if material == nil && p.Primitive.PBRMaterial == nil {
-			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-			shader.SetUniformVec3("albedo", mgl32.Vec3{255.0 / 255, 28.0 / 255, 217.0 / 121.0})
-			shader.SetUniformFloat("roughness", 0.85)
-			shader.SetUniformFloat("metallic", 0.1)
+		if material != nil {
+			if material.Invisible {
+				return
+			}
+
+			if material.PBR.TextureName != "" {
+				shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+				shader.SetUniformVec3("albedo", mgl32.Vec3{1, 1, 1}.Mul(material.PBR.DiffuseIntensity))
+				shader.SetUniformFloat("roughness", material.PBR.Roughness)
+				shader.SetUniformFloat("metallic", material.PBR.Metallic)
+
+				// main diffuse texture
+				gl.ActiveTexture(gl.TEXTURE0)
+				var textureID uint32
+				textureName := material.PBR.TextureName
+				texture := r.app.AssetManager().GetTexture(textureName)
+				textureID = texture.ID
+				gl.BindTexture(gl.TEXTURE_2D, textureID)
+			} else {
+				var color mgl32.Vec3 = material.PBR.Diffuse
+				shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+				shader.SetUniformVec3("albedo", color.Mul(material.PBR.DiffuseIntensity))
+				shader.SetUniformFloat("roughness", material.PBR.Roughness)
+				shader.SetUniformFloat("metallic", material.PBR.Metallic)
+			}
+		} else if material == nil && p.Primitive.PBRMaterial == nil {
+			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+			shader.SetUniformVec3("albedo", mgl32.Vec3{1, 1, 1})
+			// shader.SetUniformVec3("albedo", mgl32.Vec3{255.0 / 255, 28.0 / 255, 217.0 / 121.0})
+			// shader.SetUniformFloat("roughness", 0.85)
+			// shader.SetUniformFloat("metallic", 0.1)
 
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
@@ -282,15 +308,6 @@ func (r *Renderer) drawModel(
 			texture := r.app.AssetManager().GetTexture(textureName)
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
-		} else {
-			if material.Invisible {
-				return
-			}
-			var color mgl32.Vec3 = material.PBR.Diffuse
-			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-			shader.SetUniformVec3("albedo", color.Mul(material.PBR.DiffuseIntensity))
-			shader.SetUniformFloat("roughness", material.PBR.Roughness)
-			shader.SetUniformFloat("metallic", material.PBR.Metallic)
 		}
 		shader.SetUniformFloat("ao", 1.0)
 

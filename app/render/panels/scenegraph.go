@@ -9,6 +9,8 @@ import (
 	"github.com/kkevinchou/izzet/app/entities"
 	"github.com/kkevinchou/izzet/app/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -56,6 +58,18 @@ func sceneGraph(app renderiface.App) {
 			}
 			if imgui.Button("Add Cube") {
 				entity := entities.CreateCube(app.ModelLibrary(), 1)
+				i := 0
+				entity.Material = &entities.MaterialComponent{
+					PBR: types.PBR{
+						Roughness:        0.85,
+						Metallic:         0,
+						Diffuse:          [3]float32{1, 1, 1},
+						DiffuseIntensity: 1,
+
+						ColorTextureIndex: &i,
+						TextureName:       settings.DefaultTexture,
+					},
+				}
 
 				meshHandle := entity.MeshComponent.MeshHandle
 				primitives := app.ModelLibrary().GetPrimitives(meshHandle)

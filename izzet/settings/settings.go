@@ -64,7 +64,7 @@ const (
 	// ShadowMapDistanceFactor float64 = .4  // proportion of view fustrum to include in shadow cuboid
 	ShadowMapDistanceFactor float64 = 1 // proportion of view fustrum to include in shadow cuboid
 
-	DefaultTexture string = "color_grid"
+	DefaultTexture string = "asdf"
 
 	GizmoAxisThickness  float64 = 0.08
 	GizmoDistanceFactor float64 = 8

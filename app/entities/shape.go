@@ -3,7 +3,6 @@ package entities
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/modellibrary"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -45,14 +44,6 @@ type ShapeData struct {
 
 func CreateCube(ml *modellibrary.ModelLibrary, length float64) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
-	entity.Material = &MaterialComponent{
-		PBR: types.PBR{
-			Roughness:        0.85,
-			Metallic:         0,
-			Diffuse:          [3]float32{1, 1, 1},
-			DiffuseIntensity: 1,
-		},
-	}
 	entity.LocalScale = mgl64.Vec3{length, length, length}
 
 	handle := ml.GetCubeMeshHandle()

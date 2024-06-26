@@ -21,7 +21,7 @@ func createCubePrimitive(length int) *modelspec.PrimitiveSpecification {
 	}
 
 	uniqueVertices := []modelspec.Vertex{}
-	for i := 0; i < len(vertFloats); i += 6 {
+	for i := 0; i < len(vertFloats); i += 8 {
 		x := vertFloats[i]
 		y := vertFloats[i+1]
 		z := vertFloats[i+2]
@@ -30,10 +30,13 @@ func createCubePrimitive(length int) *modelspec.PrimitiveSpecification {
 		ny := vertFloats[i+4]
 		nz := vertFloats[i+5]
 
+		u := vertFloats[i+6]
+		v := vertFloats[i+7]
+
 		uniqueVertices = append(uniqueVertices, modelspec.Vertex{
 			Position:       mgl32.Vec3{x, y, z},
 			Normal:         mgl32.Vec3{nx, ny, nz},
-			Texture0Coords: mgl32.Vec2{},
+			Texture0Coords: mgl32.Vec2{u, v},
 			Texture1Coords: mgl32.Vec2{},
 		})
 	}
@@ -55,57 +58,57 @@ func cubeVertexFloatsByLength(length int) []float32 {
 
 	return []float32{
 		// front
-		-ht, -ht, ht, 0, 0, 1,
-		ht, -ht, ht, 0, 0, 1,
-		ht, ht, ht, 0, 0, 1,
+		-ht, -ht, ht, 0, 0, 1, 0, 0,
+		ht, -ht, ht, 0, 0, 1, 1, 0,
+		ht, ht, ht, 0, 0, 1, 1, 1,
 
-		ht, ht, ht, 0, 0, 1,
-		-ht, ht, ht, 0, 0, 1,
-		-ht, -ht, ht, 0, 0, 1,
+		ht, ht, ht, 0, 0, 1, 1, 1,
+		-ht, ht, ht, 0, 0, 1, 0, 1,
+		-ht, -ht, ht, 0, 0, 1, 0, 0,
 
 		// back
-		ht, ht, -ht, 0, 0, -1,
-		ht, -ht, -ht, 0, 0, -1,
-		-ht, -ht, -ht, 0, 0, -1,
+		ht, ht, -ht, 0, 0, -1, 0, 1,
+		ht, -ht, -ht, 0, 0, -1, 0, 0,
+		-ht, -ht, -ht, 0, 0, -1, 1, 0,
 
-		-ht, -ht, -ht, 0, 0, -1,
-		-ht, ht, -ht, 0, 0, -1,
-		ht, ht, -ht, 0, 0, -1,
+		-ht, -ht, -ht, 0, 0, -1, 1, 0,
+		-ht, ht, -ht, 0, 0, -1, 1, 1,
+		ht, ht, -ht, 0, 0, -1, 0, 1,
 
 		// right
-		ht, -ht, ht, 1, 0, 0,
-		ht, -ht, -ht, 1, 0, 0,
-		ht, ht, -ht, 1, 0, 0,
+		ht, -ht, ht, 1, 0, 0, 0, 0,
+		ht, -ht, -ht, 1, 0, 0, 1, 0,
+		ht, ht, -ht, 1, 0, 0, 1, 1,
 
-		ht, ht, -ht, 1, 0, 0,
-		ht, ht, ht, 1, 0, 0,
-		ht, -ht, ht, 1, 0, 0,
+		ht, ht, -ht, 1, 0, 0, 1, 1,
+		ht, ht, ht, 1, 0, 0, 0, 1,
+		ht, -ht, ht, 1, 0, 0, 0, 0,
 
 		// left
-		-ht, ht, -ht, -1, 0, 0,
-		-ht, -ht, -ht, -1, 0, 0,
-		-ht, -ht, ht, -1, 0, 0,
+		-ht, ht, -ht, -1, 0, 0, 0, 1,
+		-ht, -ht, -ht, -1, 0, 0, 0, 0,
+		-ht, -ht, ht, -1, 0, 0, 1, 0,
 
-		-ht, -ht, ht, -1, 0, 0,
-		-ht, ht, ht, -1, 0, 0,
-		-ht, ht, -ht, -1, 0, 0,
+		-ht, -ht, ht, -1, 0, 0, 1, 0,
+		-ht, ht, ht, -1, 0, 0, 1, 1,
+		-ht, ht, -ht, -1, 0, 0, 0, 1,
 
 		// top
-		ht, ht, ht, 0, 1, 0,
-		ht, ht, -ht, 0, 1, 0,
-		-ht, ht, ht, 0, 1, 0,
+		ht, ht, ht, 0, 1, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0, 1, 1,
+		-ht, ht, ht, 0, 1, 0, 0, 0,
 
-		-ht, ht, ht, 0, 1, 0,
-		ht, ht, -ht, 0, 1, 0,
-		-ht, ht, -ht, 0, 1, 0,
+		-ht, ht, ht, 0, 1, 0, 0, 0,
+		ht, ht, -ht, 0, 1, 0, 1, 1,
+		-ht, ht, -ht, 0, 1, 0, 0, 1,
 
 		// bottom
-		-ht, -ht, ht, 0, -1, 0,
-		ht, -ht, -ht, 0, -1, 0,
-		ht, -ht, ht, 0, -1, 0,
+		-ht, -ht, ht, 0, -1, 0, 0, 1,
+		ht, -ht, -ht, 0, -1, 0, 1, 0,
+		ht, -ht, ht, 0, -1, 0, 1, 1,
 
-		-ht, -ht, -ht, 0, -1, 0,
-		ht, -ht, -ht, 0, -1, 0,
-		-ht, -ht, ht, 0, -1, 0,
+		-ht, -ht, -ht, 0, -1, 0, 0, 0,
+		ht, -ht, -ht, 0, -1, 0, 1, 0,
+		-ht, -ht, ht, 0, -1, 0, 0, 1,
 	}
 }

@@ -11,10 +11,9 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/kkevinchou/izzet/app/apputils"
-	_ "github.com/kkevinchou/izzet/app/apputils"
-	"github.com/kkevinchou/izzet/app/client"
-	"github.com/kkevinchou/izzet/app/server"
+	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/client"
+	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/log"

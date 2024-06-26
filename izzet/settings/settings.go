@@ -2,16 +2,6 @@ package settings
 
 type GameMode string
 
-// var (
-// 	// dynamic settings loaded from config
-// 	Width      int  = 0
-// 	Height     int  = 0
-// 	Fullscreen bool = false
-// 	Profile    bool = false
-
-// 	RuntimeMaxTextureSize int
-// )
-
 type Config struct {
 	Width         int
 	Height        int

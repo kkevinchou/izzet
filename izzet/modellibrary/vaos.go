@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"github.com/go-gl/gl/v3.2-core/gl"
-	"github.com/kkevinchou/izzet/app/apputils"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 

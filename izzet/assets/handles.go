@@ -3,14 +3,10 @@ package assets
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
 )
-
-var nextGlobalID int
 
 const (
 	NamespaceGlobal = "global"
@@ -159,13 +155,4 @@ func (m *AssetManager) registerMeshWithHandle(handle types.MeshHandle, mesh *mod
 		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
-}
-
-// maybe this should be computed once and shared across all instances of the mesh?
-func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
-	var result []mgl64.Vec3
-	for _, p := range primitives {
-		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
-	}
-	return result
 }

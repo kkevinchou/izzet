@@ -4,21 +4,23 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 type AssetManager struct {
+	// Loaded Assets
 	textures  map[string]*textures.Texture
 	documents map[string]*modelspec.Document
 	fonts     map[string]fonts.Font
 
-	// model library
-
+	// Generated Assets
 	Primitives map[types.MeshHandle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
@@ -27,12 +29,12 @@ type AssetManager struct {
 	processVisuals bool
 }
 
-func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
+func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]fonts.Font
 	var textureLoadTime time.Duration
 
-	if loadVisualAssets {
+	if processVisualAssets {
 		start := time.Now()
 		loadedTextures = loaders.LoadTextures(directory)
 		textureLoadTime = time.Since(start)
@@ -52,10 +54,10 @@ func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:         map[string]map[int]*modelspec.JointSpec{},
 		RootJoints:     map[string]int{},
-		processVisuals: loadVisualAssets,
+		processVisuals: processVisualAssets,
 	}
 
-	if loadVisualAssets {
+	if processVisualAssets {
 		handle := assetManager.GetCubeMeshHandle()
 		assetManager.registerMeshWithHandle(handle, cubeMesh(100))
 	}
@@ -92,4 +94,13 @@ func (a *AssetManager) LoadDocument(name string, filepath string) bool {
 
 	a.documents[name] = scene
 	return true
+}
+
+// maybe this should be computed once and shared across all instances of the mesh?
+func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
+	var result []mgl64.Vec3
+	for _, p := range primitives {
+		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
+	}
+	return result
 }

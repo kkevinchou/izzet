@@ -1,4 +1,4 @@
-package modellibrary
+package assets
 
 import (
 	"sort"

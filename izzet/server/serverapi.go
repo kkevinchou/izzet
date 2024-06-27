@@ -7,10 +7,10 @@ import (
 	"net"
 	"strings"
 
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
@@ -34,7 +34,7 @@ func (g *Server) LoadWorld(name string) bool {
 		fmt.Println("failed to load world", filename, err)
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
+	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 	g.world.SpatialPartition().Clear()
 
@@ -56,10 +56,6 @@ func (g *Server) LoadWorld(name string) bool {
 
 func (g *Server) SetWorld(world *world.GameWorld) {
 	g.world = world
-}
-
-func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
-	return g.modelLibrary
 }
 
 func (g *Server) GetPlayers() map[int]*network.Player {
@@ -169,4 +165,8 @@ func (g *Server) SystemNames() []string {
 
 func (g *Server) World() *world.GameWorld {
 	return g.world
+}
+
+func (g *Server) AssetManager() *assets.AssetManager {
+	return g.assetManager
 }

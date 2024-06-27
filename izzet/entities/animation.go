@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/kitolib/animation"
 )
 
@@ -11,7 +11,7 @@ type AnimationComponent struct {
 	RootJointID     int
 }
 
-func NewAnimationComponent(animationHandle string, ml *modellibrary.ModelLibrary) *AnimationComponent {
+func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {
 	animations, joints, rootJointID := ml.GetAnimations(animationHandle)
 	animationPlayer := animation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])

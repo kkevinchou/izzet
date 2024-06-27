@@ -62,7 +62,7 @@ func prefabsBeginPopupContextItem(app renderiface.App, index int, prefab *prefab
 	if imgui.BeginPopupContextItemV(prefabsContextItemID, imgui.PopupFlagsMouseButtonRight) {
 		menuOpen = true
 		if imgui.Button("Instantiate") {
-			entities := entities.InstantiateFromPrefab(prefab, app.ModelLibrary())
+			entities := entities.InstantiateFromPrefab(prefab, app.AssetManager())
 			for _, entity := range entities {
 				world.AddEntity(entity)
 			}

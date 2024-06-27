@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
@@ -24,7 +24,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -68,10 +67,6 @@ func (g *Client) AssetManager() *assets.AssetManager {
 	return g.assetManager
 }
 
-func (g *Client) ModelLibrary() *modellibrary.ModelLibrary {
-	return g.modelLibrary
-}
-
 func (g *Client) GetEditorCameraPosition() mgl64.Vec3 {
 	return g.camera.Position
 }
@@ -101,7 +96,7 @@ func (g *Client) loadWorld(filepath string) bool {
 		fmt.Println("failed to load world", filepath, err)
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
+	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()
@@ -172,7 +167,7 @@ func (g *Client) StartLiveWorld() {
 	if err != nil {
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(liveWorld.Entities(), g.modelLibrary)
+	serialization.InitDeserializedEntities(liveWorld.Entities(), g.assetManager)
 
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
@@ -242,7 +237,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&playerEntity, g.ModelLibrary())
+	serialization.InitDeserializedEntity(&playerEntity, g.AssetManager())
 	g.world.AddEntity(&playerEntity)
 
 	var camera entities.Entity
@@ -250,7 +245,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&camera, g.ModelLibrary())
+	serialization.InitDeserializedEntity(&camera, g.AssetManager())
 	g.world.AddEntity(&camera)
 
 	g.SetPlayerCamera(&camera)
@@ -262,7 +257,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		return err
 	}
-	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
+	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 	for _, entity := range world.Entities() {
 		if entity.GetID() == camera.GetID() || entity.GetID() == playerEntity.GetID() {
@@ -360,7 +355,7 @@ func (g *Client) StartAsyncServer() {
 		if err != nil {
 			panic(err)
 		}
-		serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
+		serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 		serverApp := server.NewWithWorld("_assets", world)
 		serverApp.Start(started, g.asyncServerDone)
@@ -439,7 +434,7 @@ func (g *Client) registerSingleEntity(assetFilePath string) bool {
 	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 	if g.AssetManager().LoadDocument(baseFileName, assetFilePath) {
 		document := g.AssetManager().GetDocument(baseFileName)
-		g.ModelLibrary().RegisterSingleEntityDocument(document)
+		g.AssetManager().RegisterSingleEntityDocument(document)
 		return true
 	}
 	return false
@@ -610,7 +605,7 @@ func (g *Client) SelectedEntity() *entities.Entity {
 
 func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	document := g.AssetManager().GetDocument(entityHandle)
-	handle := modellibrary.NewGlobalHandle(entityHandle)
+	handle := assets.NewGlobalHandle(entityHandle)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
 	}
@@ -628,7 +623,7 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
 	// entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
 
-	primitives := g.ModelLibrary().GetPrimitives(handle)
+	primitives := g.AssetManager().GetPrimitives(handle)
 	if len(primitives) > 0 {
 		entity.Collider = &entities.ColliderComponent{
 			ColliderGroup:   entities.ColliderGroupMap[entities.ColliderGroupTerrain],
@@ -676,7 +671,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 			continue
 		}
 
-		primitives := app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+		primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 		transform := utils.Mat4F64ToF32(entities.WorldTransform(entity))
 		up := mgl64.Vec3{0, 1, 0}
 		right := mgl64.Vec3{1, 0, 0}

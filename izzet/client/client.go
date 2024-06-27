@@ -9,8 +9,8 @@ import (
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/internal/platforms"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/client/window"
@@ -20,7 +20,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -45,7 +44,6 @@ type Client struct {
 	client        network.IzzetClient
 
 	assetManager *assets.AssetManager
-	modelLibrary *modellibrary.ModelLibrary
 
 	camera *editorcamera.Camera
 
@@ -127,6 +125,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	metricsRegistry := metrics.New()
 	globals.SetClientMetricsRegistry(metricsRegistry)
 
+	assetManager := assets.NewAssetManager(assetsDirectory, true)
+
 	g := &Client{
 		asyncServerDone: make(chan bool),
 		window:          window,
@@ -134,8 +134,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		platform:        sdlPlatform,
 		width:           w,
 		height:          h,
-		assetManager:    assets.NewAssetManager(assetsDirectory, true),
-		modelLibrary:    modellibrary.New(true),
+		assetManager:    assetManager,
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		contentBrowser:  &contentbrowser.ContentBrowser{},
@@ -146,7 +145,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
 
 	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(g.assetManager, g.modelLibrary, data)
+	g.setupAssets(g.assetManager, data)
 	g.setupPrefabs(data)
 
 	g.initialize()
@@ -249,20 +248,20 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
+func (g *Client) setupAssets(assetManager *assets.AssetManager, data *izzetdata.Data) {
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 
 		if entityAsset, ok := data.EntityAssets[docName]; ok {
 			if entityAsset.SingleEntity {
-				modelLibrary.RegisterSingleEntityDocument(doc)
+				assetManager.RegisterSingleEntityDocument(doc)
 			} else {
 				for _, mesh := range doc.Meshes {
-					modelLibrary.RegisterMesh(doc.Name, mesh)
+					assetManager.RegisterMesh(doc.Name, mesh)
 				}
 			}
 			if len(doc.Animations) > 0 {
-				modelLibrary.RegisterAnimations(docName, doc)
+				assetManager.RegisterAnimations(docName, doc)
 			}
 		}
 	}
@@ -303,7 +302,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(pointLight)
 
-	cube := entities.CreateCube(g.modelLibrary, 50)
+	cube := entities.CreateCube(g.assetManager, 50)
 	entities.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(cube)
 
@@ -314,7 +313,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	g.world.AddEntity(directionalLight)
 
 	doc := g.assetManager.GetDocument("demo_scene_scificity")
-	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
+	for _, e := range entities.CreateEntitiesFromDocument(doc, g.assetManager, data) {
 		g.world.AddEntity(e)
 	}
 }

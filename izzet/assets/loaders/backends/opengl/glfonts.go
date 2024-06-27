@@ -2,7 +2,7 @@ package opengl
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/assets/fonts"
+	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )

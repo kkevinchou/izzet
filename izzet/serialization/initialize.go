@@ -2,12 +2,12 @@ package serialization
 
 import (
 	"github.com/kkevinchou/izzet/internal/geometry"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
-func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibrary) {
+func InitDeserializedEntity(entity *entities.Entity, ml *assets.AssetManager) {
 	// set dirty flags
 	entity.DirtyTransformFlag = true
 
@@ -34,7 +34,7 @@ func InitDeserializedEntity(entity *entities.Entity, ml *modellibrary.ModelLibra
 	}
 }
 
-func InitDeserializedEntities(entitySlice []*entities.Entity, ml *modellibrary.ModelLibrary) {
+func InitDeserializedEntities(entitySlice []*entities.Entity, ml *assets.AssetManager) {
 	for _, entity := range entitySlice {
 		InitDeserializedEntity(entity, ml)
 	}

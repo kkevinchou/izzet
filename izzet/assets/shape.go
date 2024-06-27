@@ -1,9 +1,11 @@
-package modellibrary
+package assets
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
+
+var nextGlobalID int
 
 func cubeMesh(length int) *modelspec.MeshSpecification {
 	primitive := createCubePrimitive(length)

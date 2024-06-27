@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kkevinchou/izzet/internal/geometry"
-	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/patrick-higgins/rtreego"
 )
 

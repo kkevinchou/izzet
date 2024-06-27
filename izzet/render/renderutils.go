@@ -192,24 +192,6 @@ type RenderData struct {
 	GeometryVAO uint32
 }
 
-// func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
-// 	var result []RenderData
-
-// 	if entity.MeshComponent != nil {
-// 		primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
-// 		for _, p := range primitives {
-// 			result = append(result, RenderData{
-// 				Primitive:   p.Primitive,
-// 				Transform:   utils.Mat4F64ToF32(entity.MeshComponent.Transform),
-// 				VAO:         p.VAO,
-// 				GeometryVAO: p.GeometryVAO,
-// 			})
-// 		}
-// 	}
-
-// 	return result
-// }
-
 func (r *Renderer) drawModel(
 	viewerContext ViewerContext,
 	lightContext LightContext,
@@ -239,7 +221,7 @@ func (r *Renderer) drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	material := entity.Material
-	primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+	primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 	for _, p := range primitives {
 		if material != nil {
 			if material.Invisible {

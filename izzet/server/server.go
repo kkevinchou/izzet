@@ -7,13 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kkevinchou/izzet/internal/assets"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -30,7 +29,6 @@ type Server struct {
 	gameOver bool
 
 	assetManager *assets.AssetManager
-	modelLibrary *modellibrary.ModelLibrary
 
 	entities map[int]*entities.Entity
 
@@ -60,7 +58,7 @@ func NewWithFile(assetsDirectory string, filepath string) *Server {
 	if err != nil {
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), s.modelLibrary)
+	serialization.InitDeserializedEntities(world.Entities(), s.assetManager)
 	s.world = world
 	return s
 }
@@ -76,7 +74,6 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.initSettings()
 
 	g.assetManager = assets.NewAssetManager(assetsDirectory, false)
-	g.modelLibrary = modellibrary.New(false)
 
 	start := time.Now()
 
@@ -87,7 +84,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.entities = map[int]*entities.Entity{}
 	dataFilePath := "izzet_data.json"
 	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(g.assetManager, g.modelLibrary, data)
+	g.setupAssets(g.assetManager, data)
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 
@@ -205,21 +202,21 @@ func (s *Server) listen() (net.Listener, error) {
 	return listener, nil
 }
 
-func (g *Server) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
+func (g *Server) setupAssets(assetManager *assets.AssetManager, data *izzetdata.Data) {
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 
 		if entityAsset, ok := data.EntityAssets[docName]; ok {
 			if entityAsset.SingleEntity {
-				modelLibrary.RegisterSingleEntityDocument(doc)
+				assetManager.RegisterSingleEntityDocument(doc)
 			}
 		}
 
 		for _, mesh := range doc.Meshes {
-			modelLibrary.RegisterMesh(docName, mesh)
+			assetManager.RegisterMesh(docName, mesh)
 		}
 		if len(doc.Animations) > 0 {
-			modelLibrary.RegisterAnimations(docName, doc)
+			assetManager.RegisterAnimations(docName, doc)
 		}
 	}
 }

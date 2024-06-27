@@ -12,10 +12,10 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/client"
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/kitolib/assets/assetslog"
 	"github.com/kkevinchou/kitolib/log"
 	"github.com/veandco/go-sdl2/sdl"
 )

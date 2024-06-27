@@ -127,7 +127,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					continue
 				}
 
-				serialization.InitDeserializedEntity(&entity, s.app.ModelLibrary())
+				serialization.InitDeserializedEntity(&entity, s.app.AssetManager())
 				world.AddEntity(&entity)
 			} else if message.MessageType == network.MsgTypePing {
 				pingMessage, err := network.ExtractMessage[network.PingMessage](message)

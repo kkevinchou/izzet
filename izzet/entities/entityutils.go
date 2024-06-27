@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
@@ -14,7 +14,7 @@ import (
 
 var id int
 
-func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *modellibrary.ModelLibrary) []*Entity {
+func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *assets.AssetManager) []*Entity {
 	return CreateEntitiesFromDocument(prefab.Document, ml, prefab.IzzetData)
 }
 
@@ -63,13 +63,13 @@ func RemoveParent(child *Entity) {
 	}
 }
 
-func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.ModelLibrary, data *izzetdata.Data) []*Entity {
+func CreateEntitiesFromDocument(document *modelspec.Document, ml *assets.AssetManager, data *izzetdata.Data) []*Entity {
 	var spawnedEntities []*Entity
 
 	entityAsset := data.EntityAssets[document.Name]
 
 	if entityAsset.SingleEntity {
-		handle := modellibrary.NewGlobalHandle(document.Name)
+		handle := assets.NewGlobalHandle(document.Name)
 		// entity := InstantiateEntity(document.Name)
 		// entity.MeshComponent = &MeshC
 		var scene *modelspec.Scene
@@ -161,7 +161,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *modellibrary.M
 	return spawnedEntities
 }
 
-func MLPrimitivesTospecPrimitive(primitives []modellibrary.Primitive) []*modelspec.PrimitiveSpecification {
+func MLPrimitivesTospecPrimitive(primitives []assets.Primitive) []*modelspec.PrimitiveSpecification {
 	var result []*modelspec.PrimitiveSpecification
 	for _, p := range primitives {
 		result = append(result, p.Primitive)
@@ -169,12 +169,12 @@ func MLPrimitivesTospecPrimitive(primitives []modellibrary.Primitive) []*modelsp
 	return result
 }
 
-func parseEntities(node *modelspec.Node, parent *Entity, namespace string, document *modelspec.Document, ml *modellibrary.ModelLibrary) []*Entity {
+func parseEntities(node *modelspec.Node, parent *Entity, namespace string, document *modelspec.Document, ml *assets.AssetManager) []*Entity {
 	var entity *Entity
 
 	if node.MeshID != nil {
 		entity = InstantiateEntity(node.Name)
-		meshHandle := modellibrary.NewHandleFromMeshID(namespace, *node.MeshID)
+		meshHandle := assets.NewHandleFromMeshID(namespace, *node.MeshID)
 		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)

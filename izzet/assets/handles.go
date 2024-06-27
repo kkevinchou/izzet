@@ -1,16 +1,12 @@
-package modellibrary
+package assets
 
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
 )
-
-var nextGlobalID int
 
 const (
 	NamespaceGlobal = "global"
@@ -33,33 +29,6 @@ type Primitive struct {
 	GeometryVAO uint32
 }
 
-type ModelLibrary struct {
-	// all of this is already in asset manager right? why are we storing this again?
-	Primitives map[types.MeshHandle][]Primitive
-	Animations map[string]map[string]*modelspec.AnimationSpec
-	Joints     map[string]map[int]*modelspec.JointSpec
-	RootJoints map[string]int
-
-	processVisuals bool
-}
-
-func New(processVisuals bool) *ModelLibrary {
-	m := &ModelLibrary{
-		Primitives:     map[types.MeshHandle][]Primitive{},
-		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
-		Joints:         map[string]map[int]*modelspec.JointSpec{},
-		RootJoints:     map[string]int{},
-		processVisuals: processVisuals,
-	}
-
-	if processVisuals {
-		handle := m.GetCubeMeshHandle()
-		m.registerMeshWithHandle(handle, cubeMesh(100))
-	}
-
-	return m
-}
-
 func NewGlobalHandle(id string) types.MeshHandle {
 	return NewHandle(NamespaceGlobal, id)
 }
@@ -72,7 +41,7 @@ func NewHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
-func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
+func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 	return NewHandle("global", "cube")
 }
 
@@ -82,12 +51,12 @@ func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
 //		- the mesh component should be all we need to render entities in renderutils
 //		- the handle should return all the primitives as well as the animations if any
 //		- we need config to be able to mark a document as a single entity that's animated
-//		- the registration API for ModelLibrary may need to be a whole document
+//		- the registration API for AssetManager may need to be a whole document
 //		- then the config determines what handle we want to associate with each asset
 //			- Question, do I want to support selected instantiation of entities within a document?
 //			- e.g. from within demo_scene_samurai, instantiating one entity by name
 
-func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document) {
+func (m *AssetManager) RegisterSingleEntityDocument(document *modelspec.Document) {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
 			handle := NewGlobalHandle(document.Name)
@@ -97,31 +66,31 @@ func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document
 	}
 }
 
-func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *AssetManager) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	handle := NewHandleFromMeshID(namespace, mesh.ID)
 	m.registerMeshWithHandle(handle, mesh)
 	return handle
 }
 
-func (m *ModelLibrary) RegisterAnimations(handle string, document *modelspec.Document) {
+func (m *AssetManager) RegisterAnimations(handle string, document *modelspec.Document) {
 	m.Animations[handle] = document.Animations
 	m.Joints[handle] = document.JointMap
 	m.RootJoints[handle] = document.RootJoint.ID
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally
-func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
+func (m *AssetManager) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
 	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
 }
 
-func (m *ModelLibrary) GetPrimitives(handle types.MeshHandle) []Primitive {
+func (m *AssetManager) GetPrimitives(handle types.MeshHandle) []Primitive {
 	if _, ok := m.Primitives[handle]; !ok {
 		return nil
 	}
 	return m.Primitives[handle]
 }
 
-func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
+func (m *AssetManager) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
 	q := []*modelspec.Node{node}
 
 	var result []Primitive
@@ -163,7 +132,7 @@ func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.No
 	return result
 }
 
-func (m *ModelLibrary) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *AssetManager) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
 	var vaos [][]uint32
@@ -186,13 +155,4 @@ func (m *ModelLibrary) registerMeshWithHandle(handle types.MeshHandle, mesh *mod
 		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
-}
-
-// maybe this should be computed once and shared across all instances of the mesh?
-func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
-	var result []mgl64.Vec3
-	for _, p := range primitives {
-		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
-	}
-	return result
 }

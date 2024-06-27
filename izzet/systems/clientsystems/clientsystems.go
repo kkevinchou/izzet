@@ -13,7 +13,7 @@ import (
 )
 
 type App interface {
-	ModelLibrary() *assets.AssetManager
+	AssetManager() *assets.AssetManager
 	NetworkMessagesChannel() chan network.MessageTransport
 	GetPlayerID() int
 	CommandFrame() int

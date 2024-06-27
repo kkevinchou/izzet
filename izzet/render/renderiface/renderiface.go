@@ -19,7 +19,6 @@ import (
 
 type App interface {
 	AssetManager() *assets.AssetManager
-	ModelLibrary() *assets.AssetManager
 	GetEditorCameraPosition() mgl64.Vec3
 	GetEditorCameraRotation() mgl64.Quat
 	Prefabs() []*prefabs.Prefab

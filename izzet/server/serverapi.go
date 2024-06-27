@@ -34,7 +34,7 @@ func (g *Server) LoadWorld(name string) bool {
 		fmt.Println("failed to load world", filename, err)
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), g.modelLibrary)
+	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 	g.world.SpatialPartition().Clear()
 
@@ -56,10 +56,6 @@ func (g *Server) LoadWorld(name string) bool {
 
 func (g *Server) SetWorld(world *world.GameWorld) {
 	g.world = world
-}
-
-func (g *Server) ModelLibrary() *assets.AssetManager {
-	return g.modelLibrary
 }
 
 func (g *Server) GetPlayers() map[int]*network.Player {
@@ -169,4 +165,8 @@ func (g *Server) SystemNames() []string {
 
 func (g *Server) World() *world.GameWorld {
 	return g.world
+}
+
+func (g *Server) AssetManager() *assets.AssetManager {
+	return g.assetManager
 }

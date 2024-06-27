@@ -40,7 +40,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 				CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 			}
 
-			primitives := s.app.ModelLibrary().GetPrimitives(handle)
+			primitives := s.app.AssetManager().GetPrimitives(handle)
 			verts := assets.UniqueVerticesFromPrimitives(primitives)
 			c := collider.NewCapsuleFromVertices(verts)
 			entity.Collider.CapsuleCollider = &c
@@ -49,7 +49,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{c.Radius, c.Radius, c.Radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{c.Radius, c.Radius, c.Radius})}
 
 			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-			entity.Animation = entities.NewAnimationComponent("vampire2", s.app.ModelLibrary())
+			entity.Animation = entities.NewAnimationComponent("vampire2", s.app.AssetManager())
 			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 			entities.SetLocalPosition(entity, mgl64.Vec3{0, 10, 0})
 			entity.AIComponent = &entities.AIComponent{

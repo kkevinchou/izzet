@@ -49,7 +49,7 @@ func sceneGraph(app renderiface.App) {
 
 				handle := assets.NewGlobalHandle("alpha3")
 				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-				entity.Animation = entities.NewAnimationComponent("alpha3", app.ModelLibrary())
+				entity.Animation = entities.NewAnimationComponent("alpha3", app.AssetManager())
 				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
 				world.AddEntity(entity)
@@ -57,7 +57,7 @@ func sceneGraph(app renderiface.App) {
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Cube") {
-				entity := entities.CreateCube(app.ModelLibrary(), 1)
+				entity := entities.CreateCube(app.AssetManager(), 1)
 				i := 0
 				entity.Material = &entities.MaterialComponent{
 					PBR: types.PBR{
@@ -72,7 +72,7 @@ func sceneGraph(app renderiface.App) {
 				}
 
 				meshHandle := entity.MeshComponent.MeshHandle
-				primitives := app.ModelLibrary().GetPrimitives(meshHandle)
+				primitives := app.AssetManager().GetPrimitives(meshHandle)
 				entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
 				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 

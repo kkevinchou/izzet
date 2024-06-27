@@ -13,11 +13,11 @@ import (
 )
 
 type App interface {
+	AssetManager() *assets.AssetManager
 	GetPlayers() map[int]*network.Player
 	RegisterPlayer(playerID int, connection net.Conn) *network.Player
 	InputBuffer() *inputbuffer.InputBuffer
 	CommandFrame() int
-	ModelLibrary() *assets.AssetManager
 	GetPlayer(playerID int) *network.Player
 	GetPlayerInput(playerID int) input.Input
 	SetPlayerInput(playerID int, input input.Input)

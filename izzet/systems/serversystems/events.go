@@ -63,7 +63,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		handle := assets.NewGlobalHandle("alpha3")
 
 		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.ModelLibrary())
+		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.AssetManager())
 		entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 
 		world := s.app.World()

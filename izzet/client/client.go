@@ -44,7 +44,6 @@ type Client struct {
 	client        network.IzzetClient
 
 	assetManager *assets.AssetManager
-	modelLibrary *assets.AssetManager
 
 	camera *editorcamera.Camera
 
@@ -136,7 +135,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		width:           w,
 		height:          h,
 		assetManager:    assetManager,
-		modelLibrary:    assetManager,
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		contentBrowser:  &contentbrowser.ContentBrowser{},
@@ -304,7 +302,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(pointLight)
 
-	cube := entities.CreateCube(g.modelLibrary, 50)
+	cube := entities.CreateCube(g.assetManager, 50)
 	entities.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(cube)
 
@@ -315,7 +313,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	g.world.AddEntity(directionalLight)
 
 	doc := g.assetManager.GetDocument("demo_scene_scificity")
-	for _, e := range entities.CreateEntitiesFromDocument(doc, g.modelLibrary, data) {
+	for _, e := range entities.CreateEntitiesFromDocument(doc, g.assetManager, data) {
 		g.world.AddEntity(e)
 	}
 }

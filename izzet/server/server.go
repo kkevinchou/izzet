@@ -29,7 +29,6 @@ type Server struct {
 	gameOver bool
 
 	assetManager *assets.AssetManager
-	modelLibrary *assets.AssetManager
 
 	entities map[int]*entities.Entity
 
@@ -59,7 +58,7 @@ func NewWithFile(assetsDirectory string, filepath string) *Server {
 	if err != nil {
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), s.modelLibrary)
+	serialization.InitDeserializedEntities(world.Entities(), s.assetManager)
 	s.world = world
 	return s
 }
@@ -75,7 +74,6 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.initSettings()
 
 	g.assetManager = assets.NewAssetManager(assetsDirectory, false)
-	g.modelLibrary = g.assetManager
 
 	start := time.Now()
 

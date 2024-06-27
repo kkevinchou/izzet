@@ -55,7 +55,7 @@ func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 //		- the mesh component should be all we need to render entities in renderutils
 //		- the handle should return all the primitives as well as the animations if any
 //		- we need config to be able to mark a document as a single entity that's animated
-//		- the registration API for ModelLibrary may need to be a whole document
+//		- the registration API for AssetManager may need to be a whole document
 //		- then the config determines what handle we want to associate with each asset
 //			- Question, do I want to support selected instantiation of entities within a document?
 //			- e.g. from within demo_scene_samurai, instantiating one entity by name

@@ -172,7 +172,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 					id := entities.GetNextIDAndAdvance()
 					newEntity.ID = id
 
-					serialization.InitDeserializedEntity(&newEntity, g.ModelLibrary())
+					serialization.InitDeserializedEntity(&newEntity, g.AssetManager())
 
 					g.world.AddEntity(&newEntity)
 					g.SelectEntity(&newEntity)

@@ -591,7 +591,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+		primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 		for _, p := range primitives {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 
@@ -652,7 +652,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 		modelMatrix := entities.WorldTransform(entity)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		primitives := r.app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+		primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 		for _, p := range primitives {
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 

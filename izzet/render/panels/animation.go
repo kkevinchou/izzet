@@ -27,14 +27,14 @@ func animationUI(app renderiface.App, entity *entities.Entity) {
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
-	// app.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
+	// app.AssetManager().GetAnimations(entity.Animation.AnimationHandle)
 	fullAnimationLength := entity.Animation.AnimationPlayer.Length()
 
 	// imgui.BeginV("animation window", &open, imgui.WindowFlagsNone)
 
 	var anims []string
 
-	animations, joints, _ := app.ModelLibrary().GetAnimations(entity.Animation.AnimationHandle)
+	animations, joints, _ := app.AssetManager().GetAnimations(entity.Animation.AnimationHandle)
 	for name, _ := range animations {
 		anims = append(anims, name)
 	}

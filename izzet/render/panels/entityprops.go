@@ -246,7 +246,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	originalMeshTriCount := 0
 
 	if entity.MeshComponent != nil {
-		for _, primitive := range app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle) {
+		for _, primitive := range app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle) {
 			originalMeshTriCount += len(primitive.Primitive.VertexIndices) / 3
 		}
 
@@ -339,7 +339,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			imgui.PopItemWidth()
 			imgui.SameLine()
 			if imgui.Button("Simplify Mesh") {
-				primitives := app.ModelLibrary().GetPrimitives(entity.MeshComponent.MeshHandle)
+				primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 				specPrimitives := entities.MLPrimitivesTospecPrimitive(primitives)
 				entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(specPrimitives[0], int(app.RuntimeConfig().SimplifyMeshIterations))
 				entity.SimplifiedTriMeshIterations = int(app.RuntimeConfig().SimplifyMeshIterations)

@@ -291,7 +291,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	}
 
 	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, settings.ShadowmapZOffset)
+	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
 
 	lightViewerContext := ViewerContext{
@@ -385,7 +385,7 @@ func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotatio
 		renderContext.FovX(),
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
-		float64(r.app.RuntimeConfig().SPNearPlaneOffset),
+		float64(r.app.RuntimeConfig().ShadowSpatialPartitionNearPlane),
 		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)

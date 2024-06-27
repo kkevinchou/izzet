@@ -72,7 +72,7 @@ func (s *ShadowMap) ShadowDistance() float64 {
 }
 
 // returns the orthographic projection matrix for the directional light as well as the "position" of the light
-func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints []mgl64.Vec3, shadowMapZOffset float64) (mgl64.Vec3, mgl64.Mat4) {
+func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints []mgl64.Vec3, shadowMapZOffset float32) (mgl64.Vec3, mgl64.Mat4) {
 	var lightSpacePoints []mgl64.Vec3
 	invLightRotationMatrix := lightRotationMatrix.Inv()
 
@@ -110,7 +110,7 @@ func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints 
 			maxZ = point.Z()
 		}
 	}
-	maxZ += shadowMapZOffset
+	maxZ += float64(shadowMapZOffset)
 
 	halfX := (maxX - minX) / 2
 	halfY := (maxY - minY) / 2

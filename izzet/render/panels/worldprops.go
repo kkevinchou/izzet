@@ -92,6 +92,8 @@ func worldProps(app renderiface.App) {
 		setupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &runtimeConfig.BloomThresholdPasses, 0, 3) }, true)
 		setupRow("Bloom Threshold", func() { imgui.SliderFloat("", &runtimeConfig.BloomThreshold, 0, 3) }, true)
 		setupRow("Bloom Upsampling Scale", func() { imgui.SliderFloat("", &runtimeConfig.BloomUpsamplingScale, 0, 5.0) }, true)
+		setupRow("Shadow Map Z Offset", func() { imgui.SliderFloat("", &runtimeConfig.ShadowmapZOffset, 0, 2000) }, true)
+		setupRow("SP Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.ShadowSpatialPartitionNearPlane, 0, 2000) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsNone) {
@@ -154,7 +156,6 @@ func worldProps(app renderiface.App) {
 		initColumns()
 		setupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
 		setupRow("Render Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.RenderSpatialPartition) }, true)
-		setupRow("Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.SPNearPlaneOffset, 0, 1000) }, true)
 		imgui.EndTable()
 	}
 }

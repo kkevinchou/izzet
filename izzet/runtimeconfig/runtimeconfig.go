@@ -8,22 +8,22 @@ type RuntimeConfig struct {
 	CameraPosition mgl64.Vec3
 	CameraRotation mgl64.Quat
 
-	DirectionalLightDir  [3]float32
-	Roughness            float32
-	Metallic             float32
-	PointLightBias       float32
-	MaterialOverride     bool
-	EnableShadowMapping  bool
-	ShadowFarFactor      float32
-	SPNearPlaneOffset    float32
-	BloomIntensity       float32
-	Exposure             float32
-	AmbientFactor        float32
-	Bloom                bool
-	BloomThresholdPasses int32
-	BloomThreshold       float32
-	BloomUpsamplingScale float32
-	Color                [3]float32
+	DirectionalLightDir             [3]float32
+	Roughness                       float32
+	Metallic                        float32
+	PointLightBias                  float32
+	MaterialOverride                bool
+	EnableShadowMapping             bool
+	ShadowFarFactor                 float32
+	ShadowSpatialPartitionNearPlane float32
+	BloomIntensity                  float32
+	Exposure                        float32
+	AmbientFactor                   float32
+	Bloom                           bool
+	BloomThresholdPasses            int32
+	BloomThreshold                  float32
+	BloomUpsamplingScale            float32
+	Color                           [3]float32
 
 	ShowDebugTexture bool
 	DebugTexture     uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
@@ -79,29 +79,32 @@ type RuntimeConfig struct {
 	NavigationMeshClimbaleHeight int32
 	NavigationMeshMinRegionArea  int32
 	NavigationmeshMaxError       float32
+
+	ShadowmapZOffset float32
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
 	return RuntimeConfig{
-		DirectionalLightDir:    [3]float32{-1, -1, -1},
-		Roughness:              0.55,
-		Metallic:               1.0,
-		PointLightBias:         1,
-		MaterialOverride:       false,
-		EnableShadowMapping:    true,
-		ShadowFarFactor:        1,
-		SPNearPlaneOffset:      300,
-		BloomIntensity:         0.04,
-		Exposure:               1.0,
-		AmbientFactor:          0.1,
-		Bloom:                  true,
-		BloomThresholdPasses:   1,
-		BloomThreshold:         0.8,
-		BloomUpsamplingScale:   1.0,
-		Color:                  [3]float32{1, 1, 1},
-		RenderSpatialPartition: false,
-		EnableSpatialPartition: true,
-		FPS:                    0,
+		DirectionalLightDir:             [3]float32{-1, -1, -1},
+		Roughness:                       0.55,
+		Metallic:                        1.0,
+		PointLightBias:                  1,
+		MaterialOverride:                false,
+		EnableShadowMapping:             true,
+		ShadowFarFactor:                 1,
+		ShadowSpatialPartitionNearPlane: 1000,
+		ShadowmapZOffset:                2000,
+		BloomIntensity:                  0.04,
+		Exposure:                        1.0,
+		AmbientFactor:                   0.1,
+		Bloom:                           true,
+		BloomThresholdPasses:            1,
+		BloomThreshold:                  0.8,
+		BloomUpsamplingScale:            1.0,
+		Color:                           [3]float32{1, 1, 1},
+		RenderSpatialPartition:          false,
+		EnableSpatialPartition:          true,
+		FPS:                             0,
 
 		Near: 1,
 		Far:  3000,

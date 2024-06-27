@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kkevinchou/izzet/internal/assets"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"

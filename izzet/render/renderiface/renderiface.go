@@ -2,8 +2,8 @@ package renderiface
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/assets"
 	"github.com/kkevinchou/izzet/internal/platforms"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"

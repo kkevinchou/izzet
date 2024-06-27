@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kkevinchou/izzet/internal/assets/assetslog"
-	"github.com/kkevinchou/izzet/internal/assets/fonts"
-	"github.com/kkevinchou/izzet/internal/assets/loaders"
-	"github.com/kkevinchou/izzet/internal/assets/textures"
+	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
+	"github.com/kkevinchou/izzet/izzet/assets/fonts"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders"
+	"github.com/kkevinchou/izzet/izzet/assets/textures"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 

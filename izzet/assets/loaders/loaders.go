@@ -5,10 +5,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kkevinchou/izzet/internal/assets/fonts"
-	"github.com/kkevinchou/izzet/internal/assets/loaders/backends/opengl"
-	"github.com/kkevinchou/izzet/internal/assets/loaders/gltf"
-	"github.com/kkevinchou/izzet/internal/assets/textures"
+	"github.com/kkevinchou/izzet/izzet/assets/fonts"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders/backends/opengl"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
+	"github.com/kkevinchou/izzet/izzet/assets/textures"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )

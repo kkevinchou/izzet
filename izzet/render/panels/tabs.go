@@ -54,6 +54,10 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 			stats(app, renderContext)
 			imgui.EndTabItem()
 		}
+		if imgui.BeginTabItem("Materials") {
+			spaghettios(app, renderContext)
+			imgui.EndTabItem()
+		}
 		// if imgui.BeginTabItem("Animation") {
 		// 	entity := SelectedEntity()
 		// 	if entity != nil && entity.Animation != nil {

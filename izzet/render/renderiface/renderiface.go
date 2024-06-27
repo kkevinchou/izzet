@@ -7,6 +7,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/material"
+	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -61,6 +63,7 @@ type App interface {
 	Minimized() bool
 	WindowFocused() bool
 	ContentBrowser() *contentbrowser.ContentBrowser
+	MaterialBrowser() *materialbrowser.MaterialBrowser
 	ImportToContentBrowser(assetFilePath string)
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
@@ -68,6 +71,7 @@ type App interface {
 	BuildNavMesh(App, int, int, int, int, float64)
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld
+	CreateMaterial(material material.Material)
 }
 
 type RenderContext interface {

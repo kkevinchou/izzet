@@ -23,6 +23,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
+	"github.com/kkevinchou/izzet/izzet/material"
+	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -769,4 +771,12 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 func (g *Client) NavMesh() *navmesh.NavigationMesh {
 	return g.navMesh
+}
+
+func (g *Client) CreateMaterial(material material.Material) {
+	g.materialBrowser.AddMaterial(material)
+}
+
+func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
+	return g.materialBrowser
 }

@@ -46,6 +46,7 @@ func BuildDrawer(app renderiface.App, renderContext renderiface.RenderContext, p
 		if prefabsUI(app, ps) {
 			menuOpen = true
 		}
+		materialssUI(app, ps)
 		imgui.EndTabBar()
 	}
 

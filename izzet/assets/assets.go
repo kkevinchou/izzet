@@ -1,7 +1,6 @@
 package assets
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -15,12 +14,12 @@ import (
 )
 
 type AssetManager struct {
-	// Loaded Assets
+	// Static Assets
 	textures  map[string]*textures.Texture
 	documents map[string]*modelspec.Document
 	fonts     map[string]fonts.Font
 
-	// Generated Assets
+	// Asset References
 	Primitives map[types.MeshHandle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
@@ -63,37 +62,6 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 	}
 
 	return &assetManager
-}
-
-func (a *AssetManager) GetTexture(name string) *textures.Texture {
-	if _, ok := a.textures[name]; !ok {
-		panic(fmt.Sprintf("could not find texture %s", name))
-	}
-	return a.textures[name]
-}
-
-func (a *AssetManager) GetDocument(name string) *modelspec.Document {
-	if _, ok := a.documents[name]; !ok {
-		panic(fmt.Sprintf("could not find animated model %s", name))
-	}
-	return a.documents[name]
-}
-
-func (a *AssetManager) GetFont(name string) fonts.Font {
-	if _, ok := a.fonts[name]; !ok {
-		panic(fmt.Sprintf("could not find font %s", name))
-	}
-	return a.fonts[name]
-}
-
-func (a *AssetManager) LoadDocument(name string, filepath string) bool {
-	scene := loaders.LoadDocument(name, filepath)
-	if _, ok := a.documents[name]; ok {
-		fmt.Printf("warning, document with name %s already previously loaded", name)
-	}
-
-	a.documents[name] = scene
-	return true
 }
 
 // maybe this should be computed once and shared across all instances of the mesh?

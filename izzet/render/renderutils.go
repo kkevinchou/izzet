@@ -192,11 +192,11 @@ type RenderData struct {
 	GeometryVAO uint32
 }
 
-// func getRenderData(modelLibrary *modellibrary.ModelLibrary, entity *entities.Entity) []RenderData {
+// func getRenderData(modelLibrary *assets.AssetManager, entity *entities.Entity) []RenderData {
 // 	var result []RenderData
 
 // 	if entity.MeshComponent != nil {
-// 		primitives := modelLibrary.GetPrimitives(entity.MeshComponent.MeshHandle)
+// 		primitives := assets.GetPrimitives(entity.MeshComponent.MeshHandle)
 // 		for _, p := range primitives {
 // 			result = append(result, RenderData{
 // 				Primitive:   p.Primitive,

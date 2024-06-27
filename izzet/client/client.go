@@ -20,7 +20,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -45,7 +44,7 @@ type Client struct {
 	client        network.IzzetClient
 
 	assetManager *assets.AssetManager
-	modelLibrary *modellibrary.ModelLibrary
+	modelLibrary *assets.AssetManager
 
 	camera *editorcamera.Camera
 
@@ -127,6 +126,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	metricsRegistry := metrics.New()
 	globals.SetClientMetricsRegistry(metricsRegistry)
 
+	assetManager := assets.NewAssetManager(assetsDirectory, true)
+
 	g := &Client{
 		asyncServerDone: make(chan bool),
 		window:          window,
@@ -134,8 +135,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		platform:        sdlPlatform,
 		width:           w,
 		height:          h,
-		assetManager:    assets.NewAssetManager(assetsDirectory, true),
-		modelLibrary:    modellibrary.New(true),
+		assetManager:    assetManager,
+		modelLibrary:    assetManager,
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		contentBrowser:  &contentbrowser.ContentBrowser{},
@@ -146,7 +147,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
 
 	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(g.assetManager, g.modelLibrary, data)
+	g.setupAssets(g.assetManager, data)
 	g.setupPrefabs(data)
 
 	g.initialize()
@@ -249,20 +250,20 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Client) setupAssets(assetManager *assets.AssetManager, modelLibrary *modellibrary.ModelLibrary, data *izzetdata.Data) {
+func (g *Client) setupAssets(assetManager *assets.AssetManager, data *izzetdata.Data) {
 	for docName, _ := range data.EntityAssets {
 		doc := assetManager.GetDocument(docName)
 
 		if entityAsset, ok := data.EntityAssets[docName]; ok {
 			if entityAsset.SingleEntity {
-				modelLibrary.RegisterSingleEntityDocument(doc)
+				assetManager.RegisterSingleEntityDocument(doc)
 			} else {
 				for _, mesh := range doc.Meshes {
-					modelLibrary.RegisterMesh(doc.Name, mesh)
+					assetManager.RegisterMesh(doc.Name, mesh)
 				}
 			}
 			if len(doc.Animations) > 0 {
-				modelLibrary.RegisterAnimations(docName, doc)
+				assetManager.RegisterAnimations(docName, doc)
 			}
 		}
 	}

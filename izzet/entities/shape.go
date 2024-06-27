@@ -2,7 +2,7 @@ package entities
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -42,7 +42,7 @@ type ShapeData struct {
 	Triangle *Triangle
 }
 
-func CreateCube(ml *modellibrary.ModelLibrary, length float64) *Entity {
+func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	entity := InstantiateBaseEntity("cube", id)
 	entity.LocalScale = mgl64.Vec3{length, length, length}
 

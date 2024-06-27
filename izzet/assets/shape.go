@@ -1,4 +1,4 @@
-package modellibrary
+package assets
 
 import (
 	"github.com/go-gl/mathgl/mgl32"

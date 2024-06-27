@@ -998,7 +998,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 
 			// 	// itemName := *ptr
 			// 	// document := r.app.AssetManager().GetDocument(itemName)
-			// 	// handle := modellibrary.NewGlobalHandle(itemName)
+			// 	// handle := assets.NewGlobalHandle(itemName)
 			// 	// if len(document.Scenes) != 1 {
 			// 	// 	panic("single entity asset loading only supports a singular scene")
 			// 	// }

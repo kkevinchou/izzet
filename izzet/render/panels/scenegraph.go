@@ -6,8 +6,8 @@ import (
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -47,7 +47,7 @@ func sceneGraph(app renderiface.App) {
 				capsule := entity.Collider.CapsuleCollider
 				entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
 
-				handle := modellibrary.NewGlobalHandle("alpha3")
+				handle := assets.NewGlobalHandle("alpha3")
 				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 				entity.Animation = entities.NewAnimationComponent("alpha3", app.ModelLibrary())
 				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})

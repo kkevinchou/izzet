@@ -3,8 +3,8 @@ package clientsystems
 import (
 	"net"
 
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -13,7 +13,7 @@ import (
 )
 
 type App interface {
-	ModelLibrary() *modellibrary.ModelLibrary
+	ModelLibrary() *assets.AssetManager
 	NetworkMessagesChannel() chan network.MessageTransport
 	GetPlayerID() int
 	CommandFrame() int

@@ -7,10 +7,10 @@ import (
 	"net"
 	"strings"
 
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
@@ -58,7 +58,7 @@ func (g *Server) SetWorld(world *world.GameWorld) {
 	g.world = world
 }
 
-func (g *Server) ModelLibrary() *modellibrary.ModelLibrary {
+func (g *Server) ModelLibrary() *assets.AssetManager {
 	return g.modelLibrary
 }
 

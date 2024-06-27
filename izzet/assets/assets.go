@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -15,6 +16,15 @@ type AssetManager struct {
 	textures  map[string]*textures.Texture
 	documents map[string]*modelspec.Document
 	fonts     map[string]fonts.Font
+
+	// model library
+
+	Primitives map[types.MeshHandle][]Primitive
+	Animations map[string]map[string]*modelspec.AnimationSpec
+	Joints     map[string]map[int]*modelspec.JointSpec
+	RootJoints map[string]int
+
+	processVisuals bool
 }
 
 func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
@@ -35,9 +45,19 @@ func NewAssetManager(directory string, loadVisualAssets bool) *AssetManager {
 	assetslog.Logger.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
-		textures:  loadedTextures,
-		documents: documents,
-		fonts:     loadedFonts,
+		textures:       loadedTextures,
+		documents:      documents,
+		fonts:          loadedFonts,
+		Primitives:     map[types.MeshHandle][]Primitive{},
+		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
+		Joints:         map[string]map[int]*modelspec.JointSpec{},
+		RootJoints:     map[string]int{},
+		processVisuals: loadVisualAssets,
+	}
+
+	if loadVisualAssets {
+		handle := assetManager.GetCubeMeshHandle()
+		assetManager.registerMeshWithHandle(handle, cubeMesh(100))
 	}
 
 	return &assetManager

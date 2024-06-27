@@ -8,7 +8,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -20,7 +19,7 @@ import (
 
 type App interface {
 	AssetManager() *assets.AssetManager
-	ModelLibrary() *modellibrary.ModelLibrary
+	ModelLibrary() *assets.AssetManager
 	GetEditorCameraPosition() mgl64.Vec3
 	GetEditorCameraRotation() mgl64.Quat
 	Prefabs() []*prefabs.Prefab

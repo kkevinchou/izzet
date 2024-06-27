@@ -1,4 +1,4 @@
-package modellibrary
+package assets
 
 import (
 	"fmt"
@@ -33,33 +33,6 @@ type Primitive struct {
 	GeometryVAO uint32
 }
 
-type ModelLibrary struct {
-	// all of this is already in asset manager right? why are we storing this again?
-	Primitives map[types.MeshHandle][]Primitive
-	Animations map[string]map[string]*modelspec.AnimationSpec
-	Joints     map[string]map[int]*modelspec.JointSpec
-	RootJoints map[string]int
-
-	processVisuals bool
-}
-
-func New(processVisuals bool) *ModelLibrary {
-	m := &ModelLibrary{
-		Primitives:     map[types.MeshHandle][]Primitive{},
-		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
-		Joints:         map[string]map[int]*modelspec.JointSpec{},
-		RootJoints:     map[string]int{},
-		processVisuals: processVisuals,
-	}
-
-	if processVisuals {
-		handle := m.GetCubeMeshHandle()
-		m.registerMeshWithHandle(handle, cubeMesh(100))
-	}
-
-	return m
-}
-
 func NewGlobalHandle(id string) types.MeshHandle {
 	return NewHandle(NamespaceGlobal, id)
 }
@@ -72,7 +45,7 @@ func NewHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
-func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
+func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 	return NewHandle("global", "cube")
 }
 
@@ -87,7 +60,7 @@ func (m *ModelLibrary) GetCubeMeshHandle() types.MeshHandle {
 //			- Question, do I want to support selected instantiation of entities within a document?
 //			- e.g. from within demo_scene_samurai, instantiating one entity by name
 
-func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document) {
+func (m *AssetManager) RegisterSingleEntityDocument(document *modelspec.Document) {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
 			handle := NewGlobalHandle(document.Name)
@@ -97,31 +70,31 @@ func (m *ModelLibrary) RegisterSingleEntityDocument(document *modelspec.Document
 	}
 }
 
-func (m *ModelLibrary) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *AssetManager) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	handle := NewHandleFromMeshID(namespace, mesh.ID)
 	m.registerMeshWithHandle(handle, mesh)
 	return handle
 }
 
-func (m *ModelLibrary) RegisterAnimations(handle string, document *modelspec.Document) {
+func (m *AssetManager) RegisterAnimations(handle string, document *modelspec.Document) {
 	m.Animations[handle] = document.Animations
 	m.Joints[handle] = document.JointMap
 	m.RootJoints[handle] = document.RootJoint.ID
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally
-func (m *ModelLibrary) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
+func (m *AssetManager) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
 	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
 }
 
-func (m *ModelLibrary) GetPrimitives(handle types.MeshHandle) []Primitive {
+func (m *AssetManager) GetPrimitives(handle types.MeshHandle) []Primitive {
 	if _, ok := m.Primitives[handle]; !ok {
 		return nil
 	}
 	return m.Primitives[handle]
 }
 
-func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
+func (m *AssetManager) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
 	q := []*modelspec.Node{node}
 
 	var result []Primitive
@@ -163,7 +136,7 @@ func (m *ModelLibrary) getPrimitives(doc *modelspec.Document, node *modelspec.No
 	return result
 }
 
-func (m *ModelLibrary) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *AssetManager) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
 
 	var vaos [][]uint32

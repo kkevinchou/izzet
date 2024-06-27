@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
@@ -32,7 +32,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, player := range s.app.GetPlayers() {
 		frameInput := s.app.GetPlayerInput(player.ID)
 		if frameInput.KeyboardInput[input.KeyboardKeyJ].Event == input.KeyboardEventUp {
-			handle := modellibrary.NewGlobalHandle("vampire2")
+			handle := assets.NewGlobalHandle("vampire2")
 			entity := entities.InstantiateEntity("vampire2")
 			entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: true}
 			entity.Collider = &entities.ColliderComponent{
@@ -41,7 +41,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			}
 
 			primitives := s.app.ModelLibrary().GetPrimitives(handle)
-			verts := modellibrary.UniqueVerticesFromPrimitives(primitives)
+			verts := assets.UniqueVerticesFromPrimitives(primitives)
 			c := collider.NewCapsuleFromVertices(verts)
 			entity.Collider.CapsuleCollider = &c
 

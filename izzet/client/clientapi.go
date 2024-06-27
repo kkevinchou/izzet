@@ -24,7 +24,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/modellibrary"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -68,7 +67,7 @@ func (g *Client) AssetManager() *assets.AssetManager {
 	return g.assetManager
 }
 
-func (g *Client) ModelLibrary() *modellibrary.ModelLibrary {
+func (g *Client) ModelLibrary() *assets.AssetManager {
 	return g.modelLibrary
 }
 
@@ -610,7 +609,7 @@ func (g *Client) SelectedEntity() *entities.Entity {
 
 func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	document := g.AssetManager().GetDocument(entityHandle)
-	handle := modellibrary.NewGlobalHandle(entityHandle)
+	handle := assets.NewGlobalHandle(entityHandle)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
 	}

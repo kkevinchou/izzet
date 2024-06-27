@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kkevinchou/kitolib/assets/loaders/gltf"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 

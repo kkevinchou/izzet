@@ -95,7 +95,7 @@ type Client struct {
 	navMesh *navmesh.NavigationMesh
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
+func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultProject string) *Client {
 	initSeed()
 
 	imgui.CreateContext()
@@ -152,8 +152,8 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.setupPrefabs(data)
 
 	g.initialize()
-	if defaultWorld != "" {
-		g.LoadProject(defaultWorld)
+	if defaultProject != "" {
+		g.LoadProject(defaultProject)
 	} else {
 		g.renderer.SetWorld(g.world)
 	}

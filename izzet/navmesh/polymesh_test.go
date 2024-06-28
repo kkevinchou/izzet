@@ -1,20 +1,47 @@
 package navmesh
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestBuildMeshAdjacency(t *testing.T) {
 	polygons := []Polygon{
 		{
-			verts:      []int{0, 1, 2},
-			vertToPoly: []int{-1, -1, -1},
+			verts:        []int{0, 1, 2},
+			polyNeighbor: []int{-1, -1, -1},
 		},
 		{
-			verts:      []int{1, 0, 3},
-			vertToPoly: []int{-1, -1, -1},
+			verts:        []int{1, 0, 3},
+			polyNeighbor: []int{-1, -1, -1},
 		},
 	}
 
 	buildMeshAdjacency(polygons, 999999)
+
+	// for the first polygon. edge (0, 1) should be a neighbor to polygon's edge (0, 1)
+	if polygons[0].polyNeighbor[0] != 1 {
+		t.Errorf("neighbor to edge at index 0 was %d instead of 1", polygons[0].polyNeighbor[0])
+		return
+	}
+	for i := 1; i < len(polygons[0].polyNeighbor); i++ {
+		neighbor := polygons[0].polyNeighbor[i]
+		if neighbor != -1 {
+			t.Errorf("neighbor to edge at index %d was %d instead of -1", i, neighbor)
+			return
+		}
+	}
+
+	if polygons[1].polyNeighbor[0] != 0 {
+		t.Errorf("neighbor to edge at index 0 was %d instead of 0", polygons[1].polyNeighbor[0])
+		return
+	}
+	for i := 1; i < len(polygons[1].polyNeighbor); i++ {
+		neighbor := polygons[1].polyNeighbor[i]
+		if neighbor != -1 {
+			t.Errorf("neighbor to edge at index %d was %d instead of -1", i, neighbor)
+			return
+		}
+	}
 }
 
 func TestBuildPolyMesh(t *testing.T) {
@@ -39,6 +66,7 @@ func TestBuildPolyMesh(t *testing.T) {
 
 	if len(mesh.vertices) != 5 {
 		t.Errorf("expected 5 vertices but found %d", len(mesh.vertices))
+		return
 	}
 }
 

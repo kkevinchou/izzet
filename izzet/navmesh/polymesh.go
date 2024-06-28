@@ -32,8 +32,9 @@ type PolyVertex struct {
 type Polygon struct {
 	// index to the vertices owned by Mesh that make up this polygon
 	verts []int
-	// vertToPoly[i] stores the polygon index sharing the edge i, i+1
-	vertToPoly []int
+	// polyNeighbor[i] stores the polygon index sharing the edge (i, i+1), defined by
+	// the vertices i and i+1
+	polyNeighbor []int
 }
 
 type Mesh struct {
@@ -87,8 +88,8 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 			t := tris[j]
 			if t.a != t.b && t.a != t.c && t.b != t.c {
 				polygons = append(polygons, Polygon{
-					verts:      []int{indices[t.a], indices[t.b], indices[t.c]},
-					vertToPoly: []int{-1, -1, -1},
+					verts:        []int{indices[t.a], indices[t.b], indices[t.c]},
+					polyNeighbor: []int{-1, -1, -1},
 				})
 			}
 		}
@@ -185,8 +186,8 @@ func buildMeshAdjacency(polygons []Polygon, numVerts int) {
 			p0 := &polygons[edge.poly[0]]
 			p1 := &polygons[edge.poly[1]]
 
-			p0.vertToPoly[edge.polyEdge[0]] = edge.poly[1]
-			p1.vertToPoly[edge.polyEdge[1]] = edge.poly[0]
+			p0.polyNeighbor[edge.polyEdge[0]] = edge.poly[1]
+			p1.polyNeighbor[edge.polyEdge[1]] = edge.poly[0]
 		}
 	}
 }

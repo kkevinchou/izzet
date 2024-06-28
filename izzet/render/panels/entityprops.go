@@ -251,7 +251,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			}
 			imgui.PopID()
 			imgui.PushIDStr("Material Combo")
-			if imgui.BeginCombo("##", selectedMaterial.ID) {
+			if imgui.BeginCombo("", selectedMaterial.ID) {
 				for _, material := range app.MaterialBrowser().Items {
 					if imgui.SelectableBool(material.ID) {
 						selectedMaterial = material

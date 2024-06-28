@@ -981,7 +981,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 		r.gameWindowWidth = int(size.X)
 		r.gameWindowHeight = int(size.Y)
 
-		if imgui.BeginChildStrV("Game Window", size, false, imgui.WindowFlagsNoBringToFrontOnFocus) {
+		if imgui.BeginChildStrV("Game Window", size, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus) {
 			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
 		if imgui.BeginDragDropTarget() {

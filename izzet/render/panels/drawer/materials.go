@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	tableFlags  imgui.TableFlags = imgui.TableFlagsBordersInnerV
-	WIPMaterial material.Material
+	tableFlags    imgui.TableFlags = imgui.TableFlagsBordersInnerV
+	WIPMaterial   material.Material
+	materialIDGen int
 )
 
 func materialssUI(app renderiface.App, ps []*prefabs.Prefab) bool {
@@ -71,12 +72,18 @@ func materialssUI(app renderiface.App, ps []*prefabs.Prefab) bool {
 					baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 					mat.PBR.TextureName = baseFileName
 					mat.PBR.ColorTextureIndex = &i
+					mat.PBR.DiffuseIntensity = 1
+					mat.PBR.Diffuse = [3]float32{1, 1, 1}
+					mat.PBR.Metallic = 0
+					mat.PBR.Roughness = 0.55
 				}
 			}
 
 			imgui.EndTable()
 			if imgui.Button("Create Material") {
+				mat.ID = fmt.Sprintf("mat-%d", materialIDGen)
 				app.CreateMaterial(*mat)
+				materialIDGen++
 				WIPMaterial = material.Material{}
 			}
 		}

@@ -87,7 +87,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 	return RuntimeConfig{
 		DirectionalLightDir:             [3]float32{-1, -1, -1},
 		Roughness:                       0.55,
-		Metallic:                        1.0,
+		Metallic:                        0,
 		PointLightBias:                  1,
 		MaterialOverride:                false,
 		EnableShadowMapping:             true,

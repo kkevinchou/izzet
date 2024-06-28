@@ -34,7 +34,7 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 	// imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
-	imgui.BeginChildStrV("Right Window", imgui.Vec2{}, false, imgui.WindowFlagsNoBringToFrontOnFocus)
+	imgui.BeginChildStrV("Right Window", imgui.Vec2{}, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus)
 
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 	if imgui.BeginTabBar("Main") {

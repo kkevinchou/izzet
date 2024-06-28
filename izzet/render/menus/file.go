@@ -59,7 +59,7 @@ func file(app renderiface.App) {
 		imgui.SameLine()
 		if imgui.Button("Load") {
 			fmt.Println("Load from", selectedWorldName)
-			if app.LoadProject(selectedWorldName) {
+			if app.LoadWorld(selectedWorldName) {
 				worldName = selectedWorldName
 			}
 		}

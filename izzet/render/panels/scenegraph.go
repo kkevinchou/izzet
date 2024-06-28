@@ -18,7 +18,7 @@ import (
 func sceneGraph(app renderiface.App) {
 	world := app.World()
 	entityPopup := false
-	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, true, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, imgui.ChildFlagsBorder, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
 			popup := drawSceneGraphEntity(entity, app)

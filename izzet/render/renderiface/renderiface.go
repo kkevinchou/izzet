@@ -38,7 +38,7 @@ type App interface {
 	SetShowImguiDemo(bool)
 	ShowImguiDemo() bool
 
-	LoadWorld(name string) bool
+	LoadProject(name string) bool
 
 	CollisionObserver() *collisionobserver.CollisionObserver
 	RuntimeConfig() *runtimeconfig.RuntimeConfig

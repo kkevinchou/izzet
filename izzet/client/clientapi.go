@@ -459,7 +459,7 @@ func (g *Client) ImportToContentBrowser(assetFilePath string) {
 	}
 }
 
-func (g *Client) LoadWorld(name string) bool {
+func (g *Client) LoadProject(name string) bool {
 	if name == "" {
 		return false
 	}

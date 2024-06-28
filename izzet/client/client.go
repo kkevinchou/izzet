@@ -153,7 +153,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 
 	g.initialize()
 	if defaultWorld != "" {
-		g.LoadWorld(defaultWorld)
+		g.LoadProject(defaultWorld)
 	} else {
 		g.renderer.SetWorld(g.world)
 	}

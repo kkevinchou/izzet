@@ -10,7 +10,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/sqweek/dialog"
 )
-import "unsafe"
+import (
+	"unsafe"
+)
 
 var name []byte = []byte("bob")
 var someInt int = 15

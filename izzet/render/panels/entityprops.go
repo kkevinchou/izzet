@@ -10,6 +10,8 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/material"
+	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
@@ -28,6 +30,10 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	LightComboOption,
 	SpawnPointComboOption,
 }
+
+var (
+	selectedMaterial material.Material
+)
 
 func entityProps(entity *entities.Entity, app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
@@ -66,7 +72,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		}
 
 		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-		initColumns()
+		panelutils.InitColumns()
 		uiTableRow("ID", entityIDStr)
 		uiTableRow("Name", entityNameStr)
 
@@ -77,7 +83,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
 		}
 
-		setupRow("Local Position", func() {
+		panelutils.SetupRow("Local Position", func() {
 			if entity != nil {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
 				imgui.PushIDStr("position x")
@@ -126,7 +132,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	if entity.CameraComponent != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Camera Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
+			panelutils.InitColumns()
 
 			var position *mgl64.Vec3
 			var x, y, z int32
@@ -135,7 +141,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
 			}
 
-			setupRow("Target Position Offset", func() {
+			panelutils.SetupRow("Target Position Offset", func() {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
 				imgui.PushIDStr("position x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
@@ -166,7 +172,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PopItemWidth()
 			}, false)
 
-			setupRow("Target ID", func() {
+			panelutils.SetupRow("Target ID", func() {
 				var target int32
 
 				if entity.CameraComponent.Target != nil {
@@ -186,7 +192,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	if entity.LightInfo != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Light Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
+			panelutils.InitColumns()
 
 			lightTypeStr := "?"
 			if entity.LightInfo.Type == entities.LightTypePoint {
@@ -195,17 +201,17 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				lightTypeStr = "Directional Light"
 			}
 			uiTableRow("Light Type", lightTypeStr)
-			setupRow("Color", func() {
+			panelutils.SetupRow("Color", func() {
 				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			}, true)
-			setupRow("Color Intensity", func() {
+			panelutils.SetupRow("Color Intensity", func() {
 				imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
 			}, true)
 
 			if entity.LightInfo.Type == entities.LightTypePoint {
-				setupRow("Light Range", func() { imgui.SliderFloatV("", &entity.LightInfo.Range, 1, 1500, "%.0f", imgui.SliderFlagsNone) }, true)
+				panelutils.SetupRow("Light Range", func() { imgui.SliderFloatV("", &entity.LightInfo.Range, 1, 1500, "%.0f", imgui.SliderFlagsNone) }, true)
 			} else if entity.LightInfo.Type == entities.LightTypeDirection {
-				setupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) }, true)
+				panelutils.SetupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &entity.LightInfo.Direction3F, -1, 1) }, true)
 			}
 			imgui.EndTable()
 			imgui.PushIDStr("remove light")
@@ -219,25 +225,44 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	if entity.Material != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Material Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
+			panelutils.InitColumns()
 
-			setupRow("Diffuse", func() {
-				imgui.ColorEdit3V("", &entity.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+			panelutils.SetupRow("Diffuse", func() {
+				imgui.ColorEdit3V("", &entity.Material.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			}, true)
-			setupRow("Invisible", func() {
-				imgui.Checkbox("", &entity.Material.Invisible)
-			}, true)
-
-			setupRow("Diffuse Intensity", func() {
-				imgui.SliderFloatV("", &entity.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+			panelutils.SetupRow("Invisible", func() {
+				imgui.Checkbox("", &entity.Material.Material.Invisible)
 			}, true)
 
-			setupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
-			setupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
+			panelutils.SetupRow("Diffuse Intensity", func() {
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+			}, true)
+
+			panelutils.SetupRow("Roughness", func() {
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			}, true)
+			panelutils.SetupRow("Metallic Factor", func() {
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			}, true)
 			imgui.EndTable()
 			imgui.PushIDStr("remove material")
 			if imgui.Button("Remove") {
 				entity.Material = nil
+			}
+			imgui.PopID()
+			imgui.PushIDStr("Material Combo")
+			if imgui.BeginCombo("", selectedMaterial.ID) {
+				for _, material := range app.MaterialBrowser().Items {
+					if imgui.SelectableBool(material.ID) {
+						selectedMaterial = material
+					}
+				}
+				imgui.EndCombo()
+			}
+			imgui.PopID()
+			imgui.PushIDStr("assign")
+			if imgui.Button("Assign") {
+				entity.Material.Material = selectedMaterial
 			}
 			imgui.PopID()
 		}
@@ -252,9 +277,9 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Mesh Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
-			setupRow("Visible", func() { imgui.Checkbox("", &entity.MeshComponent.Visible) }, true)
-			setupRow("Shadow Casting", func() { imgui.Checkbox("", &entity.MeshComponent.ShadowCasting) }, true)
+			panelutils.InitColumns()
+			panelutils.SetupRow("Visible", func() { imgui.Checkbox("", &entity.MeshComponent.Visible) }, true)
+			panelutils.SetupRow("Shadow Casting", func() { imgui.Checkbox("", &entity.MeshComponent.ShadowCasting) }, true)
 
 			uiTableRow("Original Triangle Count", originalMeshTriCount)
 			imgui.EndTable()
@@ -266,35 +291,35 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		velocity := &physicsComponent.Velocity
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Physics Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
+			panelutils.InitColumns()
 
 			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
 
-			setupRow("Velocity X", func() {
+			panelutils.SetupRow("Velocity X", func() {
 				imgui.PushIDStr("velocity x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[0] = float64(x)
 				}
 				imgui.PopID()
 			}, true)
-			setupRow("Velocity Y", func() {
+			panelutils.SetupRow("Velocity Y", func() {
 				imgui.PushIDStr("velocity y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[1] = float64(y)
 				}
 				imgui.PopID()
 			}, true)
-			setupRow("Velocity Z", func() {
+			panelutils.SetupRow("Velocity Z", func() {
 				imgui.PushIDStr("velocity z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[2] = float64(z)
 				}
 				imgui.PopID()
 			}, true)
-			setupRow("Grounded", func() {
+			panelutils.SetupRow("Grounded", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Physics.Grounded))
 			}, true)
-			setupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
+			panelutils.SetupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
 			imgui.EndTable()
 			imgui.PushIDStr("remove phys")
 			if imgui.Button("Remove") {
@@ -307,18 +332,18 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	if entity.Collider != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Collider Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
+			panelutils.InitColumns()
 
-			setupRow("Collider Type", func() {
+			panelutils.SetupRow("Collider Type", func() {
 				imgui.LabelText("", string(entities.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
 			}, true)
-			setupRow("Capsule", func() {
+			panelutils.SetupRow("Capsule", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.CapsuleCollider != nil))
 			}, true)
-			setupRow("Triangular Mesh", func() {
+			panelutils.SetupRow("Triangular Mesh", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.TriMeshCollider != nil))
 			}, true)
-			setupRow("Bounding Box", func() {
+			panelutils.SetupRow("Bounding Box", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.BoundingBoxCollider != nil))
 			}, true)
 
@@ -363,11 +388,13 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		if entity != nil {
 			if SelectedComponentComboOption == MaterialComboOption {
 				entity.Material = &entities.MaterialComponent{
-					PBR: types.PBR{
-						Roughness:        0.85,
-						Metallic:         0,
-						Diffuse:          [3]float32{1, 1, 1},
-						DiffuseIntensity: 1,
+					Material: material.Material{
+						PBR: types.PBR{
+							Roughness:        0.85,
+							Metallic:         0,
+							Diffuse:          [3]float32{1, 1, 1},
+							DiffuseIntensity: 1,
+						},
 					},
 				}
 			} else if SelectedComponentComboOption == LightComboOption {
@@ -388,16 +415,16 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 	if entity.Collider != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Debugging Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			initColumns()
+			panelutils.InitColumns()
 
 			collisionObserver := app.CollisionObserver()
-			setupRow("Entities In Partition", func() { imgui.LabelText("", formatNumber(collisionObserver.SpatialQuery[entity.GetID()])) }, true)
-			setupRow("Bounding Box Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.BoundingBoxCheck[entity.GetID()])) }, true)
-			setupRow("Collision Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheck[entity.GetID()])) }, true)
-			setupRow("Triangle Mesh Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriMesh[entity.GetID()])) }, true)
-			setupRow("Triangle Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriangle[entity.GetID()])) }, true)
-			setupRow("Capsule Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckCapsule[entity.GetID()])) }, true)
-			setupRow("Collision Resolutions", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionResolution[entity.GetID()])) }, true)
+			panelutils.SetupRow("Entities In Partition", func() { imgui.LabelText("", formatNumber(collisionObserver.SpatialQuery[entity.GetID()])) }, true)
+			panelutils.SetupRow("Bounding Box Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.BoundingBoxCheck[entity.GetID()])) }, true)
+			panelutils.SetupRow("Collision Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheck[entity.GetID()])) }, true)
+			panelutils.SetupRow("Triangle Mesh Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriMesh[entity.GetID()])) }, true)
+			panelutils.SetupRow("Triangle Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriangle[entity.GetID()])) }, true)
+			panelutils.SetupRow("Capsule Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckCapsule[entity.GetID()])) }, true)
+			panelutils.SetupRow("Collision Resolutions", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionResolution[entity.GetID()])) }, true)
 
 			imgui.EndTable()
 		}

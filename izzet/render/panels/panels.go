@@ -25,23 +25,3 @@ type GameWorld interface {
 	GetEntityByID(id int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 }
-
-func setupRow(label string, item func(), fillWidth bool) {
-	imgui.TableNextRow()
-	imgui.TableNextColumn()
-	imgui.Text(label)
-	imgui.TableNextColumn()
-	imgui.PushIDStr(label)
-	if fillWidth {
-		imgui.PushItemWidth(-1)
-	}
-	item()
-	if fillWidth {
-		imgui.PopItemWidth()
-	}
-	imgui.PopID()
-}
-
-func initColumns() {
-	imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed|imgui.TableColumnFlagsNoResize, tableColumn0Width, 0)
-}

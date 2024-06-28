@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -23,6 +24,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
+	"github.com/kkevinchou/izzet/izzet/material"
+	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -475,7 +478,6 @@ func (g *Client) LoadProject(name string) bool {
 		panic(err)
 	}
 
-	g.projectName = project.Name
 	g.contentBrowser = &project.ContentBrowser
 
 	for _, item := range g.contentBrowser.Items {
@@ -485,16 +487,20 @@ func (g *Client) LoadProject(name string) bool {
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
 }
 
-func (g *Client) SaveProject() {
-	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.projectName), os.ModePerm)
+func (g *Client) SaveProject(name string) error {
+	if name == "" {
+		return errors.New("name cannot be empty string")
+	}
+
+	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name), os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
 
-	worldFilePath := path.Join(settings.ProjectsDirectory, g.projectName, fmt.Sprintf("./%s.json", g.projectName))
+	worldFilePath := path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name))
 	g.saveWorld(worldFilePath)
 
-	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, g.projectName, "content"), os.ModePerm)
+	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name, "content"), os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
@@ -527,7 +533,7 @@ func (g *Client) SaveProject() {
 				panic(err)
 			}
 
-			outFilePath := filepath.Join(settings.ProjectsDirectory, g.projectName, "content", fileName)
+			outFilePath := filepath.Join(settings.ProjectsDirectory, name, "content", fileName)
 			outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
 				panic(err)
@@ -542,28 +548,25 @@ func (g *Client) SaveProject() {
 
 		// overwrite in file path to be the asset copy in in the project folder
 		items[i].SavedToProjectFolder = true
-		items[i].InFilePath = filepath.Join(settings.ProjectsDirectory, g.projectName, "content", baseFileName+filepath.Ext(items[i].InFilePath))
+		items[i].InFilePath = filepath.Join(settings.ProjectsDirectory, name, "content", baseFileName+filepath.Ext(items[i].InFilePath))
 	}
 
-	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, g.projectName, "main_project.izt"), os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
 	project := Project{
-		Name:           g.projectName,
+		Name:           name,
 		WorldFile:      worldFilePath,
 		ContentBrowser: *g.contentBrowser,
 	}
 
 	encoder := json.NewEncoder(f)
 	encoder.Encode(project)
-}
 
-func (g *Client) SaveProjectAs(name string) {
-	g.projectName = name
-	g.SaveProject()
+	return nil
 }
 
 func (g *Client) Shutdown() {
@@ -769,4 +772,12 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 func (g *Client) NavMesh() *navmesh.NavigationMesh {
 	return g.navMesh
+}
+
+func (g *Client) CreateMaterial(material material.Material) {
+	g.materialBrowser.AddMaterial(material)
+}
+
+func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
+	return g.materialBrowser
 }

@@ -10,16 +10,36 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
+var errorModal error
+
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
 		imgui.InputTextWithHint("##WorldName", "", &worldName, imgui.InputTextFlagsNone, nil)
 
+		center := imgui.MainViewport().Center()
+		imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
+
 		imgui.SameLine()
 		if imgui.Button("Save") {
 			fmt.Println("Save to", worldName)
-			app.SaveProjectAs(worldName)
+			if err := app.SaveProject(worldName); err != nil {
+				errorModal = err
+			} else {
+				imgui.CloseCurrentPopup()
+			}
 		}
 
+		if errorModal != nil {
+			imgui.OpenPopupStr("Error")
+			if imgui.BeginPopupModalV("Error", nil, imgui.WindowFlagsAlwaysAutoResize) {
+				imgui.LabelText("##", errorModal.Error())
+				if imgui.Button("OK") {
+					errorModal = nil
+					imgui.CloseCurrentPopup()
+				}
+				imgui.EndPopup()
+			}
+		}
 		err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory), os.ModePerm)
 		if err != nil {
 			panic(err)
@@ -32,20 +52,12 @@ func file(app renderiface.App) {
 		var savedWorlds []string
 		for _, file := range files {
 			extension := filepath.Ext(file.Name())
-			// if extension != ".json" {
-			// 	continue
-			// }
-
 			if _, ok := ignoredJsonFiles[file.Name()]; ok {
 				continue
 			}
 
 			name := file.Name()[0 : len(file.Name())-len(extension)]
 			savedWorlds = append(savedWorlds, name)
-		}
-
-		if len(savedWorlds) == 0 {
-			savedWorlds = append(savedWorlds, selectedWorldName)
 		}
 
 		if imgui.BeginCombo("##", selectedWorldName) {
@@ -62,6 +74,7 @@ func file(app renderiface.App) {
 			if app.LoadProject(selectedWorldName) {
 				worldName = selectedWorldName
 			}
+			imgui.CloseCurrentPopup()
 		}
 
 		imgui.EndMenu()

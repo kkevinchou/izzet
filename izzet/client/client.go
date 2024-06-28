@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
+	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -86,14 +87,14 @@ type Client struct {
 	frameInput  input.Input
 	serverStats serverstats.ServerStats
 
-	projectName    string
-	contentBrowser *contentbrowser.ContentBrowser
-	selectedEntity *entities.Entity
+	contentBrowser  *contentbrowser.ContentBrowser
+	materialBrowser *materialbrowser.MaterialBrowser
+	selectedEntity  *entities.Entity
 
 	navMesh *navmesh.NavigationMesh
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultWorld string) *Client {
+func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultProject string) *Client {
 	initSeed()
 
 	imgui.CreateContext()
@@ -138,6 +139,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		contentBrowser:  &contentbrowser.ContentBrowser{},
+		materialBrowser: &materialbrowser.MaterialBrowser{},
 		metricsRegistry: metricsRegistry,
 	}
 
@@ -149,8 +151,10 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.setupPrefabs(data)
 
 	g.initialize()
-	if defaultWorld != "" {
-		g.LoadProject(defaultWorld)
+	if defaultProject != "" {
+		g.LoadProject(defaultProject)
+	} else {
+		g.renderer.SetWorld(g.world)
 	}
 
 	g.setupSystems()

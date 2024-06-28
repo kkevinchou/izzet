@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -60,14 +61,16 @@ func sceneGraph(app renderiface.App) {
 				entity := entities.CreateCube(app.AssetManager(), 1)
 				i := 0
 				entity.Material = &entities.MaterialComponent{
-					PBR: types.PBR{
-						Roughness:        0.85,
-						Metallic:         0,
-						Diffuse:          [3]float32{1, 1, 1},
-						DiffuseIntensity: 1,
+					Material: material.Material{
+						PBR: types.PBR{
+							Roughness:        0.85,
+							Metallic:         0,
+							Diffuse:          [3]float32{1, 1, 1},
+							DiffuseIntensity: 1,
 
-						ColorTextureIndex: &i,
-						TextureName:       settings.DefaultTexture,
+							ColorTextureIndex: &i,
+							TextureName:       settings.DefaultTexture,
+						},
 					},
 				}
 

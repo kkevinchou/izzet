@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -29,6 +30,10 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	LightComboOption,
 	SpawnPointComboOption,
 }
+
+var (
+	selectedMaterial material.Material
+)
 
 func entityProps(entity *entities.Entity, app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
@@ -223,22 +228,41 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			panelutils.InitColumns()
 
 			panelutils.SetupRow("Diffuse", func() {
-				imgui.ColorEdit3V("", &entity.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+				imgui.ColorEdit3V("", &entity.Material.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			}, true)
 			panelutils.SetupRow("Invisible", func() {
-				imgui.Checkbox("", &entity.Material.Invisible)
+				imgui.Checkbox("", &entity.Material.Material.Invisible)
 			}, true)
 
 			panelutils.SetupRow("Diffuse Intensity", func() {
-				imgui.SliderFloatV("", &entity.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
 			}, true)
 
-			panelutils.SetupRow("Roughness", func() { imgui.SliderFloatV("", &entity.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
-			panelutils.SetupRow("Metallic Factor", func() { imgui.SliderFloatV("", &entity.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone) }, true)
+			panelutils.SetupRow("Roughness", func() {
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			}, true)
+			panelutils.SetupRow("Metallic Factor", func() {
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			}, true)
 			imgui.EndTable()
 			imgui.PushIDStr("remove material")
 			if imgui.Button("Remove") {
 				entity.Material = nil
+			}
+			imgui.PopID()
+			imgui.PushIDStr("Material Combo")
+			if imgui.BeginCombo("##", selectedMaterial.ID) {
+				for _, material := range app.MaterialBrowser().Items {
+					if imgui.SelectableBool(material.ID) {
+						selectedMaterial = material
+					}
+				}
+				imgui.EndCombo()
+			}
+			imgui.PopID()
+			imgui.PushIDStr("assign")
+			if imgui.Button("Assign") {
+				entity.Material.Material = selectedMaterial
 			}
 			imgui.PopID()
 		}
@@ -364,11 +388,13 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		if entity != nil {
 			if SelectedComponentComboOption == MaterialComboOption {
 				entity.Material = &entities.MaterialComponent{
-					PBR: types.PBR{
-						Roughness:        0.85,
-						Metallic:         0,
-						Diffuse:          [3]float32{1, 1, 1},
-						DiffuseIntensity: 1,
+					Material: material.Material{
+						PBR: types.PBR{
+							Roughness:        0.85,
+							Metallic:         0,
+							Diffuse:          [3]float32{1, 1, 1},
+							DiffuseIntensity: 1,
+						},
 					},
 				}
 			} else if SelectedComponentComboOption == LightComboOption {

@@ -1,8 +1,9 @@
 package entities
 
-import "github.com/kkevinchou/izzet/izzet/types"
+import (
+	"github.com/kkevinchou/izzet/izzet/material"
+)
 
 type MaterialComponent struct {
-	PBR       types.PBR
-	Invisible bool
+	Material material.Material
 }

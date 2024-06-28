@@ -220,10 +220,10 @@ func (r *Renderer) drawModel(
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	material := entity.Material
 	primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 	for _, p := range primitives {
-		if material != nil {
+		if entity.Material != nil {
+			material := entity.Material.Material
 			if material.Invisible {
 				return
 			}
@@ -248,7 +248,7 @@ func (r *Renderer) drawModel(
 				shader.SetUniformFloat("roughness", material.PBR.Roughness)
 				shader.SetUniformFloat("metallic", material.PBR.Metallic)
 			}
-		} else if material == nil && p.Primitive.PBRMaterial == nil {
+		} else if entity.Material == nil && p.Primitive.PBRMaterial == nil {
 			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 			shader.SetUniformVec3("albedo", mgl32.Vec3{1, 1, 1})
 			// shader.SetUniformVec3("albedo", mgl32.Vec3{255.0 / 255, 28.0 / 255, 217.0 / 121.0})
@@ -261,7 +261,7 @@ func (r *Renderer) drawModel(
 			texture := r.app.AssetManager().GetTexture(textureName)
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
-		} else if material == nil {
+		} else if entity.Material == nil {
 			primitiveMaterial := p.Primitive.PBRMaterial.PBRMetallicRoughness
 			shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
 

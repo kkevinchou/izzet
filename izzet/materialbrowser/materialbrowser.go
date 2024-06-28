@@ -11,6 +11,6 @@ type MaterialBrowser struct {
 }
 
 func (m *MaterialBrowser) AddMaterial(material material.Material) {
-	fmt.Println(len(m.Items), "total materials")
 	m.Items = append(m.Items, material)
+	fmt.Println(len(m.Items), "total materials")
 }

@@ -16,25 +16,6 @@ func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
 		imgui.InputTextWithHint("##WorldName", "", &worldName, imgui.InputTextFlagsNone, nil)
 
-		// imgui.OpenPopupStr("asdf")
-		// center := imgui.MainViewport().Center()
-		// imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
-
-		// if imgui.Button("hello") {
-		// 	errorModal = true
-		// }
-
-		// if errorModal {
-		// 	if imgui.BeginPopupModal("asdf") {
-		// 		imgui.LabelText("##", "asdf")
-		// 		if imgui.Button("OK") {
-		// 			imgui.CloseCurrentPopup()
-		// 			errorModal = false
-		// 		}
-		// 		imgui.EndPopup()
-		// 	}
-		// }
-
 		center := imgui.MainViewport().Center()
 		imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
 
@@ -43,6 +24,8 @@ func file(app renderiface.App) {
 			fmt.Println("Save to", worldName)
 			if err := app.SaveProject(worldName); err != nil {
 				errorModal = err
+			} else {
+				imgui.CloseCurrentPopup()
 			}
 		}
 
@@ -69,10 +52,6 @@ func file(app renderiface.App) {
 		var savedWorlds []string
 		for _, file := range files {
 			extension := filepath.Ext(file.Name())
-			if extension != ".json" {
-				continue
-			}
-
 			if _, ok := ignoredJsonFiles[file.Name()]; ok {
 				continue
 			}
@@ -95,6 +74,7 @@ func file(app renderiface.App) {
 			if app.LoadProject(selectedWorldName) {
 				worldName = selectedWorldName
 			}
+			imgui.CloseCurrentPopup()
 		}
 
 		imgui.EndMenu()

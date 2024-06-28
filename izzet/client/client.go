@@ -87,7 +87,6 @@ type Client struct {
 	frameInput  input.Input
 	serverStats serverstats.ServerStats
 
-	projectName     string
 	contentBrowser  *contentbrowser.ContentBrowser
 	materialBrowser *materialbrowser.MaterialBrowser
 	selectedEntity  *entities.Entity

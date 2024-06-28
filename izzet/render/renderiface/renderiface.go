@@ -54,8 +54,7 @@ type App interface {
 	DisconnectClient()
 
 	GetServerStats() serverstats.ServerStats
-	SaveProject()
-	SaveProjectAs(name string)
+	SaveProject(name string) error
 
 	GetPlayerEntity() *entities.Entity
 	ConfigureUI(enabled bool)

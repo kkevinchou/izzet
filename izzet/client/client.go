@@ -15,11 +15,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/client/window"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
-	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -87,9 +85,9 @@ type Client struct {
 	frameInput  input.Input
 	serverStats serverstats.ServerStats
 
-	contentBrowser  *contentbrowser.ContentBrowser
-	materialBrowser *materialbrowser.MaterialBrowser
-	selectedEntity  *entities.Entity
+	selectedEntity *entities.Entity
+
+	project *Project
 
 	navMesh *navmesh.NavigationMesh
 }
@@ -138,8 +136,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		assetManager:    assetManager,
 		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
-		contentBrowser:  &contentbrowser.ContentBrowser{},
-		materialBrowser: &materialbrowser.MaterialBrowser{},
 		metricsRegistry: metricsRegistry,
 	}
 
@@ -154,6 +150,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	if defaultProject != "" {
 		g.LoadProject(defaultProject)
 	} else {
+		g.project = NewProject()
 		g.renderer.SetWorld(g.world)
 	}
 

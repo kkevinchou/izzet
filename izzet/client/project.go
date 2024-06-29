@@ -8,6 +8,13 @@ import (
 type Project struct {
 	WorldFile       string
 	Name            string
-	ContentBrowser  contentbrowser.ContentBrowser
-	MaterialBrowser materialbrowser.MaterialBrowser
+	ContentBrowser  *contentbrowser.ContentBrowser
+	MaterialBrowser *materialbrowser.MaterialBrowser
+}
+
+func NewProject() *Project {
+	return &Project{
+		ContentBrowser:  &contentbrowser.ContentBrowser{},
+		MaterialBrowser: &materialbrowser.MaterialBrowser{},
+	}
 }

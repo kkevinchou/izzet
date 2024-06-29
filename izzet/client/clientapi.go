@@ -450,7 +450,7 @@ func (g *Client) ImportToContentBrowser(assetFilePath string) {
 	if g.registerSingleEntity(assetFilePath) {
 		baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 		document := g.AssetManager().GetDocument(baseFileName)
-		g.contentBrowser.AddGLTFModel(assetFilePath, document)
+		g.ContentBrowser().AddGLTFModel(assetFilePath, document)
 
 		var primitiveSpecs []*modelspec.PrimitiveSpecification
 		for _, mesh := range document.Meshes {
@@ -478,9 +478,9 @@ func (g *Client) LoadProject(name string) bool {
 		panic(err)
 	}
 
-	g.contentBrowser = &project.ContentBrowser
+	g.project = &project
 
-	for _, item := range g.contentBrowser.Items {
+	for _, item := range g.project.ContentBrowser.Items {
 		g.registerSingleEntity(item.InFilePath)
 	}
 
@@ -505,7 +505,7 @@ func (g *Client) SaveProject(name string) error {
 		panic(err)
 	}
 
-	items := g.contentBrowser.Items
+	items := g.ContentBrowser().Items
 	for i := range items {
 		// this has already been saved, skip
 		if items[i].SavedToProjectFolder {
@@ -557,14 +557,8 @@ func (g *Client) SaveProject(name string) error {
 	}
 	defer f.Close()
 
-	project := Project{
-		Name:           name,
-		WorldFile:      worldFilePath,
-		ContentBrowser: *g.contentBrowser,
-	}
-
 	encoder := json.NewEncoder(f)
-	encoder.Encode(project)
+	encoder.Encode(g.project)
 
 	return nil
 }
@@ -595,7 +589,7 @@ func (g *Client) WindowFocused() bool {
 }
 
 func (g *Client) ContentBrowser() *contentbrowser.ContentBrowser {
-	return g.contentBrowser
+	return g.project.ContentBrowser
 }
 
 func (g *Client) SelectEntity(entity *entities.Entity) {
@@ -775,9 +769,9 @@ func (g *Client) NavMesh() *navmesh.NavigationMesh {
 }
 
 func (g *Client) CreateMaterial(material material.Material) {
-	g.materialBrowser.AddMaterial(material)
+	g.MaterialBrowser().AddMaterial(material)
 }
 
 func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
-	return g.materialBrowser
+	return g.project.MaterialBrowser
 }

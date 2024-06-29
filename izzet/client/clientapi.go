@@ -499,6 +499,7 @@ func (g *Client) SaveProject(name string) error {
 
 	worldFilePath := path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name))
 	g.saveWorld(worldFilePath)
+	g.project.WorldFile = worldFilePath
 
 	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name, "content"), os.ModePerm)
 	if err != nil {

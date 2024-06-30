@@ -1288,7 +1288,6 @@ func CalculateMenuBarSize() float32 {
 
 func (r *Renderer) ConfigureUI() {
 	r.ReinitializeFrameBuffers()
-	r.contentBrowserHeight = apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 }
 
 func (r *Renderer) GameWindowSize() (int, int) {

@@ -95,11 +95,10 @@ type Renderer struct {
 	batchCubeVAOs map[string]uint32
 	triangleVAOs  map[string]uint32
 
-	gameWindowHovered    bool
-	gameWindowWidth      int
-	gameWindowHeight     int
-	menuBarHeight        float32
-	contentBrowserHeight float32
+	gameWindowHovered bool
+	gameWindowWidth   int
+	gameWindowHeight  int
+	menuBarHeight     float32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -133,8 +132,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.triangleVAOs = map[string]uint32{}
 
 	r.ReinitializeFrameBuffers()
-
-	r.contentBrowserHeight = apputils.CalculateFooterSize(true)
 
 	// circles for the rotation gizmo
 
@@ -1067,7 +1064,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 				r.app.Prefabs(),
 			)
 
-			drawer.BuildDrawer(
+			drawer.BuildFooter(
 				r.app,
 				renderContext,
 				r.app.Prefabs(),

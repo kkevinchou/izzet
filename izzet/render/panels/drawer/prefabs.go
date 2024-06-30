@@ -13,37 +13,34 @@ const prefabsContextItemID = "prefabsContextItem"
 
 func prefabsUI(app renderiface.App, ps []*prefabs.Prefab) bool {
 	var menuOpen bool
-	if imgui.BeginTabItem("Prefabs") {
-		for i, prefab := range ps {
-			var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
+	for i, prefab := range ps {
+		var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 
-			open := imgui.TreeNodeExStrV(prefab.Name, nodeFlags)
-			if prefabsSelectIndex == -1 || prefabsSelectIndex == i {
-				menuOpen = prefabsBeginPopupContextItem(app, i, prefab)
-			}
+		open := imgui.TreeNodeExStrV(prefab.Name, nodeFlags)
+		if prefabsSelectIndex == -1 || prefabsSelectIndex == i {
+			menuOpen = prefabsBeginPopupContextItem(app, i, prefab)
+		}
 
-			if open {
-				// this call allows drag/drop from an expanded tree node
-				beginPrefabDragDrop(prefab.ID)
-				// if imgui.TreeNodeExStrV("meshes", imgui.TreeNodeFlagsNone) {
-				// 	for _, mr := range prefab.ModelRefs() {
-				// 		if imgui.TreeNodeExStrV(mr.Name, imgui.TreeNodeFlagsLeaf) {
-				// 			imgui.TreePop()
-				// 		}
-				// 	}
-				// 	imgui.TreePop()
-				// }
-				imgui.TreePop()
-			}
-			// this call allows drag/drop from a collapsed tree node
+		if open {
+			// this call allows drag/drop from an expanded tree node
 			beginPrefabDragDrop(prefab.ID)
+			// if imgui.TreeNodeExStrV("meshes", imgui.TreeNodeFlagsNone) {
+			// 	for _, mr := range prefab.ModelRefs() {
+			// 		if imgui.TreeNodeExStrV(mr.Name, imgui.TreeNodeFlagsLeaf) {
+			// 			imgui.TreePop()
+			// 		}
+			// 	}
+			// 	imgui.TreePop()
+			// }
+			imgui.TreePop()
 		}
+		// this call allows drag/drop from a collapsed tree node
+		beginPrefabDragDrop(prefab.ID)
+	}
 
-		// if the pop up isn't open it means it was either never opened or dismissed, reset the select index
-		if !imgui.IsPopupOpenStr(prefabsContextItemID) {
-			prefabsSelectIndex = -1
-		}
-		imgui.EndTabItem()
+	// if the pop up isn't open it means it was either never opened or dismissed, reset the select index
+	if !imgui.IsPopupOpenStr(prefabsContextItemID) {
+		prefabsSelectIndex = -1
 	}
 	return menuOpen
 }

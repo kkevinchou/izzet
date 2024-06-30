@@ -66,6 +66,8 @@ const (
 	CameraEntityOffset float64 = 100
 	ProjectsDirectory  string  = ".project/"
 	DefaultProject     string  = "default"
+
+	FooterSize float32 = 31
 )
 
 // styles

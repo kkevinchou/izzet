@@ -37,13 +37,10 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: settings.FooterSize})
 
 	var open bool = true
-	var flags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
-	flags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
+	var footerFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
+	footerFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
 
-	if !shelfExpanded {
-		flags |= imgui.WindowFlagsNoScrollbar
-	}
-	imgui.BeginV("Footer", &open, flags)
+	imgui.BeginV("Footer", &open, footerFlags)
 	windowFocused := imgui.IsWindowFocused()
 
 	if imgui.BeginTabBarV("Footer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
@@ -82,15 +79,13 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 	}
 
 	if expanded {
-		//  := imgui.MainViewport().Center()
-		// fmt.Println(imgui.MainViewport().Center().Y)
-		width, height := app.WindowSize()
-		_ = width
-		_ = height
+		_, height := app.WindowSize()
+		var shelfFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
+		shelfFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
 
 		imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: float32(height) - settings.FooterSize - settings.ShelfHeight - 2})
 		imgui.SetNextWindowSize(imgui.Vec2{X: settings.ShelfWidth, Y: settings.ShelfHeight})
-		imgui.BeginV("Shelf", &open, flags)
+		imgui.BeginV("Shelf", &open, shelfFlags)
 		if last == ShelfContent {
 			contentBrowser(app)
 		} else if last == ShelfPrefabs {

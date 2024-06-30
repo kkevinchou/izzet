@@ -13,11 +13,6 @@ const (
 
 var documentTexture *imgui.TextureID
 
-var (
-	shelfExpanded bool
-	currentSehfl  ShelfType = ShelfNone
-)
-
 type ShelfType string
 
 const ShelfNone ShelfType = "NONE"
@@ -41,12 +36,10 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 	footerFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
 
 	imgui.BeginV("Footer", &open, footerFlags)
-	windowFocused := imgui.IsWindowFocused()
 
 	if imgui.BeginTabBarV("Footer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
 		if imgui.BeginTabItem("Content Browser") {
 			if last != ShelfContent {
-				currentSehfl = ShelfContent
 				expanded = true
 			} else if imgui.IsItemClicked() {
 				expanded = !expanded
@@ -56,7 +49,6 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 		}
 		if imgui.BeginTabItem("Prefabs") {
 			if last != ShelfPrefabs {
-				currentSehfl = ShelfPrefabs
 				expanded = true
 			} else if imgui.IsItemClicked() {
 				expanded = !expanded
@@ -66,7 +58,6 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 		}
 		if imgui.BeginTabItem("Materials") {
 			if last != ShelfMaterials {
-				currentSehfl = ShelfMaterials
 				expanded = true
 			} else if imgui.IsItemClicked() {
 				expanded = !expanded
@@ -95,8 +86,6 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 		}
 		imgui.End()
 	}
-
-	shelfExpanded = windowFocused
 
 	imgui.End()
 }

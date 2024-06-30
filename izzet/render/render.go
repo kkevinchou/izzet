@@ -162,7 +162,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 }
 
 func (r *Renderer) ReinitializeFrameBuffers() {
-	menuBarSize := CalculateMenuBarSize()
+	menuBarSize := CalculateMenuBarHeight()
 	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 
 	windowWidth, windowHeight := r.app.WindowSize()
@@ -956,7 +956,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 
 	r.gameWindowHovered = false
 	menus.SetupMenuBar(r.app)
-	menuBarHeight := CalculateMenuBarSize()
+	menuBarHeight := CalculateMenuBarHeight()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)
 	height := float32(windowHeight) - menuBarHeight - footerHeight

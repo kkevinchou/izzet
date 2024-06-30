@@ -1281,7 +1281,7 @@ func (r *Renderer) initializeCircleTextures() {
 	r.drawCircle()
 }
 
-func CalculateMenuBarSize() float32 {
+func CalculateMenuBarHeight() float32 {
 	style := imgui.CurrentStyle()
 	return settings.FontSize + style.FramePadding().Y*2
 }

@@ -67,7 +67,9 @@ const (
 	ProjectsDirectory  string  = ".project/"
 	DefaultProject     string  = "default"
 
-	FooterSize float32 = 31
+	FooterSize  float32 = 31
+	ShelfHeight float32 = 210
+	ShelfWidth  float32 = 800
 )
 
 // styles

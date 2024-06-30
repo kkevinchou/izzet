@@ -14,18 +14,18 @@ const (
 var documentTexture *imgui.TextureID
 
 var (
-	drawerExpanded bool
-	currentDrawer  Drawer = DrawerNone
+	shelfExpanded bool
+	currentSehfl  ShelfType = ShelfNone
 )
 
-type Drawer string
+type ShelfType string
 
-const DrawerNone Drawer = "NONE"
-const DrawerContent Drawer = "CONTENT"
-const DrawerPrefabs Drawer = "PREFABS"
-const DrawerMaterials Drawer = "MATERIALS"
+const ShelfNone ShelfType = "NONE"
+const ShelfContent ShelfType = "CONTENT"
+const ShelfPrefabs ShelfType = "PREFABS"
+const ShelfMaterials ShelfType = "MATERIALS"
 
-var last = DrawerContent
+var last = ShelfContent
 var expanded bool
 
 func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, ps []*prefabs.Prefab) {
@@ -40,41 +40,41 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 	var flags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
 	flags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
 
-	if !drawerExpanded {
+	if !shelfExpanded {
 		flags |= imgui.WindowFlagsNoScrollbar
 	}
-	imgui.BeginV("Drawer", &open, flags)
+	imgui.BeginV("Footer", &open, flags)
 	windowFocused := imgui.IsWindowFocused()
 
-	if imgui.BeginTabBarV("Drawer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
+	if imgui.BeginTabBarV("Footer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
 		if imgui.BeginTabItem("Content Browser") {
-			if last != DrawerContent {
-				currentDrawer = DrawerContent
+			if last != ShelfContent {
+				currentSehfl = ShelfContent
 				expanded = true
 			} else if imgui.IsItemClicked() {
 				expanded = !expanded
 			}
-			last = DrawerContent
+			last = ShelfContent
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Prefabs") {
-			if last != DrawerPrefabs {
-				currentDrawer = DrawerPrefabs
+			if last != ShelfPrefabs {
+				currentSehfl = ShelfPrefabs
 				expanded = true
 			} else if imgui.IsItemClicked() {
 				expanded = !expanded
 			}
-			last = DrawerPrefabs
+			last = ShelfPrefabs
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Materials") {
-			if last != DrawerMaterials {
-				currentDrawer = DrawerMaterials
+			if last != ShelfMaterials {
+				currentSehfl = ShelfMaterials
 				expanded = true
 			} else if imgui.IsItemClicked() {
 				expanded = !expanded
 			}
-			last = DrawerMaterials
+			last = ShelfMaterials
 			imgui.EndTabItem()
 		}
 
@@ -82,18 +82,26 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 	}
 
 	if expanded {
-		imgui.BeginV("ExpandedDrawer", &open, imgui.WindowFlagsNone)
-		if last == DrawerContent {
+		//  := imgui.MainViewport().Center()
+		// fmt.Println(imgui.MainViewport().Center().Y)
+		width, height := app.WindowSize()
+		_ = width
+		_ = height
+
+		imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: float32(height) - settings.FooterSize - settings.ShelfHeight - 2})
+		imgui.SetNextWindowSize(imgui.Vec2{X: settings.ShelfWidth, Y: settings.ShelfHeight})
+		imgui.BeginV("Shelf", &open, flags)
+		if last == ShelfContent {
 			contentBrowser(app)
-		} else if last == DrawerPrefabs {
+		} else if last == ShelfPrefabs {
 			prefabsUI(app, ps)
-		} else if last == DrawerMaterials {
+		} else if last == ShelfMaterials {
 			materialssUI(app)
 		}
 		imgui.End()
 	}
 
-	drawerExpanded = windowFocused
+	shelfExpanded = windowFocused
 
 	imgui.End()
 }

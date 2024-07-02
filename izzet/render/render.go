@@ -331,13 +331,13 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.clearMainFrameBuffer(renderContext)
 
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
-	// shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
+	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
-	// r.drawSkybox(renderContext)
+	r.drawSkybox(renderContext)
 	_ = lightViewerContext
-	// r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
-	// r.drawToCubeDepthMap(lightContext, shadowEntities)
-	// r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
+	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
+	r.drawToCubeDepthMap(lightContext, shadowEntities)
+	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
 
 	// main color FBO
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)

@@ -81,6 +81,8 @@ type RuntimeConfig struct {
 	NavigationmeshMaxError       float32
 
 	ShadowmapZOffset float32
+
+	Antialiasing bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -141,5 +143,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshClimbaleHeight: 1,
 		NavigationMeshMinRegionArea:  1,
 		NavigationmeshMaxError:       1,
+		Antialiasing:                 false,
 	}
 }

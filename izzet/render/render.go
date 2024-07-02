@@ -40,7 +40,7 @@ const (
 	mipsCount                  int     = 6
 	MaxBloomTextureWidth       int     = 1920
 	MaxBloomTextureHeight      int     = 1080
-	internalTextureColorFormat int32   = gl.RGB10_A2
+	internalTextureColorFormat         = gl.RGB10_A2
 	uiWidthRatio               float32 = 0.2
 )
 
@@ -69,6 +69,7 @@ type Renderer struct {
 	cameraViewerContext ViewerContext
 
 	renderFBO              uint32
+	renderRBO              uint32
 	mainColorTexture       uint32
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
@@ -99,6 +100,8 @@ type Renderer struct {
 	gameWindowWidth   int
 	gameWindowHeight  int
 	menuBarHeight     float32
+
+	shouldRerender bool
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -209,8 +212,35 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
 }
 
+var (
+	resolveFBO          uint32
+	resolveColorTexture uint32
+)
+
 func (r *Renderer) initMainRenderFBO(width, height int) {
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	var renderFBO uint32
+	var colorTextures []uint32
+
+	if r.app.RuntimeConfig().Antialiasing {
+		renderFBO, colorTextures, r.renderRBO = r.initFrameBufferMultisample(width, height, []uint32{internalTextureColorFormat, gl.R32UI})
+
+		// resolveFBO, resolveColorTexture = r.initFBOAndTexture(width, height)
+
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+		a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat}, []uint32{gl.RGBA})
+		resolveFBO = a
+		resolveColorTexture = b[0]
+
+		// r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI, internalTextureColorFormat}, []uint32{gl.RGBA, gl.RED_INTEGER, gl.RGBA})
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RGBA, gl.RED_INTEGER})
+		// resolveFBO = a
+		// resolveColorTexture = b[0]
+	} else {
+		renderFBO, colorTextures, r.renderRBO = r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	}
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
@@ -224,10 +254,10 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	// if r.app.Minimized() || !r.app.WindowFocused() {
-	// 	return
-	// }
-
+	if r.shouldRerender {
+		r.ReinitializeFrameBuffers()
+		r.shouldRerender = false
+	}
 	initOpenGLRenderSettings()
 	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
@@ -312,8 +342,10 @@ func (r *Renderer) Render(delta time.Duration) {
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
+	// both for aliasing and non aliasing we render to renderFBO
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+
 	r.drawSkybox(renderContext)
-	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
@@ -363,14 +395,43 @@ func (r *Renderer) Render(delta time.Duration) {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		}
 	}
+	_ = imguiFinalRenderTexture
+
+	// // render to back buffer
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	// gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	if r.app.RuntimeConfig().Antialiasing {
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveFBO)
+		// gl.BlitFramebuffer(0, 0, 800, 600, 0, 0, 800, 600, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	}
 
 	// render to back buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
-	r.renderImgui(renderContext, imguiFinalRenderTexture)
+	// if settings.Multisample {
+	// 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, resolveColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
+	// } else {
+	// 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.mainColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
+	// }
+
+	if r.app.RuntimeConfig().Antialiasing {
+		texture := imgui.TextureID{Data: uintptr(resolveColorTexture)}
+		r.renderImgui(renderContext, texture)
+	} else {
+		r.renderImgui(renderContext, imguiFinalRenderTexture)
+	}
+
+	// if settings.Multisample {
+	// 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
+	// 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	// 	gl.BlitFramebuffer(0, 0, 1200, 900, 0, 0, 1200, 900, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	// }
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -663,6 +724,14 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
+	if r.app.RuntimeConfig().Antialiasing {
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D_MULTISAMPLE, r.mainColorTexture, 0)
+		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
+	} else {
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
+		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
+	}
+
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
 
@@ -712,7 +781,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				texture := r.app.AssetManager().GetTexture("light").ID
 				for _, particle := range particles.GetActiveParticles() {
 					particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-					r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
+					r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil, false)
 				}
 			}
 		} else if entity.CharacterControllerComponent != nil {
@@ -1058,11 +1127,19 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
-			panels.BuildTabsSet(
+			shouldRerender := panels.BuildTabsSet(
 				r.app,
 				renderContext,
 				r.app.Prefabs(),
 			)
+
+			if shouldRerender {
+				r.shouldRerender = shouldRerender
+			}
+
+			if shouldRerender {
+
+			}
 
 			drawer.BuildFooter(
 				r.app,

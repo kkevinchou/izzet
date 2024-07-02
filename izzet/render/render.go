@@ -210,12 +210,29 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
 }
 
+var (
+	resolveFBO          uint32
+	resolveColorTexture uint32
+)
+
 func (r *Renderer) initMainRenderFBO(width, height int) {
 	var renderFBO uint32
 	var colorTextures []uint32
 
 	if settings.Multisample {
 		renderFBO, colorTextures, r.renderRBO = r.initFrameBufferMultisample(width, height, []uint32{internalTextureColorFormat, gl.R32UI})
+
+		// resolveFBO, resolveColorTexture = r.initFBOAndTexture(width, height)
+
+		a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat}, []uint32{gl.RGBA})
+		resolveFBO = a
+		resolveColorTexture = b[0]
+
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI, internalTextureColorFormat}, []uint32{gl.RGBA, gl.RED_INTEGER, gl.RGBA})
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RGBA, gl.RED_INTEGER})
+		// resolveFBO = a
+		// resolveColorTexture = b[0]
 	} else {
 		renderFBO, colorTextures, r.renderRBO = r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	}
@@ -232,10 +249,6 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	// if r.app.Minimized() || !r.app.WindowFocused() {
-	// 	return
-	// }
-
 	initOpenGLRenderSettings()
 	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
@@ -318,17 +331,17 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.clearMainFrameBuffer(renderContext)
 
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
-	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
+	// shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
-	r.drawSkybox(renderContext)
+	// r.drawSkybox(renderContext)
 	_ = lightViewerContext
-	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
-	r.drawToCubeDepthMap(lightContext, shadowEntities)
-	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
+	// r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
+	// r.drawToCubeDepthMap(lightContext, shadowEntities)
+	// r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
 
 	// main color FBO
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
-	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	// r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	// clear depth for gizmo rendering
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -371,20 +384,38 @@ func (r *Renderer) Render(delta time.Duration) {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		}
 	}
+	_ = imguiFinalRenderTexture
+
+	// // render to back buffer
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	// gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	if settings.Multisample {
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveFBO)
+		// gl.BlitFramebuffer(0, 0, 800, 600, 0, 0, 800, 600, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		gl.BlitFramebuffer(0, 0, 1200, 900, 0, 0, 1200, 900, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	}
 
 	// render to back buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
-
-	r.renderImgui(renderContext, imguiFinalRenderTexture)
 
 	if settings.Multisample {
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
-		gl.BlitFramebuffer(0, 0, 1200, 900, 0, 0, 1200, 900, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, resolveColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
+	} else {
+		r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.mainColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
 	}
+
+	// r.renderImgui(renderContext, imguiFinalRenderTexture)
+
+	// if settings.Multisample {
+	// 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
+	// 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	// 	gl.BlitFramebuffer(0, 0, 1200, 900, 0, 0, 1200, 900, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	// }
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -734,7 +765,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				texture := r.app.AssetManager().GetTexture("light").ID
 				for _, particle := range particles.GetActiveParticles() {
 					particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-					r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
+					r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil, false)
 				}
 			}
 		} else if entity.CharacterControllerComponent != nil {

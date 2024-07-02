@@ -72,6 +72,7 @@ const (
 	ShelfWidth  float32 = 800
 
 	Multisample bool = true
+	// Multisample bool = false
 )
 
 // styles

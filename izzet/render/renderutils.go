@@ -801,6 +801,10 @@ func (r *Renderer) initFBOAndTexture(width, height int) (uint32, uint32) {
 func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	if settings.Multisample {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, resolveFBO)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	}
 }
 
 func (r *Renderer) drawSkybox(renderContext RenderContext) {
@@ -817,9 +821,17 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 		return nil
 	}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	if settings.Multisample {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, resolveFBO)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	}
 	gl.ReadBuffer(r.colorPickingAttachment)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	if settings.Multisample {
+		defer gl.BindFramebuffer(gl.FRAMEBUFFER, resolveFBO)
+	} else {
+		defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	}
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)

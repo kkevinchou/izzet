@@ -40,7 +40,7 @@ const (
 	mipsCount                  int     = 6
 	MaxBloomTextureWidth       int     = 1920
 	MaxBloomTextureHeight      int     = 1080
-	internalTextureColorFormat int32   = gl.RGB10_A2
+	internalTextureColorFormat         = gl.RGB10_A2
 	uiWidthRatio               float32 = 0.2
 )
 
@@ -69,6 +69,7 @@ type Renderer struct {
 	cameraViewerContext ViewerContext
 
 	renderFBO              uint32
+	renderRBO              uint32
 	mainColorTexture       uint32
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
@@ -175,8 +176,8 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 	}
 
 	r.initMainRenderFBO(width, height)
-	r.initCompositeFBO(width, height)
-	r.initDepthMapFBO(width, height)
+	// r.initCompositeFBO(width, height)
+	// r.initDepthMapFBO(width, height)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
@@ -210,7 +211,14 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 }
 
 func (r *Renderer) initMainRenderFBO(width, height int) {
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	var renderFBO uint32
+	var colorTextures []uint32
+
+	if settings.Multisample {
+		renderFBO, colorTextures, r.renderRBO = r.initFrameBufferMultisample(width, height, []uint32{internalTextureColorFormat, gl.R32UI})
+	} else {
+		renderFBO, colorTextures, r.renderRBO = r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	}
 	r.renderFBO = renderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
@@ -371,6 +379,12 @@ func (r *Renderer) Render(delta time.Duration) {
 	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
 
 	r.renderImgui(renderContext, imguiFinalRenderTexture)
+
+	if settings.Multisample {
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+		gl.BlitFramebuffer(0, 0, 1200, 900, 0, 0, 1200, 900, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	}
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -662,6 +676,14 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+
+	if settings.Multisample {
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D_MULTISAMPLE, r.mainColorTexture, 0)
+		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
+	} else {
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
+		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
+	}
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)

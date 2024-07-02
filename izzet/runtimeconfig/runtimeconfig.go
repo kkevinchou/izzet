@@ -81,6 +81,8 @@ type RuntimeConfig struct {
 	NavigationmeshMaxError       float32
 
 	ShadowmapZOffset float32
+
+	Antialiasing bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -90,14 +92,14 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		Metallic:                        0,
 		PointLightBias:                  1,
 		MaterialOverride:                false,
-		EnableShadowMapping:             false,
+		EnableShadowMapping:             true,
 		ShadowFarFactor:                 1,
 		ShadowSpatialPartitionNearPlane: 1000,
 		ShadowmapZOffset:                2000,
 		BloomIntensity:                  0.04,
 		Exposure:                        1.0,
 		AmbientFactor:                   0.1,
-		Bloom:                           false,
+		Bloom:                           true,
 		BloomThresholdPasses:            1,
 		BloomThreshold:                  0.8,
 		BloomUpsamplingScale:            1.0,
@@ -141,5 +143,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshClimbaleHeight: 1,
 		NavigationMeshMinRegionArea:  1,
 		NavigationmeshMaxError:       1,
+		Antialiasing:                 true,
 	}
 }

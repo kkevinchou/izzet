@@ -33,7 +33,7 @@ var (
 	}
 )
 
-func worldProps(app renderiface.App) {
+func worldProps(app renderiface.App) bool {
 	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
@@ -97,11 +97,18 @@ func worldProps(app renderiface.App) {
 		panelutils.SetupRow("SP Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.ShadowSpatialPartitionNearPlane, 0, 2000) }, true)
 		imgui.EndTable()
 	}
+
+	var shouldRerender bool
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 		panelutils.SetupRow("Far", func() { imgui.SliderFloat("", &runtimeConfig.Far, 0, 100000) }, true)
 		panelutils.SetupRow("FovX", func() { imgui.SliderFloat("", &runtimeConfig.FovX, 0, 170) }, true)
+		panelutils.SetupRow("Antialiasing", func() {
+			if imgui.Checkbox("Antialiasing", &runtimeConfig.Antialiasing) {
+				shouldRerender = true
+			}
+		}, true)
 
 		panelutils.SetupRow("Debug Color", func() {
 			imgui.ColorEdit3V("", &runtimeConfig.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
@@ -159,6 +166,7 @@ func worldProps(app renderiface.App) {
 		panelutils.SetupRow("Render Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.RenderSpatialPartition) }, true)
 		imgui.EndTable()
 	}
+	return shouldRerender
 }
 
 func formatNumber(number int) string {

@@ -100,6 +100,8 @@ type Renderer struct {
 	gameWindowWidth   int
 	gameWindowHeight  int
 	menuBarHeight     float32
+
+	shouldRerender bool
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -219,7 +221,7 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	var renderFBO uint32
 	var colorTextures []uint32
 
-	if settings.Multisample {
+	if r.app.RuntimeConfig().Antialiasing {
 		renderFBO, colorTextures, r.renderRBO = r.initFrameBufferMultisample(width, height, []uint32{internalTextureColorFormat, gl.R32UI})
 
 		// resolveFBO, resolveColorTexture = r.initFBOAndTexture(width, height)
@@ -249,6 +251,10 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
+	if r.shouldRerender {
+		r.ReinitializeFrameBuffers()
+		r.shouldRerender = false
+	}
 	initOpenGLRenderSettings()
 	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
@@ -333,6 +339,9 @@ func (r *Renderer) Render(delta time.Duration) {
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
+	// both for aliasing and non aliasing we render to renderFBO
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+
 	r.drawSkybox(renderContext)
 	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
@@ -341,7 +350,7 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	// main color FBO
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
-	// r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 
 	// clear depth for gizmo rendering
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -391,7 +400,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	// gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	if settings.Multisample {
+	if r.app.RuntimeConfig().Antialiasing {
 		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveFBO)
 		// gl.BlitFramebuffer(0, 0, 800, 600, 0, 0, 800, 600, gl.COLOR_BUFFER_BIT, gl.NEAREST)
@@ -409,7 +418,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	// 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.mainColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
 	// }
 
-	if settings.Multisample {
+	if r.app.RuntimeConfig().Antialiasing {
 		texture := imgui.TextureID{Data: uintptr(resolveColorTexture)}
 		r.renderImgui(renderContext, texture)
 	} else {
@@ -713,7 +722,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
-	if settings.Multisample {
+	if r.app.RuntimeConfig().Antialiasing {
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D_MULTISAMPLE, r.mainColorTexture, 0)
 		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
 	} else {
@@ -1116,11 +1125,19 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
-			panels.BuildTabsSet(
+			shouldRerender := panels.BuildTabsSet(
 				r.app,
 				renderContext,
 				r.app.Prefabs(),
 			)
+
+			if shouldRerender {
+				r.shouldRerender = shouldRerender
+			}
+
+			if shouldRerender {
+
+			}
 
 			drawer.BuildFooter(
 				r.app,

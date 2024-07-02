@@ -8,7 +8,7 @@ import (
 
 var open bool
 
-func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefabs.Prefab) {
+func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefabs.Prefab) bool {
 	// rect := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - menuBarSize.Y}
 	// width := rect.X * 0.20
 	// height := rect.Y * 0.5
@@ -34,6 +34,9 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: menuBarSize.X - propertiesWidth, Y: menuBarSize.Y}, imgui.ConditionNone, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: propertiesWidth, Y: rect.Y}, imgui.ConditionNone)
 	// imgui.BeginV("Right Window", nil, imgui.WindowFlagsNoResize|imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoScrollWithMouse)
+
+	var reinitializeBuffers bool
+
 	imgui.BeginChildStrV("Right Window", imgui.Vec2{}, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus)
 
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
@@ -47,7 +50,10 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("World") {
-			worldProps(app)
+			reinit := worldProps(app)
+			if reinit {
+				reinitializeBuffers = true
+			}
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Stats") {
@@ -67,4 +73,5 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 	}
 
 	imgui.EndChild()
+	return reinitializeBuffers
 }

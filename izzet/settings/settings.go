@@ -70,9 +70,6 @@ const (
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210
 	ShelfWidth  float32 = 800
-
-	Multisample bool = true
-	// Multisample bool = false
 )
 
 // styles

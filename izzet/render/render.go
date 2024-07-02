@@ -395,7 +395,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveFBO)
 		// gl.BlitFramebuffer(0, 0, 800, 600, 0, 0, 800, 600, gl.COLOR_BUFFER_BIT, gl.NEAREST)
-		gl.BlitFramebuffer(0, 0, 1200, 900, 0, 0, 1200, 900, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
 	}
 
 	// render to back buffer

@@ -178,8 +178,8 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 	}
 
 	r.initMainRenderFBO(width, height)
-	// r.initCompositeFBO(width, height)
-	// r.initDepthMapFBO(width, height)
+	r.initCompositeFBO(width, height)
+	r.initDepthMapFBO(width, height)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
@@ -226,9 +226,12 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 
 		// resolveFBO, resolveColorTexture = r.initFBOAndTexture(width, height)
 
+		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 		a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat}, []uint32{gl.RGBA})
 		resolveFBO = a
 		resolveColorTexture = b[0]
+
+		// r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 
 		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI, internalTextureColorFormat}, []uint32{gl.RGBA, gl.RED_INTEGER, gl.RGBA})
@@ -343,7 +346,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	r.drawSkybox(renderContext)
-	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)

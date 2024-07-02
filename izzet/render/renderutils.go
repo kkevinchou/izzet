@@ -826,12 +826,14 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	}
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
 	if r.app.RuntimeConfig().Antialiasing {
 		defer gl.BindFramebuffer(gl.FRAMEBUFFER, resolveFBO)
 	} else {
 		defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	}
+	// defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)

@@ -143,6 +143,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshClimbaleHeight: 1,
 		NavigationMeshMinRegionArea:  1,
 		NavigationmeshMaxError:       1,
-		Antialiasing:                 true,
+		Antialiasing:                 false,
 	}
 }

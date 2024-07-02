@@ -219,6 +219,11 @@ func (r *Renderer) drawModel(
 		shader.SetUniformInt("isAnimated", 0)
 	}
 
+	var textureType uint32 = gl.TEXTURE_2D
+	// if settings.Multisample {
+	// 	textureType = gl.TEXTURE_2D_MULTISAMPLE
+	// }
+
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 	for _, p := range primitives {
@@ -240,7 +245,7 @@ func (r *Renderer) drawModel(
 				textureName := material.PBR.TextureName
 				texture := r.app.AssetManager().GetTexture(textureName)
 				textureID = texture.ID
-				gl.BindTexture(gl.TEXTURE_2D, textureID)
+				gl.BindTexture(textureType, textureID)
 			} else {
 				var color mgl32.Vec3 = material.PBR.Diffuse
 				shader.SetUniformInt("hasPBRBaseColorTexture", 0)
@@ -260,7 +265,7 @@ func (r *Renderer) drawModel(
 			textureName := settings.DefaultTexture
 			texture := r.app.AssetManager().GetTexture(textureName)
 			textureID = texture.ID
-			gl.BindTexture(gl.TEXTURE_2D, textureID)
+			gl.BindTexture(textureType, textureID)
 		} else if entity.Material == nil {
 			primitiveMaterial := p.Primitive.PBRMaterial.PBRMetallicRoughness
 			shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
@@ -289,7 +294,7 @@ func (r *Renderer) drawModel(
 			}
 			texture := r.app.AssetManager().GetTexture(textureName)
 			textureID = texture.ID
-			gl.BindTexture(gl.TEXTURE_2D, textureID)
+			gl.BindTexture(textureType, textureID)
 		}
 		shader.SetUniformFloat("ao", 1.0)
 
@@ -676,11 +681,54 @@ func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *sha
 }
 
 func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internalFormat int32, format uint32) (uint32, uint32) {
-	fbo, textures := r.initFrameBuffer(width, height, []int32{internalFormat}, []uint32{format})
+	fbo, textures, _ := r.initFrameBuffer(width, height, []int32{internalFormat}, []uint32{format})
 	return fbo, textures[0]
 }
 
-func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
+func (r *Renderer) initFrameBufferMultisample(width int, height int, internalFormat []uint32) (uint32, []uint32, uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	var textures []uint32
+	var drawBuffers []uint32
+
+	colorBufferCount := len(internalFormat)
+
+	for i := 0; i < colorBufferCount; i++ {
+		var texture uint32
+		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
+
+		gl.GenTextures(1, &texture)
+		gl.BindTexture(gl.TEXTURE_2D_MULTISAMPLE, texture)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+		gl.TexImage2DMultisample(gl.TEXTURE_2D_MULTISAMPLE, 4, internalFormat[i],
+			int32(width), int32(height), true)
+
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+
+		textures = append(textures, texture)
+		drawBuffers = append(drawBuffers, attachment)
+	}
+
+	gl.DrawBuffers(int32(colorBufferCount), &drawBuffers[0])
+
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorageMultisample(gl.RENDERBUFFER, 4, gl.DEPTH_COMPONENT, int32(width), int32(height))
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return fbo, textures, rbo
+}
+
+func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32, uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -720,7 +768,7 @@ func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32
 		panic(errors.New("failed to initalize frame buffer"))
 	}
 
-	return fbo, textures
+	return fbo, textures, rbo
 }
 
 func (r *Renderer) initFBOAndTexture(width, height int) (uint32, uint32) {

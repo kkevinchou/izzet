@@ -41,14 +41,14 @@ func stats(app renderiface.App, renderContext RenderContext) {
 				if settings.ShowDebugTexture {
 					imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
 					if imgui.BeginV("Texture Viewer", &settings.ShowDebugTexture, imgui.WindowFlagsNone) {
-						if imgui.BeginCombo("", string(SelectedComboOption)) {
-							for _, option := range comboOptions {
-								if imgui.SelectableBool(string(option)) {
-									SelectedComboOption = option
-								}
-							}
-							imgui.EndCombo()
-						}
+						// if imgui.BeginCombo("", string(SelectedComboOption)) {
+						// 	for _, option := range comboOptions {
+						// 		if imgui.SelectableBool(string(option)) {
+						// 			SelectedComboOption = option
+						// 		}
+						// 	}
+						// 	imgui.EndCombo()
+						// }
 
 						regionSize := imgui.ContentRegionAvail()
 						imageWidth := regionSize.X

@@ -403,13 +403,18 @@ func (r *Renderer) Render(delta time.Duration) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	if settings.Multisample {
-		r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, resolveColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
-	} else {
-		r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.mainColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
-	}
+	// if settings.Multisample {
+	// 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, resolveColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
+	// } else {
+	// 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.mainColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
+	// }
 
-	// r.renderImgui(renderContext, imguiFinalRenderTexture)
+	if settings.Multisample {
+		texture := imgui.TextureID{Data: uintptr(resolveColorTexture)}
+		r.renderImgui(renderContext, texture)
+	} else {
+		r.renderImgui(renderContext, imguiFinalRenderTexture)
+	}
 
 	// if settings.Multisample {
 	// 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)

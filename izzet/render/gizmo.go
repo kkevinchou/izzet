@@ -182,7 +182,7 @@ func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.
 			texture = r.yellowCircleTexture
 		}
 
-		r.drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
+		r.drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID, false)
 	}
 }
 

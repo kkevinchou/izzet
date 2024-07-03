@@ -222,6 +222,7 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	var colorTextures []uint32
 
 	if r.app.RuntimeConfig().Antialiasing {
+		// renderFBO, colorTextures, r.renderRBO = r.initFrameBufferMultisample(width, height, []uint32{internalTextureColorFormat, gl.R32UI})
 		renderFBO, colorTextures, r.renderRBO = r.initFrameBufferMultisample(width, height, []uint32{internalTextureColorFormat, gl.R32UI})
 
 		// resolveFBO, resolveColorTexture = r.initFBOAndTexture(width, height)
@@ -230,8 +231,6 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 		a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat}, []uint32{gl.RGBA})
 		resolveFBO = a
 		resolveColorTexture = b[0]
-
-		// r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 
 		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 		// a, b, _ := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI, internalTextureColorFormat}, []uint32{gl.RGBA, gl.RED_INTEGER, gl.RGBA})

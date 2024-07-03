@@ -359,12 +359,23 @@ func (r *Renderer) Render(delta time.Duration) {
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	r.renderGizmos(cameraViewerContext, renderContext)
 
+	if r.app.RuntimeConfig().Antialiasing {
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveFBO)
+		// gl.BlitFramebuffer(0, 0, 800, 600, 0, 0, 800, 600, gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	}
+
 	var finalRenderTexture uint32
 	var imguiFinalRenderTexture imgui.TextureID
 	if r.app.RuntimeConfig().Bloom {
-		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
+		texture := r.mainColorTexture
+		if r.app.RuntimeConfig().Antialiasing {
+			texture = resolveColorTexture
+		}
+		r.downSample(texture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
-		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
+		finalRenderTexture = r.composite(renderContext, texture, upsampleTexture)
 		imguiFinalRenderTexture = r.imguiCompositeTexture
 		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
@@ -382,6 +393,10 @@ func (r *Renderer) Render(delta time.Duration) {
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		imguiFinalRenderTexture = r.imguiMainColorTexture
+		if r.app.RuntimeConfig().Antialiasing {
+			texture := imgui.TextureID{Data: uintptr(resolveColorTexture)}
+			imguiFinalRenderTexture = texture
+		}
 		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
 		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
@@ -398,13 +413,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	}
 	_ = imguiFinalRenderTexture
 
-	if r.app.RuntimeConfig().Antialiasing {
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, resolveFBO)
-		// gl.BlitFramebuffer(0, 0, 800, 600, 0, 0, 800, 600, gl.COLOR_BUFFER_BIT, gl.NEAREST)
-		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
-	}
-
 	// render to back buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
@@ -416,12 +424,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	// 	r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, r.mainColorTexture, float32(renderContext.aspectRatio), nil, false, nil, false)
 	// }
 
-	if r.app.RuntimeConfig().Antialiasing {
-		texture := imgui.TextureID{Data: uintptr(resolveColorTexture)}
-		r.renderImgui(renderContext, texture)
-	} else {
-		r.renderImgui(renderContext, imguiFinalRenderTexture)
-	}
+	r.renderImgui(renderContext, imguiFinalRenderTexture)
 
 	// if settings.Multisample {
 	// 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)

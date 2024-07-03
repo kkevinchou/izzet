@@ -707,7 +707,7 @@ func (r *Renderer) initFrameBufferMultisample(width int, height int, internalFor
 		gl.TexImage2DMultisample(gl.TEXTURE_2D_MULTISAMPLE, 4, internalFormat[i],
 			int32(width), int32(height), true)
 
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D_MULTISAMPLE, texture, 0)
 
 		textures = append(textures, texture)
 		drawBuffers = append(drawBuffers, attachment)
@@ -826,14 +826,12 @@ func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	}
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
 	if r.app.RuntimeConfig().Antialiasing {
 		defer gl.BindFramebuffer(gl.FRAMEBUFFER, resolveFBO)
 	} else {
 		defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 	}
-	// defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)

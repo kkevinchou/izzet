@@ -327,6 +327,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		InverseViewMatrix: lightViewMatrix,
 		ProjectionMatrix:  lightProjectionMatrix,
 	}
+	_ = lightViewerContext
 
 	lightContext := LightContext{
 		// this should be the inverse of the transforms applied to the viewer context
@@ -396,11 +397,6 @@ func (r *Renderer) Render(delta time.Duration) {
 		}
 	}
 	_ = imguiFinalRenderTexture
-
-	// // render to back buffer
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	// gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	if r.app.RuntimeConfig().Antialiasing {
 		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, r.renderFBO)
@@ -723,14 +719,6 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-
-	if r.app.RuntimeConfig().Antialiasing {
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D_MULTISAMPLE, r.mainColorTexture, 0)
-		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
-	} else {
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
-		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, r.renderRBO)
-	}
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)

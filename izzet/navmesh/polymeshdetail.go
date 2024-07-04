@@ -63,8 +63,8 @@ func BuildPolyMeshDetail(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	var hp HeightPatch
 	hp.data = make([]int, maxhw*maxhh)
 
-	vcap := nPolyVerts + (nPolyVerts / 2)
-	tcap := vcap * 2
+	// vcap := nPolyVerts + (nPolyVerts / 2)
+	// tcap := vcap * 2
 
 	var dmesh DetailedMesh
 	var poly []PolyVertex

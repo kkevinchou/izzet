@@ -150,18 +150,14 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 
 func calcAreaOfPolygon2D(verts []SimplifiedVertex) int {
 	area := 0
+	j := len(verts) - 1
 	for i := 0; i < len(verts); i++ {
-		j := (i + 1) % len(verts)
 		vi := verts[i]
 		vj := verts[j]
 		area += (vi.X * vj.Z) - (vi.Z * vj.X)
+
+		j = i
 	}
-	// for i := 0; i < len(verts); i++ {
-	// 	j := (i - 1 + len(verts)) % len(verts)
-	// 	vi := verts[i]
-	// 	vj := verts[j]
-	// 	area += (vi.X * -vj.Z) - (-vi.Z * vj.X)
-	// }
 	return (area + 1) / 2
 }
 
@@ -187,10 +183,10 @@ func getContourPoints(x, z, i int, chf *CompactHeightField, flags []int) []Verte
 			pz := z
 
 			if dir == 0 {
-				pz--
+				pz++
 			} else if dir == 1 {
 				px++
-				pz--
+				pz++
 			} else if dir == 2 {
 				px++
 			}
@@ -218,7 +214,7 @@ func getContourPoints(x, z, i int, chf *CompactHeightField, flags []int) []Verte
 			})
 
 			flags[i] &= ^(1 << dir) // remove visited edge
-			dir = (dir + 1) % 4     // rotate CW
+			dir = (dir + 1) % 4     // rotate CCW
 		} else {
 			if neighborSpanIndex == -1 {
 				panic("should not happen")
@@ -227,7 +223,7 @@ func getContourPoints(x, z, i int, chf *CompactHeightField, flags []int) []Verte
 			x = x + xDirs[dir]
 			z = z + zDirs[dir]
 			i = int(neighborSpanIndex)
-			dir = (dir + 3) % 4 // rotate CCW
+			dir = (dir + 3) % 4 // rotate CW
 		}
 		if starti == i && startDir == dir {
 			break

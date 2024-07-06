@@ -1,7 +1,6 @@
 package render
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
@@ -765,35 +764,37 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 }
 
 func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
-	if r.app.Minimized() || !r.app.WindowFocused() {
-		return nil
-	}
+	return nil
+	// if r.app.Minimized() || !r.app.WindowFocused() {
+	// 	return nil
+	// }
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	gl.ReadBuffer(r.colorPickingAttachment)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	// gl.ReadBuffer(r.colorPickingAttachment)
+	// defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
 
-	_, windowHeight := r.app.WindowSize()
-	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-	data := make([]byte, 4)
+	// _, windowHeight := r.app.WindowSize()
+	// gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	// // TODO: try creating this on renderer initialization and reusing this buffer?
+	// data := make([]byte, 4)
 
-	var footerSize int32 = 0
-	if r.app.RuntimeConfig().UIEnabled {
-		footerSize = int32(apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled))
-	}
+	// var footerSize int32 = 0
+	// if r.app.RuntimeConfig().UIEnabled {
+	// 	footerSize = int32(apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled))
+	// }
 
-	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
-	// SDL, on the other hand, has the mouse origin in the top left corner
-	var weirdOffset float32 = -1 // Weirdge
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	// // in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
+	// // SDL, on the other hand, has the mouse origin in the top left corner
+	// var weirdOffset float32 = -1 // Weirdge
+	// gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
 
-	uintID := binary.LittleEndian.Uint32(data)
-	if uintID == settings.EmptyColorPickingID {
-		return nil
-	}
+	// uintID := binary.LittleEndian.Uint32(data)
+	// if uintID == settings.EmptyColorPickingID {
+	// 	return nil
+	// }
 
-	id := int(uintID)
-	return &id
+	// id := int(uintID)
+	// return &id
 }
 
 // func (r *Renderer) ReadAllPixels() {

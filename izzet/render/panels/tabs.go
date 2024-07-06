@@ -38,22 +38,22 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 
 	// if imgui.BeginTabBarV("Main", imgui.TabBarFlagsFittingPolicyScroll|imgui.TabBarFlagsReorderable) {
 	if imgui.BeginTabBar("Main") {
-		// if imgui.BeginTabItem("Details") {
-		// 	entityProps(app.SelectedEntity(), app)
-		// 	imgui.EndTabItem()
-		// }
-		// if imgui.BeginTabItem("Scene Graph") {
-		// 	sceneGraph(app)
-		// 	imgui.EndTabItem()
-		// }
+		if imgui.BeginTabItem("Details") {
+			entityProps(app.SelectedEntity(), app)
+			imgui.EndTabItem()
+		}
+		if imgui.BeginTabItem("Scene Graph") {
+			sceneGraph(app)
+			imgui.EndTabItem()
+		}
 		if imgui.BeginTabItem("World") {
 			worldProps(app)
 			imgui.EndTabItem()
 		}
-		// if imgui.BeginTabItem("Stats") {
-		// 	stats(app, renderContext)
-		// 	imgui.EndTabItem()
-		// }
+		if imgui.BeginTabItem("Stats") {
+			stats(app, renderContext)
+			imgui.EndTabItem()
+		}
 		// if imgui.BeginTabItem("Animation") {
 		// 	entity := SelectedEntity()
 		// 	if entity != nil && entity.Animation != nil {

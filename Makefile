@@ -45,7 +45,7 @@ client:
 
 .PHONY: server
 server:
-	GOGC=10 go run main.go SERVER
+	go run main.go SERVER
 
 .PHONY: headless
 headless:

@@ -1058,11 +1058,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
-			panels.BuildTabsSet(
-				r.app,
-				renderContext,
-				r.app.Prefabs(),
-			)
+			// panels.BuildTabsSet(
+			// 	r.app,
+			// 	renderContext,
+			// 	r.app.Prefabs(),
+			// )
 
 			drawer.BuildFooter(
 				r.app,

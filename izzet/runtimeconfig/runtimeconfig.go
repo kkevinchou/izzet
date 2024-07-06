@@ -139,7 +139,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshIterations:      500,
 		NavigationMeshWalkableHeight:  20,
 		NavigationMeshClimbableHeight: 4,
-		NavigationMeshMinRegionArea:   1,
+		NavigationMeshMinRegionArea:   4,
 		NavigationmeshMaxError:        1.3,
 	}
 }

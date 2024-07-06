@@ -131,12 +131,17 @@ func (hf *HeightField) AddVoxel(x, y, z int, walkable bool) {
 	}
 }
 
-func (hf *HeightField) AddSpan(x, z, min, max int) {
+func (hf *HeightField) AddSpan(x, z, min, max int, walkable bool) {
 	var previousSpan *Span
 	columnIndex := x + z*hf.width
 	currentSpan := hf.spans[columnIndex]
 
-	newSpan := &Span{min: min, max: max}
+	area := NULL_AREA
+	if walkable {
+		area = WALKABLE_AREA
+	}
+
+	newSpan := &Span{min: min, max: max, area: area}
 
 	for currentSpan != nil {
 		if currentSpan.min > newSpan.max {

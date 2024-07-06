@@ -674,16 +674,26 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		up := mgl64.Vec3{0, 1, 0}
 		right := mgl64.Vec3{1, 0, 0}
 
-		// rasterize triangles
+		_ = primitives
+		_ = transform
+		_ = up
+		_ = right
+
+		// // 1. debug rasterize triangles
+
+		// v1 := mgl64.Vec3{0, 0, 5}
+		// v2 := mgl64.Vec3{5, 0, 5}
+		// v3 := mgl64.Vec3{5, 0, 0}
+
+		// navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, true)
+
+		// 2. implementation
+
 		for _, p := range primitives {
 			for i := 0; i < len(p.Primitive.Vertices); i += 3 {
 				v1 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i].Position.Vec4(1)).Vec3())
 				v2 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3())
 				v3 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3())
-
-				// debugLines = append(debugLines, [2]mgl64.Vec3{v1, v2})
-				// debugLines = append(debugLines, [2]mgl64.Vec3{v2, v3})
-				// debugLines = append(debugLines, [2]mgl64.Vec3{v3, v1})
 
 				tv1 := v2.Sub(v1)
 				tv2 := v3.Sub(v2)
@@ -693,33 +703,52 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 					normal = normal.Normalize()
 				}
 				isUp := normal.Dot(up) > 0.7
-				isDown := normal.Dot(up) < -0.7
-				isRight := normal.Dot(right) > 0.7
-				isLeft := normal.Dot(right) < -0.7
-				_, _, _, _ = isUp, isDown, isRight, isLeft
 
-				// walkable := isUp
-				// if (isUp && entity.GetID() < 3) || ((isDown || isUp) && entity.GetID() >= 3) {
-				// if (isUp && entity.GetID() < 3) || (isUp && entity.GetID() >= 3) {
-				// if (isUp && entity.GetID() < 3) || (isDown && entity.GetID() >= 3) {
-				// if isUp {
-				navmesh.RasterizeTriangle(
-					int(v1.X()),
-					int(v1.Y()),
-					int(v1.Z()),
-					int(v2.X()),
-					int(v2.Y()),
-					int(v2.Z()),
-					int(v3.X()),
-					int(v3.Y()),
-					int(v3.Z()),
-					hf,
-					isUp,
-				)
-				// }
-				// }
+				navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, isUp)
 			}
 		}
+
+		// // 3. rasterize triangles
+		// for _, p := range primitives {
+		// 	for i := 0; i < len(p.Primitive.Vertices); i += 3 {
+		// 		v1 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i].Position.Vec4(1)).Vec3())
+		// 		v2 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3())
+		// 		v3 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3())
+
+		// 		// debugLines = append(debugLines, [2]mgl64.Vec3{v1, v2})
+		// 		// debugLines = append(debugLines, [2]mgl64.Vec3{v2, v3})
+		// 		// debugLines = append(debugLines, [2]mgl64.Vec3{v3, v1})
+
+		// 		tv1 := v2.Sub(v1)
+		// 		tv2 := v3.Sub(v2)
+
+		// 		normal := tv1.Cross(tv2)
+		// 		if normal.LenSqr() > 0 {
+		// 			normal = normal.Normalize()
+		// 		}
+		// 		isUp := normal.Dot(up) > 0.7
+		// 		isDown := normal.Dot(up) < -0.7
+		// 		isRight := normal.Dot(right) > 0.7
+		// 		isLeft := normal.Dot(right) < -0.7
+		// 		_, _, _, _ = isUp, isDown, isRight, isLeft
+
+		// 		navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, isUp)
+
+		// 		// navmesh.RasterizeTriangle(
+		// 		// 	int(v1.X()),
+		// 		// 	int(v1.Y()),
+		// 		// 	int(v1.Z()),
+		// 		// 	int(v2.X()),
+		// 		// 	int(v2.Y()),
+		// 		// 	int(v2.Z()),
+		// 		// 	int(v3.X()),
+		// 		// 	int(v3.Y()),
+		// 		// 	int(v3.Z()),
+		// 		// 	hf,
+		// 		// 	isUp,
+		// 		// )
+		// 	}
+		// }
 	}
 
 	hf.Test()

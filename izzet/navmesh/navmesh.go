@@ -10,6 +10,12 @@ import (
 const maxHeight int = 0xffff
 const maxDistance int = 0xffff
 
+// / Defines the number of bits allocated to rcSpan::smin and rcSpan::smax.
+const spanHeightBits int = 13
+
+// / Defines the maximum value for rcSpan::smin and rcSpan::smax.
+const spanMaxHeight int = (1 << spanHeightBits) - 1
+
 type AREA_TYPE int
 
 const NULL_AREA AREA_TYPE = 0

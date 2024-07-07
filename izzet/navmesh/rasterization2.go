@@ -240,12 +240,3 @@ func overlapBounds(aMin, aMax, bMin, bMax mgl64.Vec3) bool {
 		aMin[1] <= bMax[1] && aMax[1] >= bMin[1] &&
 		aMin[2] <= bMax[2] && aMax[2] >= bMin[2]
 }
-
-// // vCopy copies a vec3 into a slice of floats
-// func vCopy(v mgl64.Vec3) []float64 {
-// 	r := make([]float64, 3)
-// 	r[0] = v[0]
-// 	r[1] = v[1]
-// 	r[2] = v[2]
-// 	return r
-// }

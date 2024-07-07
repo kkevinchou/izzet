@@ -99,6 +99,8 @@ type Renderer struct {
 	gameWindowWidth   int
 	gameWindowHeight  int
 	menuBarHeight     float32
+
+	hoveredEntityID *int
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -325,6 +327,9 @@ func (r *Renderer) Render(delta time.Duration) {
 	// clear depth for gizmo rendering
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	r.renderGizmos(cameraViewerContext, renderContext)
+
+	// store color picking entity
+	r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
 
 	var finalRenderTexture uint32
 	var imguiFinalRenderTexture imgui.TextureID
@@ -1112,6 +1117,10 @@ func (r *Renderer) SetWorld(world *world.GameWorld) {
 
 func (r *Renderer) GameWindowHovered() bool {
 	return r.gameWindowHovered
+}
+
+func (r *Renderer) HoveredEntityID() *int {
+	return r.hoveredEntityID
 }
 
 var (

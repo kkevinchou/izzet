@@ -15,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/world"
+	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 )
@@ -71,6 +72,8 @@ type App interface {
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld
 	CreateMaterial(material material.Material)
+
+	GetFrameInput() input.Input
 }
 
 type RenderContext interface {

@@ -764,7 +764,11 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
-func (r *Renderer) GetEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+// NOTE: this method should only be called from within the render loop. i believe some past
+// crashes have happened trying to read the color picking FBO outside of the renderer. for
+// example if the game loop tries to sample the frame buffer right after a buffer swap, the
+// data may be undefined
+func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	// return nil
 	if r.app.Minimized() || !r.app.WindowFocused() {
 		return nil

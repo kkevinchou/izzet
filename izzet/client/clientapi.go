@@ -682,10 +682,10 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		// // 1. debug rasterize triangles
 
 		// v1 := mgl64.Vec3{0, 0, 0}
-		// v2 := mgl64.Vec3{0, 0, 1}
-		// v3 := mgl64.Vec3{0, 1, 0}
+		// v2 := mgl64.Vec3{0, 0, 5}
+		// v3 := mgl64.Vec3{0, 5, 0}
 
-		// navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, true)
+		// navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, true, 10)
 
 		// 2. implementation
 
@@ -698,11 +698,8 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 				tv1 := v2.Sub(v1)
 				tv2 := v3.Sub(v2)
 
-				normal := tv1.Cross(tv2)
-				if normal.LenSqr() > 0 {
-					normal = normal.Normalize()
-				}
-				isUp := normal.Dot(up) > 0.9
+				normal := tv1.Cross(tv2).Normalize()
+				isUp := normal.Dot(up) >= 0.9
 
 				navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, isUp, climbableHeight)
 			}

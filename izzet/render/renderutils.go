@@ -764,6 +764,8 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
+var pickingBuffer []byte
+
 // NOTE: this method should only be called from within the render loop. i believe some past
 // crashes have happened trying to read the color picking FBO outside of the renderer. for
 // example if the game loop tries to sample the frame buffer right after a buffer swap, the
@@ -781,7 +783,9 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 	// TODO: try creating this on renderer initialization and reusing this buffer?
-	data := make([]byte, 4)
+	if len(pickingBuffer) == 0 {
+		pickingBuffer = make([]byte, 4)
+	}
 
 	var footerSize int32 = 0
 	if r.app.RuntimeConfig().UIEnabled {
@@ -791,9 +795,9 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner
 	var weirdOffset float32 = -1 // Weirdge
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(data))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
 
-	uintID := binary.LittleEndian.Uint32(data)
+	uintID := binary.LittleEndian.Uint32(pickingBuffer)
 	if uintID == settings.EmptyColorPickingID {
 		return nil
 	}

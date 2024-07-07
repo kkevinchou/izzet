@@ -45,11 +45,14 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 
 	// not sure if this is actually faster than making 4 different slices
 	// theoretically this should be more cache friendly since they're all packed together
-	var buffer [7 * 4]RasterVertex
+	var buffer [7 * 5]RasterVertex
 	in := buffer[0:7]
 	zSlice := buffer[7:14]
-	zRemainder := buffer[14:21]
-	xRemainder := buffer[21:28]
+	// technically we don't need a buffer for xSlice, we could reuse `in` in the x loop
+	// however, this is more readable
+	xSlice := buffer[14:21]
+	zRemainder := buffer[21:28]
+	xRemainder := buffer[28:35]
 
 	in[0] = RasterVertex{X: v0.X(), Y: v0.Y(), Z: v0.Z()}
 	in[1] = RasterVertex{X: v1.X(), Y: v1.Y(), Z: v1.Z()}
@@ -93,7 +96,7 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 
 		for x := x0; x <= x1; x++ {
 			cx := hf.bMin.X() + float64(x)*cellSize
-			xSliceSize, xRemainderSize = dividePoly(zSlice, xRemainderSize, zRemainder, xRemainder, cx+cellSize, AxisTypeX)
+			xSliceSize, xRemainderSize = dividePoly(zSlice, xRemainderSize, xSlice, xRemainder, cx+cellSize, AxisTypeX)
 			bufferSwap(&zSlice, &xRemainder)
 
 			if xSliceSize < 3 {
@@ -104,11 +107,11 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 				continue
 			}
 
-			spanMin := zRemainder[0].Y
-			spanMax := zRemainder[0].Y
+			spanMin := xSlice[0].Y
+			spanMax := xSlice[0].Y
 			for i := 0; i < xSliceSize; i++ {
-				spanMin = min(spanMin, zRemainder[i].Y)
-				spanMax = Max(spanMax, zRemainder[i].Y)
+				spanMin = min(spanMin, xSlice[i].Y)
+				spanMax = Max(spanMax, xSlice[i].Y)
 			}
 			spanMin -= hf.bMin.Y()
 			spanMax -= hf.bMin.Y()

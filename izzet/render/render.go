@@ -1123,6 +1123,21 @@ func (r *Renderer) HoveredEntityID() *int {
 	return r.hoveredEntityID
 }
 
+func initOpenGLRenderSettings() {
+	// gl.ClearColor(0.0, 0.5, 0.5, 0.0)
+	gl.ClearColor(1, 1, 1, 1)
+	gl.ClearDepth(1)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LEQUAL)
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+	gl.FrontFace(gl.CCW)
+	gl.Enable(gl.MULTISAMPLE)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Disable(gl.FRAMEBUFFER_SRGB)
+}
+
 var (
 	InActiveColorBg      imgui.Vec4 = imgui.Vec4{X: .1, Y: .1, Z: 0.1, W: 1}
 	ActiveColorBg        imgui.Vec4 = imgui.Vec4{X: .3, Y: .3, Z: 0.3, W: 1}

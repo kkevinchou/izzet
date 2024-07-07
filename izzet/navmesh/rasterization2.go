@@ -18,7 +18,7 @@ const (
 	AxisTypeZ AxisType = "Z"
 )
 
-func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, inverseCellHeight float64, hf *HeightField, walkable bool) int {
+func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, inverseCellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
 	triBBMin := v0
 	vMin(&triBBMin, &v1)
 	vMin(&triBBMin, &v2)
@@ -47,35 +47,35 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 	// theoretically this should be more cache friendly since they're all packed together
 	var buffer [7 * 4]RasterVertex
 	in := buffer[0:7]
-	inRow := buffer[7:14]
-	p1 := buffer[14:21]
-	p2 := buffer[21:28]
+	zSlice := buffer[7:14]
+	zRemainder := buffer[14:21]
+	xRemainder := buffer[21:28]
 
 	in[0] = RasterVertex{X: v0.X(), Y: v0.Y(), Z: v0.Z()}
 	in[1] = RasterVertex{X: v1.X(), Y: v1.Y(), Z: v1.Z()}
 	in[2] = RasterVertex{X: v2.X(), Y: v2.Y(), Z: v2.Z()}
 
-	var nvRow int
-	var nvIn int = 3
+	var zSliceSize int
+	var zRemainderSize int = 3
 
 	for z := z0; z <= z1; z++ {
 		cellZ := hf.bMin.Z() + float64(z)*cellSize
-		nvRow, nvIn = dividePoly(in, nvIn, inRow, p1, cellZ+cellSize, AxisTypeZ)
-		bufferSwap(&in, &p1)
+		zSliceSize, zRemainderSize = dividePoly(in, zRemainderSize, zSlice, zRemainder, cellZ+cellSize, AxisTypeZ)
+		bufferSwap(&in, &zRemainder)
 
-		if nvRow < 3 {
+		if zSliceSize < 3 {
 			continue
 		}
 		if z < 0 {
 			continue
 		}
 
-		minX := inRow[0].X
-		maxX := inRow[0].X
+		minX := zSlice[0].X
+		maxX := zSlice[0].X
 
-		for i := 0; i < nvRow; i++ {
-			minX = min(minX, inRow[i].X)
-			maxX = max(maxX, inRow[i].X)
+		for i := 0; i < zSliceSize; i++ {
+			minX = min(minX, zSlice[i].X)
+			maxX = max(maxX, zSlice[i].X)
 		}
 
 		x0 := int((minX - hf.bMin.X()) * inverseCellSize)
@@ -88,15 +88,15 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 		x0 = Clamp(x0, -1, w-1)
 		x1 = Clamp(x1, 0, w-1)
 
-		var nv int
-		nv2 := nvRow
+		var xSliceSize int
+		xRemainderSize := zSliceSize
 
 		for x := x0; x <= x1; x++ {
 			cx := hf.bMin.X() + float64(x)*cellSize
-			nv, nv2 = dividePoly(inRow, nv2, p1, p2, cx+cellSize, AxisTypeX)
-			bufferSwap(&inRow, &p2)
+			xSliceSize, xRemainderSize = dividePoly(zSlice, xRemainderSize, zRemainder, xRemainder, cx+cellSize, AxisTypeX)
+			bufferSwap(&zSlice, &xRemainder)
 
-			if nv < 3 {
+			if xSliceSize < 3 {
 				continue
 			}
 
@@ -104,11 +104,11 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 				continue
 			}
 
-			spanMin := p1[0].Y
-			spanMax := p1[0].Y
-			for i := 0; i < nv; i++ {
-				spanMin = min(spanMin, p1[i].Y)
-				spanMax = Max(spanMax, p1[i].Y)
+			spanMin := zRemainder[0].Y
+			spanMax := zRemainder[0].Y
+			for i := 0; i < xSliceSize; i++ {
+				spanMin = min(spanMin, zRemainder[i].Y)
+				spanMax = Max(spanMax, zRemainder[i].Y)
 			}
 			spanMin -= hf.bMin.Y()
 			spanMax -= hf.bMin.Y()
@@ -135,7 +135,7 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 			spanMinCellIndex := Clamp(int(math.Floor(spanMin*inverseCellHeight)), 0, spanMaxHeight)
 			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*inverseCellHeight)), spanMinCellIndex+1, spanMaxHeight)
 
-			hf.AddSpan(x, z, spanMinCellIndex, spanMaxCellIndex, walkable)
+			hf.AddSpan(x, z, spanMinCellIndex, spanMaxCellIndex, walkable, areaMergeThreshold)
 		}
 	}
 

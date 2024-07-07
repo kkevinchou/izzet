@@ -20,7 +20,8 @@ func TestHeightField(t *testing.T) {
 	// X
 
 	// first voxel
-	hf.AddVoxel(0, 0, 0, true)
+	// hf.AddVoxel(0, 0, 0, true)
+	hf.AddSpan(0, 0, 0, 1, true)
 	count = hf.SpanCount()
 	if count != 1 {
 		t.Fatalf("count %d != 1", count)

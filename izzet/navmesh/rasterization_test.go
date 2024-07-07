@@ -8,9 +8,9 @@ import (
 )
 
 func TestRasterization(t *testing.T) {
-	v0 := mgl64.Vec3{0, 0, 1}
-	v1 := mgl64.Vec3{1, 0, 1}
-	v2 := mgl64.Vec3{1, 0, 0}
+	v0 := mgl64.Vec3{0, 0, 0}
+	v1 := mgl64.Vec3{0, 0, 1}
+	v2 := mgl64.Vec3{0, 1, 0}
 
 	minVertex := mgl64.Vec3{-10, -10, -10}
 	maxVertex := mgl64.Vec3{10, 10, 10}

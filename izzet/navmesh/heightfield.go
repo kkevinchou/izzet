@@ -1,6 +1,8 @@
 package navmesh
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -131,7 +133,7 @@ func (hf *HeightField) AddVoxel(x, y, z int, walkable bool) {
 	}
 }
 
-func (hf *HeightField) AddSpan(x, z, min, max int, walkable bool) {
+func (hf *HeightField) AddSpan(x, z, sMin, sMax int, walkable bool, areaMergeThreshold int) {
 	var previousSpan *Span
 	columnIndex := x + z*hf.width
 	currentSpan := hf.spans[columnIndex]
@@ -141,7 +143,7 @@ func (hf *HeightField) AddSpan(x, z, min, max int, walkable bool) {
 		area = WALKABLE_AREA
 	}
 
-	newSpan := &Span{min: min, max: max, area: area}
+	newSpan := &Span{min: sMin, max: sMax, area: area}
 
 	for currentSpan != nil {
 		if currentSpan.min > newSpan.max {
@@ -157,6 +159,14 @@ func (hf *HeightField) AddSpan(x, z, min, max int, walkable bool) {
 			}
 			if currentSpan.max > newSpan.max {
 				newSpan.max = currentSpan.max
+			}
+
+			// merge flags
+			if int(math.Abs(float64(newSpan.max-currentSpan.max))) <= areaMergeThreshold {
+				// higher area ID numbers indicate higher resolution priority
+				// NULL_AREA is the smallest
+				// WALKABLE_AREA is the largest
+				newSpan.area = max(newSpan.area, currentSpan.area)
 			}
 
 			next := currentSpan.next

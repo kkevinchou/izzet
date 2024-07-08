@@ -8,6 +8,31 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
+type DebugComboOption string
+
+const (
+	ComboOptionFinalRender    DebugComboOption = "FINALRENDER"
+	ComboOptionColorPicking   DebugComboOption = "COLORPICKING"
+	ComboOptionHDR            DebugComboOption = "HDR (bloom only)"
+	ComboOptionBloom          DebugComboOption = "BLOOMTEXTURE (bloom only)"
+	ComboOptionShadowDepthMap DebugComboOption = "SHADOW DEPTH MAP"
+	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
+	ComboOptionCubeDepthMap   DebugComboOption = "CUBE DEPTH MAP"
+)
+
+var SelectedDebugComboOption DebugComboOption = ComboOptionFinalRender
+
+var (
+	debugComboOptions []DebugComboOption = []DebugComboOption{
+		ComboOptionFinalRender,
+		ComboOptionColorPicking,
+		ComboOptionHDR,
+		ComboOptionBloom,
+		ComboOptionShadowDepthMap,
+		ComboOptionCameraDepthMap,
+	}
+)
+
 func stats(app renderiface.App, renderContext RenderContext) {
 	settings := app.RuntimeConfig()
 	mr := app.MetricsRegistry()
@@ -41,10 +66,10 @@ func stats(app renderiface.App, renderContext RenderContext) {
 				if settings.ShowDebugTexture {
 					imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
 					if imgui.BeginV("Texture Viewer", &settings.ShowDebugTexture, imgui.WindowFlagsNone) {
-						if imgui.BeginCombo("", string(SelectedComboOption)) {
-							for _, option := range comboOptions {
+						if imgui.BeginCombo("", string(SelectedDebugComboOption)) {
+							for _, option := range debugComboOptions {
 								if imgui.SelectableBool(string(option)) {
-									SelectedComboOption = option
+									SelectedDebugComboOption = option
 								}
 							}
 							imgui.EndCombo()

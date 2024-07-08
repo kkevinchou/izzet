@@ -338,33 +338,33 @@ func (r *Renderer) Render(delta time.Duration) {
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 		imguiFinalRenderTexture = r.imguiCompositeTexture
-		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
+		if panels.SelectedDebugComboOption == panels.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionColorPicking {
 			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionHDR {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionShadowDepthMap {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionShadowDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionCameraDepthMap {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		imguiFinalRenderTexture = r.imguiMainColorTexture
-		if panels.SelectedComboOption == panels.ComboOptionFinalRender {
+		if panels.SelectedDebugComboOption == panels.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionColorPicking {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionColorPicking {
 			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionHDR {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = 0
-		} else if panels.SelectedComboOption == panels.ComboOptionBloom {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = 0
-		} else if panels.SelectedComboOption == panels.ComboOptionShadowDepthMap {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionShadowDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedComboOption == panels.ComboOptionCameraDepthMap {
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		}
 	}

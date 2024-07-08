@@ -81,9 +81,6 @@ type RuntimeConfig struct {
 	NavigationMeshMinRegionArea   int32
 	NavigationmeshMaxError        float32
 
-	// Navigation Mesh Rendering
-	NavigationMeshDrawVoxels bool
-
 	ShadowmapZOffset float32
 }
 

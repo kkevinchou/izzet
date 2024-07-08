@@ -5,6 +5,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/render/panels"
 )
 
 var (
@@ -22,12 +23,14 @@ func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField, nm.BlurredDistances)
 	}
 
-	if r.app.RuntimeConfig().NavigationMeshDrawVoxels {
+	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
+		gl.BindVertexArray(navmeshVAOCache)
+		r.iztDrawElements(navmeshVAOCacheVertexCount * 36)
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionVoxel {
 		gl.BindVertexArray(voxelVAOCache)
 		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
 	} else {
-		gl.BindVertexArray(navmeshVAOCache)
-		r.iztDrawElements(navmeshVAOCacheVertexCount * 36)
+		panic("WAT")
 	}
 }
 func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []int) (uint32, int32) {
@@ -98,22 +101,22 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32
 		x, y, z := position.X(), position.Y(), position.Z()
 		vertexAttributes = append(vertexAttributes, []float32{
 			// front
-			x, y, z, 0, 0, -1,
-			1 + x, y, z, 0, 0, -1,
-			1 + x, lengths[i] + y, z, 0, 0, -1,
+			x, y, z, 0, 0, 1,
+			1 + x, y, z, 0, 0, 1,
+			1 + x, lengths[i] + y, z, 0, 0, 1,
 
-			1 + x, lengths[i] + y, z, 0, 0, -1,
-			x, lengths[i] + y, z, 0, 0, -1,
-			x, y, z, 0, 0, -1,
+			1 + x, lengths[i] + y, z, 0, 0, 1,
+			x, lengths[i] + y, z, 0, 0, 1,
+			x, y, z, 0, 0, 1,
 
 			// back
-			1 + x, lengths[i] + y, z - 1, 0, 0, 1,
-			1 + x, y, z - 1, 0, 0, 1,
-			x, y, z - 1, 0, 0, 1,
+			1 + x, lengths[i] + y, z - 1, 0, 0, -1,
+			1 + x, y, z - 1, 0, 0, -1,
+			x, y, z - 1, 0, 0, -1,
 
-			x, y, z - 1, 0, 0, 1,
-			x, lengths[i] + y, z - 1, 0, 0, 1,
-			1 + x, lengths[i] + y, z - 1, 0, 0, 1,
+			x, y, z - 1, 0, 0, -1,
+			x, lengths[i] + y, z - 1, 0, 0, -1,
+			1 + x, lengths[i] + y, z - 1, 0, 0, -1,
 
 			// rig1
 			1 + x, y, z, 1, 0, 0,

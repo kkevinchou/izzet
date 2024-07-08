@@ -9,27 +9,19 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
-type ComboOption string
+type NavMeshRenderComboOption string
 
 const (
-	ComboOptionFinalRender    ComboOption = "FINALRENDER"
-	ComboOptionColorPicking   ComboOption = "COLORPICKING"
-	ComboOptionHDR            ComboOption = "HDR (bloom only)"
-	ComboOptionBloom          ComboOption = "BLOOMTEXTURE (bloom only)"
-	ComboOptionShadowDepthMap ComboOption = "SHADOW DEPTH MAP"
-	ComboOptionCameraDepthMap ComboOption = "CAMERA DEPTH MAP"
-	ComboOptionCubeDepthMap   ComboOption = "CUBE DEPTH MAP"
+	ComboOptionCompactHeightField NavMeshRenderComboOption = "Compact Height Field"
+	ComboOptionVoxel              NavMeshRenderComboOption = "Voxel"
 )
 
-var SelectedComboOption ComboOption = ComboOptionFinalRender
+var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
+
 var (
-	comboOptions []ComboOption = []ComboOption{
-		ComboOptionFinalRender,
-		ComboOptionColorPicking,
-		ComboOptionHDR,
-		ComboOptionBloom,
-		ComboOptionShadowDepthMap,
-		ComboOptionCameraDepthMap,
+	navmeshRenderComboOptions []NavMeshRenderComboOption = []NavMeshRenderComboOption{
+		ComboOptionCompactHeightField,
+		ComboOptionVoxel,
 	}
 )
 
@@ -152,11 +144,14 @@ func worldProps(app renderiface.App) {
 		imgui.EndTable()
 
 		imgui.LabelText("##", "Draw")
-
-		imgui.BeginTableV("Navigation Mesh Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-		panelutils.SetupRow("Voxels", func() { imgui.Checkbox("", &runtimeConfig.NavigationMeshDrawVoxels) }, true)
-		imgui.EndTable()
+		if imgui.BeginCombo("##", string(SelectedNavmeshRenderComboOption)) {
+			for _, option := range navmeshRenderComboOptions {
+				if imgui.SelectableBool(string(option)) {
+					SelectedNavmeshRenderComboOption = option
+				}
+			}
+			imgui.EndCombo()
+		}
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsNone) {

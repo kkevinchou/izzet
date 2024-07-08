@@ -1,6 +1,8 @@
 package navmesh
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -8,7 +10,7 @@ type Span struct {
 	min, max int
 	next     *Span
 	area     AREA_TYPE
-	x, z     int
+	x, z     int // purely for debugging, x and z can be removed
 }
 
 func (s *Span) Min() int {
@@ -131,12 +133,17 @@ func (hf *HeightField) AddVoxel(x, y, z int, walkable bool) {
 	}
 }
 
-func (hf *HeightField) AddSpan(x, z, min, max int) {
+func (hf *HeightField) AddSpan(x, z, sMin, sMax int, walkable bool, areaMergeThreshold int) {
 	var previousSpan *Span
 	columnIndex := x + z*hf.width
 	currentSpan := hf.spans[columnIndex]
 
-	newSpan := &Span{min: min, max: max}
+	area := NULL_AREA
+	if walkable {
+		area = WALKABLE_AREA
+	}
+
+	newSpan := &Span{min: sMin, max: sMax, area: area, x: x, z: z}
 
 	for currentSpan != nil {
 		if currentSpan.min > newSpan.max {
@@ -147,11 +154,21 @@ func (hf *HeightField) AddSpan(x, z, min, max int) {
 			previousSpan = currentSpan
 			currentSpan = currentSpan.next
 		} else {
+			// the current recast implementation favors the area of the new span over the new
+			// if the max of each span is outside of the areaMergeThreshold
 			if currentSpan.min < newSpan.min {
 				newSpan.min = currentSpan.min
 			}
 			if currentSpan.max > newSpan.max {
 				newSpan.max = currentSpan.max
+			}
+
+			// merge flags
+			if int(math.Abs(float64(newSpan.max-currentSpan.max))) <= areaMergeThreshold {
+				// higher area ID numbers indicate higher resolution priority
+				// NULL_AREA is the smallest
+				// WALKABLE_AREA is the largest
+				newSpan.area = max(newSpan.area, currentSpan.area)
 			}
 
 			next := currentSpan.next
@@ -174,22 +191,11 @@ func (hf *HeightField) AddSpan(x, z, min, max int) {
 }
 
 func (hf *HeightField) Test() {
-	maxX := -1
-	maxZ := -1
-	_, _ = maxX, maxZ
-
 	for z := range hf.height {
 		for x := range hf.width {
 			index := x + z*hf.width
 			span := hf.Spans()[index]
 			for span != nil {
-				if span.x > maxX {
-					maxZ = span.z
-				}
-				maxX = max(maxX, span.x)
-
-				// minZ = min(minZ, span.z)
-				// maxZ = max(maxZ, span.z)
 				span = span.next
 			}
 		}

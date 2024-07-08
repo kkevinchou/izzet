@@ -12,8 +12,31 @@
   - Polygons are all triangles at the moment, I still need to merge them into convex polygons
   - There's potentially some work remaining for removing edge vertices, and finding portal edges but I don't understand that part yet
 - rcBuildPolyMeshDetail
-  - This is step creates an actual detailed mesh for navigation. The points on the mesh will better track the geometry of the level as it will consider the height level of the polygon via sampling and also create the points in world space.
-  - This step hasn't been started yet but is the last step in constructing the navigation mesh
+  - for each polygon
+    - create a height patch
+    - getHeightData
+      - fill the height patch with height data from the compact height field
+    - builPolyDetail
+      - calculate the minimum extent
+      - for each edge
+        - create samples along the edge
+          - the number of samples is based on sampleDist
+        - simplify the samples
+          - iterate through the samples
+          - if the max deviation is larger than the accepted error, add the sample with the largest deviation to the list of points. otherwise, move on to the next edge
+        - add the vertices to the hull
+      - if the polygon minimum extent is small (sliver or small triangle), do not try to add internal points
+        - triangulate the hull
+        - for each triangle, set a flag to mark it if one of its edges lies on the hull
+      - triangulate the hull
+      - sample the polygon in a grid arrangement
+      - add vertices that have the most error, repeat until error threshold is met, or all samples were added
+      - create a delauney triangulation based on the added vertex
+        - TODO: do an incremental add instead of full rebuiild
+  - move vertices to world space
+  - store vertices in the detailed poly mesh
+  - store triangles in the detailed poly mesh
+    - seems like it doesn't store the polygons but triangles only??
 
 ## Edge cases remaining
 

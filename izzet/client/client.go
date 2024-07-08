@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/gl/v3.2-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/platforms"
@@ -95,11 +94,7 @@ type Client struct {
 func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultProject string) *Client {
 	initSeed()
 
-	imgui.CreateContext()
-	imguiIO := imgui.CurrentIO()
-	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
-
-	sdlPlatform, window, err := platforms.NewSDLPlatform(imguiIO)
+	sdlPlatform, window, err := platforms.NewSDLPlatform()
 	if err != nil {
 		panic(err)
 	}

@@ -140,7 +140,7 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 
 		// TODO - merge holes
 		if numHoles > 0 {
-			panic("holes detected")
+			// panic("holes detected")
 			// numRegions := chf.maxRegionID + 1
 		}
 	}

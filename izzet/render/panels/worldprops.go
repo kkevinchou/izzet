@@ -124,9 +124,9 @@ func worldProps(app renderiface.App) {
 			}
 		}, true)
 		panelutils.SetupRow("Climbable Height", func() {
-			var i int32 = runtimeConfig.NavigationMeshClimbaleHeight
+			var i int32 = runtimeConfig.NavigationMeshClimbableHeight
 			if imgui.InputInt("", &i) {
-				runtimeConfig.NavigationMeshClimbaleHeight = i
+				runtimeConfig.NavigationMeshClimbableHeight = i
 			}
 		}, true)
 		panelutils.SetupRow("Min Region Area", func() {
@@ -144,7 +144,7 @@ func worldProps(app renderiface.App) {
 		if imgui.Button("Build") {
 			iterations := int(runtimeConfig.NavigationMeshIterations)
 			walkableHeight := int(runtimeConfig.NavigationMeshWalkableHeight)
-			climbableHeight := int(runtimeConfig.NavigationMeshClimbaleHeight)
+			climbableHeight := int(runtimeConfig.NavigationMeshClimbableHeight)
 			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)

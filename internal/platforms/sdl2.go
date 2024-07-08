@@ -5,6 +5,7 @@ import (
 	"math"
 
 	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -19,7 +20,11 @@ type SDLPlatform struct {
 	keyMap  map[sdl.Scancode]imgui.Key
 }
 
-func NewSDLPlatform(imguiIO *imgui.IO) (*SDLPlatform, *SDLWindow, error) {
+func NewSDLPlatform() (*SDLPlatform, *SDLWindow, error) {
+	imgui.CreateContext()
+	imguiIO := imgui.CurrentIO()
+	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
+
 	window, err := InitSDL()
 	if err != nil {
 		return nil, nil, err

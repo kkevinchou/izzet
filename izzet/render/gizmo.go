@@ -30,7 +30,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Translate3D(renderPosition.X(), renderPosition.Y(), renderPosition.Z())))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
@@ -38,15 +38,15 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	for _, entityID := range axisEntityIDs {
 		axis := gizmo.TranslationGizmo.EntityIDToAxis[entityID]
 		shader.SetUniformUInt("entityID", uint32(entityID))
-		lines := [][2]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
+		lines := [][2]mgl64.Vec3{{mgl64.Vec3{}, axis.Direction}}
 		color := colors[entityID]
 
 		if gizmo.TranslationGizmo.HoveredEntityID == entityID {
 			color = mgl64.Vec3{1, 1, 0}
 		}
 
-		// r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
-		r.drawLineGroup(fmt.Sprintf("%d_%v", entityID, renderPosition), *viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+		// TODO: refactor to do a single draw call
+		r.drawLineGroup(fmt.Sprintf("translation_gizmo_%d", entityID), *viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 	}
 
 	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
@@ -101,16 +101,17 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 }
 
 func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
-	shader.Use()
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
 	}
+
 	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
+
+	shader.Use()
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	colors := map[int]mgl64.Vec3{
 		gizmo.GizmoXAxisPickingID:   mgl64.Vec3{1, 0, 0},
@@ -126,16 +127,17 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	for _, entityID := range axisEntityIDs {
 		axis := gizmo.ScaleGizmo.EntityIDToAxis[entityID]
 		shader.SetUniformUInt("entityID", uint32(entityID))
-		shader.SetUniformMat4("model", mgl32.Ident4())
-
+		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Translate3D(renderPosition.X(), renderPosition.Y(), renderPosition.Z())))
+		lines := [][2]mgl64.Vec3{{mgl64.Vec3{}, axis.Direction}}
 		color := colors[entityID]
+
 		if gizmo.ScaleGizmo.HoveredEntityID == entityID || gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 			color = hoverColor
 		}
 
 		if entityID != gizmo.GizmoAllAxisPickingID {
-			lines := [][]mgl64.Vec3{{renderPosition, renderPosition.Add(axis.Direction)}}
-			r.drawLines(*viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+			// TODO: refactor to do a single draw call
+			r.drawLineGroup(fmt.Sprintf("scale_gizmo_%d", entityID), *viewerContext, shader, lines, settings.GizmoAxisThickness, color)
 		}
 
 		cubePosition := renderPosition.Add(axis.Direction)

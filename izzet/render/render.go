@@ -99,6 +99,8 @@ type Renderer struct {
 	gameWindowWidth   int
 	gameWindowHeight  int
 	menuBarHeight     float32
+
+	hoveredEntityID *int
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -325,6 +327,9 @@ func (r *Renderer) Render(delta time.Duration) {
 	// clear depth for gizmo rendering
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	r.renderGizmos(cameraViewerContext, renderContext)
+
+	// store color picking entity
+	r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
 
 	var finalRenderTexture uint32
 	var imguiFinalRenderTexture imgui.TextureID
@@ -1112,6 +1117,25 @@ func (r *Renderer) SetWorld(world *world.GameWorld) {
 
 func (r *Renderer) GameWindowHovered() bool {
 	return r.gameWindowHovered
+}
+
+func (r *Renderer) HoveredEntityID() *int {
+	return r.hoveredEntityID
+}
+
+func initOpenGLRenderSettings() {
+	// gl.ClearColor(0.0, 0.5, 0.5, 0.0)
+	gl.ClearColor(1, 1, 1, 1)
+	gl.ClearDepth(1)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LEQUAL)
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+	gl.FrontFace(gl.CCW)
+	gl.Enable(gl.MULTISAMPLE)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
 var (

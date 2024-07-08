@@ -771,10 +771,16 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 
 var pickingBuffer []byte
 
-// NOTE: this method should only be called from within the render loop. i believe some past
-// crashes have happened trying to read the color picking FBO outside of the renderer. for
-// example if the game loop tries to sample the frame buffer right after a buffer swap, the
-// data may be undefined
+// NOTE: this method should only be called from within the render loop. if the frame
+// buffer is swapped, then the data in the buffer can be undefined. so, we should make
+// sure this is called in the render loop and before we swap frame buffers. that said,
+// this might be handled automatically by the graphics driver so it may not actually
+// be necessary.
+//
+// some changes that i've made to attempt crash fixes is moving the picking buffer into
+// a package variable outside of the getEntityByPixelPosition method. in addition, i've
+// done better vao caching for our gizmos which previously were recreated whenever the
+// camera moves
 func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	// return nil
 	if r.app.Minimized() || !r.app.WindowFocused() {

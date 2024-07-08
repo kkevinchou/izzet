@@ -759,25 +759,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	contourSet := navmesh.BuildContours(chf, maxError, 1)
 	navmesh.BuildPolyMesh(contourSet)
 
-	// for _, contour := range contourSet.Contours {
-	// 	verts := contour.Verts
-	// 	for i := 0; i < len(verts); i++ {
-	// 		v1 := verts[i]
-	// 		v2 := verts[(i+1)%len(verts)]
-	// 		v164 := mgl64.Vec3{float64(v1.X), float64(v1.Y + 2), float64(v1.Z)}.Add(minVertex)
-	// 		v264 := mgl64.Vec3{float64(v2.X), float64(v2.Y + 2), float64(v2.Z)}.Add(minVertex)
-
-	// 		debugLines = append(debugLines, [2]mgl64.Vec3{v164, v264})
-	// 	}
-	// }
-
-	// lines don't join properly at mgl64.Vec3{267, 173, 129}
-	// debugLines = [][2]mgl64.Vec3{
-	// 	// [2]mgl64.Vec3{mgl64.Vec3{266, 173, -28}, mgl64.Vec3{267, 173, 129}},
-	// 	[2]mgl64.Vec3{mgl64.Vec3{267, 173, 129}, mgl64.Vec3{266, 173, -28}},
-	// 	[2]mgl64.Vec3{mgl64.Vec3{267, 173, 129}, mgl64.Vec3{209, 173, 302}},
-	// }
-
 	nm := &navmesh.NavigationMesh{
 		HeightField:          hf,
 		CompactHeightField:   chf,

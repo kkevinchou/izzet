@@ -46,7 +46,6 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 		gl.BindVertexArray(simplifiedContourVAOCache)
-		// r.iztDrawLineStrip(simplifiedContourVertexCount)
 		r.iztDrawLines(simplifiedContourVertexCount)
 	} else {
 		panic("WAT")
@@ -57,12 +56,6 @@ func createSimplifiedContourVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	contourSet := nm.ContourSet
 	minVertex := nm.Volume.MinVertex
 
-	// var vertices []float32
-	// for _, contour := range contourSet.Contours {
-	// 	for _, vert := range contour.Verts {
-	// 		vertices = append(vertices, float32(vert.X+int(minVertex.X())), float32(vert.Y+int(minVertex.Y())), float32(vert.Z+int(minVertex.Z())))
-	// 	}
-	// }
 	var vertices []float32
 	for _, contour := range contourSet.Contours {
 		for i, _ := range contour.Verts {

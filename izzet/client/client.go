@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
-	"github.com/kkevinchou/izzet/izzet/client/window"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -36,7 +35,7 @@ import (
 
 type Client struct {
 	gameOver      bool
-	window        window.Window
+	window        Window
 	platform      platforms.Platform
 	width, height int
 	client        network.IzzetClient
@@ -329,4 +328,11 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 func (g *Client) initSettings() {
 	config := runtimeconfig.DefaultRuntimeConfig()
 	g.runtimeConfig = &config
+}
+
+type Window interface {
+	Minimized() bool
+	WindowFocused() bool
+	GetSize() (int, int)
+	Swap()
 }

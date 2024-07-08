@@ -8,68 +8,94 @@ import (
 )
 
 var (
-	navmeshVAOCache map[string]uint32
-	numVertices     int32
+	navmeshVAOCache            uint32
+	navmeshVAOCacheVertexCount int32
 
 	voxelVAOCache            uint32
 	voxelVAOCacheVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(nm *navmesh.NavigationMesh) {
-	chf := nm.CompactHeightField
-	distances := nm.BlurredDistances
-	name := "navmesh"
 
-	if voxelVAOCacheVertexCount == 0 || nm.Invalidated {
+	if nm.Invalidated {
 		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
-	}
-
-	if _, ok := navmeshVAOCache[name]; !ok || nm.Invalidated {
-		var positions []mgl32.Vec3
-		var lengths []float32
-		var ds []int32
-		var regionIDs []int32
-
-		// assign the render id 0 to the unassigned region. this keeps the colors consistent
-		// when we color in all regions
-		regionRenderID := map[int]int{
-			0: 0,
-		}
-
-		for x := range chf.Width() {
-			for z := range chf.Height() {
-				cell := chf.Cells()[x+z*chf.Width()]
-				spanIndex := cell.SpanIndex
-				spanCount := cell.SpanCount
-
-				for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
-					span := chf.Spans()[i]
-					position := mgl32.Vec3{
-						float32(x) + float32(chf.BMin().X()),
-						float32(span.Y()) + float32(chf.BMin().Y()),
-						float32(z) + float32(chf.BMin().Z()),
-					}
-					positions = append(positions, position)
-					lengths = append(lengths, 1)
-					ds = append(ds, int32(distances[i]))
-					regionIDs = append(regionIDs, int32(span.RegionID()))
-					regionRenderID[span.RegionID()]++
-				}
-			}
-		}
-
-		numVertices = int32(len(positions))
-		vao := cubeAttributes(positions, lengths, ds, regionIDs)
-		navmeshVAOCache[name] = vao
+		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField, nm.BlurredDistances)
 	}
 
 	if r.app.RuntimeConfig().NavigationMeshDrawVoxels {
 		gl.BindVertexArray(voxelVAOCache)
 		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
 	} else {
-		gl.BindVertexArray(navmeshVAOCache[name])
-		r.iztDrawElements(numVertices * 36)
+		gl.BindVertexArray(navmeshVAOCache)
+		r.iztDrawElements(navmeshVAOCacheVertexCount * 36)
 	}
+}
+func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []int) (uint32, int32) {
+	var positions []mgl32.Vec3
+	var lengths []float32
+	var ds []int32
+	var regionIDs []int32
+
+	// assign the render id 0 to the unassigned region. this keeps the colors consistent
+	// when we color in all regions
+	regionRenderID := map[int]int{
+		0: 0,
+	}
+
+	for x := range chf.Width() {
+		for z := range chf.Height() {
+			cell := chf.Cells()[x+z*chf.Width()]
+			spanIndex := cell.SpanIndex
+			spanCount := cell.SpanCount
+
+			for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
+				span := chf.Spans()[i]
+				position := mgl32.Vec3{
+					float32(x) + float32(chf.BMin().X()),
+					float32(span.Y()) + float32(chf.BMin().Y()),
+					float32(z) + float32(chf.BMin().Z()),
+				}
+				positions = append(positions, position)
+				lengths = append(lengths, 1)
+				ds = append(ds, int32(distances[i]))
+				regionIDs = append(regionIDs, int32(span.RegionID()))
+				regionRenderID[span.RegionID()]++
+			}
+		}
+	}
+
+	vao := cubeAttributes(positions, lengths, ds, regionIDs)
+
+	return vao, int32(len(positions))
+}
+
+func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
+	var positions []mgl32.Vec3
+	var lengths []float32
+	var ds []int32
+	var regionIDs []int32
+
+	for z := range hf.Height {
+		for x := range hf.Width {
+			index := x + z*hf.Width
+			span := hf.Spans[index]
+			for span != nil {
+				position := mgl32.Vec3{
+					float32(x) + float32(hf.BMin.X()),
+					float32(span.Min) + float32(hf.BMin.Y()),
+					float32(z) + float32(hf.BMin.Z()),
+				}
+				positions = append(positions, position)
+				lengths = append(lengths, float32(span.Max-span.Min+1))
+				ds = append(ds, 0)
+				regionIDs = append(regionIDs, 0)
+
+				span = span.Next
+			}
+		}
+	}
+	vao := cubeAttributes(positions, lengths, ds, regionIDs)
+	return vao, int32(len(positions))
 }
 
 func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32, regionRenderIDs []int32) uint32 {
@@ -208,33 +234,4 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*4, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
 
 	return vao
-}
-
-func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
-	var positions []mgl32.Vec3
-	var lengths []float32
-	var ds []int32
-	var regionIDs []int32
-
-	for z := range hf.Height {
-		for x := range hf.Width {
-			index := x + z*hf.Width
-			span := hf.Spans[index]
-			for span != nil {
-				position := mgl32.Vec3{
-					float32(x) + float32(hf.BMin.X()),
-					float32(span.Min) + float32(hf.BMin.Y()),
-					float32(z) + float32(hf.BMin.Z()),
-				}
-				positions = append(positions, position)
-				lengths = append(lengths, float32(span.Max-span.Min+1))
-				ds = append(ds, 0)
-				regionIDs = append(regionIDs, 0)
-
-				span = span.Next
-			}
-		}
-	}
-	vao := cubeAttributes(positions, lengths, ds, regionIDs)
-	return vao, int32(len(positions))
 }

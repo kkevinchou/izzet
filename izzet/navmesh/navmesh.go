@@ -53,6 +53,7 @@ type NavigationMesh struct {
 	Volume             collider.BoundingBox
 	BlurredDistances   []int
 	DebugLines         [][2]mgl64.Vec3
+	ContourSet         *ContourSet
 }
 
 func Min[T cmp.Ordered](a T, b T) T {

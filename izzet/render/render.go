@@ -515,7 +515,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformFloat("roughness", .8)
 		shader.SetUniformFloat("metallic", 0)
 
-		r.drawNavmesh(nm)
+		r.drawNavmesh(shaderManager, viewerContext, nm)
 
 		// draw bounding box
 		volume := nm.Volume

@@ -1258,6 +1258,16 @@ func (r *Renderer) iztDrawArrays(first, count int32) {
 	gl.DrawArrays(gl.TRIANGLES, first, count)
 }
 
+func (r *Renderer) iztDrawLineStrip(count int32) {
+	r.app.RuntimeConfig().DrawCount += 1
+	gl.DrawArrays(gl.LINE_STRIP, 0, count)
+}
+
+func (r *Renderer) iztDrawLines(count int32) {
+	r.app.RuntimeConfig().DrawCount += 1
+	gl.DrawArrays(gl.LINES, 0, count)
+}
+
 func (r *Renderer) iztDrawElements(count int32) {
 	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
 	r.app.RuntimeConfig().DrawCount += 1

@@ -235,8 +235,8 @@ func InitSDL() (*sdl.Window, error) {
 	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
 	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 2)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
 
 	sdl.SetRelativeMouseMode(false)

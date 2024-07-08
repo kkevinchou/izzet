@@ -150,6 +150,13 @@ func worldProps(app renderiface.App) {
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)
 		}
 		imgui.EndTable()
+
+		imgui.LabelText("##", "Draw")
+
+		imgui.BeginTableV("Navigation Mesh Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
+		panelutils.InitColumns()
+		panelutils.SetupRow("Voxels", func() { imgui.Checkbox("", &runtimeConfig.NavigationMeshDrawVoxels) }, true)
+		imgui.EndTable()
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsNone) {

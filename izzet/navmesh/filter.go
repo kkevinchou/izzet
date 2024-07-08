@@ -1,18 +1,18 @@
 package navmesh
 
 func FilterLowHeightSpans(walkableHeight int, hf *HeightField) {
-	xSize := hf.width
-	zSize := hf.height
+	xSize := hf.Width
+	zSize := hf.Height
 	for z := range zSize {
 		for x := range xSize {
-			for span := hf.spans[x+z*xSize]; span != nil; span = span.next {
-				floor := span.max
+			for span := hf.Spans[x+z*xSize]; span != nil; span = span.Next {
+				floor := span.Max
 				ceiling := maxHeight
-				if span.next != nil {
-					ceiling = span.next.min
+				if span.Next != nil {
+					ceiling = span.Next.Min
 				}
 				if ceiling-floor < walkableHeight {
-					span.area = NULL_AREA
+					span.Area = NULL_AREA
 				}
 			}
 		}

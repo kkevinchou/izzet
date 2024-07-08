@@ -74,11 +74,15 @@ type RuntimeConfig struct {
 	ShowSelectionBoundingBox        bool
 	LockRenderingToCommandFrameRate bool
 
+	// Navigation Mesh
 	NavigationMeshIterations      int32
 	NavigationMeshWalkableHeight  int32
 	NavigationMeshClimbableHeight int32
 	NavigationMeshMinRegionArea   int32
 	NavigationmeshMaxError        float32
+
+	// Navigation Mesh Rendering
+	NavigationMeshDrawVoxels bool
 
 	ShadowmapZOffset float32
 }

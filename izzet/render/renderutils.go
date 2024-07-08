@@ -8,7 +8,7 @@ import (
 	"time"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/gl/v3.2-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -333,7 +333,6 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 				for _, p := range cp {
 					points = append(points, p.Add(start))
 				}
-
 			} else {
 				dir := end.Sub(start).Normalize()
 				q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
@@ -343,7 +342,6 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 					points = append(points, newEnd)
 				}
 			}
-
 		}
 		vao, length = r.generateTrisVAO(points)
 		item := TriangleVAO{VAO: vao, length: length}
@@ -358,6 +356,14 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 	shader.SetUniformFloat("intensity", 1.0)
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
+
+	//   glLineWidth(3.0f);
+	//   glBegin(GL_LINE_LOOP);
+	//         glVertex2d(x1, y1);
+	//         glVertex2d(x2, y1);
+	//         glVertex2d(x2, y2);
+	//         glVertex2d(x1, y2);
+	//   glEnd();
 }
 
 func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {

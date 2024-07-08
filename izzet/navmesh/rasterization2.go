@@ -27,17 +27,17 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 	vMax(&triBBMax, &v1)
 	vMax(&triBBMax, &v2)
 
-	if !overlapBounds(triBBMin, triBBMax, hf.bMin, hf.bMax) {
+	if !overlapBounds(triBBMin, triBBMax, hf.BMin, hf.BMax) {
 		return -1
 	}
 
-	w := hf.width
-	h := hf.height
-	by := hf.bMax.Y() - hf.bMin.Y()
+	w := hf.Width
+	h := hf.Height
+	by := hf.BMax.Y() - hf.BMin.Y()
 
 	// calculate the footprint of the triangle on the grid's z axis
-	z0 := int((triBBMin.Z() - hf.bMin.Z()) * inverseCellSize)
-	z1 := int((triBBMax.Z() - hf.bMin.Z()) * inverseCellSize)
+	z0 := int((triBBMin.Z() - hf.BMin.Z()) * inverseCellSize)
+	z1 := int((triBBMax.Z() - hf.BMin.Z()) * inverseCellSize)
 
 	// use -1 rather than 0 to cut the polygon properly at the start of the tile
 	z0 = Clamp(z0, -1, h-1)
@@ -62,7 +62,7 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 	var zRemainderSize int = 3
 
 	for z := z0; z <= z1; z++ {
-		cellZ := hf.bMin.Z() + float64(z)*cellSize
+		cellZ := hf.BMin.Z() + float64(z)*cellSize
 		zSliceSize, zRemainderSize = dividePoly(in, zRemainderSize, zSlice, zRemainder, cellZ+cellSize, AxisTypeZ)
 		bufferSwap(&in, &zRemainder)
 
@@ -81,8 +81,8 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 			maxX = max(maxX, zSlice[i].X)
 		}
 
-		x0 := int((minX - hf.bMin.X()) * inverseCellSize)
-		x1 := int((maxX - hf.bMin.X()) * inverseCellSize)
+		x0 := int((minX - hf.BMin.X()) * inverseCellSize)
+		x1 := int((maxX - hf.BMin.X()) * inverseCellSize)
 
 		if x1 < 0 || x0 >= w {
 			continue
@@ -95,7 +95,7 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 		xRemainderSize := zSliceSize
 
 		for x := x0; x <= x1; x++ {
-			cx := hf.bMin.X() + float64(x)*cellSize
+			cx := hf.BMin.X() + float64(x)*cellSize
 			xSliceSize, xRemainderSize = dividePoly(zSlice, xRemainderSize, xSlice, xRemainder, cx+cellSize, AxisTypeX)
 			bufferSwap(&zSlice, &xRemainder)
 
@@ -113,8 +113,8 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 				spanMin = min(spanMin, xSlice[i].Y)
 				spanMax = Max(spanMax, xSlice[i].Y)
 			}
-			spanMin -= hf.bMin.Y()
-			spanMax -= hf.bMin.Y()
+			spanMin -= hf.BMin.Y()
+			spanMax -= hf.BMin.Y()
 
 			// skip the span if it's outside the heightfield bounding box
 			if spanMax < 0 {

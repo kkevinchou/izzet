@@ -43,13 +43,13 @@ type CompactHeightField struct {
 func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *CompactHeightField {
 	chf := &CompactHeightField{}
 
-	chf.width = hf.width
-	chf.height = hf.height
+	chf.width = hf.Width
+	chf.height = hf.Height
 	chf.spanCount = hf.SpanCount()
 	chf.walkableHeight = walkableHeight
 	chf.walkableClimb = walkableClimb
-	chf.bMin = hf.bMin
-	chf.bMax = hf.bMax
+	chf.bMin = hf.BMin
+	chf.bMax = hf.BMax
 	chf.bMax[1] += float64(walkableHeight)
 	chf.cells = make([]CompactCell, chf.width*chf.height)
 	chf.spans = make([]CompactSpan, chf.spanCount)
@@ -64,7 +64,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 	numColumns := chf.width * chf.height
 
 	for columnIndex := range numColumns {
-		span := hf.spans[columnIndex]
+		span := hf.Spans[columnIndex]
 		if span == nil {
 			continue
 		}
@@ -72,16 +72,16 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 		cell := &chf.cells[columnIndex]
 		cell.SpanIndex = currentSpanIndex
 
-		for ; span != nil; span = span.next {
-			if span.area != NULL_AREA {
-				bottom := span.max
+		for ; span != nil; span = span.Next {
+			if span.Area != NULL_AREA {
+				bottom := span.Max
 				top := maxHeight
-				if span.next != nil {
-					top = span.next.min
+				if span.Next != nil {
+					top = span.Next.Min
 				}
 				chf.spans[currentSpanIndex].y = Clamp(bottom, 0, maxHeight)
 				chf.spans[currentSpanIndex].h = Clamp(top-bottom, 0, maxHeight)
-				chf.areas[currentSpanIndex] = span.area
+				chf.areas[currentSpanIndex] = span.Area
 				// set areas
 				currentSpanIndex++
 				cell.SpanCount++

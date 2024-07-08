@@ -445,9 +445,9 @@ func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField 
 }
 
 func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *HeightField, walkable bool) int {
-	vxs := int(heightField.bMax.X() - heightField.bMin.X())
-	vys := int(heightField.bMax.Y() - heightField.bMin.Y())
-	vzs := int(heightField.bMax.Z() - heightField.bMin.Z())
+	vxs := int(heightField.BMax.X() - heightField.BMin.X())
+	vys := int(heightField.BMax.Y() - heightField.BMin.Y())
+	vzs := int(heightField.BMax.Z() - heightField.BMin.Z())
 
 	vsz := int(math.Max(math.Max(float64(vxs), float64(vys)), float64(vzs)))
 
@@ -460,7 +460,7 @@ func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *Heig
 
 	var X0, Y0, Z0, X1, Y1, Z1, dx, dy, dz, x, y, z int
 
-	bMin := heightField.bMin
+	bMin := heightField.BMin
 
 	x0 -= int(bMin.X())
 	x1 -= int(bMin.X())

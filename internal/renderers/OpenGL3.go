@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/gl/v3.2-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 //go:embed gl-shader/main.vs
@@ -14,7 +14,7 @@ var unversionedVertexShader string
 //go:embed gl-shader/main.fs
 var unversionedFragmentShader string
 
-// OpenGL3 implements a renderer based on github.com/go-gl/gl (v3.2-core).
+// OpenGL3 implements a renderer based on github.com/go-gl/gl (v4.1-core).
 type OpenGL3 struct {
 	imguiIO *imgui.IO
 

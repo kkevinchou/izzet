@@ -36,7 +36,6 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		gl.BindVertexArray(voxelVAOCache)
 		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
-		gl.LineWidth(1)
 		shader := shaderManager.GetShaderProgram("flat")
 		// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
 		color := mgl64.Vec3{1, 0, 0}

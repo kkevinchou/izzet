@@ -355,14 +355,6 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 	shader.SetUniformFloat("intensity", 1.0)
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
-
-	//   glLineWidth(3.0f);
-	//   glBegin(GL_LINE_LOOP);
-	//         glVertex2d(x1, y1);
-	//         glVertex2d(x2, y1);
-	//         glVertex2d(x2, y2);
-	//         glVertex2d(x1, y2);
-	//   glEnd();
 }
 
 func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
@@ -769,7 +761,7 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
-var pickingBuffer []byte
+// var pickingBuffer []byte
 
 // NOTE: this method should only be called from within the render loop. if the frame
 // buffer is swapped, then the data in the buffer can be undefined. so, we should make
@@ -782,7 +774,6 @@ var pickingBuffer []byte
 // done better vao caching for our gizmos which previously were recreated whenever the
 // camera moves
 func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
-	// return nil
 	if r.app.Minimized() || !r.app.WindowFocused() {
 		return nil
 	}
@@ -793,7 +784,8 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-	// TODO: try creating this on renderer initialization and reusing this buffer?
+
+	var pickingBuffer []byte
 	if len(pickingBuffer) == 0 {
 		pickingBuffer = make([]byte, 4)
 	}

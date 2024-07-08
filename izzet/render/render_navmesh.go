@@ -36,12 +36,6 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []in
 	var ds []int32
 	var regionIDs []int32
 
-	// assign the render id 0 to the unassigned region. this keeps the colors consistent
-	// when we color in all regions
-	regionRenderID := map[int]int{
-		0: 0,
-	}
-
 	for x := range chf.Width() {
 		for z := range chf.Height() {
 			cell := chf.Cells()[x+z*chf.Width()]
@@ -59,7 +53,6 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []in
 				lengths = append(lengths, 1)
 				ds = append(ds, int32(distances[i]))
 				regionIDs = append(regionIDs, int32(span.RegionID()))
-				regionRenderID[span.RegionID()]++
 			}
 		}
 	}

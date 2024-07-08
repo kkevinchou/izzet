@@ -761,7 +761,7 @@ func (r *Renderer) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
-// var pickingBuffer []byte
+var pickingBuffer []byte
 
 // NOTE: this method should only be called from within the render loop. if the frame
 // buffer is swapped, then the data in the buffer can be undefined. so, we should make
@@ -785,7 +785,6 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 
-	var pickingBuffer []byte
 	if len(pickingBuffer) == 0 {
 		pickingBuffer = make([]byte, 4)
 	}

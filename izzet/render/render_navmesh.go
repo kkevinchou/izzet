@@ -148,58 +148,58 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32
 		x, y, z := position.X(), position.Y(), position.Z()
 		vertexAttributes = append(vertexAttributes, []float32{
 			// front
-			x, y, z, 0, 0, 1,
-			1 + x, y, z, 0, 0, 1,
-			1 + x, lengths[i] + y, z, 0, 0, 1,
+			x, y, z + 1, 0, 0, 1,
+			1 + x, y, z + 1, 0, 0, 1,
+			1 + x, lengths[i] + y, z + 1, 0, 0, 1,
 
-			1 + x, lengths[i] + y, z, 0, 0, 1,
-			x, lengths[i] + y, z, 0, 0, 1,
-			x, y, z, 0, 0, 1,
+			1 + x, lengths[i] + y, z + 1, 0, 0, 1,
+			x, lengths[i] + y, z + 1, 0, 0, 1,
+			x, y, z + 1, 0, 0, 1,
 
 			// back
-			1 + x, lengths[i] + y, z - 1, 0, 0, -1,
-			1 + x, y, z - 1, 0, 0, -1,
-			x, y, z - 1, 0, 0, -1,
+			1 + x, lengths[i] + y, z, 0, 0, -1,
+			1 + x, y, z, 0, 0, -1,
+			x, y, z, 0, 0, -1,
 
-			x, y, z - 1, 0, 0, -1,
-			x, lengths[i] + y, z - 1, 0, 0, -1,
-			1 + x, lengths[i] + y, z - 1, 0, 0, -1,
+			x, y, z, 0, 0, -1,
+			x, lengths[i] + y, z, 0, 0, -1,
+			1 + x, lengths[i] + y, z, 0, 0, -1,
 
 			// rig1
+			1 + x, y, z + 1, 1, 0, 0,
 			1 + x, y, z, 1, 0, 0,
-			1 + x, y, z - 1, 1, 0, 0,
-			1 + x, lengths[i] + y, z - 1, 1, 0, 0,
-
-			1 + x, lengths[i] + y, z - 1, 1, 0, 0,
 			1 + x, lengths[i] + y, z, 1, 0, 0,
-			1 + x, y, z, 1, 0, 0,
+
+			1 + x, lengths[i] + y, z, 1, 0, 0,
+			1 + x, lengths[i] + y, z + 1, 1, 0, 0,
+			1 + x, y, z + 1, 1, 0, 0,
 
 			// left
-			x, lengths[i] + y, z - 1, -1, 0, 0,
-			x, y, z - 1, -1, 0, 0,
-			x, y, z, -1, 0, 0,
-
-			x, y, z, -1, 0, 0,
 			x, lengths[i] + y, z, -1, 0, 0,
-			x, lengths[i] + y, z - 1, -1, 0, 0,
+			x, y, z, -1, 0, 0,
+			x, y, z + 1, -1, 0, 0,
+
+			x, y, z + 1, -1, 0, 0,
+			x, lengths[i] + y, z + 1, -1, 0, 0,
+			x, lengths[i] + y, z, -1, 0, 0,
 
 			// top
+			1 + x, lengths[i] + y, z + 1, 0, 1, 0,
 			1 + x, lengths[i] + y, z, 0, 1, 0,
-			1 + x, lengths[i] + y, z - 1, 0, 1, 0,
-			x, lengths[i] + y, z, 0, 1, 0,
+			x, lengths[i] + y, z + 1, 0, 1, 0,
 
+			x, lengths[i] + y, z + 1, 0, 1, 0,
+			1 + x, lengths[i] + y, z, 0, 1, 0,
 			x, lengths[i] + y, z, 0, 1, 0,
-			1 + x, lengths[i] + y, z - 1, 0, 1, 0,
-			x, lengths[i] + y, z - 1, 0, 1, 0,
 
 			// bottom
-			x, y, z, 0, -1, 0,
-			1 + x, y, z - 1, 0, -1, 0,
+			x, y, z + 1, 0, -1, 0,
 			1 + x, y, z, 0, -1, 0,
+			1 + x, y, z + 1, 0, -1, 0,
 
-			x, y, z - 1, 0, -1, 0,
-			1 + x, y, z - 1, 0, -1, 0,
 			x, y, z, 0, -1, 0,
+			1 + x, y, z, 0, -1, 0,
+			x, y, z + 1, 0, -1, 0,
 		}...)
 	}
 

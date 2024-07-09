@@ -27,7 +27,7 @@ var (
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
-		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField, nm.BlurredDistances)
+		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
 		simplifiedContourVAOCache, simplifiedContourVertexCount = createSimplifiedContourVAO(nm)
 	}
 
@@ -38,14 +38,11 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		gl.BindVertexArray(voxelVAOCache)
 		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
-		shader := shaderManager.GetShaderProgram("flat")
-		// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-		color := mgl64.Vec3{1, 0, 0}
+		shader := shaderManager.GetShaderProgram("line")
 		shader.Use()
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 		gl.BindVertexArray(simplifiedContourVAOCache)
 		r.iztDrawLines(simplifiedContourVertexCount)
 	} else {
@@ -57,15 +54,25 @@ func createSimplifiedContourVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	contourSet := nm.ContourSet
 	minVertex := nm.Volume.MinVertex
 
-	var vertices []float32
+	var vertexAttributes []float32
 	for _, contour := range contourSet.Contours {
 		for i, _ := range contour.Verts {
 			v0 := contour.Verts[i]
 			v1 := contour.Verts[(i+1)%len(contour.Verts)]
-			vertices = append(vertices, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
-			vertices = append(vertices, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
+
+			// v0
+			vertexAttributes = append(vertexAttributes, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+
+			// v1
+			vertexAttributes = append(vertexAttributes, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
 		}
 	}
+
+	var floatSize int32 = 4
+	ptrOffset := 0
+	var totalAttributeSize int32 = 6
 
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
@@ -74,15 +81,22 @@ func createSimplifiedContourVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*int(floatSize), gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, gl.PtrOffset(0))
+	// position
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, totalAttributeSize*floatSize, gl.PtrOffset(ptrOffset))
 	gl.EnableVertexAttribArray(0)
 
-	return vao, int32(len(vertices))
+	ptrOffset += 3
+
+	// color
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, totalAttributeSize*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
+	gl.EnableVertexAttribArray(1)
+
+	return vao, int32(len(vertexAttributes) / int(totalAttributeSize))
 }
 
-func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []int) (uint32, int32) {
+func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 	var lengths []float32

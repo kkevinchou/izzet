@@ -23,6 +23,9 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("flat", "flat", "flat", ""); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("line", "line", "line", ""); err != nil {
+		panic(err)
+	}
 	if err := shaderManager.CompileShaderProgram("ndc", "ndc", "ndc", ""); err != nil {
 		panic(err)
 	}

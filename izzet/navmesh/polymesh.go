@@ -103,7 +103,7 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 		// store polygons
 
 		for _, polygon := range polygons {
-			mesh.regionIDs = append(mesh.regionIDs, contour.regionID)
+			mesh.regionIDs = append(mesh.regionIDs, contour.RegionID)
 			mesh.areas = append(mesh.areas, contour.area)
 			mesh.polygons = append(mesh.polygons, polygon)
 			if len(mesh.polygons) > maxTris {

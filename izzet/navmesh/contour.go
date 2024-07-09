@@ -30,7 +30,7 @@ type SimplifiedVertex struct {
 }
 
 type Contour struct {
-	regionID int
+	RegionID int
 	area     AREA_TYPE
 	Verts    []SimplifiedVertex
 	RawVerts []Vertex
@@ -110,7 +110,7 @@ func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int)
 
 				if len(simplified) >= 3 {
 					contour := Contour{
-						regionID: regionID,
+						RegionID: regionID,
 						area:     area,
 						Verts:    simplified,
 						RawVerts: verts,

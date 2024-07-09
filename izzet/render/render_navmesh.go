@@ -82,6 +82,7 @@ func createSimplifiedContourVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 
 func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []int) (uint32, int32) {
 	var positions []mgl32.Vec3
+	var colors []mgl32.Vec3
 	var lengths []float32
 	var ds []int32
 	var regionIDs []int32
@@ -100,6 +101,7 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []in
 					float32(z) + float32(chf.BMin().Z()),
 				}
 				positions = append(positions, position)
+				colors = append(colors, mgl32.Vec3{1, 0, 1})
 				lengths = append(lengths, 1)
 				ds = append(ds, int32(distances[i]))
 				regionIDs = append(regionIDs, int32(span.RegionID()))
@@ -107,13 +109,14 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField, distances []in
 		}
 	}
 
-	vao := cubeAttributes(positions, lengths, ds, regionIDs)
+	vao := cubeAttributes(positions, lengths, ds, regionIDs, colors)
 
 	return vao, int32(len(positions))
 }
 
 func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 	var positions []mgl32.Vec3
+	var colors []mgl32.Vec3
 	var lengths []float32
 	var ds []int32
 	var regionIDs []int32
@@ -129,6 +132,7 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 					float32(z) + float32(hf.BMin.Z()),
 				}
 				positions = append(positions, position)
+				colors = append(colors, mgl32.Vec3{1, 0, 1})
 				lengths = append(lengths, float32(span.Max-span.Min+1))
 				ds = append(ds, 0)
 				regionIDs = append(regionIDs, 0)
@@ -137,97 +141,100 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 			}
 		}
 	}
-	vao := cubeAttributes(positions, lengths, ds, regionIDs)
+	vao := cubeAttributes(positions, lengths, ds, regionIDs, colors)
 	return vao, int32(len(positions))
 }
 
-func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32, regionRenderIDs []int32) uint32 {
+func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32, regionRenderIDs []int32, colors []mgl32.Vec3) uint32 {
 	var vertexAttributes []float32
 
-	for i, position := range positions {
+	for i := range len(positions) {
+		position := positions[i]
+		color := colors[i]
 		x, y, z := position.X(), position.Y(), position.Z()
+		r, g, b := color.X(), color.Y(), color.Z()
+
 		vertexAttributes = append(vertexAttributes, []float32{
 			// front
-			x, y, z + 1, 0, 0, 1,
-			1 + x, y, z + 1, 0, 0, 1,
-			1 + x, lengths[i] + y, z + 1, 0, 0, 1,
+			x, y, z + 1, 0, 0, 1, r, g, b,
+			1 + x, y, z + 1, 0, 0, 1, r, g, b,
+			1 + x, lengths[i] + y, z + 1, 0, 0, 1, r, g, b,
 
-			1 + x, lengths[i] + y, z + 1, 0, 0, 1,
-			x, lengths[i] + y, z + 1, 0, 0, 1,
-			x, y, z + 1, 0, 0, 1,
+			1 + x, lengths[i] + y, z + 1, 0, 0, 1, r, g, b,
+			x, lengths[i] + y, z + 1, 0, 0, 1, r, g, b,
+			x, y, z + 1, 0, 0, 1, r, g, b,
 
 			// back
-			1 + x, lengths[i] + y, z, 0, 0, -1,
-			1 + x, y, z, 0, 0, -1,
-			x, y, z, 0, 0, -1,
+			1 + x, lengths[i] + y, z, 0, 0, -1, r, g, b,
+			1 + x, y, z, 0, 0, -1, r, g, b,
+			x, y, z, 0, 0, -1, r, g, b,
 
-			x, y, z, 0, 0, -1,
-			x, lengths[i] + y, z, 0, 0, -1,
-			1 + x, lengths[i] + y, z, 0, 0, -1,
+			x, y, z, 0, 0, -1, r, g, b,
+			x, lengths[i] + y, z, 0, 0, -1, r, g, b,
+			1 + x, lengths[i] + y, z, 0, 0, -1, r, g, b,
 
 			// rig1
-			1 + x, y, z + 1, 1, 0, 0,
-			1 + x, y, z, 1, 0, 0,
-			1 + x, lengths[i] + y, z, 1, 0, 0,
+			1 + x, y, z + 1, 1, 0, 0, r, g, b,
+			1 + x, y, z, 1, 0, 0, r, g, b,
+			1 + x, lengths[i] + y, z, 1, 0, 0, r, g, b,
 
-			1 + x, lengths[i] + y, z, 1, 0, 0,
-			1 + x, lengths[i] + y, z + 1, 1, 0, 0,
-			1 + x, y, z + 1, 1, 0, 0,
+			1 + x, lengths[i] + y, z, 1, 0, 0, r, g, b,
+			1 + x, lengths[i] + y, z + 1, 1, 0, 0, r, g, b,
+			1 + x, y, z + 1, 1, 0, 0, r, g, b,
 
 			// left
-			x, lengths[i] + y, z, -1, 0, 0,
-			x, y, z, -1, 0, 0,
-			x, y, z + 1, -1, 0, 0,
+			x, lengths[i] + y, z, -1, 0, 0, r, g, b,
+			x, y, z, -1, 0, 0, r, g, b,
+			x, y, z + 1, -1, 0, 0, r, g, b,
 
-			x, y, z + 1, -1, 0, 0,
-			x, lengths[i] + y, z + 1, -1, 0, 0,
-			x, lengths[i] + y, z, -1, 0, 0,
+			x, y, z + 1, -1, 0, 0, r, g, b,
+			x, lengths[i] + y, z + 1, -1, 0, 0, r, g, b,
+			x, lengths[i] + y, z, -1, 0, 0, r, g, b,
 
 			// top
-			1 + x, lengths[i] + y, z + 1, 0, 1, 0,
-			1 + x, lengths[i] + y, z, 0, 1, 0,
-			x, lengths[i] + y, z + 1, 0, 1, 0,
+			1 + x, lengths[i] + y, z + 1, 0, 1, 0, r, g, b,
+			1 + x, lengths[i] + y, z, 0, 1, 0, r, g, b,
+			x, lengths[i] + y, z + 1, 0, 1, 0, r, g, b,
 
-			x, lengths[i] + y, z + 1, 0, 1, 0,
-			1 + x, lengths[i] + y, z, 0, 1, 0,
-			x, lengths[i] + y, z, 0, 1, 0,
+			x, lengths[i] + y, z + 1, 0, 1, 0, r, g, b,
+			1 + x, lengths[i] + y, z, 0, 1, 0, r, g, b,
+			x, lengths[i] + y, z, 0, 1, 0, r, g, b,
 
 			// bottom
-			x, y, z + 1, 0, -1, 0,
-			1 + x, y, z, 0, -1, 0,
-			1 + x, y, z + 1, 0, -1, 0,
+			x, y, z + 1, 0, -1, 0, r, g, b,
+			1 + x, y, z, 0, -1, 0, r, g, b,
+			1 + x, y, z + 1, 0, -1, 0, r, g, b,
 
-			x, y, z, 0, -1, 0,
-			1 + x, y, z, 0, -1, 0,
-			x, y, z + 1, 0, -1, 0,
+			x, y, z, 0, -1, 0, r, g, b,
+			1 + x, y, z, 0, -1, 0, r, g, b,
+			x, y, z + 1, 0, -1, 0, r, g, b,
 		}...)
 	}
 
-	totalAttributeSize := 6
+	totalAttributeSize := 9
 
-	// spanAttributes := make([]int32, len(vertexAttributes)/totalAttributeSize*2)
-	spanAttributes := make([]int32, (len(distances)+len(regionRenderIDs))*36)
-	for i := 0; i < len(distances); i++ {
-		for j := 0; j < 36; j++ {
-			spanAttributes[i+j] = 500
-			spanAttributes[i+j+1] = regionRenderIDs[i]
-		}
-	}
+	// spanAttributes := make([]int32, (len(distances)+len(regionRenderIDs))*36)
+	// for i := 0; i < len(distances); i++ {
+	// 	for j := 0; j < 36; j++ {
+	// 		spanAttributes[i+j] = 500
+	// 		spanAttributes[i+j+1] = regionRenderIDs[i]
+	// 	}
+	// }
 
-	distRegionIndex := 0
-	for i := 0; i < len(spanAttributes); i += 72 {
-		for j := 0; j < 72; j += 2 {
-			spanAttributes[i+j] = distances[distRegionIndex]
-			spanAttributes[i+j+1] = regionRenderIDs[distRegionIndex]
-		}
-		distRegionIndex++
-	}
+	// distRegionIndex := 0
+	// for i := 0; i < len(spanAttributes); i += 72 {
+	// 	for j := 0; j < 72; j += 2 {
+	// 		spanAttributes[i+j] = distances[distRegionIndex]
+	// 		spanAttributes[i+j+1] = regionRenderIDs[distRegionIndex]
+	// 	}
+	// 	distRegionIndex++
+	// }
 
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
 
-	// lay out the position and normal in a VBO
+	// lay out the position, normal, and color in a VBO
 	var vbo uint32
 	apputils.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
@@ -235,9 +242,9 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32
 
 	ptrOffset := 0
 	var floatSize int32 = 4
-	var intSize int32 = 4
-	spanPtrOffset := 0
-	totalSpanAttributeSize := 2
+	// var intSize int32 = 4
+	// spanPtrOffset := 0
+	// totalSpanAttributeSize := 2
 
 	// position
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, nil)
@@ -249,20 +256,26 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, distances []int32
 	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
 	gl.EnableVertexAttribArray(1)
 
-	var vboSpan uint32
-	apputils.GenBuffers(1, &vboSpan)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vboSpan)
-	gl.BufferData(gl.ARRAY_BUFFER, len(spanAttributes)*4, gl.Ptr(spanAttributes), gl.STATIC_DRAW)
+	ptrOffset += 3
 
-	// distance
-	gl.VertexAttribIPointer(2, 1, gl.INT, int32(totalSpanAttributeSize)*intSize, nil)
+	// color
+	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
 	gl.EnableVertexAttribArray(2)
 
-	spanPtrOffset += 1
+	// var vboSpan uint32
+	// apputils.GenBuffers(1, &vboSpan)
+	// gl.BindBuffer(gl.ARRAY_BUFFER, vboSpan)
+	// gl.BufferData(gl.ARRAY_BUFFER, len(spanAttributes)*4, gl.Ptr(spanAttributes), gl.STATIC_DRAW)
 
-	// regionID
-	gl.VertexAttribIPointer(3, 1, gl.INT, int32(totalSpanAttributeSize)*intSize, gl.PtrOffset(spanPtrOffset*int(intSize)))
-	gl.EnableVertexAttribArray(3)
+	// // distance
+	// gl.VertexAttribIPointer(3, 1, gl.INT, int32(totalSpanAttributeSize)*intSize, nil)
+	// gl.EnableVertexAttribArray(3)
+
+	// spanPtrOffset += 1
+
+	// // regionID
+	// gl.VertexAttribIPointer(4, 1, gl.INT, int32(totalSpanAttributeSize)*intSize, gl.PtrOffset(spanPtrOffset*int(intSize)))
+	// gl.EnableVertexAttribArray(4)
 
 	vertexIndices := make([]uint32, len(vertexAttributes)/totalAttributeSize)
 	for i := range len(vertexIndices) {

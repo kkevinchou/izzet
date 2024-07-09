@@ -1,7 +1,6 @@
 #version 330 core
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out uint PickingColor;
 
 // material parameters
 uniform vec3  albedo;
@@ -65,10 +64,9 @@ const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
 in VS_OUT {
     vec3 FragPos;
     vec3 Normal;
+    vec3 Color;
     vec4 FragPosLightSpace;
     mat4 View;
-    flat int Distance;
-    flat int RegionID;
 } fs_in;
 
 const float A = 2.51;
@@ -280,12 +278,13 @@ void main()
 
     // float colorScaleFactor = (fs_in.Distance / 80.0);
     // vec3 in_albedo = mix(vec3(0, 0, 0), vec3(1, 1, 1), colorScaleFactor);
+    vec3 in_albedo = fs_in.Color;
 
-    vec3 hsv = vec3(mod((83 * int(fs_in.RegionID)), 360), 1, 1);
-    vec3 in_albedo = hsvToRgb(hsv);
-    if (fs_in.RegionID == 0) {
-        in_albedo = vec3(0);
-    }
+    // vec3 hsv = vec3(mod((83 * int(fs_in.RegionID)), 360), 1, 1);
+    // vec3 in_albedo = hsvToRgb(hsv);
+    // if (fs_in.RegionID == 0) {
+    //     in_albedo = vec3(0);
+    // }
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
     if (lightCount > MAX_LIGHTS) {
@@ -350,7 +349,6 @@ void main()
         color = pow(color, vec3(1.0/2.2));
     }
 
-
     FragColor = vec4(color, 1.0);
 
     if (fog == 1) {
@@ -363,6 +361,4 @@ void main()
 
         FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);
     }
-
-    PickingColor = entityID;
 }

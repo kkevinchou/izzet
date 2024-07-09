@@ -4,16 +4,14 @@ const int MAX_WEIGHTS = 4;
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
-layout (location = 2) in int aDistance;
-layout (location = 3) in int aRegionID;
+layout (location = 2) in vec3 aColor;
 
 out VS_OUT {
     vec3 FragPos;
     vec3 Normal;
+    vec3 Color;
     vec4 FragPosLightSpace;
     mat4 View;
-    flat int Distance;
-    flat int RegionID;
 } vs_out;
 
 uniform mat4 model;
@@ -38,9 +36,9 @@ void main() {
     vs_out.FragPos = vec3(model * totalPos);
     vs_out.View = view;
 
+    vs_out.Color = aColor;
+
     vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
-    vs_out.Distance = aDistance;
-    vs_out.RegionID = aRegionID;
 
     gl_Position = (projection * (view * (model * totalPos)));
 }

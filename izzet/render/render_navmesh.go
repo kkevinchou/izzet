@@ -22,13 +22,17 @@ var (
 
 	simplifiedContourVAOCache    uint32
 	simplifiedContourVertexCount int32
+
+	rawContourVAOCache    uint32
+	rawContourVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
-		simplifiedContourVAOCache, simplifiedContourVertexCount = createSimplifiedContourVAO(nm)
+		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
+		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
@@ -37,36 +41,60 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionVoxel {
 		gl.BindVertexArray(voxelVAOCache)
 		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionRawContour {
+		r.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
-		shader := shaderManager.GetShaderProgram("line")
-		shader.Use()
-		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		gl.BindVertexArray(simplifiedContourVAOCache)
-		r.iztDrawLines(simplifiedContourVertexCount)
+		r.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
 	} else {
 		panic("WAT")
 	}
 }
 
-func createSimplifiedContourVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, vao uint32, count int32) {
+	shader := shaderManager.GetShaderProgram("line")
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	gl.BindVertexArray(vao)
+	r.iztDrawLines(count)
+}
+
+func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int32) {
 	contourSet := nm.ContourSet
 	minVertex := nm.Volume.MinVertex
 
 	var vertexAttributes []float32
-	for _, contour := range contourSet.Contours {
-		for i, _ := range contour.Verts {
-			v0 := contour.Verts[i]
-			v1 := contour.Verts[(i+1)%len(contour.Verts)]
 
-			// v0
-			vertexAttributes = append(vertexAttributes, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+	if simplified {
+		for _, contour := range contourSet.Contours {
+			for i, _ := range contour.Verts {
+				v0 := contour.Verts[i]
+				v1 := contour.Verts[(i+1)%len(contour.Verts)]
 
-			// v1
-			vertexAttributes = append(vertexAttributes, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+				// v0
+				vertexAttributes = append(vertexAttributes, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+
+				// v1
+				vertexAttributes = append(vertexAttributes, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+			}
+		}
+	} else {
+		for _, contour := range contourSet.Contours {
+			for i, _ := range contour.RawVerts {
+				v0 := contour.RawVerts[i]
+				v1 := contour.RawVerts[(i+1)%len(contour.RawVerts)]
+
+				// v0
+				vertexAttributes = append(vertexAttributes, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+
+				// v1
+				vertexAttributes = append(vertexAttributes, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+			}
 		}
 	}
 

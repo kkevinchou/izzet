@@ -36,11 +36,17 @@ type Contour struct {
 	RawVerts []Vertex
 }
 
+type RawContour struct {
+	RegionID int
+	Verts    []Vertex
+}
+
 type ContourSet struct {
 	bMin, bMax    mgl64.Vec3
 	width, height int
 	maxError      float64
 	Contours      []Contour
+	RawContours   []RawContour
 }
 
 func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int) *ContourSet {

@@ -126,6 +126,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 							}
 							count++
 							span.neighbors[dir] = j
+							break
 						}
 					}
 				}

@@ -3,6 +3,7 @@
         "alpha3": {"single_entity": true},
         "vampire2": {"single_entity": true},
         "demo_scene_city": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
+        "twocube": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
         "demo_scene_battleroyale": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
         "demo_scene_western_frontier": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
         "hut_back2": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },

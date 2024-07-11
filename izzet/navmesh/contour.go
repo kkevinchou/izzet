@@ -457,6 +457,7 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 	return simplified
 }
 
+// returns the squared distance between a point and a line segment
 func distancePtSeg(x, z, px, pz, qx, qz int) float64 {
 	pqx := float64(qx - px)
 	pqz := float64(qz - pz)

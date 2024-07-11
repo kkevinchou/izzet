@@ -168,8 +168,7 @@ func dividePoly(inVerts []RasterVertex, inVertsCount int, outVerts1 []RasterVert
 	var poly1Vert int
 	var poly2Vert int
 
-	inVertB := inVertsCount - 1
-	for inVertA := 0; inVertA < inVertsCount; inVertA++ {
+	for inVertA, inVertB := 0, inVertsCount-1; inVertA < inVertsCount; inVertB, inVertA = inVertA, inVertA+1 {
 		// check if the two verts are on the same side of the separating axis
 		sameSide := (inVertAxisDelta[inVertA] >= 0) == (inVertAxisDelta[inVertB] >= 0)
 
@@ -202,7 +201,6 @@ func dividePoly(inVerts []RasterVertex, inVertsCount int, outVerts1 []RasterVert
 				outVerts1[poly1Vert] = inVerts[inVertA]
 				poly1Vert++
 				if inVertAxisDelta[inVertA] != 0 {
-					inVertB = inVertA
 					continue
 				}
 			}

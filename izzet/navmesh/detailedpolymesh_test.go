@@ -21,5 +21,5 @@ func TestPolyMeshDetail(t *testing.T) {
 	mesh := BuildPolyMesh(contourSet)
 
 	chf := &CompactHeightField{width: 200, height: 200}
-	BuildPolyMeshDetail(mesh, chf)
+	BuildDetailedPolyMesh(mesh, chf)
 }

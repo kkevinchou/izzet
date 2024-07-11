@@ -6,6 +6,8 @@
 
 ## Things to do
 
+- rcBuildRegions
+  - need to implement region merging
 - rcBuildContours
   - Holes are currently not handled, I just panic
 - rcBuildPolyMesh
@@ -37,7 +39,3 @@
   - store vertices in the detailed poly mesh
   - store triangles in the detailed poly mesh
     - seems like it doesn't store the polygons but triangles only??
-
-## Edge cases remaining
-
-- The winding order still needs figuring out. A lot of the geometry functions and their tests in polymesh_test.go assume a counter clockwise ordering. However, the Recast algorithm seems to construct contours in a clockwise order.

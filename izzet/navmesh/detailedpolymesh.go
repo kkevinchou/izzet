@@ -1,5 +1,9 @@
 package navmesh
 
+import (
+	"math"
+)
+
 type HeightPatch struct {
 	xmin   int
 	zmin   int
@@ -19,10 +23,14 @@ type Bound struct {
 type DetailedMesh struct {
 }
 
-func BuildPolyMeshDetail(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
+func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	bounds := make([]Bound, len(mesh.polygons))
 	var maxhw, maxhh int
 	var nPolyVerts int
+
+	// TODO: this should be dynamic and come from another datastructure (chf, or mesh, or w/e)
+	cs := 1
+	ch := 1
 
 	// find max size for a polygon area
 	for i := range mesh.polygons {
@@ -63,20 +71,14 @@ func BuildPolyMeshDetail(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	var hp HeightPatch
 	hp.data = make([]int, maxhw*maxhh)
 
-	// vcap := nPolyVerts + (nPolyVerts / 2)
-	// tcap := vcap * 2
-
 	var dmesh DetailedMesh
-	var poly []PolyVertex
+	var polyVerts []PolyVertex
 
 	for i := range mesh.polygons {
 		polygon := &mesh.polygons[i]
 		for _, vertIndex := range polygon.verts {
 			vert := mesh.vertices[vertIndex]
-			// TODO: this should be dynamic and come from another datastructure (chf, or mesh, or w/e)
-			cs := 1
-			ch := 1
-			poly = append(poly, PolyVertex{
+			polyVerts = append(polyVerts, PolyVertex{
 				X: vert.X * cs, Y: vert.Y * ch, Z: vert.Z * cs,
 			})
 		}
@@ -85,17 +87,131 @@ func BuildPolyMeshDetail(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 		hp.zmin = bounds[i].zmin
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
-		getHeightData()
-		buildPolyDetail()
+		getHeightData(chf, hp, mesh.regionIDs[i])
+		buildDetailedPoly(polyVerts, 10)
 	}
 
 	return &dmesh
 }
 
-func getHeightData() {
-
+type QueueItem struct {
+	x, z      int
+	spanIndex SpanIndex
 }
 
-func buildPolyDetail() {
+func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
+	for i := range len(hp.data) {
+		hp.data[i] = -1
+	}
 
+	var queue []QueueItem
+	empty := true
+
+	// copy the height from the same region, and mark region borders as seeds
+	// to fill in the rest
+	for hz := range hp.height {
+		z := hp.zmin + hz
+		for hx := range hp.height {
+			x := hp.xmin + hx
+			cell := chf.cells[x+z*chf.width]
+			spanIndex := cell.SpanIndex
+			spanCount := cell.SpanCount
+
+			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
+				span := chf.spans[spanIndex]
+				if span.regionID == regionID {
+					hp.data[hx+hz*hp.width] = span.y
+					empty = false
+					border := false
+					for _, dir := range dirs {
+						neighborSpanIndex := span.neighbors[dir]
+						if neighborSpanIndex == -1 {
+							continue
+						}
+
+						neighborSpan := chf.spans[neighborSpanIndex]
+						if neighborSpan.regionID != regionID {
+							border = true
+							break
+						}
+					}
+					if border {
+						queue = append(queue, QueueItem{x: x, z: z, spanIndex: spanIndex})
+					}
+					break
+				}
+			}
+		}
+	}
+
+	if empty {
+		panic("TODO: implement seedArrayWithPolyCenter")
+	}
+
+	// assume the seed is centered in the polygon, so a BFS to collect
+	// height data will ensure we do not move onto overlapping polygons and
+	// sample wrong heights
+	for len(queue) > 0 {
+		queueItem := queue[0]
+		queue = queue[1:]
+
+		x := queueItem.x
+		z := queueItem.z
+		spanIndex := queueItem.spanIndex
+
+		span := chf.spans[spanIndex]
+
+		for _, dir := range dirs {
+			neighborSpanIndex := span.neighbors[dir]
+			if neighborSpanIndex == -1 {
+				continue
+			}
+			neighborX := x + xDirs[dir]
+			neighborZ := z + zDirs[dir]
+			hx := neighborX - hp.xmin
+			hy := neighborZ - hp.zmin
+
+			if hx >= hp.width || hy >= hp.height || hx < 0 || hy < 0 {
+				continue
+			}
+
+			if hp.data[hx+hy*hp.width] != -1 {
+				continue
+			}
+
+			neighborSpan := chf.spans[neighborSpanIndex]
+
+			hp.data[hx+hy*hp.width] = neighborSpan.y
+			queue = append(queue, QueueItem{x: neighborX, z: neighborZ, spanIndex: neighborSpanIndex})
+		}
+	}
+}
+
+func buildDetailedPoly(verts []PolyVertex, sampleDist float64) {
+
+	// var cs float64 = 1
+	// ics := 1 / cs
+	minPolyExtent(verts)
+
+	// tesselate outlines
+	// this is done in a separate pass to ensure seamless height values across the poly boundaries
+}
+
+func minPolyExtent(verts []PolyVertex) float64 {
+	var minDist float64 = math.MaxFloat64
+	for i := range len(verts) {
+		ni := (i + 1) % len(verts)
+		p1 := verts[i]
+		p2 := verts[ni]
+		var maxEdgeDist float64 = 0
+		for j := 0; j < len(verts); j++ {
+			if j == i || j == ni {
+				continue
+			}
+			d := distancePtSeg(verts[i].X, verts[i].Z, p1.X, p1.Z, p2.X, p2.Z)
+			maxEdgeDist = max(maxEdgeDist, d)
+		}
+		minDist = min(minDist, maxEdgeDist)
+	}
+	return math.Sqrt(minDist)
 }

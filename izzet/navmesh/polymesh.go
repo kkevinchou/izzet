@@ -21,10 +21,6 @@ type RCTriangle struct {
 	c int
 }
 
-type MeshVertex struct {
-	x, y, z int
-}
-
 type PolyVertex struct {
 	X, Y, Z int
 }

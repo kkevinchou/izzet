@@ -640,6 +640,8 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	}()
 	minVertex := mgl64.Vec3{-500, -250, -500}
 	maxVertex := mgl64.Vec3{500, 250, 500}
+	// minVertex := mgl64.Vec3{-10, -10, -10}
+	// maxVertex := mgl64.Vec3{20, 12, 20}
 
 	vxs := int(maxVertex.X() - minVertex.X())
 	vzs := int(maxVertex.Z() - minVertex.Z())
@@ -757,7 +759,9 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
 	contourSet := navmesh.BuildContours(chf, maxError, 1)
-	navmesh.BuildPolyMesh(contourSet)
+	mesh := navmesh.BuildPolyMesh(contourSet)
+	_ = mesh
+	// navmesh.BuildDetailedPolyMesh(mesh, chf)
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:          hf,

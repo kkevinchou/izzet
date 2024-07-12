@@ -34,14 +34,17 @@ type Polygon struct {
 }
 
 type Mesh struct {
-	vertices  []PolyVertex
-	polygons  []Polygon
-	regionIDs []int
-	areas     []AREA_TYPE
+	vertices     []PolyVertex
+	polygons     []Polygon
+	regionIDs    []int
+	areas        []AREA_TYPE
+	maxEdgeError float64
 }
 
 func BuildPolyMesh(contourSet *ContourSet) *Mesh {
-	mesh := &Mesh{}
+	mesh := &Mesh{
+		maxEdgeError: contourSet.maxError,
+	}
 
 	maxVertices := 0
 	maxTris := 0

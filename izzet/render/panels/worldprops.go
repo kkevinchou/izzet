@@ -16,6 +16,7 @@ const (
 	ComboOptionVoxel              NavMeshRenderComboOption = "Voxel"
 	ComboOptionRawContour         NavMeshRenderComboOption = "Raw Contour"
 	ComboOptionSimplifiedContour  NavMeshRenderComboOption = "Simplified Contour"
+	ComboOptionDetailedMesh       NavMeshRenderComboOption = "Detailed Mesh"
 )
 
 var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
@@ -26,6 +27,7 @@ var (
 		ComboOptionVoxel,
 		ComboOptionRawContour,
 		ComboOptionSimplifiedContour,
+		ComboOptionDetailedMesh,
 	}
 )
 

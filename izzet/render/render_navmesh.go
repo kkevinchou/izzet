@@ -25,6 +25,9 @@ var (
 
 	rawContourVAOCache    uint32
 	rawContourVertexCount int32
+
+	detailedMeshVAOCache    uint32
+	detailedMeshVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
@@ -33,6 +36,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
 		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
+		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshOutline(nm)
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
@@ -45,6 +49,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		r.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
 		r.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
+		r.drawContour(shaderManager, viewerContext, detailedMeshVAOCache, detailedMeshVertexCount)
 	} else {
 		panic("WAT")
 	}
@@ -60,12 +66,32 @@ func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerConte
 	r.iztDrawLines(count)
 }
 
+func createDetailedMeshOutline(nm *navmesh.NavigationMesh) (uint32, int32) {
+	minVertex := nm.Volume.MinVertex
+
+	var vertexAttributes []float32
+	for _, outline := range nm.DetailedMesh.Outlines {
+		for i := range len(outline) {
+			v0 := outline[i]
+			v1 := outline[(i+1)%len(outline)]
+
+			// v0
+			vertexAttributes = append(vertexAttributes, float32(v0.X+minVertex.X()), float32(v0.Y+minVertex.Y()), float32(v0.Z+minVertex.Z()))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			// v1
+			vertexAttributes = append(vertexAttributes, float32(v1.X+minVertex.X()), float32(v1.Y+minVertex.Y()), float32(v1.Z+minVertex.Z()))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+		}
+	}
+	return createLineVAO(vertexAttributes)
+}
+
 func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int32) {
 	contourSet := nm.ContourSet
 	minVertex := nm.Volume.MinVertex
 
 	var vertexAttributes []float32
-
 	if simplified {
 		for _, contour := range contourSet.Contours {
 			for i, _ := range contour.Verts {
@@ -73,11 +99,11 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 				v1 := contour.Verts[(i+1)%len(contour.Verts)]
 
 				// v0
-				vertexAttributes = append(vertexAttributes, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, float32(float64(v0.X)+minVertex.X()), float32(float64(v0.Y)+minVertex.Y()), float32(float64(v0.Z)+minVertex.Z()))
 				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
 
 				// v1
-				vertexAttributes = append(vertexAttributes, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, float32(float64(v1.X)+minVertex.X()), float32(float64(v1.Y)+minVertex.Y()), float32(float64(v1.Z)+minVertex.Z()))
 				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
 			}
 		}
@@ -88,16 +114,19 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 				v1 := contour.RawVerts[(i+1)%len(contour.RawVerts)]
 
 				// v0
-				vertexAttributes = append(vertexAttributes, float32(v0.X+int(minVertex.X())), float32(v0.Y+int(minVertex.Y())), float32(v0.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, float32(float64(v0.X)+minVertex.X()), float32(float64(v0.Y)+minVertex.Y()), float32(float64(v0.Z)+minVertex.Z()))
 				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
 
 				// v1
-				vertexAttributes = append(vertexAttributes, float32(v1.X+int(minVertex.X())), float32(v1.Y+int(minVertex.Y())), float32(v1.Z+int(minVertex.Z())))
+				vertexAttributes = append(vertexAttributes, float32(float64(v1.X)+minVertex.X()), float32(float64(v1.Y)+minVertex.Y()), float32(float64(v1.Z)+minVertex.Z()))
 				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
 			}
 		}
 	}
+	return createLineVAO(vertexAttributes)
+}
 
+func createLineVAO(vertexAttributes []float32) (uint32, int32) {
 	var floatSize int32 = 4
 	ptrOffset := 0
 	var totalAttributeSize int32 = 6

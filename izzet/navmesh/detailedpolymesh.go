@@ -4,6 +4,16 @@ import (
 	"math"
 )
 
+const (
+	maxVertsPerEdge = 32
+	maxVerts        = 127
+	hpUnsetHeight   = 0xffff
+)
+
+type DetailedVertex struct {
+	X, Y, Z float64
+}
+
 type HeightPatch struct {
 	xmin   int
 	zmin   int
@@ -20,7 +30,13 @@ type Bound struct {
 	zmax int
 }
 
+type QueueItem struct {
+	x, z      int
+	spanIndex SpanIndex
+}
+
 type DetailedMesh struct {
+	Outlines [][]DetailedVertex
 }
 
 func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
@@ -29,8 +45,9 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	var nPolyVerts int
 
 	// TODO: this should be dynamic and come from another datastructure (chf, or mesh, or w/e)
-	cs := 1
-	ch := 1
+	var cs float64 = 1
+	var ch float64 = 1
+	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
 
 	// find max size for a polygon area
 	for i := range mesh.polygons {
@@ -72,14 +89,14 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	hp.data = make([]int, maxhw*maxhh)
 
 	var dmesh DetailedMesh
-	var polyVerts []PolyVertex
 
 	for i := range mesh.polygons {
+		var polyVerts []DetailedVertex
 		polygon := &mesh.polygons[i]
 		for _, vertIndex := range polygon.verts {
 			vert := mesh.vertices[vertIndex]
-			polyVerts = append(polyVerts, PolyVertex{
-				X: vert.X * cs, Y: vert.Y * ch, Z: vert.Z * cs,
+			polyVerts = append(polyVerts, DetailedVertex{
+				X: float64(vert.X) * cs, Y: float64(vert.Y) * ch, Z: float64(vert.Z) * cs,
 			})
 		}
 
@@ -88,15 +105,11 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, mesh.regionIDs[i])
-		buildDetailedPoly(polyVerts, 10)
+		buildDetailedPoly(chf, &polyVerts, 1, 1, heightSearchRadius, hp)
+		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
 	}
 
 	return &dmesh
-}
-
-type QueueItem struct {
-	x, z      int
-	spanIndex SpanIndex
 }
 
 func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
@@ -175,7 +188,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 				continue
 			}
 
-			if hp.data[hx+hy*hp.width] != -1 {
+			if hp.data[hx+hy*hp.width] != hpUnsetHeight {
 				continue
 			}
 
@@ -187,17 +200,168 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 	}
 }
 
-func buildDetailedPoly(verts []PolyVertex, sampleDist float64) {
+func buildDetailedPoly(chf *CompactHeightField, verts *[]DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch) {
+	var ch float64 = 1
+	var cs float64 = 1
+	ics := 1 / cs
+	var hull []int
 
-	// var cs float64 = 1
-	// ics := 1 / cs
-	minPolyExtent(verts)
+	minPolyExtent(*verts)
 
 	// tesselate outlines
 	// this is done in a separate pass to ensure seamless height values across the poly boundaries
+	for i, j := 0, len(*verts)-1; i < len(*verts); j, i = i, i+1 {
+		vj := (*verts)[j]
+		vi := (*verts)[i]
+		swapped := false
+
+		// make sure the segments are always handled in same order
+		// using lexological sort or else there will be seams.
+		if math.Abs(vj.X-vi.X) < 1e-6 {
+			if vj.Z > vi.Z {
+				vj, vi = vi, vj
+				swapped = true
+			}
+		} else {
+			if vj.X > vi.X {
+				vj, vi = vi, vj
+				swapped = true
+			}
+		}
+
+		dx := vi.X - vj.X
+		dy := vi.Y - vj.Y
+		dz := vi.Z - vj.Z
+		d := math.Sqrt(dx*dx + dz*dz)
+		nn := 1 + int(math.Floor(d/sampleDist))
+
+		if nn >= maxVertsPerEdge {
+			nn = maxVertsPerEdge - 1
+		}
+		if len(*verts)+nn >= maxVerts {
+			nn = maxVerts - 1 - len(*verts)
+		}
+
+		var edges []DetailedVertex
+		for k := 0; k <= nn; k++ {
+			u := float64(k) / float64(nn)
+			x := vj.X + dx*u
+			y := vj.Y + dy*u
+			z := vj.Z + dz*u
+			edges = append(edges, DetailedVertex{
+				X: x,
+				Y: float64(getHeight(x, y, z, cs, ics, ch, heightSearchRadius, hp)) * ch,
+				Z: z,
+			})
+		}
+
+		// simplify samples
+
+		var idx [maxVertsPerEdge]int
+		idx[0], idx[1] = 0, nn
+		nidx := 2
+
+		for k := 0; k < nidx-1; {
+			i0 := idx[k]
+			i1 := idx[k+1]
+			v0 := edges[i0]
+			v1 := edges[i1]
+			var maxd float64
+			maxi := -1
+			for m := i0 + 1; m < i1; m++ {
+				d := distancePtSegf(edges[m].X, edges[m].Z, v0.X, v0.Z, v1.X, v1.Z)
+				if d > maxd {
+					maxd = d
+					maxi = m
+				}
+			}
+
+			if maxi != -1 && maxd > (sampleMaxError*sampleMaxError) {
+				for m := nidx; m > k; m-- {
+					idx[m] = idx[m-1]
+				}
+				idx[k+1] = maxi
+				nidx++
+			} else {
+				k++
+			}
+		}
+
+		hull = append(hull, j)
+
+		if swapped {
+			for k := nidx - 2; k > 0; k-- {
+				*verts = append(*verts, edges[idx[k]])
+				hull = append(hull, len(*verts))
+			}
+		} else {
+			for k := 1; k < nidx-1; k++ {
+				*verts = append(*verts, edges[idx[k]])
+				hull = append(hull, len(*verts))
+			}
+		}
+	}
 }
 
-func minPolyExtent(verts []PolyVertex) float64 {
+func getHeight(fx, fy, fz, cs, ics, ch float64, radius int, hp HeightPatch) int {
+	ix := int(math.Floor(fx*ics + 0.01))
+	iz := int(math.Floor(fz*ics + 0.01))
+
+	ix = Clamp(ix-hp.xmin, 0, hp.width-1)
+	iz = Clamp(iz-hp.zmin, 0, hp.height-1)
+
+	h := hp.data[ix+iz*hp.width]
+
+	// spiral search for next available height value
+	if h == hpUnsetHeight {
+		x, z, dx, dz := 1, 0, 1, 0
+		maxSize := radius*2 + 1
+		maxIter := maxSize*maxSize - 1
+
+		nextRingIterStart := 8
+		nextRingIters := 16
+
+		dmin := math.MaxFloat64
+		for i := range maxIter {
+			nx := ix + x
+			nz := iz + z
+
+			if nx >= 0 && nz >= 0 && nx < hp.width && nz < hp.height {
+				nh := hp.data[nx+nz*hp.width]
+				if nh != hpUnsetHeight {
+					d := math.Abs(float64(nh)*ch - fy)
+					if d < dmin {
+						h = nh
+						dmin = d
+					}
+				}
+			}
+
+			if i+1 == nextRingIterStart {
+				if h != hpUnsetHeight {
+					break
+				}
+
+				nextRingIterStart += nextRingIters
+				nextRingIters += 8
+			}
+
+			if (x == z) || ((x < 0) && (x == -z)) || ((x > 0) && (x == 1-z)) {
+				dx, dz = -dz, dx
+			}
+			x += dx
+			z += dz
+		}
+	}
+
+	if h == hpUnsetHeight {
+		panic("failed to find height")
+	}
+
+	return h
+}
+
+func minPolyExtent(verts []DetailedVertex) float64 {
 	var minDist float64 = math.MaxFloat64
 	for i := range len(verts) {
 		ni := (i + 1) % len(verts)
@@ -208,10 +372,34 @@ func minPolyExtent(verts []PolyVertex) float64 {
 			if j == i || j == ni {
 				continue
 			}
-			d := distancePtSeg(verts[i].X, verts[i].Z, p1.X, p1.Z, p2.X, p2.Z)
+			d := distancePtSegf(verts[i].X, verts[i].Z, p1.X, p1.Z, p2.X, p2.Z)
 			maxEdgeDist = max(maxEdgeDist, d)
 		}
 		minDist = min(minDist, maxEdgeDist)
 	}
 	return math.Sqrt(minDist)
+}
+
+// returns the squared distance between a point and a line segment
+func distancePtSegf(x, z, px, pz, qx, qz float64) float64 {
+	pqx := qx - px
+	pqz := qz - pz
+	dx := x - px
+	dz := z - pz
+	d := pqx*pqx + pqz*pqz
+	t := pqx*dx + pqz*dz
+
+	if d > 0 {
+		t /= d
+	}
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+
+	dx = px + t*pqx - x
+	dz = pz + t*pqz - z
+
+	return dx*dx + dz*dz
 }

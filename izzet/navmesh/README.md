@@ -6,6 +6,10 @@
 
 ## Things to do
 
+- RC_BORDER_REG
+
+  - set on the perimeter of the navigation mesh bounding volume when the border size > 0
+
 - rcBuildRegions
   - need to implement region merging
 - rcBuildContours

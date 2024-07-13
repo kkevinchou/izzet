@@ -105,7 +105,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID, i)
-		buildDetailedPoly(chf, &polyVerts, 100, 1, heightSearchRadius, hp)
+		buildDetailedPoly(chf, polyVerts, 100, 1, heightSearchRadius, hp)
 		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
 	}
 
@@ -200,19 +200,24 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 	}
 }
 
-func buildDetailedPoly(chf *CompactHeightField, verts *[]DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch) {
+func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch) {
 	var ch float64 = 1
 	var cs float64 = 1
 	ics := 1 / cs
 	var hull []int
 
-	minExtent := minPolyExtent(*verts)
+	verts := make([]DetailedVertex, len(inVerts))
+	for i := range len(inVerts) {
+		verts[i] = inVerts[i]
+	}
+
+	minExtent := minPolyExtent(inVerts)
 
 	// tesselate outlines
 	// this is done in a separate pass to ensure seamless height values across the poly boundaries
-	for i, j := 0, len(*verts)-1; i < len(*verts); j, i = i, i+1 {
-		vj := (*verts)[j]
-		vi := (*verts)[i]
+	for i, j := 0, len(inVerts)-1; i < len(inVerts); j, i = i, i+1 {
+		vj := inVerts[j]
+		vi := inVerts[i]
 		swapped := false
 
 		// make sure the segments are always handled in same order
@@ -238,8 +243,8 @@ func buildDetailedPoly(chf *CompactHeightField, verts *[]DetailedVertex, sampleD
 		if nn >= maxVertsPerEdge {
 			nn = maxVertsPerEdge - 1
 		}
-		if len(*verts)+nn >= maxVerts {
-			nn = maxVerts - 1 - len(*verts)
+		if len(inVerts)+nn >= maxVerts {
+			nn = maxVerts - 1 - len(inVerts)
 		}
 
 		var edges []DetailedVertex
@@ -291,22 +296,38 @@ func buildDetailedPoly(chf *CompactHeightField, verts *[]DetailedVertex, sampleD
 
 		if swapped {
 			for k := nidx - 2; k > 0; k-- {
-				*verts = append(*verts, edges[idx[k]])
-				hull = append(hull, len(*verts))
+				verts = append(verts, edges[idx[k]])
+				hull = append(hull, len(verts))
 			}
 		} else {
 			for k := 1; k < nidx-1; k++ {
-				*verts = append(*verts, edges[idx[k]])
-				hull = append(hull, len(*verts))
+				verts = append(verts, edges[idx[k]])
+				hull = append(hull, len(verts))
 			}
 		}
 	}
 
 	if minExtent < sampleDist*2 {
-		// triangulateHull
+		triangulateHull(verts, hull, len(inVerts))
 		// setTriFlags
 		return
 	}
+}
+
+func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) {
+	// start, left, right := 0, 1, len(hull)-1
+
+	// // start from an ear with the shortest perimeter.
+	// // this tends to favor well formed triangles as a starting point
+
+	// dmin := math.MaxFloat64
+	// for i := range len(hull) {
+	// 	if hull[i] >= originalNumVerts {
+	// 		// ears are centered on original hull vertices and not on newly added vertices from tesselation
+	// 		continue
+	// 	}
+
+	// }
 }
 
 func getHeight(fx, fy, fz, cs, ics, ch float64, radius int, hp HeightPatch) int {

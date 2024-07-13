@@ -241,7 +241,7 @@ func InitSDL() (*sdl.Window, error) {
 
 	sdl.SetRelativeMouseMode(false)
 
-	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
+	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE | sdl.WINDOW_MAXIMIZED
 	// if config.Fullscreen {
 	// 	dm, err := sdl.GetCurrentDisplayMode(0)
 	// 	if err != nil {

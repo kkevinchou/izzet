@@ -323,6 +323,9 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32)
 
 // regionIDToColor converts a regionID into an rgb color
 func regionIDToColor(regionID int) []float32 {
+	if regionID == 0 {
+		return []float32{.2, .2, .2}
+	}
 	var h float32 = float32((83 * regionID) % 360)
 	var s float32 = 1
 	var v float32 = 1

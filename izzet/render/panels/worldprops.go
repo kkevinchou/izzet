@@ -13,6 +13,7 @@ type NavMeshRenderComboOption string
 
 const (
 	ComboOptionCompactHeightField NavMeshRenderComboOption = "Compact Height Field"
+	ComboOptionDistanceField      NavMeshRenderComboOption = "Distance Field"
 	ComboOptionVoxel              NavMeshRenderComboOption = "Voxel"
 	ComboOptionRawContour         NavMeshRenderComboOption = "Raw Contour"
 	ComboOptionSimplifiedContour  NavMeshRenderComboOption = "Simplified Contour"
@@ -24,6 +25,7 @@ var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompa
 var (
 	navmeshRenderComboOptions []NavMeshRenderComboOption = []NavMeshRenderComboOption{
 		ComboOptionCompactHeightField,
+		ComboOptionDistanceField,
 		ComboOptionVoxel,
 		ComboOptionRawContour,
 		ComboOptionSimplifiedContour,

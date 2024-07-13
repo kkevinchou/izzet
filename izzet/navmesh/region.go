@@ -155,10 +155,10 @@ func floodRegion(x, z int, spanIndex SpanIndex, level, regionID int, chf *Compac
 				continue
 			}
 
-			if chf.distances[neighborSpanIndex] >= lev && regions[neighborSpanIndex] == 0 {
+			if chf.Distances[neighborSpanIndex] >= lev && regions[neighborSpanIndex] == 0 {
 				regions[neighborSpanIndex] = regionID
 				distances[neighborSpanIndex] = 0
-				queue = append(queue, LevelStackEntry{x: x + xDirs[dir], z: z + zDirs[dir], spanIndex: neighborSpanIndex, distance: chf.distances[neighborSpanIndex]})
+				queue = append(queue, LevelStackEntry{x: x + xDirs[dir], z: z + zDirs[dir], spanIndex: neighborSpanIndex, distance: chf.Distances[neighborSpanIndex]})
 			}
 		}
 	}
@@ -185,7 +185,7 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 					continue
 				}
 
-				level := chf.distances[i] / levelStepSize
+				level := chf.Distances[i] / levelStepSize
 				stackID := startLevel - level
 
 				if stackID >= maxStacks {
@@ -196,7 +196,7 @@ func sortCellsByLevel(startLevel int, chf *CompactHeightField, regions []int, ma
 					stackID = 0
 				}
 
-				stacks[stackID] = append(stacks[stackID], LevelStackEntry{x: x, z: z, spanIndex: i, distance: chf.distances[i]})
+				stacks[stackID] = append(stacks[stackID], LevelStackEntry{x: x, z: z, spanIndex: i, distance: chf.Distances[i]})
 			}
 		}
 	}
@@ -224,7 +224,7 @@ func expandRegions(level int, chf *CompactHeightField, stack []LevelStackEntry, 
 				spanCount := cell.SpanCount
 				totalSpans += spanCount
 				for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
-					if chf.distances[i] >= level && regions[i] == 0 && chf.areas[i] != NULL_AREA {
+					if chf.Distances[i] >= level && regions[i] == 0 && chf.areas[i] != NULL_AREA {
 						stack = append(stack, LevelStackEntry{x: x, z: z, spanIndex: i})
 					}
 				}

@@ -766,7 +766,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		HeightField:          hf,
 		CompactHeightField:   chf,
 		Volume:               nmbb,
-		BlurredDistances:     chf.Distances(),
+		BlurredDistances:     chf.Distances,
 		DebugLines:           debugLines,
 		Invalidated:          true,
 		InvalidatedTimestamp: int(time.Now().Unix()),

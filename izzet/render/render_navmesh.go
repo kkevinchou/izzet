@@ -28,12 +28,16 @@ var (
 
 	detailedMeshVAOCache    uint32
 	detailedMeshVertexCount int32
+
+	distanceFieldVAOCache    uint32
+	distanceFieldVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
+		distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
 		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshOutline(nm)
@@ -42,6 +46,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
 		gl.BindVertexArray(navmeshVAOCache)
 		r.iztDrawElements(navmeshVAOCacheVertexCount * 36)
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDistanceField {
+		gl.BindVertexArray(distanceFieldVAOCache)
+		r.iztDrawElements(distanceFieldVertexCount * 36)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionVoxel {
 		gl.BindVertexArray(voxelVAOCache)
 		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
@@ -151,6 +158,36 @@ func createLineVAO(vertexAttributes []float32) (uint32, int32) {
 	gl.EnableVertexAttribArray(1)
 
 	return vao, int32(len(vertexAttributes) / int(totalAttributeSize))
+}
+
+func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
+	var positions []mgl32.Vec3
+	var colors []float32
+	var lengths []float32
+
+	for x := range chf.Width() {
+		for z := range chf.Height() {
+			cell := chf.Cells()[x+z*chf.Width()]
+			spanIndex := cell.SpanIndex
+			spanCount := cell.SpanCount
+
+			for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
+				span := chf.Spans()[i]
+				position := mgl32.Vec3{
+					float32(x) + float32(chf.BMin().X()),
+					float32(span.Y()) + float32(chf.BMin().Y()),
+					float32(z) + float32(chf.BMin().Z()),
+				}
+				positions = append(positions, position)
+				colors = append(colors, distanceToColor(float32(chf.Distances[i]))...)
+				lengths = append(lengths, 1)
+			}
+		}
+	}
+
+	vao := cubeAttributes(positions, lengths, colors)
+
+	return vao, int32(len(positions))
 }
 
 func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
@@ -319,6 +356,11 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*4, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
 
 	return vao
+}
+
+func distanceToColor(distance float32) []float32 {
+	c := distance / 100
+	return []float32{c, c, c}
 }
 
 // regionIDToColor converts a regionID into an rgb color

@@ -48,7 +48,7 @@ func TestBuildRegion(t *testing.T) {
 	chf := setupCHF()
 
 	BuildDistanceField(chf)
-	BoxBlur(chf, chf.distances)
+	BoxBlur(chf, chf.Distances)
 
 	BuildRegions(chf, 999, 1, 1)
 }

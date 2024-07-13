@@ -11,8 +11,9 @@
 - rcBuildContours
   - Holes are currently not handled, I just panic
 - rcBuildPolyMesh
-  - Polygons are all triangles at the moment, I still need to merge them into convex polygons
-  - There's potentially some work remaining for removing edge vertices, and finding portal edges but I don't understand that part yet
+  - some border specific logic
+    - remove vertex
+    - find portals
 - rcBuildPolyMeshDetail
   - todo
     - implement seedArrayWithPolyCenter

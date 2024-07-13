@@ -467,16 +467,15 @@ func walkContour(chf *CompactHeightField, spanIndex SpanIndex, dir int, regionID
 	iter := 0
 	for iter < 40000 {
 		span := chf.spans[spanIndex]
-		regionID := -1
 		if isSolidEdge(chf, regionIDs, spanIndex, dir) {
+			regionID := 0
 			neighborSpanIndex := span.neighbors[dir]
 			if neighborSpanIndex != -1 {
-				// neighborSpan := chf.spans[neighborSpanIndex]
 				regionID = regionIDs[neighborSpanIndex]
-				if regionID != currentRegion {
-					currentRegion = regionID
-					neighboringRegionIDs = append(neighboringRegionIDs, regionID)
-				}
+			}
+			if regionID != currentRegion {
+				currentRegion = regionID
+				neighboringRegionIDs = append(neighboringRegionIDs, regionID)
 			}
 			// rotate CW
 			dir = (dir + 1) % 4

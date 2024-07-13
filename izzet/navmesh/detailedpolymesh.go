@@ -206,7 +206,7 @@ func buildDetailedPoly(chf *CompactHeightField, verts *[]DetailedVertex, sampleD
 	ics := 1 / cs
 	var hull []int
 
-	minPolyExtent(*verts)
+	minExtent := minPolyExtent(*verts)
 
 	// tesselate outlines
 	// this is done in a separate pass to ensure seamless height values across the poly boundaries
@@ -300,6 +300,12 @@ func buildDetailedPoly(chf *CompactHeightField, verts *[]DetailedVertex, sampleD
 				hull = append(hull, len(*verts))
 			}
 		}
+	}
+
+	if minExtent < sampleDist*2 {
+		// triangulateHull
+		// setTriFlags
+		return
 	}
 }
 

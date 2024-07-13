@@ -7,7 +7,7 @@ import (
 
 const (
 	vertexBucketCount = (1 << 12)
-	nvp               = 1000 // max verts per poly
+	nvp               = 6 // max verts per poly
 )
 
 type Index struct {
@@ -97,10 +97,45 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 			continue
 		}
 
-		// TODO - merge polygons
+		// merge polygons
+		for {
+			bestMergeVal := 0
+			bestPa, bestPb, bestEa, bestEb := 0, 0, 0, 0
+			for j := range len(polygons) - 1 {
+				pj := polygons[j]
+				for k := j + 1; k < len(polygons); k++ {
+					pk := polygons[k]
+					v, ea, eb := getPolyMergeValue(pj, pk, mesh.vertices)
+					if v > bestMergeVal {
+						bestMergeVal = v
+						bestPa = j
+						bestPb = k
+						bestEa = ea
+						bestEb = eb
+					}
+				}
+			}
+
+			// found the best merge candidates
+			if bestMergeVal > 0 {
+				pa := polygons[bestPa]
+				pb := polygons[bestPb]
+
+				// merge verts
+				polygons[bestPa].verts = mergePolyVerts(pa, pb, bestEa, bestEb)
+				polygons[bestPa].polyNeighbor = make([]int, len(polygons[bestPa].verts))
+
+				// swap the last polygon to where b used to be, and reduce the polygon list size
+				if bestPb != len(polygons)-1 {
+					polygons[bestPb] = polygons[len(polygons)-1]
+				}
+				polygons = polygons[:len(polygons)-1]
+			} else {
+				break
+			}
+		}
 
 		// store polygons
-
 		for _, polygon := range polygons {
 			mesh.regionIDs = append(mesh.regionIDs, contour.RegionID)
 			mesh.areas = append(mesh.areas, contour.area)
@@ -119,6 +154,101 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 	// TODO - find portal edges
 
 	return mesh
+}
+
+func mergePolyVerts(pa, pb Polygon, ea, eb int) []int {
+	na := len(pa.verts)
+	nb := len(pb.verts)
+	var mergedVerts []int
+
+	for i := range len(pa.verts) - 1 {
+		mergedVerts = append(mergedVerts, pa.verts[(ea+1+i)%na])
+	}
+	for i := range len(pb.verts) - 1 {
+		mergedVerts = append(mergedVerts, pb.verts[(eb+1+i)%nb])
+	}
+
+	return mergedVerts
+}
+
+// merge with a polygon with the greatest edge length
+func getPolyMergeValue(pa, pb Polygon, verts []PolyVertex) (int, int, int) {
+	na := len(pa.verts)
+	nb := len(pb.verts)
+
+	// sum of the vertices - 2. 2 shared vertices will be removed
+	if na+nb-2 > nvp {
+		return -1, -1, -1
+	}
+
+	ea, eb := -1, -1
+
+	found := false
+	for i := 0; i < na; i++ {
+		va0 := pa.verts[i]
+		va1 := pa.verts[(i+1)%na]
+
+		if va0 > va1 {
+			va0, va1 = va1, va0
+		}
+
+		for j := 0; j < nb; j++ {
+			vb0 := pb.verts[j]
+			vb1 := pb.verts[(j+1)%nb]
+			if vb0 > vb1 {
+				vb0, vb1 = vb1, vb0
+			}
+
+			// found a shared edge
+			if va0 == vb0 && va1 == vb1 {
+				ea = i
+				eb = j
+				found = true
+				break
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	if ea == -1 || eb == -1 {
+		return -1, -1, -1
+	}
+
+	// check if the merged polygon would be convex
+	va := pa.verts[(ea+na-1)%na]
+	vb := pa.verts[ea]
+	vc := pb.verts[(eb+2)%nb]
+	if !uLeft(verts[va], verts[vb], verts[vc]) {
+		return -1, -1, -1
+	}
+
+	va = pb.verts[(eb+nb-1)%nb]
+	vb = pb.verts[eb]
+	vc = pa.verts[(ea+2)%na]
+	if !uLeft(verts[va], verts[vb], verts[vc]) {
+		return -1, -1, -1
+	}
+
+	va = pa.verts[ea]
+	vb = pa.verts[(ea+1)%na]
+
+	dx := verts[va].X - verts[vb].X
+	dz := verts[va].Z - verts[vb].Z
+
+	return dx*dx + dz*dz, ea, eb
+}
+
+// inline bool uleft(const unsigned short *a, const unsigned short *b, const unsigned short *c)
+// {
+// 	return ((int)b[0] - (int)a[0]) * ((int)c[2] - (int)a[2]) -
+// 			   ((int)c[0] - (int)a[0]) * ((int)b[2] - (int)a[2]) <
+// 		   0;
+// }
+
+func uLeft(a, b, c PolyVertex) bool {
+	return (b.X-a.X)*(c.Z-a.Z)-(c.X-a.X)*(b.Z-a.Z) < 0
 }
 
 type Edge struct {

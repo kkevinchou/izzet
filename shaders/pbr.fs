@@ -7,7 +7,6 @@ layout (location = 1) out uint PickingColor;
 uniform vec3  albedo;
 uniform float metallic;
 uniform float roughness;
-uniform float ao; // ambient occlusion
 
 // lights
 const int MAX_LIGHTS = 10;
@@ -307,7 +306,7 @@ void main()
         Lo += (1 - shadow) * calculateLightOut(normal, fragToCam, fragToLight, distance, light.diffuse, in_albedo, do_attenuation);
     }
   
-    vec3 ambient = vec3(ambientFactor) * in_albedo * ao;
+    vec3 ambient = vec3(ambientFactor) * in_albedo;
     vec3 color = ambient + Lo;
 	
     if (applyToneMapping == 1) {

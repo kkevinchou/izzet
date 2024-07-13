@@ -18,6 +18,7 @@ const (
 	ComboOptionRawContour         NavMeshRenderComboOption = "Raw Contour"
 	ComboOptionSimplifiedContour  NavMeshRenderComboOption = "Simplified Contour"
 	ComboOptionDetailedMesh       NavMeshRenderComboOption = "Detailed Mesh"
+	ComboOptionPremergeTriangles  NavMeshRenderComboOption = "Premerge Triangles"
 )
 
 var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
@@ -29,6 +30,7 @@ var (
 		ComboOptionVoxel,
 		ComboOptionRawContour,
 		ComboOptionSimplifiedContour,
+		ComboOptionPremergeTriangles,
 		ComboOptionDetailedMesh,
 	}
 )

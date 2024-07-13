@@ -31,6 +31,9 @@ var (
 
 	distanceFieldVAOCache    uint32
 	distanceFieldVertexCount int32
+
+	premergeTrianglesVAOCache    uint32
+	premergeTrianglesVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
@@ -40,7 +43,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
 		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
-		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshOutline(nm)
+		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
+		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
@@ -56,6 +60,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		r.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
 		r.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPremergeTriangles {
+		r.drawContour(shaderManager, viewerContext, premergeTrianglesVAOCache, premergeTrianglesVertexCount)
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
 		r.drawContour(shaderManager, viewerContext, detailedMeshVAOCache, detailedMeshVertexCount)
 	} else {
@@ -73,7 +79,29 @@ func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerConte
 	r.iztDrawLines(count)
 }
 
-func createDetailedMeshOutline(nm *navmesh.NavigationMesh) (uint32, int32) {
+func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+	minVertex := nm.Volume.MinVertex
+	iMinVertex := []int{int(minVertex.X()), int(minVertex.Y()), int(minVertex.Z())}
+
+	var vertexAttributes []float32
+	for _, tri := range nm.Mesh.PremergeTriangles {
+		for i := range len(tri.Verts) {
+			v0 := nm.Mesh.Vertices[tri.Verts[i]]
+			v1 := nm.Mesh.Vertices[tri.Verts[(i+1)%len(tri.Verts)]]
+
+			// v0
+			vertexAttributes = append(vertexAttributes, float32(v0.X+iMinVertex[0]), float32(v0.Y+iMinVertex[1]), float32(v0.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(tri.RegionID)...)
+
+			// v1
+			vertexAttributes = append(vertexAttributes, float32(v1.X+iMinVertex[0]), float32(v1.Y+iMinVertex[1]), float32(v1.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(tri.RegionID)...)
+		}
+	}
+	return createLineVAO(vertexAttributes)
+}
+
+func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	minVertex := nm.Volume.MinVertex
 
 	var vertexAttributes []float32

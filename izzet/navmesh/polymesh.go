@@ -36,11 +36,11 @@ type Polygon struct {
 }
 
 type Mesh struct {
-	Vertices         []PolyVertex
-	Polygons         []Polygon
-	PremergePolygons []Polygon
-	areas            []AREA_TYPE
-	maxEdgeError     float64
+	Vertices          []PolyVertex
+	Polygons          []Polygon
+	PremergeTriangles []Polygon
+	areas             []AREA_TYPE
+	maxEdgeError      float64
 }
 
 func BuildPolyMesh(contourSet *ContourSet) *Mesh {
@@ -94,7 +94,7 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 					RegionID:     contour.RegionID,
 				}
 				polygons = append(polygons, p)
-				mesh.PremergePolygons = append(mesh.PremergePolygons, p)
+				mesh.PremergeTriangles = append(mesh.PremergeTriangles, p)
 			}
 		}
 

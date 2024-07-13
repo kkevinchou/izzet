@@ -27,18 +27,20 @@ type PolyVertex struct {
 
 type Polygon struct {
 	// index to the vertices owned by Mesh that make up this polygon
-	verts []int
+	Verts []int
 	// polyNeighbor[i] stores the polygon index sharing the edge (i, i+1), defined by
 	// the vertices i and i+1
 	polyNeighbor []int
+
+	RegionID int
 }
 
 type Mesh struct {
-	vertices     []PolyVertex
-	polygons     []Polygon
-	regionIDs    []int
-	areas        []AREA_TYPE
-	maxEdgeError float64
+	Vertices         []PolyVertex
+	Polygons         []Polygon
+	PremergePolygons []Polygon
+	areas            []AREA_TYPE
+	maxEdgeError     float64
 }
 
 func BuildPolyMesh(contourSet *ContourSet) *Mesh {
@@ -86,10 +88,13 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 		for j := 0; j < len(tris); j++ {
 			t := tris[j]
 			if t.a != t.b && t.a != t.c && t.b != t.c {
-				polygons = append(polygons, Polygon{
-					verts:        []int{indices[t.a], indices[t.b], indices[t.c]},
+				p := Polygon{
+					Verts:        []int{indices[t.a], indices[t.b], indices[t.c]},
 					polyNeighbor: []int{-1, -1, -1},
-				})
+					RegionID:     contour.RegionID,
+				}
+				polygons = append(polygons, p)
+				mesh.PremergePolygons = append(mesh.PremergePolygons, p)
 			}
 		}
 
@@ -105,7 +110,7 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 				pj := polygons[j]
 				for k := j + 1; k < len(polygons); k++ {
 					pk := polygons[k]
-					v, ea, eb := getPolyMergeValue(pj, pk, mesh.vertices)
+					v, ea, eb := getPolyMergeValue(pj, pk, mesh.Vertices)
 					if v > bestMergeVal {
 						bestMergeVal = v
 						bestPa = j
@@ -122,8 +127,8 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 				pb := polygons[bestPb]
 
 				// merge verts
-				polygons[bestPa].verts = mergePolyVerts(pa, pb, bestEa, bestEb)
-				polygons[bestPa].polyNeighbor = make([]int, len(polygons[bestPa].verts))
+				polygons[bestPa].Verts = mergePolyVerts(pa, pb, bestEa, bestEb)
+				polygons[bestPa].polyNeighbor = make([]int, len(polygons[bestPa].Verts))
 
 				// swap the last polygon to where b used to be, and reduce the polygon list size
 				if bestPb != len(polygons)-1 {
@@ -137,11 +142,10 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 
 		// store polygons
 		for _, polygon := range polygons {
-			mesh.regionIDs = append(mesh.regionIDs, contour.RegionID)
 			mesh.areas = append(mesh.areas, contour.area)
-			mesh.polygons = append(mesh.polygons, polygon)
-			if len(mesh.polygons) > maxTris {
-				panic(fmt.Sprintf("too many polygons %d, max: %d", len(mesh.polygons), maxTris))
+			mesh.Polygons = append(mesh.Polygons, polygon)
+			if len(mesh.Polygons) > maxTris {
+				panic(fmt.Sprintf("too many polygons %d, max: %d", len(mesh.Polygons), maxTris))
 			}
 		}
 	}
@@ -150,7 +154,7 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 	// done by checking if the vertex has the `borderVertexFlag` flag set
 
 	// calculate adjacency
-	buildMeshAdjacency(mesh.polygons, len(mesh.vertices))
+	buildMeshAdjacency(mesh.Polygons, len(mesh.Vertices))
 
 	// TODO - find portal edges. only runs when on borderSize > 0
 
@@ -158,15 +162,15 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 }
 
 func mergePolyVerts(pa, pb Polygon, ea, eb int) []int {
-	na := len(pa.verts)
-	nb := len(pb.verts)
+	na := len(pa.Verts)
+	nb := len(pb.Verts)
 	var mergedVerts []int
 
-	for i := range len(pa.verts) - 1 {
-		mergedVerts = append(mergedVerts, pa.verts[(ea+1+i)%na])
+	for i := range len(pa.Verts) - 1 {
+		mergedVerts = append(mergedVerts, pa.Verts[(ea+1+i)%na])
 	}
-	for i := range len(pb.verts) - 1 {
-		mergedVerts = append(mergedVerts, pb.verts[(eb+1+i)%nb])
+	for i := range len(pb.Verts) - 1 {
+		mergedVerts = append(mergedVerts, pb.Verts[(eb+1+i)%nb])
 	}
 
 	return mergedVerts
@@ -174,8 +178,8 @@ func mergePolyVerts(pa, pb Polygon, ea, eb int) []int {
 
 // merge with a polygon with the greatest edge length
 func getPolyMergeValue(pa, pb Polygon, verts []PolyVertex) (int, int, int) {
-	na := len(pa.verts)
-	nb := len(pb.verts)
+	na := len(pa.Verts)
+	nb := len(pb.Verts)
 
 	// sum of the vertices - 2. 2 shared vertices will be removed
 	if na+nb-2 > nvp {
@@ -186,16 +190,16 @@ func getPolyMergeValue(pa, pb Polygon, verts []PolyVertex) (int, int, int) {
 
 	found := false
 	for i := 0; i < na; i++ {
-		va0 := pa.verts[i]
-		va1 := pa.verts[(i+1)%na]
+		va0 := pa.Verts[i]
+		va1 := pa.Verts[(i+1)%na]
 
 		if va0 > va1 {
 			va0, va1 = va1, va0
 		}
 
 		for j := 0; j < nb; j++ {
-			vb0 := pb.verts[j]
-			vb1 := pb.verts[(j+1)%nb]
+			vb0 := pb.Verts[j]
+			vb1 := pb.Verts[(j+1)%nb]
 			if vb0 > vb1 {
 				vb0, vb1 = vb1, vb0
 			}
@@ -218,22 +222,22 @@ func getPolyMergeValue(pa, pb Polygon, verts []PolyVertex) (int, int, int) {
 	}
 
 	// check if the merged polygon would be convex
-	va := pa.verts[(ea+na-1)%na]
-	vb := pa.verts[ea]
-	vc := pb.verts[(eb+2)%nb]
+	va := pa.Verts[(ea+na-1)%na]
+	vb := pa.Verts[ea]
+	vc := pb.Verts[(eb+2)%nb]
 	if !uLeft(verts[va], verts[vb], verts[vc]) {
 		return -1, -1, -1
 	}
 
-	va = pb.verts[(eb+nb-1)%nb]
-	vb = pb.verts[eb]
-	vc = pa.verts[(ea+2)%na]
+	va = pb.Verts[(eb+nb-1)%nb]
+	vb = pb.Verts[eb]
+	vc = pa.Verts[(ea+2)%na]
 	if !uLeft(verts[va], verts[vb], verts[vc]) {
 		return -1, -1, -1
 	}
 
-	va = pa.verts[ea]
-	vb = pa.verts[(ea+1)%na]
+	va = pa.Verts[ea]
+	vb = pa.Verts[(ea+1)%na]
 
 	dx := verts[va].X - verts[vb].X
 	dz := verts[va].Z - verts[vb].Z
@@ -268,9 +272,9 @@ func buildMeshAdjacency(polygons []Polygon, numVerts int) {
 	var edges []Edge
 
 	for i, polygon := range polygons {
-		for j := 0; j < len(polygon.verts); j++ {
-			v0 := polygon.verts[j]
-			v1 := polygon.verts[(j+1)%len(polygon.verts)]
+		for j := 0; j < len(polygon.Verts); j++ {
+			v0 := polygon.Verts[j]
+			v1 := polygon.Verts[(j+1)%len(polygon.Verts)]
 			if v0 < v1 {
 				edge := Edge{
 					vert:     [2]int{v0, v1},
@@ -287,9 +291,9 @@ func buildMeshAdjacency(polygons []Polygon, numVerts int) {
 	}
 
 	for i, polygon := range polygons {
-		for j := 0; j < len(polygon.verts); j++ {
-			v0 := polygon.verts[j]
-			v1 := polygon.verts[(j+1)%len(polygon.verts)]
+		for j := 0; j < len(polygon.Verts); j++ {
+			v0 := polygon.Verts[j]
+			v1 := polygon.Verts[(j+1)%len(polygon.Verts)]
 			if v0 > v1 {
 				for e := firstEdge[v1]; e != -1; e = nextEdge[e] {
 					edge := &edges[e]
@@ -320,15 +324,15 @@ func (m *Mesh) addVertex(x, y, z int, firstVert, nextVert []int) int {
 	i := firstVert[bucket]
 
 	for i != -1 {
-		v := m.vertices[i]
+		v := m.Vertices[i]
 		if v.X == x && (math.Abs(float64(v.Y-y)) <= 2) && v.Z == z {
 			return i
 		}
 		i = nextVert[i]
 	}
 
-	i = len(m.vertices)
-	m.vertices = append(m.vertices, PolyVertex{X: x, Y: y, Z: z})
+	i = len(m.Vertices)
+	m.Vertices = append(m.Vertices, PolyVertex{X: x, Y: y, Z: z})
 	nextVert[i] = firstVert[bucket]
 	firstVert[bucket] = i
 

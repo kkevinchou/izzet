@@ -760,7 +760,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
 	contourSet := navmesh.BuildContours(chf, maxError, 1)
 	mesh := navmesh.BuildPolyMesh(contourSet)
-	_ = mesh
 	detailedMesh := navmesh.BuildDetailedPolyMesh(mesh, chf)
 
 	nm := &navmesh.NavigationMesh{
@@ -772,6 +771,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		Invalidated:          true,
 		InvalidatedTimestamp: int(time.Now().Unix()),
 		ContourSet:           contourSet,
+		Mesh:                 mesh,
 		DetailedMesh:         detailedMesh,
 	}
 

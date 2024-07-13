@@ -40,7 +40,7 @@ type DetailedMesh struct {
 }
 
 func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
-	bounds := make([]Bound, len(mesh.polygons))
+	bounds := make([]Bound, len(mesh.Polygons))
 	var maxhw, maxhh int
 	var nPolyVerts int
 
@@ -50,16 +50,16 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
 
 	// find max size for a polygon area
-	for i := range mesh.polygons {
-		polygon := &mesh.polygons[i]
+	for i := range mesh.Polygons {
+		polygon := &mesh.Polygons[i]
 
 		xmin := chf.width
 		xmax := 0
 		zmin := chf.height
 		zmax := 0
 
-		for _, vertIndex := range polygon.verts {
-			vert := mesh.vertices[vertIndex]
+		for _, vertIndex := range polygon.Verts {
+			vert := mesh.Vertices[vertIndex]
 			xmin = min(xmin, vert.X)
 			xmax = max(xmax, vert.X)
 			zmin = min(zmin, vert.Z)
@@ -90,11 +90,11 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 
 	var dmesh DetailedMesh
 
-	for i := range mesh.polygons {
+	for i := range mesh.Polygons {
 		var polyVerts []DetailedVertex
-		polygon := &mesh.polygons[i]
-		for _, vertIndex := range polygon.verts {
-			vert := mesh.vertices[vertIndex]
+		polygon := &mesh.Polygons[i]
+		for _, vertIndex := range polygon.Verts {
+			vert := mesh.Vertices[vertIndex]
 			polyVerts = append(polyVerts, DetailedVertex{
 				X: float64(vert.X) * cs, Y: float64(vert.Y) * ch, Z: float64(vert.Z) * cs,
 			})
@@ -104,7 +104,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 		hp.zmin = bounds[i].zmin
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
-		getHeightData(chf, hp, mesh.regionIDs[i])
+		getHeightData(chf, hp, polygon.RegionID)
 		buildDetailedPoly(chf, &polyVerts, 1, 1, heightSearchRadius, hp)
 		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
 	}

@@ -104,15 +104,15 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 		hp.zmin = bounds[i].zmin
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
-		getHeightData(chf, hp, polygon.RegionID)
-		buildDetailedPoly(chf, &polyVerts, 1, 1, heightSearchRadius, hp)
+		getHeightData(chf, hp, polygon.RegionID, i)
+		buildDetailedPoly(chf, &polyVerts, 100, 1, heightSearchRadius, hp)
 		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
 	}
 
 	return &dmesh
 }
 
-func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
+func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID int) {
 	for i := range len(hp.data) {
 		hp.data[i] = -1
 	}
@@ -131,7 +131,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 			spanCount := cell.SpanCount
 
 			for i := spanIndex; i < spanIndex+SpanIndex(spanCount); i++ {
-				span := chf.spans[spanIndex]
+				span := chf.spans[i]
 				if span.regionID == regionID {
 					hp.data[hx+hz*hp.width] = span.y
 					empty = false
@@ -149,7 +149,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 						}
 					}
 					if border {
-						queue = append(queue, QueueItem{x: x, z: z, spanIndex: spanIndex})
+						queue = append(queue, QueueItem{x: x, z: z, spanIndex: i})
 					}
 					break
 				}

@@ -146,12 +146,13 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 		}
 	}
 
-	// TODO - remove edge vertices
+	// TODO - remove edge vertices for border vertexes
+	// done by checking if the vertex has the `borderVertexFlag` flag set
 
 	// calculate adjacency
 	buildMeshAdjacency(mesh.polygons, len(mesh.vertices))
 
-	// TODO - find portal edges
+	// TODO - find portal edges. only runs when on borderSize > 0
 
 	return mesh
 }
@@ -239,13 +240,6 @@ func getPolyMergeValue(pa, pb Polygon, verts []PolyVertex) (int, int, int) {
 
 	return dx*dx + dz*dz, ea, eb
 }
-
-// inline bool uleft(const unsigned short *a, const unsigned short *b, const unsigned short *c)
-// {
-// 	return ((int)b[0] - (int)a[0]) * ((int)c[2] - (int)a[2]) -
-// 			   ((int)c[0] - (int)a[0]) * ((int)b[2] - (int)a[2]) <
-// 		   0;
-// }
 
 func uLeft(a, b, c PolyVertex) bool {
 	return (b.X-a.X)*(c.Z-a.Z)-(c.X-a.X)*(b.Z-a.Z) < 0

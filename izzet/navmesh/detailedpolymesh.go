@@ -39,6 +39,10 @@ type DetailedMesh struct {
 	Outlines [][]DetailedVertex
 }
 
+// type Triangle struct {
+// 	X, Y, Z int
+// }
+
 func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 	bounds := make([]Bound, len(mesh.Polygons))
 	var maxhw, maxhh int
@@ -327,7 +331,20 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) {
 	// 		continue
 	// 	}
 
+	// 	pi := (i - 1) % len(hull)
+	// 	ni := (i - 1) % len(hull)
+	// 	pv := verts[hull[pi]]
+	// 	cv := verts[hull[i]]
+	// 	nv := verts[hull[ni]]
+	// 	d := dist2D(pv, cv) + dist2D(cv, nv) + dist2D(nv, pv)
+	// 	if d < dmin {
+	// 		start = i
+	// 		left = ni
+	// 		right = pi
+	// 		dmin = d
+	// 	}
 	// }
+
 }
 
 func getHeight(fx, fy, fz, cs, ics, ch float64, radius int, hp HeightPatch) int {
@@ -428,5 +445,15 @@ func distancePtSegf(x, z, px, pz, qx, qz float64) float64 {
 	dx = px + t*pqx - x
 	dz = pz + t*pqz - z
 
+	return dx*dx + dz*dz
+}
+
+func dist2D(v0, v1 DetailedVertex) float64 {
+	return math.Sqrt(dist2dSq(v0, v1))
+}
+
+func dist2dSq(v0, v1 DetailedVertex) float64 {
+	dx := v0.X - v1.X
+	dz := v0.Z - v1.Z
 	return dx*dx + dz*dz
 }

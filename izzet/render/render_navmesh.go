@@ -396,41 +396,33 @@ func regionIDToColor(regionID int) []float32 {
 	if regionID == 0 {
 		return []float32{.2, .2, .2}
 	}
-	var h float32 = float32((83 * regionID) % 360)
-	var s float32 = 1
-	var v float32 = 1
 
-	c := v * s
-	x := c * (1.0 - float32(math.Abs(float64(int(h/60)%2)-1)))
-	m := v - c
+	hue := float32(regionID) * 137.508           // 137.508 is the golden angle in degrees
+	hue = float32(math.Mod(float64(hue), 360.0)) // Ensure the hue is within [0, 360)
+	return HSLToRGB(hue, 1, 0.2)
+}
+
+// HSLToRGB converts an HSL color value to RGB.
+func HSLToRGB(h, s, l float32) []float32 {
+	c := (1.0 - float32(math.Abs(float64(2.0*l-1.0)))) * s
+	x := c * (1.0 - float32(math.Abs(math.Mod(float64(h/60.0), 2.0)-1.0)))
+	m := l - c/2.0
 
 	var r, g, b float32
-
-	if h >= 0.0 && h < 60.0 {
-		r = c
-		g = x
-		b = 0
-	} else if h >= 60.0 && h < 120.0 {
-		r = x
-		g = c
-		b = 0
-	} else if h >= 120.0 && h < 180.0 {
-		r = 0
-		g = c
-		b = x
-	} else if h >= 180.0 && h < 240.0 {
-		r = 0
-		g = x
-		b = c
-	} else if h >= 240.0 && h < 300.0 {
-		r = x
-		g = 0
-		b = c
-	} else {
-		r = c
-		g = 0
-		b = x
+	switch {
+	case h < 60:
+		r, g, b = c, x, 0
+	case h < 120:
+		r, g, b = x, c, 0
+	case h < 180:
+		r, g, b = 0, c, x
+	case h < 240:
+		r, g, b = 0, x, c
+	case h < 300:
+		r, g, b = x, 0, c
+	default:
+		r, g, b = c, 0, x
 	}
 
-	return []float32{r + m, g + m, b + m}
+	return []float32{(r + m), (g + m), (b + m)}
 }

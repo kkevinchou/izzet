@@ -15,7 +15,7 @@ type Index struct {
 	removable bool
 }
 
-type RCTriangle struct {
+type PolyTriangle struct {
 	a int
 	b int
 	c int
@@ -339,7 +339,7 @@ func (m *Mesh) addVertex(x, y, z int, firstVert, nextVert []int) int {
 	return i
 }
 
-func triangulate(vertices []SimplifiedVertex) []RCTriangle {
+func triangulate(vertices []SimplifiedVertex) []PolyTriangle {
 	indices := make([]Index, len(vertices))
 	for i := range indices {
 		indices[i].index = i
@@ -354,7 +354,7 @@ func triangulate(vertices []SimplifiedVertex) []RCTriangle {
 		}
 	}
 
-	var tris []RCTriangle
+	var tris []PolyTriangle
 	vertCount := len(vertices)
 	for vertCount > 3 {
 		minLength := -1
@@ -388,7 +388,7 @@ func triangulate(vertices []SimplifiedVertex) []RCTriangle {
 		i1 := (i + 1) % vertCount
 		i2 := (i + 2) % vertCount
 
-		tris = append(tris, RCTriangle{a: indices[i].index, b: indices[i1].index, c: indices[i2].index})
+		tris = append(tris, PolyTriangle{a: indices[i].index, b: indices[i1].index, c: indices[i2].index})
 
 		vertCount--
 		for j := i1; j < vertCount; j++ {
@@ -407,7 +407,7 @@ func triangulate(vertices []SimplifiedVertex) []RCTriangle {
 		indices[i1].removable = diagonal(i, i2, vertCount, vertices, indices)
 	}
 
-	tris = append(tris, RCTriangle{a: indices[0].index, b: indices[1].index, c: indices[2].index})
+	tris = append(tris, PolyTriangle{a: indices[0].index, b: indices[1].index, c: indices[2].index})
 
 	return tris
 }

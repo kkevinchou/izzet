@@ -1,7 +1,10 @@
 package navmesh
 
 import (
+	"fmt"
 	"math"
+
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 )
 
 const (
@@ -39,11 +42,11 @@ type DetailedMesh struct {
 	Outlines [][]DetailedVertex
 }
 
-// type Triangle struct {
-// 	X, Y, Z int
-// }
+type Triangle struct {
+	A, B, C int
+}
 
-func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
+func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
 	bounds := make([]Bound, len(mesh.Polygons))
 	var maxhw, maxhh int
 	var nPolyVerts int
@@ -94,7 +97,12 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 
 	var dmesh DetailedMesh
 
+	debugMap := runtimeConfig.DebugBlob2IntMap
+
 	for i := range mesh.Polygons {
+		if !debugMap[i] && len(debugMap) > 0 {
+			continue
+		}
 		var polyVerts []DetailedVertex
 		polygon := &mesh.Polygons[i]
 		for _, vertIndex := range polygon.Verts {
@@ -109,16 +117,21 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField) *DetailedMesh {
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID, i)
-		buildDetailedPoly(chf, polyVerts, 100, 1, heightSearchRadius, hp)
+		buildDetailedPoly(chf, polyVerts, 200, 1, heightSearchRadius, hp, i)
 		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
 	}
 
 	return &dmesh
 }
 
+var HP map[string]bool
+
 func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID int) {
+	if HP == nil {
+		HP = map[string]bool{}
+	}
 	for i := range len(hp.data) {
-		hp.data[i] = -1
+		hp.data[i] = hpUnsetHeight
 	}
 
 	var queue []QueueItem
@@ -128,7 +141,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 	// to fill in the rest
 	for hz := range hp.height {
 		z := hp.zmin + hz
-		for hx := range hp.height {
+		for hx := range hp.width {
 			x := hp.xmin + hx
 			cell := chf.cells[x+z*chf.width]
 			spanIndex := cell.SpanIndex
@@ -138,6 +151,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 				span := chf.spans[i]
 				if span.regionID == regionID {
 					hp.data[hx+hz*hp.width] = span.y
+					HP[fmt.Sprintf("%d_%d", x, z)] = true
 					empty = false
 					border := false
 					for _, dir := range dirs {
@@ -204,11 +218,12 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 	}
 }
 
-func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch) {
+func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, polygonID int) {
 	var ch float64 = 1
 	var cs float64 = 1
 	ics := 1 / cs
 	var hull []int
+	// heightSearchRadius = 100
 
 	verts := make([]DetailedVertex, len(inVerts))
 	for i := range len(inVerts) {
@@ -216,6 +231,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	}
 
 	minExtent := minPolyExtent(inVerts)
+	_ = minExtent
 
 	// tesselate outlines
 	// this is done in a separate pass to ensure seamless height values across the poly boundaries
@@ -251,6 +267,10 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			nn = maxVerts - 1 - len(inVerts)
 		}
 
+		if i == 0 && j == 2 && polygonID == 0 {
+			fmt.Println("HI")
+		}
+
 		var edges []DetailedVertex
 		for k := 0; k <= nn; k++ {
 			u := float64(k) / float64(nn)
@@ -278,7 +298,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			var maxd float64
 			maxi := -1
 			for m := i0 + 1; m < i1; m++ {
-				d := distancePtSegf(edges[m].X, edges[m].Z, v0.X, v0.Z, v1.X, v1.Z)
+				d := distancePtSeg(edges[m], v0, v1)
 				if d > maxd {
 					maxd = d
 					maxi = m
@@ -312,39 +332,78 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	}
 
 	if minExtent < sampleDist*2 {
-		triangulateHull(verts, hull, len(inVerts))
+		tris := triangulateHull(verts, hull, len(inVerts))
+		fmt.Println(len(hull), len(inVerts))
+		_ = tris
 		// setTriFlags
 		return
 	}
+
+	// tessellate the base mesh
+	// tris = triangulateHull(verts, hull, len(inVerts))
 }
 
-func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) {
-	// start, left, right := 0, 1, len(hull)-1
+func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) []Triangle {
+	// start from an ear with the shortest perimeter.
+	// this tends to favor well formed triangles as a starting point
 
-	// // start from an ear with the shortest perimeter.
-	// // this tends to favor well formed triangles as a starting point
+	start, left, right := 0, 1, len(hull)-1
+	dmin := math.MaxFloat64
 
-	// dmin := math.MaxFloat64
-	// for i := range len(hull) {
-	// 	if hull[i] >= originalNumVerts {
-	// 		// ears are centered on original hull vertices and not on newly added vertices from tesselation
-	// 		continue
-	// 	}
+	for i := range len(hull) {
+		if hull[i] >= originalNumVerts {
+			// ears are centered on original hull vertices and not on newly added vertices from tesselation
+			continue
+		}
 
-	// 	pi := (i - 1) % len(hull)
-	// 	ni := (i - 1) % len(hull)
-	// 	pv := verts[hull[pi]]
-	// 	cv := verts[hull[i]]
-	// 	nv := verts[hull[ni]]
-	// 	d := dist2D(pv, cv) + dist2D(cv, nv) + dist2D(nv, pv)
-	// 	if d < dmin {
-	// 		start = i
-	// 		left = ni
-	// 		right = pi
-	// 		dmin = d
-	// 	}
-	// }
+		pi := prev(i, len(hull))
+		ni := next(i, len(hull))
+		pv := verts[hull[pi]]
+		cv := verts[hull[i]]
+		nv := verts[hull[ni]]
+		d := dist2D(pv, cv) + dist2D(cv, nv) + dist2D(nv, pv)
+		if d < dmin {
+			start = i
+			left = ni
+			right = pi
+			dmin = d
+		}
+	}
 
+	var tris []Triangle
+	tris = append(tris, Triangle{A: hull[start], B: hull[left], C: hull[right]})
+
+	// triangulate the polygon by moving left or right, depending on which triangle
+	// has the shorter perimeter
+	for next(left, len(hull)) != right {
+		nLeft := next(left, len(hull))
+		nRight := prev(right, len(hull))
+
+		leftVert := verts[hull[left]]
+		nextLeftVert := verts[hull[nLeft]]
+		rightVert := verts[hull[right]]
+		nextRightVert := verts[hull[nRight]]
+
+		dLeft := dist2D(leftVert, nextLeftVert) + dist2D(nextLeftVert, rightVert)
+		dRight := dist2D(rightVert, nextRightVert) + dist2D(leftVert, nextRightVert)
+
+		if dLeft < dRight {
+			tris = append(tris, Triangle{A: hull[left], B: hull[nLeft], C: hull[right]})
+			left = nLeft
+		} else {
+			tris = append(tris, Triangle{A: hull[left], B: hull[right], C: hull[nRight]})
+			right = nRight
+		}
+	}
+
+	return tris
+}
+
+func next(i, max int) int {
+	return (i + 1) % max
+}
+func prev(i, max int) int {
+	return (i - 1 + max) % max
 }
 
 func getHeight(fx, fy, fz, cs, ics, ch float64, radius int, hp HeightPatch) int {
@@ -400,6 +459,7 @@ func getHeight(fx, fy, fz, cs, ics, ch float64, radius int, hp HeightPatch) int 
 
 	if h == hpUnsetHeight {
 		panic("failed to find height")
+		// fmt.Printf("failed to sample %.0f %.0f %.0f\n", fx, fy, fz)
 	}
 
 	return h
@@ -416,7 +476,7 @@ func minPolyExtent(verts []DetailedVertex) float64 {
 			if j == i || j == ni {
 				continue
 			}
-			d := distancePtSegf(verts[i].X, verts[i].Z, p1.X, p1.Z, p2.X, p2.Z)
+			d := distancePtSeg2Df(verts[i].X, verts[i].Z, p1.X, p1.Z, p2.X, p2.Z)
 			maxEdgeDist = max(maxEdgeDist, d)
 		}
 		minDist = min(minDist, maxEdgeDist)
@@ -424,8 +484,34 @@ func minPolyExtent(verts []DetailedVertex) float64 {
 	return math.Sqrt(minDist)
 }
 
+func distancePtSeg(pt, p, q DetailedVertex) float64 {
+	pqx := q.X - p.X
+	pqy := q.Y - p.Y
+	pqz := q.Z - p.Z
+	dx := pt.X - p.X
+	dy := pt.Y - p.Y
+	dz := pt.Z - p.Z
+	d := pqx*pqx + pqy*pqy + pqz*pqz
+	t := pqx*dx + pqy*dy + pqz*dz
+
+	if d > 0 {
+		t /= d
+	}
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+
+	dx = p.X + t*pqx - pt.X
+	dy = p.Y + t*pqy - pt.Y
+	dz = p.Z + t*pqz - pt.Z
+
+	return dx*dx + dy*dy + dz*dz
+}
+
 // returns the squared distance between a point and a line segment
-func distancePtSegf(x, z, px, pz, qx, qz float64) float64 {
+func distancePtSeg2Df(x, z, px, pz, qx, qz float64) float64 {
 	pqx := qx - px
 	pqz := qz - pz
 	dx := x - px

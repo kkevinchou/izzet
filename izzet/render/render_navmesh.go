@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -34,6 +35,9 @@ var (
 
 	premergeTrianglesVAOCache    uint32
 	premergeTrianglesVertexCount int32
+
+	polygonsVAOCache    uint32
+	polygonsVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
@@ -45,25 +49,44 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
 		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
+		polygonsVAOCache, polygonsVertexCount = r.createPolygonsVAO(nm)
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
-		gl.BindVertexArray(navmeshVAOCache)
-		r.iztDrawElements(navmeshVAOCacheVertexCount * 36)
+		if navmeshVAOCacheVertexCount > 0 {
+			gl.BindVertexArray(navmeshVAOCache)
+			r.iztDrawElements(navmeshVAOCacheVertexCount * 36)
+		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDistanceField {
-		gl.BindVertexArray(distanceFieldVAOCache)
-		r.iztDrawElements(distanceFieldVertexCount * 36)
+		if distanceFieldVertexCount > 0 {
+			gl.BindVertexArray(distanceFieldVAOCache)
+			r.iztDrawElements(distanceFieldVertexCount * 36)
+		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionVoxel {
-		gl.BindVertexArray(voxelVAOCache)
-		r.iztDrawElements(voxelVAOCacheVertexCount * 36)
+		if voxelVAOCacheVertexCount > 0 {
+			gl.BindVertexArray(voxelVAOCache)
+			r.iztDrawElements(voxelVAOCacheVertexCount * 36)
+		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionRawContour {
-		r.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
+		if rawContourVertexCount > 0 {
+			r.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
+		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
-		r.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
+		if simplifiedContourVertexCount > 0 {
+			r.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
+		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPremergeTriangles {
-		r.drawContour(shaderManager, viewerContext, premergeTrianglesVAOCache, premergeTrianglesVertexCount)
+		if premergeTrianglesVertexCount > 0 {
+			r.drawContour(shaderManager, viewerContext, premergeTrianglesVAOCache, premergeTrianglesVertexCount)
+		}
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPolygons {
+		if polygonsVertexCount > 0 {
+			r.drawContour(shaderManager, viewerContext, polygonsVAOCache, polygonsVertexCount)
+		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
-		r.drawContour(shaderManager, viewerContext, detailedMeshVAOCache, detailedMeshVertexCount)
+		if detailedMeshVertexCount > 0 {
+			r.drawContour(shaderManager, viewerContext, detailedMeshVAOCache, detailedMeshVertexCount)
+		}
 	} else {
 		panic("WAT")
 	}
@@ -101,7 +124,38 @@ func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	return createLineVAO(vertexAttributes)
 }
 
+func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+	minVertex := nm.Volume.MinVertex
+	iMinVertex := []int{int(minVertex.X()), int(minVertex.Y()), int(minVertex.Z())}
+
+	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+
+	var vertexAttributes []float32
+	for id, poly := range nm.Mesh.Polygons {
+		if !debugMap[id] && len(debugMap) > 0 {
+			continue
+		}
+		for i := range len(poly.Verts) {
+			v0 := nm.Mesh.Vertices[poly.Verts[i]]
+			v1 := nm.Mesh.Vertices[poly.Verts[(i+1)%len(poly.Verts)]]
+
+			// v0
+			vertexAttributes = append(vertexAttributes, float32(v0.X+iMinVertex[0]), float32(v0.Y+iMinVertex[1]), float32(v0.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(poly.RegionID)...)
+
+			// v1
+			vertexAttributes = append(vertexAttributes, float32(v1.X+iMinVertex[0]), float32(v1.Y+iMinVertex[1]), float32(v1.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(poly.RegionID)...)
+		}
+	}
+	return createLineVAO(vertexAttributes)
+}
+
 func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+	if nm.DebugLines == nil || len(nm.DetailedMesh.Outlines) == 0 {
+		return 0, 0
+	}
+
 	minVertex := nm.Volume.MinVertex
 
 	var vertexAttributes []float32
@@ -162,6 +216,9 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 }
 
 func createLineVAO(vertexAttributes []float32) (uint32, int32) {
+	if len(vertexAttributes) == 0 {
+		return 0, 0
+	}
 	var floatSize int32 = 4
 	ptrOffset := 0
 	var totalAttributeSize int32 = 6
@@ -213,6 +270,10 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 		}
 	}
 
+	if len(positions) == 0 {
+		return 0, 0
+	}
+
 	vao := cubeAttributes(positions, lengths, colors)
 
 	return vao, int32(len(positions))
@@ -243,6 +304,10 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 		}
 	}
 
+	if len(positions) == 0 {
+		return 0, 0
+	}
+
 	vao := cubeAttributes(positions, lengths, colors)
 
 	return vao, int32(len(positions))
@@ -255,22 +320,55 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 
 	for z := range hf.Height {
 		for x := range hf.Width {
-			index := x + z*hf.Width
-			span := hf.Spans[index]
-			for span != nil {
+			if x == 809 && z == 248 {
 				position := mgl32.Vec3{
 					float32(x) + float32(hf.BMin.X()),
-					float32(span.Min) + float32(hf.BMin.Y()),
+					float32(hf.BMin.Y()),
 					float32(z) + float32(hf.BMin.Z()),
 				}
 				positions = append(positions, position)
-				colors = append(colors, .9, .9, .9)
-				lengths = append(lengths, float32(span.Max-span.Min+1))
+				colors = append(colors, 1, 0, 0)
+				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
+			} else if navmesh.HP[fmt.Sprintf("%d_%d", x, z)] {
+				position := mgl32.Vec3{
+					float32(x) + float32(hf.BMin.X()),
+					float32(hf.BMin.Y()),
+					float32(z) + float32(hf.BMin.Z()),
+				}
+				positions = append(positions, position)
+				colors = append(colors, 0, 1, 0)
+				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
 
-				span = span.Next
+			} else {
+				index := x + z*hf.Width
+				span := hf.Spans[index]
+				for span != nil {
+					position := mgl32.Vec3{
+						float32(x) + float32(hf.BMin.X()),
+						float32(span.Min) + float32(hf.BMin.Y()),
+						float32(z) + float32(hf.BMin.Z()),
+					}
+					positions = append(positions, position)
+					color := []float32{.9, .9, .9}
+					// if x == 809 || x == 796 || x == 764 || x == 617 || x == 653 || x == 808 {
+					// 	color = []float32{1, 0, 0}
+					// }
+					// if z == 248 || z == 244 || z == 194 || z == 240 || z == 331 || z == 379 {
+					// 	color = []float32{1, 0, 0}
+					// }
+					colors = append(colors, color...)
+					lengths = append(lengths, float32(span.Max-span.Min+1))
+
+					span = span.Next
+				}
 			}
 		}
 	}
+
+	if len(positions) == 0 {
+		return 0, 0
+	}
+
 	vao := cubeAttributes(positions, lengths, colors)
 	return vao, int32(len(positions))
 }

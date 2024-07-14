@@ -2,6 +2,8 @@ package panels
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
@@ -19,6 +21,7 @@ const (
 	ComboOptionSimplifiedContour  NavMeshRenderComboOption = "Simplified Contour"
 	ComboOptionDetailedMesh       NavMeshRenderComboOption = "Detailed Mesh"
 	ComboOptionPremergeTriangles  NavMeshRenderComboOption = "Premerge Triangles"
+	ComboOptionPolygons           NavMeshRenderComboOption = "Polygons"
 )
 
 var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
@@ -31,6 +34,7 @@ var (
 		ComboOptionRawContour,
 		ComboOptionSimplifiedContour,
 		ComboOptionPremergeTriangles,
+		ComboOptionPolygons,
 		ComboOptionDetailedMesh,
 	}
 )
@@ -143,6 +147,25 @@ func worldProps(app renderiface.App) {
 				runtimeConfig.NavigationmeshMaxError = f
 			}
 		}, true)
+		imgui.EndTable()
+		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
+			ids := map[int]bool{}
+			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
+			for _, sID := range sIDs {
+				id, _ := strconv.Atoi(sID)
+				ids[id] = true
+			}
+			runtimeConfig.DebugBlob1IntMap = ids
+		}
+		if imgui.InputTextWithHint("##DebugBlob2", "", &runtimeConfig.DebugBlob2, imgui.InputTextFlagsNone, nil) {
+			ids := map[int]bool{}
+			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
+			for _, sID := range sIDs {
+				id, _ := strconv.Atoi(sID)
+				ids[id] = true
+			}
+			runtimeConfig.DebugBlob2IntMap = ids
+		}
 		if imgui.Button("Build") {
 			iterations := int(runtimeConfig.NavigationMeshIterations)
 			walkableHeight := int(runtimeConfig.NavigationMeshWalkableHeight)
@@ -151,7 +174,6 @@ func worldProps(app renderiface.App) {
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)
 		}
-		imgui.EndTable()
 
 		imgui.LabelText("##", "Draw")
 		if imgui.BeginCombo("##", string(SelectedNavmeshRenderComboOption)) {

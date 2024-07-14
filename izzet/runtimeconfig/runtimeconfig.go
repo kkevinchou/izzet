@@ -82,6 +82,11 @@ type RuntimeConfig struct {
 	NavigationmeshMaxError        float32
 
 	ShadowmapZOffset float32
+
+	DebugBlob1       string
+	DebugBlob1IntMap map[int]bool
+	DebugBlob2       string
+	DebugBlob2IntMap map[int]bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {

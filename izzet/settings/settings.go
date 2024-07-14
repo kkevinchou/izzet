@@ -65,7 +65,7 @@ const (
 	FirstPersonCamera  bool    = false
 	CameraEntityOffset float64 = 100
 	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "spicy"
+	DefaultProject     string  = "spicy2"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210

@@ -346,8 +346,8 @@ func triangulate(vertices []SimplifiedVertex) []PolyTriangle {
 	}
 
 	for i := range len(vertices) {
-		i1 := (i + 1) % len(vertices)
-		i2 := (i + 2) % len(vertices)
+		i1 := next(i, len(vertices))
+		i2 := next(i1, len(vertices))
 
 		if diagonal(i, i2, len(vertices), vertices, indices) {
 			indices[i1].removable = true
@@ -355,17 +355,16 @@ func triangulate(vertices []SimplifiedVertex) []PolyTriangle {
 	}
 
 	var tris []PolyTriangle
-	vertCount := len(vertices)
-	for vertCount > 3 {
+	n := len(vertices)
+	for n > 3 {
 		minLength := -1
 		mini := -1
 
-		for i := 0; i < vertCount; i++ {
-			i1 := (i + 1) % vertCount
-			i2 := (i + 2) % vertCount
+		for i := 0; i < n; i++ {
+			i1 := next(i, n)
 			if indices[i1].removable {
 				p0 := vertices[indices[i].index]
-				p2 := vertices[indices[i2].index]
+				p2 := vertices[indices[next(i1, n)].index]
 
 				dx := p2.X - p0.X
 				dz := p2.Z - p0.Z
@@ -379,33 +378,49 @@ func triangulate(vertices []SimplifiedVertex) []PolyTriangle {
 		}
 
 		if mini == -1 {
-			// TODO: implement loose triangulation method diagonalLoose
+			minLength = -1
+			mini = -1
+			for i := 0; i < n; i++ {
+				i1 := next(i, n)
+				i2 := next(i1, n)
+				if diagonalLoose(i, i2, n, vertices, indices) {
+					p0 := vertices[indices[i].index]
+					p2 := vertices[indices[next(i2, n)].index]
+					dx := p2.X - p0.X
+					dy := p2.Z - p0.Z
+					len := dx*dx + dy*dy
+
+					if minLength < 0 || len < minLength {
+						minLength = len
+						mini = i
+					}
+				}
+			}
+		}
+
+		if mini == -1 {
 			fmt.Println("failed to triangulate")
 			return nil
-			// panic("WAT")
 		}
 
 		i := mini
-		i1 := (i + 1) % vertCount
-		i2 := (i + 2) % vertCount
+		i1 := next(i, n)
+		i2 := next(i1, n)
 
 		tris = append(tris, PolyTriangle{a: indices[i].index, b: indices[i1].index, c: indices[i2].index})
 
-		vertCount--
-		for j := i1; j < vertCount; j++ {
+		n--
+		for j := i1; j < n; j++ {
 			indices[j] = indices[j+1]
 		}
 
-		if i1 >= vertCount {
+		if i1 >= n {
 			i1 = 0
 		}
 
-		i = (i1 - 1 + vertCount) % vertCount
-		previ := (i - 1 + vertCount) % vertCount
-		i2 = (i1 + 1) % vertCount
-
-		indices[i].removable = diagonal(previ, i1, vertCount, vertices, indices)
-		indices[i1].removable = diagonal(i, i2, vertCount, vertices, indices)
+		i = prev(i1, n)
+		indices[i].removable = diagonal(prev(i, n), i1, n, vertices, indices)
+		indices[i1].removable = diagonal(i, next(i1, n), n, vertices, indices)
 	}
 
 	tris = append(tris, PolyTriangle{a: indices[0].index, b: indices[1].index, c: indices[2].index})
@@ -413,17 +428,71 @@ func triangulate(vertices []SimplifiedVertex) []PolyTriangle {
 	return tris
 }
 
-// returns true if the line segment i-j is a proper internal diagonal
-func diagonal(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
-	return inCone(i, j, n, vertices, indices) && diagonalie(i, j, n, vertices, indices)
+func diagonalLoose(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
+	return isConeLoose(i, j, n, vertices, indices) && diagonalieLoose(i, j, n, vertices, indices)
 }
 
+func isConeLoose(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
+	pi := vertices[indices[i].index]
+	pj := vertices[indices[j].index]
+
+	previ := prev(i, n)
+	nexti := next(i, n)
+
+	pprev := vertices[indices[previ].index]
+	pnext := vertices[indices[nexti].index]
+
+	if leftOn(pprev, pi, pnext) {
+		return leftOn(pi, pj, pprev) && leftOn(pj, pi, pnext)
+	}
+
+	l1 := leftOn(pi, pj, pnext)
+	l2 := leftOn(pj, pi, pprev)
+
+	return !(l1 && l2)
+}
+
+func diagonalieLoose(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
+	d0 := vertices[indices[i].index]
+	d1 := vertices[indices[j].index]
+
+	for k := range n {
+		k1 := (k + 1) % n
+
+		if k == i || k == j || k1 == i || k1 == j {
+			continue
+		}
+
+		p0 := vertices[indices[k].index]
+		p1 := vertices[indices[k1].index]
+
+		if vequal(d0, p0) || vequal(d1, p0) || vequal(d0, p1) || vequal(d1, p1) {
+			continue
+		}
+
+		if intersectProp(d0, d1, p0, p1) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// returns true if the line segment i-j is a proper internal diagonal
+func diagonal(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
+	c := inCone(i, j, n, vertices, indices)
+	d := diagonalie(i, j, n, vertices, indices)
+	return c && d
+}
+
+// returns true iff the diagonal (i,j) is strictly internal to the
+// polygon P in the neighborhood of the i endpoint.
 func inCone(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
 	pi := vertices[indices[i].index]
 	pj := vertices[indices[j].index]
 
-	previ := (i - 1 + n) % n
-	nexti := (i + 1) % n
+	previ := prev(i, n)
+	nexti := next(i, n)
 
 	pprev := vertices[indices[previ].index]
 	pnext := vertices[indices[nexti].index]
@@ -438,6 +507,8 @@ func inCone(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
 	return !(l1 && l2)
 }
 
+// returns T iff (v_i, v_j) is a proper internal *or* external
+// diagonal of P, *ignoring edges incident to v_i and v_j*.
 func diagonalie(i, j, n int, vertices []SimplifiedVertex, indices []Index) bool {
 	d0 := vertices[indices[i].index]
 	d1 := vertices[indices[j].index]
@@ -477,6 +548,7 @@ func between(a, b, c SimplifiedVertex) bool {
 
 }
 
+// returns true iff segments ab and cd intersect, properly or improperly.
 func intersect(a, b, c, d SimplifiedVertex) bool {
 	if intersectProp(a, b, c, d) {
 		return true
@@ -489,6 +561,9 @@ func intersect(a, b, c, d SimplifiedVertex) bool {
 	return false
 }
 
+// returns true iff ab properly intersects cd: they share
+// a point interior to both segments.  The properness of the
+// intersection is ensured by using strict leftness.
 func intersectProp(a, b, c, d SimplifiedVertex) bool {
 	if colinear(a, b, c) || colinear(a, b, d) || colinear(c, d, a) || colinear(c, d, b) {
 		return false

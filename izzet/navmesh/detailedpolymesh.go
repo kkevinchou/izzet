@@ -283,7 +283,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				z := vj.Z + dz*u
 				edges = append(edges, DetailedVertex{
 					X: x,
-					Y: float64(getHeight(x, y, z, cs, ics, ch, heightSearchRadius, hp)) * ch,
+					Y: float64(getHeight(x, y, z, ics, ch, heightSearchRadius, hp)) * ch,
 					Z: z,
 				})
 			}
@@ -374,7 +374,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				}
 				sample := Sample{
 					X: x,
-					Y: getHeight(px, py, pz, cs, ics, ch, heightSearchRadius, hp),
+					Y: getHeight(px, py, pz, ics, ch, heightSearchRadius, hp),
 					Z: z,
 				}
 				samples = append(samples, sample)
@@ -478,7 +478,7 @@ func prev(i, max int) int {
 	return (i - 1 + max) % max
 }
 
-func getHeight(fx, fy, fz, cs, ics, ch float64, radius int, hp HeightPatch) int {
+func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 	ix := int(math.Floor(fx*ics + 0.01))
 	iz := int(math.Floor(fz*ics + 0.01))
 

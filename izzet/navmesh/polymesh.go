@@ -379,6 +379,7 @@ func triangulate(vertices []SimplifiedVertex) []PolyTriangle {
 		}
 
 		if mini == -1 {
+			// TODO: implement loose triangulation method diagonalLoose
 			fmt.Println("failed to triangulate")
 			return nil
 			// panic("WAT")
@@ -505,18 +506,18 @@ func vequal(a, b SimplifiedVertex) bool {
 }
 
 func leftOn(a, b, c SimplifiedVertex) bool {
-	return area2(a, b, c) <= 0
+	return area2D(a, b, c) <= 0
 }
 
 func left(a, b, c SimplifiedVertex) bool {
-	return area2(a, b, c) < 0
+	return area2D(a, b, c) < 0
 }
 
 func colinear(a, b, c SimplifiedVertex) bool {
-	return area2(a, b, c) == 0
+	return area2D(a, b, c) == 0
 }
 
-func area2(a, b, c SimplifiedVertex) int {
+func area2D(a, b, c SimplifiedVertex) int {
 	p := (b.X - a.X) * (c.Z - a.Z)
 	q := (c.X - a.X) * (b.Z - a.Z)
 	value := p - q

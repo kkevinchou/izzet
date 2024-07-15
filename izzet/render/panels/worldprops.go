@@ -152,7 +152,10 @@ func worldProps(app renderiface.App) {
 			ids := map[int]bool{}
 			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
 			for _, sID := range sIDs {
-				id, _ := strconv.Atoi(sID)
+				id, err := strconv.Atoi(sID)
+				if err != nil {
+					continue
+				}
 				ids[id] = true
 			}
 			runtimeConfig.DebugBlob1IntMap = ids
@@ -161,7 +164,10 @@ func worldProps(app renderiface.App) {
 			ids := map[int]bool{}
 			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
 			for _, sID := range sIDs {
-				id, _ := strconv.Atoi(sID)
+				id, err := strconv.Atoi(sID)
+				if err != nil {
+					continue
+				}
 				ids[id] = true
 			}
 			runtimeConfig.DebugBlob2IntMap = ids

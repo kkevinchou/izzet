@@ -184,16 +184,19 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 	if simplified {
 		for _, contour := range contourSet.Contours {
 			for i, _ := range contour.Verts {
+				ni := (i + 1) % len(contour.Verts)
 				v0 := contour.Verts[i]
-				v1 := contour.Verts[(i+1)%len(contour.Verts)]
+				v1 := contour.Verts[ni]
+
+				color := regionIDToColor(contour.RegionID)
 
 				// v0
 				vertexAttributes = append(vertexAttributes, float32(float64(v0.X)+minVertex.X()), float32(float64(v0.Y)+minVertex.Y()), float32(float64(v0.Z)+minVertex.Z()))
-				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+				vertexAttributes = append(vertexAttributes, color...)
 
 				// v1
 				vertexAttributes = append(vertexAttributes, float32(float64(v1.X)+minVertex.X()), float32(float64(v1.Y)+minVertex.Y()), float32(float64(v1.Z)+minVertex.Z()))
-				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+				vertexAttributes = append(vertexAttributes, color...)
 			}
 		}
 	} else {
@@ -202,13 +205,15 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 				v0 := contour.RawVerts[i]
 				v1 := contour.RawVerts[(i+1)%len(contour.RawVerts)]
 
+				color := regionIDToColor(contour.RegionID)
+
 				// v0
 				vertexAttributes = append(vertexAttributes, float32(float64(v0.X)+minVertex.X()), float32(float64(v0.Y)+minVertex.Y()), float32(float64(v0.Z)+minVertex.Z()))
-				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+				vertexAttributes = append(vertexAttributes, color...)
 
 				// v1
 				vertexAttributes = append(vertexAttributes, float32(float64(v1.X)+minVertex.X()), float32(float64(v1.Y)+minVertex.Y()), float32(float64(v1.Z)+minVertex.Z()))
-				vertexAttributes = append(vertexAttributes, regionIDToColor(contour.RegionID)...)
+				vertexAttributes = append(vertexAttributes, color...)
 			}
 		}
 	}

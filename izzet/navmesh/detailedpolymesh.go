@@ -267,10 +267,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			nn = maxVerts - 1 - len(inVerts)
 		}
 
-		if i == 0 && j == 2 && polygonID == 0 {
-			fmt.Println("HI")
-		}
-
 		var edges []DetailedVertex
 		for k := 0; k <= nn; k++ {
 			u := float64(k) / float64(nn)
@@ -333,7 +329,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 	if minExtent < sampleDist*2 {
 		tris := triangulateHull(verts, hull, len(inVerts))
-		fmt.Println(len(hull), len(inVerts))
 		_ = tris
 		// setTriFlags
 		return

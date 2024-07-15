@@ -117,7 +117,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID, i)
-		buildDetailedPoly(chf, polyVerts, 200, 1, heightSearchRadius, hp, i)
+		buildDetailedPoly(chf, polyVerts, 1, 1, heightSearchRadius, hp, i)
 		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
 	}
 
@@ -218,12 +218,16 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 	}
 }
 
-func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, polygonID int) {
+func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, polygonID int) ([]DetailedVertex, []Triangle) {
 	var ch float64 = 1
 	var cs float64 = 1
 	ics := 1 / cs
 	var hull []int
 	// heightSearchRadius = 100
+
+	if polygonID == 4 {
+		fmt.Println("HI")
+	}
 
 	verts := make([]DetailedVertex, len(inVerts))
 	for i := range len(inVerts) {
@@ -231,7 +235,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	}
 
 	minExtent := minPolyExtent(inVerts)
-	_ = minExtent
 
 	// tesselate outlines
 	// this is done in a separate pass to ensure seamless height values across the poly boundaries
@@ -316,26 +319,27 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 		if swapped {
 			for k := nidx - 2; k > 0; k-- {
-				verts = append(verts, edges[idx[k]])
 				hull = append(hull, len(verts))
+				verts = append(verts, edges[idx[k]])
 			}
 		} else {
 			for k := 1; k < nidx-1; k++ {
-				verts = append(verts, edges[idx[k]])
 				hull = append(hull, len(verts))
+				verts = append(verts, edges[idx[k]])
 			}
 		}
 	}
 
+	var tris []Triangle
 	if minExtent < sampleDist*2 {
-		tris := triangulateHull(verts, hull, len(inVerts))
-		_ = tris
+		tris = triangulateHull(verts, hull, len(inVerts))
 		// setTriFlags
-		return
+		return verts, tris
 	}
 
 	// tessellate the base mesh
-	// tris = triangulateHull(verts, hull, len(inVerts))
+	tris = triangulateHull(verts, hull, len(inVerts))
+	return verts, tris
 }
 
 func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) []Triangle {

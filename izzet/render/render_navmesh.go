@@ -152,7 +152,7 @@ func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32)
 }
 
 func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
-	if nm.DebugLines == nil || len(nm.DetailedMesh.Outlines) == 0 {
+	if nm.DetailedMesh == nil || len(nm.DetailedMesh.Outlines) == 0 {
 		return 0, 0
 	}
 

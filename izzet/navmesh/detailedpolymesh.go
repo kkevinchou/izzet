@@ -46,6 +46,10 @@ type Triangle struct {
 	A, B, C int
 }
 
+type Sample struct {
+	X, Y, Z int
+}
+
 func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
 	bounds := make([]Bound, len(mesh.Polygons))
 	var maxhw, maxhh int
@@ -234,98 +238,100 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 		verts[i] = inVerts[i]
 	}
 
-	minExtent := minPolyExtent(inVerts)
+	minExtent := minPolyExtent(verts)
 
 	// tesselate outlines
 	// this is done in a separate pass to ensure seamless height values across the poly boundaries
-	for i, j := 0, len(inVerts)-1; i < len(inVerts); j, i = i, i+1 {
-		vj := inVerts[j]
-		vi := inVerts[i]
-		swapped := false
+	if sampleDist > 0 {
+		for i, j := 0, len(inVerts)-1; i < len(inVerts); j, i = i, i+1 {
+			vj := inVerts[j]
+			vi := inVerts[i]
+			swapped := false
 
-		// make sure the segments are always handled in same order
-		// using lexological sort or else there will be seams.
-		if math.Abs(vj.X-vi.X) < 1e-6 {
-			if vj.Z > vi.Z {
-				vj, vi = vi, vj
-				swapped = true
-			}
-		} else {
-			if vj.X > vi.X {
-				vj, vi = vi, vj
-				swapped = true
-			}
-		}
-
-		dx := vi.X - vj.X
-		dy := vi.Y - vj.Y
-		dz := vi.Z - vj.Z
-		d := math.Sqrt(dx*dx + dz*dz)
-		nn := 1 + int(math.Floor(d/sampleDist))
-
-		if nn >= maxVertsPerEdge {
-			nn = maxVertsPerEdge - 1
-		}
-		if len(inVerts)+nn >= maxVerts {
-			nn = maxVerts - 1 - len(inVerts)
-		}
-
-		var edges []DetailedVertex
-		for k := 0; k <= nn; k++ {
-			u := float64(k) / float64(nn)
-			x := vj.X + dx*u
-			y := vj.Y + dy*u
-			z := vj.Z + dz*u
-			edges = append(edges, DetailedVertex{
-				X: x,
-				Y: float64(getHeight(x, y, z, cs, ics, ch, heightSearchRadius, hp)) * ch,
-				Z: z,
-			})
-		}
-
-		// simplify samples
-
-		var idx [maxVertsPerEdge]int
-		idx[0], idx[1] = 0, nn
-		nidx := 2
-
-		for k := 0; k < nidx-1; {
-			i0 := idx[k]
-			i1 := idx[k+1]
-			v0 := edges[i0]
-			v1 := edges[i1]
-			var maxd float64
-			maxi := -1
-			for m := i0 + 1; m < i1; m++ {
-				d := distancePtSeg(edges[m], v0, v1)
-				if d > maxd {
-					maxd = d
-					maxi = m
+			// make sure the segments are always handled in same order
+			// using lexological sort or else there will be seams.
+			if math.Abs(vj.X-vi.X) < 1e-6 {
+				if vj.Z > vi.Z {
+					vj, vi = vi, vj
+					swapped = true
 				}
-			}
-
-			if maxi != -1 && maxd > (sampleMaxError*sampleMaxError) {
-				for m := nidx; m > k; m-- {
-					idx[m] = idx[m-1]
-				}
-				idx[k+1] = maxi
-				nidx++
 			} else {
-				k++
+				if vj.X > vi.X {
+					vj, vi = vi, vj
+					swapped = true
+				}
 			}
-		}
 
-		hull = append(hull, j)
+			dx := vi.X - vj.X
+			dy := vi.Y - vj.Y
+			dz := vi.Z - vj.Z
+			d := math.Sqrt(dx*dx + dz*dz)
+			nn := 1 + int(math.Floor(d/sampleDist))
 
-		if swapped {
-			for k := nidx - 2; k > 0; k-- {
-				hull = append(hull, len(verts))
-				verts = append(verts, edges[idx[k]])
+			if nn >= maxVertsPerEdge {
+				nn = maxVertsPerEdge - 1
 			}
-		} else {
-			for k := 1; k < nidx-1; k++ {
-				hull = append(hull, len(verts))
-				verts = append(verts, edges[idx[k]])
+			if len(inVerts)+nn >= maxVerts {
+				nn = maxVerts - 1 - len(inVerts)
+			}
+
+			var edges []DetailedVertex
+			for k := 0; k <= nn; k++ {
+				u := float64(k) / float64(nn)
+				x := vj.X + dx*u
+				y := vj.Y + dy*u
+				z := vj.Z + dz*u
+				edges = append(edges, DetailedVertex{
+					X: x,
+					Y: float64(getHeight(x, y, z, cs, ics, ch, heightSearchRadius, hp)) * ch,
+					Z: z,
+				})
+			}
+
+			// simplify samples
+
+			var idx [maxVertsPerEdge]int
+			idx[0], idx[1] = 0, nn
+			nidx := 2
+
+			for k := 0; k < nidx-1; {
+				i0 := idx[k]
+				i1 := idx[k+1]
+				v0 := edges[i0]
+				v1 := edges[i1]
+				var maxd float64
+				maxi := -1
+				for m := i0 + 1; m < i1; m++ {
+					d := distancePtSeg(edges[m], v0, v1)
+					if d > maxd {
+						maxd = d
+						maxi = m
+					}
+				}
+
+				if maxi != -1 && maxd > (sampleMaxError*sampleMaxError) {
+					for m := nidx; m > k; m-- {
+						idx[m] = idx[m-1]
+					}
+					idx[k+1] = maxi
+					nidx++
+				} else {
+					k++
+				}
+			}
+
+			hull = append(hull, j)
+
+			if swapped {
+				for k := nidx - 2; k > 0; k-- {
+					hull = append(hull, len(verts))
+					verts = append(verts, edges[idx[k]])
+				}
+			} else {
+				for k := 1; k < nidx-1; k++ {
+					hull = append(hull, len(verts))
+					verts = append(verts, edges[idx[k]])
+				}
 			}
 		}
 	}
@@ -339,7 +345,74 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 	// tessellate the base mesh
 	tris = triangulateHull(verts, hull, len(inVerts))
+	if len(tris) == 0 {
+		panic("no triangles found from hull")
+	}
+
+	if sampleDist > 0 {
+		bmin, bmax := inVerts[0], inVerts[0]
+		for i := 1; i < len(inVerts); i++ {
+			dvMin(&bmin, &inVerts[i])
+			dvMax(&bmax, &inVerts[i])
+		}
+
+		x0 := int(math.Floor(bmin.X / sampleDist))
+		x1 := int(math.Ceil(bmax.X / sampleDist))
+		z0 := int(math.Floor(bmin.Z / sampleDist))
+		z1 := int(math.Ceil(bmax.Z / sampleDist))
+
+		var samples []Sample
+		for z := z0; z < z1; z++ {
+			for x := x0; x < x1; x++ {
+				px := float64(x) * sampleDist
+				py := (bmax.Y + bmin.Y) / 2
+				pz := float64(z) * sampleDist
+
+				// make sure the samples are not too close to the edges
+				if distToPoly(inVerts, DetailedVertex{X: px, Y: py, Z: pz}) > -sampleDist/2 {
+					continue
+				}
+				sample := Sample{
+					X: x,
+					Y: getHeight(px, py, pz, cs, ics, ch, heightSearchRadius, hp),
+					Z: z,
+				}
+				samples = append(samples, sample)
+			}
+		}
+	}
+
 	return verts, tris
+}
+
+func distToPoly(verts []DetailedVertex, pt DetailedVertex) float64 {
+	n := len(verts)
+	c := false
+	dmin := math.MaxFloat64
+	for i, j := 0, n-1; i < n; j, i = i, i+1 {
+		vi := verts[i]
+		vj := verts[j]
+		if ((vi.Z > pt.Z) != (vj.Z > pt.Z)) && (pt.X < (vj.X-vi.X)*(pt.Z-vi.Z)/(vj.Z-vi.Z)+vi.X) {
+			c = !c
+		}
+		dmin = min(dmin, distancePtSeg2Df(pt.X, pt.Z, vj.X, vj.Z, vi.X, vi.Z))
+	}
+	if c {
+		return -dmin
+	}
+	return dmin
+}
+
+func dvMin(v0, v1 *DetailedVertex) {
+	v0.X = min(v0.X, v1.X)
+	v0.Y = min(v0.Y, v1.Y)
+	v0.Z = min(v0.Z, v1.Z)
+}
+
+func dvMax(v0, v1 *DetailedVertex) {
+	v0.X = max(v0.X, v1.X)
+	v0.Y = max(v0.Y, v1.Y)
+	v0.Z = max(v0.Z, v1.Z)
 }
 
 func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) []Triangle {
@@ -475,7 +548,7 @@ func minPolyExtent(verts []DetailedVertex) float64 {
 			if j == i || j == ni {
 				continue
 			}
-			d := distancePtSeg2Df(verts[i].X, verts[i].Z, p1.X, p1.Z, p2.X, p2.Z)
+			d := distancePtSeg2Df(verts[j].X, verts[j].Z, p1.X, p1.Z, p2.X, p2.Z)
 			maxEdgeDist = max(maxEdgeDist, d)
 		}
 		minDist = min(minDist, maxEdgeDist)

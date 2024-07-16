@@ -128,12 +128,12 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	return &dmesh
 }
 
-var HP map[string]bool
+// var HP map[string]bool
 
 func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID int) {
-	if HP == nil {
-		HP = map[string]bool{}
-	}
+	// if HP == nil {
+	// 	HP = map[string]bool{}
+	// }
 	for i := range len(hp.data) {
 		hp.data[i] = hpUnsetHeight
 	}
@@ -155,7 +155,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 				span := chf.spans[i]
 				if span.regionID == regionID {
 					hp.data[hx+hz*hp.width] = span.y
-					HP[fmt.Sprintf("%d_%d", x, z)] = true
+					// HP[fmt.Sprintf("%d_%d", x, z)] = true
 					empty = false
 					border := false
 					for _, dir := range dirs {
@@ -380,6 +380,15 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				samples = append(samples, sample)
 			}
 		}
+
+		for iter := 0; iter < len(samples); iter++ {
+			if len(verts) >= maxVerts {
+				break
+			}
+
+			// add samples with max error
+			// delaunayHull
+		}
 	}
 
 	return verts, tris
@@ -530,8 +539,8 @@ func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 	}
 
 	if h == hpUnsetHeight {
-		panic("failed to find height")
-		// fmt.Printf("failed to sample %.0f %.0f %.0f\n", fx, fy, fz)
+		// panic("failed to find height")
+		fmt.Printf("failed to sample %.0f %.0f %.0f\n", fx, fy, fz)
 	}
 
 	return h

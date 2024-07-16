@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -334,16 +333,15 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 				positions = append(positions, position)
 				colors = append(colors, 1, 0, 0)
 				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
-			} else if navmesh.HP[fmt.Sprintf("%d_%d", x, z)] {
-				position := mgl32.Vec3{
-					float32(x) + float32(hf.BMin.X()),
-					float32(hf.BMin.Y()),
-					float32(z) + float32(hf.BMin.Z()),
-				}
-				positions = append(positions, position)
-				colors = append(colors, 0, 1, 0)
-				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
-
+				// } else if navmesh.HP[fmt.Sprintf("%d_%d", x, z)] {
+				// 	position := mgl32.Vec3{
+				// 		float32(x) + float32(hf.BMin.X()),
+				// 		float32(hf.BMin.Y()),
+				// 		float32(z) + float32(hf.BMin.Z()),
+				// 	}
+				// 	positions = append(positions, position)
+				// 	colors = append(colors, 0, 1, 0)
+				// 	lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
 			} else {
 				index := x + z*hf.Width
 				span := hf.Spans[index]

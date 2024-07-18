@@ -11,6 +11,8 @@ const (
 	maxVertsPerEdge = 32
 	maxVerts        = 127
 	hpUnsetHeight   = 0xffff
+	edgeUndefined   = -1
+	edgeHull        = -2
 )
 
 type DetailedVertex struct {
@@ -39,15 +41,23 @@ type QueueItem struct {
 }
 
 type DetailedMesh struct {
-	Outlines [][]DetailedVertex
+	PolyVertices  [][]DetailedVertex
+	PolyTriangles [][]Triangle
 }
 
 type Triangle struct {
 	A, B, C int
+	OnHull  bool
 }
 
 type Sample struct {
 	X, Y, Z int
+	added   bool
+}
+
+type DetailedEdge struct {
+	s, t int
+	l, r int
 }
 
 func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
@@ -58,7 +68,6 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	// TODO: this should be dynamic and come from another datastructure (chf, or mesh, or w/e)
 	var cs float64 = 1
 	var ch float64 = 1
-	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
 
 	// find max size for a polygon area
 	for i := range mesh.Polygons {
@@ -102,11 +111,19 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	var dmesh DetailedMesh
 
 	debugMap := runtimeConfig.DebugBlob2IntMap
+	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
+	var sampleDist float64 = 1
+	var sampleMaxError float64 = 1.3
+	origin := mesh.bMin
+
+	dmesh.PolyVertices = make([][]DetailedVertex, len(mesh.Polygons))
+	dmesh.PolyTriangles = make([][]Triangle, len(mesh.Polygons))
 
 	for i := range mesh.Polygons {
 		if !debugMap[i] && len(debugMap) > 0 {
 			continue
 		}
+
 		var polyVerts []DetailedVertex
 		polygon := &mesh.Polygons[i]
 		for _, vertIndex := range polygon.Verts {
@@ -121,8 +138,26 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID, i)
-		buildDetailedPoly(chf, polyVerts, 1, 1, heightSearchRadius, hp, i)
-		dmesh.Outlines = append(dmesh.Outlines, polyVerts)
+		verts, tris := buildDetailedPoly(chf, polyVerts, sampleDist, sampleMaxError, heightSearchRadius, hp, i)
+
+		// move detailed verts to world space
+		for j := range len(verts) {
+			v := &verts[j]
+			v.X += origin.X()
+			v.Y += origin.Y()
+			v.Z += origin.Z()
+		}
+
+		// offset poly too for flag checking
+		for j := range len(polyVerts) {
+			p := &polyVerts[j]
+			p.X += origin.X()
+			p.Y += origin.Y()
+			p.Z += origin.Z()
+		}
+
+		dmesh.PolyVertices[i] = verts
+		dmesh.PolyTriangles[i] = tris
 	}
 
 	return &dmesh
@@ -337,14 +372,17 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	}
 
 	var tris []Triangle
-	if minExtent < sampleDist*2 {
-		tris = triangulateHull(verts, hull, len(inVerts))
-		// setTriFlags
-		return verts, tris
-	}
+
+	// disabling just for debugging
+	// if minExtent < sampleDist*2 {
+	// 	tris = triangulateHull(verts, hull, len(inVerts))
+	// 	// setTriFlags
+	// 	return verts, tris
+	// }
+	_ = minExtent
 
 	// tessellate the base mesh
-	tris = triangulateHull(verts, hull, len(inVerts))
+	tris = append(tris, triangulateHull(verts, hull, len(inVerts))...)
 	if len(tris) == 0 {
 		panic("no triangles found from hull")
 	}
@@ -381,17 +419,373 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			}
 		}
 
+		// progressively add samples which have the highest error until
+		// we go under the error threshold
 		for iter := 0; iter < len(samples); iter++ {
 			if len(verts) >= maxVerts {
 				break
 			}
 
-			// add samples with max error
-			// delaunayHull
+			var bestPoint DetailedVertex
+			var bestd float64
+			besti := -1
+
+			for i := range samples {
+				sample := samples[i]
+				if sample.added {
+					continue
+				}
+
+				// the sample location is jittered to get rid of some bad triangulations
+				// which are caused by symmetrical data from the grid structure
+				px := float64(sample.X)*sampleDist + getJitterX(i)*cs*0.1
+				py := float64(sample.Y) * ch
+				pz := float64(sample.Z)*sampleDist + getJitterZ(i)*cs*0.1
+				pt := DetailedVertex{X: px, Y: py, Z: pz}
+
+				d := distToTris(pt, verts, tris)
+				if d < 0 {
+					continue
+				}
+				if d > bestd {
+					bestd = d
+					besti = i
+					bestPoint = pt
+				}
+			}
+
+			if bestd <= sampleMaxError || besti == -1 {
+				break
+			}
+
+			samples[besti].added = true
+			verts = append(verts, bestPoint)
+
+			// TODO - incremental add instead of full rebuild
+			tris = delaunayHull(verts, hull)
+		}
+	}
+	// set tri flags
+
+	return verts, tris
+}
+
+func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
+	var edges []DetailedEdge
+	for i, j := 0, len(hull)-1; i < len(hull); j, i = i, i+1 {
+		edges = addEdge(edges, hull[j], hull[i], edgeHull, edgeUndefined)
+	}
+
+	nfaces := 0
+	for e := range len(edges) {
+		if edges[e].l == edgeUndefined {
+			edges, nfaces = completeFacet(e, edges, verts, nfaces)
+		}
+		if edges[e].r == edgeUndefined {
+			edges, nfaces = completeFacet(e, edges, verts, nfaces)
 		}
 	}
 
-	return verts, tris
+	tris := make([]Triangle, nfaces)
+	for i := range len(tris) {
+		t := &tris[i]
+		t.A = -1
+		t.B = -1
+		t.C = -1
+	}
+
+	for _, edge := range edges {
+		if edge.r >= 0 {
+			// left face
+			t := &tris[edge.r]
+			if t.A == -1 {
+				t.A = edge.s
+				t.B = edge.t
+			} else if t.A == edge.t {
+				t.C = edge.s
+			} else if t.B == edge.s {
+				t.C = edge.t
+			}
+		}
+		if edge.l >= 0 {
+			// right face
+			t := &tris[edge.l]
+			if t.A == -1 {
+				t.A = edge.t
+				t.B = edge.s
+			} else if t.A == edge.s {
+				t.C = edge.t
+			} else if t.B == edge.t {
+				t.C = edge.s
+			}
+		}
+	}
+
+	// remove dangling face
+	for i := 0; i < len(tris); i++ {
+		t := &tris[i]
+		if t.A == -1 || t.B == -1 || t.C == -1 {
+			t.A = tris[len(tris)-1].A
+			t.B = tris[len(tris)-1].B
+			t.C = tris[len(tris)-1].C
+			t.OnHull = tris[len(tris)-1].OnHull
+			fmt.Printf("removing dangling face %d [%d, %d, %d]\n", i, t.A, t.B, t.C)
+
+			tris = tris[:len(tris)-1]
+			i--
+		}
+	}
+
+	return tris
+}
+
+func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) ([]DetailedEdge, int) {
+	var epsilon float64 = 1e-5
+	var tolerance float64 = 1e-3
+
+	edge := &edges[e]
+
+	// cache s and t
+	var s, t int
+
+	if edge.l == edgeUndefined {
+		s = edge.s
+		t = edge.t
+		// s = edge.t
+		// t = edge.s
+	} else if edge.r == edgeUndefined {
+		s = edge.t
+		t = edge.s
+		// s = edge.s
+		// t = edge.t
+	} else {
+		return edges, 0
+	}
+
+	// find the best point on the left of edge
+
+	pt := len(verts)
+	var center DetailedVertex
+	var radius float64 = -1
+
+	// iterate over all points that are not part of the edge
+	// and find the point that produces the smallest circumcircle
+	for u := range len(verts) {
+		if u == s || u == t {
+			continue
+		}
+
+		if vCross2D(verts[s], verts[t], verts[u]) > epsilon {
+			// if vCross2D(verts[s], verts[t], verts[u]) < epsilon {
+			if radius < 0 {
+				// first time circumcircle is set
+				pt = u
+				center, radius = circumCircle(verts[s], verts[t], verts[u])
+				continue
+			}
+
+			d := dist2D(center, verts[u])
+			if d > radius*(1.0+tolerance) {
+				// outside of the current circumcircle
+				continue
+			} else if d < radius*(1.0-tolerance) {
+				pt = u
+				center, radius = circumCircle(verts[s], verts[t], verts[u])
+				continue
+			} else {
+				// if we're within some margin of error for the circumcircle
+				// conduct some more tests
+				if overlapEdges(verts, edges, s, u) {
+					continue
+				}
+				if overlapEdges(verts, edges, t, u) {
+					continue
+				}
+				// edge is valid
+				pt = u
+				center, radius = circumCircle(verts[s], verts[t], verts[u])
+			}
+		}
+	}
+
+	// add a new triangle or update the edge info if s-t is on the hull
+	if pt < len(verts) {
+		// update face information being completed
+		updateLeftFace(&edges[e], s, t, f)
+
+		// add a new edge or update the face info of the old edge
+		e := findEdge(edges, pt, s)
+		if e == edgeUndefined {
+			edges = addEdge(edges, pt, s, f, edgeUndefined)
+		} else {
+			updateLeftFace(&edges[e], pt, s, f)
+		}
+
+		// add a new edge or update the face info of the old edge
+		e = findEdge(edges, t, pt)
+		if e == edgeUndefined {
+			edges = addEdge(edges, t, pt, f, edgeUndefined)
+		} else {
+			updateLeftFace(&edges[e], t, pt, f)
+		}
+		f++
+	} else {
+		updateLeftFace(&edges[e], s, t, edgeHull)
+	}
+
+	return edges, f
+}
+
+func updateLeftFace(edge *DetailedEdge, s, t, f int) {
+	if edge.s == s && edge.t == t && edge.l == edgeUndefined {
+		edge.l = f
+	} else if edge.t == s && edge.s == t && edge.r == edgeUndefined {
+		edge.r = f
+	}
+}
+
+func overlapSegSeg2D(a, b, c, d DetailedVertex) bool {
+	a1 := vCross2D(a, b, d)
+	a2 := vCross2D(a, b, c)
+	if a1*a2 < 0 {
+		a3 := vCross2D(c, d, a)
+		a4 := a3 + a2 - a1
+		if a3*a4 < 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func overlapEdges(verts []DetailedVertex, edges []DetailedEdge, s1, t1 int) bool {
+	for _, edge := range edges {
+		s0 := edge.s
+		t0 := edge.t
+
+		// same or connected edges do not overlap
+		if s0 == s1 || s0 == t1 || t0 == s1 || t0 == t1 {
+			continue
+		}
+		if overlapSegSeg2D(verts[s0], verts[t0], verts[s1], verts[t1]) {
+			return true
+		}
+	}
+	return false
+}
+
+func circumCircle(p1, p2, p3 DetailedVertex) (DetailedVertex, float64) {
+	var epsilon float64 = 1e-6
+
+	// calculate the circle relative to avoid some precision issues
+	var v1 DetailedVertex
+	v2 := vSub(p2, p1)
+	v3 := vSub(p3, p1)
+
+	var center DetailedVertex
+	var radius float64
+
+	cp := vCross2D(v1, v2, v3)
+	if math.Abs(cp) > epsilon {
+		v1Sq := vDot2D(v1, v1)
+		v2Sq := vDot2D(v2, v2)
+		v3Sq := vDot2D(v3, v3)
+
+		center.X = (v1Sq*(v2.Z-v3.Z) + v2Sq*(v3.Z-v1.Z) + v3Sq*(v1.Z-v2.Z)) / (2 * cp)
+		center.Y = 0
+		center.Z = (v1Sq*(v3.X-v2.X) + v2Sq*(v1.X-v3.X) + v3Sq*(v2.X-v1.X)) / (2 * cp)
+
+		radius = dist2D(center, v1)
+
+		center.X += p1.X
+		center.Y += p1.Y
+		center.Z += p1.Z
+	}
+
+	return center, radius
+}
+
+func addEdge(edges []DetailedEdge, s, t, l, r int) []DetailedEdge {
+	e := findEdge(edges, s, t)
+	if e == edgeUndefined {
+		result := edges
+		result = append(result, DetailedEdge{
+			s: s,
+			t: t,
+			l: l,
+			r: r,
+		})
+		return result
+	}
+
+	return edges
+}
+
+func findEdge(edges []DetailedEdge, s, t int) int {
+	for i, edge := range edges {
+		if edge.s == s && edge.t == t || edge.s == t && edge.t == s {
+			return i
+		}
+	}
+	return edgeUndefined
+}
+
+func vSub(a, b DetailedVertex) DetailedVertex {
+	return DetailedVertex{X: a.X - b.X, Y: a.Y - b.Y, Z: a.Z - b.Z}
+}
+
+func vDot2D(a, b DetailedVertex) float64 {
+	return a.X*b.X + a.Z*b.Z
+}
+
+func distToTri(p, a, b, c DetailedVertex) float64 {
+	v0 := vSub(c, a)
+	v1 := vSub(b, a)
+	v2 := vSub(p, a)
+
+	dot00 := vDot2D(v0, v0)
+	dot01 := vDot2D(v0, v1)
+	dot02 := vDot2D(v0, v2)
+	dot11 := vDot2D(v1, v1)
+	dot12 := vDot2D(v1, v2)
+
+	// compute barycentric coordinates
+	var invDenom float64 = 1.0 / (dot00*dot11 - dot01*dot01)
+	var u float64 = (dot11*dot02 - dot01*dot12) * invDenom
+	var v float64 = (dot00*dot12 - dot01*dot02) * invDenom
+
+	// if point lies inside of the triangle, return the interpolated y -coord
+	epsilon := 1e-4
+	if u >= -epsilon && v >= -epsilon && (u+v) <= 1+epsilon {
+		y := a.Y + v0.Y*u + v1.Y*v
+		return math.Abs(y - p.Y)
+	}
+
+	return math.MaxFloat64
+}
+
+func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float64 {
+	dmin := math.MaxFloat64
+	for i := range len(tris) {
+		a := verts[tris[i].A]
+		b := verts[tris[i].B]
+		c := verts[tris[i].C]
+		d := distToTri(p, a, b, c)
+		if d < dmin {
+			dmin = d
+		}
+	}
+	if dmin == math.MaxFloat64 {
+		return -1
+	}
+	return dmin
+}
+
+func getJitterX(i int) float64 {
+	return (float64((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
+}
+
+func getJitterZ(i int) float64 {
+	return (float64((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 
 func distToPoly(verts []DetailedVertex, pt DetailedVertex) float64 {
@@ -623,4 +1017,12 @@ func dist2dSq(v0, v1 DetailedVertex) float64 {
 	dx := v0.X - v1.X
 	dz := v0.Z - v1.Z
 	return dx*dx + dz*dz
+}
+
+func vCross2D(p1, p2, p3 DetailedVertex) float64 {
+	u1 := p2.X - p1.X
+	v1 := p2.Z - p1.Z
+	u2 := p3.X - p1.X
+	v2 := p3.Z - p1.Z
+	return u1*v2 - v1*u2
 }

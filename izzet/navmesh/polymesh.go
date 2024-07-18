@@ -3,6 +3,8 @@ package navmesh
 import (
 	"fmt"
 	"math"
+
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 const (
@@ -41,11 +43,14 @@ type Mesh struct {
 	PremergeTriangles []Polygon
 	areas             []AREA_TYPE
 	maxEdgeError      float64
+	bMin, bMax        mgl64.Vec3
 }
 
 func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 	mesh := &Mesh{
 		maxEdgeError: contourSet.maxError,
+		bMin:         contourSet.bMin,
+		bMax:         contourSet.bMax,
 	}
 
 	maxVertices := 0

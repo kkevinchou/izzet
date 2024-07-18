@@ -151,25 +151,43 @@ func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32)
 }
 
 func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
-	if nm.DetailedMesh == nil || len(nm.DetailedMesh.Outlines) == 0 {
+	if nm.DetailedMesh == nil || len(nm.DetailedMesh.PolyTriangles) == 0 {
 		return 0, 0
 	}
 
-	minVertex := nm.Volume.MinVertex
-
 	var vertexAttributes []float32
-	for _, outline := range nm.DetailedMesh.Outlines {
-		for i := range len(outline) {
-			v0 := outline[i]
-			v1 := outline[(i+1)%len(outline)]
+	for j := range len(nm.DetailedMesh.PolyTriangles) {
+		for _, tri := range nm.DetailedMesh.PolyTriangles[j] {
+			v0 := nm.DetailedMesh.PolyVertices[j][tri.A]
+			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
+			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
 
-			// v0
-			vertexAttributes = append(vertexAttributes, float32(v0.X+minVertex.X()), float32(v0.Y+minVertex.Y()), float32(v0.Z+minVertex.Z()))
+			// v0 - v1
+			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
 			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
 
-			// v1
-			vertexAttributes = append(vertexAttributes, float32(v1.X+minVertex.X()), float32(v1.Y+minVertex.Y()), float32(v1.Z+minVertex.Z()))
+			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
 			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
+			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			// // v0
+			// vertexAttributes = append(vertexAttributes, float32(v0.X+minVertex.X()), float32(v0.Y+minVertex.Y()), float32(v0.Z+minVertex.Z()))
+			// vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+
+			// // v1
+			// vertexAttributes = append(vertexAttributes, float32(v1.X+minVertex.X()), float32(v1.Y+minVertex.Y()), float32(v1.Z+minVertex.Z()))
+			// vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
 		}
 	}
 	return createLineVAO(vertexAttributes)

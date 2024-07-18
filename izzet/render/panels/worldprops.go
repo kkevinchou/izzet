@@ -147,6 +147,12 @@ func worldProps(app renderiface.App) {
 				runtimeConfig.NavigationmeshMaxError = f
 			}
 		}, true)
+		panelutils.SetupRow("Sample Dist", func() {
+			var f float32 = float32(runtimeConfig.NavigationmeshSampleDist)
+			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+				runtimeConfig.NavigationmeshSampleDist = f
+			}
+		}, true)
 		imgui.EndTable()
 		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
 			ids := map[int]bool{}
@@ -178,7 +184,8 @@ func worldProps(app renderiface.App) {
 			climbableHeight := int(runtimeConfig.NavigationMeshClimbableHeight)
 			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
-			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, maxError)
+			sampleDist := float64(runtimeConfig.NavigationmeshSampleDist)
+			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
 		}
 
 		imgui.LabelText("##", "Draw")

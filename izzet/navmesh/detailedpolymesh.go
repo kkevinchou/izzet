@@ -60,7 +60,7 @@ type DetailedEdge struct {
 	l, r int
 }
 
-func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
+func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float64, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
 	bounds := make([]Bound, len(mesh.Polygons))
 	var maxhw, maxhh int
 	var nPolyVerts int
@@ -112,7 +112,6 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 
 	debugMap := runtimeConfig.DebugBlob2IntMap
 	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
-	var sampleDist float64 = 1
 	var sampleMaxError float64 = 1.3
 	origin := mesh.bMin
 
@@ -263,10 +262,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	ics := 1 / cs
 	var hull []int
 	// heightSearchRadius = 100
-
-	if polygonID == 4 {
-		fmt.Println("HI")
-	}
 
 	verts := make([]DetailedVertex, len(inVerts))
 	for i := range len(inVerts) {
@@ -866,7 +861,7 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) [
 			tris = append(tris, Triangle{A: hull[left], B: hull[nLeft], C: hull[right]})
 			left = nLeft
 		} else {
-			tris = append(tris, Triangle{A: hull[left], B: hull[right], C: hull[nRight]})
+			tris = append(tris, Triangle{A: hull[left], B: hull[nRight], C: hull[right]})
 			right = nRight
 		}
 	}

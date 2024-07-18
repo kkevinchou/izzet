@@ -80,6 +80,7 @@ type RuntimeConfig struct {
 	NavigationMeshClimbableHeight int32
 	NavigationMeshMinRegionArea   int32
 	NavigationmeshMaxError        float32
+	NavigationmeshSampleDist      float32
 
 	ShadowmapZOffset float32
 
@@ -147,5 +148,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshClimbableHeight: 30,
 		NavigationMeshMinRegionArea:   4,
 		NavigationmeshMaxError:        1.3,
+		NavigationmeshSampleDist:      5,
 	}
 }

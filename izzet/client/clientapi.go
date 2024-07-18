@@ -633,7 +633,7 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	return entity
 }
 
-func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, maxError float64) {
+func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, sampleDist float64, maxError float64) {
 	start := time.Now()
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
@@ -704,7 +704,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
 	contourSet := navmesh.BuildContours(chf, maxError, 1)
 	mesh := navmesh.BuildPolyMesh(contourSet)
-	detailedMesh := navmesh.BuildDetailedPolyMesh(mesh, chf, app.RuntimeConfig())
+	detailedMesh := navmesh.BuildDetailedPolyMesh(mesh, chf, sampleDist, app.RuntimeConfig())
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:          hf,

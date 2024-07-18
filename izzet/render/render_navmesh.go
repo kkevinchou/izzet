@@ -84,7 +84,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
 		if detailedMeshVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, detailedMeshVAOCache, detailedMeshVertexCount)
+			gl.BindVertexArray(detailedMeshVAOCache)
+			r.iztDrawElements(detailedMeshVertexCount * 3)
 		}
 	} else {
 		panic("WAT")
@@ -155,42 +156,27 @@ func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 		return 0, 0
 	}
 
-	var vertexAttributes []float32
+	var triangles [][3]mgl32.Vec3
+	var colors []float32
+
 	for j := range len(nm.DetailedMesh.PolyTriangles) {
 		for _, tri := range nm.DetailedMesh.PolyTriangles[j] {
 			v0 := nm.DetailedMesh.PolyVertices[j][tri.A]
 			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
 			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
 
-			// v0 - v1
-			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
-			vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			// // v0
-			// vertexAttributes = append(vertexAttributes, float32(v0.X+minVertex.X()), float32(v0.Y+minVertex.Y()), float32(v0.Z+minVertex.Z()))
-			// vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
-
-			// // v1
-			// vertexAttributes = append(vertexAttributes, float32(v1.X+minVertex.X()), float32(v1.Y+minVertex.Y()), float32(v1.Z+minVertex.Z()))
-			// vertexAttributes = append(vertexAttributes, regionIDToColor(1)...)
+			triangles = append(triangles, [3]mgl32.Vec3{
+				{float32(v0.X), float32(v0.Y), float32(v0.Z)},
+				{float32(v1.X), float32(v1.Y), float32(v1.Z)},
+				{float32(v2.X), float32(v2.Y), float32(v2.Z)},
+			})
+			colors = append(colors, regionIDToColor(len(triangles))...)
 		}
 	}
-	return createLineVAO(vertexAttributes)
+
+	vao := triangleAttributes(triangles, colors)
+
+	return vao, int32(len(triangles))
 }
 
 func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int32) {
@@ -392,6 +378,72 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 
 	vao := cubeAttributes(positions, lengths, colors)
 	return vao, int32(len(positions))
+}
+
+func triangleAttributes(triangles [][3]mgl32.Vec3, colors []float32) uint32 {
+	var vertexAttributes []float32
+
+	for i := range len(triangles) {
+		t := &triangles[i]
+		r, g, b := colors[i*3], colors[i*3+1], colors[i*3+2]
+
+		v0 := t[0]
+		v1 := t[1]
+		v2 := t[2]
+
+		normal := v1.Sub(v0).Cross(v2.Sub(v0)).Normalize()
+
+		vertexAttributes = append(vertexAttributes, []float32{
+			v0.X(), v0.Y(), v0.Z(), normal.X(), normal.Y(), normal.Z(), r, g, b,
+			v1.X(), v1.Y(), v1.Z(), normal.X(), normal.Y(), normal.Z(), r, g, b,
+			v2.X(), v2.Y(), v2.Z(), normal.X(), normal.Y(), normal.Z(), r, g, b,
+		}...)
+	}
+
+	totalAttributeSize := 9
+
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
+	// lay out the position, normal, and color in a VBO
+	var vbo uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
+
+	ptrOffset := 0
+	var floatSize int32 = 4
+
+	// position
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, nil)
+	gl.EnableVertexAttribArray(0)
+
+	ptrOffset += 3
+
+	// normal
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
+	gl.EnableVertexAttribArray(1)
+
+	ptrOffset += 3
+
+	// color
+	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
+	gl.EnableVertexAttribArray(2)
+
+	vertexIndices := make([]uint32, len(vertexAttributes)/totalAttributeSize)
+	for i := range len(vertexIndices) {
+		vertexIndices[i] = uint32(i)
+	}
+
+	// set up the EBO, each triplet of indices point to three vertices
+	// that form a triangle.
+	var ebo uint32
+	apputils.GenBuffers(1, &ebo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*4, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
+
+	return vao
 }
 
 func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32) uint32 {

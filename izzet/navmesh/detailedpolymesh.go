@@ -472,13 +472,16 @@ func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 	}
 
 	nfaces := 0
-	for e := range len(edges) {
+
+	e := 0
+	for e < len(edges) {
 		if edges[e].l == edgeUndefined {
 			edges, nfaces = completeFacet(e, edges, verts, nfaces)
 		}
 		if edges[e].r == edgeUndefined {
 			edges, nfaces = completeFacet(e, edges, verts, nfaces)
 		}
+		e++
 	}
 
 	tris := make([]Triangle, nfaces)

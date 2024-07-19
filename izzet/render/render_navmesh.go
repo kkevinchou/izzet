@@ -37,18 +37,20 @@ var (
 	polygonsVAOCache    uint32
 	polygonsVertexCount int32
 
-	detailedMeshVAOCache           uint32
-	detailedMeshVertexCount        int32
-	detailedMeshSamplesVAOCache    uint32
-	detailedMeshSamplesVertexCount int32
+	detailedMeshVAOCache                   uint32
+	detailedMeshVertexCount                int32
+	detailedMeshOutlineSamplesVAOCache     uint32
+	detailedMeshOutlineSamplesVertexCount  int32
+	detailedMeshInteriorSamplesVAOCache    uint32
+	detailedMeshInteriorSamplesVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		start := time.Now()
-		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
-		fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
-		start = time.Now()
+		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
+		// fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
+		// start = time.Now()
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
 		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
 		start = time.Now()
@@ -68,7 +70,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
-		detailedMeshSamplesVAOCache, detailedMeshSamplesVertexCount = createDetailedMeshSamplesVAO(nm)
+		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
+		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 	}
 
@@ -107,8 +110,10 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		if detailedMeshVertexCount > 0 {
 			gl.BindVertexArray(detailedMeshVAOCache)
 			r.iztDrawElements(detailedMeshVertexCount * 3)
-			gl.BindVertexArray(detailedMeshSamplesVAOCache)
-			r.iztDrawElements(detailedMeshSamplesVertexCount * 36)
+			gl.BindVertexArray(detailedMeshOutlineSamplesVAOCache)
+			r.iztDrawElements(detailedMeshOutlineSamplesVertexCount * 36)
+			gl.BindVertexArray(detailedMeshInteriorSamplesVAOCache)
+			r.iztDrawElements(detailedMeshInteriorSamplesVertexCount * 36)
 		}
 	} else {
 		panic("WAT")
@@ -202,12 +207,11 @@ func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	return vao, int32(len(triangles))
 }
 
-func createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 	var lengths []float32
 
-	samples := nm.DetailedMesh.Samples
 	chf := nm.CompactHeightField
 
 	for p := range len(samples) {
@@ -218,7 +222,7 @@ func createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 				float32(samples[p][i+2]) + float32(chf.BMin().Z()),
 			}
 			positions = append(positions, position)
-			colors = append(colors, regionIDToColor(p)...)
+			colors = append(colors, color...)
 			lengths = append(lengths, 1)
 		}
 	}
@@ -413,15 +417,15 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 				positions = append(positions, position)
 				colors = append(colors, 1, 0, 0)
 				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
-			} else if debugCheck(x, z) {
-				position := mgl32.Vec3{
-					float32(x) + float32(hf.BMin.X()),
-					float32(hf.BMin.Y()),
-					float32(z) + float32(hf.BMin.Z()),
-				}
-				positions = append(positions, position)
-				colors = append(colors, 0, 1, 0)
-				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
+				// } else if debugCheck(x, z) {
+				// 	position := mgl32.Vec3{
+				// 		float32(x) + float32(hf.BMin.X()),
+				// 		float32(hf.BMin.Y()),
+				// 		float32(z) + float32(hf.BMin.Z()),
+				// 	}
+				// 	positions = append(positions, position)
+				// 	colors = append(colors, 0, 1, 0)
+				// 	lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
 			} else {
 				index := x + z*hf.Width
 				span := hf.Spans[index]

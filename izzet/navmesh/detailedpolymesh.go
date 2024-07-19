@@ -41,9 +41,10 @@ type QueueItem struct {
 }
 
 type DetailedMesh struct {
-	PolyVertices  [][]DetailedVertex
-	PolyTriangles [][]Triangle
-	Samples       [][]float32
+	PolyVertices    [][]DetailedVertex
+	PolyTriangles   [][]Triangle
+	OutlineSamples  [][]float32
+	InteriorSamples [][]float32
 }
 
 type Triangle struct {
@@ -117,7 +118,8 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 
 	dmesh.PolyVertices = make([][]DetailedVertex, len(mesh.Polygons))
 	dmesh.PolyTriangles = make([][]Triangle, len(mesh.Polygons))
-	dmesh.Samples = make([][]float32, len(mesh.Polygons))
+	dmesh.OutlineSamples = make([][]float32, len(mesh.Polygons))
+	dmesh.InteriorSamples = make([][]float32, len(mesh.Polygons))
 
 	for i := range mesh.Polygons {
 		if !debugMap[i] && len(debugMap) > 0 {
@@ -345,7 +347,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 						idx[m] = idx[m-1]
 
 						sampledPoint := edges[maxi]
-						dmesh.Samples[polyIndex] = append(dmesh.Samples[polyIndex], float32(sampledPoint.X), float32(sampledPoint.Y), float32(sampledPoint.Z))
+						dmesh.OutlineSamples[polyIndex] = append(dmesh.OutlineSamples[polyIndex], float32(sampledPoint.X), float32(sampledPoint.Y), float32(sampledPoint.Z))
 					}
 					idx[k+1] = maxi
 					nidx++
@@ -414,6 +416,11 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 					Z: z,
 				}
 				samples = append(samples, sample)
+
+				// sx := float64(sample.X) * sampleDist
+				// sy := float64(sample.Y) * ch
+				// sz := float64(sample.Z) * sampleDist
+				// dmesh.InteriorSamples[polyIndex] = append(dmesh.InteriorSamples[polyIndex], float32(sx), float32(sy), float32(sz))
 			}
 		}
 
@@ -458,7 +465,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 			samples[besti].added = true
 			verts = append(verts, bestPoint)
-			// dmesh.Samples[polyIndex] = append(dmesh.Samples[polyIndex], float32(bestPoint.X), float32(bestPoint.Y), float32(bestPoint.Z))
+			dmesh.InteriorSamples[polyIndex] = append(dmesh.InteriorSamples[polyIndex], float32(bestPoint.X), float32(bestPoint.Y), float32(bestPoint.Z))
 
 			// TODO - incremental add instead of full rebuild
 			tris = delaunayHull(verts, hull)
@@ -1018,10 +1025,12 @@ func vCross2D(p1, p2, p3 DetailedVertex) float64 {
 }
 
 func getJitterX(i int) float64 {
+	return 0
 	return (float64((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 
 func getJitterZ(i int) float64 {
+	return 0
 	return (float64((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 

@@ -694,8 +694,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 	hf.Test()
 
-	// navmesh.HP = nil
-
 	navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()

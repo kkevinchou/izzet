@@ -75,12 +75,14 @@ type RuntimeConfig struct {
 	LockRenderingToCommandFrameRate bool
 
 	// Navigation Mesh
-	NavigationMeshIterations      int32
-	NavigationMeshWalkableHeight  int32
-	NavigationMeshClimbableHeight int32
-	NavigationMeshMinRegionArea   int32
-	NavigationmeshMaxError        float32
-	NavigationmeshSampleDist      float32
+	NavigationMeshIterations           int32
+	NavigationMeshWalkableHeight       int32
+	NavigationMeshClimbableHeight      int32
+	NavigationMeshMinRegionArea        int32
+	NavigationmeshMaxError             float32
+	NavigationmeshSampleDist           float32
+	NavigationmeshFilterLedgeSpans     bool
+	NavigationmeshFilterLowHeightSpans bool
 
 	ShadowmapZOffset float32
 
@@ -143,11 +145,13 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		ShowSelectionBoundingBox: true,
 		ShowColliders:            false,
 
-		NavigationMeshIterations:      500,
-		NavigationMeshWalkableHeight:  40,
-		NavigationMeshClimbableHeight: 13,
-		NavigationMeshMinRegionArea:   4,
-		NavigationmeshMaxError:        1,
-		NavigationmeshSampleDist:      5,
+		NavigationMeshIterations:           500,
+		NavigationMeshWalkableHeight:       40,
+		NavigationMeshClimbableHeight:      13,
+		NavigationMeshMinRegionArea:        4,
+		NavigationmeshMaxError:             1,
+		NavigationmeshSampleDist:           5,
+		NavigationmeshFilterLedgeSpans:     true,
+		NavigationmeshFilterLowHeightSpans: true,
 	}
 }

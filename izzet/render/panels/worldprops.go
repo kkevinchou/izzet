@@ -153,6 +153,12 @@ func worldProps(app renderiface.App) {
 				runtimeConfig.NavigationmeshSampleDist = f
 			}
 		}, true)
+		panelutils.SetupRow("Filter Ledge Spans", func() {
+			imgui.Checkbox("##", &runtimeConfig.NavigationmeshFilterLedgeSpans)
+		}, true)
+		panelutils.SetupRow("Filter Low Height Spans", func() {
+			imgui.Checkbox("##", &runtimeConfig.NavigationmeshFilterLowHeightSpans)
+		}, true)
 		imgui.EndTable()
 		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
 			ids := map[int]bool{}

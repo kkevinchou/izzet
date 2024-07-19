@@ -1025,12 +1025,10 @@ func vCross2D(p1, p2, p3 DetailedVertex) float64 {
 }
 
 func getJitterX(i int) float64 {
-	return 0
 	return (float64((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 
 func getJitterZ(i int) float64 {
-	return 0
 	return (float64((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 

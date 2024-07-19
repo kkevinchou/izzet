@@ -694,7 +694,14 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 	hf.Test()
 
-	navmesh.FilterLowHeightSpans(walkableHeight, hf)
+	if app.RuntimeConfig().NavigationmeshFilterLedgeSpans {
+		navmesh.FilterLedgeSpans(walkableHeight, climbableHeight, hf)
+	}
+
+	if app.RuntimeConfig().NavigationmeshFilterLowHeightSpans {
+		navmesh.FilterLowHeightSpans(walkableHeight, hf)
+	}
+
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 	chf.Test()
 	navmesh.BuildDistanceField(chf)

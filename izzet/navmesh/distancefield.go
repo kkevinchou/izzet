@@ -134,7 +134,7 @@ func BoxBlur(chf *CompactHeightField, distances []int) []int {
 				}
 
 				totalDistance := cellDistance
-				for dir := range dirs {
+				for _, dir := range dirs {
 					neighborSpanIndex := span.neighbors[dir]
 					if neighborSpanIndex != -1 {
 						neighborSpan := chf.spans[neighborSpanIndex]

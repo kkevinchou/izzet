@@ -43,6 +43,7 @@ type QueueItem struct {
 type DetailedMesh struct {
 	PolyVertices  [][]DetailedVertex
 	PolyTriangles [][]Triangle
+	Samples       [][]float32
 }
 
 type Triangle struct {
@@ -117,6 +118,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float
 
 	dmesh.PolyVertices = make([][]DetailedVertex, len(mesh.Polygons))
 	dmesh.PolyTriangles = make([][]Triangle, len(mesh.Polygons))
+	dmesh.Samples = make([][]float32, len(mesh.Polygons))
 
 	for i := range mesh.Polygons {
 		if !debugMap[i] && len(debugMap) > 0 {
@@ -136,8 +138,8 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float
 		hp.zmin = bounds[i].zmin
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
-		getHeightData(chf, hp, polygon.RegionID, i)
-		verts, tris := buildDetailedPoly(chf, polyVerts, sampleDist, sampleMaxError, heightSearchRadius, hp, i)
+		getHeightData(chf, hp, polygon.RegionID)
+		verts, tris := buildDetailedPoly(chf, polyVerts, sampleDist, sampleMaxError, heightSearchRadius, hp, &dmesh, i)
 
 		// move detailed verts to world space
 		for j := range len(verts) {
@@ -164,7 +166,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float
 
 // var HP map[string]bool
 
-func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID int) {
+func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 	// if HP == nil {
 	// 	HP = map[string]bool{}
 	// }
@@ -256,7 +258,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int, polyID
 	}
 }
 
-func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, polygonID int) ([]DetailedVertex, []Triangle) {
+func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, dmesh *DetailedMesh, polyIndex int) ([]DetailedVertex, []Triangle) {
 	var ch float64 = 1
 	var cs float64 = 1
 	ics := 1 / cs
@@ -342,6 +344,9 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				if maxi != -1 && maxd > (sampleMaxError*sampleMaxError) {
 					for m := nidx; m > k; m-- {
 						idx[m] = idx[m-1]
+
+						sampledPoint := edges[maxi]
+						dmesh.Samples[polyIndex] = append(dmesh.Samples[polyIndex], float32(sampledPoint.X), float32(sampledPoint.Y), float32(sampledPoint.Z))
 					}
 					idx[k+1] = maxi
 					nidx++
@@ -368,12 +373,11 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 	var tris []Triangle
 
-	// disabling just for debugging
-	// if minExtent < sampleDist*2 {
-	// 	tris = triangulateHull(verts, hull, len(inVerts))
-	// 	// setTriFlags
-	// 	return verts, tris
-	// }
+	if minExtent < sampleDist*2 {
+		tris = triangulateHull(verts, hull, len(inVerts))
+		// setTriFlags
+		return verts, tris
+	}
 	_ = minExtent
 
 	// tessellate the base mesh
@@ -455,6 +459,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 			samples[besti].added = true
 			verts = append(verts, bestPoint)
+			dmesh.Samples[polyIndex] = append(dmesh.Samples[polyIndex], float32(bestPoint.X), float32(bestPoint.Y), float32(bestPoint.Z))
 
 			// TODO - incremental add instead of full rebuild
 			tris = delaunayHull(verts, hull)
@@ -778,14 +783,6 @@ func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float
 	return dmin
 }
 
-func getJitterX(i int) float64 {
-	return (float64((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
-}
-
-func getJitterZ(i int) float64 {
-	return (float64((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
-}
-
 func distToPoly(verts []DetailedVertex, pt DetailedVertex) float64 {
 	n := len(verts)
 	c := false
@@ -872,12 +869,7 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) [
 	return tris
 }
 
-func next(i, max int) int {
-	return (i + 1) % max
-}
-func prev(i, max int) int {
-	return (i - 1 + max) % max
-}
+var DBG []int
 
 func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 	ix := int(math.Floor(fx*ics + 0.01))
@@ -890,6 +882,7 @@ func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 
 	// spiral search for next available height value
 	if h == hpUnsetHeight {
+		DBG = append(DBG, ix+hp.xmin, iz+hp.zmin)
 		x, z, dx, dz := 1, 0, 1, 0
 		maxSize := radius*2 + 1
 		maxIter := maxSize*maxSize - 1
@@ -1023,4 +1016,20 @@ func vCross2D(p1, p2, p3 DetailedVertex) float64 {
 	u2 := p3.X - p1.X
 	v2 := p3.Z - p1.Z
 	return u1*v2 - v1*u2
+}
+
+func getJitterX(i int) float64 {
+	return (float64((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
+}
+
+func getJitterZ(i int) float64 {
+	return (float64((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
+}
+
+func next(i, max int) int {
+	return (i + 1) % max
+}
+
+func prev(i, max int) int {
+	return (i - 1 + max) % max
 }

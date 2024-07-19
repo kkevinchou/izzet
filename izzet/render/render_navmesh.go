@@ -1,7 +1,9 @@
 package render
 
 import (
+	"fmt"
 	"math"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -26,9 +28,6 @@ var (
 	rawContourVAOCache    uint32
 	rawContourVertexCount int32
 
-	detailedMeshVAOCache    uint32
-	detailedMeshVertexCount int32
-
 	distanceFieldVAOCache    uint32
 	distanceFieldVertexCount int32
 
@@ -37,18 +36,40 @@ var (
 
 	polygonsVAOCache    uint32
 	polygonsVertexCount int32
+
+	detailedMeshVAOCache           uint32
+	detailedMeshVertexCount        int32
+	detailedMeshSamplesVAOCache    uint32
+	detailedMeshSamplesVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
+		start := time.Now()
 		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
+		fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
+		start = time.Now()
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
+		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
+		start = time.Now()
 		distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
-		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
+		fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
+		start = time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
-		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
+		fmt.Printf("%.1f seconds to create contour vao\n", time.Since(start).Seconds())
+		start = time.Now()
+		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
+		fmt.Printf("%.1f seconds to create simplified contour vao\n", time.Since(start).Seconds())
+		start = time.Now()
 		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
+		fmt.Printf("%.1f seconds to create premerge triangle vao\n", time.Since(start).Seconds())
+		start = time.Now()
 		polygonsVAOCache, polygonsVertexCount = r.createPolygonsVAO(nm)
+		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
+		start = time.Now()
+		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
+		detailedMeshSamplesVAOCache, detailedMeshSamplesVertexCount = createDetailedMeshSamplesVAO(nm)
+		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
@@ -86,6 +107,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		if detailedMeshVertexCount > 0 {
 			gl.BindVertexArray(detailedMeshVAOCache)
 			r.iztDrawElements(detailedMeshVertexCount * 3)
+			gl.BindVertexArray(detailedMeshSamplesVAOCache)
+			r.iztDrawElements(detailedMeshSamplesVertexCount * 36)
 		}
 	} else {
 		panic("WAT")
@@ -177,6 +200,36 @@ func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	vao := triangleAttributes(triangles, colors)
 
 	return vao, int32(len(triangles))
+}
+
+func createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+	var positions []mgl32.Vec3
+	var colors []float32
+	var lengths []float32
+
+	samples := nm.DetailedMesh.Samples
+	chf := nm.CompactHeightField
+
+	for p := range len(samples) {
+		for i := 0; i < len(samples[p]); i += 3 {
+			position := mgl32.Vec3{
+				float32(samples[p][i]) + float32(chf.BMin().X()),
+				float32(samples[p][i+1]) + float32(chf.BMin().Y()),
+				float32(samples[p][i+2]) + float32(chf.BMin().Z()),
+			}
+			positions = append(positions, position)
+			colors = append(colors, regionIDToColor(p)...)
+			lengths = append(lengths, 1)
+		}
+	}
+
+	if len(positions) == 0 {
+		return 0, 0
+	}
+
+	vao := cubeAttributes(positions, lengths, colors)
+
+	return vao, int32(len(positions))
 }
 
 func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int32) {
@@ -321,6 +374,29 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 	return vao, int32(len(positions))
 }
 
+func debugCheck(x, z int) bool {
+	for i := 0; i < len(navmesh.DBG); i += 2 {
+		if navmesh.DBG[i] == x && navmesh.DBG[i+1] == z {
+			return true
+		}
+	}
+
+	// if x == 686 && z == 102 {
+	// 	return true
+	// } else if x == 696 && z == 101 {
+	// 	return true
+	// } else if x == 720 && z == 98 {
+	// 	return true
+	// } else if x == 754 && z == 94 {
+	// 	return true
+	// } else if x == 812 && z == 88 {
+	// 	return true
+	// } else if x == 688 && z == 235 {
+	// 	return true
+	// }
+	return false
+}
+
 func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
@@ -337,15 +413,15 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 				positions = append(positions, position)
 				colors = append(colors, 1, 0, 0)
 				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
-				// } else if navmesh.HP[fmt.Sprintf("%d_%d", x, z)] {
-				// 	position := mgl32.Vec3{
-				// 		float32(x) + float32(hf.BMin.X()),
-				// 		float32(hf.BMin.Y()),
-				// 		float32(z) + float32(hf.BMin.Z()),
-				// 	}
-				// 	positions = append(positions, position)
-				// 	colors = append(colors, 0, 1, 0)
-				// 	lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
+			} else if debugCheck(x, z) {
+				position := mgl32.Vec3{
+					float32(x) + float32(hf.BMin.X()),
+					float32(hf.BMin.Y()),
+					float32(z) + float32(hf.BMin.Z()),
+				}
+				positions = append(positions, position)
+				colors = append(colors, 0, 1, 0)
+				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
 			} else {
 				index := x + z*hf.Width
 				span := hf.Spans[index]

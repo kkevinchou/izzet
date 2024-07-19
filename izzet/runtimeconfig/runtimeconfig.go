@@ -144,10 +144,10 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		ShowColliders:            false,
 
 		NavigationMeshIterations:      500,
-		NavigationMeshWalkableHeight:  50,
-		NavigationMeshClimbableHeight: 30,
+		NavigationMeshWalkableHeight:  40,
+		NavigationMeshClimbableHeight: 13,
 		NavigationMeshMinRegionArea:   4,
-		NavigationmeshMaxError:        1.3,
+		NavigationmeshMaxError:        1,
 		NavigationmeshSampleDist:      5,
 	}
 }

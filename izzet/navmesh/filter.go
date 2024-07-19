@@ -18,3 +18,7 @@ func FilterLowHeightSpans(walkableHeight int, hf *HeightField) {
 		}
 	}
 }
+
+// func FilterLedgeSpans(walkableHeight, walkableClimb int, hf *HeightField) {
+
+// }

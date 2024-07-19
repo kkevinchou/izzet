@@ -633,13 +633,15 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	return entity
 }
 
-func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, maxError float64) {
+func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, sampleDist float64, maxError float64) {
 	start := time.Now()
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
 	}()
 	minVertex := mgl64.Vec3{-500, -250, -500}
 	maxVertex := mgl64.Vec3{500, 250, 500}
+	// minVertex := mgl64.Vec3{-10, -10, -10}
+	// maxVertex := mgl64.Vec3{20, 12, 20}
 
 	vxs := int(maxVertex.X() - minVertex.X())
 	vzs := int(maxVertex.Z() - minVertex.Z())
@@ -672,22 +674,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 		transform := utils.Mat4F64ToF32(entities.WorldTransform(entity))
 		up := mgl64.Vec3{0, 1, 0}
-		right := mgl64.Vec3{1, 0, 0}
-
-		_ = primitives
-		_ = transform
-		_ = up
-		_ = right
-
-		// // 1. debug rasterize triangles
-
-		// v1 := mgl64.Vec3{0, 0, 0}
-		// v2 := mgl64.Vec3{0, 0, 5}
-		// v3 := mgl64.Vec3{0, 5, 0}
-
-		// navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, true, 10)
-
-		// 2. implementation
 
 		for _, p := range primitives {
 			for i := 0; i < len(p.Primitive.Vertices); i += 3 {
@@ -704,48 +690,6 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 				navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, isUp, climbableHeight)
 			}
 		}
-
-		// // 3. rasterize triangles
-		// for _, p := range primitives {
-		// 	for i := 0; i < len(p.Primitive.Vertices); i += 3 {
-		// 		v1 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i].Position.Vec4(1)).Vec3())
-		// 		v2 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3())
-		// 		v3 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3())
-
-		// 		// debugLines = append(debugLines, [2]mgl64.Vec3{v1, v2})
-		// 		// debugLines = append(debugLines, [2]mgl64.Vec3{v2, v3})
-		// 		// debugLines = append(debugLines, [2]mgl64.Vec3{v3, v1})
-
-		// 		tv1 := v2.Sub(v1)
-		// 		tv2 := v3.Sub(v2)
-
-		// 		normal := tv1.Cross(tv2)
-		// 		if normal.LenSqr() > 0 {
-		// 			normal = normal.Normalize()
-		// 		}
-		// 		isUp := normal.Dot(up) > 0.7
-		// 		isDown := normal.Dot(up) < -0.7
-		// 		isRight := normal.Dot(right) > 0.7
-		// 		isLeft := normal.Dot(right) < -0.7
-		// 		_, _, _, _ = isUp, isDown, isRight, isLeft
-
-		// 		navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, isUp)
-
-		// 		// navmesh.RasterizeTriangle(
-		// 		// 	int(v1.X()),
-		// 		// 	int(v1.Y()),
-		// 		// 	int(v1.Z()),
-		// 		// 	int(v2.X()),
-		// 		// 	int(v2.Y()),
-		// 		// 	int(v2.Z()),
-		// 		// 	int(v3.X()),
-		// 		// 	int(v3.Y()),
-		// 		// 	int(v3.Z()),
-		// 		// 	hf,
-		// 		// 	isUp,
-		// 		// )
-		// 	}
-		// }
 	}
 
 	hf.Test()
@@ -757,17 +701,20 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)
 	contourSet := navmesh.BuildContours(chf, maxError, 1)
-	navmesh.BuildPolyMesh(contourSet)
+	mesh := navmesh.BuildPolyMesh(contourSet)
+	detailedMesh := navmesh.BuildDetailedPolyMesh(mesh, chf, app.RuntimeConfig())
 
 	nm := &navmesh.NavigationMesh{
 		HeightField:          hf,
 		CompactHeightField:   chf,
 		Volume:               nmbb,
-		BlurredDistances:     chf.Distances(),
+		BlurredDistances:     chf.Distances,
 		DebugLines:           debugLines,
 		Invalidated:          true,
 		InvalidatedTimestamp: int(time.Now().Unix()),
 		ContourSet:           contourSet,
+		Mesh:                 mesh,
+		DetailedMesh:         detailedMesh,
 	}
 
 	g.navMesh = nm

@@ -80,8 +80,14 @@ type RuntimeConfig struct {
 	NavigationMeshClimbableHeight int32
 	NavigationMeshMinRegionArea   int32
 	NavigationmeshMaxError        float32
+	NavigationmeshSampleDist      float32
 
 	ShadowmapZOffset float32
+
+	DebugBlob1       string
+	DebugBlob1IntMap map[int]bool
+	DebugBlob2       string
+	DebugBlob2IntMap map[int]bool
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -138,9 +144,10 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		ShowColliders:            false,
 
 		NavigationMeshIterations:      500,
-		NavigationMeshWalkableHeight:  20,
-		NavigationMeshClimbableHeight: 4,
+		NavigationMeshWalkableHeight:  40,
+		NavigationMeshClimbableHeight: 13,
 		NavigationMeshMinRegionArea:   4,
-		NavigationmeshMaxError:        1.3,
+		NavigationmeshMaxError:        1,
+		NavigationmeshSampleDist:      5,
 	}
 }

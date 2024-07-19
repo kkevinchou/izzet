@@ -424,7 +424,7 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 		// tessellate only outer edges or edges between areas
 		if vertices[ci].regionID == 0 || (vertices[ci].flags&areaBorderFlag > 0) {
 			for ci != endi {
-				d := distancePtSeg(vertices[ci].X, vertices[ci].Z, ax, az, bx, bz)
+				d := distancePtSeg2D(vertices[ci].X, vertices[ci].Z, ax, az, bx, bz)
 				if d > maxd {
 					maxd = d
 					maxi = ci
@@ -457,7 +457,8 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 	return simplified
 }
 
-func distancePtSeg(x, z, px, pz, qx, qz int) float64 {
+// returns the squared distance between a point and a line segment
+func distancePtSeg2D(x, z, px, pz, qx, qz int) float64 {
 	pqx := float64(qx - px)
 	pqz := float64(qz - pz)
 	dx := float64(x - px)

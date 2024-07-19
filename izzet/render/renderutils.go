@@ -290,7 +290,6 @@ func (r *Renderer) drawModel(
 			textureID = texture.ID
 			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		}
-		shader.SetUniformFloat("ao", 1.0)
 
 		modelMatrix := entities.WorldTransform(entity)
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))

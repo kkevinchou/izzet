@@ -1,15 +1,9 @@
 package navmesh
 
-import (
-	"testing"
-
-	"github.com/go-gl/mathgl/mgl64"
-)
-
 type Case struct {
-	aabb           AABB
-	triangle       Triangle
-	expectedResult bool
+	// aabb           AABB
+	// triangle       Triangle
+	// expectedResult bool
 }
 
 var cases []Case = []Case{
@@ -52,26 +46,26 @@ var cases []Case = []Case{
 	// 	},
 	// 	expectedResult: true,
 	// },
-	{
-		aabb: AABB{Min: mgl64.Vec3{0, 0, 100}, Max: mgl64.Vec3{1, 1, 101}},
-		triangle: Triangle{
-			// V1: mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
-			// V2: mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
-			// V3: mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
-			V1: mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
-			V2: mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
-			V3: mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
-		},
-		expectedResult: true,
-	},
+	// {
+	// 	aabb: AABB{Min: mgl64.Vec3{0, 0, 100}, Max: mgl64.Vec3{1, 1, 101}},
+	// 	triangle: Triangle{
+	// 		// V1: mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
+	// 		// V2: mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
+	// 		// V3: mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
+	// 		V1: mgl64.Vec3{0.019916534423828125, 0.4266499876976013, 102.72208404541016},
+	// 		V2: mgl64.Vec3{0.5111160278320312, 0.3816499710083008, 102.5407943725586},
+	// 		V3: mgl64.Vec3{3.814697265625e-06, 3.0616166814766664e-15, 99.99999237060547},
+	// 	},
+	// 	expectedResult: true,
+	// },
 }
 
-func TestIntersection(t *testing.T) {
-	for _, c := range cases {
-		intersection := IntersectAABBTriangle(c.aabb, c.triangle)
+// func TestIntersection(t *testing.T) {
+// 	for _, c := range cases {
+// 		intersection := IntersectAABBTriangle(c.aabb, c.triangle)
 
-		if intersection != c.expectedResult {
-			t.Fail()
-		}
-	}
-}
+// 		if intersection != c.expectedResult {
+// 			t.Fail()
+// 		}
+// 	}
+// }

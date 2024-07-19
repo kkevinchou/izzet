@@ -123,12 +123,12 @@ func TestDistanceFieldBlur(t *testing.T) {
 	threeCostCount := 0
 	fourCostCount := 0
 
-	for i := 0; i < len(chf.distances); i++ {
-		if chf.distances[i] == 2 {
+	for i := 0; i < len(chf.Distances); i++ {
+		if chf.Distances[i] == 2 {
 			twoCostCount++
-		} else if chf.distances[i] == 3 {
+		} else if chf.Distances[i] == 3 {
 			threeCostCount++
-		} else if chf.distances[i] == 4 {
+		} else if chf.Distances[i] == 4 {
 			fourCostCount++
 		}
 	}

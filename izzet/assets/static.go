@@ -33,7 +33,7 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 func (a *AssetManager) LoadDocument(name string, filepath string) bool {
 	scene := loaders.LoadDocument(name, filepath)
 	if _, ok := a.documents[name]; ok {
-		fmt.Printf("warning, document with name %s already previously loaded", name)
+		fmt.Printf("warning, document with name %s already previously loaded\n", name)
 	}
 
 	a.documents[name] = scene

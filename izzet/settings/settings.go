@@ -65,7 +65,7 @@ const (
 	FirstPersonCamera  bool    = false
 	CameraEntityOffset float64 = 100
 	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "nav_test"
+	DefaultProject     string  = "elevation"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210

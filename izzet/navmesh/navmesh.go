@@ -54,6 +54,8 @@ type NavigationMesh struct {
 	BlurredDistances   []int
 	DebugLines         [][2]mgl64.Vec3
 	ContourSet         *ContourSet
+	Mesh               *Mesh
+	DetailedMesh       *DetailedMesh
 }
 
 func Min[T cmp.Ordered](a T, b T) T {

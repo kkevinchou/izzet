@@ -107,7 +107,7 @@ func BuildDistanceField(chf *CompactHeightField) {
 		maxDist = Max(distances[i], maxDist)
 	}
 
-	chf.distances = BoxBlur(chf, distances)
+	chf.Distances = BoxBlur(chf, distances)
 	chf.maxDistance = maxDist
 }
 

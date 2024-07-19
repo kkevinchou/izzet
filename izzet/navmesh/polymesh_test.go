@@ -7,11 +7,11 @@ import (
 func TestBuildMeshAdjacency(t *testing.T) {
 	polygons := []Polygon{
 		{
-			verts:        []int{0, 1, 2},
+			Verts:        []int{0, 1, 2},
 			polyNeighbor: []int{-1, -1, -1},
 		},
 		{
-			verts:        []int{1, 0, 3},
+			Verts:        []int{1, 0, 3},
 			polyNeighbor: []int{-1, -1, -1},
 		},
 	}
@@ -64,8 +64,8 @@ func TestBuildPolyMesh(t *testing.T) {
 		t.Fail()
 	}
 
-	if len(mesh.vertices) != 5 {
-		t.Errorf("expected 5 vertices but found %d", len(mesh.vertices))
+	if len(mesh.Vertices) != 5 {
+		t.Errorf("expected 5 vertices but found %d", len(mesh.Vertices))
 		return
 	}
 }
@@ -99,8 +99,8 @@ func TestBuildPolyMeshWithOverlappingVerts(t *testing.T) {
 		t.Fail()
 	}
 
-	if len(mesh.vertices) != 5 {
-		t.Errorf("expected 5 vertices but found %d", len(mesh.vertices))
+	if len(mesh.Vertices) != 5 {
+		t.Errorf("expected 5 vertices but found %d", len(mesh.Vertices))
 	}
 }
 

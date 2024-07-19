@@ -34,7 +34,7 @@ type CompactHeightField struct {
 	bMin, bMax     mgl64.Vec3
 	cells          []CompactCell
 	spans          []CompactSpan
-	distances      []int
+	Distances      []int
 	areas          []AREA_TYPE
 	maxDistance    int
 	maxRegionID    int
@@ -159,10 +159,6 @@ func (chf *CompactHeightField) Cells() []CompactCell {
 
 func (chf *CompactHeightField) Spans() []CompactSpan {
 	return chf.spans
-}
-
-func (chf *CompactHeightField) Distances() []int {
-	return chf.distances
 }
 
 func (chf *CompactHeightField) Test() {

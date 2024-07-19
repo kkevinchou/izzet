@@ -61,7 +61,7 @@ type DetailedEdge struct {
 	l, r int
 }
 
-func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float64, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
+func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *runtimeconfig.RuntimeConfig) *DetailedMesh {
 	bounds := make([]Bound, len(mesh.Polygons))
 	var maxhw, maxhh int
 	var nPolyVerts int
@@ -113,7 +113,6 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float
 
 	debugMap := runtimeConfig.DebugBlob2IntMap
 	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
-	var sampleMaxError float64 = 1.3
 	origin := mesh.bMin
 
 	dmesh.PolyVertices = make([][]DetailedVertex, len(mesh.Polygons))
@@ -139,7 +138,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, sampleDist float
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID)
-		verts, tris := buildDetailedPoly(chf, polyVerts, sampleDist, sampleMaxError, heightSearchRadius, hp, &dmesh, i)
+		verts, tris := buildDetailedPoly(chf, polyVerts, float64(runtimeConfig.NavigationmeshSampleDist), float64(runtimeConfig.NavigationmeshMaxError), heightSearchRadius, hp, &dmesh, i)
 
 		// move detailed verts to world space
 		for j := range len(verts) {
@@ -459,7 +458,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 			samples[besti].added = true
 			verts = append(verts, bestPoint)
-			dmesh.Samples[polyIndex] = append(dmesh.Samples[polyIndex], float32(bestPoint.X), float32(bestPoint.Y), float32(bestPoint.Z))
+			// dmesh.Samples[polyIndex] = append(dmesh.Samples[polyIndex], float32(bestPoint.X), float32(bestPoint.Y), float32(bestPoint.Z))
 
 			// TODO - incremental add instead of full rebuild
 			tris = delaunayHull(verts, hull)

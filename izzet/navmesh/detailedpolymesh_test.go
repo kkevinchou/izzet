@@ -23,7 +23,7 @@ func TestPolyMeshDetail(t *testing.T) {
 	mesh := BuildPolyMesh(contourSet)
 
 	chf := &CompactHeightField{width: 200, height: 200}
-	BuildDetailedPolyMesh(mesh, chf, 6, nil)
+	BuildDetailedPolyMesh(mesh, chf, nil)
 }
 
 func TestTriDist(t *testing.T) {

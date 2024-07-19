@@ -45,6 +45,7 @@ type DetailedMesh struct {
 	PolyTriangles   [][]Triangle
 	OutlineSamples  [][]float32
 	InteriorSamples [][]float32
+	AllSamples      [][]float32
 }
 
 type Triangle struct {
@@ -120,6 +121,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	dmesh.PolyTriangles = make([][]Triangle, len(mesh.Polygons))
 	dmesh.OutlineSamples = make([][]float32, len(mesh.Polygons))
 	dmesh.InteriorSamples = make([][]float32, len(mesh.Polygons))
+	dmesh.AllSamples = make([][]float32, len(mesh.Polygons))
 
 	for i := range mesh.Polygons {
 		if !debugMap[i] && len(debugMap) > 0 {
@@ -417,10 +419,10 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				}
 				samples = append(samples, sample)
 
-				// sx := float64(sample.X) * sampleDist
-				// sy := float64(sample.Y) * ch
-				// sz := float64(sample.Z) * sampleDist
-				// dmesh.InteriorSamples[polyIndex] = append(dmesh.InteriorSamples[polyIndex], float32(sx), float32(sy), float32(sz))
+				sx := float64(sample.X) * sampleDist
+				sy := float64(sample.Y) * ch
+				sz := float64(sample.Z) * sampleDist
+				dmesh.AllSamples[polyIndex] = append(dmesh.AllSamples[polyIndex], float32(sx), float32(sy), float32(sz))
 			}
 		}
 

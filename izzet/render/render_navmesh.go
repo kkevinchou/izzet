@@ -43,6 +43,8 @@ var (
 	detailedMeshOutlineSamplesVertexCount  int32
 	detailedMeshInteriorSamplesVAOCache    uint32
 	detailedMeshInteriorSamplesVertexCount int32
+	detailedMeshAllSamplesVAOCache         uint32
+	detailedMeshAllSamplesVertexCount      int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
@@ -51,12 +53,12 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
 		// fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
 		// start = time.Now()
-		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
-		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
-		start = time.Now()
-		distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
-		fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
-		start = time.Now()
+		// navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
+		// fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
+		// start = time.Now()
+		// distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
+		// fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
+		// start = time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 		fmt.Printf("%.1f seconds to create contour vao\n", time.Since(start).Seconds())
 		start = time.Now()
@@ -72,6 +74,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
 		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
 		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
+		// detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0, 1, 0})
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 	}
 
@@ -114,6 +117,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 			r.iztDrawElements(detailedMeshOutlineSamplesVertexCount * 36)
 			gl.BindVertexArray(detailedMeshInteriorSamplesVAOCache)
 			r.iztDrawElements(detailedMeshInteriorSamplesVertexCount * 36)
+			gl.BindVertexArray(detailedMeshAllSamplesVAOCache)
+			r.iztDrawElements(detailedMeshAllSamplesVertexCount * 36)
 		}
 	} else {
 		panic("WAT")

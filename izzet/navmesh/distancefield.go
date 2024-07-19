@@ -5,6 +5,18 @@ const (
 )
 
 func BuildDistanceField(chf *CompactHeightField) {
+	distances := computeDistances(chf)
+
+	maxDist := 0
+	for i := 0; i < chf.spanCount; i++ {
+		maxDist = Max(distances[i], maxDist)
+	}
+
+	chf.Distances = BoxBlur(chf, distances)
+	chf.maxDistance = maxDist
+}
+
+func computeDistances(chf *CompactHeightField) []int {
 	width := chf.width
 	height := chf.height
 
@@ -102,13 +114,7 @@ func BuildDistanceField(chf *CompactHeightField) {
 		}
 	}
 
-	maxDist := 0
-	for i := 0; i < chf.spanCount; i++ {
-		maxDist = Max(distances[i], maxDist)
-	}
-
-	chf.Distances = BoxBlur(chf, distances)
-	chf.maxDistance = maxDist
+	return distances
 }
 
 func BoxBlur(chf *CompactHeightField, distances []int) []int {

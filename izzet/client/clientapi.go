@@ -692,18 +692,17 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		}
 	}
 
-	hf.Test()
-
-	if app.RuntimeConfig().NavigationmeshFilterLedgeSpans {
+	if app.RuntimeConfig().NavigationMeshFilterLedgeSpans {
 		navmesh.FilterLedgeSpans(walkableHeight, climbableHeight, hf)
 	}
 
-	if app.RuntimeConfig().NavigationmeshFilterLowHeightSpans {
+	if app.RuntimeConfig().NavigationMeshFilterLowHeightSpans {
 		navmesh.FilterLowHeightSpans(walkableHeight, hf)
 	}
 
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
-	chf.Test()
+
+	navmesh.ErodeWalkableArea(chf, app.RuntimeConfig().NavigationMeshAgentRadius)
 	navmesh.BuildDistanceField(chf)
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)

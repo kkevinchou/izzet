@@ -147,6 +147,12 @@ func worldProps(app renderiface.App) {
 				runtimeConfig.NavigationmeshMaxError = f
 			}
 		}, true)
+		panelutils.SetupRow("Agent Radius", func() {
+			var f float32 = float32(runtimeConfig.NavigationMeshAgentRadius)
+			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+				runtimeConfig.NavigationMeshAgentRadius = f
+			}
+		}, true)
 		panelutils.SetupRow("Sample Dist", func() {
 			var f float32 = float32(runtimeConfig.NavigationmeshSampleDist)
 			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
@@ -154,10 +160,10 @@ func worldProps(app renderiface.App) {
 			}
 		}, true)
 		panelutils.SetupRow("Filter Ledge Spans", func() {
-			imgui.Checkbox("##", &runtimeConfig.NavigationmeshFilterLedgeSpans)
+			imgui.Checkbox("##", &runtimeConfig.NavigationMeshFilterLedgeSpans)
 		}, true)
 		panelutils.SetupRow("Filter Low Height Spans", func() {
-			imgui.Checkbox("##", &runtimeConfig.NavigationmeshFilterLowHeightSpans)
+			imgui.Checkbox("##", &runtimeConfig.NavigationMeshFilterLowHeightSpans)
 		}, true)
 		imgui.EndTable()
 		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {

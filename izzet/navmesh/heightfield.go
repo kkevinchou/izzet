@@ -47,59 +47,6 @@ func (hf *HeightField) SpanCount() int {
 	return count
 }
 
-// AddVoxel adds a voxel to the heightfield, either extending an existing span, or creating a new one
-func (hf *HeightField) AddVoxel(x, y, z int, walkable bool) {
-	area := NULL_AREA
-	if walkable {
-		area = WALKABLE_AREA
-	}
-	columnIndex := x + z*hf.Width
-	currentSpan := hf.Spans[columnIndex]
-	var previousSpan *Span
-
-	// find where to insert
-	for currentSpan != nil {
-		if currentSpan.Min > y {
-			break
-		}
-
-		if currentSpan.Max == y || currentSpan.Min == y {
-			return
-		}
-
-		previousSpan = currentSpan
-		currentSpan = currentSpan.Next
-	}
-
-	if previousSpan != nil {
-		if previousSpan.Max == y-1 {
-			// merge with prevous
-			previousSpan.Max += 1
-		} else {
-			// add new span
-			newSpan := &Span{Min: y, Max: y, Area: area, X: x, Z: z}
-			newSpan.Next = previousSpan.Next
-			previousSpan.Next = newSpan
-			previousSpan = newSpan
-		}
-	} else {
-		// no previous span means this is the lowest span
-		newSpan := &Span{Min: y, Max: y, Area: area, X: x, Z: z}
-		newSpan.Next = currentSpan
-		hf.Spans[columnIndex] = newSpan
-		previousSpan = newSpan
-	}
-
-	nextSpan := previousSpan.Next
-	if nextSpan != nil {
-		// merge with next span
-		if previousSpan.Max == nextSpan.Min-1 {
-			previousSpan.Max = nextSpan.Max
-			previousSpan.Next = nextSpan.Next
-		}
-	}
-}
-
 func (hf *HeightField) AddSpan(x, z, sMin, sMax int, walkable bool, areaMergeThreshold int) {
 	var previousSpan *Span
 	columnIndex := x + z*hf.Width

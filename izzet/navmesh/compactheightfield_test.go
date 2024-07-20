@@ -9,8 +9,11 @@ import (
 func TestCompactHeightField(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0, true)
-	hf.AddVoxel(1, 0, 0, true)
+	// hf.AddVoxel(0, 0, 0, true)
+	// hf.AddVoxel(1, 0, 0, true)
+
+	hf.AddSpan(0, 0, 0, 1, true, 1)
+	hf.AddSpan(1, 0, 0, 1, true, 1)
 
 	chf := NewCompactHeightField(1, 0, hf)
 
@@ -25,10 +28,10 @@ func TestCompactHeightField(t *testing.T) {
 func TestClimbableHeight(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0, true)
-	hf.AddVoxel(0, 1, 0, true)
+	hf.AddSpan(0, 0, 0, 1, true, 1)
+	hf.AddSpan(0, 0, 1, 1, true, 1)
 
-	hf.AddVoxel(1, 0, 0, true)
+	hf.AddSpan(1, 0, 0, 1, true, 1)
 
 	chf := NewCompactHeightField(1, 1, hf)
 
@@ -44,27 +47,27 @@ func TestClimbableHeight(t *testing.T) {
 func TestNotClimbableHeight(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0, true)
-	hf.AddVoxel(0, 1, 0, true)
-	hf.AddVoxel(0, 2, 0, true)
+	hf.AddSpan(0, 0, 0, 1, true, 1)
+	hf.AddSpan(0, 0, 1, 2, true, 1)
+	hf.AddSpan(0, 0, 2, 3, true, 1)
 
-	hf.AddVoxel(1, 0, 0, true)
+	hf.AddSpan(1, 0, 0, 1, true, 1)
 
 	chf := NewCompactHeightField(1, 1, hf)
 
 	// not walkable with step size 1
 	if chf.spans[0].neighbors[2] != -1 {
-		t.Fatalf("the first span should not reach the second span anymore, climbaleHeight of 1, but the difference is 2")
+		t.Fatalf("the first span should not reach the second span anymore, climbableHeight of 1, but the difference is 2")
 	}
 }
 
 func TestNotWalkableHeight(t *testing.T) {
 	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
 
-	hf.AddVoxel(0, 0, 0, true)
+	hf.AddSpan(0, 0, 0, 1, true, 1)
 
-	hf.AddVoxel(1, 0, 0, true)
-	hf.AddVoxel(1, 2, 0, true)
+	hf.AddSpan(1, 0, 0, 1, true, 1)
+	hf.AddSpan(1, 0, 2, 3, true, 1)
 
 	chf := NewCompactHeightField(3, 0, hf)
 

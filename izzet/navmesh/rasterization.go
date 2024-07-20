@@ -1,590 +1,240 @@
 package navmesh
 
-import "math"
+import (
+	"fmt"
+	"math"
 
-var offset int = 100
+	"github.com/go-gl/mathgl/mgl64"
+)
 
-func Plinex(x0, y0, z0, x1, y1, z1 int, LY, LZ, RY, RZ []int, vxs int) {
-	var i, n, cx, cy, cz, sx, sy, sz int
-	var by, bz []int
-
-	// target buffer & order points by x
-	if x1 >= x0 {
-		i = x0
-		x0 = x1
-		x1 = i
-
-		i = y0
-		y0 = y1
-		y1 = i
-
-		i = z0
-		z0 = z1
-		z1 = i
-
-		by = LY
-		bz = LZ
-	} else {
-		by = RY
-		bz = RZ
-	}
-
-	// line is perpendicular to x axis
-	if x0 == x1 {
-		if x0 >= 0 && x0 < vxs {
-			LY[x0] = y0
-			LZ[x0] = z0
-			RY[x0] = y1
-			RZ[x0] = z1
-			return
-		}
-	}
-
-	// line DDA parameters
-	x1 -= x0
-	sx = 0
-	if x1 > 0 {
-		sx = 1
-	}
-	if x1 < 0 {
-		sx = -1
-		x1 = -x1
-	}
-	if x1 != 0 {
-		x1++
-	}
-	n = x1
-
-	y1 -= y0
-	sy = 0
-	if y1 > 0 {
-		sy = 1
-	}
-	if y1 < 0 {
-		sy = -1
-		y1 = -y1
-	}
-	if y1 != 0 {
-		y1++
-	}
-	if n < y1 {
-		n = y1
-	}
-
-	z1 -= z0
-	sz = 0
-	if z1 > 0 {
-		sz = 1
-	}
-	if z1 < 0 {
-		sz = -1
-		z1 = -z1
-	}
-	if z1 != 0 {
-		z1++
-	}
-	if n < z1 {
-		n = z1
-	}
-
-	// single pixel (not a line)
-	if n == 0 {
-		if x0 >= 0 && x0 < vxs {
-			LY[x0] = y0
-			LZ[x0] = z0
-			RY[x0] = y0
-			RZ[x0] = z0
-		}
-		return
-	}
-
-	// ND DDA algo i is parameter
-	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if x0 >= 0 && x0 < vxs {
-			by[x0] = y0
-			bz[x0] = z0
-		}
-		cx -= x1
-		if cx <= 0 {
-			cx += n
-			x0 += sx
-		}
-		cy -= y1
-		if cy <= 0 {
-			cy += n
-			y0 += sy
-		}
-		cz -= z1
-		if cz <= 0 {
-			cz += n
-			z0 += sz
-		}
-	}
+type RasterVertex struct {
+	X, Y, Z float64
 }
 
-func Pliney(x0, y0, z0, x1, y1, z1 int, LX, LZ, RX, RZ []int, vys int) {
-	var i, n, cx, cy, cz, sx, sy, sz int
-	var bx, bz []int
+type AxisType string
 
-	// target buffer & order points by y
-	if y1 >= y0 {
-		i = x0
-		x0 = x1
-		x1 = i
+const (
+	AxisTypeX AxisType = "X"
+	AxisTypeZ AxisType = "Z"
+)
 
-		i = y0
-		y0 = y1
-		y1 = i
+func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, inverseCellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
+	triBBMin := v0
+	vMin(&triBBMin, &v1)
+	vMin(&triBBMin, &v2)
 
-		i = z0
-		z0 = z1
-		z1 = i
+	triBBMax := v0
+	vMax(&triBBMax, &v1)
+	vMax(&triBBMax, &v2)
 
-		bx = LX
-		bz = LZ
-	} else {
-		bx = RX
-		bz = RZ
+	if !overlapBounds(triBBMin, triBBMax, hf.BMin, hf.BMax) {
+		return -1
 	}
 
-	// line is perpendicular to y axis
-	if y0 == y1 {
-		if y0 >= 0 && y0 < vys {
-			LX[y0] = x0
-			LZ[y0] = z0
-			RX[y0] = x1
-			RZ[y0] = z1
-			return
+	w := hf.Width
+	h := hf.Height
+	by := hf.BMax.Y() - hf.BMin.Y()
+
+	// calculate the footprint of the triangle on the grid's z axis
+	z0 := int((triBBMin.Z() - hf.BMin.Z()) * inverseCellSize)
+	z1 := int((triBBMax.Z() - hf.BMin.Z()) * inverseCellSize)
+
+	// use -1 rather than 0 to cut the polygon properly at the start of the tile
+	z0 = Clamp(z0, -1, h-1)
+	z1 = Clamp(z1, 0, h-1)
+
+	// not sure if this is actually faster than making 4 different slices
+	// theoretically this should be more cache friendly since they're all packed together
+	var buffer [7 * 5]RasterVertex
+	in := buffer[0:7]
+	zSlice := buffer[7:14]
+	// technically we don't need a buffer for xSlice, we could reuse `in` in the x loop
+	// however, this is more readable
+	xSlice := buffer[14:21]
+	zRemainder := buffer[21:28]
+	xRemainder := buffer[28:35]
+
+	in[0] = RasterVertex{X: v0.X(), Y: v0.Y(), Z: v0.Z()}
+	in[1] = RasterVertex{X: v1.X(), Y: v1.Y(), Z: v1.Z()}
+	in[2] = RasterVertex{X: v2.X(), Y: v2.Y(), Z: v2.Z()}
+
+	var zSliceSize int
+	var zRemainderSize int = 3
+
+	for z := z0; z <= z1; z++ {
+		cellZ := hf.BMin.Z() + float64(z)*cellSize
+		zSliceSize, zRemainderSize = dividePoly(in, zRemainderSize, zSlice, zRemainder, cellZ+cellSize, AxisTypeZ)
+		bufferSwap(&in, &zRemainder)
+
+		if zSliceSize < 3 {
+			continue
+		}
+		if z < 0 {
+			continue
+		}
+
+		minX := zSlice[0].X
+		maxX := zSlice[0].X
+
+		for i := 0; i < zSliceSize; i++ {
+			minX = min(minX, zSlice[i].X)
+			maxX = max(maxX, zSlice[i].X)
+		}
+
+		x0 := int((minX - hf.BMin.X()) * inverseCellSize)
+		x1 := int((maxX - hf.BMin.X()) * inverseCellSize)
+
+		if x1 < 0 || x0 >= w {
+			continue
+		}
+
+		x0 = Clamp(x0, -1, w-1)
+		x1 = Clamp(x1, 0, w-1)
+
+		var xSliceSize int
+		xRemainderSize := zSliceSize
+
+		for x := x0; x <= x1; x++ {
+			cx := hf.BMin.X() + float64(x)*cellSize
+			xSliceSize, xRemainderSize = dividePoly(zSlice, xRemainderSize, xSlice, xRemainder, cx+cellSize, AxisTypeX)
+			bufferSwap(&zSlice, &xRemainder)
+
+			if xSliceSize < 3 {
+				continue
+			}
+
+			if x < 0 {
+				continue
+			}
+
+			spanMin := xSlice[0].Y
+			spanMax := xSlice[0].Y
+			for i := 0; i < xSliceSize; i++ {
+				spanMin = min(spanMin, xSlice[i].Y)
+				spanMax = Max(spanMax, xSlice[i].Y)
+			}
+			spanMin -= hf.BMin.Y()
+			spanMax -= hf.BMin.Y()
+
+			// skip the span if it's outside the heightfield bounding box
+			if spanMax < 0 {
+				continue
+			}
+
+			if spanMin > by {
+				continue
+			}
+
+			// clamp the span to the heightfield boundign box
+			if spanMin < 0 {
+				spanMin = 0
+			}
+
+			if spanMax > by {
+				spanMax = by
+			}
+
+			// snap the span to the heightfield height grid
+			spanMinCellIndex := Clamp(int(math.Floor(spanMin*inverseCellHeight)), 0, spanMaxHeight)
+			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*inverseCellHeight)), spanMinCellIndex+1, spanMaxHeight)
+
+			hf.AddSpan(x, z, spanMinCellIndex, spanMaxCellIndex, walkable, areaMergeThreshold)
 		}
 	}
 
-	// line DDA parameters
-	x1 -= x0
-	sx = 0
-	if x1 > 0 {
-		sx = 1
-	}
-	if x1 < 0 {
-		sx = -1
-		x1 = -x1
-	}
-	if x1 != 0 {
-		x1++
-	}
-	n = x1
-
-	y1 -= y0
-	sy = 0
-	if y1 > 0 {
-		sy = 1
-	}
-	if y1 < 0 {
-		sy = -1
-		y1 = -y1
-	}
-	if y1 != 0 {
-		y1++
-	}
-	if n < y1 {
-		n = y1
-	}
-
-	z1 -= z0
-	sz = 0
-	if z1 > 0 {
-		sz = 1
-	}
-	if z1 < 0 {
-		sz = -1
-		z1 = -z1
-	}
-	if z1 != 0 {
-		z1++
-	}
-	if n < z1 {
-		n = z1
-	}
-
-	// single pixel (not a line)
-	if n == 0 {
-		if y0 >= 0 && y0 < vys {
-			LX[y0] = x0
-			LZ[y0] = z0
-			RX[y0] = x0
-			RZ[y0] = z0
-		}
-		return
-	}
-
-	// ND DDA algo i is parameter
-	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if y0 >= 0 && y0 < vys {
-			bx[y0] = x0
-			bz[y0] = z0
-		}
-		cx -= x1
-		if cx <= 0 {
-			cx += n
-			x0 += sx
-		}
-		cy -= y1
-		if cy <= 0 {
-			cy += n
-			y0 += sy
-		}
-		cz -= z1
-		if cz <= 0 {
-			cz += n
-			z0 += sz
-		}
-	}
+	return -1
 }
 
-func Plinez(x0, y0, z0, x1, y1, z1 int, LX, LY, RX, RY []int, vzs int) {
-	var i, n, cx, cy, cz, sx, sy, sz int
-	var bx, by []int
-
-	// target buffer & order points by z
-	if z1 >= z0 {
-		i = x0
-		x0 = x1
-		x1 = i
-
-		i = y0
-		y0 = y1
-		y1 = i
-
-		i = z0
-		z0 = z1
-		z1 = i
-
-		bx = LX
-		by = LY
-	} else {
-		bx = RX
-		by = RY
+func dividePoly(inVerts []RasterVertex, inVertsCount int, outVerts1 []RasterVertex, outVerts2 []RasterVertex, axisOffset float64, axisType AxisType) (int, int) {
+	if inVertsCount > 12 {
+		panic(fmt.Sprintf("divide poly only supports splitting polygons of size up to 12, received %d", inVertsCount))
 	}
 
-	// line is perpendicular to z axis
-	if z0 == z1 {
-		if z0 >= 0 && z0 < vzs {
-			LX[z0] = x0
-			LY[z0] = y0
-			RX[z0] = x1
-			RY[z0] = y1
-			return
+	// how far positive or negative away from the separating axis for each vertex
+	var inVertAxisDelta [12]float64
+	for i := 0; i < inVertsCount; i++ {
+		var axisValue float64
+		if axisType == AxisTypeX {
+			axisValue = inVerts[i].X
+		} else if axisType == AxisTypeZ {
+			axisValue = inVerts[i].Z
+		} else {
+			panic(fmt.Sprintf("unexpected axis type %s", axisType))
 		}
+
+		inVertAxisDelta[i] = axisOffset - axisValue
 	}
 
-	// line DDA parameters
-	x1 -= x0
-	sx = 0
-	if x1 > 0 {
-		sx = 1
-	}
-	if x1 < 0 {
-		sx = -1
-		x1 = -x1
-	}
-	if x1 != 0 {
-		x1++
-	}
-	n = x1
+	var poly1Vert int
+	var poly2Vert int
 
-	y1 -= y0
-	sy = 0
-	if y1 > 0 {
-		sy = 1
-	}
-	if y1 < 0 {
-		sy = -1
-		y1 = -y1
-	}
-	if y1 != 0 {
-		y1++
-	}
-	if n < y1 {
-		n = y1
-	}
+	for inVertA, inVertB := 0, inVertsCount-1; inVertA < inVertsCount; inVertB, inVertA = inVertA, inVertA+1 {
+		// check if the two verts are on the same side of the separating axis
+		sameSide := (inVertAxisDelta[inVertA] >= 0) == (inVertAxisDelta[inVertB] >= 0)
 
-	z1 -= z0
-	sz = 0
-	if z1 > 0 {
-		sz = 1
-	}
-	if z1 < 0 {
-		sz = -1
-		z1 = -z1
-	}
-	if z1 != 0 {
-		z1++
-	}
-	if n < z1 {
-		n = z1
+		if !sameSide {
+			s := inVertAxisDelta[inVertB] / (inVertAxisDelta[inVertB] - inVertAxisDelta[inVertA])
+
+			// find the intersection with the separating axis and add that vertex to both buffers
+			outVerts1[poly1Vert].X = inVerts[inVertB].X + (inVerts[inVertA].X-inVerts[inVertB].X)*s
+			outVerts1[poly1Vert].Y = inVerts[inVertB].Y + (inVerts[inVertA].Y-inVerts[inVertB].Y)*s
+			outVerts1[poly1Vert].Z = inVerts[inVertB].Z + (inVerts[inVertA].Z-inVerts[inVertB].Z)*s
+
+			outVerts2[poly2Vert] = outVerts1[poly1Vert]
+
+			poly1Vert++
+			poly2Vert++
+
+			// add inVertA to the right polygon. Do not add points that are on the dividing line
+			// since these are added above
+
+			if inVertAxisDelta[inVertA] > 0 {
+				outVerts1[poly1Vert] = inVerts[inVertA]
+				poly1Vert++
+			} else if inVertAxisDelta[inVertA] < 0 {
+				outVerts2[poly2Vert] = inVerts[inVertA]
+				poly2Vert++
+			}
+		} else {
+			// add inVertA to the right polygon. Addition is done even for points on the dividing line
+			if inVertAxisDelta[inVertA] >= 0 {
+				outVerts1[poly1Vert] = inVerts[inVertA]
+				poly1Vert++
+				if inVertAxisDelta[inVertA] != 0 {
+					continue
+				}
+			}
+			outVerts2[poly2Vert] = inVerts[inVertA]
+			poly2Vert++
+		}
+		inVertB = inVertA
 	}
 
-	// single pixel (not a line)
-	if n == 0 {
-		if z0 >= 0 && z0 < vzs {
-			LX[z0] = x0
-			LY[z0] = y0
-			RX[z0] = x0
-			RY[z0] = y0
-		}
-		return
-	}
-
-	// ND DDA algo i is parameter
-	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if z0 >= 0 && z0 < vzs {
-			bx[z0] = x0
-			by[z0] = y0
-		}
-		cx -= x1
-		if cx <= 0 {
-			cx += n
-			x0 += sx
-		}
-		cy -= y1
-		if cy <= 0 {
-			cy += n
-			y0 += sy
-		}
-		cz -= z1
-		if cz <= 0 {
-			cz += n
-			z0 += sz
-		}
-	}
+	return poly1Vert, poly2Vert
 }
 
-func Line(x0, y0, z0, x1, y1, z1 int, c float32, vxs, vys, vzs int, heightField *HeightField, walkable bool) int {
-	var i, n, cx, cy, cz, sx, sy, sz int
-
-	// line DDA parameters
-	x1 -= x0
-	sx = 0
-	if x1 > 0 {
-		sx = 1
-	}
-	if x1 < 0 {
-		sx = -1
-		x1 = -x1
-	}
-	if x1 != 0 {
-		x1++
-	}
-	n = x1
-
-	y1 -= y0
-	sy = 0
-	if y1 > 0 {
-		sy = 1
-	}
-	if y1 < 0 {
-		sy = -1
-		y1 = -y1
-	}
-	if y1 != 0 {
-		y1++
-	}
-	if n < y1 {
-		n = y1
-	}
-
-	z1 -= z0
-	sz = 0
-	if z1 > 0 {
-		sz = 1
-	}
-	if z1 < 0 {
-		sz = -1
-		z1 = -z1
-	}
-	if z1 != 0 {
-		z1++
-	}
-	if n < z1 {
-		n = z1
-	}
-
-	count := 0
-
-	// single pixel (not a line)
-	if n == 0 {
-		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			heightField.AddVoxel(x0, y0, z0, walkable)
-		}
-		return count
-	}
-
-	// ND DDA algo i is parameter
-	for cx, cy, cz, i = n, n, n, 0; i < n; i++ {
-		if x0 >= 0 && x0 < vxs && y0 >= 0 && y0 < vys && z0 >= 0 && z0 < vzs {
-			heightField.AddVoxel(x0, y0, z0, walkable)
-			count++
-		}
-		cx -= x1
-		if cx <= 0 {
-			cx += n
-			x0 += sx
-		}
-		cy -= y1
-		if cy <= 0 {
-			cy += n
-			y0 += sy
-		}
-		cz -= z1
-		if cz <= 0 {
-			cz += n
-			z0 += sz
-		}
-	}
-
-	return count
+func bufferSwap(a, b *[]RasterVertex) {
+	temp := *a
+	*a = *b
+	*b = temp
 }
 
-func RasterizeTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2 int, heightField *HeightField, walkable bool) int {
-	vxs := int(heightField.BMax.X() - heightField.BMin.X())
-	vys := int(heightField.BMax.Y() - heightField.BMin.Y())
-	vzs := int(heightField.BMax.Z() - heightField.BMin.Z())
+// vMin updates v0 to contain the minimum values for each axis between v0 and v1
+func vMin(v0, v1 *mgl64.Vec3) {
+	v0[0] = min(v0[0], v1[0])
+	v0[1] = min(v0[1], v1[1])
+	v0[2] = min(v0[2], v1[2])
+}
 
-	vsz := int(math.Max(math.Max(float64(vxs), float64(vys)), float64(vzs)))
+// vMin updates v0 to contain the maximum values for each axis between v0 and v1
+func vMax(v0, v1 *mgl64.Vec3) {
+	v0[0] = max(v0[0], v1[0])
+	v0[1] = max(v0[1], v1[1])
+	v0[2] = max(v0[2], v1[2])
+}
 
-	LX := make([]int, vsz)
-	LY := make([]int, vsz)
-	LZ := make([]int, vsz)
-	RX := make([]int, vsz)
-	RY := make([]int, vsz)
-	RZ := make([]int, vsz)
-
-	var X0, Y0, Z0, X1, Y1, Z1, dx, dy, dz, x, y, z int
-
-	bMin := heightField.BMin
-
-	x0 -= int(bMin.X())
-	x1 -= int(bMin.X())
-	x2 -= int(bMin.X())
-
-	y0 -= int(bMin.Y())
-	y1 -= int(bMin.Y())
-	y2 -= int(bMin.Y())
-
-	z0 -= int(bMin.Z())
-	z1 -= int(bMin.Z())
-	z2 -= int(bMin.Z())
-
-	// BBOX
-	X0 = x0
-	X1 = x0
-	if X0 > x1 {
-		X0 = x1
-	}
-	if X1 < x1 {
-		X1 = x1
-	}
-	if X0 > x2 {
-		X0 = x2
-	}
-	if X1 < x2 {
-		X1 = x2
-	}
-	Y0 = y0
-	Y1 = y0
-	if Y0 > y1 {
-		Y0 = y1
-	}
-	if Y1 < y1 {
-		Y1 = y1
-	}
-	if Y0 > y2 {
-		Y0 = y2
-	}
-	if Y1 < y2 {
-		Y1 = y2
-	}
-	Z0 = z0
-	Z1 = z0
-	if Z0 > z1 {
-		Z0 = z1
-	}
-	if Z1 < z1 {
-		Z1 = z1
-	}
-	if Z0 > z2 {
-		Z0 = z2
-	}
-	if Z1 < z2 {
-		Z1 = z2
-	}
-
-	dx = X1 - X0
-	dy = Y1 - Y0
-	dz = Z1 - Z0
-
-	var count int
-
-	if dx >= dy && dx >= dz { // x is major axis
-		// render circumference into left/right buffers
-		Plinex(x0, y0, z0, x1, y1, z1, LY, LZ, RY, RZ, vxs)
-		Plinex(x1, y1, z1, x2, y2, z2, LY, LZ, RY, RZ, vxs)
-		Plinex(x2, y2, z2, x0, y0, z0, LY, LZ, RY, RZ, vxs)
-
-		// fill the triangle
-		if X0 < 0 {
-			X0 = 0
-		}
-		if X1 >= vxs {
-			X1 = vxs - 1
-		}
-
-		for x = X0; x <= X1; x++ {
-			y0 = LY[x]
-			z0 = LZ[x]
-			y1 = RY[x]
-			z1 = RZ[x]
-			count += Line(x, y0, z0, x, y1, z1, 1, vxs, vys, vzs, heightField, walkable)
-		}
-	} else if dy >= dx && dy >= dz { // y is major axis
-		// render circumference into left/right buffers
-		Pliney(x0, y0, z0, x1, y1, z1, LX, LZ, RX, RZ, vys)
-		Pliney(x1, y1, z1, x2, y2, z2, LX, LZ, RX, RZ, vys)
-		Pliney(x2, y2, z2, x0, y0, z0, LX, LZ, RX, RZ, vys)
-
-		// fill the triangle
-		if Y0 < 0 {
-			Y0 = 0
-		}
-		if Y1 >= vys {
-			Y1 = vys - 1
-		}
-		for y = Y0; y <= Y1; y++ {
-			x0 = LX[y]
-			z0 = LZ[y]
-			x1 = RX[y]
-			z1 = RZ[y]
-			count += Line(x0, y, z0, x1, y, z1, 1, vxs, vys, vzs, heightField, walkable)
-		}
-	} else if dz >= dx && dz >= dy { // z is major axis
-		// render circumference into left/right buffers
-		Plinez(x0, y0, z0, x1, y1, z1, LX, LY, RX, RY, vzs)
-		Plinez(x1, y1, z1, x2, y2, z2, LX, LY, RX, RY, vzs)
-		Plinez(x2, y2, z2, x0, y0, z0, LX, LY, RX, RY, vzs)
-
-		// fill the triangle
-		if Z0 < 0 {
-			Z0 = 0
-		}
-		if Z1 >= vzs {
-			Z1 = vzs - 1
-		}
-		for z = Z0; z <= Z1; z++ {
-			x0 = LX[z]
-			y0 = LY[z]
-			x1 = RX[z]
-			y1 = RY[z]
-			count += Line(x0, y0, z, x1, y1, z, 1, vxs, vys, vzs, heightField, walkable)
-		}
-	}
-	return count
+func overlapBounds(aMin, aMax, bMin, bMax mgl64.Vec3) bool {
+	return aMin[0] <= bMax[0] && aMax[0] >= bMin[0] &&
+		aMin[1] <= bMax[1] && aMax[1] >= bMin[1] &&
+		aMin[2] <= bMax[2] && aMax[2] >= bMin[2]
 }

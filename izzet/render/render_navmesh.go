@@ -50,11 +50,11 @@ var (
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		start := time.Now()
+		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
+		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
+		start = time.Now()
 		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
 		// fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
-		// start = time.Now()
-		// navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
-		// fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
 		// start = time.Now()
 		// distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
 		// fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
@@ -71,9 +71,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		polygonsVAOCache, polygonsVertexCount = r.createPolygonsVAO(nm)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		detailedMeshVAOCache, detailedMeshVertexCount = createDetailedMeshVAO(nm)
-		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
-		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
+		detailedMeshVAOCache, detailedMeshVertexCount = r.createDetailedMeshVAO(nm)
+		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
+		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
 		// detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0, 1, 0})
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 	}
@@ -184,7 +184,7 @@ func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32)
 	return createLineVAO(vertexAttributes)
 }
 
-func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	if nm.DetailedMesh == nil || len(nm.DetailedMesh.PolyTriangles) == 0 {
 		return 0, 0
 	}
@@ -192,7 +192,11 @@ func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	var triangles [][3]mgl32.Vec3
 	var colors []float32
 
+	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
 	for j := range len(nm.DetailedMesh.PolyTriangles) {
+		if !debugMap[j] && len(debugMap) > 0 {
+			continue
+		}
 		for _, tri := range nm.DetailedMesh.PolyTriangles[j] {
 			v0 := nm.DetailedMesh.PolyVertices[j][tri.A]
 			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
@@ -207,24 +211,32 @@ func createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 		}
 	}
 
+	if len(triangles) == 0 {
+		return 0, 0
+	}
+
 	vao := triangleAttributes(triangles, colors)
 
 	return vao, int32(len(triangles))
 }
 
-func createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
+func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 	var lengths []float32
 
 	chf := nm.CompactHeightField
 
-	for p := range len(samples) {
-		for i := 0; i < len(samples[p]); i += 3 {
+	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+	for j := range len(samples) {
+		if !debugMap[j] && len(debugMap) > 0 {
+			continue
+		}
+		for i := 0; i < len(samples[j]); i += 3 {
 			position := mgl32.Vec3{
-				float32(samples[p][i]) + float32(chf.BMin().X()),
-				float32(samples[p][i+1]) + float32(chf.BMin().Y()),
-				float32(samples[p][i+2]) + float32(chf.BMin().Z()),
+				float32(samples[j][i]) + float32(chf.BMin().X()),
+				float32(samples[j][i+1]) + float32(chf.BMin().Y()),
+				float32(samples[j][i+2]) + float32(chf.BMin().Z()),
 			}
 			positions = append(positions, position)
 			colors = append(colors, color...)

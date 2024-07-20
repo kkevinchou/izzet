@@ -167,28 +167,31 @@ func worldProps(app renderiface.App) {
 		}, true)
 		imgui.EndTable()
 		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
-			ids := map[int]bool{}
+			runtimeConfig.DebugBlob1IntMap = map[int]bool{}
+			runtimeConfig.DebugBlob1IntSlice = nil
 			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
 			for _, sID := range sIDs {
 				id, err := strconv.Atoi(sID)
 				if err != nil {
 					continue
 				}
-				ids[id] = true
+				runtimeConfig.DebugBlob1IntMap[id] = true
+				runtimeConfig.DebugBlob1IntSlice = append(runtimeConfig.DebugBlob1IntSlice, id)
 			}
-			runtimeConfig.DebugBlob1IntMap = ids
 		}
 		if imgui.InputTextWithHint("##DebugBlob2", "", &runtimeConfig.DebugBlob2, imgui.InputTextFlagsNone, nil) {
-			ids := map[int]bool{}
-			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
+			runtimeConfig.DebugBlob2IntMap = map[int]bool{}
+			runtimeConfig.DebugBlob2IntSlice = nil
+			sIDs := strings.Split(runtimeConfig.DebugBlob2, ",")
 			for _, sID := range sIDs {
 				id, err := strconv.Atoi(sID)
 				if err != nil {
 					continue
 				}
-				ids[id] = true
+				runtimeConfig.DebugBlob2IntMap[id] = true
+				runtimeConfig.DebugBlob2IntSlice = append(runtimeConfig.DebugBlob2IntSlice, id)
 			}
-			runtimeConfig.DebugBlob2IntMap = ids
+
 		}
 		if imgui.Button("Build") {
 			iterations := int(runtimeConfig.NavigationMeshIterations)

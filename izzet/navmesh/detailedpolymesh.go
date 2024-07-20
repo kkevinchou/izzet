@@ -113,7 +113,6 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 
 	var dmesh DetailedMesh
 
-	debugMap := runtimeConfig.DebugBlob2IntMap
 	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
 	origin := mesh.bMin
 
@@ -124,10 +123,6 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	dmesh.AllSamples = make([][]float32, len(mesh.Polygons))
 
 	for i := range mesh.Polygons {
-		if !debugMap[i] && len(debugMap) > 0 {
-			continue
-		}
-
 		var polyVerts []DetailedVertex
 		polygon := &mesh.Polygons[i]
 		for _, vertIndex := range polygon.Verts {
@@ -142,7 +137,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID)
-		verts, tris := buildDetailedPoly(chf, polyVerts, float64(runtimeConfig.NavigationmeshSampleDist), float64(runtimeConfig.NavigationmeshMaxError), heightSearchRadius, hp, &dmesh, i)
+		verts, tris := buildDetailedPoly(chf, polyVerts, float64(runtimeConfig.NavigationmeshSampleDist), float64(runtimeConfig.NavigationmeshMaxError), heightSearchRadius, hp, &dmesh, i, runtimeConfig)
 
 		// move detailed verts to world space
 		for j := range len(verts) {
@@ -261,7 +256,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 	}
 }
 
-func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, dmesh *DetailedMesh, polyIndex int) ([]DetailedVertex, []Triangle) {
+func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, dmesh *DetailedMesh, polyIndex int, runtimeConfig *runtimeconfig.RuntimeConfig) ([]DetailedVertex, []Triangle) {
 	var ch float64 = 1
 	var cs float64 = 1
 	ics := 1 / cs
@@ -348,8 +343,8 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 					for m := nidx; m > k; m-- {
 						idx[m] = idx[m-1]
 
-						sampledPoint := edges[maxi]
-						dmesh.OutlineSamples[polyIndex] = append(dmesh.OutlineSamples[polyIndex], float32(sampledPoint.X), float32(sampledPoint.Y), float32(sampledPoint.Z))
+						// sampledPoint := edges[maxi]
+						// dmesh.OutlineSamples[polyIndex] = append(dmesh.OutlineSamples[polyIndex], float32(sampledPoint.X), float32(sampledPoint.Y), float32(sampledPoint.Z))
 					}
 					idx[k+1] = maxi
 					nidx++
@@ -372,6 +367,10 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				}
 			}
 		}
+	}
+
+	for _, i := range hull {
+		dmesh.OutlineSamples[polyIndex] = append(dmesh.OutlineSamples[polyIndex], float32(verts[i].X), float32(verts[i].Y), float32(verts[i].Z))
 	}
 
 	var tris []Triangle
@@ -426,11 +425,17 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			}
 		}
 
+		debugSlice := runtimeConfig.DebugBlob2IntSlice
+
 		// progressively add samples which have the highest error until
 		// we go under the error threshold
 		for iter := 0; iter < len(samples); iter++ {
 			if len(verts) >= maxVerts {
 				break
+			}
+
+			if len(debugSlice) > 0 && iter > debugSlice[0] {
+				continue
 			}
 
 			var bestPoint DetailedVertex
@@ -791,17 +796,17 @@ func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float
 	return dmin
 }
 
-func distToPoly(verts []DetailedVertex, pt DetailedVertex) float64 {
+func distToPoly(verts []DetailedVertex, p DetailedVertex) float64 {
 	n := len(verts)
 	c := false
 	dmin := math.MaxFloat64
 	for i, j := 0, n-1; i < n; j, i = i, i+1 {
 		vi := verts[i]
 		vj := verts[j]
-		if ((vi.Z > pt.Z) != (vj.Z > pt.Z)) && (pt.X < (vj.X-vi.X)*(pt.Z-vi.Z)/(vj.Z-vi.Z)+vi.X) {
+		if ((vi.Z > p.Z) != (vj.Z > p.Z)) && (p.X < (vj.X-vi.X)*(p.Z-vi.Z)/(vj.Z-vi.Z)+vi.X) {
 			c = !c
 		}
-		dmin = min(dmin, distancePtSeg2Df(pt.X, pt.Z, vj.X, vj.Z, vi.X, vi.Z))
+		dmin = min(dmin, distancePtSeg2Df(p.X, p.Z, vj.X, vj.Z, vi.X, vi.Z))
 	}
 	if c {
 		return -dmin

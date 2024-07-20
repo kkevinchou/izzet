@@ -87,10 +87,12 @@ type RuntimeConfig struct {
 
 	ShadowmapZOffset float32
 
-	DebugBlob1       string
-	DebugBlob1IntMap map[int]bool
-	DebugBlob2       string
-	DebugBlob2IntMap map[int]bool
+	DebugBlob1         string
+	DebugBlob1IntMap   map[int]bool
+	DebugBlob1IntSlice []int
+	DebugBlob2         string
+	DebugBlob2IntMap   map[int]bool
+	DebugBlob2IntSlice []int
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -148,7 +150,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		NavigationMeshIterations:           500,
 		NavigationMeshWalkableHeight:       40,
-		NavigationMeshClimbableHeight:      13,
+		NavigationMeshClimbableHeight:      4,
 		NavigationMeshMinRegionArea:        4,
 		NavigationMeshAgentRadius:          1,
 		NavigationmeshMaxError:             1,

@@ -261,7 +261,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	var cs float64 = 1
 	ics := 1 / cs
 	var hull []int
-	// heightSearchRadius = 100
 
 	verts := make([]DetailedVertex, len(inVerts))
 	for i := range len(inVerts) {

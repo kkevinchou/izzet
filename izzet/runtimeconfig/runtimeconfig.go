@@ -80,6 +80,8 @@ type RuntimeConfig struct {
 	NavigationMeshClimbableHeight      int32
 	NavigationMeshMinRegionArea        int32
 	NavigationMeshAgentRadius          float32
+	NavigationMeshCellSize             float32
+	NavigationMeshCellHeight           float32
 	NavigationmeshMaxError             float32
 	NavigationmeshSampleDist           float32
 	NavigationMeshFilterLedgeSpans     bool
@@ -153,6 +155,8 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshClimbableHeight:      4,
 		NavigationMeshMinRegionArea:        4,
 		NavigationMeshAgentRadius:          1,
+		NavigationMeshCellSize:             1,
+		NavigationMeshCellHeight:           1,
 		NavigationmeshMaxError:             1,
 		NavigationmeshSampleDist:           5,
 		NavigationMeshFilterLedgeSpans:     true,

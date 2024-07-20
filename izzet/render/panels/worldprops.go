@@ -153,6 +153,18 @@ func worldProps(app renderiface.App) {
 				runtimeConfig.NavigationMeshAgentRadius = f
 			}
 		}, true)
+		panelutils.SetupRow("Cell Size", func() {
+			f := runtimeConfig.NavigationMeshCellSize
+			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+				runtimeConfig.NavigationMeshCellSize = f
+			}
+		}, true)
+		panelutils.SetupRow("Cell Height", func() {
+			f := runtimeConfig.NavigationMeshCellHeight
+			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+				runtimeConfig.NavigationMeshCellHeight = f
+			}
+		}, true)
 		panelutils.SetupRow("Sample Dist", func() {
 			var f float32 = float32(runtimeConfig.NavigationmeshSampleDist)
 			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {

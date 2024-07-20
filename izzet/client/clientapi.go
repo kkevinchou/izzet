@@ -650,6 +650,9 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	hf := navmesh.NewHeightField(vxs, vzs, minVertex, maxVertex)
 	var debugLines [][2]mgl64.Vec3
 
+	cs := app.RuntimeConfig().NavigationMeshCellSize
+	ch := app.RuntimeConfig().NavigationMeshCellHeight
+
 	world := app.World()
 	for _, entity := range world.Entities() {
 		if entity.MeshComponent == nil {
@@ -687,7 +690,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 				normal := tv1.Cross(tv2).Normalize()
 				isUp := normal.Dot(up) >= 0.7
 
-				navmesh.RasterizeTriangle(v1, v2, v3, 1, 1, 1, hf, isUp, climbableHeight)
+				navmesh.RasterizeTriangle(v1, v2, v3, float64(cs), float64(ch), hf, isUp, climbableHeight)
 			}
 		}
 	}

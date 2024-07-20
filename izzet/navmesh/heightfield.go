@@ -14,19 +14,22 @@ type Span struct {
 }
 
 type HeightField struct {
-	Width, Height int
-	BMin, BMax    mgl64.Vec3
+	Width, Height        int
+	BMin, BMax           mgl64.Vec3
+	CellSize, CellHeight float64
 
 	Spans []*Span
 }
 
-func NewHeightField(width, height int, bMin, bMax mgl64.Vec3) *HeightField {
+func NewHeightField(width, height int, bMin, bMax mgl64.Vec3, cellSize, cellHeight float64) *HeightField {
 	return &HeightField{
-		Width:  width,
-		Height: height,
-		BMin:   bMin,
-		BMax:   bMax,
-		Spans:  make([]*Span, width*height),
+		Width:      width,
+		Height:     height,
+		BMin:       bMin,
+		BMax:       bMax,
+		CellSize:   cellSize,
+		CellHeight: cellHeight,
+		Spans:      make([]*Span, width*height),
 	}
 }
 

@@ -18,7 +18,10 @@ const (
 	AxisTypeZ AxisType = "Z"
 )
 
-func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, inverseCellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
+func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
+	ics := 1.0 / cellSize
+	ich := 1.0 / cellHeight
+
 	triBBMin := v0
 	vMin(&triBBMin, &v1)
 	vMin(&triBBMin, &v2)
@@ -36,8 +39,8 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 	by := hf.BMax.Y() - hf.BMin.Y()
 
 	// calculate the footprint of the triangle on the grid's z axis
-	z0 := int((triBBMin.Z() - hf.BMin.Z()) * inverseCellSize)
-	z1 := int((triBBMax.Z() - hf.BMin.Z()) * inverseCellSize)
+	z0 := int((triBBMin.Z() - hf.BMin.Z()) * ics)
+	z1 := int((triBBMax.Z() - hf.BMin.Z()) * ics)
 
 	// use -1 rather than 0 to cut the polygon properly at the start of the tile
 	z0 = Clamp(z0, -1, h-1)
@@ -81,8 +84,8 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 			maxX = max(maxX, zSlice[i].X)
 		}
 
-		x0 := int((minX - hf.BMin.X()) * inverseCellSize)
-		x1 := int((maxX - hf.BMin.X()) * inverseCellSize)
+		x0 := int((minX - hf.BMin.X()) * ics)
+		x1 := int((maxX - hf.BMin.X()) * ics)
 
 		if x1 < 0 || x0 >= w {
 			continue
@@ -135,8 +138,8 @@ func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, invers
 			}
 
 			// snap the span to the heightfield height grid
-			spanMinCellIndex := Clamp(int(math.Floor(spanMin*inverseCellHeight)), 0, spanMaxHeight)
-			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*inverseCellHeight)), spanMinCellIndex+1, spanMaxHeight)
+			spanMinCellIndex := Clamp(int(math.Floor(spanMin*ich)), 0, spanMaxHeight)
+			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*ich)), spanMinCellIndex+1, spanMaxHeight)
 
 			hf.AddSpan(x, z, spanMinCellIndex, spanMaxCellIndex, walkable, areaMergeThreshold)
 		}

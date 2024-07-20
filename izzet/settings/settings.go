@@ -26,11 +26,11 @@ const (
 
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.
-	MSPerCommandFrame    int = 8
+	MSPerCommandFrame    int = 16
 	MSPerGameStateUpdate int = 100
 
 	// number of rendered frames per second, separate from command frames
-	FPS int = 144
+	FPS int = 60
 
 	// the maximum number of command frames to execute in a single loop to prevent the spiral of death
 	MaxCommandFramesPerLoop int = 3
@@ -65,7 +65,7 @@ const (
 	FirstPersonCamera  bool    = false
 	CameraEntityOffset float64 = 100
 	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "0_tri_test"
+	DefaultProject     string  = "nav_test"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210

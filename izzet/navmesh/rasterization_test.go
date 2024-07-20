@@ -32,5 +32,5 @@ func TestRasterization(t *testing.T) {
 	vzs := int(maxVertex.Z() - minVertex.Z())
 	hf := NewHeightField(vxs, vzs, minVertex, maxVertex)
 
-	RasterizeTriangle2(v0, v1, v2, 1, 1, 1, hf, true, 10)
+	RasterizeTriangle(v0, v1, v2, 1, 1, hf, true, 10)
 }

@@ -18,8 +18,9 @@ const (
 	AxisTypeZ AxisType = "Z"
 )
 
-func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
+func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
 	ics := 1.0 / cellSize
+	ich := 1.0 / cellHeight
 
 	triBBMin := v0
 	vMin(&triBBMin, &v1)
@@ -137,8 +138,8 @@ func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellHeight float6
 			}
 
 			// snap the span to the heightfield height grid
-			spanMinCellIndex := Clamp(int(math.Floor(spanMin*inverseCellHeight)), 0, spanMaxHeight)
-			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*inverseCellHeight)), spanMinCellIndex+1, spanMaxHeight)
+			spanMinCellIndex := Clamp(int(math.Floor(spanMin*ich)), 0, spanMaxHeight)
+			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*ich)), spanMinCellIndex+1, spanMaxHeight)
 
 			hf.AddSpan(x, z, spanMinCellIndex, spanMaxCellIndex, walkable, areaMergeThreshold)
 		}

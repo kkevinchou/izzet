@@ -26,18 +26,19 @@ func (s CompactSpan) RegionID() int {
 }
 
 type CompactHeightField struct {
-	width          int
-	height         int
-	spanCount      int
-	walkableHeight int
-	walkableClimb  int
-	bMin, bMax     mgl64.Vec3
-	cells          []CompactCell
-	spans          []CompactSpan
-	Distances      []int
-	areas          []AREA_TYPE
-	maxDistance    int
-	maxRegionID    int
+	width                int
+	height               int
+	spanCount            int
+	walkableHeight       int
+	walkableClimb        int
+	bMin, bMax           mgl64.Vec3
+	cells                []CompactCell
+	spans                []CompactSpan
+	Distances            []int
+	areas                []AREA_TYPE
+	maxDistance          int
+	maxRegionID          int
+	CellSize, CellHeight float64
 }
 
 func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *CompactHeightField {
@@ -54,6 +55,8 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 	chf.cells = make([]CompactCell, chf.width*chf.height)
 	chf.spans = make([]CompactSpan, chf.spanCount)
 	chf.areas = make([]AREA_TYPE, chf.spanCount)
+	chf.CellSize = hf.CellSize
+	chf.CellHeight = hf.CellHeight
 
 	// initialize initial neighbor indices as negative to signal abscence of neighbors
 	for i := 0; i < chf.spanCount; i++ {

@@ -56,9 +56,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
 		fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
-		fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
-		start = time.Now()
+		// distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
+		// fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
+		// start = time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 		fmt.Printf("%.1f seconds to create contour vao\n", time.Since(start).Seconds())
 		start = time.Now()
@@ -234,9 +234,9 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 		}
 		for i := 0; i < len(samples[j]); i += 3 {
 			position := mgl32.Vec3{
-				float32(samples[j][i]) + float32(chf.BMin().X()),
-				float32(samples[j][i+1]) + float32(chf.BMin().Y()),
-				float32(samples[j][i+2]) + float32(chf.BMin().Z()),
+				float32(samples[j][i]),
+				float32(samples[j][i+1]),
+				float32(samples[j][i+2]),
 			}
 			positions = append(positions, position)
 			colors = append(colors, color...)
@@ -248,7 +248,7 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors)
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()))
 
 	return vao, int32(len(positions))
 }
@@ -341,9 +341,9 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 			for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
 				span := chf.Spans()[i]
 				position := mgl32.Vec3{
-					float32(x) + float32(chf.BMin().X()),
-					float32(span.Y()) + float32(chf.BMin().Y()),
-					float32(z) + float32(chf.BMin().Z()),
+					float32(x),
+					float32(span.Y()),
+					float32(z),
 				}
 				positions = append(positions, position)
 				colors = append(colors, distanceToColor(float32(chf.Distances[i]))...)
@@ -356,7 +356,7 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors)
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()))
 
 	return vao, int32(len(positions))
 }
@@ -375,9 +375,9 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 			for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
 				span := chf.Spans()[i]
 				position := mgl32.Vec3{
-					float32(x) + float32(chf.BMin().X()),
-					float32(span.Y()) + float32(chf.BMin().Y()),
-					float32(z) + float32(chf.BMin().Z()),
+					float32(x),
+					float32(span.Y()),
+					float32(z),
 				}
 				positions = append(positions, position)
 				colors = append(colors, regionIDToColor(span.RegionID())...)
@@ -390,7 +390,7 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors)
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()))
 
 	return vao, int32(len(positions))
 }
@@ -425,46 +425,20 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 
 	for z := range hf.Height {
 		for x := range hf.Width {
-			if x == 809 && z == 248 {
+			index := x + z*hf.Width
+			span := hf.Spans[index]
+			for span != nil {
 				position := mgl32.Vec3{
-					float32(x) + float32(hf.BMin.X()),
-					float32(hf.BMin.Y()),
-					float32(z) + float32(hf.BMin.Z()),
+					float32(x),
+					float32(span.Min),
+					float32(z),
 				}
 				positions = append(positions, position)
-				colors = append(colors, 1, 0, 0)
-				lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
-				// } else if debugCheck(x, z) {
-				// 	position := mgl32.Vec3{
-				// 		float32(x) + float32(hf.BMin.X()),
-				// 		float32(hf.BMin.Y()),
-				// 		float32(z) + float32(hf.BMin.Z()),
-				// 	}
-				// 	positions = append(positions, position)
-				// 	colors = append(colors, 0, 1, 0)
-				// 	lengths = append(lengths, float32(hf.BMax.Y()-hf.BMin.Y()))
-			} else {
-				index := x + z*hf.Width
-				span := hf.Spans[index]
-				for span != nil {
-					position := mgl32.Vec3{
-						float32(x) + float32(hf.BMin.X()),
-						float32(span.Min) + float32(hf.BMin.Y()),
-						float32(z) + float32(hf.BMin.Z()),
-					}
-					positions = append(positions, position)
-					color := []float32{.9, .9, .9}
-					// if x == 809 || x == 796 || x == 764 || x == 617 || x == 653 || x == 808 {
-					// 	color = []float32{1, 0, 0}
-					// }
-					// if z == 248 || z == 244 || z == 194 || z == 240 || z == 331 || z == 379 {
-					// 	color = []float32{1, 0, 0}
-					// }
-					colors = append(colors, color...)
-					lengths = append(lengths, float32(span.Max-span.Min+1))
+				color := []float32{.9, .9, .9}
+				colors = append(colors, color...)
+				lengths = append(lengths, float32(span.Max-span.Min+1))
 
-					span = span.Next
-				}
+				span = span.Next
 			}
 		}
 	}
@@ -473,7 +447,7 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors)
+	vao := cubeAttributes(positions, lengths, colors, float32(hf.CellSize), float32(hf.CellHeight), utils.Vec3F64ToF32(hf.BMin))
 	return vao, int32(len(positions))
 }
 
@@ -543,7 +517,7 @@ func triangleAttributes(triangles [][3]mgl32.Vec3, colors []float32) uint32 {
 	return vao
 }
 
-func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32) uint32 {
+func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32, cellSize, cellHeight float32, offset mgl32.Vec3) uint32 {
 	var vertexAttributes []float32
 
 	for i := range len(positions) {
@@ -553,58 +527,58 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32)
 
 		vertexAttributes = append(vertexAttributes, []float32{
 			// front
-			x, y, z + 1, 0, 0, 1, r, g, b,
-			1 + x, y, z + 1, 0, 0, 1, r, g, b,
-			1 + x, lengths[i] + y, z + 1, 0, 0, 1, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
 
-			1 + x, lengths[i] + y, z + 1, 0, 0, 1, r, g, b,
-			x, lengths[i] + y, z + 1, 0, 0, 1, r, g, b,
-			x, y, z + 1, 0, 0, 1, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
 
 			// back
-			1 + x, lengths[i] + y, z, 0, 0, -1, r, g, b,
-			1 + x, y, z, 0, 0, -1, r, g, b,
-			x, y, z, 0, 0, -1, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
 
-			x, y, z, 0, 0, -1, r, g, b,
-			x, lengths[i] + y, z, 0, 0, -1, r, g, b,
-			1 + x, lengths[i] + y, z, 0, 0, -1, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
 
 			// rig1
-			1 + x, y, z + 1, 1, 0, 0, r, g, b,
-			1 + x, y, z, 1, 0, 0, r, g, b,
-			1 + x, lengths[i] + y, z, 1, 0, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
 
-			1 + x, lengths[i] + y, z, 1, 0, 0, r, g, b,
-			1 + x, lengths[i] + y, z + 1, 1, 0, 0, r, g, b,
-			1 + x, y, z + 1, 1, 0, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 1, 0, 0, r, g, b,
 
 			// left
-			x, lengths[i] + y, z, -1, 0, 0, r, g, b,
-			x, y, z, -1, 0, 0, r, g, b,
-			x, y, z + 1, -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), -1, 0, 0, r, g, b,
 
-			x, y, z + 1, -1, 0, 0, r, g, b,
-			x, lengths[i] + y, z + 1, -1, 0, 0, r, g, b,
-			x, lengths[i] + y, z, -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
 
 			// top
-			1 + x, lengths[i] + y, z + 1, 0, 1, 0, r, g, b,
-			1 + x, lengths[i] + y, z, 0, 1, 0, r, g, b,
-			x, lengths[i] + y, z + 1, 0, 1, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 1, 0, r, g, b,
 
-			x, lengths[i] + y, z + 1, 0, 1, 0, r, g, b,
-			1 + x, lengths[i] + y, z, 0, 1, 0, r, g, b,
-			x, lengths[i] + y, z, 0, 1, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
 
 			// bottom
-			x, y, z + 1, 0, -1, 0, r, g, b,
-			1 + x, y, z, 0, -1, 0, r, g, b,
-			1 + x, y, z + 1, 0, -1, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, -1, 0, r, g, b,
 
-			x, y, z, 0, -1, 0, r, g, b,
-			1 + x, y, z, 0, -1, 0, r, g, b,
-			x, y, z + 1, 0, -1, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, -1, 0, r, g, b,
 		}...)
 	}
 

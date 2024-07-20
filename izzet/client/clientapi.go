@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"os"
 	"path"
@@ -638,20 +639,24 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
 	}()
-	minVertex := mgl64.Vec3{-500, -250, -500}
-	maxVertex := mgl64.Vec3{500, 250, 500}
-	// minVertex := mgl64.Vec3{-10, -10, -10}
-	// maxVertex := mgl64.Vec3{20, 12, 20}
-
-	vxs := int(maxVertex.X() - minVertex.X())
-	vzs := int(maxVertex.Z() - minVertex.Z())
-	nmbb := collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex}
-
-	hf := navmesh.NewHeightField(vxs, vzs, minVertex, maxVertex)
-	var debugLines [][2]mgl64.Vec3
 
 	cs := app.RuntimeConfig().NavigationMeshCellSize
 	ch := app.RuntimeConfig().NavigationMeshCellHeight
+	walkableRadius := app.RuntimeConfig().NavigationMeshAgentRadius
+	walkableRadius /= cs
+
+	walkableHeight = (int(math.Ceil(float64(walkableHeight) / float64(ch))))
+	climbableHeight = (int(math.Floor(float64(climbableHeight) / float64(ch))))
+
+	minVertex := mgl64.Vec3{-500.0, -250.0, -500.0}
+	maxVertex := mgl64.Vec3{500.0, 250.0, 500.0}
+
+	hfWidth := int((maxVertex.X()-minVertex.X())/float64(cs) + 0.5)
+	hfHeight := int((maxVertex.Z()-minVertex.Z())/float64(cs) + 0.5)
+	nmbb := collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex}
+
+	hf := navmesh.NewHeightField(hfWidth, hfHeight, minVertex, maxVertex, float64(cs), float64(ch))
+	var debugLines [][2]mgl64.Vec3
 
 	world := app.World()
 	for _, entity := range world.Entities() {
@@ -705,7 +710,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 
 	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
 
-	navmesh.ErodeWalkableArea(chf, app.RuntimeConfig().NavigationMeshAgentRadius)
+	navmesh.ErodeWalkableArea(chf, walkableRadius)
 	navmesh.BuildDistanceField(chf)
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)

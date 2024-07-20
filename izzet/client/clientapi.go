@@ -687,7 +687,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 				normal := tv1.Cross(tv2).Normalize()
 				isUp := normal.Dot(up) >= 0.7
 
-				navmesh.RasterizeTriangle2(v1, v2, v3, 1, 1, 1, hf, isUp, climbableHeight)
+				navmesh.RasterizeTriangle(v1, v2, v3, 1, 1, 1, hf, isUp, climbableHeight)
 			}
 		}
 	}

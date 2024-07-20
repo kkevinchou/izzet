@@ -18,7 +18,7 @@ const (
 	AxisTypeZ AxisType = "Z"
 )
 
-func RasterizeTriangle2(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, inverseCellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
+func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, inverseCellSize, inverseCellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
 	triBBMin := v0
 	vMin(&triBBMin, &v1)
 	vMin(&triBBMin, &v2)

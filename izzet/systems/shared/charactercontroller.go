@@ -6,12 +6,12 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/input"
 )
 
 const (
-	jumpVelocity float64 = 300
-	webSpeed     float64 = 500
+	webSpeed float64 = 500
 )
 
 func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, entity *entities.Entity) {
@@ -38,7 +38,7 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 			entity.Physics.Velocity = mgl64.Vec3{}
 			if c.ControlVector.Y() > 0 {
 				entity.Physics.Grounded = false
-				entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl64.Vec3{0, jumpVelocity, 0})
+				entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl64.Vec3{0, settings.CharacterJumpVelocity, 0})
 			}
 			if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
 				dir := cameraRotation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()

@@ -74,7 +74,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = r.createDetailedMeshVAO(nm)
-		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
+		// detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
 		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 1, 0})
 		// detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{1, 0, 0})
 		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = r.createDetailedMeshLinesVAO(nm)

@@ -58,7 +58,7 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 
 	if processVisualAssets {
 		handle := assetManager.GetCubeMeshHandle()
-		assetManager.registerMeshWithHandle(handle, cubeMesh(100))
+		assetManager.registerMeshWithHandle(handle, cubeMesh(15))
 	}
 
 	return &assetManager

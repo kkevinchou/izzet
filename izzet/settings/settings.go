@@ -1,5 +1,7 @@
 package settings
 
+import "github.com/go-gl/mathgl/mgl64"
+
 type GameMode string
 
 type Config struct {
@@ -63,16 +65,22 @@ const (
 	MaxStateBufferSize        int = 100
 
 	FirstPersonCamera  bool    = false
-	CameraEntityOffset float64 = 100
+	CameraEntityOffset float64 = 20
 	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "tiny_nav_test"
+	DefaultProject     string  = "scale"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210
 	ShelfWidth  float32 = 800
+
+	CharacterSpeed        float64 = 80
+	CharacterJumpVelocity float64 = 150
+	CameraSpeed           float64 = 150
+	CameraSlowSpeed       float64 = 30
 )
 
 // styles
 var (
-	FontSize float32 = 20
+	FontSize                  float32    = 20
+	EditorCameraStartPosition mgl64.Vec3 = mgl64.Vec3{0, 5, 5}
 )

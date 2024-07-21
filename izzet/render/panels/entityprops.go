@@ -205,7 +205,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			}, true)
 			panelutils.SetupRow("Color Intensity", func() {
-				imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+				imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 0, 2, "%.2f", imgui.SliderFlagsNone)
 			}, true)
 
 			if entity.LightInfo.Type == entities.LightTypePoint {

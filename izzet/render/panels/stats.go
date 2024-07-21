@@ -52,7 +52,6 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.SetupRow("Ping", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.GetLatest("ping")))) }, true)
 
 		// Rendering
-		panelutils.SetupRow("Shadow Far Factor", func() { imgui.SliderFloat("", &settings.ShadowFarFactor, 0, 10) }, true)
 		panelutils.SetupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(settings.TriangleDrawCount)) }, true)
 		panelutils.SetupRow("Draw Count", func() { imgui.LabelText("", formatNumber(settings.DrawCount)) }, true)
 		panelutils.SetupRow("gl.GenBuffers() count", func() { imgui.LabelText("", fmt.Sprintf("%0.f", mr.GetOneSecondSum("gen_buffers"))) }, true)

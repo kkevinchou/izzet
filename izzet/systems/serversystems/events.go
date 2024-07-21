@@ -55,7 +55,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			ColliderGroup: entities.ColliderGroupFlagPlayer,
 			CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 		}
-		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: 200, FlySpeed: 500}
+		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterSpeed}
 
 		capsule := entity.Collider.CapsuleCollider
 		entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
@@ -64,7 +64,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
 		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.AssetManager())
-		entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
+		entities.SetScale(entity, mgl64.Vec3{0.05, 0.05, 0.05})
 
 		world := s.app.World()
 		for _, e := range world.Entities() {
@@ -132,7 +132,7 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 
 func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	entity := entities.InstantiateEntity("camera")
-	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, 50, 0}, Target: &targetEntityID}
+	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, 10, 0}, Target: &targetEntityID}
 	entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
 	entity.Billboard = true
 	entity.PlayerInput = &entities.PlayerInputComponent{PlayerID: playerID}

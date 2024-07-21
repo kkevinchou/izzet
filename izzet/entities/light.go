@@ -34,14 +34,14 @@ func (l *LightInfo) Intensity() float32 {
 
 func CreateDirectionalLight() *Entity {
 	lightInfo := &LightInfo{
-		PreScaledIntensity: 1,
+		PreScaledIntensity: 2,
 		Diffuse3F:          [3]float32{1, 1, 1},
 		Type:               LightTypeDirection,
 		Direction3F:        [3]float32{-1, -1, -1},
 	}
 
 	entity := InstantiateBaseEntity("directional-light", id)
-	entity.ImageInfo = NewImageInfo("lamp.png", 15)
+	entity.ImageInfo = NewImageInfo("lamp.png", 5)
 	entity.LightInfo = lightInfo
 	entity.Billboard = true
 	id += 1
@@ -50,14 +50,14 @@ func CreateDirectionalLight() *Entity {
 
 func CreatePointLight() *Entity {
 	lightInfo := &LightInfo{
-		PreScaledIntensity: 1,
+		PreScaledIntensity: 0.1,
 		Diffuse3F:          [3]float32{1, 1, 1},
 		Type:               LightTypePoint,
 		Range:              800,
 	}
 
 	entity := InstantiateBaseEntity("point-light", id)
-	entity.ImageInfo = NewImageInfo("lamp.png", 15)
+	entity.ImageInfo = NewImageInfo("lamp.png", 5)
 	entity.LightInfo = lightInfo
 	entity.Billboard = true
 	id += 1

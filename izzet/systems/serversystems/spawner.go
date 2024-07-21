@@ -53,7 +53,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
 			entities.SetLocalPosition(entity, mgl64.Vec3{0, 10, 0})
 			entity.AIComponent = &entities.AIComponent{
-				Speed: 100,
+				Speed: 50,
 				// TargetConfig: &entities.TargetConfig{},
 				PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {100, 10, 0}}},
 			}

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	accelerationDueToGravity float64 = 450 // units per second
+	accelerationDueToGravity float64 = 200 // units per second
 )
 
 func PhysicsStepSingle(delta time.Duration, entity *entities.Entity) {

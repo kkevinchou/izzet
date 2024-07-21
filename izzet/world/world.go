@@ -21,7 +21,7 @@ func New(entities map[int]*entities.Entity) *GameWorld {
 	g := &GameWorld{
 		sortFrame:        -1,
 		entities:         entities,
-		spatialPartition: spatialpartition.NewSpatialPartition(200, 25),
+		spatialPartition: spatialpartition.NewSpatialPartition(50, 25),
 	}
 	return g
 }

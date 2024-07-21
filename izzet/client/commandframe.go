@@ -13,14 +13,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/serialization"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
-)
-
-var (
-	maxCameraSpeed float64 = 400 // units per second
-	slowSpeed      float64 = 50  // units per second
 )
 
 // Systems Context
@@ -255,12 +251,12 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	if !movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
 		if g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
 			// this is the starting speed that the camera accelerates from
-			g.camera.Speed = maxCameraSpeed * 0.3
+			g.camera.Speed = settings.CameraSpeed * 0.3
 		} else {
 			// TODO(kevin) parameterize how slowly we accelerate based on how long we want to drift for
 			g.camera.Speed *= 1.03
-			if g.camera.Speed > maxCameraSpeed {
-				g.camera.Speed = maxCameraSpeed
+			if g.camera.Speed > settings.CameraSpeed {
+				g.camera.Speed = settings.CameraSpeed
 			}
 		}
 	}
@@ -292,16 +288,16 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	g.camera.Position = g.camera.Position.Add(movementDelta).Add(g.camera.Drift)
 
 	if _, ok := keyboardInput[input.KeyboardKeyUp]; ok {
-		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
 	if _, ok := keyboardInput[input.KeyboardKeyDown]; ok {
-		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(-slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(-settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
 	if _, ok := keyboardInput[input.KeyboardKeyLeft]; ok {
-		g.camera.Position = g.camera.Position.Add(rightVector.Mul(-slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(rightVector.Mul(-settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
 	if _, ok := keyboardInput[input.KeyboardKeyRight]; ok {
-		g.camera.Position = g.camera.Position.Add(rightVector.Mul(slowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(rightVector.Mul(settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
 	}
 
 	g.camera.LastFrameMovementVector = movementVector

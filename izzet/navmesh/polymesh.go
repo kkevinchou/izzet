@@ -38,12 +38,13 @@ type Polygon struct {
 }
 
 type Mesh struct {
-	Vertices          []PolyVertex
-	Polygons          []Polygon
-	PremergeTriangles []Polygon
-	areas             []AREA_TYPE
-	maxEdgeError      float64
-	bMin, bMax        mgl64.Vec3
+	Vertices             []PolyVertex
+	Polygons             []Polygon
+	PremergeTriangles    []Polygon
+	areas                []AREA_TYPE
+	maxEdgeError         float64
+	bMin, bMax           mgl64.Vec3
+	CellSize, CellHeight float64
 }
 
 func BuildPolyMesh(contourSet *ContourSet) *Mesh {
@@ -51,6 +52,8 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 		maxEdgeError: contourSet.maxError,
 		bMin:         contourSet.bMin,
 		bMax:         contourSet.bMax,
+		CellSize:     contourSet.CellSize,
+		CellHeight:   contourSet.CellHeight,
 	}
 
 	maxVertices := 0

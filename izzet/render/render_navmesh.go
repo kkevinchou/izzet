@@ -39,6 +39,8 @@ var (
 
 	detailedMeshVAOCache                   uint32
 	detailedMeshVertexCount                int32
+	detailedMeshLinesVAOCache              uint32
+	detailedMeshLinesVertexCount           int32
 	detailedMeshOutlineSamplesVAOCache     uint32
 	detailedMeshOutlineSamplesVertexCount  int32
 	detailedMeshInteriorSamplesVAOCache    uint32
@@ -53,9 +55,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		navmeshVAOCache, navmeshVAOCacheVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
 		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
-		fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
-		start = time.Now()
+		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
+		// fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
+		// start = time.Now()
 		// distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
 		// fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
 		// start = time.Now()
@@ -73,8 +75,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = r.createDetailedMeshVAO(nm)
 		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
-		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
-		// detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0, 1, 0})
+		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 1, 0})
+		// detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{1, 0, 0})
+		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = r.createDetailedMeshLinesVAO(nm)
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 	}
 
@@ -119,6 +122,8 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 			r.iztDrawElements(detailedMeshInteriorSamplesVertexCount * 36)
 			gl.BindVertexArray(detailedMeshAllSamplesVAOCache)
 			r.iztDrawElements(detailedMeshAllSamplesVertexCount * 36)
+			r.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
+			gl.BindVertexArray(detailedMeshOutlineSamplesVAOCache)
 		}
 	} else {
 		panic("WAT")
@@ -137,7 +142,6 @@ func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerConte
 
 func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	minVertex := nm.Volume.MinVertex
-	iMinVertex := []int{int(minVertex.X()), int(minVertex.Y()), int(minVertex.Z())}
 
 	var vertexAttributes []float32
 	for _, tri := range nm.Mesh.PremergeTriangles {
@@ -146,11 +150,19 @@ func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 			v1 := nm.Mesh.Vertices[tri.Verts[(i+1)%len(tri.Verts)]]
 
 			// v0
-			vertexAttributes = append(vertexAttributes, float32(v0.X+iMinVertex[0]), float32(v0.Y+iMinVertex[1]), float32(v0.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes,
+				float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+			)
 			vertexAttributes = append(vertexAttributes, regionIDToColor(tri.RegionID)...)
 
 			// v1
-			vertexAttributes = append(vertexAttributes, float32(v1.X+iMinVertex[0]), float32(v1.Y+iMinVertex[1]), float32(v1.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes,
+				float32(v1.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+			)
 			vertexAttributes = append(vertexAttributes, regionIDToColor(tri.RegionID)...)
 		}
 	}
@@ -159,7 +171,6 @@ func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 
 func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	minVertex := nm.Volume.MinVertex
-	iMinVertex := []int{int(minVertex.X()), int(minVertex.Y()), int(minVertex.Z())}
 
 	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
 
@@ -173,11 +184,19 @@ func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32)
 			v1 := nm.Mesh.Vertices[poly.Verts[(i+1)%len(poly.Verts)]]
 
 			// v0
-			vertexAttributes = append(vertexAttributes, float32(v0.X+iMinVertex[0]), float32(v0.Y+iMinVertex[1]), float32(v0.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes,
+				float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+			)
 			vertexAttributes = append(vertexAttributes, regionIDToColor(poly.RegionID)...)
 
 			// v1
-			vertexAttributes = append(vertexAttributes, float32(v1.X+iMinVertex[0]), float32(v1.Y+iMinVertex[1]), float32(v1.Z+iMinVertex[2]))
+			vertexAttributes = append(vertexAttributes,
+				float32(v1.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+			)
 			vertexAttributes = append(vertexAttributes, regionIDToColor(poly.RegionID)...)
 		}
 	}
@@ -207,7 +226,7 @@ func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, in
 				{float32(v1.X), float32(v1.Y), float32(v1.Z)},
 				{float32(v2.X), float32(v2.Y), float32(v2.Z)},
 			})
-			colors = append(colors, regionIDToColor(len(triangles))...)
+			colors = append(colors, regionIDToColor(nm.Mesh.Polygons[j].RegionID)...)
 		}
 	}
 
@@ -218,6 +237,49 @@ func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, in
 	vao := triangleAttributes(triangles, colors)
 
 	return vao, int32(len(triangles))
+}
+
+func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+	if len(nm.DetailedMesh.PolyTriangles) == 0 {
+		return 0, 0
+	}
+
+	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+	var vertexAttributes []float32
+
+	for j := range len(nm.DetailedMesh.PolyTriangles) {
+		if !debugMap[j] && len(debugMap) > 0 {
+			continue
+		}
+		for _, tri := range nm.DetailedMesh.PolyTriangles[j] {
+			v0 := nm.DetailedMesh.PolyVertices[j][tri.A]
+			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
+			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
+
+			// edge 0
+			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
+			vertexAttributes = append(vertexAttributes, 0, 0, 0)
+
+			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
+			vertexAttributes = append(vertexAttributes, 0, 0, 0)
+
+			// edge 1
+			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
+			vertexAttributes = append(vertexAttributes, 0, 0, 0)
+
+			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
+			vertexAttributes = append(vertexAttributes, 0, 0, 0)
+
+			// edge 2
+			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
+			vertexAttributes = append(vertexAttributes, 0, 0, 0)
+
+			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
+			vertexAttributes = append(vertexAttributes, 0, 0, 0)
+		}
+	}
+
+	return createLineVAO(vertexAttributes)
 }
 
 func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
@@ -234,9 +296,9 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 		}
 		for i := 0; i < len(samples[j]); i += 3 {
 			position := mgl32.Vec3{
-				float32(samples[j][i]),
-				float32(samples[j][i+1]),
-				float32(samples[j][i+2]),
+				samples[j][i],
+				samples[j][i+1],
+				samples[j][i+2],
 			}
 			positions = append(positions, position)
 			colors = append(colors, color...)
@@ -248,7 +310,8 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()))
+	// sample verts are already offset
+	vao := cubeAttributes(positions, lengths, colors, 1, 1, utils.Vec3F64ToF32(chf.BMin()))
 
 	return vao, int32(len(positions))
 }
@@ -268,11 +331,19 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 				color := regionIDToColor(contour.RegionID)
 
 				// v0
-				vertexAttributes = append(vertexAttributes, float32(float64(v0.X)+minVertex.X()), float32(float64(v0.Y)+minVertex.Y()), float32(float64(v0.Z)+minVertex.Z()))
+				vertexAttributes = append(vertexAttributes,
+					float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+					float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+					float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+				)
 				vertexAttributes = append(vertexAttributes, color...)
 
 				// v1
-				vertexAttributes = append(vertexAttributes, float32(float64(v1.X)+minVertex.X()), float32(float64(v1.Y)+minVertex.Y()), float32(float64(v1.Z)+minVertex.Z()))
+				vertexAttributes = append(vertexAttributes,
+					float32(v1.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+					float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+					float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+				)
 				vertexAttributes = append(vertexAttributes, color...)
 			}
 		}
@@ -285,11 +356,19 @@ func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int3
 				color := regionIDToColor(contour.RegionID)
 
 				// v0
-				vertexAttributes = append(vertexAttributes, float32(float64(v0.X)+minVertex.X()), float32(float64(v0.Y)+minVertex.Y()), float32(float64(v0.Z)+minVertex.Z()))
+				vertexAttributes = append(vertexAttributes,
+					float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+					float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+					float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+				)
 				vertexAttributes = append(vertexAttributes, color...)
 
 				// v1
-				vertexAttributes = append(vertexAttributes, float32(float64(v1.X)+minVertex.X()), float32(float64(v1.Y)+minVertex.Y()), float32(float64(v1.Z)+minVertex.Z()))
+				vertexAttributes = append(vertexAttributes,
+					float32(v1.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
+					float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+					float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
+				)
 				vertexAttributes = append(vertexAttributes, color...)
 			}
 		}

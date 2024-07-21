@@ -68,9 +68,8 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	var maxhw, maxhh int
 	var nPolyVerts int
 
-	// TODO: this should be dynamic and come from another datastructure (chf, or mesh, or w/e)
-	var cs float64 = 1
-	var ch float64 = 1
+	var cs float64 = mesh.CellSize
+	var ch float64 = mesh.CellHeight
 
 	// find max size for a polygon area
 	for i := range mesh.Polygons {
@@ -143,7 +142,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		for j := range len(verts) {
 			v := &verts[j]
 			v.X += origin.X()
-			v.Y += origin.Y()
+			v.Y += origin.Y() + chf.CellHeight
 			v.Z += origin.Z()
 		}
 
@@ -257,8 +256,8 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 }
 
 func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, dmesh *DetailedMesh, polyIndex int, runtimeConfig *runtimeconfig.RuntimeConfig) ([]DetailedVertex, []Triangle) {
-	var ch float64 = 1
-	var cs float64 = 1
+	cs := chf.CellSize
+	ch := chf.CellHeight
 	ics := 1 / cs
 	var hull []int
 

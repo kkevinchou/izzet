@@ -324,7 +324,7 @@ void main()
         color = pow(color, vec3(1.0/2.2));
     }
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, 0.9);
 
     if (fog == 1) {
         vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
@@ -334,6 +334,6 @@ void main()
         float fogFactor = exponentialSquaredFog(dist, float(fogDensity) / 50000);
         fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-        FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);
+        FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 0.9);
     }
 }

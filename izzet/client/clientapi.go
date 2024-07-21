@@ -648,8 +648,8 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	walkableHeight = (int(math.Ceil(float64(walkableHeight) / float64(ch))))
 	climbableHeight = (int(math.Floor(float64(climbableHeight) / float64(ch))))
 
-	minVertex := mgl64.Vec3{-500.0, -250.0, -500.0}
-	maxVertex := mgl64.Vec3{500.0, 250.0, 500.0}
+	minVertex := mgl64.Vec3{-100.0, -50.0, -100.0}
+	maxVertex := mgl64.Vec3{100.0, 50.0, 100.0}
 
 	hfWidth := int((maxVertex.X()-minVertex.X())/float64(cs) + 0.5)
 	hfHeight := int((maxVertex.Z()-minVertex.Z())/float64(cs) + 0.5)

@@ -42,21 +42,24 @@ type RawContour struct {
 }
 
 type ContourSet struct {
-	bMin, bMax    mgl64.Vec3
-	width, height int
-	maxError      float64
-	Contours      []Contour
-	RawContours   []RawContour
+	bMin, bMax           mgl64.Vec3
+	width, height        int
+	maxError             float64
+	Contours             []Contour
+	RawContours          []RawContour
+	CellSize, CellHeight float64
 }
 
 func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int) *ContourSet {
 	contourSet := &ContourSet{
-		bMin:     chf.bMin,
-		bMax:     chf.bMax,
-		width:    chf.width,
-		height:   chf.height,
-		maxError: maxError,
-		Contours: nil,
+		bMin:       chf.bMin,
+		bMax:       chf.bMax,
+		width:      chf.width,
+		height:     chf.height,
+		maxError:   maxError,
+		Contours:   nil,
+		CellSize:   chf.CellSize,
+		CellHeight: chf.CellHeight,
 	}
 
 	flags := make([]int, chf.spanCount)

@@ -18,6 +18,7 @@ type ViewerContext struct {
 type LightContext struct {
 	LightSpaceMatrix mgl64.Mat4
 	Lights           []*entities.Entity
+	PointLights      []*entities.Entity
 }
 
 type RenderContext struct {

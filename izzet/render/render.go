@@ -274,19 +274,22 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	// find the directional light if there is one
 	lights := r.world.Lights()
-	var directionalLight *entities.Entity
+	var directionalLights []*entities.Entity
+	var pointLights []*entities.Entity
+
 	for _, light := range lights {
-		if light.LightInfo.Type == 0 {
-			directionalLight = light
-			break
+		if light.LightInfo.Type == entities.LightTypeDirection {
+			directionalLights = append(directionalLights, light)
+		} else if light.LightInfo.Type == entities.LightTypePoint {
+			pointLights = append(pointLights, light)
 		}
 	}
 
 	var directionalLightX, directionalLightY, directionalLightZ float64 = 0, -1, 0
-	if directionalLight != nil {
-		directionalLightX = float64(directionalLight.LightInfo.Direction3F[0])
-		directionalLightY = float64(directionalLight.LightInfo.Direction3F[1])
-		directionalLightZ = float64(directionalLight.LightInfo.Direction3F[2])
+	if len(directionalLights) > 0 {
+		directionalLightX = float64(directionalLights[0].LightInfo.Direction3F[0])
+		directionalLightY = float64(directionalLights[0].LightInfo.Direction3F[1])
+		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
 	}
 
 	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
@@ -298,13 +301,6 @@ func (r *Renderer) Render(delta time.Duration) {
 		Rotation:          lightRotation,
 		InverseViewMatrix: lightViewMatrix,
 		ProjectionMatrix:  lightProjectionMatrix,
-	}
-
-	var pointLights []*entities.Entity
-	for _, light := range r.world.Lights() {
-		if light.LightInfo.Type == entities.LightTypePoint {
-			pointLights = append(pointLights, light)
-		}
 	}
 
 	lightContext := LightContext{

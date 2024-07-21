@@ -42,7 +42,7 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 			}
 			if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
 				dir := cameraRotation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
-				entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(800))
+				entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(400))
 			}
 		}
 		movementDir = movementDirWithoutY
@@ -55,7 +55,7 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 
 		if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
 			if event.Event == input.KeyboardEventUp {
-				entity.Physics.Velocity = entity.Physics.Velocity.Add(viewVector.Mul(1000))
+				entity.Physics.Velocity = entity.Physics.Velocity.Add(viewVector.Mul(400))
 			}
 		}
 	} else {

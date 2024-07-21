@@ -509,7 +509,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
 		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+		shader.SetUniformFloat("far_plane", r.app.RuntimeConfig().PointLightFarPlane)
 		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
 
 		shader.SetUniformFloat("roughness", .8)
@@ -621,14 +621,14 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	position := pointLight.Position()
-	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, settings.DepthCubeMapFar)
+	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, float64(r.app.RuntimeConfig().PointLightFarPlane))
 
 	shader := r.shaderManager.GetShaderProgram("point_shadow")
 	shader.Use()
 	for i, transform := range shadowTransforms {
 		shader.SetUniformMat4(fmt.Sprintf("shadowMatrices[%d]", i), utils.Mat4F64ToF32(transform))
 	}
-	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	shader.SetUniformFloat("far_plane", float32(r.app.RuntimeConfig().PointLightFarPlane))
 	shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
 	for _, entity := range renderableEntities {
@@ -796,7 +796,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
 	shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-	shader.SetUniformFloat("far_plane", float32(settings.DepthCubeMapFar))
+	shader.SetUniformFloat("far_plane", r.app.RuntimeConfig().PointLightFarPlane)
 	shader.SetUniformInt("hasColorOverride", 0)
 
 	setupLightingUniforms(shader, lightContext.Lights)

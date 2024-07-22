@@ -257,24 +257,24 @@ func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint3
 			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
 
 			// edge 0
-			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
+			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y)+0.1, float32(v0.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
 
-			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
+			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y)+0.1, float32(v1.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
 
 			// edge 1
-			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y), float32(v1.Z))
+			vertexAttributes = append(vertexAttributes, float32(v1.X), float32(v1.Y)+0.1, float32(v1.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
 
-			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
+			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y)+0.1, float32(v2.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
 
 			// edge 2
-			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y), float32(v2.Z))
+			vertexAttributes = append(vertexAttributes, float32(v2.X), float32(v2.Y)+0.1, float32(v2.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
 
-			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y), float32(v0.Z))
+			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y)+0.1, float32(v0.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
 		}
 	}

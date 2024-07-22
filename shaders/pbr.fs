@@ -256,6 +256,8 @@ void main()
         //     discard;
         //     return;
         // }
+        // in_albedo = in_albedo * texture_value.xyz;
+        // in_albedo = vec3(0, 0, 1);
         in_albedo = in_albedo * texture_value.xyz;
     }
 

@@ -14,7 +14,7 @@ type RuntimeConfig struct {
 	PointLightBias                  float32
 	MaterialOverride                bool
 	EnableShadowMapping             bool
-	ShadowFarFactor                 float32
+	ShadowFarDistance               float32
 	ShadowSpatialPartitionNearPlane float32
 	BloomIntensity                  float32
 	Exposure                        float32
@@ -105,7 +105,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		PointLightBias:                  0.5,
 		MaterialOverride:                false,
 		EnableShadowMapping:             true,
-		ShadowFarFactor:                 0.2,
+		ShadowFarDistance:               200,
 		ShadowSpatialPartitionNearPlane: 1000,
 		ShadowmapZOffset:                1000,
 		BloomIntensity:                  0.04,
@@ -121,7 +121,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		FPS:                             0,
 
 		Near: 1,
-		Far:  1000,
+		Far:  500,
 		FovX: 105,
 
 		FogStart:   200,
@@ -155,8 +155,8 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshClimbableHeight:      3,
 		NavigationMeshMinRegionArea:        4,
 		NavigationMeshAgentRadius:          0.6,
-		NavigationMeshCellSize:             0.1,
-		NavigationMeshCellHeight:           0.1,
+		NavigationMeshCellSize:             0.5,
+		NavigationMeshCellHeight:           0.5,
 		NavigationmeshMaxError:             1,
 		NavigationmeshSampleDist:           1,
 		NavigationMeshFilterLedgeSpans:     true,

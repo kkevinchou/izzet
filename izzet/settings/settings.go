@@ -63,19 +63,23 @@ const (
 	MaxCommandFrameBufferSize int = 100000
 	MaxStateBufferSize        int = 100
 
-	FirstPersonCamera  bool    = false
-	CameraEntityOffset float64 = 20
-	ProjectsDirectory  string  = ".project/"
-	DefaultProject     string  = "plane_point_light"
+	FirstPersonCamera                bool    = false
+	CameraEntityFollowDistance       float64 = 5
+	CameraEntityFollowVerticalOffset float64 = 1.5
+	ProjectsDirectory                string  = ".project/"
+	DefaultProject                   string  = "room"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210
 	ShelfWidth  float32 = 800
 
-	CharacterSpeed        float64 = 80
-	CharacterJumpVelocity float64 = 150
-	CameraSpeed           float64 = 150
-	CameraSlowSpeed       float64 = 30
+	CharacterSpeed           float64 = 10
+	CharacterJumpVelocity    float64 = 25
+	CharacterWebSpeed        float64 = 110
+	CharacterWebLaunchSpeed  float64 = 80
+	CameraSpeed              float64 = 85
+	CameraSlowSpeed          float64 = 10
+	AccelerationDueToGravity float64 = 75 // units per second
 )
 
 // styles

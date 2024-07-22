@@ -205,7 +205,11 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.ColorEdit3V("", &entity.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			}, true)
 			panelutils.SetupRow("Color Intensity", func() {
-				imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 0, 2, "%.2f", imgui.SliderFlagsNone)
+				if entity.LightInfo.Type == entities.LightTypePoint {
+					imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 0, 0.1, "%.3f", imgui.SliderFlagsNone)
+				} else if entity.LightInfo.Type == entities.LightTypeDirection {
+					imgui.SliderFloatV("", &entity.LightInfo.PreScaledIntensity, 0, 6, "%.3f", imgui.SliderFlagsNone)
+				}
 			}, true)
 
 			if entity.LightInfo.Type == entities.LightTypePoint {
@@ -399,7 +403,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 			} else if SelectedComponentComboOption == LightComboOption {
 				entity.LightInfo = &entities.LightInfo{
-					PreScaledIntensity: 3,
+					PreScaledIntensity: 0.05,
 					Diffuse3F:          [3]float32{1, 1, 1},
 					Type:               entities.LightTypePoint,
 					Range:              800,

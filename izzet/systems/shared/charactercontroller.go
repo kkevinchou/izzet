@@ -10,10 +10,6 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
-const (
-	webSpeed float64 = 500
-)
-
 func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput input.Input, entity *entities.Entity) {
 	keyboardInput := frameInput.KeyboardInput
 	cameraRotation := frameInput.CameraRotation
@@ -42,7 +38,7 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 			}
 			if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
 				dir := cameraRotation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
-				entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(400))
+				entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(50))
 			}
 		}
 		movementDir = movementDirWithoutY
@@ -50,12 +46,12 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 		c.WebVector = mgl64.Vec3{}
 		viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 		if _, ok := keyboardInput[input.KeyboardKeyF]; ok {
-			c.WebVector = viewVector.Mul(webSpeed)
+			c.WebVector = viewVector.Mul(settings.CharacterWebSpeed)
 		}
 
 		if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
 			if event.Event == input.KeyboardEventUp {
-				entity.Physics.Velocity = entity.Physics.Velocity.Add(viewVector.Mul(400))
+				entity.Physics.Velocity = entity.Physics.Velocity.Add(viewVector.Mul(settings.CharacterWebLaunchSpeed))
 			}
 		}
 	} else {

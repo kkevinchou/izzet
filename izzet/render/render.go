@@ -264,12 +264,11 @@ func (r *Renderer) Render(delta time.Duration) {
 		position,
 		rotation,
 		float64(r.app.RuntimeConfig().Near),
-		float64(r.app.RuntimeConfig().Far),
+		float64(r.app.RuntimeConfig().ShadowFarDistance),
 		renderContext.FovX(),
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
 		0,
-		float64(r.app.RuntimeConfig().ShadowFarFactor),
 	)
 
 	// find the directional light if there is one
@@ -392,7 +391,6 @@ func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotatio
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
 		float64(r.app.RuntimeConfig().ShadowSpatialPartitionNearPlane),
-		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
 	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.ShadowCasting)
@@ -408,7 +406,6 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation m
 		renderContext.FovY(),
 		renderContext.AspectRatio(),
 		0,
-		1,
 	)
 	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
 	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.Renderable)
@@ -460,7 +457,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 				if lightInfo.Type == 0 {
 
 					direction3F := lightInfo.Direction3F
-					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(50)
+					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(5)
 					// directional light arrow
 					lines := [][2]mgl64.Vec3{
 						[2]mgl64.Vec3{
@@ -476,7 +473,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-					r.drawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), viewerContext, shader, lines, 0.1, color)
+					r.drawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), viewerContext, shader, lines, 0.05, color)
 				}
 			}
 		}
@@ -540,7 +537,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), viewerContext, shader, nm.DebugLines, 0.1, color)
+			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), viewerContext, shader, nm.DebugLines, 0.05, color)
 		}
 
 		nm.Invalidated = false
@@ -739,7 +736,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				// there's probably away to get the right vector directly rather than going crossing the up vector :D
 				rightVector := forwardVector.Cross(upVector)
 
-				start := entity.Position().Add(rightVector.Mul(10)).Add(mgl64.Vec3{0, 30, 0})
+				start := entity.Position().Add(rightVector.Mul(1)).Add(mgl64.Vec3{0, 2, 0})
 				lines := [][]mgl64.Vec3{
 					{start, entity.Position().Add(entity.CharacterControllerComponent.WebVector)},
 				}
@@ -750,7 +747,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-				r.drawLines(viewerContext, shader, lines, 1, mgl64.Vec3{1, 1, 1})
+				r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 1, 1})
 			}
 		}
 	}
@@ -872,7 +869,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
-					// r.drawLines(viewerContext, shader, lines, 0.1, mgl64.Vec3{1, 0, 0})
+					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
 					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.01, mgl64.Vec3{1, 0, 0})
 				}
 
@@ -882,7 +879,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
 				}
 				if len(pointLines) > 0 {
-					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.1, mgl64.Vec3{0, 0, 1})
+					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
 				}
 			}
 
@@ -952,7 +949,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-				r.drawLines(viewerContext, shader, lines, 0.1, color)
+				r.drawLines(viewerContext, shader, lines, 0.05, color)
 			}
 		}
 	}

@@ -44,7 +44,7 @@ func update(delta time.Duration, world GameWorld, camera *entities.Entity) {
 	target := world.GetEntityByID(*camera.CameraComponent.Target)
 	targetPosition := target.Position().Add(camera.CameraComponent.TargetPositionOffset)
 
-	cameraOffset := settings.CameraEntityOffset
+	cameraOffset := settings.CameraEntityFollowDistance
 	if settings.FirstPersonCamera {
 		cameraOffset = 0
 	}

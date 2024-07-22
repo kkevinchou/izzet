@@ -292,7 +292,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
 		Speed:        100,
 	}
-	pointLight.LightInfo.PreScaledIntensity = 6
+	pointLight.LightInfo.PreScaledIntensity = 0.05
 	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
 	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(pointLight)
@@ -303,7 +303,7 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
-	directionalLight.LightInfo.PreScaledIntensity = 8
+	directionalLight.LightInfo.PreScaledIntensity = 0.1
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.world.AddEntity(directionalLight)
 

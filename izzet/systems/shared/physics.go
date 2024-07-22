@@ -6,10 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
-)
-
-const (
-	accelerationDueToGravity float64 = 200 // units per second
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 func PhysicsStepSingle(delta time.Duration, entity *entities.Entity) {
@@ -24,7 +21,7 @@ func PhysicsStep(delta time.Duration, worldEntities []*entities.Entity) {
 		}
 
 		if physicsComponent.GravityEnabled {
-			velocityFromGravity := mgl64.Vec3{0, -accelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
+			velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
 			physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
 			if physicsComponent.RotateOnVelocity {
 

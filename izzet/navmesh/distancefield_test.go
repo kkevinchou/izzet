@@ -7,7 +7,7 @@ import (
 )
 
 func TestDistanceField(t *testing.T) {
-	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
 
 	// 3x3 voxels on xz plane
 
@@ -32,7 +32,7 @@ func TestDistanceField(t *testing.T) {
 }
 
 func TestDistanceFieldAllBorders(t *testing.T) {
-	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
 
 	// 3x3 voxels on xz plane
 
@@ -56,7 +56,7 @@ func TestDistanceFieldAllBorders(t *testing.T) {
 }
 
 func TestDistanceFieldBlur(t *testing.T) {
-	hf := NewHeightField(7, 7, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf := NewHeightField(7, 7, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
 
 	// 5x5 voxels on xz plane
 

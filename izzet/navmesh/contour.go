@@ -406,7 +406,7 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 		// find the maximum deviation from the segment
 
 		// set up variables to either traverse a -> b or b -> a
-		// this keep sthe actual traversal code simple and agnostic of direction
+		// this keeps the actual traversal code simple and agnostic of direction
 
 		var maxd float64
 		maxi := -1
@@ -454,6 +454,63 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 			}
 		} else {
 			i++
+		}
+	}
+
+	// split long edges
+
+	if maxEdgeLength > 0 {
+		for i := 0; i < len(simplified); {
+			ni := (i + 1) % len(simplified)
+
+			v0 := simplified[i]
+			v1 := simplified[ni]
+
+			nextVertIndex := (simplified[i].I + 1) % len(vertices)
+			v := vertices[nextVertIndex]
+
+			tesselate := v.regionID == 0 || (v.flags&areaBorderFlag > 0)
+			maxi := -1
+
+			if tesselate {
+				dx := v1.X - v0.X
+				dz := v1.Z - v0.Z
+
+				if dx*dx+dz*dz > maxEdgeLength*maxEdgeLength {
+					n := simplified[ni].I - simplified[i].I
+					if simplified[ni].I < simplified[i].I {
+						n = simplified[ni].I + len(vertices) - simplified[i].I
+					}
+
+					// if a vertex exists between i and ni, add the middle vertex
+
+					// round based on the segments in lexilogical order so that the
+					// max tesselation is consistent regardless in which direction
+					// segments are traversed.
+					if n > 1 {
+						if v1.X > v0.X || (v1.X == v0.X && v1.Z > v0.Z) {
+							maxi = (v0.I + n/2) % len(vertices)
+						} else {
+							maxi = (v0.I + (n+1)/2) % len(vertices)
+						}
+					}
+				}
+			}
+
+			if maxi != -1 {
+				simplified = append(simplified, SimplifiedVertex{
+					X: vertices[maxi].X,
+					Y: vertices[maxi].Y,
+					Z: vertices[maxi].Z,
+					I: maxi,
+				})
+
+				for j := len(simplified) - 1; j > i+1; j-- {
+					simplified[j], simplified[j-1] = simplified[j-1], simplified[j]
+				}
+			} else {
+				i++
+			}
 		}
 	}
 

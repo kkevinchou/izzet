@@ -142,7 +142,8 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		for j := range len(verts) {
 			v := &verts[j]
 			v.X += origin.X()
-			v.Y += origin.Y() + chf.CellHeight
+			// v.Y += origin.Y() + chf.CellHeight
+			v.Y += origin.Y()
 			v.Z += origin.Z()
 		}
 
@@ -261,6 +262,10 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	ics := 1 / cs
 	var hull []int
 
+	if polyIndex == 13 {
+		fmt.Println("HI")
+	}
+
 	verts := make([]DetailedVertex, len(inVerts))
 	for i := range len(inVerts) {
 		verts[i] = inVerts[i]
@@ -340,9 +345,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				if maxi != -1 && maxd > (sampleMaxError*sampleMaxError) {
 					for m := nidx; m > k; m-- {
 						idx[m] = idx[m-1]
-
-						// sampledPoint := edges[maxi]
-						// dmesh.OutlineSamples[polyIndex] = append(dmesh.OutlineSamples[polyIndex], float32(sampledPoint.X), float32(sampledPoint.Y), float32(sampledPoint.Z))
 					}
 					idx[k+1] = maxi
 					nidx++

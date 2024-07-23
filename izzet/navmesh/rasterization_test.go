@@ -30,7 +30,7 @@ func TestRasterization(t *testing.T) {
 	maxVertex := mgl64.Vec3{10, 10, 10}
 	vxs := int(maxVertex.X() - minVertex.X())
 	vzs := int(maxVertex.Z() - minVertex.Z())
-	hf := NewHeightField(vxs, vzs, minVertex, maxVertex)
+	hf := NewHeightField(vxs, vzs, minVertex, maxVertex, 1, 1)
 
 	RasterizeTriangle(v0, v1, v2, 1, 1, hf, true, 10)
 }

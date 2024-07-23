@@ -7,7 +7,7 @@ import (
 )
 
 func setupCHF() *CompactHeightField {
-	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100})
+	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
 
 	// 5x5 voxels on xz plane
 

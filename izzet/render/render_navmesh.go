@@ -74,9 +74,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = r.createDetailedMeshVAO(nm)
-		// detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
-		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 1, 0})
-		// detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{1, 0, 0})
+		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
+		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
+		detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0.1, 0.1, 0.1})
 		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = r.createDetailedMeshLinesVAO(nm)
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 	}
@@ -113,7 +113,13 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 			r.drawContour(shaderManager, viewerContext, polygonsVAOCache, polygonsVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
-		if detailedMeshVertexCount > 0 {
+		if detailedMeshLinesVertexCount > 0 {
+			gl.BindVertexArray(detailedMeshVAOCache)
+			r.iztDrawElements(detailedMeshVertexCount * 3)
+			r.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
+		}
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMeshAndSamples {
+		if detailedMeshLinesVertexCount > 0 {
 			gl.BindVertexArray(detailedMeshVAOCache)
 			r.iztDrawElements(detailedMeshVertexCount * 3)
 			gl.BindVertexArray(detailedMeshOutlineSamplesVAOCache)
@@ -123,7 +129,6 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 			gl.BindVertexArray(detailedMeshAllSamplesVAOCache)
 			r.iztDrawElements(detailedMeshAllSamplesVertexCount * 36)
 			r.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
-			gl.BindVertexArray(detailedMeshOutlineSamplesVAOCache)
 		}
 	} else {
 		panic("WAT")
@@ -256,6 +261,8 @@ func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint3
 			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
 			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
 
+			// small y offset is for visual clarity
+
 			// edge 0
 			vertexAttributes = append(vertexAttributes, float32(v0.X), float32(v0.Y)+0.1, float32(v0.Z))
 			vertexAttributes = append(vertexAttributes, 0, 0, 0)
@@ -285,7 +292,6 @@ func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint3
 func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
-	var lengths []float32
 
 	chf := nm.CompactHeightField
 
@@ -302,7 +308,6 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 			}
 			positions = append(positions, position)
 			colors = append(colors, color...)
-			lengths = append(lengths, 1)
 		}
 	}
 
@@ -311,7 +316,11 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 	}
 
 	// sample verts are already offset
-	vao := cubeAttributes(positions, lengths, colors, 1, 1, utils.Vec3F64ToF32(chf.BMin()))
+	var cubeHeight float32 = 0.1
+	var cubeSize float32 = 0.1
+
+	// small y offset is for visual clarity
+	vao := samplesCubeAttributes(positions, colors, cubeSize, cubeHeight, utils.Vec3F64ToF32(chf.BMin().Add(mgl64.Vec3{0, 0.1, 0})))
 
 	return vao, int32(len(positions))
 }
@@ -435,7 +444,7 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()))
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
 
 	return vao, int32(len(positions))
 }
@@ -469,7 +478,7 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()))
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
 
 	return vao, int32(len(positions))
 }
@@ -526,7 +535,7 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(hf.CellSize), float32(hf.CellHeight), utils.Vec3F64ToF32(hf.BMin))
+	vao := cubeAttributes(positions, lengths, colors, float32(hf.CellSize), float32(hf.CellHeight), utils.Vec3F64ToF32(hf.BMin), float32(hf.CellSize))
 	return vao, int32(len(positions))
 }
 
@@ -595,8 +604,7 @@ func triangleAttributes(triangles [][3]mgl32.Vec3, colors []float32) uint32 {
 
 	return vao
 }
-
-func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32, cellSize, cellHeight float32, offset mgl32.Vec3) uint32 {
+func samplesCubeAttributes(positions []mgl32.Vec3, colors []float32, size, height float32, offset mgl32.Vec3) uint32 {
 	var vertexAttributes []float32
 
 	for i := range len(positions) {
@@ -606,58 +614,169 @@ func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32,
 
 		vertexAttributes = append(vertexAttributes, []float32{
 			// front
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 0, 1, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 0, 1, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 0, 1, r, g, b,
 
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 0, 1, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 0, 1, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 0, 1, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 0, 1, r, g, b,
 
 			// back
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 0, 0, -1, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 0, 0, -1, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 0, 0, -1, r, g, b,
+
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 0, 0, -1, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 0, 0, -1, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 0, 0, -1, r, g, b,
+
+			// rig1
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 1, 0, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 1, 0, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 1, 0, 0, r, g, b,
+
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 1, 0, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 1, 0, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 1, 0, 0, r, g, b,
+
+			// left
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), -1, 0, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), -1, 0, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), -1, 0, 0, r, g, b,
+
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), -1, 0, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), -1, 0, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), -1, 0, 0, r, g, b,
+
+			// top
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 1, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 0, 1, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 1, 0, r, g, b,
+
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, 1, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 0, 1, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + height + offset.Y(), z - 0.5*size + offset.Z(), 0, 1, 0, r, g, b,
+
+			// bottom
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, -1, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 0, -1, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, -1, 0, r, g, b,
+
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 0, -1, 0, r, g, b,
+			x - 0.5*size + size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + offset.Z(), 0, -1, 0, r, g, b,
+			x - 0.5*size + offset.X(), y - 0.5*height + offset.Y(), z - 0.5*size + size + offset.Z(), 0, -1, 0, r, g, b,
+		}...)
+	}
+
+	totalAttributeSize := 9
+
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
+	// lay out the position, normal, and color in a VBO
+	var vbo uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
+
+	ptrOffset := 0
+	var floatSize int32 = 4
+
+	// position
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, nil)
+	gl.EnableVertexAttribArray(0)
+
+	ptrOffset += 3
+
+	// normal
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
+	gl.EnableVertexAttribArray(1)
+
+	ptrOffset += 3
+
+	// color
+	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
+	gl.EnableVertexAttribArray(2)
+
+	vertexIndices := make([]uint32, len(vertexAttributes)/totalAttributeSize)
+	for i := range len(vertexIndices) {
+		vertexIndices[i] = uint32(i)
+	}
+
+	// set up the EBO, each triplet of indices point to three vertices
+	// that form a triangle.
+	var ebo uint32
+	apputils.GenBuffers(1, &ebo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*4, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
+
+	return vao
+}
+
+func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32, cellSize, cellHeight float32, offset mgl32.Vec3, size float32) uint32 {
+	var vertexAttributes []float32
+
+	for i := range len(positions) {
+		position := positions[i]
+		x, y, z := position.X(), position.Y(), position.Z()
+		r, g, b := colors[i*3], colors[i*3+1], colors[i*3+2]
+
+		vertexAttributes = append(vertexAttributes, []float32{
+			// front
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
+
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
+
+			// back
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
 			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
 
 			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
 			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
 
 			// rig1
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 1, 0, 0, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
 
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 1, 0, 0, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 1, 0, 0, r, g, b,
 
 			// left
 			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
 			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), -1, 0, 0, r, g, b,
 
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), -1, 0, 0, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), -1, 0, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), -1, 0, 0, r, g, b,
 			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
 
 			// top
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 1, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 1, 0, r, g, b,
 
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, 1, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 1, 0, r, g, b,
+			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
 			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
 
 			// bottom
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, -1, 0, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, -1, 0, r, g, b,
 
 			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			(1+x)*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), (z+1)*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
+			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, -1, 0, r, g, b,
 		}...)
 	}
 

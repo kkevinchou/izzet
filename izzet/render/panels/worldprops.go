@@ -14,14 +14,15 @@ import (
 type NavMeshRenderComboOption string
 
 const (
-	ComboOptionCompactHeightField NavMeshRenderComboOption = "Compact Height Field"
-	ComboOptionDistanceField      NavMeshRenderComboOption = "Distance Field"
-	ComboOptionVoxel              NavMeshRenderComboOption = "Voxel"
-	ComboOptionRawContour         NavMeshRenderComboOption = "Raw Contour"
-	ComboOptionSimplifiedContour  NavMeshRenderComboOption = "Simplified Contour"
-	ComboOptionDetailedMesh       NavMeshRenderComboOption = "Detailed Mesh"
-	ComboOptionPremergeTriangles  NavMeshRenderComboOption = "Premerge Triangles"
-	ComboOptionPolygons           NavMeshRenderComboOption = "Polygons"
+	ComboOptionCompactHeightField     NavMeshRenderComboOption = "Compact Height Field"
+	ComboOptionDistanceField          NavMeshRenderComboOption = "Distance Field"
+	ComboOptionVoxel                  NavMeshRenderComboOption = "Voxel"
+	ComboOptionRawContour             NavMeshRenderComboOption = "Raw Contour"
+	ComboOptionSimplifiedContour      NavMeshRenderComboOption = "Simplified Contour"
+	ComboOptionDetailedMesh           NavMeshRenderComboOption = "Detailed Mesh"
+	ComboOptionDetailedMeshAndSamples NavMeshRenderComboOption = "Detailed Mesh + Samples"
+	ComboOptionPremergeTriangles      NavMeshRenderComboOption = "Premerge Triangles"
+	ComboOptionPolygons               NavMeshRenderComboOption = "Polygons"
 )
 
 var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
@@ -36,6 +37,7 @@ var (
 		ComboOptionPremergeTriangles,
 		ComboOptionPolygons,
 		ComboOptionDetailedMesh,
+		ComboOptionDetailedMeshAndSamples,
 	}
 )
 
@@ -145,6 +147,12 @@ func worldProps(app renderiface.App) {
 			var f float32 = float32(runtimeConfig.NavigationmeshMaxError)
 			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
 				runtimeConfig.NavigationmeshMaxError = f
+			}
+		}, true)
+		panelutils.SetupRow("Max Edge Length", func() {
+			var f float32 = float32(runtimeConfig.NavigationmeshMaxEdgeLength)
+			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+				runtimeConfig.NavigationmeshMaxEdgeLength = f
 			}
 		}, true)
 		panelutils.SetupRow("Agent Radius", func() {

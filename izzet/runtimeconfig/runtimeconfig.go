@@ -83,6 +83,7 @@ type RuntimeConfig struct {
 	NavigationMeshCellSize             float32
 	NavigationMeshCellHeight           float32
 	NavigationmeshMaxError             float32
+	NavigationmeshMaxEdgeLength        float32
 	NavigationmeshSampleDist           float32
 	NavigationMeshFilterLedgeSpans     bool
 	NavigationMeshFilterLowHeightSpans bool
@@ -158,6 +159,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshCellSize:             0.5,
 		NavigationMeshCellHeight:           0.5,
 		NavigationmeshMaxError:             1,
+		NavigationmeshMaxEdgeLength:        6,
 		NavigationmeshSampleDist:           1,
 		NavigationMeshFilterLedgeSpans:     true,
 		NavigationMeshFilterLowHeightSpans: true,

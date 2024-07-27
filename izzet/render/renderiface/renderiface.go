@@ -74,6 +74,7 @@ type App interface {
 	CreateMaterial(material material.Material)
 
 	GetFrameInput() input.Input
+	FindPath()
 }
 
 type RenderContext interface {

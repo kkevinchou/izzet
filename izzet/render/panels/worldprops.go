@@ -188,6 +188,7 @@ func worldProps(app renderiface.App) {
 			imgui.Checkbox("##", &runtimeConfig.NavigationMeshFilterLowHeightSpans)
 		}, true)
 		imgui.EndTable()
+
 		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
 			runtimeConfig.DebugBlob1IntMap = map[int]bool{}
 			runtimeConfig.DebugBlob1IntSlice = nil
@@ -223,6 +224,25 @@ func worldProps(app renderiface.App) {
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
 			sampleDist := float64(runtimeConfig.NavigationmeshSampleDist)
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
+		}
+
+		imgui.BeginTableV("Navigation Mesh Table", 2, tableFlags, imgui.Vec2{}, 0)
+		panelutils.SetupRow("Start", func() {
+			var i int32 = runtimeConfig.NavigationMeshStart
+			if imgui.InputInt("##", &i) {
+				runtimeConfig.NavigationMeshStart = i
+			}
+		}, true)
+		panelutils.SetupRow("Goal", func() {
+			var i int32 = int32(runtimeConfig.NavigationMeshGoal)
+			if imgui.InputInt("##", &i) {
+				runtimeConfig.NavigationMeshGoal = i
+			}
+		}, true)
+		imgui.EndTable()
+
+		if imgui.Button("Find Path") {
+			app.FindPath()
 		}
 
 		imgui.LabelText("##", "Draw")

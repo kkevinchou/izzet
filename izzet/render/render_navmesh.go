@@ -226,13 +226,15 @@ func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32)
 			v0 := nm.Mesh.Vertices[poly.Verts[i]]
 			v1 := nm.Mesh.Vertices[poly.Verts[(i+1)%len(poly.Verts)]]
 
+			color := regionIDToColor(poly.RegionID)
+
 			// v0
 			vertexAttributes = append(vertexAttributes,
 				float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
 				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
 				float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
 			)
-			vertexAttributes = append(vertexAttributes, regionIDToColor(poly.RegionID)...)
+			vertexAttributes = append(vertexAttributes, color...)
 
 			// v1
 			vertexAttributes = append(vertexAttributes,
@@ -240,7 +242,7 @@ func (r *Renderer) createPolygonsVAO(nm *navmesh.NavigationMesh) (uint32, int32)
 				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
 				float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
 			)
-			vertexAttributes = append(vertexAttributes, regionIDToColor(poly.RegionID)...)
+			vertexAttributes = append(vertexAttributes, color...)
 		}
 	}
 	return createLineVAO(vertexAttributes)
@@ -264,12 +266,17 @@ func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh) (uint32, in
 			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
 			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
 
+			color := regionIDToColor(nm.Mesh.Polygons[j].RegionID)
+			if _, ok := navmesh.PATHPOLYGONS[j]; ok {
+				color = []float32{.9, .9, .9}
+			}
+
 			triangles = append(triangles, [3]mgl32.Vec3{
 				{float32(v0.X), float32(v0.Y), float32(v0.Z)},
 				{float32(v1.X), float32(v1.Y), float32(v1.Z)},
 				{float32(v2.X), float32(v2.Y), float32(v2.Z)},
 			})
-			colors = append(colors, regionIDToColor(nm.Mesh.Polygons[j].RegionID)...)
+			colors = append(colors, color...)
 		}
 	}
 

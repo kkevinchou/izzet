@@ -88,6 +88,9 @@ type RuntimeConfig struct {
 	NavigationMeshFilterLedgeSpans     bool
 	NavigationMeshFilterLowHeightSpans bool
 
+	NavigationMeshStart int32
+	NavigationMeshGoal  int32
+
 	ShadowmapZOffset float32
 
 	DebugBlob1         string
@@ -163,5 +166,8 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationmeshSampleDist:           1,
 		NavigationMeshFilterLedgeSpans:     true,
 		NavigationMeshFilterLowHeightSpans: true,
+
+		NavigationMeshStart: 0,
+		NavigationMeshGoal:  1,
 	}
 }

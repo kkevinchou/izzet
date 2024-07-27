@@ -47,6 +47,9 @@ var (
 	detailedMeshInteriorSamplesVertexCount int32
 	detailedMeshAllSamplesVAOCache         uint32
 	detailedMeshAllSamplesVertexCount      int32
+
+	debugVAOCache    uint32
+	debugVertexCount int32
 )
 
 func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
@@ -72,6 +75,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		start = time.Now()
 		polygonsVAOCache, polygonsVertexCount = r.createPolygonsVAO(nm)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
+		// debugVAOCache, debugVertexCount = r.createDebugVAO(nm)
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = r.createDetailedMeshVAO(nm)
 		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
@@ -130,9 +134,43 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 			r.iztDrawElements(detailedMeshAllSamplesVertexCount * 36)
 			r.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
 		}
+	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDebug {
+		if debugVertexCount > 0 {
+			gl.BindVertexArray(debugVAOCache)
+			r.iztDrawElements(debugVertexCount * 36)
+		}
 	} else {
 		panic("WAT")
 	}
+}
+
+func (r *Renderer) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+	var positions []mgl32.Vec3
+	var colors []float32
+
+	chf := nm.CompactHeightField
+	contour := nm.ContourSet.Contours[0]
+	var lengths []float32
+
+	for j := range len(contour.Verts) {
+		v0 := contour.Verts[j]
+		position := mgl32.Vec3{
+			float32(v0.X),
+			float32(v0.Y),
+			float32(v0.Z),
+		}
+		positions = append(positions, position)
+		colors = append(colors, 1, 1, 1)
+		lengths = append(lengths, 1)
+	}
+
+	if len(positions) == 0 {
+		return 0, 0
+	}
+
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
+
+	return vao, int32(len(positions))
 }
 
 func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, vao uint32, count int32) {

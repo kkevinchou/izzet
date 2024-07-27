@@ -30,6 +30,7 @@ type PolyVertex struct {
 type Polygon struct {
 	// index to the vertices owned by Mesh that make up this polygon
 	Verts []int
+
 	// polyNeighbor[i] stores the polygon index sharing the edge (i, i+1), defined by
 	// the vertices i and i+1
 	polyNeighbor []int
@@ -137,6 +138,9 @@ func BuildPolyMesh(contourSet *ContourSet) *Mesh {
 				// merge verts
 				polygons[bestPa].Verts = mergePolyVerts(pa, pb, bestEa, bestEb)
 				polygons[bestPa].polyNeighbor = make([]int, len(polygons[bestPa].Verts))
+				for i := range len(polygons[bestPa].polyNeighbor) {
+					polygons[bestPa].polyNeighbor[i] = -1
+				}
 
 				// swap the last polygon to where b used to be, and reduce the polygon list size
 				if bestPb != len(polygons)-1 {

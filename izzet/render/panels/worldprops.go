@@ -23,6 +23,7 @@ const (
 	ComboOptionDetailedMeshAndSamples NavMeshRenderComboOption = "Detailed Mesh + Samples"
 	ComboOptionPremergeTriangles      NavMeshRenderComboOption = "Premerge Triangles"
 	ComboOptionPolygons               NavMeshRenderComboOption = "Polygons"
+	ComboOptionDebug                  NavMeshRenderComboOption = "Debug"
 )
 
 var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
@@ -30,14 +31,15 @@ var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompa
 var (
 	navmeshRenderComboOptions []NavMeshRenderComboOption = []NavMeshRenderComboOption{
 		ComboOptionCompactHeightField,
-		ComboOptionDistanceField,
-		ComboOptionVoxel,
-		ComboOptionRawContour,
-		ComboOptionSimplifiedContour,
-		ComboOptionPremergeTriangles,
-		ComboOptionPolygons,
 		ComboOptionDetailedMesh,
 		ComboOptionDetailedMeshAndSamples,
+		ComboOptionRawContour,
+		ComboOptionSimplifiedContour,
+		ComboOptionPolygons,
+		ComboOptionPremergeTriangles,
+		ComboOptionDebug,
+		// ComboOptionDistanceField,
+		// ComboOptionVoxel,
 	}
 )
 

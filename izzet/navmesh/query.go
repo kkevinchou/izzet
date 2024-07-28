@@ -69,7 +69,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 			if nn, ok := nodeMap[neighborIndex]; ok {
 				neighborNode = nn
 			} else {
-				midpoint, success := GetEdgeMidpoint(node.Polygon, neighborIndex, tile)
+				midpoint, success := GetEdgeMidpoint(tile, node.Polygon, neighborIndex)
 				if !success {
 					panic("failed to get edge mid point")
 				}
@@ -133,8 +133,19 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	return path
 }
 
-func GetEdgeMidpoint(from, to int, tile CTile) (mgl64.Vec3, bool) {
-	left, right, success := GetPortalVertIndices(from, to, tile)
+func FindStraightPath(tile CTile, start, end mgl64.Vec3, path []int) []int {
+	// l, r, success := GetPortalVertIndices(tile, path[0], path[1])
+	// if !success {
+	// 	panic(fmt.Sprintf("could not find portal vertices between %d, %d", path[0], path[1]))
+	// }
+
+	// apex := start
+
+	return nil
+}
+
+func GetEdgeMidpoint(tile CTile, from, to int) (mgl64.Vec3, bool) {
+	left, right, success := GetPortalVertIndices(tile, from, to)
 	if !success {
 		return mgl64.Vec3{}, false
 	}
@@ -145,7 +156,7 @@ func GetEdgeMidpoint(from, to int, tile CTile) (mgl64.Vec3, bool) {
 	return leftVert.Add(rightVert).Mul(.5), true
 }
 
-func GetPortalVertIndices(from, to int, tile CTile) (int, int, bool) {
+func GetPortalVertIndices(tile CTile, from, to int) (int, int, bool) {
 	fromPoly := tile.Polygons[from]
 
 	for i, neighborIndex := range fromPoly.PolyNeighbors {
@@ -276,4 +287,15 @@ func pointInPoly(tile CTile, poly int, point mgl64.Vec3) bool {
 
 func Less(n0, n1 *Node) bool {
 	return n0.Cost < n1.Cost
+}
+
+func vLeft(a, b, c mgl64.Vec3) bool {
+	return vArea2D(a, b, c) < 0
+}
+
+func vArea2D(a, b, c mgl64.Vec3) float64 {
+	p := (b.X() - a.X()) * (c.Z() - a.Z())
+	q := (c.X() - a.X()) * (b.Z() - a.Z())
+	value := p - q
+	return value
 }

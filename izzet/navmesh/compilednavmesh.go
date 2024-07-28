@@ -10,7 +10,7 @@ type CTile struct {
 	Vertices          []mgl64.Vec3
 	Polygons          []CPolygon
 	CDetailedPolygon  []CDetailedPolygon
-	CDetailedVertices []mgl64.Vec3
+	CDetailedVertices [][]mgl64.Vec3
 }
 
 type CPolygon struct {
@@ -19,6 +19,7 @@ type CPolygon struct {
 }
 
 type CDetailedPolygon struct {
+	Triangles [][3]int
 }
 
 func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
@@ -43,15 +44,19 @@ func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
 		})
 	}
 
-	// TODO - figure out how i need to store detailed vertices
+	tile.CDetailedVertices = make([][]mgl64.Vec3, len(inNavMesh.DetailedMesh.PolyVertices))
+	for i, verts := range inNavMesh.DetailedMesh.PolyVertices {
+		for _, v := range verts {
+			tile.CDetailedVertices[i] = append(tile.CDetailedVertices[i], mgl64.Vec3{v.X, v.Y, v.Z})
+		}
+	}
 
-	// for _, poly := range inNavMesh.DetailedMesh.PolyVertices {
-	// 	for _, v := range inNavMesh.DetailedMesh.PolyVertices[poly] {
-	// 		tile.Vertices = append(tile.Vertices, mgl64.Vec3{
-	// 			float64(v.X), float64(v.Y), float64(v.Z),
-	// 		})
-	// 	}
-	// }
+	tile.CDetailedPolygon = make([]CDetailedPolygon, len(inNavMesh.DetailedMesh.PolyTriangles))
+	for i, tris := range inNavMesh.DetailedMesh.PolyTriangles {
+		for _, tri := range tris {
+			tile.CDetailedPolygon[i].Triangles = append(tile.CDetailedPolygon[i].Triangles, [3]int{tri.A, tri.B, tri.C})
+		}
+	}
 
 	return nm
 }

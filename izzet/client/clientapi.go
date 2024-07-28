@@ -749,5 +749,10 @@ func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
 func (g *Client) FindPath(start, goal mgl64.Vec3) {
 	g.navMesh.Invalidated = true
 	c := navmesh.CompileNavMesh(g.navMesh)
-	navmesh.FindPath(c, start, goal)
+	path := navmesh.FindPath(c, start, goal)
+
+	navmesh.PATHPOLYGONS = make(map[int]bool)
+	for _, p := range path {
+		navmesh.PATHPOLYGONS[p] = true
+	}
 }

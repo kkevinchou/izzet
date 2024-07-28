@@ -88,8 +88,10 @@ type RuntimeConfig struct {
 	NavigationMeshFilterLedgeSpans     bool
 	NavigationMeshFilterLowHeightSpans bool
 
-	NavigationMeshStart int32
-	NavigationMeshGoal  int32
+	NavigationMeshStart      int32
+	NavigationMeshStartPoint mgl64.Vec3
+	NavigationMeshGoal       int32
+	NavigationMeshGoalPoint  mgl64.Vec3
 
 	ShadowmapZOffset float32
 
@@ -162,7 +164,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshCellSize:             0.5,
 		NavigationMeshCellHeight:           0.5,
 		NavigationmeshMaxError:             1,
-		NavigationmeshMaxEdgeLength:        6,
+		NavigationmeshMaxEdgeLength:        150,
 		NavigationmeshSampleDist:           1,
 		NavigationMeshFilterLedgeSpans:     true,
 		NavigationMeshFilterLowHeightSpans: true,

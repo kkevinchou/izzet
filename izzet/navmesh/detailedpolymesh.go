@@ -262,10 +262,6 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 	ics := 1 / cs
 	var hull []int
 
-	if polyIndex == 13 {
-		fmt.Println("HI")
-	}
-
 	verts := make([]DetailedVertex, len(inVerts))
 	for i := range len(inVerts) {
 		verts[i] = inVerts[i]

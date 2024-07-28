@@ -21,13 +21,11 @@ type Node struct {
 
 var PATHPOLYGONS map[int]bool
 
-func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3, startPolygon, goalPolygon int) *Node {
-	// startPolygon := FindClosestPolygon(start, nm)
-	// goalPolygon := FindClosestPolygon(goal, nm)
+func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) *Node {
+	startPolygon := FindNearestPolygon(start, nm)
+	goalPolygon := FindNearestPolygon(goal, nm)
 
 	tile := nm.Tiles[0]
-
-	_, _ = startPolygon, goalPolygon
 
 	open := gheap.New(Less)
 	open.Push(&Node{Polygon: startPolygon, Cost: 0})
@@ -154,28 +152,11 @@ func GetPortalVertIndices(from, to int, tile CTile) (int, int, bool) {
 	return -1, -1, false
 }
 
-func FindClosestPolygon(point mgl64.Vec3, nm *CompiledNavMesh) int {
+func FindNearestPolygon(point mgl64.Vec3, nm *CompiledNavMesh) int {
+	// for _, p := range nm.Tiles[0].Polygons {
+
+	// }
 	return -1
-}
-
-type NodeHeap []Node
-
-func (h NodeHeap) Len() int           { return len(h) }
-func (h NodeHeap) Less(i, j int) bool { return h[i].Cost < h[j].Cost }
-func (h NodeHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
-func (h *NodeHeap) Push(x any) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*h = append(*h, x.(Node))
-}
-
-func (h *NodeHeap) Pop() any {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
 }
 
 func Less(n0, n1 *Node) bool {

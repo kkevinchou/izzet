@@ -749,26 +749,5 @@ func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
 func (g *Client) FindPath(start, goal mgl64.Vec3) {
 	g.navMesh.Invalidated = true
 	c := navmesh.CompileNavMesh(g.navMesh)
-	p0 := g.runtimeConfig.NavigationMeshStart
-	p1 := g.runtimeConfig.NavigationMeshGoal
-
-	poly0 := c.Tiles[0].Polygons[p0]
-
-	var total mgl64.Vec3
-
-	for _, v := range poly0.Vertices {
-		vert := c.Tiles[0].Vertices[v]
-		total = total.Add(vert)
-	}
-	startPosition := total.Mul(float64(1.0) / float64(len(poly0.Vertices)))
-
-	total = mgl64.Vec3{}
-	poly1 := c.Tiles[0].Polygons[p1]
-	for _, v := range poly1.Vertices {
-		vert := c.Tiles[0].Vertices[v]
-		total = total.Add(vert)
-	}
-	goalPosition := total.Mul(float64(1.0) / float64(len(poly1.Vertices)))
-
-	navmesh.FindPath(c, startPosition, goalPosition, int(p0), int(p1))
+	navmesh.FindPath(c, start, goal)
 }

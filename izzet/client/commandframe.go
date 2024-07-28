@@ -168,7 +168,6 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			}
 
 			if start != nil && goal != nil {
-				fmt.Println(*start, *goal)
 				g.FindPath(*start, *goal)
 			}
 		}
@@ -184,7 +183,6 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			}
 
 			if start != nil && goal != nil {
-				fmt.Println(*start, *goal)
 				g.FindPath(*start, *goal)
 			}
 		}

@@ -242,7 +242,7 @@ func worldProps(app renderiface.App) {
 		imgui.EndTable()
 
 		if imgui.Button("Find Path") {
-			app.FindPath()
+			app.FindPath(mgl64.Vec3{}, mgl64.Vec3{})
 		}
 
 		imgui.LabelText("##", "Draw")

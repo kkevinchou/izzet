@@ -12,8 +12,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/mode"
+	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/kitolib/collision/checks"
+	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
@@ -50,6 +53,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	g.handleInputCommands(frameInput)
 
 	if g.AppMode() == mode.AppModeEditor {
+		g.handleEditorInputCommands(frameInput)
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)
 	}
@@ -71,42 +75,9 @@ func (g *Client) handleSpatialPartition() {
 
 var copiedEntity []byte
 
-func (g *Client) handleInputCommands(frameInput input.Input) {
-	for _, cmd := range frameInput.Commands {
-		if c, ok := cmd.(input.FileDropCommand); ok {
-			fmt.Println("received drop file command", c.File)
-		} else if _, ok := cmd.(input.QuitCommand); ok {
-			g.Shutdown()
-		}
-	}
-
-	mouseInput := frameInput.MouseInput
+func (g *Client) handleEditorInputCommands(frameInput input.Input) {
+	// mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
-
-	// shutdown
-	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {
-		if g.AppMode() == mode.AppModeEditor {
-			g.Shutdown()
-		} else if g.AppMode() == mode.AppModePlay {
-			g.DisconnectClient()
-		}
-	}
-
-	if g.renderer.GameWindowHovered() {
-		if g.relativeMouseActive {
-			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-		}
-
-		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
-			g.relativeMouseActive = true
-			g.relativeMouseOrigin[0] = int32(mouseInput.Position[0])
-			g.relativeMouseOrigin[1] = int32(mouseInput.Position[1])
-			g.platform.SetRelativeMouse(true)
-		} else if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
-			g.relativeMouseActive = false
-			g.platform.SetRelativeMouse(false)
-		}
-	}
 
 	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
 		err := g.ConnectAndInitialize()
@@ -176,33 +147,113 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 			}
 		}
 	}
+	// set pathfinding start and goal
 
-	// navmesh - move highlight
-	if event, ok := keyboardInput[input.KeyboardKeyI]; ok {
+	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
 		if event.Event == input.KeyboardEventUp {
-			g.RuntimeConfig().VoxelHighlightZ--
-			g.ResetNavMeshVAO()
+			mousePosition := frameInput.MouseInput.Position
+			width, height := g.renderer.GameWindowSize()
+			ctx := g.renderer.CameraViewerContext()
+
+			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
+
+			menuBarSize := float64(render.CalculateMenuBarHeight())
+			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
+
+			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
+
+			if success {
+				start = &point
+			}
+
+			if start != nil && goal != nil {
+				fmt.Println(*start, *goal)
+				g.FindPath(*start, *goal)
+			}
 		}
 	}
-	if event, ok := keyboardInput[input.KeyboardKeyK]; ok {
+	if event, ok := keyboardInput[input.KeyboardKeyM]; ok {
 		if event.Event == input.KeyboardEventUp {
-			g.RuntimeConfig().VoxelHighlightZ++
-			g.ResetNavMeshVAO()
-		}
-	}
-	if event, ok := keyboardInput[input.KeyboardKeyJ]; ok {
-		if event.Event == input.KeyboardEventUp {
-			g.RuntimeConfig().VoxelHighlightX--
-			g.ResetNavMeshVAO()
-		}
-	}
-	if event, ok := keyboardInput[input.KeyboardKeyL]; ok {
-		if event.Event == input.KeyboardEventUp {
-			g.RuntimeConfig().VoxelHighlightX++
-			g.ResetNavMeshVAO()
+			mousePosition := frameInput.MouseInput.Position
+			dir := mgl64.Vec3{mousePosition.X(), mousePosition.Y(), -float64(g.RuntimeConfig().Near)}.Normalize()
+			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), dir)
+
+			if success {
+				goal = &point
+			}
+
+			if start != nil && goal != nil {
+				fmt.Println(*start, *goal)
+				g.FindPath(*start, *goal)
+			}
 		}
 	}
 }
+
+func (g *Client) handleInputCommands(frameInput input.Input) {
+	for _, cmd := range frameInput.Commands {
+		if c, ok := cmd.(input.FileDropCommand); ok {
+			fmt.Println("received drop file command", c.File)
+		} else if _, ok := cmd.(input.QuitCommand); ok {
+			g.Shutdown()
+		}
+	}
+
+	mouseInput := frameInput.MouseInput
+	keyboardInput := frameInput.KeyboardInput
+
+	// shutdown
+	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {
+		if g.AppMode() == mode.AppModeEditor {
+			g.Shutdown()
+		} else if g.AppMode() == mode.AppModePlay {
+			g.DisconnectClient()
+		}
+	}
+
+	if g.renderer.GameWindowHovered() {
+		if g.relativeMouseActive {
+			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
+		}
+
+		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
+			g.relativeMouseActive = true
+			g.relativeMouseOrigin[0] = int32(mouseInput.Position[0])
+			g.relativeMouseOrigin[1] = int32(mouseInput.Position[1])
+			g.platform.SetRelativeMouse(true)
+		} else if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
+			g.relativeMouseActive = false
+			g.platform.SetRelativeMouse(false)
+		}
+	}
+
+}
+
+func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
+	var point mgl64.Vec3
+	var success bool
+
+	for _, entity := range g.world.Entities() {
+		if entity.Collider == nil || entity.Collider.TriMeshCollider == nil {
+			continue
+		}
+
+		ray := collider.Ray{Origin: position, Direction: dir}
+		transformMatrix := entities.WorldTransform(entity)
+		collider := entity.Collider.TriMeshCollider.Transform(transformMatrix)
+
+		point, success = checks.IntersectRayTriMesh(ray, collider)
+		if !success {
+			continue
+		}
+
+		break
+	}
+	return point, true
+}
+
+var start, goal *mgl64.Vec3
 
 func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duration) {
 	mouseInput := frameInput.MouseInput

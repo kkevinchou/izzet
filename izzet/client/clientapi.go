@@ -746,7 +746,7 @@ func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
 	return g.project.MaterialBrowser
 }
 
-func (g *Client) FindPath() {
+func (g *Client) FindPath(start, goal mgl64.Vec3) {
 	g.navMesh.Invalidated = true
 	c := navmesh.CompileNavMesh(g.navMesh)
 	p0 := g.runtimeConfig.NavigationMeshStart

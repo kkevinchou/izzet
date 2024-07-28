@@ -26,7 +26,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	if behind {
 		return
 	}
-	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	shader.Use()
@@ -106,7 +106,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		return
 	}
 
-	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	shader.Use()
@@ -154,7 +154,7 @@ func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.
 	if behind {
 		return
 	}
-	nearPlanePosition := ndcToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
 
 	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
@@ -215,7 +215,7 @@ func (r *Renderer) drawCircle() {
 }
 
 // computes the near plane position for a given x y coordinate
-func ndcToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
+func NDCToWorldPosition(viewerContext ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
 	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
 	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())

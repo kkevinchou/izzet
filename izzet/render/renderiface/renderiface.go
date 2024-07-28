@@ -74,7 +74,7 @@ type App interface {
 	CreateMaterial(material material.Material)
 
 	GetFrameInput() input.Input
-	FindPath()
+	FindPath(start, goal mgl64.Vec3)
 }
 
 type RenderContext interface {

@@ -53,6 +53,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 		polygonIndex := node.Polygon
 
 		if polygonIndex == goalPolygon {
+			lastBestNode = node
 			break
 		}
 
@@ -63,15 +64,15 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 			if neighborIndex == -1 || (node.Parent != nil && node.Parent.Polygon == neighborIndex) {
 				continue
 			}
-			midpoint, success := GetEdgeMidpoint(node.Polygon, neighborIndex, tile)
-			if !success {
-				panic("failed to get edge mid point")
-			}
 
 			var neighborNode *Node
 			if nn, ok := nodeMap[neighborIndex]; ok {
 				neighborNode = nn
 			} else {
+				midpoint, success := GetEdgeMidpoint(node.Polygon, neighborIndex, tile)
+				if !success {
+					panic("failed to get edge mid point")
+				}
 				neighborNode = &Node{
 					Position: midpoint,
 					Polygon:  neighborIndex,
@@ -210,12 +211,12 @@ func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
 		return -1, false
 	}
 
-	dp := tile.CDetailedPolygon[poly]
+	dp := tile.DetailedPolygon[poly]
 
 	for _, tri := range dp.Triangles {
-		v0 := tile.CDetailedVertices[poly][tri[0]]
-		v1 := tile.CDetailedVertices[poly][tri[1]]
-		v2 := tile.CDetailedVertices[poly][tri[2]]
+		v0 := tile.DetailedVertices[poly][tri[0]]
+		v1 := tile.DetailedVertices[poly][tri[1]]
+		v2 := tile.DetailedVertices[poly][tri[2]]
 
 		if height, success := closestHeightOnTriangle(point, v0, v1, v2); success {
 			return height, true

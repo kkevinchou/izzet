@@ -7,10 +7,10 @@ type CompiledNavMesh struct {
 }
 
 type CTile struct {
-	Vertices          []mgl64.Vec3
-	Polygons          []CPolygon
-	CDetailedPolygon  []CDetailedPolygon
-	CDetailedVertices [][]mgl64.Vec3
+	Vertices         []mgl64.Vec3
+	Polygons         []CPolygon
+	DetailedPolygon  []CDetailedPolygon
+	DetailedVertices [][]mgl64.Vec3
 }
 
 type CPolygon struct {
@@ -19,8 +19,10 @@ type CPolygon struct {
 }
 
 type CDetailedPolygon struct {
-	Triangles [][3]int
+	Triangles []CDetailedTriangle
 }
+
+type CDetailedTriangle [3]int
 
 func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
 	nm := &CompiledNavMesh{}
@@ -44,17 +46,20 @@ func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
 		})
 	}
 
-	tile.CDetailedVertices = make([][]mgl64.Vec3, len(inNavMesh.DetailedMesh.PolyVertices))
+	tile.DetailedVertices = make([][]mgl64.Vec3, len(inNavMesh.DetailedMesh.PolyVertices))
 	for i, verts := range inNavMesh.DetailedMesh.PolyVertices {
+		if len(verts) > 3 {
+			panic("asdf")
+		}
 		for _, v := range verts {
-			tile.CDetailedVertices[i] = append(tile.CDetailedVertices[i], mgl64.Vec3{v.X, v.Y, v.Z})
+			tile.DetailedVertices[i] = append(tile.DetailedVertices[i], mgl64.Vec3{v.X, v.Y, v.Z})
 		}
 	}
 
-	tile.CDetailedPolygon = make([]CDetailedPolygon, len(inNavMesh.DetailedMesh.PolyTriangles))
+	tile.DetailedPolygon = make([]CDetailedPolygon, len(inNavMesh.DetailedMesh.PolyTriangles))
 	for i, tris := range inNavMesh.DetailedMesh.PolyTriangles {
 		for _, tri := range tris {
-			tile.CDetailedPolygon[i].Triangles = append(tile.CDetailedPolygon[i].Triangles, [3]int{tri.A, tri.B, tri.C})
+			tile.DetailedPolygon[i].Triangles = append(tile.DetailedPolygon[i].Triangles, CDetailedTriangle{tri.A, tri.B, tri.C})
 		}
 	}
 

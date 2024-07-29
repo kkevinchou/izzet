@@ -24,6 +24,7 @@ type Node struct {
 }
 
 var PATHPOLYGONS map[int]bool
+var PATHVERTICES []mgl64.Vec3
 
 func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	tile := nm.Tiles[0]
@@ -130,20 +131,113 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	}
 	slices.Reverse(path)
 
+	PATHVERTICES = FindStraightPath(tile, start, goal, path)
+
 	return path
 }
 
-func FindStraightPath(tile CTile, start, end mgl64.Vec3, path []int) []int {
-	// l, r, success := GetPortalVertIndices(tile, path[0], path[1])
-	// if !success {
-	// 	panic(fmt.Sprintf("could not find portal vertices between %d, %d", path[0], path[1]))
-	// }
+func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {
+	portalApex := start
+	portalLeft := portalApex
+	portalRight := portalApex
 
-	// apex := start
+	var apexIndex, leftIndex, rightIndex int
 
-	return nil
+	var path []mgl64.Vec3
+	path = append(path, start)
+
+	iterCount := 0
+	maxIterCount := 100
+
+	for i := 0; i < len(polyPath) && iterCount < maxIterCount; i++ {
+		iterCount++
+
+		var left, right mgl64.Vec3
+
+		if i+1 < len(polyPath) {
+			l, r, success := GetPortalVertIndices(tile, polyPath[i], polyPath[i+1])
+			if !success {
+				panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i], polyPath[i+1]))
+			}
+			left = tile.Vertices[l]
+			right = tile.Vertices[r]
+		} else {
+			left = goal
+			right = goal
+		}
+
+		// update the right vertex
+		if vLeftOn(portalApex, portalRight, right) {
+			if vEqual(portalApex, portalRight) || vRight(portalApex, portalLeft, right) {
+				// tighten the funnel
+				portalRight = right
+				rightIndex = i
+			} else {
+				// right crossed over left, insert left onto the path and restart scan from portal left point
+				path = append(path, portalLeft)
+				portalApex = portalLeft
+				portalRight = portalApex
+				apexIndex = leftIndex
+				rightIndex = apexIndex
+				i = apexIndex
+				continue
+			}
+		}
+
+		// update the right vertex
+		if vRightOn(portalApex, portalLeft, left) {
+			if vEqual(portalApex, portalLeft) || vLeft(portalApex, portalRight, left) {
+				// tighten the funnel
+				portalLeft = left
+				leftIndex = i
+			} else {
+				// right crossed over right, insert right onto the path and restart scan from portal right point
+				path = append(path, portalRight)
+				portalApex = portalRight
+				portalLeft = portalApex
+				apexIndex = rightIndex
+				leftIndex = apexIndex
+				i = apexIndex
+				continue
+			}
+		}
+	}
+
+	if iterCount == maxIterCount {
+		path = []mgl64.Vec3{start}
+	}
+
+	path = append(path, goal)
+	return path
 }
 
+func vEqual(a, b mgl64.Vec3) bool {
+	threshold := (1.0 / 16384.0) * (1.0 / 16384.0)
+	return a.Sub(b).LenSqr() < threshold
+}
+
+// returns true if c_a is to the left of b_a
+func vLeftOn(a, b, c mgl64.Vec3) bool {
+	return vArea2D(a, b, c) <= 0
+}
+
+func vLeft(a, b, c mgl64.Vec3) bool {
+	return vArea2D(a, b, c) < 0
+}
+
+func vRightOn(a, b, c mgl64.Vec3) bool {
+	return vArea2D(a, b, c) >= 0
+}
+
+func vRight(a, b, c mgl64.Vec3) bool {
+	return vArea2D(a, b, c) > 0
+}
+func vArea2D(a, b, c mgl64.Vec3) float64 {
+	p := (b.X() - a.X()) * (c.Z() - a.Z())
+	q := (c.X() - a.X()) * (b.Z() - a.Z())
+	value := p - q
+	return value
+}
 func GetEdgeMidpoint(tile CTile, from, to int) (mgl64.Vec3, bool) {
 	left, right, success := GetPortalVertIndices(tile, from, to)
 	if !success {
@@ -166,8 +260,8 @@ func GetPortalVertIndices(tile CTile, from, to int) (int, int, bool) {
 
 		ni := (i + 1) % len(fromPoly.Vertices)
 
-		left := fromPoly.Vertices[i]
-		right := fromPoly.Vertices[ni]
+		left := fromPoly.Vertices[ni]
+		right := fromPoly.Vertices[i]
 
 		return left, right, true
 	}
@@ -287,15 +381,4 @@ func pointInPoly(tile CTile, poly int, point mgl64.Vec3) bool {
 
 func Less(n0, n1 *Node) bool {
 	return n0.Cost < n1.Cost
-}
-
-func vLeft(a, b, c mgl64.Vec3) bool {
-	return vArea2D(a, b, c) < 0
-}
-
-func vArea2D(a, b, c mgl64.Vec3) float64 {
-	p := (b.X() - a.X()) * (c.Z() - a.Z())
-	q := (c.X() - a.X()) * (b.Z() - a.Z())
-	value := p - q
-	return value
 }

@@ -48,6 +48,9 @@ var (
 	detailedMeshAllSamplesVAOCache         uint32
 	detailedMeshAllSamplesVertexCount      int32
 
+	pathVAOCache    uint32
+	pathVertexCount int32
+
 	debugVAOCache    uint32
 	debugVertexCount int32
 )
@@ -83,6 +86,10 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0.1, 0.1, 0.1})
 		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = r.createDetailedMeshLinesVAO(nm)
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
+		start = time.Now()
+
+		pathVAOCache, pathVertexCount = createPathVAO()
+		fmt.Printf("%.1f seconds to create path vao\n", time.Since(start).Seconds())
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
@@ -115,6 +122,9 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPolygons {
 		if polygonsVertexCount > 0 {
 			r.drawContour(shaderManager, viewerContext, polygonsVAOCache, polygonsVertexCount)
+		}
+		if pathVertexCount > 0 {
+			r.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
 		if detailedMeshLinesVertexCount > 0 {
@@ -368,6 +378,24 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 	vao := samplesCubeAttributes(positions, colors, cubeSize, cubeHeight, utils.Vec3F64ToF32(chf.BMin().Add(mgl64.Vec3{0, 0.1, 0})))
 
 	return vao, int32(len(positions))
+}
+
+func createPathVAO() (uint32, int32) {
+	var vertexAttributes []float32
+	for i := 0; i < len(navmesh.PATHVERTICES)-1; i++ {
+		v0 := navmesh.PATHVERTICES[i]
+		v1 := navmesh.PATHVERTICES[i+1]
+
+		color := []float32{1, 1, 1}
+
+		// v0
+		vertexAttributes = append(vertexAttributes, float32(v0.X()), float32(v0.Y()+1), float32(v0.Z()))
+		vertexAttributes = append(vertexAttributes, color...)
+
+		vertexAttributes = append(vertexAttributes, float32(v1.X()), float32(v1.Y()+1), float32(v1.Z()))
+		vertexAttributes = append(vertexAttributes, color...)
+	}
+	return createLineVAO(vertexAttributes)
 }
 
 func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int32) {

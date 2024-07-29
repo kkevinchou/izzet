@@ -48,9 +48,6 @@ func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
 
 	tile.DetailedVertices = make([][]mgl64.Vec3, len(inNavMesh.DetailedMesh.PolyVertices))
 	for i, verts := range inNavMesh.DetailedMesh.PolyVertices {
-		if len(verts) > 3 {
-			panic("asdf")
-		}
 		for _, v := range verts {
 			tile.DetailedVertices[i] = append(tile.DetailedVertices[i], mgl64.Vec3{v.X, v.Y, v.Z})
 		}

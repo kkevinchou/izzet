@@ -14,6 +14,7 @@ const (
 	MsgTypePlayerJoin
 	MsgTypeAckPlayerJoin
 	MsgTypePing
+	MsgTypeRPC
 )
 
 type Message interface {

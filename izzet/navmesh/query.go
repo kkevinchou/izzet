@@ -60,7 +60,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 
 		polygon := tile.Polygons[polygonIndex]
 
-		var g, h float64
+		var cost, heuristic float64
 		for _, neighborIndex := range polygon.PolyNeighbors {
 			if neighborIndex == -1 || (node.Parent != nil && node.Parent.Polygon == neighborIndex) {
 				continue
@@ -82,15 +82,15 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 			}
 
 			if neighborIndex == goalPolygon {
-				endCost := neighborNode.Position.Sub(goal).LenSqr()
-				g = node.Cost + neighborNode.Position.Sub(node.Position).LenSqr() + endCost
-				h = 0
+				endCost := neighborNode.Position.Sub(goal).Len()
+				cost = node.Cost + neighborNode.Position.Sub(node.Position).Len() + endCost
+				heuristic = 0
 			} else {
-				g = node.Cost + neighborNode.Position.Sub(node.Position).LenSqr()
-				h = neighborNode.Position.Sub(goal).LenSqr()
+				cost = node.Cost + neighborNode.Position.Sub(node.Position).Len()
+				heuristic = neighborNode.Position.Sub(goal).Len()
 			}
 
-			total := g + h
+			total := cost + heuristic
 
 			if neighborNode.InOpenList && total >= neighborNode.Total {
 				continue
@@ -99,7 +99,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 				continue
 			}
 
-			neighborNode.Cost = g
+			neighborNode.Cost = cost
 			neighborNode.Parent = node
 			neighborNode.Total = total
 			neighborNode.InClosedList = false
@@ -116,9 +116,9 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 				open.Push(neighborNode)
 			}
 
-			if h < lastBestCost {
+			if heuristic < lastBestCost {
 				lastBestNode = neighborNode
-				lastBestCost = h
+				lastBestCost = heuristic
 			}
 		}
 	}
@@ -147,7 +147,7 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 	path = append(path, start)
 
 	iterCount := 0
-	maxIterCount := 100
+	maxIterCount := 2000
 
 	for i := 0; i < len(polyPath) && iterCount < maxIterCount; i++ {
 		iterCount++

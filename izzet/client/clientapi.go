@@ -479,6 +479,10 @@ func (g *Client) LoadProject(name string) bool {
 		panic(err)
 	}
 
+	if project.MaterialBrowser == nil {
+		project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
+	}
+
 	g.project = &project
 
 	for _, item := range g.project.ContentBrowser.Items {
@@ -558,6 +562,10 @@ func (g *Client) SaveProject(name string) error {
 		panic(err)
 	}
 	defer f.Close()
+
+	if g.project.MaterialBrowser == nil {
+		g.project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
+	}
 
 	encoder := json.NewEncoder(f)
 	encoder.Encode(g.project)

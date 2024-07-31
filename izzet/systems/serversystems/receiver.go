@@ -41,6 +41,18 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 						continue
 					}
 					player.Client.Send(pingMessage, s.app.CommandFrame())
+				} else if message.MessageType == network.MsgTypeRPC {
+					rpc, err := network.ExtractMessage[network.RPCMessage](message)
+					if err != nil {
+						fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
+						continue
+					}
+					for _, e := range s.app.World().Entities() {
+						if e.AIComponent == nil {
+							continue
+						}
+						e.AIComponent.PathfindConfig.Target = rpc.Pathfind.Target
+					}
 				}
 			case <-player.DisconnectChannel:
 				s.app.EventsManager().PlayerDisconnectTopic.Write(events.PlayerDisconnectEvent{PlayerID: player.ID})

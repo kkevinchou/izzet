@@ -69,6 +69,10 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 			}
 		}
+
+		if aiComponent.PathfindConfig != nil {
+
+		}
 	}
 }
 

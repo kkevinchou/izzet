@@ -67,13 +67,14 @@ const (
 	CameraEntityFollowDistance       float64 = 5
 	CameraEntityFollowVerticalOffset float64 = 1.5
 	ProjectsDirectory                string  = ".project/"
-	DefaultProject                   string  = "room2"
+	DefaultProject                   string  = "demo_scene_prototype"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210
 	ShelfWidth  float32 = 800
 
 	CharacterSpeed           float64 = 10
+	CharacterFlySpeed        float64 = 50
 	CharacterJumpVelocity    float64 = 25
 	CharacterWebSpeed        float64 = 110
 	CharacterWebLaunchSpeed  float64 = 80

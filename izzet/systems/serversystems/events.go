@@ -55,7 +55,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 			ColliderGroup: entities.ColliderGroupFlagPlayer,
 			CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 		}
-		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterSpeed}
+		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
 
 		capsule := entity.Collider.CapsuleCollider
 		entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}

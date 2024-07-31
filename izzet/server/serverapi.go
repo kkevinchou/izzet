@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
@@ -169,4 +170,8 @@ func (g *Server) World() *world.GameWorld {
 
 func (g *Server) AssetManager() *assets.AssetManager {
 	return g.assetManager
+}
+
+func (g *Server) SetNavMesh(nm *navmesh.CompiledNavMesh) {
+	g.navMesh = nm
 }

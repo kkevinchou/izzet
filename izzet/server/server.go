@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/mode"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -50,6 +51,8 @@ type Server struct {
 	inputBuffer  *inputbuffer.InputBuffer
 	playerInput  map[int]input.Input
 	eventManager *events.EventManager
+
+	navMesh *navmesh.CompiledNavMesh
 }
 
 func NewWithFile(assetsDirectory string, filepath string) *Server {

@@ -348,6 +348,12 @@ func (g *Client) GetPlayer(playerID int) *network.Player {
 func (g *Client) StartAsyncServer() {
 	started := make(chan bool)
 
+	var compiledNavMesh *navmesh.CompiledNavMesh
+
+	if g.navMesh != nil {
+		compiledNavMesh = navmesh.CompileNavMesh(g.navMesh)
+	}
+
 	go func() {
 		var worldBytes bytes.Buffer
 		err := serialization.Write(g.world, &worldBytes)
@@ -362,6 +368,7 @@ func (g *Client) StartAsyncServer() {
 		serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 		serverApp := server.NewWithWorld("_assets", world)
+		serverApp.SetNavMesh(compiledNavMesh)
 		serverApp.Start(started, g.asyncServerDone)
 		g.asyncServerStarted = false
 		fmt.Println("Server finished teardown")
@@ -456,7 +463,6 @@ func (g *Client) ImportToContentBrowser(assetFilePath string) {
 		var primitiveSpecs []*modelspec.PrimitiveSpecification
 		for _, mesh := range document.Meshes {
 			primitiveSpecs = append(primitiveSpecs, mesh.Primitives...)
-
 		}
 	}
 }

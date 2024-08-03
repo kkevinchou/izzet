@@ -70,7 +70,6 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		for _, e := range world.Entities() {
 			if e.SpawnPointComponent != nil {
 				entities.SetLocalPosition(entity, e.Position())
-				fmt.Println("FOUND SPAWN POINT AT", e.Position())
 				break
 			}
 		}

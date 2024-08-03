@@ -7,7 +7,7 @@ type RPCMessage struct {
 }
 
 type Pathfind struct {
-	Target mgl64.Vec3
+	Goal mgl64.Vec3
 }
 
 func (m RPCMessage) Type() MessageType {

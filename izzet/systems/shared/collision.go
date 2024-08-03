@@ -167,6 +167,7 @@ func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, 
 
 			entity.Collider.Contacts = append(entity.Collider.Contacts, *contact)
 
+			resolveCount[entity.ID]++
 			if resolveCount[entity.ID] > resolveCountMax {
 				maximallyCollidingEntities[entity.ID] = true
 			}

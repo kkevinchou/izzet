@@ -19,9 +19,24 @@ type PatrolConfig struct {
 	Index  int
 }
 
+// states:
+// goal set
+// pathing
+// no goal set
+
+type PathfindingState string
+
+var (
+	PathfindingStateNoGoal  PathfindingState = ""
+	PathfindingStateGoalSet PathfindingState = "GOAL_SET"
+	PathfindingStatePathing PathfindingState = "PATHING"
+)
+
 type PathfindConfig struct {
-	Target mgl64.Vec3
-	Path   []mgl64.Vec3
+	Goal       mgl64.Vec3
+	Path       []mgl64.Vec3
+	NextTarget int
+	State      PathfindingState
 }
 
 type RotationConfig struct {

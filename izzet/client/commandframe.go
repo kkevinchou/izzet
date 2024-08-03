@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
+	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -57,6 +58,8 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 		g.handleEditorInputCommands(frameInput)
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)
+	} else if g.AppMode() == mode.AppModePlay {
+		g.handlePlayInputCommands(frameInput)
 	}
 
 	g.RuntimeConfig().CameraPosition = g.camera.Position
@@ -195,6 +198,37 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 					g.runtimeConfig.NavigationMeshGoal = int32(p)
 					g.runtimeConfig.NavigationMeshGoalPoint = pt
 				}
+			}
+		}
+	}
+}
+
+func (g *Client) handlePlayInputCommands(frameInput input.Input) {
+	keyboardInput := frameInput.KeyboardInput
+
+	// set ai pathfinding target
+	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
+		if event.Event == input.KeyboardEventUp {
+			mousePosition := frameInput.MouseInput.Position
+			width, height := g.renderer.GameWindowSize()
+			ctx := g.renderer.CameraViewerContext()
+
+			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
+
+			menuBarSize := float64(render.CalculateMenuBarHeight())
+			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
+
+			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			camera := g.GetPlayerCamera()
+			position := camera.Position()
+			point, success := g.intersectRayWithEntities(position, nearPlanePosition.Sub(position).Normalize())
+
+			if success {
+				fmt.Println(point)
+				rpcMessage := network.RPCMessage{
+					Pathfind: &network.Pathfind{Goal: point},
+				}
+				g.Client().Send(rpcMessage, g.CommandFrame())
 			}
 		}
 	}

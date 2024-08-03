@@ -175,3 +175,7 @@ func (g *Server) AssetManager() *assets.AssetManager {
 func (g *Server) SetNavMesh(nm *navmesh.CompiledNavMesh) {
 	g.navMesh = nm
 }
+
+func (g *Server) NavMesh() *navmesh.CompiledNavMesh {
+	return g.navMesh
+}

@@ -26,16 +26,18 @@ type Node struct {
 var PATHPOLYGONS map[int]bool
 var PATHVERTICES []mgl64.Vec3
 
-func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
+func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) ([]int, []mgl64.Vec3, bool) {
 	tile := nm.Tiles[0]
 
 	_, startPolygon, success := FindNearestPolygon(tile, start)
 	if !success {
 		fmt.Println("failed to find start poly")
+		return nil, nil, false
 	}
 	_, goalPolygon, success := FindNearestPolygon(tile, goal)
 	if !success {
 		fmt.Println("failed to find goal poly")
+		return nil, nil, false
 	}
 
 	open := gheap.New(Less)
@@ -133,7 +135,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 
 	PATHVERTICES = FindStraightPath(tile, start, goal, path)
 
-	return path
+	return path, PATHVERTICES, true
 }
 
 func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {

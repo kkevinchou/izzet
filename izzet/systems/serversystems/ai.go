@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -37,7 +38,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 
 		if aiComponent.PatrolConfig != nil {
 			target := aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
-			if startPosition.Sub(target).Len() < 5 {
+			if startPosition.Sub(target).Len() < 1 {
 				aiComponent.PatrolConfig.Index = (aiComponent.PatrolConfig.Index + 1) % len(aiComponent.PatrolConfig.Points)
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
@@ -71,7 +72,50 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 		}
 
 		if aiComponent.PathfindConfig != nil {
+			if aiComponent.PathfindConfig.State == entities.PathfindingStateGoalSet {
+				_, straightPath, success := navmesh.FindPath(s.app.NavMesh(), entity.Position(), aiComponent.PathfindConfig.Goal)
+				if success {
+					aiComponent.PathfindConfig.Path = straightPath
+					aiComponent.PathfindConfig.NextTarget = 1
+					aiComponent.PathfindConfig.State = entities.PathfindingStatePathing
+				}
+			}
 
+			if aiComponent.PathfindConfig.State == entities.PathfindingStatePathing {
+				path := aiComponent.PathfindConfig.Path
+
+				targetIndex := aiComponent.PathfindConfig.NextTarget
+				target := aiComponent.PathfindConfig.Path[targetIndex]
+
+				var atGoal bool
+				if startPosition.Sub(target).Len() < 1 {
+					if targetIndex == len(path)-1 {
+						aiComponent.PathfindConfig.Path = nil
+						aiComponent.PathfindConfig.NextTarget = -1
+						atGoal = true
+					} else {
+						targetIndex = (targetIndex + 1) % len(path)
+						aiComponent.PathfindConfig.NextTarget = targetIndex
+						target = aiComponent.PathfindConfig.Path[targetIndex]
+					}
+				}
+
+				if !atGoal {
+					dir := target.Sub(entity.Position())
+					if dir.LenSqr() > 0 {
+						dir = dir.Normalize()
+						newPosition := startPosition.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+						entities.SetLocalPosition(entity, newPosition)
+
+						if dir != apputils.ZeroVec {
+							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+							entities.SetLocalRotation(entity, newRotation)
+						}
+					}
+				} else {
+					aiComponent.PathfindConfig.State = entities.PathfindingStateNoGoal
+				}
+			}
 		}
 	}
 }

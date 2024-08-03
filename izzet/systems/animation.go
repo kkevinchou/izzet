@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
 type AnimationSystem struct {
@@ -41,7 +42,11 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 				animationPlayer.PlayAnimation(animationName)
 			} else if entity.AIComponent != nil {
-				animationName := "Running"
+
+				animationName := "Velociraptor_Run"
+				if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
+					animationName = "Velociraptor_Idle"
+				}
 				animationPlayer := entity.Animation.AnimationPlayer
 				animationPlayer.PlayAnimation(animationName)
 			}

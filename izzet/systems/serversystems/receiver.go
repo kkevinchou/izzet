@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -51,7 +52,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 						if e.AIComponent == nil {
 							continue
 						}
-						e.AIComponent.PathfindConfig.Target = rpc.Pathfind.Target
+						e.AIComponent.PathfindConfig.Goal = rpc.Pathfind.Goal
+						e.AIComponent.PathfindConfig.State = entities.PathfindingStateGoalSet
 					}
 				}
 			case <-player.DisconnectChannel:

@@ -44,7 +44,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			} else if entity.AIComponent != nil {
 
 				animationName := "Velociraptor_Run"
-				if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
+				if entity.AIComponent.State == entities.AIStateAttack {
+					animationName = "Velociraptor_Attack"
+				} else if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
 					animationName = "Velociraptor_Idle"
 				}
 				animationPlayer := entity.Animation.AnimationPlayer

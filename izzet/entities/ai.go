@@ -8,7 +8,18 @@ type AIComponent struct {
 	TargetConfig   *TargetConfig
 	PathfindConfig *PathfindConfig
 	Speed          float64
+
+	AttackConfig *AttackConfig
+	State        AIState
 }
+
+type AIState string
+
+var (
+	AIStateIdle    AIState = "IDLE"
+	AIStateAttack  AIState = "ATTACK"
+	AIStatePathing AIState = "PATHING"
+)
 
 type TargetConfig struct {
 	Direction mgl64.Vec3
@@ -19,10 +30,8 @@ type PatrolConfig struct {
 	Index  int
 }
 
-// states:
-// goal set
-// pathing
-// no goal set
+type AttackConfig struct {
+}
 
 type PathfindingState string
 

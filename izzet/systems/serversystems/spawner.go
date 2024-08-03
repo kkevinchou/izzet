@@ -43,9 +43,10 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 				CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
 			}
 
-			primitives := s.app.AssetManager().GetPrimitives(handle)
-			verts := assets.UniqueVerticesFromPrimitives(primitives)
-			c := collider.NewCapsuleFromVertices(verts)
+			// primitives := s.app.AssetManager().GetPrimitives(handle)
+			// verts := assets.UniqueVerticesFromPrimitives(primitives)
+			// c := collider.NewCapsuleFromVertices(verts)
+			c := collider.NewCapsule(mgl64.Vec3{0, 4, 0}, mgl64.Vec3{0, 2, 0}, 2)
 			entity.Collider.CapsuleCollider = &c
 
 			capsule := entity.Collider.CapsuleCollider
@@ -64,6 +65,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 				// TargetConfig: &entities.TargetConfig{},
 				// PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {100, 10, 0}}},
 				PathfindConfig: &entities.PathfindConfig{},
+				AttackConfig:   &entities.AttackConfig{},
 			}
 
 			world := s.app.World()

@@ -1,6 +1,7 @@
 package serversystems
 
 import (
+	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -113,6 +114,41 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 						}
 					}
 				} else {
+					aiComponent.PathfindConfig.State = entities.PathfindingStateNoGoal
+				}
+			}
+		}
+
+		if aiComponent.AttackConfig != nil {
+			closestDist := math.MaxFloat64
+			var dirToTarget mgl64.Vec3
+			var closestEntity *entities.Entity
+
+			for _, targetEntity := range world.Entities() {
+				if entity.ID == targetEntity.ID {
+					continue
+				}
+
+				if targetEntity.AIComponent == nil || targetEntity.AIComponent.AttackConfig == nil {
+					continue
+				}
+
+				vecToTarget := targetEntity.Position().Sub(entity.Position())
+				if vecToTarget.Len() < closestDist {
+					closestDist = vecToTarget.Len()
+					closestEntity = targetEntity
+					dirToTarget = vecToTarget.Normalize()
+				}
+			}
+
+			if closestEntity != nil {
+				if closestDist > 4 {
+					aiComponent.PathfindConfig.Goal = closestEntity.Position()
+					aiComponent.PathfindConfig.State = entities.PathfindingStateGoalSet
+				} else {
+					aiComponent.State = entities.AIStateAttack
+					newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{dirToTarget.X(), 0, dirToTarget.Z()})
+					entities.SetLocalRotation(entity, newRotation)
 					aiComponent.PathfindConfig.State = entities.PathfindingStateNoGoal
 				}
 			}

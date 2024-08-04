@@ -1,6 +1,7 @@
 package serversystems
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -35,15 +36,18 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 			continue
 		}
 
-		startPosition := entity.Position()
+		position := entity.Position()
+		if position.Y() > 47.3 {
+			fmt.Println("HI")
+		}
 
 		if aiComponent.PatrolConfig != nil {
 			target := aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
-			if startPosition.Sub(target).Len() < 1 {
+			if position.Sub(target).Len() < 1 {
 				aiComponent.PatrolConfig.Index = (aiComponent.PatrolConfig.Index + 1) % len(aiComponent.PatrolConfig.Points)
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
-			movementDirection := target.Sub(startPosition).Normalize()
+			movementDirection := target.Sub(position).Normalize()
 			entity.Physics.Velocity = movementDirection.Mul(aiComponent.Speed)
 		}
 
@@ -61,7 +65,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
-					newPosition := startPosition.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+					newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
 					entities.SetLocalPosition(entity, newPosition)
 
 					if dir != apputils.ZeroVec {
@@ -91,7 +95,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				target := aiComponent.PathfindConfig.Path[targetIndex]
 
 				var atGoal bool
-				if startPosition.Sub(target).Len() < 1 {
+				if position.Sub(target).Len() < 1 {
 					if targetIndex == len(path)-1 {
 						aiComponent.PathfindConfig.Path = nil
 						aiComponent.PathfindConfig.NextTarget = -1
@@ -104,10 +108,12 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 
 				if !atGoal {
-					dir := target.Sub(entity.Position())
+					vecToTarget2D := target.Sub(position)
+					vecToTarget2D[1] = 0
+					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						newPosition := startPosition.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+						newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
 						entities.SetLocalPosition(entity, newPosition)
 
 						if dir != apputils.ZeroVec {

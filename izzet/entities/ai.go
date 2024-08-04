@@ -44,6 +44,7 @@ var (
 type PathfindConfig struct {
 	Goal       mgl64.Vec3
 	Path       []mgl64.Vec3
+	PolyPath   []int
 	NextTarget int
 	State      PathfindingState
 }

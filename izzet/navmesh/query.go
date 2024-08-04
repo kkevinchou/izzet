@@ -26,7 +26,7 @@ type Node struct {
 var PATHPOLYGONS map[int]bool
 var PATHVERTICES []mgl64.Vec3
 
-func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) ([]int, []mgl64.Vec3, bool) {
+func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	tile := nm.Tiles[0]
 
 	// start = mgl64.Vec3{-5.953646739493656, 46.86907447625646, -5.199594605599351}
@@ -129,9 +129,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) ([]int, []mgl64.Vec3,
 	}
 	slices.Reverse(path)
 
-	PATHVERTICES = FindStraightPath(tile, start, goal, path)
-
-	return path, PATHVERTICES, true
+	return path
 }
 
 func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {

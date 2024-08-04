@@ -224,7 +224,6 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 			point, success := g.intersectRayWithEntities(position, nearPlanePosition.Sub(position).Normalize())
 
 			if success {
-				fmt.Println(point)
 				rpcMessage := network.RPCMessage{
 					Pathfind: &network.Pathfind{Goal: point},
 				}

@@ -16,7 +16,7 @@ const (
 type RenderContext interface {
 	Width() int
 	Height() int
-	AspectRatio() float64
+	AspectRatio() float32
 }
 
 type GameWorld interface {

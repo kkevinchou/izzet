@@ -1,10 +1,11 @@
 package entities
 
 import (
-	"math/rand"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"math/rand"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -17,15 +18,15 @@ type ParticleGenerator struct {
 	Accumulator time.Duration
 
 	ParticleList []Particle
-	Position     mgl64.Vec3
+	Position     mgl32.Vec3
 
 	MaxParticles int
 	InsertCursor int
 }
 
 type Particle struct {
-	Position mgl64.Vec3
-	Velocity mgl64.Vec3
+	Position mgl32.Vec3
+	Velocity mgl32.Vec3
 	Active   bool
 }
 
@@ -36,7 +37,7 @@ func NewParticleGenerator(maxParticles int) *ParticleGenerator {
 	}
 }
 
-func (p *ParticleGenerator) SetPosition(position mgl64.Vec3) {
+func (p *ParticleGenerator) SetPosition(position mgl32.Vec3) {
 	p.Position = position
 }
 
@@ -48,18 +49,18 @@ func (p *ParticleGenerator) Update(delta time.Duration) {
 		if !particle.Active {
 			continue
 		}
-		p.ParticleList[i].Position = particle.Position.Add(particle.Velocity.Mul(delta.Seconds()))
+		p.ParticleList[i].Position = particle.Position.Add(particle.Velocity.Mul(float32(delta.Seconds())))
 	}
 
 	for p.Accumulator > particleSpawnTimer {
 		p.Accumulator -= particleSpawnTimer
 
-		x := rand.Float64()*2 - 1
-		y := rand.Float64()*2 - 1
-		z := rand.Float64()*2 - 1
+		x := rand.Float32()*2 - 1
+		y := rand.Float32()*2 - 1
+		z := rand.Float32()*2 - 1
 		p.ParticleList[p.InsertCursor%p.MaxParticles] = Particle{
 			Position: p.Position,
-			Velocity: mgl64.Vec3{x, y, z}.Mul(particleSpeed),
+			Velocity: mgl32.Vec3{x, y, z}.Mul(particleSpeed),
 			Active:   true,
 		}
 		p.InsertCursor++

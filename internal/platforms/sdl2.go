@@ -42,7 +42,7 @@ func NewSDLPlatform() (*SDLPlatform, *SDLWindow, error) {
 
 func (platform *SDLPlatform) ProcessEvents(inputCollector InputCollector) {
 	x, y, mouseState := sdl.GetMouseState()
-	inputCollector.SetMousePosition(float64(x), float64(y))
+	inputCollector.SetMousePosition(float32(x), float32(y))
 	for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
 		enabled := mouseState&sdl.Button(button) != 0
 		inputCollector.SetMouseButtonState(i, enabled)
@@ -83,10 +83,10 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 			deltaY--
 		}
 		platform.imguiIO.AddMouseWheelDelta(deltaX, deltaY)
-		inputCollector.AddMouseWheelDelta(float64(deltaX), float64(deltaY))
+		inputCollector.AddMouseWheelDelta(float32(deltaX), float32(deltaY))
 	case sdl.MOUSEMOTION:
 		motionEvent := event.(*sdl.MouseMotionEvent)
-		inputCollector.AddMouseMotion(float64(motionEvent.XRel), float64(motionEvent.YRel))
+		inputCollector.AddMouseMotion(float32(motionEvent.XRel), float32(motionEvent.YRel))
 	case sdl.MOUSEBUTTONDOWN:
 		buttonEvent := event.(*sdl.MouseButtonEvent)
 		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {

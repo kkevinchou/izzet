@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
@@ -50,7 +50,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 		if aiComponent.RotationConfig != nil {
 			r := entities.GetLocalRotation(entity)
 			finalRotation := aiComponent.RotationConfig.Quat.Mul(r)
-			frameRotation := utils.QInterpolate64(r, finalRotation, float64(delta.Milliseconds())/1000)
+			frameRotation := utils.QInterpolate64(r, finalRotation, float32(delta.Milliseconds())/1000)
 			entities.SetLocalRotation(entity, frameRotation)
 		}
 
@@ -61,11 +61,11 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
-					newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+					newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float32(delta.Milliseconds())))
 					entities.SetLocalPosition(entity, newPosition)
 
 					if dir != apputils.ZeroVec {
-						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+						newRotation := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, -1}, dir)
 						entities.SetLocalRotation(entity, newRotation)
 					}
 				}
@@ -109,11 +109,11 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
+						newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float32(delta.Milliseconds())))
 						entities.SetLocalPosition(entity, newPosition)
 
 						if dir != apputils.ZeroVec {
-							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+							newRotation := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, -1}, dir)
 							entities.SetLocalRotation(entity, newRotation)
 						}
 					}
@@ -124,8 +124,8 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 		}
 
 		if aiComponent.AttackConfig != nil {
-			closestDist := math.MaxFloat64
-			var dirToTarget mgl64.Vec3
+			var closestDist float32 = math.MaxFloat32
+			var dirToTarget mgl32.Vec3
 			var closestEntity *entities.Entity
 
 			for _, targetEntity := range world.Entities() {
@@ -151,7 +151,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 					aiComponent.PathfindConfig.State = entities.PathfindingStateGoalSet
 				} else {
 					aiComponent.State = entities.AIStateAttack
-					newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{dirToTarget.X(), 0, dirToTarget.Z()})
+					newRotation := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, -1}, mgl32.Vec3{dirToTarget.X(), 0, dirToTarget.Z()})
 					entities.SetLocalRotation(entity, newRotation)
 					aiComponent.PathfindConfig.State = entities.PathfindingStateNoGoal
 				}

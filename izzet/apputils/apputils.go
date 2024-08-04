@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/input"
@@ -22,18 +22,23 @@ func GenBuffers(n int32, buffer *uint32) {
 	gl.GenBuffers(n, buffer)
 }
 
-var ZeroVec = mgl64.Vec3{}
+var ZeroVec = mgl32.Vec3{}
 
-func Vec3ApproxEqualThreshold(v1 mgl64.Vec3, v2 mgl64.Vec3, threshold float64) bool {
-	return v1.ApproxFuncEqual(v2, func(a, b float64) bool {
-		return math.Abs(a-b) < threshold
+func Vec3ApproxEqualThreshold(v1 mgl32.Vec3, v2 mgl32.Vec3, threshold float32) bool {
+	return v1.ApproxFuncEqual(v2, func(a, b float32) bool {
+		return F32Abs(a-b) < threshold
 	})
 }
 
-func Vec4ApproxEqualThreshold(v1 mgl64.Vec4, v2 mgl64.Vec4, threshold float64) bool {
-	return v1.ApproxFuncEqual(v2, func(a, b float64) bool {
-		return math.Abs(a-b) < threshold
+func Vec4ApproxEqualThreshold(v1 mgl32.Vec4, v2 mgl32.Vec4, threshold float32) bool {
+	return v1.ApproxFuncEqual(v2, func(a, b float32) bool {
+		return F32Abs(a-b) < threshold
 	})
+}
+
+func F32Abs(x float32) float32 {
+	return float32(math.Abs(float64(x)))
+
 }
 
 func CalculateFooterSize(uiEnabled bool) float32 {
@@ -47,14 +52,14 @@ func PathToProjectFile(projectName string) string {
 	return filepath.Join(settings.ProjectsDirectory, projectName, "main_project.izt")
 }
 
-var zeroVec mgl64.Vec3
+var zeroVec mgl32.Vec3
 
-func IsZeroVec(v mgl64.Vec3) bool {
+func IsZeroVec(v mgl32.Vec3) bool {
 	return v == zeroVec
 }
 
-func GetControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {
-	var controlVector mgl64.Vec3
+func GetControlVector(keyboardInput input.KeyboardInput) mgl32.Vec3 {
+	var controlVector mgl32.Vec3
 	if _, ok := keyboardInput[input.KeyboardKeyW]; ok {
 		controlVector[2]++
 	}

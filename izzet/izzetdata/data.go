@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type EntityAsset struct {
@@ -14,13 +14,13 @@ type EntityAsset struct {
 	Static       bool
 	Physics      *Physics
 
-	Translation *mgl64.Vec3
-	Rotation    *mgl64.Quat
-	Scale       *mgl64.Vec3
+	Translation *mgl32.Vec3
+	Rotation    *mgl32.Quat
+	Scale       *mgl32.Vec3
 }
 
 type Physics struct {
-	Velocity mgl64.Vec3
+	Velocity mgl32.Vec3
 }
 
 type Collider struct {

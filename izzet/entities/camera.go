@@ -1,8 +1,8 @@
 package entities
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
 type CameraComponent struct {
-	TargetPositionOffset mgl64.Vec3
+	TargetPositionOffset mgl32.Vec3
 	Target               *int
 }

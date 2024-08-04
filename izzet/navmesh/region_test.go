@@ -3,11 +3,11 @@ package navmesh
 import (
 	"testing"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 func setupCHF() *CompactHeightField {
-	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
+	hf := NewHeightField(100, 100, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{100, 100, 100}, 1, 1)
 
 	// 5x5 voxels on xz plane
 

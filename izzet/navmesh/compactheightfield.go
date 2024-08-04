@@ -1,7 +1,7 @@
 package navmesh
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type CompactCell struct {
@@ -31,14 +31,14 @@ type CompactHeightField struct {
 	spanCount            int
 	walkableHeight       int
 	walkableClimb        int
-	bMin, bMax           mgl64.Vec3
+	bMin, bMax           mgl32.Vec3
 	cells                []CompactCell
 	spans                []CompactSpan
 	Distances            []int
 	areas                []AREA_TYPE
 	maxDistance          int
 	maxRegionID          int
-	CellSize, CellHeight float64
+	CellSize, CellHeight float32
 }
 
 func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *CompactHeightField {
@@ -51,7 +51,7 @@ func NewCompactHeightField(walkableHeight, walkableClimb int, hf *HeightField) *
 	chf.walkableClimb = walkableClimb
 	chf.bMin = hf.BMin
 	chf.bMax = hf.BMax
-	chf.bMax[1] += float64(walkableHeight)
+	chf.bMax[1] += float32(walkableHeight)
 	chf.cells = make([]CompactCell, chf.width*chf.height)
 	chf.spans = make([]CompactSpan, chf.spanCount)
 	chf.areas = make([]AREA_TYPE, chf.spanCount)
@@ -148,11 +148,11 @@ func (chf *CompactHeightField) Height() int {
 	return chf.height
 }
 
-func (chf *CompactHeightField) BMin() mgl64.Vec3 {
+func (chf *CompactHeightField) BMin() mgl32.Vec3 {
 	return chf.bMin
 }
 
-func (chf *CompactHeightField) BMax() mgl64.Vec3 {
+func (chf *CompactHeightField) BMax() mgl32.Vec3 {
 	return chf.bMax
 }
 

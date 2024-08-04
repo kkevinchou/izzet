@@ -1,54 +1,54 @@
 package render
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
-func computeCubeMapTransforms(position mgl64.Vec3, near, far float64) []mgl64.Mat4 {
-	projectionMatrix := mgl64.Perspective(mgl64.DegToRad(90), float64(settings.DepthCubeMapWidth)/float64(settings.DepthCubeMapHeight), near, far)
+func computeCubeMapTransforms(position mgl32.Vec3, near, far float32) []mgl32.Mat4 {
+	projectionMatrix := mgl32.Perspective(mgl32.DegToRad(90), float32(settings.DepthCubeMapWidth)/float32(settings.DepthCubeMapHeight), near, far)
 
-	cubeMapTransforms := []mgl64.Mat4{
+	cubeMapTransforms := []mgl32.Mat4{
 		projectionMatrix.Mul4( // right
-			mgl64.LookAtV(
+			mgl32.LookAtV(
 				position,
-				position.Add(mgl64.Vec3{1, 0, 0}),
-				mgl64.Vec3{0, -1, 0},
+				position.Add(mgl32.Vec3{1, 0, 0}),
+				mgl32.Vec3{0, -1, 0},
 			),
 		),
 		projectionMatrix.Mul4( // left
-			mgl64.LookAtV(
+			mgl32.LookAtV(
 				position,
-				position.Add(mgl64.Vec3{-1, 0, 0}),
-				mgl64.Vec3{0, -1, 0},
+				position.Add(mgl32.Vec3{-1, 0, 0}),
+				mgl32.Vec3{0, -1, 0},
 			),
 		),
 		projectionMatrix.Mul4( // up
-			mgl64.LookAtV(
+			mgl32.LookAtV(
 				position,
-				position.Add(mgl64.Vec3{0, 1, 0}),
-				mgl64.Vec3{0, 0, 1},
+				position.Add(mgl32.Vec3{0, 1, 0}),
+				mgl32.Vec3{0, 0, 1},
 			),
 		),
 		projectionMatrix.Mul4( // down
-			mgl64.LookAtV(
+			mgl32.LookAtV(
 				position,
-				position.Add(mgl64.Vec3{0, -1, 0}),
-				mgl64.Vec3{0, 0, -1},
+				position.Add(mgl32.Vec3{0, -1, 0}),
+				mgl32.Vec3{0, 0, -1},
 			),
 		),
 		projectionMatrix.Mul4( // back
-			mgl64.LookAtV(
+			mgl32.LookAtV(
 				position,
-				position.Add(mgl64.Vec3{0, 0, 1}),
-				mgl64.Vec3{0, -1, 0},
+				position.Add(mgl32.Vec3{0, 0, 1}),
+				mgl32.Vec3{0, -1, 0},
 			),
 		),
 		projectionMatrix.Mul4( // front
-			mgl64.LookAtV(
+			mgl32.LookAtV(
 				position,
-				position.Add(mgl64.Vec3{0, 0, -1}),
-				mgl64.Vec3{0, -1, 0},
+				position.Add(mgl32.Vec3{0, 0, -1}),
+				mgl32.Vec3{0, -1, 0},
 			),
 		),
 	}

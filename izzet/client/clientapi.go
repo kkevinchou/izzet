@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
@@ -71,11 +71,11 @@ func (g *Client) AssetManager() *assets.AssetManager {
 	return g.assetManager
 }
 
-func (g *Client) GetEditorCameraPosition() mgl64.Vec3 {
+func (g *Client) GetEditorCameraPosition() mgl32.Vec3 {
 	return g.camera.Position
 }
 
-func (g *Client) GetEditorCameraRotation() mgl64.Quat {
+func (g *Client) GetEditorCameraRotation() mgl32.Quat {
 	return g.camera.Rotation
 }
 
@@ -411,7 +411,7 @@ func (g *Client) initialize() {
 
 	g.camera = &editorcamera.Camera{
 		Position: settings.EditorCameraStartPosition,
-		Rotation: mgl64.QuatIdent(),
+		Rotation: mgl32.QuatIdent(),
 	}
 
 	g.editHistory = edithistory.New()
@@ -627,14 +627,14 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	node := scene.Nodes[0]
 
 	entity := entities.InstantiateEntity(entityHandle)
-	entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+	entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl32.Ident4(), Visible: true, ShadowCasting: true}
 	var vertices []modelspec.Vertex
 	entities.VerticesFromNode(node, document, &vertices)
 	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-	entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-	entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-	entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-	// entities.SetScale(entity, mgl64.Vec3{4, 4, 4})
+	entities.SetLocalPosition(entity, node.Translation)
+	entities.SetLocalRotation(entity, node.Rotation)
+	entities.SetScale(entity, node.Scale)
+	// entities.SetScale(entity, mgl32.Vec3{4, 4, 4})
 
 	primitives := g.AssetManager().GetPrimitives(handle)
 	if len(primitives) > 0 {
@@ -648,7 +648,7 @@ func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	return entity
 }
 
-func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, sampleDist float64, maxError float64) {
+func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, sampleDist float32, maxError float32) {
 	start := time.Now()
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
@@ -662,15 +662,15 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	walkableHeight = (int(math.Ceil(float64(walkableHeight) / float64(ch))))
 	climbableHeight = (int(math.Floor(float64(climbableHeight) / float64(ch))))
 
-	minVertex := mgl64.Vec3{-100.0, -50.0, -100.0}
-	maxVertex := mgl64.Vec3{100.0, 200.0, 100.0}
+	minVertex := mgl32.Vec3{-100.0, -50.0, -100.0}
+	maxVertex := mgl32.Vec3{100.0, 200.0, 100.0}
 
-	hfWidth := int((maxVertex.X()-minVertex.X())/float64(cs) + 0.5)
-	hfHeight := int((maxVertex.Z()-minVertex.Z())/float64(cs) + 0.5)
+	hfWidth := int((maxVertex.X()-minVertex.X())/float32(cs) + 0.5)
+	hfHeight := int((maxVertex.Z()-minVertex.Z())/float32(cs) + 0.5)
 	nmbb := collider.BoundingBox{MinVertex: minVertex, MaxVertex: maxVertex}
 
-	hf := navmesh.NewHeightField(hfWidth, hfHeight, minVertex, maxVertex, float64(cs), float64(ch))
-	var debugLines [][2]mgl64.Vec3
+	hf := navmesh.NewHeightField(hfWidth, hfHeight, minVertex, maxVertex, float32(cs), float32(ch))
+	var debugLines [][2]mgl32.Vec3
 
 	world := app.World()
 	for _, entity := range world.Entities() {
@@ -694,14 +694,14 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 		}
 
 		primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-		transform := utils.Mat4F64ToF32(entities.WorldTransform(entity))
-		up := mgl64.Vec3{0, 1, 0}
+		transform := entities.WorldTransform(entity)
+		up := mgl32.Vec3{0, 1, 0}
 
 		for _, p := range primitives {
 			for i := 0; i < len(p.Primitive.Vertices); i += 3 {
-				v1 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i].Position.Vec4(1)).Vec3())
-				v2 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3())
-				v3 := utils.Vec3F32ToF64(transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3())
+				v1 := transform.Mul4x1(p.Primitive.Vertices[i].Position.Vec4(1)).Vec3()
+				v2 := transform.Mul4x1(p.Primitive.Vertices[i+1].Position.Vec4(1)).Vec3()
+				v3 := transform.Mul4x1(p.Primitive.Vertices[i+2].Position.Vec4(1)).Vec3()
 
 				tv1 := v2.Sub(v1)
 				tv2 := v3.Sub(v2)
@@ -709,7 +709,7 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 				normal := tv1.Cross(tv2).Normalize()
 				isUp := normal.Dot(up) >= 0.7
 
-				navmesh.RasterizeTriangle(v1, v2, v3, float64(cs), float64(ch), hf, isUp, climbableHeight)
+				navmesh.RasterizeTriangle(v1, v2, v3, float32(cs), float32(ch), hf, isUp, climbableHeight)
 			}
 		}
 	}
@@ -760,7 +760,7 @@ func (g *Client) MaterialBrowser() *materialbrowser.MaterialBrowser {
 	return g.project.MaterialBrowser
 }
 
-func (g *Client) FindPath(start, goal mgl64.Vec3) {
+func (g *Client) FindPath(start, goal mgl32.Vec3) {
 	g.navMesh.Invalidated = true
 	c := navmesh.CompileNavMesh(g.navMesh)
 	path := navmesh.FindPath(c, start, goal)

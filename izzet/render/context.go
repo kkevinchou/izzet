@@ -3,20 +3,20 @@ package render
 import (
 	"math"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
 type ViewerContext struct {
-	Position mgl64.Vec3
-	Rotation mgl64.Quat
+	Position mgl32.Vec3
+	Rotation mgl32.Quat
 
-	InverseViewMatrix mgl64.Mat4
-	ProjectionMatrix  mgl64.Mat4
+	InverseViewMatrix mgl32.Mat4
+	ProjectionMatrix  mgl32.Mat4
 }
 
 type LightContext struct {
-	LightSpaceMatrix mgl64.Mat4
+	LightSpaceMatrix mgl32.Mat4
 	Lights           []*entities.Entity
 	PointLights      []*entities.Entity
 }
@@ -24,19 +24,19 @@ type LightContext struct {
 type RenderContext struct {
 	width       int
 	height      int
-	aspectRatio float64
-	fovX        float64
-	fovY        float64
+	aspectRatio float32
+	fovX        float32
+	fovY        float32
 }
 
-func NewRenderContext(width, height int, fovX float64) RenderContext {
-	aspectRatio := float64(width) / float64(height)
+func NewRenderContext(width, height int, fovX float32) RenderContext {
+	aspectRatio := float32(width) / float32(height)
 	return RenderContext{
 		width:       width,
 		height:      height,
 		aspectRatio: aspectRatio,
 		fovX:        fovX,
-		fovY:        mgl64.RadToDeg(2 * math.Atan(math.Tan(mgl64.DegToRad(fovX)/2)/aspectRatio)),
+		fovY:        mgl32.RadToDeg(2 * float32(math.Atan(math.Tan(float64(mgl32.DegToRad(fovX)/2)/float64(aspectRatio))))),
 	}
 }
 
@@ -46,12 +46,12 @@ func (r RenderContext) Width() int {
 func (r RenderContext) Height() int {
 	return r.height
 }
-func (r RenderContext) AspectRatio() float64 {
+func (r RenderContext) AspectRatio() float32 {
 	return r.aspectRatio
 }
-func (r RenderContext) FovX() float64 {
+func (r RenderContext) FovX() float32 {
 	return r.fovX
 }
-func (r RenderContext) FovY() float64 {
+func (r RenderContext) FovY() float32 {
 	return r.fovY
 }

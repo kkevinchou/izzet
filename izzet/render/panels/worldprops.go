@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
@@ -57,7 +57,7 @@ func worldProps(app renderiface.App) {
 		}, true)
 
 		panelutils.SetupRow("Camera Viewing Direction", func() {
-			viewDir := runtimeConfig.CameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
+			viewDir := runtimeConfig.CameraRotation.Rotate(mgl32.Vec3{0, 0, -1})
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
 
@@ -223,8 +223,8 @@ func worldProps(app renderiface.App) {
 			walkableHeight := int(runtimeConfig.NavigationMeshWalkableHeight)
 			climbableHeight := int(runtimeConfig.NavigationMeshClimbableHeight)
 			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
-			maxError := float64(runtimeConfig.NavigationmeshMaxError)
-			sampleDist := float64(runtimeConfig.NavigationmeshSampleDist)
+			maxError := float32(runtimeConfig.NavigationmeshMaxError)
+			sampleDist := float32(runtimeConfig.NavigationmeshSampleDist)
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
 		}
 

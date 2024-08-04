@@ -1,9 +1,8 @@
 package navmesh
 
 import (
-	"math"
-
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 )
 
 type Span struct {
@@ -15,13 +14,13 @@ type Span struct {
 
 type HeightField struct {
 	Width, Height        int
-	BMin, BMax           mgl64.Vec3
-	CellSize, CellHeight float64
+	BMin, BMax           mgl32.Vec3
+	CellSize, CellHeight float32
 
 	Spans []*Span
 }
 
-func NewHeightField(width, height int, bMin, bMax mgl64.Vec3, cellSize, cellHeight float64) *HeightField {
+func NewHeightField(width, height int, bMin, bMax mgl32.Vec3, cellSize, cellHeight float32) *HeightField {
 	return &HeightField{
 		Width:      width,
 		Height:     height,
@@ -81,7 +80,7 @@ func (hf *HeightField) AddSpan(x, z, sMin, sMax int, walkable bool, areaMergeThr
 			}
 
 			// merge flags
-			if int(math.Abs(float64(newSpan.Max-currentSpan.Max))) <= areaMergeThreshold {
+			if int(apputils.F32Abs(float32(newSpan.Max-currentSpan.Max))) <= areaMergeThreshold {
 				// higher area ID numbers indicate higher resolution priority
 				// NULL_AREA is the smallest
 				// WALKABLE_AREA is the largest

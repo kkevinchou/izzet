@@ -1,9 +1,9 @@
 package fonts
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
 type Glyph struct {
-	TextureCoords mgl64.Vec2
+	TextureCoords mgl32.Vec2
 	Width         int
 	Height        int
 }

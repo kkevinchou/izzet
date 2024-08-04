@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -159,12 +159,12 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			width, height := g.renderer.GameWindowSize()
 			ctx := g.renderer.CameraViewerContext()
 
-			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
+			xNDC := (mousePosition.X()/float32(width) - 0.5) * 2
 
-			menuBarSize := float64(render.CalculateMenuBarHeight())
-			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
+			menuBarSize := float32(render.CalculateMenuBarHeight())
+			yNDC := ((float32(height)-mousePosition.Y()+menuBarSize)/float32(height) - 0.5) * 2
 
-			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl32.Vec3{xNDC, yNDC, -float32(g.RuntimeConfig().Near)})
 			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
 
 			if success {
@@ -183,12 +183,12 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			width, height := g.renderer.GameWindowSize()
 			ctx := g.renderer.CameraViewerContext()
 
-			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
+			xNDC := (mousePosition.X()/float32(width) - 0.5) * 2
 
-			menuBarSize := float64(render.CalculateMenuBarHeight())
-			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
+			menuBarSize := float32(render.CalculateMenuBarHeight())
+			yNDC := ((float32(height)-mousePosition.Y()+menuBarSize)/float32(height) - 0.5) * 2
 
-			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl32.Vec3{xNDC, yNDC, -float32(g.RuntimeConfig().Near)})
 			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
 
 			if success {
@@ -213,12 +213,12 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 			width, height := g.renderer.GameWindowSize()
 			ctx := g.renderer.CameraViewerContext()
 
-			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
+			xNDC := (mousePosition.X()/float32(width) - 0.5) * 2
 
-			menuBarSize := float64(render.CalculateMenuBarHeight())
-			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
+			menuBarSize := float32(render.CalculateMenuBarHeight())
+			yNDC := ((float32(height)-mousePosition.Y()+menuBarSize)/float32(height) - 0.5) * 2
 
-			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl32.Vec3{xNDC, yNDC, -float32(g.RuntimeConfig().Near)})
 			camera := g.GetPlayerCamera()
 			position := camera.Position()
 			point, success := g.intersectRayWithEntities(position, nearPlanePosition.Sub(position).Normalize())
@@ -272,11 +272,11 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 
 }
 
-func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
+func (g *Client) intersectRayWithEntities(position, dir mgl32.Vec3) (mgl32.Vec3, bool) {
 	var hit bool
-	var hitPoint mgl64.Vec3
+	var hitPoint mgl32.Vec3
 
-	minDistSq := math.MaxFloat64
+	var minDistSq float32 = math.MaxFloat32
 
 	for _, entity := range g.world.Entities() {
 		if entity.Collider == nil || entity.Collider.TriMeshCollider == nil {
@@ -309,33 +309,33 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 
-	var viewRotation mgl64.Vec2
-	var controlVector mgl64.Vec3
+	var viewRotation mgl32.Vec2
+	var controlVector mgl32.Vec3
 	if g.relativeMouseActive {
-		var xRel, yRel float64
-		var mouseSensitivity float64 = 0.003
+		var xRel, yRel float32
+		var mouseSensitivity float32 = 0.003
 		if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {
 			xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 			yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 		}
-		viewRotation = mgl64.Vec2{xRel, yRel}
+		viewRotation = mgl32.Vec2{xRel, yRel}
 		controlVector = apputils.GetControlVector(keyboardInput)
 	}
 
-	forwardVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
-	upVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 1, 0})
+	forwardVector := g.camera.Rotation.Rotate(mgl32.Vec3{0, 0, -1})
+	upVector := g.camera.Rotation.Rotate(mgl32.Vec3{0, 1, 0})
 	// there's probably away to get the right vector directly rather than going crossing the up vector :D
 	rightVector := forwardVector.Cross(upVector)
 
 	// calculate the quaternion for the delta in rotation
-	deltaRotationX := mgl64.QuatRotate(viewRotation[1], rightVector)         // pitch
-	deltaRotationY := mgl64.QuatRotate(viewRotation[0], mgl64.Vec3{0, 1, 0}) // yaw
+	deltaRotationX := mgl32.QuatRotate(viewRotation[1], rightVector)         // pitch
+	deltaRotationY := mgl32.QuatRotate(viewRotation[0], mgl32.Vec3{0, 1, 0}) // yaw
 	deltaRotation := deltaRotationY.Mul(deltaRotationX)
 
 	newRotation := deltaRotation.Mul(g.camera.Rotation)
 
 	// don't let the camera go upside down
-	if newRotation.Rotate(mgl64.Vec3{0, 1, 0})[1] < 0 {
+	if newRotation.Rotate(mgl32.Vec3{0, 1, 0})[1] < 0 {
 		newRotation = g.camera.Rotation
 	}
 
@@ -344,13 +344,13 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 	// keyboardInput := frameInput.KeyboardInput
 	// controlVector := getControlVector(keyboardInput)
 	if !frameInput.MouseInput.MouseButtonState[1] {
-		controlVector = mgl64.Vec3{}
+		controlVector = mgl32.Vec3{}
 	}
 
-	movementVector := rightVector.Mul(controlVector[0]).Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector[1])).Add(forwardVector.Mul(controlVector[2]))
+	movementVector := rightVector.Mul(controlVector[0]).Add(mgl32.Vec3{0, 1, 0}.Mul(controlVector[1])).Add(forwardVector.Mul(controlVector[2]))
 
-	if !movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
-		if g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+	if !movementVector.ApproxEqual(mgl32.Vec3{0, 0, 0}) {
+		if g.camera.LastFrameMovementVector.ApproxEqual(mgl32.Vec3{0, 0, 0}) {
 			// this is the starting speed that the camera accelerates from
 			g.camera.Speed = settings.CameraSpeed * 0.3
 		} else {
@@ -362,43 +362,43 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 		}
 	}
 
-	if !movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+	if !movementVector.ApproxEqual(mgl32.Vec3{0, 0, 0}) {
 		movementVector = movementVector.Normalize()
 	}
 
-	perFrameMovement := float64(g.camera.Speed) * float64(delta.Milliseconds()) / 1000
+	perFrameMovement := float32(g.camera.Speed) * float32(delta.Milliseconds()) / 1000
 	movementDelta := movementVector.Mul(perFrameMovement)
 
-	if movementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+	if movementVector.ApproxEqual(mgl32.Vec3{0, 0, 0}) {
 		// start drifting if we were moving last frame but not the current one
-		if !g.camera.LastFrameMovementVector.ApproxEqual(mgl64.Vec3{0, 0, 0}) {
+		if !g.camera.LastFrameMovementVector.ApproxEqual(mgl32.Vec3{0, 0, 0}) {
 			g.camera.Drift = g.camera.LastFrameMovementVector.Mul(perFrameMovement)
 		} else {
 			// TODO(kevin) parameterize how slowly we decay based on how long we want to drift for
 			g.camera.Drift = g.camera.Drift.Mul(0.93)
 			if g.camera.Drift.Len() < 0.01 {
-				g.camera.Drift = mgl64.Vec3{}
+				g.camera.Drift = mgl32.Vec3{}
 			}
 		}
 		g.camera.Speed = 0
 	} else {
 		// if we're actively moving the camera, remove all drift
-		g.camera.Drift = mgl64.Vec3{}
+		g.camera.Drift = mgl32.Vec3{}
 	}
 
 	g.camera.Position = g.camera.Position.Add(movementDelta).Add(g.camera.Drift)
 
 	if _, ok := keyboardInput[input.KeyboardKeyUp]; ok {
-		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(settings.CameraSlowSpeed).Mul(float32(delta.Milliseconds()) / 1000))
 	}
 	if _, ok := keyboardInput[input.KeyboardKeyDown]; ok {
-		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(-settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(forwardVector.Mul(-settings.CameraSlowSpeed).Mul(float32(delta.Milliseconds()) / 1000))
 	}
 	if _, ok := keyboardInput[input.KeyboardKeyLeft]; ok {
-		g.camera.Position = g.camera.Position.Add(rightVector.Mul(-settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(rightVector.Mul(-settings.CameraSlowSpeed).Mul(float32(delta.Milliseconds()) / 1000))
 	}
 	if _, ok := keyboardInput[input.KeyboardKeyRight]; ok {
-		g.camera.Position = g.camera.Position.Add(rightVector.Mul(settings.CameraSlowSpeed).Mul(float64(delta.Milliseconds()) / 1000))
+		g.camera.Position = g.camera.Position.Add(rightVector.Mul(settings.CameraSlowSpeed).Mul(float32(delta.Milliseconds()) / 1000))
 	}
 
 	g.camera.LastFrameMovementVector = movementVector
@@ -460,35 +460,35 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			snapSize := int(g.runtimeConfig.RotationSnapSize)
 			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity, snapSize)
 			if delta != nil {
-				var magnitude float64 = 0
+				var magnitude float32 = 0
 
-				if math.Abs(delta.X()) >= math.Abs(delta.Y()) {
+				if apputils.F32Abs(delta.X()) >= apputils.F32Abs(delta.Y()) {
 					magnitude = delta.X()
 				} else {
 					magnitude = delta.Y()
 				}
-				magnitude *= math.Pi / float64(g.runtimeConfig.RotationSensitivity)
+				magnitude *= math.Pi / float32(g.runtimeConfig.RotationSensitivity)
 
-				forwardVector := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
+				forwardVector := g.camera.Rotation.Rotate(mgl32.Vec3{0, 0, -1})
 
-				var newRotationAdjustment mgl64.Quat
+				var newRotationAdjustment mgl32.Quat
 				if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoXDistancePickingID {
-					if forwardVector.Dot(mgl64.Vec3{0, 0, -1}) > 0 {
-						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, -1})
+					if forwardVector.Dot(mgl32.Vec3{0, 0, -1}) > 0 {
+						newRotationAdjustment = mgl32.QuatRotate(magnitude, mgl32.Vec3{0, 0, -1})
 					} else {
-						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 0, 1})
+						newRotationAdjustment = mgl32.QuatRotate(magnitude, mgl32.Vec3{0, 0, 1})
 					}
 				} else if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoYDistancePickingID {
-					if forwardVector.Dot(mgl64.Vec3{1, 0, 0}) > 0 {
-						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{1, 0, 0})
+					if forwardVector.Dot(mgl32.Vec3{1, 0, 0}) > 0 {
+						newRotationAdjustment = mgl32.QuatRotate(magnitude, mgl32.Vec3{1, 0, 0})
 					} else {
-						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{-1, 0, 0})
+						newRotationAdjustment = mgl32.QuatRotate(magnitude, mgl32.Vec3{-1, 0, 0})
 					}
 				} else if gizmo.RotationGizmo.HoveredEntityID == gizmo.GizmoZDistancePickingID {
-					if forwardVector.Dot(mgl64.Vec3{0, -1, 0}) > 0 {
-						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, -1, 0})
+					if forwardVector.Dot(mgl32.Vec3{0, -1, 0}) > 0 {
+						newRotationAdjustment = mgl32.QuatRotate(magnitude, mgl32.Vec3{0, -1, 0})
 					} else {
-						newRotationAdjustment = mgl64.QuatRotate(magnitude, mgl64.Vec3{0, 1, 0})
+						newRotationAdjustment = mgl32.QuatRotate(magnitude, mgl32.Vec3{0, 1, 0})
 					}
 				} else {
 					panic("wat")
@@ -510,14 +510,14 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
 				gizmo.RotationGizmo.ActivationRotation = entities.GetLocalRotation(entity)
-				// gizmo.TranslationGizmo.LastSnapVector = mgl64.Vec3{}
+				// gizmo.TranslationGizmo.LastSnapVector = mgl32.Vec3{}
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
 			snapSize := int(g.runtimeConfig.SnapSize)
 			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity, snapSize)
 			if delta != nil {
-				magnitude := 0.05
+				var magnitude float32 = 0.05
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 					magnitude = 0.005
 				}
@@ -553,14 +553,14 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 }
 
-func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl64.Vec3, gizmo.GizmoEvent) {
+func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl32.Vec3, gizmo.GizmoEvent) {
 	mouseInput := frameInput.MouseInput
 	colorPickingID := g.renderer.HoveredEntityID()
 
 	gameWindowWidth, gameWindowHeight := g.renderer.GameWindowSize()
 	nearPlanePos := g.mousePosToNearPlane(mouseInput.Position, gameWindowWidth, gameWindowHeight)
 
-	cameraViewDir := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
+	cameraViewDir := g.camera.Rotation.Rotate(mgl32.Vec3{0, 0, -1})
 	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, cameraViewDir, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

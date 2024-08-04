@@ -3,7 +3,8 @@ package gizmo
 import (
 	"math"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/kitolib/collision/checks"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
@@ -39,7 +40,7 @@ const (
 	GizmoYDistancePickingID int = 1000000005
 	GizmoZDistancePickingID int = 1000000006
 
-	planeSelectionSensitivity float64 = 0.8
+	planeSelectionSensitivity float32 = 0.8
 )
 
 func init() {
@@ -52,22 +53,22 @@ func init() {
 
 type GizmoAxis struct {
 	DistanceBasedDelta bool
-	Direction          mgl64.Vec3
+	Direction          mgl32.Vec3
 }
 
 type Gizmo struct {
 	EntityIDToAxis         map[int]GizmoAxis
 	HoveredEntityID        int
 	Active                 bool
-	LastFrameClosestPoint  mgl64.Vec3
-	LastFrameMousePosition mgl64.Vec2
+	LastFrameClosestPoint  mgl32.Vec3
+	LastFrameMousePosition mgl32.Vec2
 
-	AccumulatedDelta mgl64.Vec3
-	LastSnapVector   mgl64.Vec3
+	AccumulatedDelta mgl32.Vec3
+	LastSnapVector   mgl32.Vec3
 
-	ActivationPosition mgl64.Vec3
-	ActivationScale    mgl64.Vec3
-	ActivationRotation mgl64.Quat
+	ActivationPosition mgl32.Vec3
+	ActivationScale    mgl32.Vec3
+	ActivationRotation mgl32.Quat
 }
 
 type GizmoEvent string
@@ -79,10 +80,10 @@ const (
 )
 
 type Positionable interface {
-	Position() mgl64.Vec3
+	Position() mgl32.Vec3
 }
 
-func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewDir mgl64.Vec3, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewDir mgl32.Vec3, gizmoPosition mgl32.Vec3, cameraPosition mgl32.Vec3, nearPlanePosition mgl32.Vec3, hoveredEntityID *int, snapSize int) (*mgl32.Vec3, GizmoEvent) {
 	gizmoEvent := GizmoEventNone
 	startStatus := targetGizmo.Active
 	mouseInput := frameInput.MouseInput
@@ -141,7 +142,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 		targetGizmo.Reset()
 	}
 
-	var gizmoDelta *mgl64.Vec3
+	var gizmoDelta *mgl32.Vec3
 
 	if targetGizmo.HoveredEntityID != -1 && mouseInput.MouseButtonState[0] && !mouseInput.MouseMotionEvent.IsZero() {
 		axis := targetGizmo.EntityIDToAxis[targetGizmo.HoveredEntityID]
@@ -154,29 +155,29 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 			targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
 			calculatedPosition := targetGizmo.LastSnapVector.Add(targetGizmo.AccumulatedDelta)
 
-			snappedXPosition := math.Trunc(calculatedPosition.X()/float64(snapSize)) * float64(snapSize)
-			snappedYPosition := math.Trunc(calculatedPosition.Y()/float64(snapSize)) * float64(snapSize)
-			snappedZPosition := math.Trunc(calculatedPosition.Z()/float64(snapSize)) * float64(snapSize)
+			snappedXPosition := float32(math.Trunc(float64(calculatedPosition.X()/float32(snapSize)))) * float32(snapSize)
+			snappedYPosition := float32(math.Trunc(float64(calculatedPosition.Y()/float32(snapSize)))) * float32(snapSize)
+			snappedZPosition := float32(math.Trunc(float64(calculatedPosition.Z()/float32(snapSize)))) * float32(snapSize)
 
-			var snappedDelta mgl64.Vec3
-			if math.Trunc(targetGizmo.LastSnapVector.X()) != snappedXPosition {
-				snapDeltaX := float64(snappedXPosition) - targetGizmo.LastSnapVector.X()
+			var snappedDelta mgl32.Vec3
+			if float32(math.Trunc(float64(targetGizmo.LastSnapVector.X()))) != snappedXPosition {
+				snapDeltaX := float32(snappedXPosition) - targetGizmo.LastSnapVector.X()
 				snappedDelta[0] = snapDeltaX
 
 				gizmoDelta = &snappedDelta
 				targetGizmo.AccumulatedDelta[0] -= snapDeltaX
 				targetGizmo.LastSnapVector[0] += snapDeltaX
 			}
-			if math.Trunc(targetGizmo.LastSnapVector.Y()) != snappedYPosition {
-				snapDeltaY := float64(snappedYPosition) - targetGizmo.LastSnapVector.Y()
+			if float32(math.Trunc(float64(targetGizmo.LastSnapVector.Y()))) != snappedYPosition {
+				snapDeltaY := float32(snappedYPosition) - targetGizmo.LastSnapVector.Y()
 				snappedDelta[1] = snapDeltaY
 
 				gizmoDelta = &snappedDelta
 				targetGizmo.AccumulatedDelta[1] -= snapDeltaY
 				targetGizmo.LastSnapVector[1] += snapDeltaY
 			}
-			if math.Trunc(targetGizmo.LastSnapVector.Z()) != snappedZPosition {
-				snapDeltaZ := float64(snappedZPosition) - targetGizmo.LastSnapVector.Z()
+			if float32(math.Trunc(float64(targetGizmo.LastSnapVector.Z()))) != snappedZPosition {
+				snapDeltaZ := float32(snappedZPosition) - targetGizmo.LastSnapVector.Z()
 				snappedDelta[2] = snapDeltaZ
 
 				gizmoDelta = &snappedDelta
@@ -186,7 +187,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 		} else if targetGizmo.HoveredEntityID == GizmoAllAxisPickingID {
 			mouseDelta := mousePosition.Sub(targetGizmo.LastFrameMousePosition)
 			magnitude := (mouseDelta[0] - mouseDelta[1])
-			delta := mgl64.Vec3{1, 1, 1}.Mul(magnitude)
+			delta := mgl32.Vec3{1, 1, 1}.Mul(magnitude)
 			gizmoDelta = &delta
 			targetGizmo.LastFrameMousePosition = mousePosition
 		} else if targetGizmo.HoveredEntityID == GizmoXZAxisPickingID || targetGizmo.HoveredEntityID == GizmoXYAxisPickingID || targetGizmo.HoveredEntityID == GizmoYZAxisPickingID {
@@ -202,25 +203,25 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 			}
 		} else {
 			planes := [3]collider.Plane{
-				{Point: gizmoPosition, Normal: mgl64.Vec3{1, 0, 0}},
-				{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}},
-				{Point: gizmoPosition, Normal: mgl64.Vec3{0, 0, 1}},
+				{Point: gizmoPosition, Normal: mgl32.Vec3{1, 0, 0}},
+				{Point: gizmoPosition, Normal: mgl32.Vec3{0, 1, 0}},
+				{Point: gizmoPosition, Normal: mgl32.Vec3{0, 0, 1}},
 			}
 
 			var plane collider.Plane
 			if targetGizmo.HoveredEntityID == GizmoXAxisPickingID {
 				plane = planes[1]
-				if math.Abs(cameraViewDir.Z()) > planeSelectionSensitivity {
+				if apputils.F32Abs(cameraViewDir.Z()) > planeSelectionSensitivity {
 					plane = planes[2]
 				}
 			} else if targetGizmo.HoveredEntityID == GizmoYAxisPickingID {
 				plane = planes[0]
-				if math.Abs(cameraViewDir.Z()) > math.Abs(cameraViewDir.X()) {
+				if apputils.F32Abs(cameraViewDir.Z()) > apputils.F32Abs(cameraViewDir.X()) {
 					plane = planes[2]
 				}
 			} else if targetGizmo.HoveredEntityID == GizmoZAxisPickingID {
 				plane = planes[1]
-				if math.Abs(cameraViewDir.X()) > planeSelectionSensitivity {
+				if apputils.F32Abs(cameraViewDir.X()) > planeSelectionSensitivity {
 					plane = planes[0]
 				}
 			} else {
@@ -236,29 +237,29 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 				targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
 				calculatedPosition := targetGizmo.LastSnapVector.Add(targetGizmo.AccumulatedDelta)
 
-				snappedXPosition := math.Trunc(calculatedPosition.X()/float64(snapSize)) * float64(snapSize)
-				snappedYPosition := math.Trunc(calculatedPosition.Y()/float64(snapSize)) * float64(snapSize)
-				snappedZPosition := math.Trunc(calculatedPosition.Z()/float64(snapSize)) * float64(snapSize)
+				snappedXPosition := float32(math.Trunc(float64(calculatedPosition.X()/float32(snapSize)))) * float32(snapSize)
+				snappedYPosition := float32(math.Trunc(float64(calculatedPosition.Y()/float32(snapSize)))) * float32(snapSize)
+				snappedZPosition := float32(math.Trunc(float64(calculatedPosition.Z()/float32(snapSize)))) * float32(snapSize)
 
-				var snappedDelta mgl64.Vec3
-				if math.Trunc(targetGizmo.LastSnapVector.X()) != snappedXPosition {
-					snapDeltaX := float64(snappedXPosition) - targetGizmo.LastSnapVector.X()
+				var snappedDelta mgl32.Vec3
+				if float32(math.Trunc(float64(targetGizmo.LastSnapVector.X()))) != snappedXPosition {
+					snapDeltaX := float32(snappedXPosition) - targetGizmo.LastSnapVector.X()
 					snappedDelta[0] = snapDeltaX
 
 					gizmoDelta = &snappedDelta
 					targetGizmo.AccumulatedDelta[0] -= snapDeltaX
 					targetGizmo.LastSnapVector[0] += snapDeltaX
 				}
-				if math.Trunc(targetGizmo.LastSnapVector.Y()) != snappedYPosition {
-					snapDeltaY := float64(snappedYPosition) - targetGizmo.LastSnapVector.Y()
+				if float32(math.Trunc(float64(targetGizmo.LastSnapVector.Y()))) != snappedYPosition {
+					snapDeltaY := float32(snappedYPosition) - targetGizmo.LastSnapVector.Y()
 					snappedDelta[1] = snapDeltaY
 
 					gizmoDelta = &snappedDelta
 					targetGizmo.AccumulatedDelta[1] -= snapDeltaY
 					targetGizmo.LastSnapVector[1] += snapDeltaY
 				}
-				if math.Trunc(targetGizmo.LastSnapVector.Z()) != snappedZPosition {
-					snapDeltaZ := float64(snappedZPosition) - targetGizmo.LastSnapVector.Z()
+				if float32(math.Trunc(float64(targetGizmo.LastSnapVector.Z()))) != snappedZPosition {
+					snapDeltaZ := float32(snappedZPosition) - targetGizmo.LastSnapVector.Z()
 					snappedDelta[2] = snapDeltaZ
 
 					gizmoDelta = &snappedDelta
@@ -275,7 +276,7 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 		gizmoEvent = GizmoEventActivated
 	} else if startStatus == true && endStatus == false {
 		gizmoEvent = GizmoEventCompleted
-		targetGizmo.AccumulatedDelta = mgl64.Vec3{}
+		targetGizmo.AccumulatedDelta = mgl32.Vec3{}
 	}
 
 	return gizmoDelta, gizmoEvent
@@ -285,12 +286,12 @@ func setupTranslationGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			GizmoXAxisPickingID:  {Direction: mgl64.Vec3{1, 0, 0}},
-			GizmoYAxisPickingID:  {Direction: mgl64.Vec3{0, 1, 0}},
-			GizmoZAxisPickingID:  {Direction: mgl64.Vec3{0, 0, 1}},
-			GizmoXZAxisPickingID: {Direction: mgl64.Vec3{}},
-			GizmoXYAxisPickingID: {Direction: mgl64.Vec3{}},
-			GizmoYZAxisPickingID: {Direction: mgl64.Vec3{}},
+			GizmoXAxisPickingID:  {Direction: mgl32.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID:  {Direction: mgl32.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID:  {Direction: mgl32.Vec3{0, 0, 1}},
+			GizmoXZAxisPickingID: {Direction: mgl32.Vec3{}},
+			GizmoXYAxisPickingID: {Direction: mgl32.Vec3{}},
+			GizmoYZAxisPickingID: {Direction: mgl32.Vec3{}},
 		},
 	}
 }
@@ -310,10 +311,10 @@ func setupScaleGizmo() *Gizmo {
 	return &Gizmo{
 		HoveredEntityID: -1,
 		EntityIDToAxis: map[int]GizmoAxis{
-			GizmoXAxisPickingID:   {Direction: mgl64.Vec3{1, 0, 0}},
-			GizmoYAxisPickingID:   {Direction: mgl64.Vec3{0, 1, 0}},
-			GizmoZAxisPickingID:   {Direction: mgl64.Vec3{0, 0, 1}},
-			GizmoAllAxisPickingID: {Direction: mgl64.Vec3{}},
+			GizmoXAxisPickingID:   {Direction: mgl32.Vec3{1, 0, 0}},
+			GizmoYAxisPickingID:   {Direction: mgl32.Vec3{0, 1, 0}},
+			GizmoZAxisPickingID:   {Direction: mgl32.Vec3{0, 0, 1}},
+			GizmoAllAxisPickingID: {Direction: mgl32.Vec3{}},
 		},
 	}
 }
@@ -323,14 +324,14 @@ func (g *Gizmo) Reset() {
 	g.Active = false
 }
 
-func planeFromAxis(hoveredEntityID int, gizmoPosition mgl64.Vec3) collider.Plane {
+func planeFromAxis(hoveredEntityID int, gizmoPosition mgl32.Vec3) collider.Plane {
 	var plane collider.Plane
 	if hoveredEntityID == GizmoXZAxisPickingID {
-		plane = collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 1, 0}}
+		plane = collider.Plane{Point: gizmoPosition, Normal: mgl32.Vec3{0, 1, 0}}
 	} else if hoveredEntityID == GizmoXYAxisPickingID {
-		plane = collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{0, 0, 1}}
+		plane = collider.Plane{Point: gizmoPosition, Normal: mgl32.Vec3{0, 0, 1}}
 	} else if hoveredEntityID == GizmoYZAxisPickingID {
-		plane = collider.Plane{Point: gizmoPosition, Normal: mgl64.Vec3{1, 0, 0}}
+		plane = collider.Plane{Point: gizmoPosition, Normal: mgl32.Vec3{1, 0, 0}}
 	}
 	return plane
 }

@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
@@ -41,16 +41,16 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
-		var radius float64 = 40
-		var length float64 = 80
+		var radius float32 = 40
+		var length float32 = 80
 		entity := entities.InstantiateEntity("player")
 		entity.PositionSync = &entities.PositionSync{}
 		entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
 		entity.Collider = &entities.ColliderComponent{
 			CapsuleCollider: &collider.Capsule{
 				Radius: radius,
-				Top:    mgl64.Vec3{0, radius + length, 0},
-				Bottom: mgl64.Vec3{0, radius, 0},
+				Top:    mgl32.Vec3{0, radius + length, 0},
+				Bottom: mgl32.Vec3{0, radius, 0},
 			},
 			ColliderGroup: entities.ColliderGroupFlagPlayer,
 			CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
@@ -58,13 +58,13 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
 
 		capsule := entity.Collider.CapsuleCollider
-		entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
+		entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl32.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl32.Vec3{radius, radius, radius})}
 
 		handle := assets.NewGlobalHandle("alpha3")
 
-		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
+		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl32.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
 		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.AssetManager())
-		entities.SetScale(entity, mgl64.Vec3{0.01, 0.01, 0.01})
+		entities.SetScale(entity, mgl32.Vec3{0.01, 0.01, 0.01})
 
 		world := s.app.World()
 		for _, e := range world.Entities() {
@@ -131,7 +131,7 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 
 func createCamera(playerID int, targetEntityID int) *entities.Entity {
 	entity := entities.InstantiateEntity("camera")
-	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
+	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl32.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
 	entity.ImageInfo = entities.NewImageInfo("camera.png", 1)
 	entity.Billboard = true
 	entity.PlayerInput = &entities.PlayerInputComponent{PlayerID: playerID}

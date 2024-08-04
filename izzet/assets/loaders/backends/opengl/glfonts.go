@@ -1,7 +1,7 @@
 package opengl
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -47,10 +47,10 @@ func NewFont(fontFile string, size int) fonts.Font {
 	glyphs := map[string]fonts.Glyph{}
 	widthPerGlyph := textureWidth / len(supportedCharacters)
 	heightPerGlyph := textureHeight
-	textureCoordWidth := float64(widthPerGlyph) / float64(textureWidth)
+	textureCoordWidth := float32(widthPerGlyph) / float32(textureWidth)
 	for i, c := range supportedCharacters {
 		glyphs[string(c)] = fonts.Glyph{
-			TextureCoords: mgl64.Vec2{(float64(i) * textureCoordWidth), 0},
+			TextureCoords: mgl32.Vec2{(float32(i) * textureCoordWidth), 0},
 			Width:         widthPerGlyph,
 			Height:        heightPerGlyph,
 		}

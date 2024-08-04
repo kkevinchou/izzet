@@ -6,7 +6,7 @@ import (
 
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
@@ -28,8 +28,8 @@ func (s *SpawnerSystem) Name() string {
 }
 
 func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
-	// var radius float64 = 40
-	// var length float64 = 80
+	// var radius float32 = 40
+	// var length float32 = 80
 
 	for _, player := range s.app.GetPlayers() {
 		frameInput := s.app.GetPlayerInput(player.ID)
@@ -46,24 +46,24 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			// primitives := s.app.AssetManager().GetPrimitives(handle)
 			// verts := assets.UniqueVerticesFromPrimitives(primitives)
 			// c := collider.NewCapsuleFromVertices(verts)
-			c := collider.NewCapsule(mgl64.Vec3{0, 4, 0}, mgl64.Vec3{0, 2, 0}, 2)
+			c := collider.NewCapsule(mgl32.Vec3{0, 4, 0}, mgl32.Vec3{0, 2, 0}, 2)
 			entity.Collider.CapsuleCollider = &c
 
 			capsule := entity.Collider.CapsuleCollider
-			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{c.Radius, c.Radius, c.Radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{c.Radius, c.Radius, c.Radius})}
+			entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl32.Vec3{c.Radius, c.Radius, c.Radius}), MaxVertex: capsule.Top.Add(mgl32.Vec3{c.Radius, c.Radius, c.Radius})}
 
-			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
+			entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl32.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 			entity.Animation = entities.NewAnimationComponent(modelName, s.app.AssetManager())
-			// entities.SetScale(entity, mgl64.Vec3{0.01, 0.01, 0.01})
+			// entities.SetScale(entity, mgl32.Vec3{0.01, 0.01, 0.01})
 
 			jitterX := rand.Intn(10)
 			jitterZ := rand.Intn(10)
-			entities.SetLocalPosition(entity, mgl64.Vec3{float64(jitterX), 60, float64(jitterZ)})
+			entities.SetLocalPosition(entity, mgl32.Vec3{float32(jitterX), 60, float32(jitterZ)})
 
 			entity.AIComponent = &entities.AIComponent{
 				Speed: 25,
 				// TargetConfig: &entities.TargetConfig{},
-				// PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {100, 10, 0}}},
+				// PatrolConfig: &entities.PatrolConfig{Points: []mgl32.Vec3{{0, 10, 0}, {100, 10, 0}}},
 				PathfindConfig: &entities.PathfindConfig{},
 				// AttackConfig:   &entities.AttackConfig{},
 			}
@@ -72,7 +72,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 			for _, e := range world.Entities() {
 				if e.SpawnPointComponent != nil {
 					entities.SetLocalPosition(entity, e.Position())
-					entities.SetLocalPosition(entity, mgl64.Vec3{e.Position().X() + float64(jitterX), 60, e.Position().Z() + float64(jitterZ)})
+					entities.SetLocalPosition(entity, mgl32.Vec3{e.Position().X() + float32(jitterX), 60, e.Position().Z() + float32(jitterZ)})
 					break
 				}
 			}

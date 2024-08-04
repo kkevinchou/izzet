@@ -5,32 +5,33 @@ import (
 	"math"
 	"slices"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/gheap"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 )
 
 type Path struct {
 }
 
 type Node struct {
-	Cost     float64
-	Total    float64
+	Cost     float32
+	Total    float32
 	Polygon  int
 	Parent   *Node
-	Position mgl64.Vec3
+	Position mgl32.Vec3
 
 	InOpenList   bool
 	InClosedList bool
 }
 
 var PATHPOLYGONS map[int]bool
-var PATHVERTICES []mgl64.Vec3
+var PATHVERTICES []mgl32.Vec3
 
-func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
+func FindPath(nm *CompiledNavMesh, start, goal mgl32.Vec3) []int {
 	tile := nm.Tiles[0]
 
-	// start = mgl64.Vec3{-5.953646739493656, 46.86907447625646, -5.199594605599351}
-	// goal = mgl64.Vec3{3.081538628009632, 50.35613034511499, -8.687769285772625}
+	// start = mgl32.Vec3{-5.953646739493656, 46.86907447625646, -5.199594605599351}
+	// goal = mgl32.Vec3{3.081538628009632, 50.35613034511499, -8.687769285772625}
 
 	_, startPolygon, _ := FindNearestPolygon(tile, start)
 	_, goalPolygon, _ := FindNearestPolygon(tile, goal)
@@ -58,7 +59,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 
 		polygon := tile.Polygons[polygonIndex]
 
-		var cost, heuristic float64
+		var cost, heuristic float32
 		for _, neighborIndex := range polygon.PolyNeighbors {
 			if neighborIndex == -1 || (node.Parent != nil && node.Parent.Polygon == neighborIndex) {
 				continue
@@ -132,7 +133,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	return path
 }
 
-func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {
+func FindStraightPath(tile CTile, start, goal mgl32.Vec3, polyPath []int) []mgl32.Vec3 {
 	portalApex := start
 	portalLeft := portalApex
 	portalRight := portalApex
@@ -142,7 +143,7 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 	closestStart := closestPointOnPolyBoundary(tile, polyPath[0], start)
 	closestGoal := closestPointOnPolyBoundary(tile, polyPath[len(polyPath)-1], goal)
 
-	var path []mgl64.Vec3
+	var path []mgl32.Vec3
 	path = append(path, closestStart)
 
 	// if len(polyPath) == 1 {
@@ -166,7 +167,7 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 	for i := 0; i < len(polyPath) && iterCount < maxIterCount; i++ {
 		iterCount++
 
-		var left, right mgl64.Vec3
+		var left, right mgl32.Vec3
 
 		if i+1 < len(polyPath) {
 			l, r, success := GetPortalVertIndices(tile, polyPath[i], polyPath[i+1])
@@ -231,37 +232,37 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 	return path
 }
 
-func vEqual(a, b mgl64.Vec3) bool {
-	threshold := (1.0 / 16384.0) * (1.0 / 16384.0)
+func vEqual(a, b mgl32.Vec3) bool {
+	var threshold float32 = (1.0 / 16384.0) * (1.0 / 16384.0)
 	return a.Sub(b).LenSqr() < threshold
 }
 
 // returns true if c_a is to the left of b_a
-func vLeftOn(a, b, c mgl64.Vec3) bool {
+func vLeftOn(a, b, c mgl32.Vec3) bool {
 	return vArea2D(a, b, c) <= 0
 }
 
-func vLeft(a, b, c mgl64.Vec3) bool {
+func vLeft(a, b, c mgl32.Vec3) bool {
 	return vArea2D(a, b, c) < 0
 }
 
-func vRightOn(a, b, c mgl64.Vec3) bool {
+func vRightOn(a, b, c mgl32.Vec3) bool {
 	return vArea2D(a, b, c) >= 0
 }
 
-func vRight(a, b, c mgl64.Vec3) bool {
+func vRight(a, b, c mgl32.Vec3) bool {
 	return vArea2D(a, b, c) > 0
 }
-func vArea2D(a, b, c mgl64.Vec3) float64 {
+func vArea2D(a, b, c mgl32.Vec3) float32 {
 	p := (b.X() - a.X()) * (c.Z() - a.Z())
 	q := (c.X() - a.X()) * (b.Z() - a.Z())
 	value := p - q
 	return value
 }
-func GetEdgeMidpoint(tile CTile, from, to int) (mgl64.Vec3, bool) {
+func GetEdgeMidpoint(tile CTile, from, to int) (mgl32.Vec3, bool) {
 	left, right, success := GetPortalVertIndices(tile, from, to)
 	if !success {
-		return mgl64.Vec3{}, false
+		return mgl32.Vec3{}, false
 	}
 
 	leftVert := tile.Vertices[left]
@@ -289,9 +290,9 @@ func GetPortalVertIndices(tile CTile, from, to int) (int, int, bool) {
 	return -1, -1, false
 }
 
-func FindNearestPolygon(tile CTile, point mgl64.Vec3) (mgl64.Vec3, int, bool) {
-	var nearestDistSq float64 = math.MaxFloat64
-	var nearestPoint mgl64.Vec3
+func FindNearestPolygon(tile CTile, point mgl32.Vec3) (mgl32.Vec3, int, bool) {
+	var nearestDistSq float32 = math.MaxFloat32
+	var nearestPoint mgl32.Vec3
 	var nearestPoly int
 	var overPoly bool
 
@@ -315,17 +316,17 @@ func FindNearestPolygon(tile CTile, point mgl64.Vec3) (mgl64.Vec3, int, bool) {
 // closestPointOnPolyBoundary is faster than closestPointOnPoly, but does not return detailed heights
 // on the polygon - if a point is within the x-z bounds, it returns the point, unmodified
 // if the point is outside of the poly, it returns the closest point on the boundary of the poly
-func closestPointOnPolyBoundary(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+func closestPointOnPolyBoundary(tile CTile, poly int, point mgl32.Vec3) mgl32.Vec3 {
 	if pointInPoly(tile, poly, point) {
 		return point
 	}
 	return closestPointOnPolyEdges(tile, poly, point)
 }
 
-func closestPointOnPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
-	var dmin float64 = math.MaxFloat64
-	var tMin float64
-	var vMin, vMax mgl64.Vec3
+func closestPointOnPolyEdges(tile CTile, poly int, point mgl32.Vec3) mgl32.Vec3 {
+	var dmin float32 = math.MaxFloat32
+	var tMin float32
+	var vMin, vMax mgl32.Vec3
 	verts := tile.Polygons[poly].Vertices
 	for i, j := 0, len(verts)-1; i < len(verts); j, i = i, i+1 {
 		v0 := tile.Vertices[verts[j]]
@@ -341,7 +342,7 @@ func closestPointOnPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 
 	return vMin.Add(vMax.Sub(vMin).Mul(tMin))
 }
 
-func closestPointOnPoly(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, bool) {
+func closestPointOnPoly(tile CTile, poly int, point mgl32.Vec3) (mgl32.Vec3, bool) {
 	h, success := getPolyHeight(tile, poly, point)
 	if success {
 		np := point
@@ -352,18 +353,18 @@ func closestPointOnPoly(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, boo
 	return closestPointOnDetailPolyEdges(tile, poly, point), false
 }
 
-func closestPointOnDetailPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+func closestPointOnDetailPolyEdges(tile CTile, poly int, point mgl32.Vec3) mgl32.Vec3 {
 	dp := tile.DetailedPolygon[poly]
-	var dmin float64 = math.MaxFloat64
-	var tMin float64
-	var vMin, vMax mgl64.Vec3
+	var dmin float32 = math.MaxFloat32
+	var tMin float32
+	var vMin, vMax mgl32.Vec3
 
 	for _, tri := range dp.Triangles {
 		v0 := tile.DetailedVertices[poly][tri.Vertices[0]]
 		v1 := tile.DetailedVertices[poly][tri.Vertices[1]]
 		v2 := tile.DetailedVertices[poly][tri.Vertices[2]]
 
-		var d, t float64
+		var d, t float32
 		if tri.OnHull[0] {
 			d, t = distancePtSeg2Df(point.X(), point.Z(), v0.X(), v0.Z(), v1.X(), v1.Z())
 			if d < dmin {
@@ -395,7 +396,7 @@ func closestPointOnDetailPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64
 	return vMin.Add(vMax.Sub(vMin).Mul(tMin))
 }
 
-func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
+func getPolyHeight(tile CTile, poly int, point mgl32.Vec3) (float32, bool) {
 	// project point onto polygon
 	// early return if it's not within the poly
 
@@ -419,15 +420,15 @@ func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
 
 	return -1, false
 }
-func closestHeightOnTriangle(p, a, b, c mgl64.Vec3) (float64, bool) {
-	epsilon := 1e-6
+func closestHeightOnTriangle(p, a, b, c mgl32.Vec3) (float32, bool) {
+	var epsilon float32 = 1e-6
 	v0 := c.Sub(a)
 	v1 := b.Sub(a)
 	v2 := p.Sub(a)
 
 	// compute scaled barycentric coordinates
 	denom := v0.X()*v1.Z() - v0.Z()*v1.X()
-	if math.Abs(denom) < epsilon {
+	if apputils.F32Abs(denom) < epsilon {
 		return -1, false
 	}
 
@@ -449,7 +450,7 @@ func closestHeightOnTriangle(p, a, b, c mgl64.Vec3) (float64, bool) {
 	return -1, false
 }
 
-func pointInPoly(tile CTile, poly int, point mgl64.Vec3) bool {
+func pointInPoly(tile CTile, poly int, point mgl32.Vec3) bool {
 	verts := tile.Vertices
 	vertIndices := tile.Polygons[poly].Vertices
 	n := len(vertIndices)

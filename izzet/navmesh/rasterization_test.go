@@ -3,16 +3,16 @@ package navmesh
 import (
 	"testing"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // func TestRasterization(t *testing.T) {
-// 	v0 := mgl64.Vec3{0, 0, 0}
-// 	v1 := mgl64.Vec3{0, 0, 1}
-// 	v2 := mgl64.Vec3{0, 1, 0}
+// 	v0 := mgl32.Vec3{0, 0, 0}
+// 	v1 := mgl32.Vec3{0, 0, 1}
+// 	v2 := mgl32.Vec3{0, 1, 0}
 
-// 	minVertex := mgl64.Vec3{-10, -10, -10}
-// 	maxVertex := mgl64.Vec3{10, 10, 10}
+// 	minVertex := mgl32.Vec3{-10, -10, -10}
+// 	maxVertex := mgl32.Vec3{10, 10, 10}
 // 	vxs := int(maxVertex.X() - minVertex.X())
 // 	vzs := int(maxVertex.Z() - minVertex.Z())
 // 	hf := NewHeightField(vxs, vzs, minVertex, maxVertex)
@@ -22,12 +22,12 @@ import (
 // }
 
 func TestRasterization(t *testing.T) {
-	v0 := mgl64.Vec3{0, 0, 0}
-	v1 := mgl64.Vec3{0, 0, 5}
-	v2 := mgl64.Vec3{0, 5, 0}
+	v0 := mgl32.Vec3{0, 0, 0}
+	v1 := mgl32.Vec3{0, 0, 5}
+	v2 := mgl32.Vec3{0, 5, 0}
 
-	minVertex := mgl64.Vec3{-10, -10, -10}
-	maxVertex := mgl64.Vec3{10, 10, 10}
+	minVertex := mgl32.Vec3{-10, -10, -10}
+	maxVertex := mgl32.Vec3{10, 10, 10}
 	vxs := int(maxVertex.X() - minVertex.X())
 	vzs := int(maxVertex.Z() - minVertex.Z())
 	hf := NewHeightField(vxs, vzs, minVertex, maxVertex, 1, 1)

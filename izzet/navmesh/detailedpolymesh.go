@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 type DetailedVertex struct {
-	X, Y, Z float64
+	X, Y, Z float32
 }
 
 type HeightPatch struct {
@@ -69,8 +70,8 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 	var maxhw, maxhh int
 	var nPolyVerts int
 
-	var cs float64 = mesh.CellSize
-	var ch float64 = mesh.CellHeight
+	var cs float32 = mesh.CellSize
+	var ch float32 = mesh.CellHeight
 
 	// find max size for a polygon area
 	for i := range mesh.Polygons {
@@ -113,7 +114,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 
 	var dmesh DetailedMesh
 
-	heightSearchRadius := max(1, int(math.Ceil(mesh.maxEdgeError)))
+	heightSearchRadius := max(1, int(math.Ceil(float64(mesh.maxEdgeError))))
 	origin := mesh.bMin
 
 	dmesh.PolyVertices = make([][]DetailedVertex, len(mesh.Polygons))
@@ -128,7 +129,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		for _, vertIndex := range polygon.Verts {
 			vert := mesh.Vertices[vertIndex]
 			polyVerts = append(polyVerts, DetailedVertex{
-				X: float64(vert.X) * cs, Y: float64(vert.Y) * ch, Z: float64(vert.Z) * cs,
+				X: float32(vert.X) * cs, Y: float32(vert.Y) * ch, Z: float32(vert.Z) * cs,
 			})
 		}
 
@@ -137,7 +138,7 @@ func BuildDetailedPolyMesh(mesh *Mesh, chf *CompactHeightField, runtimeConfig *r
 		hp.width = bounds[i].xmax - bounds[i].xmin
 		hp.height = bounds[i].zmax - bounds[i].zmin
 		getHeightData(chf, hp, polygon.RegionID)
-		verts, tris := buildDetailedPoly(chf, polyVerts, float64(runtimeConfig.NavigationmeshSampleDist), float64(runtimeConfig.NavigationmeshMaxError), heightSearchRadius, hp, &dmesh, i, runtimeConfig)
+		verts, tris := buildDetailedPoly(chf, polyVerts, float32(runtimeConfig.NavigationmeshSampleDist), float32(runtimeConfig.NavigationmeshMaxError), heightSearchRadius, hp, &dmesh, i, runtimeConfig)
 
 		// move detailed verts to world space
 		for j := range len(verts) {
@@ -257,7 +258,7 @@ func getHeightData(chf *CompactHeightField, hp HeightPatch, regionID int) {
 	}
 }
 
-func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float64, heightSearchRadius int, hp HeightPatch, dmesh *DetailedMesh, polyIndex int, runtimeConfig *runtimeconfig.RuntimeConfig) ([]DetailedVertex, []Triangle) {
+func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sampleDist, sampleMaxError float32, heightSearchRadius int, hp HeightPatch, dmesh *DetailedMesh, polyIndex int, runtimeConfig *runtimeconfig.RuntimeConfig) ([]DetailedVertex, []Triangle) {
 	cs := chf.CellSize
 	ch := chf.CellHeight
 	ics := 1 / cs
@@ -280,7 +281,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 			// make sure the segments are always handled in same order
 			// using lexological sort or else there will be seams.
-			if math.Abs(vj.X-vi.X) < 1e-6 {
+			if apputils.F32Abs(vj.X-vi.X) < 1e-6 {
 				if vj.Z > vi.Z {
 					vj, vi = vi, vj
 					swapped = true
@@ -295,8 +296,8 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			dx := vi.X - vj.X
 			dy := vi.Y - vj.Y
 			dz := vi.Z - vj.Z
-			d := math.Sqrt(dx*dx + dz*dz)
-			nn := 1 + int(math.Floor(d/sampleDist))
+			d := math.Sqrt(float64(dx*dx + dz*dz))
+			nn := 1 + int(math.Floor(d/float64(sampleDist)))
 
 			if nn >= maxVertsPerEdge {
 				nn = maxVertsPerEdge - 1
@@ -307,13 +308,13 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 			var edges []DetailedVertex
 			for k := 0; k <= nn; k++ {
-				u := float64(k) / float64(nn)
+				u := float32(k) / float32(nn)
 				x := vj.X + dx*u
 				y := vj.Y + dy*u
 				z := vj.Z + dz*u
 				edges = append(edges, DetailedVertex{
 					X: x,
-					Y: float64(getHeight(x, y, z, ics, ch, heightSearchRadius, hp)) * ch,
+					Y: float32(getHeight(x, y, z, ics, ch, heightSearchRadius, hp)) * ch,
 					Z: z,
 				})
 			}
@@ -329,7 +330,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				i1 := idx[k+1]
 				v0 := edges[i0]
 				v1 := edges[i1]
-				var maxd float64
+				var maxd float32
 				maxi := -1
 				for m := i0 + 1; m < i1; m++ {
 					d := distancePtSeg(edges[m], v0, v1)
@@ -392,17 +393,17 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			dvMax(&bmax, &inVerts[i])
 		}
 
-		x0 := int(math.Floor(bmin.X / sampleDist))
-		x1 := int(math.Ceil(bmax.X / sampleDist))
-		z0 := int(math.Floor(bmin.Z / sampleDist))
-		z1 := int(math.Ceil(bmax.Z / sampleDist))
+		x0 := int(math.Floor(float64(bmin.X / sampleDist)))
+		x1 := int(math.Ceil(float64(bmax.X / sampleDist)))
+		z0 := int(math.Floor(float64(bmin.Z / sampleDist)))
+		z1 := int(math.Ceil(float64(bmax.Z / sampleDist)))
 
 		var samples []Sample
 		for z := z0; z < z1; z++ {
 			for x := x0; x < x1; x++ {
-				px := float64(x) * sampleDist
+				px := float32(x) * sampleDist
 				py := (bmax.Y + bmin.Y) / 2
-				pz := float64(z) * sampleDist
+				pz := float32(z) * sampleDist
 
 				// make sure the samples are not too close to the edges
 				if distToPoly(inVerts, DetailedVertex{X: px, Y: py, Z: pz}) > -sampleDist/2 {
@@ -415,9 +416,9 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 				}
 				samples = append(samples, sample)
 
-				sx := float64(sample.X) * sampleDist
-				sy := float64(sample.Y) * ch
-				sz := float64(sample.Z) * sampleDist
+				sx := float32(sample.X) * sampleDist
+				sy := float32(sample.Y) * ch
+				sz := float32(sample.Z) * sampleDist
 				dmesh.AllSamples[polyIndex] = append(dmesh.AllSamples[polyIndex], float32(sx), float32(sy), float32(sz))
 			}
 		}
@@ -436,7 +437,7 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			}
 
 			var bestPoint DetailedVertex
-			var bestd float64
+			var bestd float32
 			besti := -1
 
 			for i := range samples {
@@ -447,9 +448,9 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 
 				// the sample location is jittered to get rid of some bad triangulations
 				// which are caused by symmetrical data from the grid structure
-				px := float64(sample.X)*sampleDist + getJitterX(i)*cs*0.1
-				py := float64(sample.Y) * ch
-				pz := float64(sample.Z)*sampleDist + getJitterZ(i)*cs*0.1
+				px := float32(sample.X)*sampleDist + getJitterX(i)*cs*0.1
+				py := float32(sample.Y) * ch
+				pz := float32(sample.Z)*sampleDist + getJitterZ(i)*cs*0.1
 				pt := DetailedVertex{X: px, Y: py, Z: pz}
 
 				d := distToTris(pt, verts, tris)
@@ -576,8 +577,8 @@ func onHull(a, b int, hull []int) bool {
 }
 
 func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) ([]DetailedEdge, int) {
-	var epsilon float64 = 1e-5
-	var tolerance float64 = 1e-3
+	var epsilon float32 = 1e-5
+	var tolerance float32 = 1e-3
 
 	edge := &edges[e]
 
@@ -602,7 +603,7 @@ func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) (
 
 	pt := len(verts)
 	var center DetailedVertex
-	var radius float64 = -1
+	var radius float32 = -1
 
 	// iterate over all points that are not part of the edge
 	// and find the point that produces the smallest circumcircle
@@ -709,8 +710,8 @@ func overlapEdges(verts []DetailedVertex, edges []DetailedEdge, s1, t1 int) bool
 	return false
 }
 
-func circumCircle(p1, p2, p3 DetailedVertex) (DetailedVertex, float64) {
-	var epsilon float64 = 1e-6
+func circumCircle(p1, p2, p3 DetailedVertex) (DetailedVertex, float32) {
+	var epsilon float32 = 1e-6
 
 	// calculate the circle relative to avoid some precision issues
 	var v1 DetailedVertex
@@ -718,10 +719,10 @@ func circumCircle(p1, p2, p3 DetailedVertex) (DetailedVertex, float64) {
 	v3 := vSub(p3, p1)
 
 	var center DetailedVertex
-	var radius float64
+	var radius float32
 
 	cp := vCross2D(v1, v2, v3)
-	if math.Abs(cp) > epsilon {
+	if apputils.F32Abs(cp) > epsilon {
 		v1Sq := vDot2D(v1, v1)
 		v2Sq := vDot2D(v2, v2)
 		v3Sq := vDot2D(v3, v3)
@@ -769,11 +770,11 @@ func vSub(a, b DetailedVertex) DetailedVertex {
 	return DetailedVertex{X: a.X - b.X, Y: a.Y - b.Y, Z: a.Z - b.Z}
 }
 
-func vDot2D(a, b DetailedVertex) float64 {
+func vDot2D(a, b DetailedVertex) float32 {
 	return a.X*b.X + a.Z*b.Z
 }
 
-func distToTri(p, a, b, c DetailedVertex) float64 {
+func distToTri(p, a, b, c DetailedVertex) float32 {
 	v0 := vSub(c, a)
 	v1 := vSub(b, a)
 	v2 := vSub(p, a)
@@ -785,22 +786,22 @@ func distToTri(p, a, b, c DetailedVertex) float64 {
 	dot12 := vDot2D(v1, v2)
 
 	// compute barycentric coordinates
-	var invDenom float64 = 1.0 / (dot00*dot11 - dot01*dot01)
-	var u float64 = (dot11*dot02 - dot01*dot12) * invDenom
-	var v float64 = (dot00*dot12 - dot01*dot02) * invDenom
+	var invDenom float32 = 1.0 / (dot00*dot11 - dot01*dot01)
+	var u float32 = (dot11*dot02 - dot01*dot12) * invDenom
+	var v float32 = (dot00*dot12 - dot01*dot02) * invDenom
 
 	// if point lies inside of the triangle, return the interpolated y -coord
-	epsilon := 1e-4
+	var epsilon float32 = 1e-4
 	if u >= -epsilon && v >= -epsilon && (u+v) <= 1+epsilon {
 		y := a.Y + v0.Y*u + v1.Y*v
-		return math.Abs(y - p.Y)
+		return apputils.F32Abs(y - p.Y)
 	}
 
-	return math.MaxFloat64
+	return math.MaxFloat32
 }
 
-func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float64 {
-	dmin := math.MaxFloat64
+func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float32 {
+	var dmin float32 = math.MaxFloat32
 	for i := range len(tris) {
 		a := verts[tris[i].Vertices[0]]
 		b := verts[tris[i].Vertices[1]]
@@ -810,16 +811,16 @@ func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float
 			dmin = d
 		}
 	}
-	if dmin == math.MaxFloat64 {
+	if dmin == math.MaxFloat32 {
 		return -1
 	}
 	return dmin
 }
 
-func distToPoly(verts []DetailedVertex, p DetailedVertex) float64 {
+func distToPoly(verts []DetailedVertex, p DetailedVertex) float32 {
 	n := len(verts)
 	c := false
-	dmin := math.MaxFloat64
+	var dmin float32 = math.MaxFloat32
 	for i, j := 0, n-1; i < n; j, i = i, i+1 {
 		vi := verts[i]
 		vj := verts[j]
@@ -852,7 +853,7 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) [
 	// this tends to favor well formed triangles as a starting point
 
 	start, left, right := 0, 1, len(hull)-1
-	dmin := math.MaxFloat64
+	var dmin float32 = math.MaxFloat32
 
 	for i := range len(hull) {
 		if hull[i] >= originalNumVerts {
@@ -905,9 +906,9 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) [
 
 var DBG []int
 
-func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
-	ix := int(math.Floor(fx*ics + 0.01))
-	iz := int(math.Floor(fz*ics + 0.01))
+func getHeight(fx, fy, fz, ics, ch float32, radius int, hp HeightPatch) int {
+	ix := int(math.Floor(float64(fx*ics) + 0.01))
+	iz := int(math.Floor(float64(fz*ics) + 0.01))
 
 	ix = Clamp(ix-hp.xmin, 0, hp.width-1)
 	iz = Clamp(iz-hp.zmin, 0, hp.height-1)
@@ -924,7 +925,7 @@ func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 		nextRingIterStart := 8
 		nextRingIters := 16
 
-		dmin := math.MaxFloat64
+		var dmin float32 = math.MaxFloat32
 		for i := range maxIter {
 			nx := ix + x
 			nz := iz + z
@@ -932,7 +933,7 @@ func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 			if nx >= 0 && nz >= 0 && nx < hp.width && nz < hp.height {
 				nh := hp.data[nx+nz*hp.width]
 				if nh != hpUnsetHeight {
-					d := math.Abs(float64(nh)*ch - fy)
+					d := apputils.F32Abs(float32(nh)*ch - fy)
 					if d < dmin {
 						h = nh
 						dmin = d
@@ -965,13 +966,13 @@ func getHeight(fx, fy, fz, ics, ch float64, radius int, hp HeightPatch) int {
 	return h
 }
 
-func minPolyExtent(verts []DetailedVertex) float64 {
-	var minDist float64 = math.MaxFloat64
+func minPolyExtent(verts []DetailedVertex) float32 {
+	var minDist float32 = math.MaxFloat32
 	for i := range len(verts) {
 		ni := (i + 1) % len(verts)
 		p1 := verts[i]
 		p2 := verts[ni]
-		var maxEdgeDist float64 = 0
+		var maxEdgeDist float32 = 0
 		for j := 0; j < len(verts); j++ {
 			if j == i || j == ni {
 				continue
@@ -981,10 +982,10 @@ func minPolyExtent(verts []DetailedVertex) float64 {
 		}
 		minDist = min(minDist, maxEdgeDist)
 	}
-	return math.Sqrt(minDist)
+	return float32(math.Sqrt(float64(minDist)))
 }
 
-func distancePtSeg(pt, p, q DetailedVertex) float64 {
+func distancePtSeg(pt, p, q DetailedVertex) float32 {
 	pqx := q.X - p.X
 	pqy := q.Y - p.Y
 	pqz := q.Z - p.Z
@@ -1011,7 +1012,7 @@ func distancePtSeg(pt, p, q DetailedVertex) float64 {
 }
 
 // returns the squared distance between a point and a line segment
-func distancePtSeg2Df(x, z, px, pz, qx, qz float64) (float64, float64) {
+func distancePtSeg2Df(x, z, px, pz, qx, qz float32) (float32, float32) {
 	pqx := qx - px
 	pqz := qz - pz
 	dx := x - px
@@ -1034,17 +1035,17 @@ func distancePtSeg2Df(x, z, px, pz, qx, qz float64) (float64, float64) {
 	return dx*dx + dz*dz, t
 }
 
-func dist2D(v0, v1 DetailedVertex) float64 {
-	return math.Sqrt(dist2dSq(v0, v1))
+func dist2D(v0, v1 DetailedVertex) float32 {
+	return float32(math.Sqrt(float64(dist2dSq(v0, v1))))
 }
 
-func dist2dSq(v0, v1 DetailedVertex) float64 {
+func dist2dSq(v0, v1 DetailedVertex) float32 {
 	dx := v0.X - v1.X
 	dz := v0.Z - v1.Z
 	return dx*dx + dz*dz
 }
 
-func vCross2D(p1, p2, p3 DetailedVertex) float64 {
+func vCross2D(p1, p2, p3 DetailedVertex) float32 {
 	u1 := p2.X - p1.X
 	v1 := p2.Z - p1.Z
 	u2 := p3.X - p1.X
@@ -1052,12 +1053,12 @@ func vCross2D(p1, p2, p3 DetailedVertex) float64 {
 	return u1*v2 - v1*u2
 }
 
-func getJitterX(i int) float64 {
-	return (float64((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
+func getJitterX(i int) float32 {
+	return (float32((i*0x8da6b343)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 
-func getJitterZ(i int) float64 {
-	return (float64((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
+func getJitterZ(i int) float32 {
+	return (float32((i*0xd8163841)&0xffff) / 65535.0 * 2.0) - 1.0
 }
 
 func next(i, max int) int {

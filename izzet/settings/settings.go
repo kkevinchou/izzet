@@ -1,6 +1,6 @@
 package settings
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
 type GameMode string
 
@@ -48,24 +48,24 @@ const (
 
 	DepthCubeMapWidth  float32 = 4096
 	DepthCubeMapHeight float32 = 4096
-	DepthCubeMapNear   float64 = 1
+	DepthCubeMapNear   float32 = 1
 
 	// shadow map properties
-	ShadowmapZOffset float64 = 0 // Z offset relative to the light's view. if this is too small, objects behind a camera may fail to cast shadows
-	// ShadowMapDistanceFactor float64 = .4  // proportion of view fustrum to include in shadow cuboid
-	ShadowMapDistanceFactor float64 = 1 // proportion of view fustrum to include in shadow cuboid
+	ShadowmapZOffset float32 = 0 // Z offset relative to the light's view. if this is too small, objects behind a camera may fail to cast shadows
+	// ShadowMapDistanceFactor float32 = .4  // proportion of view fustrum to include in shadow cuboid
+	ShadowMapDistanceFactor float32 = 1 // proportion of view fustrum to include in shadow cuboid
 
 	DefaultTexture string = "asdf"
 
-	GizmoAxisThickness  float64 = 0.08
-	GizmoDistanceFactor float64 = 8
+	GizmoAxisThickness  float32 = 0.08
+	GizmoDistanceFactor float32 = 8
 
 	MaxCommandFrameBufferSize int = 100000
 	MaxStateBufferSize        int = 100
 
 	FirstPersonCamera                bool    = false
-	CameraEntityFollowDistance       float64 = 5
-	CameraEntityFollowVerticalOffset float64 = 1.5
+	CameraEntityFollowDistance       float32 = 5
+	CameraEntityFollowVerticalOffset float32 = 1.5
 	ProjectsDirectory                string  = ".project/"
 	DefaultProject                   string  = "room2"
 
@@ -73,18 +73,18 @@ const (
 	ShelfHeight float32 = 210
 	ShelfWidth  float32 = 800
 
-	CharacterSpeed           float64 = 10
-	CharacterFlySpeed        float64 = 50
-	CharacterJumpVelocity    float64 = 25
-	CharacterWebSpeed        float64 = 110
-	CharacterWebLaunchSpeed  float64 = 80
-	CameraSpeed              float64 = 85
-	CameraSlowSpeed          float64 = 10
-	AccelerationDueToGravity float64 = 75 // units per second
+	CharacterSpeed           float32 = 10
+	CharacterFlySpeed        float32 = 50
+	CharacterJumpVelocity    float32 = 25
+	CharacterWebSpeed        float32 = 110
+	CharacterWebLaunchSpeed  float32 = 80
+	CameraSpeed              float32 = 85
+	CameraSlowSpeed          float32 = 10
+	AccelerationDueToGravity float32 = 75 // units per second
 )
 
 // styles
 var (
 	FontSize                  float32    = 20
-	EditorCameraStartPosition mgl64.Vec3 = mgl64.Vec3{0, 5, 5}
+	EditorCameraStartPosition mgl32.Vec3 = mgl32.Vec3{0, 5, 5}
 )

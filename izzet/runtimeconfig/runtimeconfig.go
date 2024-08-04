@@ -1,12 +1,12 @@
 package runtimeconfig
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type RuntimeConfig struct {
-	CameraPosition mgl64.Vec3
-	CameraRotation mgl64.Quat
+	CameraPosition mgl32.Vec3
+	CameraRotation mgl32.Quat
 
 	DirectionalLightDir             [3]float32
 	Roughness                       float32
@@ -31,9 +31,9 @@ type RuntimeConfig struct {
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
-	RenderTime       float64
-	FPS              float64
-	CommandFrameTime float64
+	RenderTime       float32
+	FPS              float32
+	CommandFrameTime float32
 
 	FovX float32
 	Near float32
@@ -89,9 +89,9 @@ type RuntimeConfig struct {
 	NavigationMeshFilterLowHeightSpans bool
 
 	NavigationMeshStart      int32
-	NavigationMeshStartPoint mgl64.Vec3
+	NavigationMeshStartPoint mgl32.Vec3
 	NavigationMeshGoal       int32
-	NavigationMeshGoalPoint  mgl64.Vec3
+	NavigationMeshGoalPoint  mgl32.Vec3
 
 	ShadowmapZOffset float32
 

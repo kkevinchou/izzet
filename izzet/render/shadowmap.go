@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
@@ -13,7 +13,7 @@ type ShadowMap struct {
 	depthTexture   uint32
 	width          int
 	height         int
-	shadowDistance float64
+	shadowDistance float32
 }
 
 func (s *ShadowMap) DepthMapFBO() uint32 {
@@ -27,7 +27,7 @@ func (s *ShadowMap) Prepare() {
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 }
 
-func NewShadowMap(width int, height int, far float64) (*ShadowMap, error) {
+func NewShadowMap(width int, height int, far float32) (*ShadowMap, error) {
 	var storedFBO int32
 	gl.GetIntegerv(gl.FRAMEBUFFER_BINDING, &storedFBO)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(storedFBO))
@@ -67,13 +67,13 @@ func (s *ShadowMap) DepthTexture() uint32 {
 	return s.depthTexture
 }
 
-func (s *ShadowMap) ShadowDistance() float64 {
+func (s *ShadowMap) ShadowDistance() float32 {
 	return s.shadowDistance
 }
 
 // returns the orthographic projection matrix for the directional light as well as the "position" of the light
-func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints []mgl64.Vec3, shadowMapZOffset float32) (mgl64.Vec3, mgl64.Mat4) {
-	var lightSpacePoints []mgl64.Vec3
+func ComputeDirectionalLightProps(lightRotationMatrix mgl32.Mat4, frustumPoints []mgl32.Vec3, shadowMapZOffset float32) (mgl32.Vec3, mgl32.Mat4) {
+	var lightSpacePoints []mgl32.Vec3
 	invLightRotationMatrix := lightRotationMatrix.Inv()
 
 	for _, point := range frustumPoints {
@@ -81,7 +81,7 @@ func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints 
 		lightSpacePoints = append(lightSpacePoints, lightSpacePoint)
 	}
 
-	var minX, maxX, minY, maxY, minZ, maxZ float64
+	var minX, maxX, minY, maxY, minZ, maxZ float32
 
 	minX = lightSpacePoints[0].X()
 	maxX = lightSpacePoints[0].X()
@@ -110,13 +110,13 @@ func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints 
 			maxZ = point.Z()
 		}
 	}
-	maxZ += float64(shadowMapZOffset)
+	maxZ += float32(shadowMapZOffset)
 
 	halfX := (maxX - minX) / 2
 	halfY := (maxY - minY) / 2
 	halfZ := (maxZ - minZ) / 2
-	position := mgl64.Vec3{minX + halfX, minY + halfY, maxZ}
+	position := mgl32.Vec3{minX + halfX, minY + halfY, maxZ}
 	position = lightRotationMatrix.Mul4x1(position.Vec4(1)).Vec3() // bring position back into world space
-	orthoProjMatrix := mgl64.Ortho(-halfX, halfX, -halfY, halfY, 0, halfZ*2)
+	orthoProjMatrix := mgl32.Ortho(-halfX, halfX, -halfY, halfY, 0, halfZ*2)
 	return position, orthoProjMatrix
 }

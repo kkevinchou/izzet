@@ -5,7 +5,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/kitolib/shaders"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 var internedQuadVAOPositionUV uint32
@@ -111,8 +110,8 @@ func (r *Renderer) drawTexturedQuad(viewerContext *ViewerContext, shaderManager 
 			shader.SetUniformUInt("entityID", uint32(*pickingID))
 		}
 		shader.SetUniformMat4("model", *modelMatrix)
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		shader.SetUniformMat4("view", viewerContext.InverseViewMatrix)
+		shader.SetUniformMat4("projection", viewerContext.ProjectionMatrix)
 	} else {
 		shader := shaderManager.GetShaderProgram("screen_space_quad")
 		shader.Use()

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type RasterVertex struct {
-	X, Y, Z float64
+	X, Y, Z float32
 }
 
 type AxisType string
@@ -18,7 +18,7 @@ const (
 	AxisTypeZ AxisType = "Z"
 )
 
-func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *HeightField, walkable bool, areaMergeThreshold int) int {
+func RasterizeTriangle(v0, v1, v2 mgl32.Vec3, cellSize, cellHeight float32, hf *HeightField, walkable bool, areaMergeThreshold int) int {
 	ics := 1.0 / cellSize
 	ich := 1.0 / cellHeight
 
@@ -65,7 +65,7 @@ func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *
 	var zRemainderSize int = 3
 
 	for z := z0; z <= z1; z++ {
-		cellZ := hf.BMin.Z() + float64(z)*cellSize
+		cellZ := hf.BMin.Z() + float32(z)*cellSize
 		zSliceSize, zRemainderSize = dividePoly(in, zRemainderSize, zSlice, zRemainder, cellZ+cellSize, AxisTypeZ)
 		bufferSwap(&in, &zRemainder)
 
@@ -98,7 +98,7 @@ func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *
 		xRemainderSize := zSliceSize
 
 		for x := x0; x <= x1; x++ {
-			cx := hf.BMin.X() + float64(x)*cellSize
+			cx := hf.BMin.X() + float32(x)*cellSize
 			xSliceSize, xRemainderSize = dividePoly(zSlice, xRemainderSize, xSlice, xRemainder, cx+cellSize, AxisTypeX)
 			bufferSwap(&zSlice, &xRemainder)
 
@@ -138,8 +138,8 @@ func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *
 			}
 
 			// snap the span to the heightfield height grid
-			spanMinCellIndex := Clamp(int(math.Floor(spanMin*ich)), 0, spanMaxHeight)
-			spanMaxCellIndex := Clamp(int(math.Ceil(spanMax*ich)), spanMinCellIndex+1, spanMaxHeight)
+			spanMinCellIndex := Clamp(int(math.Floor(float64(spanMin*ich))), 0, spanMaxHeight)
+			spanMaxCellIndex := Clamp(int(math.Ceil(float64(spanMax*ich))), spanMinCellIndex+1, spanMaxHeight)
 
 			hf.AddSpan(x, z, spanMinCellIndex, spanMaxCellIndex, walkable, areaMergeThreshold)
 		}
@@ -148,15 +148,15 @@ func RasterizeTriangle(v0, v1, v2 mgl64.Vec3, cellSize, cellHeight float64, hf *
 	return -1
 }
 
-func dividePoly(inVerts []RasterVertex, inVertsCount int, outVerts1 []RasterVertex, outVerts2 []RasterVertex, axisOffset float64, axisType AxisType) (int, int) {
+func dividePoly(inVerts []RasterVertex, inVertsCount int, outVerts1 []RasterVertex, outVerts2 []RasterVertex, axisOffset float32, axisType AxisType) (int, int) {
 	if inVertsCount > 12 {
 		panic(fmt.Sprintf("divide poly only supports splitting polygons of size up to 12, received %d", inVertsCount))
 	}
 
 	// how far positive or negative away from the separating axis for each vertex
-	var inVertAxisDelta [12]float64
+	var inVertAxisDelta [12]float32
 	for i := 0; i < inVertsCount; i++ {
-		var axisValue float64
+		var axisValue float32
 		if axisType == AxisTypeX {
 			axisValue = inVerts[i].X
 		} else if axisType == AxisTypeZ {
@@ -223,20 +223,20 @@ func bufferSwap(a, b *[]RasterVertex) {
 }
 
 // vMin updates v0 to contain the minimum values for each axis between v0 and v1
-func vMin(v0, v1 *mgl64.Vec3) {
+func vMin(v0, v1 *mgl32.Vec3) {
 	v0[0] = min(v0[0], v1[0])
 	v0[1] = min(v0[1], v1[1])
 	v0[2] = min(v0[2], v1[2])
 }
 
 // vMin updates v0 to contain the maximum values for each axis between v0 and v1
-func vMax(v0, v1 *mgl64.Vec3) {
+func vMax(v0, v1 *mgl32.Vec3) {
 	v0[0] = max(v0[0], v1[0])
 	v0[1] = max(v0[1], v1[1])
 	v0[2] = max(v0[2], v1[2])
 }
 
-func overlapBounds(aMin, aMax, bMin, bMax mgl64.Vec3) bool {
+func overlapBounds(aMin, aMax, bMin, bMax mgl32.Vec3) bool {
 	return aMin[0] <= bMax[0] && aMax[0] >= bMin[0] &&
 		aMin[1] <= bMax[1] && aMax[1] >= bMin[1] &&
 		aMin[2] <= bMax[2] && aMax[2] >= bMin[2]

@@ -19,7 +19,7 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 		start := time.Now()
 		s.Update(delta, g.world)
 		metricName := fmt.Sprintf("%s_runtime", s.Name())
-		g.metricsRegistry.Inc(metricName, float64(time.Since(start).Milliseconds()))
+		g.metricsRegistry.Inc(metricName, float32(time.Since(start).Milliseconds()))
 	}
 }
 

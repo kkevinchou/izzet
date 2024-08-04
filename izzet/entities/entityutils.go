@@ -3,7 +3,7 @@ package entities
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
@@ -26,10 +26,10 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 		Children: map[int]*Entity{},
 
 		DirtyTransformFlag:   true,
-		LocalPosition:        mgl64.Vec3{0, 0, 0},
-		LocalRotation:        mgl64.QuatIdent(),
-		LocalScale:           mgl64.Vec3{1, 1, 1},
-		cachedWorldTransform: mgl64.Ident4(),
+		LocalPosition:        mgl32.Vec3{0, 0, 0},
+		LocalRotation:        mgl32.QuatIdent(),
+		LocalScale:           mgl32.Vec3{1, 1, 1},
+		cachedWorldTransform: mgl32.Ident4(),
 	}
 }
 
@@ -84,13 +84,13 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *assets.AssetMa
 		node := scene.Nodes[0]
 
 		entity := InstantiateEntity(document.Name)
-		entity.MeshComponent = &MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+		entity.MeshComponent = &MeshComponent{MeshHandle: handle, Transform: mgl32.Ident4(), Visible: true, ShadowCasting: true}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+		SetLocalPosition(entity, node.Translation)
+		SetLocalRotation(entity, node.Rotation)
+		SetScale(entity, node.Scale)
 
 		if len(document.Animations) > 0 {
 			entity.Animation = NewAnimationComponent(document.Name, ml)
@@ -175,13 +175,13 @@ func parseEntities(node *modelspec.Node, parent *Entity, namespace string, docum
 	if node.MeshID != nil {
 		entity = InstantiateEntity(node.Name)
 		meshHandle := assets.NewHandleFromMeshID(namespace, *node.MeshID)
-		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+		entity.MeshComponent = &MeshComponent{MeshHandle: meshHandle, Transform: mgl32.Ident4(), Visible: true, ShadowCasting: true}
 		var vertices []modelspec.Vertex
 		VerticesFromNode(node, document, &vertices)
 		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+		SetLocalPosition(entity, node.Translation)
+		SetLocalRotation(entity, node.Rotation)
+		SetScale(entity, node.Scale)
 
 		if len(document.Animations) > 0 {
 			entity.Animation = NewAnimationComponent(document.Name, ml)

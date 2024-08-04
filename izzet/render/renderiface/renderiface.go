@@ -1,7 +1,7 @@
 package renderiface
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
@@ -22,8 +22,8 @@ import (
 
 type App interface {
 	AssetManager() *assets.AssetManager
-	GetEditorCameraPosition() mgl64.Vec3
-	GetEditorCameraRotation() mgl64.Quat
+	GetEditorCameraPosition() mgl32.Vec3
+	GetEditorCameraRotation() mgl32.Quat
 	Prefabs() []*prefabs.Prefab
 	ResetNavMeshVAO()
 	CommandFrame() int
@@ -68,19 +68,19 @@ type App interface {
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
 	InstantiateEntity(entityHandle string) *entities.Entity
-	BuildNavMesh(App, int, int, int, int, float64, float64)
+	BuildNavMesh(App, int, int, int, int, float32, float32)
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld
 	CreateMaterial(material material.Material)
 
 	GetFrameInput() input.Input
-	FindPath(start, goal mgl64.Vec3)
+	FindPath(start, goal mgl32.Vec3)
 }
 
 type RenderContext interface {
 	Width() int
 	Height() int
-	AspectRatio() float64
+	AspectRatio() float32
 }
 
 type GameWorld interface {

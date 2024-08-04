@@ -1,7 +1,7 @@
 package navmesh
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // Border vertex flag.
@@ -42,15 +42,15 @@ type RawContour struct {
 }
 
 type ContourSet struct {
-	bMin, bMax           mgl64.Vec3
+	bMin, bMax           mgl32.Vec3
 	width, height        int
-	maxError             float64
+	maxError             float32
 	Contours             []Contour
 	RawContours          []RawContour
-	CellSize, CellHeight float64
+	CellSize, CellHeight float32
 }
 
-func BuildContours(chf *CompactHeightField, maxError float64, maxEdgeLength int) *ContourSet {
+func BuildContours(chf *CompactHeightField, maxError float32, maxEdgeLength int) *ContourSet {
 	contourSet := &ContourSet{
 		bMin:       chf.bMin,
 		bMax:       chf.bMax,
@@ -307,7 +307,7 @@ func getCornerHeight(x, z, i, dir int, chf *CompactHeightField) (int, bool) {
 	return cellHeight, isBorderVertex
 }
 
-func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []SimplifiedVertex {
+func simplifyContour(vertices []Vertex, maxError float32, maxEdgeLength int) []SimplifiedVertex {
 	// 1. setup initial points
 
 	var hasConnections bool
@@ -408,7 +408,7 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 		// set up variables to either traverse a -> b or b -> a
 		// this keeps the actual traversal code simple and agnostic of direction
 
-		var maxd float64
+		var maxd float32
 		maxi := -1
 		var ci, cinc, endi int
 
@@ -518,11 +518,11 @@ func simplifyContour(vertices []Vertex, maxError float64, maxEdgeLength int) []S
 }
 
 // returns the squared distance between a point and a line segment
-func distancePtSeg2D(x, z, px, pz, qx, qz int) float64 {
-	pqx := float64(qx - px)
-	pqz := float64(qz - pz)
-	dx := float64(x - px)
-	dz := float64(z - pz)
+func distancePtSeg2D(x, z, px, pz, qx, qz int) float32 {
+	pqx := float32(qx - px)
+	pqz := float32(qz - pz)
+	dx := float32(x - px)
+	dz := float32(z - pz)
 	d := pqx*pqx + pqz*pqz
 	t := pqx*dx + pqz*dz
 
@@ -535,8 +535,8 @@ func distancePtSeg2D(x, z, px, pz, qx, qz int) float64 {
 		t = 1
 	}
 
-	dx = float64(px) + t*pqx - float64(x)
-	dz = float64(pz) + t*pqz - float64(z)
+	dx = float32(px) + t*pqx - float32(x)
+	dz = float32(pz) + t*pqz - float32(z)
 
 	return dx*dx + dz*dz
 }

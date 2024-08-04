@@ -3,7 +3,7 @@ package assets
 import (
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
@@ -65,8 +65,8 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 }
 
 // maybe this should be computed once and shared across all instances of the mesh?
-func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
-	var result []mgl64.Vec3
+func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl32.Vec3 {
+	var result []mgl32.Vec3
 	for _, p := range primitives {
 		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
 	}

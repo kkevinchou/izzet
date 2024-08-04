@@ -3,11 +3,11 @@ package navmesh
 import (
 	"testing"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 func TestHeightField(t *testing.T) {
-	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
+	hf := NewHeightField(100, 100, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{100, 100, 100}, 1, 1)
 
 	count := hf.SpanCount()
 	if count != 0 {
@@ -84,7 +84,7 @@ func TestHeightField(t *testing.T) {
 
 func TestFilterLowHeightSpans(t *testing.T) {
 	walkableHeight := 4
-	hf := NewHeightField(100, 100, mgl64.Vec3{0, 0, 0}, mgl64.Vec3{100, 100, 100}, 1, 1)
+	hf := NewHeightField(100, 100, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{100, 100, 100}, 1, 1)
 	hf.AddSpan(0, 0, 0, 1, true, 1)
 
 	// okay

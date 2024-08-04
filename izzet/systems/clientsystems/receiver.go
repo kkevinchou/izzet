@@ -135,7 +135,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					fmt.Println(fmt.Errorf("failed to deserialize ping message %w", err))
 					continue
 				}
-				s.app.MetricsRegistry().Inc("ping", float64(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
+				s.app.MetricsRegistry().Inc("ping", float32(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
 			}
 		default:
 			return

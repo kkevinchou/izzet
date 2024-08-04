@@ -3,7 +3,7 @@ package navmesh
 import (
 	"cmp"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -52,7 +52,7 @@ type NavigationMesh struct {
 	CompactHeightField *CompactHeightField
 	Volume             collider.BoundingBox
 	BlurredDistances   []int
-	DebugLines         [][2]mgl64.Vec3
+	DebugLines         [][2]mgl32.Vec3
 	ContourSet         *ContourSet
 	Mesh               *Mesh
 	DetailedMesh       *DetailedMesh

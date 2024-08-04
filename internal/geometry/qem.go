@@ -5,11 +5,10 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/gheap"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
 	"github.com/patrick-higgins/rtreego"
 )
 
@@ -18,9 +17,9 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 	allVertIndices, allVertPositions, v2t, triangles := mergeVerticesByDistance(primitive, 0.00001)
 
 	// 1. Compute the Q matrices for all the initial vertices.
-	quadrics := map[int]mgl64.Mat4{}
+	quadrics := map[int]mgl32.Mat4{}
 	for _, triangle := range sortedTriangles(triangles) {
-		plane, ok := PlaneFromVerts([3]mgl64.Vec3{
+		plane, ok := PlaneFromVerts([3]mgl32.Vec3{
 			allVertPositions[triangle[0]],
 			allVertPositions[triangle[1]],
 			allVertPositions[triangle[2]],
@@ -78,7 +77,7 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 			continue
 		}
 
-		// if math.Abs(edgeContraction.Cost) < 1 {
+		// if apputils.F32Abs(edgeContraction.Cost) < 1 {
 		// 	edgeContraction.Valid = false
 		// 	continue
 		// }
@@ -174,7 +173,7 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 	for _, triangle := range sortedTriangles(triangles) {
 		triMesh.Triangles = append(triMesh.Triangles,
 			collider.NewTriangle(
-				[3]mgl64.Vec3{
+				[3]mgl32.Vec3{
 					allVertPositions[triangle[0]],
 					allVertPositions[triangle[1]],
 					allVertPositions[triangle[2]],
@@ -206,17 +205,17 @@ func sortedTriangles(triangles map[int][3]int) [][3]int {
 type Point struct {
 	Index    int
 	RPoint   rtreego.Point
-	Distance float64
+	Distance float32
 }
 
 func (p Point) Bounds() *rtreego.Rect {
-	return p.RPoint.ToRect(p.Distance)
+	return p.RPoint.ToRect(float64(p.Distance))
 }
 
-func mergeVerticesByDistance(primitive *modelspec.PrimitiveSpecification, distance float64) ([]int, []mgl64.Vec3, map[int][]int, map[int][3]int) {
-	var allVertPositions []mgl64.Vec3
+func mergeVerticesByDistance(primitive *modelspec.PrimitiveSpecification, distance float32) ([]int, []mgl32.Vec3, map[int][]int, map[int][3]int) {
+	var allVertPositions []mgl32.Vec3
 	for _, v := range primitive.UniqueVertices {
-		allVertPositions = append(allVertPositions, utils.Vec3F32ToF64(v.Position))
+		allVertPositions = append(allVertPositions, v.Position)
 	}
 
 	tree := rtreego.NewTree(1, 100)
@@ -225,7 +224,7 @@ func mergeVerticesByDistance(primitive *modelspec.PrimitiveSpecification, distan
 	var allVertIndices []int
 	for _, v := range primitive.VertexIndices {
 		position := allVertPositions[int(v)]
-		p := Point{Index: int(v), RPoint: rtreego.Point{position[0], position[1], position[2]}, Distance: distance}
+		p := Point{Index: int(v), RPoint: rtreego.Point{float64(position[0]), float64(position[1]), float64(position[2])}, Distance: distance}
 		results := tree.SearchIntersect(p.Bounds())
 
 		if len(results) > 0 {
@@ -266,11 +265,11 @@ func minEdgeHash(v1, v2 int) string {
 	return fmt.Sprintf("%d_%d", min(v1, v2), max(v1, v2))
 }
 
-func createQuadricForVertex(vert int, allVertPositions []mgl64.Vec3, v2t map[int][]int, triangles map[int][3]int) mgl64.Mat4 {
-	var q mgl64.Mat4
+func createQuadricForVertex(vert int, allVertPositions []mgl32.Vec3, v2t map[int][]int, triangles map[int][3]int) mgl32.Mat4 {
+	var q mgl32.Mat4
 	for _, triIndex := range v2t[vert] {
 		triangle := triangles[triIndex]
-		plane, ok := PlaneFromVerts([3]mgl64.Vec3{
+		plane, ok := PlaneFromVerts([3]mgl32.Vec3{
 			allVertPositions[triangle[0]],
 			allVertPositions[triangle[1]],
 			allVertPositions[triangle[2]],
@@ -318,17 +317,17 @@ func vertNeighbors(v1 int, v2t map[int][]int, triangles map[int][3]int) []int {
 	return result
 }
 
-func createEdgeContraction(v1, v2 int, v1Quadric, v2Quadric mgl64.Mat4, v1Position, v2Position mgl64.Vec3) *EdgeContraction {
+func createEdgeContraction(v1, v2 int, v1Quadric, v2Quadric mgl32.Mat4, v1Position, v2Position mgl32.Vec3) *EdgeContraction {
 	idx1 := v1
 	idx2 := v2
 
 	QHat := v1Quadric.Add(v2Quadric)
 
-	var vHat mgl64.Vec3
-	var cost float64
+	var vHat mgl32.Vec3
+	var cost float32
 
 	if QHat.Det() != 0 {
-		vHatV4 := QHat.Inv().Mul4x1(mgl64.Vec4{0, 0, 0, 1})
+		vHatV4 := QHat.Inv().Mul4x1(mgl32.Vec4{0, 0, 0, 1})
 		vHatV4 = vHatV4.Mul(1.0 / vHatV4.W())
 
 		cost = ComputeQEM(vHatV4, QHat)
@@ -355,16 +354,12 @@ func createEdgeContraction(v1, v2 int, v1Quadric, v2Quadric mgl64.Mat4, v1Positi
 type EdgeContraction struct {
 	Idx1      int
 	Idx2      int
-	NewVertex mgl64.Vec3
-	Cost      float64
-	Quadric   mgl64.Mat4
+	NewVertex mgl32.Vec3
+	Cost      float32
+	Quadric   mgl32.Mat4
 	Valid     bool
 }
 
 func Less(c1, c2 *EdgeContraction) bool {
 	return c1.Cost < c2.Cost
-}
-
-func convertVertex(v modelspec.Vertex) mgl64.Vec4 {
-	return utils.Vec3F32ToF64(v.Position).Vec4(1)
 }

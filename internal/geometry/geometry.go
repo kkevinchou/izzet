@@ -1,33 +1,33 @@
 package geometry
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Plane struct {
-	A, B, C, D float64
+	A, B, C, D float32
 }
 
-func ComputeErrorQuadric(plane Plane) mgl64.Mat4 {
+func ComputeErrorQuadric(plane Plane) mgl32.Mat4 {
 	a := plane.A
 	b := plane.B
 	c := plane.C
 	d := plane.D
 
-	// quadric := mgl64.Mat4FromCols(
-	// 	mgl64.Vec4{a * a, a * b, a * c, a * d},
-	// 	mgl64.Vec4{a * b, b * b, b * c, b * d},
-	// 	mgl64.Vec4{a * c, b * c, c * c, c * d},
-	// 	mgl64.Vec4{a * d, b * d, c * d, d * d},
+	// quadric := mgl32.Mat4FromCols(
+	// 	mgl32.Vec4{a * a, a * b, a * c, a * d},
+	// 	mgl32.Vec4{a * b, b * b, b * c, b * d},
+	// 	mgl32.Vec4{a * c, b * c, c * c, c * d},
+	// 	mgl32.Vec4{a * d, b * d, c * d, d * d},
 	// )
 
-	v := mgl64.Vec4{a, b, c, d}
+	v := mgl32.Vec4{a, b, c, d}
 	quadric := v.OuterProd4(v)
 
 	return quadric
 }
 
-func PlaneFromVerts(verts [3]mgl64.Vec3) (Plane, bool) {
+func PlaneFromVerts(verts [3]mgl32.Vec3) (Plane, bool) {
 	v1 := verts[1].Sub(verts[0])
 	v2 := verts[2].Sub(verts[1])
 
@@ -42,12 +42,12 @@ func PlaneFromVerts(verts [3]mgl64.Vec3) (Plane, bool) {
 	return Plane{A: normal[0], B: normal[1], C: normal[2], D: d}, true
 }
 
-func ComputeQEM(v mgl64.Vec4, q mgl64.Mat4) float64 {
+func ComputeQEM(v mgl32.Vec4, q mgl32.Mat4) float32 {
 	return v.Dot(q.Mul4x1(v))
 }
 
-// func PreMultiply(v mgl64.Vec4, m mgl64.Mat4) mgl64.Vec4 {
-// 	return mgl64.Vec4{
+// func PreMultiply(v mgl32.Vec4, m mgl32.Mat4) mgl32.Vec4 {
+// 	return mgl32.Vec4{
 // 		v[0] * (m[0] + m[1] + m[2] + m[3]),
 // 		v[1] * (m[4] + m[5] + m[6] + m[7]),
 // 		v[2] * (m[8] + m[9] + m[10] + m[11]),

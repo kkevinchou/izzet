@@ -1,13 +1,13 @@
 package navmesh
 
-// // var epsilon float64 = 0.000000001
-// // var epsilon float64 = 0.00001
-// var epsilon float64 = 0
+// // var epsilon float32 = 0.000000001
+// // var epsilon float32 = 0.00001
+// var epsilon float32 = 0
 
-// func triMax(a, b, c float64) float64 {
+// func triMax(a, b, c float32) float32 {
 // 	return math.Max(a, math.Max(b, c))
 // }
-// func triMin(a, b, c float64) float64 {
+// func triMin(a, b, c float32) float32 {
 // 	return math.Min(a, math.Min(b, c))
 // }
 
@@ -27,17 +27,17 @@ package navmesh
 // 	f1 := v2.Sub(v1)
 // 	f2 := v0.Sub(v2)
 
-// 	var p0, p1, p2, r float64
+// 	var p0, p1, p2, r float32
 
 // 	// Test against the nine axes given by the cross products between the AABB normals and triangle edges
 
 // 	// a00, p0 == p1
 // 	p0 = v0[2]*v1[1] - v0[1]*v1[2]
 // 	p2 = -v2[1]*(v1[2]-v0[2]) + v2[2]*(v1[1]-v0[1])
-// 	r = extents[1]*math.Abs(f0[2]) + extents[2]*math.Abs(f0[1])
+// 	r = extents[1]*apputils.F32Abs(f0[2]) + extents[2]*apputils.F32Abs(f0[1])
 // 	if math.Max(-math.Max(p0, p2), math.Min(p0, p2)) > (r - epsilon) {
-// 		// a00 := mgl64.Vec3{0, -f0[2], f0[1]}
-// 		// if !a00.ApproxEqual(mgl64.Vec3{}) {
+// 		// a00 := mgl32.Vec3{0, -f0[2], f0[1]}
+// 		// if !a00.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a00)
 // 		// 	q1 := v1.Dot(a00)
 // 		// 	q2 := v2.Dot(a00)
@@ -53,10 +53,10 @@ package navmesh
 // 	// a01, p1 == p2
 // 	p0 = -v0[1]*(v2[2]-v1[2]) + v0[2]*(v2[1]-v1[1])
 // 	p1 = -v1[1]*v2[2] + v1[2]*v2[1]
-// 	r = extents[1]*math.Abs(f1[2]) + extents[2]*math.Abs(f1[1])
+// 	r = extents[1]*apputils.F32Abs(f1[2]) + extents[2]*apputils.F32Abs(f1[1])
 // 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > (r - epsilon) {
-// 		// a01 := mgl64.Vec3{0, -f1[2], f1[1]}
-// 		// if a01.ApproxEqual(mgl64.Vec3{}) {
+// 		// a01 := mgl32.Vec3{0, -f1[2], f1[1]}
+// 		// if a01.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a01)
 // 		// 	q1 := v1.Dot(a01)
 // 		// 	q2 := v2.Dot(a01)
@@ -72,10 +72,10 @@ package navmesh
 // 	// a02, p0 == p2
 // 	p0 = v0[1]*v2[2] - v0[2]*v2[1]
 // 	p1 = -v1[1]*(v0[2]-v2[2]) + v1[2]*(v0[1]-v2[1])
-// 	r = extents[1]*math.Abs(f2[2]) + extents[2]*math.Abs(f2[1])
+// 	r = extents[1]*apputils.F32Abs(f2[2]) + extents[2]*apputils.F32Abs(f2[1])
 // 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > (r - epsilon) {
-// 		// a02 := mgl64.Vec3{0, -f2[2], f2[1]}
-// 		// if a02.ApproxEqual(mgl64.Vec3{}) {
+// 		// a02 := mgl32.Vec3{0, -f2[2], f2[1]}
+// 		// if a02.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a02)
 // 		// 	q1 := v1.Dot(a02)
 // 		// 	q2 := v2.Dot(a02)
@@ -94,10 +94,10 @@ package navmesh
 // 	// a10, p0 == p1
 // 	p0 = v0[0]*v1[2] - v0[2]*v1[0]
 // 	p2 = v2[0]*(v1[2]-v0[2]) - v2[2]*(v1[0]-v0[0])
-// 	r = extents[0]*math.Abs(f0[2]) + extents[2]*math.Abs(f0[0])
+// 	r = extents[0]*apputils.F32Abs(f0[2]) + extents[2]*apputils.F32Abs(f0[0])
 // 	if math.Max(-math.Max(p0, p2), math.Min(p0, p2)) > (r - epsilon) {
-// 		// a10 := mgl64.Vec3{f0[2], 0, -f0[0]}
-// 		// if a10.ApproxEqual(mgl64.Vec3{}) {
+// 		// a10 := mgl32.Vec3{f0[2], 0, -f0[0]}
+// 		// if a10.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a10)
 // 		// 	q1 := v1.Dot(a10)
 // 		// 	q2 := v2.Dot(a10)
@@ -114,10 +114,10 @@ package navmesh
 
 // 	p0 = v0[0]*(v2[2]-v1[2]) - v0[2]*(v2[0]-v1[0])
 // 	p1 = v1[0]*v2[2] - v1[2]*v2[0]
-// 	r = extents[0]*math.Abs(f1[2]) + extents[2]*math.Abs(f1[0])
+// 	r = extents[0]*apputils.F32Abs(f1[2]) + extents[2]*apputils.F32Abs(f1[0])
 // 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > (r - epsilon) {
-// 		// a11 := mgl64.Vec3{f1[2], 0, -f1[0]}
-// 		// if a11.ApproxEqual(mgl64.Vec3{}) {
+// 		// a11 := mgl32.Vec3{f1[2], 0, -f1[0]}
+// 		// if a11.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a11)
 // 		// 	q1 := v1.Dot(a11)
 // 		// 	q2 := v2.Dot(a11)
@@ -134,10 +134,10 @@ package navmesh
 
 // 	p0 = -v0[0]*v2[2] + v0[2]*v2[0]
 // 	p1 = v1[0]*(v0[2]-v2[2]) - v1[2]*(v0[0]-v2[0])
-// 	r = extents[0]*math.Abs(f2[2]) + extents[2]*math.Abs(f2[0])
+// 	r = extents[0]*apputils.F32Abs(f2[2]) + extents[2]*apputils.F32Abs(f2[0])
 // 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > (r - epsilon) {
-// 		// a12 := mgl64.Vec3{f2[2], 0, -f2[0]}
-// 		// if a12.ApproxEqual(mgl64.Vec3{}) {
+// 		// a12 := mgl32.Vec3{f2[2], 0, -f2[0]}
+// 		// if a12.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a12)
 // 		// 	q1 := v1.Dot(a12)
 // 		// 	q2 := v2.Dot(a12)
@@ -156,10 +156,10 @@ package navmesh
 
 // 	p0 = -v0[0]*v1[1] + v0[1]*v1[0]
 // 	p2 = -v2[0]*(v1[1]-v0[1]) + v2[1]*(v1[0]-v0[0])
-// 	r = extents[0]*math.Abs(f0[1]) + extents[1]*math.Abs(f0[0])
+// 	r = extents[0]*apputils.F32Abs(f0[1]) + extents[1]*apputils.F32Abs(f0[0])
 // 	if math.Max(-math.Max(p0, p2), math.Min(p0, p2)) > (r - epsilon) {
-// 		// a20 := mgl64.Vec3{-f0[1], f0[0], 0}
-// 		// if a20.ApproxEqual(mgl64.Vec3{}) {
+// 		// a20 := mgl32.Vec3{-f0[1], f0[0], 0}
+// 		// if a20.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a20)
 // 		// 	q1 := v1.Dot(a20)
 // 		// 	q2 := v2.Dot(a20)
@@ -176,10 +176,10 @@ package navmesh
 
 // 	p0 = -v0[0]*(v2[1]-v1[1]) + v0[1]*(v2[0]-v1[0])
 // 	p1 = -v1[0]*v2[1] + v1[1]*v2[0]
-// 	r = extents[0]*math.Abs(f1[1]) + extents[1]*math.Abs(f1[0])
+// 	r = extents[0]*apputils.F32Abs(f1[1]) + extents[1]*apputils.F32Abs(f1[0])
 // 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > (r - epsilon) {
-// 		// a21 := mgl64.Vec3{-f1[1], f1[0], 0}
-// 		// if a21.ApproxEqual(mgl64.Vec3{}) {
+// 		// a21 := mgl32.Vec3{-f1[1], f1[0], 0}
+// 		// if a21.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a21)
 // 		// 	q1 := v1.Dot(a21)
 // 		// 	q2 := v2.Dot(a21)
@@ -196,10 +196,10 @@ package navmesh
 
 // 	p0 = v0[0]*v2[1] - v0[1]*v2[0]
 // 	p1 = -v1[0]*(v0[1]-v2[1]) + v1[1]*(v0[0]-v2[0])
-// 	r = extents[0]*math.Abs(f2[1]) + extents[1]*math.Abs(f2[0])
+// 	r = extents[0]*apputils.F32Abs(f2[1]) + extents[1]*apputils.F32Abs(f2[0])
 // 	if math.Max(-math.Max(p0, p1), math.Min(p0, p1)) > (r - epsilon) {
-// 		// a22 := mgl64.Vec3{-f2[1], f2[0], 0}
-// 		// if a22.ApproxEqual(mgl64.Vec3{}) {
+// 		// a22 := mgl32.Vec3{-f2[1], f2[0], 0}
+// 		// if a22.ApproxEqual(mgl32.Vec3{}) {
 // 		// 	q0 := v0.Dot(a22)
 // 		// 	q1 := v1.Dot(a22)
 // 		// 	q2 := v2.Dot(a22)
@@ -229,8 +229,8 @@ package navmesh
 // 	// test separating axis corresponding to triangle normal
 
 // 	planeNormal := f0.Cross(f1)
-// 	r = extents[0]*math.Abs(planeNormal[0]) + extents[1]*math.Abs(planeNormal[1]) + extents[2]*math.Abs(planeNormal[2])
-// 	var planeDistance float64 = planeNormal.Dot(v0)
+// 	r = extents[0]*apputils.F32Abs(planeNormal[0]) + extents[1]*apputils.F32Abs(planeNormal[1]) + extents[2]*apputils.F32Abs(planeNormal[2])
+// 	var planeDistance float32 = planeNormal.Dot(v0)
 
 // 	if planeDistance > r {
 // 		return false
@@ -240,14 +240,14 @@ package navmesh
 // }
 
 // type AABB struct {
-// 	Min, Max mgl64.Vec3
+// 	Min, Max mgl32.Vec3
 // }
 
 // type Triangle struct {
-// 	MinX       float64
-// 	V1, V2, V3 mgl64.Vec3
+// 	MinX       float32
+// 	V1, V2, V3 mgl32.Vec3
 // }
 
 // type Triangle2 struct {
-// 	Vertices [3]mgl64.Vec3
+// 	Vertices [3]mgl32.Vec3
 // }

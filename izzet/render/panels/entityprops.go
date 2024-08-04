@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/material"
@@ -76,7 +76,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		uiTableRow("ID", entityIDStr)
 		uiTableRow("Name", entityNameStr)
 
-		var position *mgl64.Vec3
+		var position *mgl32.Vec3
 		var x, y, z int32
 		if entity != nil {
 			position = &entity.LocalPosition
@@ -89,7 +89,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PushIDStr("position x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
-						position[0] = float64(x)
+						position[0] = float32(x)
 						entities.SetDirty(entity)
 					}
 				}
@@ -98,7 +98,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PushIDStr("position y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
-						position[1] = float64(y)
+						position[1] = float32(y)
 						entities.SetDirty(entity)
 					}
 				}
@@ -107,7 +107,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PushIDStr("position z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
-						position[2] = float64(z)
+						position[2] = float32(z)
 						entities.SetDirty(entity)
 					}
 				}
@@ -134,7 +134,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			panelutils.InitColumns()
 
-			var position *mgl64.Vec3
+			var position *mgl32.Vec3
 			var x, y, z int32
 			if entity != nil {
 				position = &entity.CameraComponent.TargetPositionOffset
@@ -146,7 +146,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PushIDStr("position x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
-						position[0] = float64(x)
+						position[0] = float32(x)
 						entities.SetDirty(entity)
 					}
 				}
@@ -155,7 +155,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PushIDStr("position y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
-						position[1] = float64(y)
+						position[1] = float32(y)
 						entities.SetDirty(entity)
 					}
 				}
@@ -164,7 +164,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				imgui.PushIDStr("position z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					if entity != nil {
-						position[2] = float64(z)
+						position[2] = float32(z)
 						entities.SetDirty(entity)
 					}
 				}
@@ -302,21 +302,21 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			panelutils.SetupRow("Velocity X", func() {
 				imgui.PushIDStr("velocity x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
-					velocity[0] = float64(x)
+					velocity[0] = float32(x)
 				}
 				imgui.PopID()
 			}, true)
 			panelutils.SetupRow("Velocity Y", func() {
 				imgui.PushIDStr("velocity y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
-					velocity[1] = float64(y)
+					velocity[1] = float32(y)
 				}
 				imgui.PopID()
 			}, true)
 			panelutils.SetupRow("Velocity Z", func() {
 				imgui.PushIDStr("velocity z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
-					velocity[2] = float64(z)
+					velocity[2] = float32(z)
 				}
 				imgui.PopID()
 			}, true)
@@ -441,7 +441,7 @@ func uiTableInputPosition(entity *entities.Entity, text *string) {
 	matches := r.FindStringSubmatch(textCopy)
 	if matches != nil {
 		var parseErr bool
-		var newPosition mgl64.Vec3
+		var newPosition mgl32.Vec3
 		for i, name := range r.SubexpNames() {
 			// https://pkg.go.dev/regexp#Regexp.SubexpNames
 			// first name is always the empty string since the regexp as a whole cannot be named
@@ -460,7 +460,7 @@ func uiTableInputPosition(entity *entities.Entity, text *string) {
 				continue
 			}
 
-			newPosition[i-1] = float64(value)
+			newPosition[i-1] = float32(value)
 		}
 
 		if !parseErr {
@@ -488,7 +488,7 @@ func uiTableRow(label string, value any) {
 	imgui.Text(fmt.Sprintf("%v", value))
 }
 
-func QuatToEuler(q mgl64.Quat) mgl64.Vec3 {
+func QuatToEuler(q mgl32.Quat) mgl32.Vec3 {
 	// Convert a quaternion into euler angles (roll, pitch, yaw)
 	// roll is rotation around x in radians (counterclockwise)
 	// pitch is rotation around y in radians (counterclockwise)
@@ -500,7 +500,7 @@ func QuatToEuler(q mgl64.Quat) mgl64.Vec3 {
 
 	t0 := 2.0 * (w*x + y*z)
 	t1 := 1.0 - 2.0*(x*x+y*y)
-	roll_x := math.Atan2(t0, t1)
+	roll_x := float32(math.Atan2(float64(t0), float64(t1)))
 
 	t2 := 2.0 * (w*y - z*x)
 	if t2 > 1 {
@@ -510,11 +510,11 @@ func QuatToEuler(q mgl64.Quat) mgl64.Vec3 {
 	if t2 < -1 {
 		t2 = -1
 	}
-	pitch_y := math.Asin(t2)
+	pitch_y := float32(math.Asin(float64(t2)))
 
 	t3 := +2.0 * (w*z + x*y)
 	t4 := +1.0 - 2.0*(y*y+z*z)
-	yaw_z := math.Atan2(t3, t4)
+	yaw_z := float32(math.Atan2(float64(t3), float64(t4)))
 
-	return mgl64.Vec3{mgl64.RadToDeg(roll_x), mgl64.RadToDeg(pitch_y), mgl64.RadToDeg(yaw_z)} // in radians
+	return mgl32.Vec3{mgl32.RadToDeg(roll_x), mgl32.RadToDeg(pitch_y), mgl32.RadToDeg(yaw_z)} // in radians
 }

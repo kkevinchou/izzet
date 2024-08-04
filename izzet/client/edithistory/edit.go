@@ -1,17 +1,17 @@
 package edithistory
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
 type PositionEdit struct {
-	LastPosition    mgl64.Vec3
-	CurrentPosition mgl64.Vec3
+	LastPosition    mgl32.Vec3
+	CurrentPosition mgl32.Vec3
 	Entity          *entities.Entity
 }
 
-func NewPositionEdit(lastPosition, currentPosition mgl64.Vec3, entity *entities.Entity) *PositionEdit {
+func NewPositionEdit(lastPosition, currentPosition mgl32.Vec3, entity *entities.Entity) *PositionEdit {
 	return &PositionEdit{
 		LastPosition:    lastPosition,
 		CurrentPosition: currentPosition,
@@ -28,12 +28,12 @@ func (e *PositionEdit) Redo() {
 }
 
 type RotationEdit struct {
-	LastRotation    mgl64.Quat
-	CurrentRotation mgl64.Quat
+	LastRotation    mgl32.Quat
+	CurrentRotation mgl32.Quat
 	Entity          *entities.Entity
 }
 
-func NewRotationEdit(lastRotation, currentRotation mgl64.Quat, entity *entities.Entity) *RotationEdit {
+func NewRotationEdit(lastRotation, currentRotation mgl32.Quat, entity *entities.Entity) *RotationEdit {
 	return &RotationEdit{
 		LastRotation:    lastRotation,
 		CurrentRotation: currentRotation,
@@ -50,12 +50,12 @@ func (e *RotationEdit) Redo() {
 }
 
 type ScaleEdit struct {
-	LastScale    mgl64.Vec3
-	CurrentScale mgl64.Vec3
+	LastScale    mgl32.Vec3
+	CurrentScale mgl32.Vec3
 	Entity       *entities.Entity
 }
 
-func NewScaleEdit(lastScale, currentScale mgl64.Vec3, entity *entities.Entity) *ScaleEdit {
+func NewScaleEdit(lastScale, currentScale mgl32.Vec3, entity *entities.Entity) *ScaleEdit {
 	return &ScaleEdit{
 		LastScale:    lastScale,
 		CurrentScale: currentScale,

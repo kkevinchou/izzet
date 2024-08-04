@@ -2,17 +2,14 @@ package render
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/kitolib/shaders"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 var (
@@ -201,7 +198,7 @@ func (r *Renderer) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), chf.BMin(), float32(chf.CellSize))
 
 	return vao, int32(len(positions))
 }
@@ -209,9 +206,9 @@ func (r *Renderer) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, vao uint32, count int32) {
 	shader := shaderManager.GetShaderProgram("line")
 	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformMat4("model", mgl32.Ident4())
+	shader.SetUniformMat4("view", viewerContext.InverseViewMatrix)
+	shader.SetUniformMat4("projection", viewerContext.ProjectionMatrix)
 	gl.BindVertexArray(vao)
 	r.iztDrawLines(count)
 }
@@ -416,7 +413,7 @@ func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samp
 	var cubeSize float32 = 0.1
 
 	// small y offset is for visual clarity
-	vao := samplesCubeAttributes(positions, colors, cubeSize, cubeHeight, utils.Vec3F64ToF32(chf.BMin().Add(mgl64.Vec3{0, 0.1, 0})))
+	vao := samplesCubeAttributes(positions, colors, cubeSize, cubeHeight, chf.BMin().Add(mgl32.Vec3{0, 0.1, 0}))
 
 	return vao, int32(len(positions))
 }
@@ -558,7 +555,7 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), chf.BMin(), float32(chf.CellSize))
 
 	return vao, int32(len(positions))
 }
@@ -592,7 +589,7 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
+	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), chf.BMin(), float32(chf.CellSize))
 
 	return vao, int32(len(positions))
 }
@@ -649,7 +646,7 @@ func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
 		return 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(hf.CellSize), float32(hf.CellHeight), utils.Vec3F64ToF32(hf.BMin), float32(hf.CellSize))
+	vao := cubeAttributes(positions, lengths, colors, float32(hf.CellSize), float32(hf.CellHeight), hf.BMin, float32(hf.CellSize))
 	return vao, int32(len(positions))
 }
 
@@ -951,15 +948,15 @@ func regionIDToColor(regionID int) []float32 {
 		return []float32{.2, .2, .2}
 	}
 
-	hue := float32(regionID) * 137.508           // 137.508 is the golden angle in degrees
-	hue = float32(math.Mod(float64(hue), 360.0)) // Ensure the hue is within [0, 360)
+	hue := float32(regionID) * 137.508 // 137.508 is the golden angle in degrees
+	hue = f32Mod(hue, 360.0)           // Ensure the hue is within [0, 360)
 	return HSLToRGB(hue, 1, 0.2)
 }
 
 // HSLToRGB converts an HSL color value to RGB.
 func HSLToRGB(h, s, l float32) []float32 {
-	c := (1.0 - float32(math.Abs(float64(2.0*l-1.0)))) * s
-	x := c * (1.0 - float32(math.Abs(math.Mod(float64(h/60.0), 2.0)-1.0)))
+	c := (1.0 - (f32Abs(2.0*l - 1.0))) * s
+	x := c * (1.0 - (f32Abs(f32Mod(h/60.0, 2.0) - 1.0)))
 	m := l - c/2.0
 
 	var r, g, b float32

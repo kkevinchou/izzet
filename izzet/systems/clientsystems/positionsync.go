@@ -31,7 +31,7 @@ func (s *PositionSyncSystem) Name() string {
 // }
 
 // x between 0 and 1
-func easeInOutExpo(x float64) float64 {
+func easeInOutExpo(x float32) float32 {
 	if x == 0 || x == 1 {
 		return x
 	} else if x > 1 {
@@ -39,16 +39,16 @@ func easeInOutExpo(x float64) float64 {
 	}
 
 	if x < 0.5 {
-		return math.Pow(2, 20*x-10) / 2
+		return float32(math.Pow(2, 20*float64(x)-10)) / 2
 	}
 
-	return (2 - math.Pow(2, -20*x+10)) / 2
+	return float32(2-math.Pow(2, -20*float64(x)+10)) / 2
 }
 
 func (s *PositionSyncSystem) Update(delta time.Duration, world systems.GameWorld) {
 	player := s.app.GetPlayerEntity()
 	if player.PositionSync.Active {
-		x := float64(time.Since(player.PositionSync.StartTime).Milliseconds()) / 1000
+		x := float32(time.Since(player.PositionSync.StartTime).Milliseconds()) / 1000
 		fmt.Println("PRE", x)
 		x = easeInOutExpo(x)
 		fmt.Println("POST", x)

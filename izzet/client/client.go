@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
@@ -154,12 +154,12 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 }
 
 func (g *Client) Start() {
-	var accumulator float64
-	var renderAccumulator float64
-	// var oneSecondAccumulator float64
+	var accumulator float32
+	var renderAccumulator float32
+	// var oneSecondAccumulator float32
 
-	msPerFrame := float64(1000) / float64(settings.FPS)
-	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
+	msPerFrame := float32(1000) / float32(settings.FPS)
+	previousTimeStamp := float32(time.Now().UnixNano()) / 1000000
 
 	// immediate updates when swapping buffers
 	err := sdl.GLSetSwapInterval(0)
@@ -169,7 +169,7 @@ func (g *Client) Start() {
 
 	commandFrameCountBeforeRender := 0
 	for !g.gameOver {
-		now := float64(time.Now().UnixNano()) / 1000000
+		now := float32(time.Now().UnixNano()) / 1000000
 		delta := now - previousTimeStamp
 		previousTimeStamp = now
 
@@ -177,7 +177,7 @@ func (g *Client) Start() {
 		renderAccumulator += delta
 
 		currentLoopCommandFrames := 0
-		for accumulator >= float64(settings.MSPerCommandFrame) {
+		for accumulator >= float32(settings.MSPerCommandFrame) {
 			g.platform.NewFrame()
 			inputCollector := input.NewInputCollector()
 			g.platform.ProcessEvents(inputCollector)
@@ -190,11 +190,11 @@ func (g *Client) Start() {
 
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
-			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			g.MetricsRegistry().Inc("command_frame_nanoseconds", float32(commandFrameNanos))
 			g.world.IncrementCommandFrameCount()
 			commandFrameCountBeforeRender += 1
 
-			accumulator -= float64(settings.MSPerCommandFrame)
+			accumulator -= float32(settings.MSPerCommandFrame)
 			currentLoopCommandFrames++
 			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
 				accumulator = 0
@@ -202,11 +202,11 @@ func (g *Client) Start() {
 		}
 
 		if g.window.Minimized() {
-			msPerFrame = float64(1000) / float64(30)
+			msPerFrame = float32(1000) / float32(30)
 		} else if g.RuntimeConfig().LockRenderingToCommandFrameRate {
-			msPerFrame = float64(settings.MSPerCommandFrame)
+			msPerFrame = float32(settings.MSPerCommandFrame)
 		} else {
-			msPerFrame = float64(1000) / float64(settings.FPS)
+			msPerFrame = float32(1000) / float32(settings.FPS)
 		}
 
 		if renderAccumulator >= msPerFrame {
@@ -233,7 +233,7 @@ func (g *Client) render(delta time.Duration) {
 	g.renderer.Render(delta)
 	g.window.Swap()
 	renderTime := time.Since(start).Milliseconds()
-	g.MetricsRegistry().Inc("render_time", float64(renderTime))
+	g.MetricsRegistry().Inc("render_time", float32(renderTime))
 
 }
 
@@ -289,22 +289,22 @@ func (g *Client) setupSystems() {
 func (g *Client) setupEntities(data *izzetdata.Data) {
 	pointLight := entities.CreatePointLight()
 	pointLight.AIComponent = &entities.AIComponent{
-		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
+		PatrolConfig: &entities.PatrolConfig{Points: []mgl32.Vec3{{0, 100, 0}, {0, 300, 0}}},
 		Speed:        100,
 	}
 	pointLight.LightInfo.PreScaledIntensity = 0.05
 	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
-	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
+	entities.SetLocalPosition(pointLight, mgl32.Vec3{0, 100, 0})
 	g.world.AddEntity(pointLight)
 
 	cube := entities.CreateCube(g.assetManager, 50)
-	entities.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
+	entities.SetLocalPosition(cube, mgl32.Vec3{0, 100, 0})
 	g.world.AddEntity(cube)
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
 	directionalLight.LightInfo.PreScaledIntensity = 0.1
-	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
+	entities.SetLocalPosition(directionalLight, mgl32.Vec3{0, 500, 0})
 	g.world.AddEntity(directionalLight)
 
 	doc := g.assetManager.GetDocument("demo_scene_scificity")
@@ -313,12 +313,12 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	}
 }
 
-func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int) mgl64.Vec3 {
+func (g *Client) mousePosToNearPlane(mousePosition mgl32.Vec2, width, height int) mgl32.Vec3 {
 	x := mousePosition.X()
 	y := mousePosition.Y()
 
 	// -1 for the near plane
-	ndcP := mgl64.Vec4{((x / float64(width)) - 0.5) * 2, ((y / float64(height)) - 0.5) * -2, -1, 1}
+	ndcP := mgl32.Vec4{((x / float32(width)) - 0.5) * 2, ((y / float32(height)) - 0.5) * -2, -1, 1}
 	nearPlanePos := g.renderer.CameraViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.CameraViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 

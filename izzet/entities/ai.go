@@ -1,13 +1,13 @@
 package entities
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
 type AIComponent struct {
 	PatrolConfig   *PatrolConfig
 	RotationConfig *RotationConfig
 	TargetConfig   *TargetConfig
 	PathfindConfig *PathfindConfig
-	Speed          float64
+	Speed          float32
 
 	AttackConfig *AttackConfig
 	State        AIState
@@ -22,11 +22,11 @@ var (
 )
 
 type TargetConfig struct {
-	Direction mgl64.Vec3
+	Direction mgl32.Vec3
 }
 
 type PatrolConfig struct {
-	Points []mgl64.Vec3
+	Points []mgl32.Vec3
 	Index  int
 }
 
@@ -42,13 +42,13 @@ var (
 )
 
 type PathfindConfig struct {
-	Goal       mgl64.Vec3
-	Path       []mgl64.Vec3
+	Goal       mgl32.Vec3
+	Path       []mgl32.Vec3
 	PolyPath   []int
 	NextTarget int
 	State      PathfindingState
 }
 
 type RotationConfig struct {
-	Quat mgl64.Quat
+	Quat mgl32.Quat
 }

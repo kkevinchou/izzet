@@ -1,6 +1,6 @@
 package navmesh
 
-import "math"
+import "github.com/kkevinchou/izzet/izzet/apputils"
 
 func ErodeWalkableArea(chf *CompactHeightField, erosionRadius float32) {
 	distances := computeDistances(chf)
@@ -98,7 +98,7 @@ func FilterLedgeSpans(walkableHeight, climbableHeight int, hf *HeightField) {
 						lowestNeighborFloorDifference = min(lowestNeighborFloorDifference, neighborFloorDifference)
 
 						// update the min/max traversable neighbor distances
-						if math.Abs(float64(neighborFloorDifference)) <= float64(climbableHeight) {
+						if apputils.F32Abs(float32(neighborFloorDifference)) <= float32(climbableHeight) {
 							lowestTraversableNeighborFloor = min(lowestTraversableNeighborFloor, neighborFloor)
 							highestTraversableNeighborFloor = max(highestTraversableNeighborFloor, neighborFloor)
 						} else if neighborFloorDifference < -climbableHeight {

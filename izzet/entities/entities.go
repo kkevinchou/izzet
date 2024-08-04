@@ -3,7 +3,7 @@ package entities
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
@@ -30,12 +30,12 @@ type Entity struct {
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
-	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
+	cachedWorldTransform mgl32.Mat4 // TODO: initialize to identity
 
 	// each Entity has their own transforms and animation player
-	LocalPosition mgl64.Vec3
-	LocalRotation mgl64.Quat
-	LocalScale    mgl64.Vec3
+	LocalPosition mgl32.Vec3
+	LocalRotation mgl32.Quat
+	LocalScale    mgl32.Vec3
 
 	MeshComponent       *MeshComponent
 	InternalBoundingBox collider.BoundingBox

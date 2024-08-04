@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -10,7 +10,7 @@ import (
 // 1. transformations from model space transformations
 // 2. transformations from an animated joint that the entity is parented to
 // 3. transformations from the entity's parent
-func WorldTransform(entity *Entity) mgl64.Mat4 {
+func WorldTransform(entity *Entity) mgl32.Mat4 {
 	// TODO:
 	// animations can move obects around pretty regularly, we shouldn't cache world
 	// transforms for entities that have animations
@@ -18,10 +18,10 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
 
 		localPosition := GetLocalPosition(entity)
-		translationMatrix := mgl64.Translate3D(localPosition[0], localPosition[1], localPosition[2])
+		translationMatrix := mgl32.Translate3D(localPosition[0], localPosition[1], localPosition[2])
 		rotationMatrix := GetLocalRotation(entity).Mat4()
 		scale := GetLocalScale(entity)
-		scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
+		scaleMatrix := mgl32.Scale3D(scale.X(), scale.Y(), scale.Z())
 		modelMatrix := translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 		entity.cachedWorldTransform = parentAndJointTransformMatrix.Mul4(modelMatrix)
@@ -31,29 +31,29 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	return entity.cachedWorldTransform
 }
 
-func GetLocalPosition(entity *Entity) mgl64.Vec3 {
+func GetLocalPosition(entity *Entity) mgl32.Vec3 {
 	return entity.LocalPosition
 }
 
-func GetLocalRotation(entity *Entity) mgl64.Quat {
+func GetLocalRotation(entity *Entity) mgl32.Quat {
 	return entity.LocalRotation
 }
 
-func GetLocalScale(entity *Entity) mgl64.Vec3 {
+func GetLocalScale(entity *Entity) mgl32.Vec3 {
 	return entity.LocalScale
 }
 
-func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
+func SetLocalPosition(entity *Entity, position mgl32.Vec3) {
 	SetDirty(entity)
 	entity.LocalPosition = position
 }
 
-func SetLocalRotation(entity *Entity, rotation mgl64.Quat) {
+func SetLocalRotation(entity *Entity, rotation mgl32.Quat) {
 	SetDirty(entity)
 	entity.LocalRotation = rotation
 }
 
-func SetScale(entity *Entity, scale mgl64.Vec3) {
+func SetScale(entity *Entity, scale mgl32.Vec3) {
 	SetDirty(entity)
 	entity.LocalScale = scale
 }
@@ -67,9 +67,9 @@ func SetDirty(entity *Entity) {
 	entity.DirtyTransformFlag = true
 }
 
-func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
-	parentModelMatrix := mgl64.Ident4()
-	animModelMatrix := mgl64.Ident4()
+func ComputeParentAndJointTransformMatrix(entity *Entity) mgl32.Mat4 {
+	parentModelMatrix := mgl32.Ident4()
+	animModelMatrix := mgl32.Ident4()
 	if entity.Parent != nil {
 		parentModelMatrix = WorldTransform(entity.Parent)
 	}
@@ -77,13 +77,13 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 	return parentModelMatrix.Mul4(animModelMatrix)
 }
 
-func (e *Entity) WorldRotation() mgl64.Quat {
+func (e *Entity) WorldRotation() mgl32.Quat {
 	m := WorldTransform(e)
 	_, r, _ := utils.DecomposeF64(m)
 	return r
 }
 
-func (e *Entity) Position() mgl64.Vec3 {
+func (e *Entity) Position() mgl32.Vec3 {
 	m := WorldTransform(e)
-	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
+	return m.Mul4x1(mgl32.Vec4{0, 0, 0, 1}).Vec3()
 }

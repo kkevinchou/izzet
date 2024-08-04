@@ -1,12 +1,12 @@
 package editorcamera
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
 type Camera struct {
-	Position mgl64.Vec3
-	Rotation mgl64.Quat
-	Speed    float64
+	Position mgl32.Vec3
+	Rotation mgl32.Quat
+	Speed    float32
 
-	Drift                   mgl64.Vec3
-	LastFrameMovementVector mgl64.Vec3
+	Drift                   mgl32.Vec3
+	LastFrameMovementVector mgl32.Vec3
 }

@@ -1,7 +1,7 @@
 package navmesh
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
-func MoveAlongSurface(tile CTile, path []int, targets []mgl64.Vec3) {
+func MoveAlongSurface(tile CTile, path []int, targets []mgl32.Vec3) {
 
 }

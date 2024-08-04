@@ -1,11 +1,11 @@
 package entities
 
-import "github.com/go-gl/mathgl/mgl64"
+import "github.com/go-gl/mathgl/mgl32"
 
 type CharacterControllerComponent struct {
-	ControlVector       mgl64.Vec3
-	Speed               float64
-	FlySpeed            float64
-	WebVector           mgl64.Vec3
-	PersistentWebVector mgl64.Vec3
+	ControlVector       mgl32.Vec3
+	Speed               float32
+	FlySpeed            float32
+	WebVector           mgl32.Vec3
+	PersistentWebVector mgl32.Vec3
 }

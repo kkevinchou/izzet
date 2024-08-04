@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/physicsutils"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -28,7 +28,7 @@ type ICollisionObserver interface {
 
 const (
 	resolveCountMax   int     = 3
-	GroundedThreshold float64 = 0.85
+	GroundedThreshold float32 = 0.85
 )
 
 func ResolveCollisionsSingle(app App, entity *entities.Entity, observer ICollisionObserver) {
@@ -128,9 +128,9 @@ func ResolveCollisions(app App, worldEntities []*entities.Entity, observer IColl
 
 		if entity.Collider.Contacts != nil && entity.Physics != nil {
 			for _, contact := range entity.Collider.Contacts {
-				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
+				if contact.SeparatingVector.Normalize().Dot(mgl32.Vec3{0, 1, 0}) > GroundedThreshold {
 					entity.Physics.Grounded = true
-					entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
+					entity.Physics.Velocity = mgl32.Vec3{0, 0, 0}
 				}
 			}
 		}
@@ -209,7 +209,7 @@ func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityLi
 			cc.TransformedCapsuleCollider = &capsule
 		} else if cc.TriMeshCollider != nil && (!e.Static || cc.TransformedTriMeshCollider == nil) {
 			// localPosition := entities.GetLocalPosition(e)
-			// transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
+			// transformMatrix := mgl32.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
 			transformMatrix := entities.WorldTransform(e)
 			// triMesh := cc.TriMeshCollider.Transform(transformMatrix)
 			triMesh := cc.TriMeshCollider.Transform(transformMatrix)
@@ -306,7 +306,7 @@ func collide(e1 *entities.Entity, e2 *entities.Entity, observer ICollisionObserv
 	}
 
 	// filter out contacts that have tiny separating distances
-	threshold := 0.00005
+	var threshold float32 = 0.00005
 	var filteredContacts []*collision.Contact
 	for _, contact := range result {
 		if contact.SeparatingDistance > threshold {

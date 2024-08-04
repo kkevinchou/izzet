@@ -3,7 +3,7 @@ package clientsystems
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/input"
@@ -11,9 +11,9 @@ import (
 
 type EntityState struct {
 	ID             int
-	Position       mgl64.Vec3
-	Rotation       mgl64.Quat
-	Velocity       mgl64.Vec3
+	Position       mgl32.Vec3
+	Rotation       mgl32.Quat
+	Velocity       mgl32.Vec3
 	GravityEnabled bool
 }
 

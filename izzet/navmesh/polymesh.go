@@ -2,9 +2,9 @@ package navmesh
 
 import (
 	"fmt"
-	"math"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 )
 
 const (
@@ -43,9 +43,9 @@ type Mesh struct {
 	Polygons             []Polygon
 	PremergeTriangles    []Polygon
 	areas                []AREA_TYPE
-	maxEdgeError         float64
-	bMin, bMax           mgl64.Vec3
-	CellSize, CellHeight float64
+	maxEdgeError         float32
+	bMin, bMax           mgl32.Vec3
+	CellSize, CellHeight float32
 }
 
 func BuildPolyMesh(contourSet *ContourSet) *Mesh {
@@ -337,7 +337,7 @@ func (m *Mesh) addVertex(x, y, z int, firstVert, nextVert []int) int {
 
 	for i != -1 {
 		v := m.Vertices[i]
-		if v.X == x && (math.Abs(float64(v.Y-y)) <= 2) && v.Z == z {
+		if v.X == x && (apputils.F32Abs(float32(v.Y-y)) <= 2) && v.Z == z {
 			return i
 		}
 		i = nextVert[i]

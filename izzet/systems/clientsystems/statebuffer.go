@@ -3,7 +3,7 @@ package clientsystems
 import (
 	"fmt"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -23,8 +23,8 @@ type BufferedInterpolation struct {
 
 type BufferedState struct {
 	EntityID int
-	Position mgl64.Vec3
-	Rotation mgl64.Quat
+	Position mgl32.Vec3
+	Rotation mgl32.Quat
 	Deadge   bool
 }
 
@@ -74,7 +74,7 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 	}
 
 	numStates := gamestateUpdateMessage.GlobalCommandFrame - sb.lastGameStateUpdate.GlobalCommandFrame + 1
-	cfStep := float64(1) / float64(numStates)
+	cfStep := float32(1) / float32(numStates)
 
 	for i := 1; i <= numStates; i++ {
 		bi := BufferedInterpolation{CommandFrame: 0}
@@ -85,8 +85,8 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 
 			bs := BufferedState{
 				EntityID: id,
-				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
-				Rotation: QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
+				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float32(i) * cfStep).Add(startSnapshot.Position),
+				Rotation: QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float32(i)*cfStep),
 			}
 
 			bi.BufferedStates = append(bi.BufferedStates, bs)
@@ -126,20 +126,20 @@ func (sb *StateBuffer) Pull(localCommandFrame int) (BufferedInterpolation, bool)
 }
 
 // Quaternion interpolation, reimplemented from: https://github.com/TheThinMatrix/OpenGL-Animation/blob/dde792fe29767192bcb60d30ac3e82d6bcff1110/Animation/animation/Quaternion.java#L158
-func QInterpolate64(a, b mgl64.Quat, blend float64) mgl64.Quat {
-	var result mgl64.Quat = mgl64.Quat{}
-	var dot float64 = a.W*b.W + a.V.X()*b.V.X() + a.V.Y()*b.V.Y() + a.V.Z()*b.V.Z()
-	blendI := float64(1) - blend
+func QInterpolate64(a, b mgl32.Quat, blend float32) mgl32.Quat {
+	var result mgl32.Quat = mgl32.Quat{}
+	var dot float32 = a.W*b.W + a.V.X()*b.V.X() + a.V.Y()*b.V.Y() + a.V.Z()*b.V.Z()
+	blendI := float32(1) - blend
 	if dot < 0 {
 		result.W = blendI*a.W + blend*-b.W
-		result.V = mgl64.Vec3{
+		result.V = mgl32.Vec3{
 			blendI*a.V.X() + blend*-b.V.X(),
 			blendI*a.V.Y() + blend*-b.V.Y(),
 			blendI*a.V.Z() + blend*-b.V.Z(),
 		}
 	} else {
 		result.W = blendI*a.W + blend*b.W
-		result.V = mgl64.Vec3{
+		result.V = mgl32.Vec3{
 			blendI*a.V.X() + blend*b.V.X(),
 			blendI*a.V.Y() + blend*b.V.Y(),
 			blendI*a.V.Z() + blend*b.V.Z(),

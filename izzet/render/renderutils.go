@@ -10,7 +10,6 @@ import (
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -19,11 +18,10 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/spatialpartition"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
-var lineCache map[string][]mgl64.Vec3
-var cubeCache map[string][]mgl64.Vec3
+var lineCache map[string][]mgl32.Vec3
+var cubeCache map[string][]mgl32.Vec3
 var triangleVAOCache map[string]TriangleVAO
 
 type TriangleVAO struct {
@@ -32,17 +30,17 @@ type TriangleVAO struct {
 }
 
 func init() {
-	lineCache = map[string][]mgl64.Vec3{}
-	cubeCache = map[string][]mgl64.Vec3{}
+	lineCache = map[string][]mgl32.Vec3{}
+	cubeCache = map[string][]mgl32.Vec3{}
 	triangleVAOCache = map[string]TriangleVAO{}
 }
 
-func genCacheKey(thickness, length float64) string {
+func genCacheKey(thickness, length float32) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func (r *Renderer) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
+func (r *Renderer) generateTrisVAO(points []mgl32.Vec3) (uint32, int) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
@@ -62,7 +60,7 @@ func (r *Renderer) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	return vao, len(vertices)
 }
 
-func (r *Renderer) drawTris(points []mgl64.Vec3) {
+func (r *Renderer) drawTris(points []mgl32.Vec3) {
 	vao, length := r.generateTrisVAO(points)
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
@@ -128,7 +126,7 @@ func HSVtoRGB(hsv mgl32.Vec3) mgl32.Vec3 {
 	hPrime := h / 60
 
 	// Calculate x
-	x := c * float32(1-math.Abs(float64(math.Mod(float64(hPrime), 2)-1)))
+	x := c * (1 - f32Abs(f32Mod(hPrime, 2)-1))
 
 	// Calculate m
 	m := v - c
@@ -179,7 +177,7 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 		shader.SetUniformInt(fmt.Sprintf("lights[%d].type", i), int32(lightInfo.Type))
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].dir", i), lightInfo.Direction3F)
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].diffuse", i), diffuse)
-		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.Position()))
+		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), light.Position())
 		shader.SetUniformFloat(fmt.Sprintf("lights[%d].range", i), lightInfo.Range)
 	}
 }
@@ -292,7 +290,7 @@ func (r *Renderer) drawModel(
 		}
 
 		modelMatrix := entities.WorldTransform(entity)
-		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+		modelMat := modelMatrix.Mul4(entity.MeshComponent.Transform)
 		shader.SetUniformMat4("model", modelMat)
 
 		gl.BindVertexArray(p.VAO)
@@ -311,16 +309,16 @@ func (r *Renderer) drawModel(
 	}
 }
 
-func toRadians(degrees float64) float64 {
+func toRadians(degrees float32) float32 {
 	return degrees / 180 * math.Pi
 }
 
-func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl32.Vec3, thickness float32, color mgl32.Vec3) {
 	var vao uint32
 	var length int
 
 	if _, ok := triangleVAOCache[name]; !ok {
-		var points []mgl64.Vec3
+		var points []mgl32.Vec3
 		for _, line := range lines {
 			start := line[0]
 			end := line[1]
@@ -333,7 +331,7 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 				}
 			} else {
 				dir := end.Sub(start).Normalize()
-				q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+				q := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, -1}, dir)
 
 				for _, dp := range linePoints(thickness, length) {
 					newEnd := q.Rotate(dp).Add(start)
@@ -350,81 +348,81 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 	vao = item.VAO
 	length = item.length
 
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformVec3("color", color)
 	shader.SetUniformFloat("intensity", 1.0)
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
 }
 
-func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
-	var points []mgl64.Vec3
+func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl32.Vec3, thickness float32, color mgl32.Vec3) {
+	var points []mgl32.Vec3
 	for _, line := range lines {
 		start := line[0]
 		end := line[1]
 		length := end.Sub(start).Len()
 
 		dir := end.Sub(start).Normalize()
-		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+		q := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, -1}, dir)
 
 		for _, dp := range linePoints(thickness, length) {
 			newEnd := q.Rotate(dp).Add(start)
 			points = append(points, newEnd)
 		}
 	}
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformVec3("color", color)
 	shader.SetUniformFloat("intensity", 1.0)
 	r.drawTris(points)
 }
 
-func cubeLines(length float64) [][]mgl64.Vec3 {
-	directions := [][]float64{
-		[]float64{-1, 1, 0.5},
-		[]float64{-1, -1, 0.5},
-		[]float64{1, -1, 0.5},
-		[]float64{1, 1, 0.5},
+func cubeLines(length float32) [][]mgl32.Vec3 {
+	directions := [][]float32{
+		[]float32{-1, 1, 0.5},
+		[]float32{-1, -1, 0.5},
+		[]float32{1, -1, 0.5},
+		[]float32{1, 1, 0.5},
 	}
 
-	position := mgl64.Vec3{}
-	var lines [][]mgl64.Vec3
-	var frontPoints []mgl64.Vec3
+	position := mgl32.Vec3{}
+	var lines [][]mgl32.Vec3
+	var frontPoints []mgl32.Vec3
 
 	// front points
 	for _, direction := range directions {
-		point := position.Add(mgl64.Vec3{direction[0] * length / 2, direction[1] * length / 2, direction[2] * length})
+		point := position.Add(mgl32.Vec3{direction[0] * length / 2, direction[1] * length / 2, direction[2] * length})
 		frontPoints = append(frontPoints, point)
 	}
 	for i := range frontPoints {
-		line := []mgl64.Vec3{frontPoints[i], frontPoints[(i+1)%len(frontPoints)]}
+		line := []mgl32.Vec3{frontPoints[i], frontPoints[(i+1)%len(frontPoints)]}
 		lines = append(lines, line)
 	}
 
 	// back points
-	var backPoints []mgl64.Vec3
+	var backPoints []mgl32.Vec3
 	for _, point := range frontPoints {
-		backPoints = append(backPoints, point.Add(mgl64.Vec3{0, 0, -length}))
+		backPoints = append(backPoints, point.Add(mgl32.Vec3{0, 0, -length}))
 	}
 	for i := range backPoints {
-		line := []mgl64.Vec3{backPoints[i], backPoints[(i+1)%len(backPoints)]}
+		line := []mgl32.Vec3{backPoints[i], backPoints[(i+1)%len(backPoints)]}
 		lines = append(lines, line)
 	}
 
 	// connect front and back
 	for i := range frontPoints {
-		line := []mgl64.Vec3{frontPoints[i], backPoints[i]}
+		line := []mgl32.Vec3{frontPoints[i], backPoints[i]}
 		lines = append(lines, line)
 	}
 
 	return lines
 }
 
-func cubePoints(thickness float64) []mgl64.Vec3 {
+func cubePoints(thickness float32) []mgl32.Vec3 {
 	cacheKey := genCacheKey(thickness, 0)
 	if _, ok := cubeCache[cacheKey]; ok {
 		return cubeCache[cacheKey]
 	}
 
-	var ht float64 = thickness / 2
-	points := []mgl64.Vec3{
+	var ht float32 = thickness / 2
+	points := []mgl32.Vec3{
 		// front
 		{-ht, -ht, ht},
 		{ht, -ht, ht},
@@ -484,14 +482,14 @@ func cubePoints(thickness float64) []mgl64.Vec3 {
 	return points
 }
 
-func linePoints(thickness float64, length float64) []mgl64.Vec3 {
+func linePoints(thickness float32, length float32) []mgl32.Vec3 {
 	cacheKey := genCacheKey(thickness, length)
 	if _, ok := lineCache[cacheKey]; ok {
 		return lineCache[cacheKey]
 	}
 
-	var ht float64 = thickness / 2
-	linePoints := []mgl64.Vec3{
+	var ht float32 = thickness / 2
+	linePoints := []mgl32.Vec3{
 		// front
 		{-ht, -ht, 0},
 		{ht, -ht, 0},
@@ -666,7 +664,7 @@ func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *sha
 	shader.Use()
 	shader.SetUniformMat4("model", mgl32.Translate3D(0, 0, -2))
 	shader.SetUniformMat4("view", mgl32.Ident4())
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformMat4("projection", viewerContext.ProjectionMatrix)
 
 	r.iztDrawArrays(0, 6)
 }
@@ -772,7 +770,7 @@ var pickingBuffer []byte
 // a package variable outside of the getEntityByPixelPosition method. in addition, i've
 // done better vao caching for our gizmos which previously were recreated whenever the
 // camera moves
-func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl32.Vec2) *int {
 	if r.app.Minimized() || !r.app.WindowFocused() {
 		return nil
 	}
@@ -864,50 +862,50 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 // }
 
 var (
-	spatialPartitionLineCache [][]mgl64.Vec3
+	spatialPartitionLineCache [][]mgl32.Vec3
 )
 
-func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
-	var allLines [][]mgl64.Vec3
+func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl32.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float32) {
+	var allLines [][]mgl32.Vec3
 
 	if len(spatialPartitionLineCache) == 0 {
 		d := spatialPartition.PartitionDimension * spatialPartition.PartitionCount
-		var baseHorizontalLines [][]mgl64.Vec3
+		var baseHorizontalLines [][]mgl32.Vec3
 
 		// lines along z axis
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			baseHorizontalLines = append(baseHorizontalLines,
-				[]mgl64.Vec3{{float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(-d / 2)}, {float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(d / 2)}},
+				[]mgl32.Vec3{{float32(-d/2 + i*spatialPartition.PartitionDimension), float32(-d / 2), float32(-d / 2)}, {float32(-d/2 + i*spatialPartition.PartitionDimension), float32(-d / 2), float32(d / 2)}},
 			)
 		}
 
 		// // lines along x axis
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			baseHorizontalLines = append(baseHorizontalLines,
-				[]mgl64.Vec3{{float64(-d / 2), float64(-d / 2), float64(-d/2 + i*spatialPartition.PartitionDimension)}, {float64(d / 2), float64(-d / 2), float64(-d/2 + i*spatialPartition.PartitionDimension)}},
+				[]mgl32.Vec3{{float32(-d / 2), float32(-d / 2), float32(-d/2 + i*spatialPartition.PartitionDimension)}, {float32(d / 2), float32(-d / 2), float32(-d/2 + i*spatialPartition.PartitionDimension)}},
 			)
 		}
 
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			for _, b := range baseHorizontalLines {
 				allLines = append(allLines,
-					[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0}), b[1].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0})},
+					[]mgl32.Vec3{b[0].Add(mgl32.Vec3{0, float32(i * spatialPartition.PartitionDimension), 0}), b[1].Add(mgl32.Vec3{0, float32(i * spatialPartition.PartitionDimension), 0})},
 				)
 			}
 		}
 
-		var baseVerticalLines [][]mgl64.Vec3
+		var baseVerticalLines [][]mgl32.Vec3
 
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			baseVerticalLines = append(baseVerticalLines,
-				[]mgl64.Vec3{{float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(-d / 2)}, {float64(-d/2 + i*spatialPartition.PartitionDimension), float64(d / 2), float64(-d / 2)}},
+				[]mgl32.Vec3{{float32(-d/2 + i*spatialPartition.PartitionDimension), float32(-d / 2), float32(-d / 2)}, {float32(-d/2 + i*spatialPartition.PartitionDimension), float32(d / 2), float32(-d / 2)}},
 			)
 		}
 
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			for _, b := range baseVerticalLines {
 				allLines = append(allLines,
-					[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)}), b[1].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)})},
+					[]mgl32.Vec3{b[0].Add(mgl32.Vec3{0, 0, float32(i * spatialPartition.PartitionDimension)}), b[1].Add(mgl32.Vec3{0, 0, float32(i * spatialPartition.PartitionDimension)})},
 				)
 			}
 		}
@@ -917,9 +915,9 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64
 
 	shader := r.shaderManager.GetShaderProgram("flat")
 	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformMat4("model", mgl32.Ident4())
+	shader.SetUniformMat4("view", viewerContext.InverseViewMatrix)
+	shader.SetUniformMat4("projection", viewerContext.ProjectionMatrix)
 
 	r.drawLines(
 		viewerContext,
@@ -930,51 +928,51 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64
 	)
 }
 
-func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
-	var allLines [][2]mgl64.Vec3
+func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl32.Vec3, aabb collider.BoundingBox, thickness float32) {
+	var allLines [][2]mgl32.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)
 	xd := d.X()
 	yd := d.Y()
 	zd := d.Z()
 
-	baseHorizontalLines := [][2]mgl64.Vec3{}
+	baseHorizontalLines := [][2]mgl32.Vec3{}
 	baseHorizontalLines = append(baseHorizontalLines,
-		[2]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
-		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
-		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
-		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
+		[2]mgl32.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl32.Vec3{xd, 0, 0})},
+		[2]mgl32.Vec3{aabb.MinVertex.Add(mgl32.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl32.Vec3{xd, 0, zd})},
+		[2]mgl32.Vec3{aabb.MinVertex.Add(mgl32.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl32.Vec3{0, 0, zd})},
+		[2]mgl32.Vec3{aabb.MinVertex.Add(mgl32.Vec3{0, 0, zd}), aabb.MinVertex},
 	)
 
 	for i := 0; i < 2; i++ {
 		for _, b := range baseHorizontalLines {
 			allLines = append(allLines,
-				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
+				[2]mgl32.Vec3{b[0].Add(mgl32.Vec3{0, float32(i) * yd, 0}), b[1].Add(mgl32.Vec3{0, float32(i) * yd, 0})},
 			)
 		}
 	}
 
-	baseVerticalLines := [][]mgl64.Vec3{}
+	baseVerticalLines := [][]mgl32.Vec3{}
 	for i := 0; i < 2; i++ {
 		baseVerticalLines = append(baseVerticalLines,
-			[]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{0, yd, 0})},
-			[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, yd, 0})},
+			[]mgl32.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl32.Vec3{0, yd, 0})},
+			[]mgl32.Vec3{aabb.MinVertex.Add(mgl32.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl32.Vec3{xd, yd, 0})},
 		)
 	}
 
 	for i := 0; i < 2; i++ {
 		for _, b := range baseVerticalLines {
 			allLines = append(allLines,
-				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
+				[2]mgl32.Vec3{b[0].Add(mgl32.Vec3{0, 0, float32(i) * zd}), b[1].Add(mgl32.Vec3{0, 0, float32(i) * zd})},
 			)
 		}
 	}
 
 	shader := r.shaderManager.GetShaderProgram("flat")
 	shader.Use()
-	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformMat4("model", mgl32.Ident4())
+	shader.SetUniformMat4("view", viewerContext.InverseViewMatrix)
+	shader.SetUniformMat4("projection", viewerContext.ProjectionMatrix)
 
 	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), viewerContext, shader, allLines, thickness, color)
 }
@@ -1193,7 +1191,7 @@ func (r *Renderer) initCubeVAO(length float32, includeNormals bool) uint32 {
 	return vao
 }
 
-func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
+func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl32.Vec3) uint32 {
 	vertices := []float32{
 		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
 		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
@@ -1221,25 +1219,25 @@ func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	return vao
 }
 
-func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far, fovX, fovY, aspectRatio float64, nearPlaneOffset float64) []mgl64.Vec3 {
+func calculateFrustumPoints(position mgl32.Vec3, rotation mgl32.Quat, near, far, fovX, fovY, aspectRatio float32, nearPlaneOffset float32) []mgl32.Vec3 {
 	viewerViewMatrix := rotation.Mat4()
 
-	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+	viewTranslationMatrix := mgl32.Translate3D(position.X(), position.Y(), position.Z())
 	viewMatrix := viewTranslationMatrix.Mul4(viewerViewMatrix)
 
-	halfY := math.Tan(mgl64.DegToRad(fovY / 2))
-	halfX := math.Tan(mgl64.DegToRad(fovX / 2))
+	halfY := float32(math.Tan(float64(mgl32.DegToRad(fovY / 2))))
+	halfX := float32(math.Tan(float64(mgl32.DegToRad(fovX / 2))))
 
-	var verts []mgl64.Vec3
+	var verts []mgl32.Vec3
 
-	corners := []float64{-1, 1}
-	nearFar := []float64{near, far}
-	offsets := []float64{nearPlaneOffset, 0}
+	corners := []float32{-1, 1}
+	nearFar := []float32{near, far}
+	offsets := []float32{nearPlaneOffset, 0}
 
 	for k, distance := range nearFar {
 		for _, i := range corners {
 			for _, j := range corners {
-				vert := viewMatrix.Mul4x1(mgl64.Vec3{i * halfX * distance, j * halfY * distance, -distance + offsets[k]}.Vec4(1)).Vec3()
+				vert := viewMatrix.Mul4x1(mgl32.Vec3{i * halfX * distance, j * halfY * distance, -distance + offsets[k]}.Vec4(1)).Vec3()
 				verts = append(verts, vert)
 			}
 		}

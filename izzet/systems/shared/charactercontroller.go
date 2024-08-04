@@ -3,7 +3,7 @@ package shared
 import (
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -17,13 +17,13 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 	if event, ok := keyboardInput[input.KeyboardKeyG]; ok {
 		if event.Event == input.KeyboardEventUp {
 			entity.Physics.GravityEnabled = !entity.Physics.GravityEnabled
-			entity.Physics.Velocity = mgl64.Vec3{}
+			entity.Physics.Velocity = mgl32.Vec3{}
 		}
 	}
 
 	c := entity.CharacterControllerComponent
 
-	var movementDir mgl64.Vec3
+	var movementDir mgl32.Vec3
 	speed := c.Speed
 	c.ControlVector = apputils.GetControlVector(keyboardInput)
 
@@ -31,20 +31,20 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 
 	if entity.Physics.GravityEnabled {
 		if entity.Physics.Grounded {
-			entity.Physics.Velocity = mgl64.Vec3{}
+			entity.Physics.Velocity = mgl32.Vec3{}
 			if c.ControlVector.Y() > 0 {
 				entity.Physics.Grounded = false
-				entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl64.Vec3{0, settings.CharacterJumpVelocity, 0})
+				entity.Physics.Velocity = entity.Physics.Velocity.Add(mgl32.Vec3{0, settings.CharacterJumpVelocity, 0})
 			}
 			if _, ok := keyboardInput[input.KeyboardKeyE]; ok {
-				dir := cameraRotation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
+				dir := cameraRotation.Rotate(mgl32.Vec3{0, 1, -5}).Normalize()
 				entity.Physics.Velocity = entity.Physics.Velocity.Add(dir.Mul(50))
 			}
 		}
 		movementDir = movementDirWithoutY
 
-		c.WebVector = mgl64.Vec3{}
-		viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
+		c.WebVector = mgl32.Vec3{}
+		viewVector := cameraRotation.Rotate(mgl32.Vec3{0, 0, -1})
 		if _, ok := keyboardInput[input.KeyboardKeyF]; ok {
 			c.WebVector = viewVector.Mul(settings.CharacterWebSpeed)
 		}
@@ -60,27 +60,27 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 	}
 
 	if movementDirWithoutY != apputils.ZeroVec {
-		newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, movementDirWithoutY)
+		newRotation := mgl32.QuatBetweenVectors(mgl32.Vec3{0, 0, -1}, movementDirWithoutY)
 		entities.SetLocalRotation(entity, newRotation)
 	}
 
 	finalMovementDir := movementDir.Mul(speed)
 	finalMovementDir = finalMovementDir.Add(c.WebVector)
-	finalMovementDir = finalMovementDir.Mul(float64(delta.Milliseconds()) / 1000)
+	finalMovementDir = finalMovementDir.Mul(float32(delta.Milliseconds()) / 1000)
 
 	entities.SetLocalPosition(entity, entity.LocalPosition.Add(finalMovementDir))
 }
 
-func calculateMovementDir(cameraRotation mgl64.Quat, controlVector mgl64.Vec3, includeY bool) mgl64.Vec3 {
-	forwardVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
+func calculateMovementDir(cameraRotation mgl32.Quat, controlVector mgl32.Vec3, includeY bool) mgl32.Vec3 {
+	forwardVector := cameraRotation.Rotate(mgl32.Vec3{0, 0, -1})
 	forwardVector = forwardVector.Normalize().Mul(controlVector.Z())
 
-	rightVector := cameraRotation.Rotate(mgl64.Vec3{1, 0, 0})
+	rightVector := cameraRotation.Rotate(mgl32.Vec3{1, 0, 0})
 	rightVector = rightVector.Normalize().Mul(controlVector.X())
 
 	movementDir := forwardVector.Add(rightVector)
 	if includeY {
-		movementDir = movementDir.Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector.Y()))
+		movementDir = movementDir.Add(mgl32.Vec3{0, 1, 0}.Mul(controlVector.Y()))
 	} else {
 		movementDir[1] = 0
 	}

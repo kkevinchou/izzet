@@ -119,28 +119,28 @@ func (g *Server) Start(started chan bool, done chan bool) {
 	}
 
 	started <- true
-	var accumulator float64
+	var accumulator float32
 
-	// msPerFrame := float64(1000) / float64(60)
-	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
+	// msPerFrame := float32(1000) / float32(60)
+	previousTimeStamp := float32(time.Now().UnixNano()) / 1000000
 
 	for !g.gameOver {
-		now := float64(time.Now().UnixNano()) / 1000000
+		now := float32(time.Now().UnixNano()) / 1000000
 		delta := now - previousTimeStamp
 		previousTimeStamp = now
 
 		accumulator += delta
 
 		currentLoopCommandFrames := 0
-		for accumulator >= float64(settings.MSPerCommandFrame) {
+		for accumulator >= float32(settings.MSPerCommandFrame) {
 			start := time.Now()
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
-			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			g.MetricsRegistry().Inc("command_frame_nanoseconds", float32(commandFrameNanos))
 			g.MetricsRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 
-			accumulator -= float64(settings.MSPerCommandFrame)
+			accumulator -= float32(settings.MSPerCommandFrame)
 			currentLoopCommandFrames++
 			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
 				accumulator = 0

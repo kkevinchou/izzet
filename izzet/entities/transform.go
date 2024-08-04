@@ -1,9 +1,6 @@
 package entities
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -47,9 +44,6 @@ func GetLocalScale(entity *Entity) mgl64.Vec3 {
 }
 
 func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
-	if position.Y() > 50 && strings.HasPrefix(entity.Name, "velociraptor") {
-		fmt.Println("HI")
-	}
 	SetDirty(entity)
 	entity.LocalPosition = position
 }

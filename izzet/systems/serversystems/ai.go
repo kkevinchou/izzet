@@ -1,7 +1,6 @@
 package serversystems
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -37,9 +36,6 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 		}
 
 		position := entity.Position()
-		if position.Y() > 47.3 {
-			fmt.Println("HI")
-		}
 
 		if aiComponent.PatrolConfig != nil {
 			target := aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]

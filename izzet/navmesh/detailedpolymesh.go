@@ -475,7 +475,8 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			tris = delaunayHull(verts, hull)
 		}
 	}
-	// set tri flags
+
+	setTriFlags(tris, hull)
 
 	return verts, tris
 }
@@ -547,18 +548,32 @@ func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 		}
 	}
 
-	// setTriFlags(tris, hull)
-
 	return tris
 }
 
-// func setTriFlags(tris []Triangle, hull []int) {
-// 	for i := range tris {
-// 		tri := &tris[i]
+func setTriFlags(tris []Triangle, hull []int) {
+	for i := range tris {
+		tri := &tris[i]
+		tri.OnHull[0] = onHull(tri.Vertices[0], tri.Vertices[1], hull)
+		tri.OnHull[1] = onHull(tri.Vertices[1], tri.Vertices[2], hull)
+		tri.OnHull[2] = onHull(tri.Vertices[2], tri.Vertices[0], hull)
+	}
+}
 
-// 	}
+func onHull(a, b int, hull []int) bool {
+	// all internal sampled points come after the hull so we can early out for those
+	if a >= len(hull) || b >= len(hull) {
+		return false
+	}
 
-// }
+	for i, j := 0, len(hull)-1; i < len(hull); j, i = i, i+1 {
+		if a == hull[j] && b == hull[i] {
+			return true
+		}
+	}
+
+	return false
+}
 
 func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) ([]DetailedEdge, int) {
 	var epsilon float64 = 1e-5
@@ -811,7 +826,8 @@ func distToPoly(verts []DetailedVertex, p DetailedVertex) float64 {
 		if ((vi.Z > p.Z) != (vj.Z > p.Z)) && (p.X < (vj.X-vi.X)*(p.Z-vi.Z)/(vj.Z-vi.Z)+vi.X) {
 			c = !c
 		}
-		dmin = min(dmin, distancePtSeg2Df(p.X, p.Z, vj.X, vj.Z, vi.X, vi.Z))
+		d, _ := distancePtSeg2Df(p.X, p.Z, vj.X, vj.Z, vi.X, vi.Z)
+		dmin = min(dmin, d)
 	}
 	if c {
 		return -dmin
@@ -960,7 +976,7 @@ func minPolyExtent(verts []DetailedVertex) float64 {
 			if j == i || j == ni {
 				continue
 			}
-			d := distancePtSeg2Df(verts[j].X, verts[j].Z, p1.X, p1.Z, p2.X, p2.Z)
+			d, _ := distancePtSeg2Df(verts[j].X, verts[j].Z, p1.X, p1.Z, p2.X, p2.Z)
 			maxEdgeDist = max(maxEdgeDist, d)
 		}
 		minDist = min(minDist, maxEdgeDist)
@@ -995,7 +1011,7 @@ func distancePtSeg(pt, p, q DetailedVertex) float64 {
 }
 
 // returns the squared distance between a point and a line segment
-func distancePtSeg2Df(x, z, px, pz, qx, qz float64) float64 {
+func distancePtSeg2Df(x, z, px, pz, qx, qz float64) (float64, float64) {
 	pqx := qx - px
 	pqz := qz - pz
 	dx := x - px
@@ -1015,7 +1031,7 @@ func distancePtSeg2Df(x, z, px, pz, qx, qz float64) float64 {
 	dx = px + t*pqx - x
 	dz = pz + t*pqz - z
 
-	return dx*dx + dz*dz
+	return dx*dx + dz*dz, t
 }
 
 func dist2D(v0, v1 DetailedVertex) float64 {

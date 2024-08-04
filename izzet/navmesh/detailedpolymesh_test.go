@@ -5,7 +5,6 @@ import (
 )
 
 func TestPolyMeshDetail(t *testing.T) {
-
 	contourSet := &ContourSet{
 		Contours: []Contour{
 			{

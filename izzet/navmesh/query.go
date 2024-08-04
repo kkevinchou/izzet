@@ -29,22 +29,18 @@ var PATHVERTICES []mgl64.Vec3
 func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) ([]int, []mgl64.Vec3, bool) {
 	tile := nm.Tiles[0]
 
-	_, startPolygon, success := FindNearestPolygon(tile, start)
-	if !success {
-		fmt.Println("failed to find start poly")
-		return nil, nil, false
-	}
-	_, goalPolygon, success := FindNearestPolygon(tile, goal)
-	if !success {
-		fmt.Println("failed to find goal poly")
-		return nil, nil, false
-	}
+	// start = mgl64.Vec3{-5.953646739493656, 46.86907447625646, -5.199594605599351}
+	// goal = mgl64.Vec3{3.081538628009632, 50.35613034511499, -8.687769285772625}
+
+	_, startPolygon, _ := FindNearestPolygon(tile, start)
+	_, goalPolygon, _ := FindNearestPolygon(tile, goal)
+
+	startNode := &Node{Polygon: startPolygon, Cost: 0}
+	lastBestNode := startNode
+	lastBestCost := start.Sub(goal).Len()
 
 	open := gheap.New(Less)
-	open.Push(&Node{Polygon: startPolygon, Cost: 0})
-
-	var lastBestNode *Node
-	lastBestCost := start.Sub(goal).LenSqr()
+	open.Push(startNode)
 
 	nodeMap := map[int]*Node{}
 
@@ -145,17 +141,26 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 
 	var apexIndex, leftIndex, rightIndex int
 
-	var path []mgl64.Vec3
-	path = append(path, start)
+	closestStart := closestPointOnPolyBoundary(tile, polyPath[0], start)
+	closestGoal := closestPointOnPolyBoundary(tile, polyPath[len(polyPath)-1], goal)
 
-	if len(polyPath) == 1 {
-		if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[0] {
-			// goal is the same as the start poly, create a straight path and return
-			path = append(path, goal)
-		}
-		// TODO: clip the goal to the poly if it does not lie on the polygon
-		return path
-	}
+	var path []mgl64.Vec3
+	path = append(path, closestStart)
+
+	// if len(polyPath) == 1 {
+	// 	if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[0] {
+	// 		// goal is the same as the start poly, create a straight path and return
+	// 		path = append(path, goal)
+	// 	} else {
+	// 		clippedPoint, success := closestPointOnPoly(tile, polyPath[0], goal)
+	// 		if !success {
+	// 			panic("WAT")
+	// 		}
+	// 		path = append(path, clippedPoint)
+	// 	}
+	// 	// TODO: clip the goal to the poly if it does not lie on the polygon
+	// 	return path
+	// }
 
 	iterCount := 0
 	maxIterCount := 2000
@@ -173,8 +178,8 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 			left = tile.Vertices[l]
 			right = tile.Vertices[r]
 		} else {
-			left = goal
-			right = goal
+			left = closestGoal
+			right = closestGoal
 		}
 
 		// update the right vertex
@@ -214,9 +219,16 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 		}
 	}
 
-	if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[len(polyPath)-1] {
-		path = append(path, goal)
-	}
+	// if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[len(polyPath)-1] {
+	// 	path = append(path, goal)
+	// } else {
+	// 	clippedPoint, success := closestPointOnPoly(tile, polyPath[len(polyPath)-2], goal)
+	// 	if !success {
+	// 		panic("WAT")
+	// 	}
+	// 	path = append(path, clippedPoint)
+	// }
+	path = append(path, closestGoal)
 
 	return path
 }
@@ -283,28 +295,52 @@ func FindNearestPolygon(tile CTile, point mgl64.Vec3) (mgl64.Vec3, int, bool) {
 	var nearestDistSq float64 = math.MaxFloat64
 	var nearestPoint mgl64.Vec3
 	var nearestPoly int
+	var overPoly bool
 
 	for i, _ := range tile.Polygons {
 		// find neareast point on the polygon
 		// height should be taken from the detailed mesh
-		pt, success := closestPointOnPoly(tile, i, point)
-		if !success {
-			continue
-		}
-
+		pt, op := closestPointOnPoly(tile, i, point)
 		distSq := pt.Sub(point).LenSqr()
+
 		if distSq < nearestDistSq {
 			nearestDistSq = distSq
 			nearestPoint = pt
 			nearestPoly = i
+			overPoly = op
 		}
 	}
 
-	if nearestDistSq == math.MaxFloat64 {
-		return nearestPoint, -1, false
+	return nearestPoint, nearestPoly, overPoly
+}
+
+// closestPointOnPolyBoundary is faster than closestPointOnPoly, but does not return detailed heights
+// on the polygon - if a point is within the x-z bounds, it returns the point, unmodified
+// if the point is outside of the poly, it returns the closest point on the boundary of the poly
+func closestPointOnPolyBoundary(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+	if pointInPoly(tile, poly, point) {
+		return point
+	}
+	return closestPointOnPolyEdges(tile, poly, point)
+}
+
+func closestPointOnPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+	var dmin float64 = math.MaxFloat64
+	var tMin float64
+	var vMin, vMax mgl64.Vec3
+	verts := tile.Polygons[poly].Vertices
+	for i, j := 0, len(verts)-1; i < len(verts); j, i = i, i+1 {
+		v0 := tile.Vertices[verts[j]]
+		v1 := tile.Vertices[verts[i]]
+		d, t := distancePtSeg2Df(point.X(), point.Z(), v0.X(), v0.Z(), v1.X(), v1.Z())
+		if d < dmin {
+			dmin = d
+			tMin = t
+			vMin, vMax = v0, v1
+		}
 	}
 
-	return nearestPoint, nearestPoly, true
+	return vMin.Add(vMax.Sub(vMin).Mul(tMin))
 }
 
 func closestPointOnPoly(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, bool) {
@@ -315,12 +351,51 @@ func closestPointOnPoly(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, boo
 		return np, true
 	}
 
-	return point, false
+	return closestPointOnDetailPolyEdges(tile, poly, point), false
 }
 
-// func closestPointOnPolyEdges(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, bool) {
+func closestPointOnDetailPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+	dp := tile.DetailedPolygon[poly]
+	var dmin float64 = math.MaxFloat64
+	var tMin float64
+	var vMin, vMax mgl64.Vec3
 
-// }
+	for _, tri := range dp.Triangles {
+		v0 := tile.DetailedVertices[poly][tri.Vertices[0]]
+		v1 := tile.DetailedVertices[poly][tri.Vertices[1]]
+		v2 := tile.DetailedVertices[poly][tri.Vertices[2]]
+
+		var d, t float64
+		if tri.OnHull[0] {
+			d, t = distancePtSeg2Df(point.X(), point.Z(), v0.X(), v0.Z(), v1.X(), v1.Z())
+			if d < dmin {
+				dmin = d
+				tMin = t
+				vMin, vMax = v0, v1
+			}
+		}
+
+		if tri.OnHull[1] {
+			d, t = distancePtSeg2Df(point.X(), point.Z(), v1.X(), v1.Z(), v2.X(), v2.Z())
+			if d < dmin {
+				dmin = d
+				tMin = t
+				vMin, vMax = v1, v2
+			}
+		}
+
+		if tri.OnHull[2] {
+			d, t = distancePtSeg2Df(point.X(), point.Z(), v2.X(), v2.Z(), v0.X(), v0.Z())
+			if d < dmin {
+				dmin = d
+				tMin = t
+				vMin, vMax = v2, v0
+			}
+		}
+	}
+
+	return vMin.Add(vMax.Sub(vMin).Mul(tMin))
+}
 
 func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
 	// project point onto polygon

@@ -65,7 +65,7 @@ func (s *SpawnerSystem) Update(delta time.Duration, world systems.GameWorld) {
 				// TargetConfig: &entities.TargetConfig{},
 				// PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 10, 0}, {100, 10, 0}}},
 				PathfindConfig: &entities.PathfindConfig{},
-				AttackConfig:   &entities.AttackConfig{},
+				// AttackConfig:   &entities.AttackConfig{},
 			}
 
 			world := s.app.World()

@@ -79,6 +79,8 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 					aiComponent.PathfindConfig.Path = straightPath
 					aiComponent.PathfindConfig.NextTarget = 1
 					aiComponent.PathfindConfig.State = entities.PathfindingStatePathing
+				} else {
+					aiComponent.PathfindConfig.State = entities.PathfindingStateNoGoal
 				}
 			}
 

@@ -99,7 +99,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 		start = time.Now()
 
-		pathVAOCache, pathVertexCount = createPathVAO()
+		// pathVAOCache, pathVertexCount = createPathVAO()
 		fmt.Printf("%.1f seconds to create path vao\n", time.Since(start).Seconds())
 	}
 
@@ -308,9 +308,9 @@ func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colo
 			continue
 		}
 		for _, tri := range nm.DetailedMesh.PolyTriangles[j] {
-			v0 := nm.DetailedMesh.PolyVertices[j][tri.A]
-			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
-			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
+			v0 := nm.DetailedMesh.PolyVertices[j][tri.Vertices[0]]
+			v1 := nm.DetailedMesh.PolyVertices[j][tri.Vertices[1]]
+			v2 := nm.DetailedMesh.PolyVertices[j][tri.Vertices[2]]
 
 			var color []float32
 			if cstyle == colorStyleRegionID {
@@ -353,9 +353,9 @@ func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint3
 			continue
 		}
 		for _, tri := range nm.DetailedMesh.PolyTriangles[j] {
-			v0 := nm.DetailedMesh.PolyVertices[j][tri.A]
-			v1 := nm.DetailedMesh.PolyVertices[j][tri.B]
-			v2 := nm.DetailedMesh.PolyVertices[j][tri.C]
+			v0 := nm.DetailedMesh.PolyVertices[j][tri.Vertices[0]]
+			v1 := nm.DetailedMesh.PolyVertices[j][tri.Vertices[1]]
+			v2 := nm.DetailedMesh.PolyVertices[j][tri.Vertices[2]]
 
 			// small y offset is for visual clarity
 

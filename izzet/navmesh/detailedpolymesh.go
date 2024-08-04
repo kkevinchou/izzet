@@ -49,8 +49,9 @@ type DetailedMesh struct {
 }
 
 type Triangle struct {
-	A, B, C int
-	OnHull  bool
+	// A, B, C  int
+	Vertices [3]int
+	OnHull   [3]bool
 }
 
 type Sample struct {
@@ -501,34 +502,32 @@ func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 	tris := make([]Triangle, nfaces)
 	for i := range len(tris) {
 		t := &tris[i]
-		t.A = -1
-		t.B = -1
-		t.C = -1
+		t.Vertices = [3]int{-1, -1, -1}
 	}
 
 	for _, edge := range edges {
 		if edge.r >= 0 {
 			// left face
 			t := &tris[edge.r]
-			if t.A == -1 {
-				t.A = edge.s
-				t.B = edge.t
-			} else if t.A == edge.t {
-				t.C = edge.s
-			} else if t.B == edge.s {
-				t.C = edge.t
+			if t.Vertices[0] == -1 {
+				t.Vertices[0] = edge.s
+				t.Vertices[1] = edge.t
+			} else if t.Vertices[0] == edge.t {
+				t.Vertices[2] = edge.s
+			} else if t.Vertices[1] == edge.s {
+				t.Vertices[2] = edge.t
 			}
 		}
 		if edge.l >= 0 {
 			// right face
 			t := &tris[edge.l]
-			if t.A == -1 {
-				t.A = edge.t
-				t.B = edge.s
-			} else if t.A == edge.s {
-				t.C = edge.t
-			} else if t.B == edge.t {
-				t.C = edge.s
+			if t.Vertices[0] == -1 {
+				t.Vertices[0] = edge.t
+				t.Vertices[1] = edge.s
+			} else if t.Vertices[0] == edge.s {
+				t.Vertices[2] = edge.t
+			} else if t.Vertices[1] == edge.t {
+				t.Vertices[2] = edge.s
 			}
 		}
 	}
@@ -536,20 +535,30 @@ func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 	// remove dangling face
 	for i := 0; i < len(tris); i++ {
 		t := &tris[i]
-		if t.A == -1 || t.B == -1 || t.C == -1 {
-			t.A = tris[len(tris)-1].A
-			t.B = tris[len(tris)-1].B
-			t.C = tris[len(tris)-1].C
+		if t.Vertices[0] == -1 || t.Vertices[1] == -1 || t.Vertices[2] == -1 {
+			t.Vertices[0] = tris[len(tris)-1].Vertices[0]
+			t.Vertices[1] = tris[len(tris)-1].Vertices[1]
+			t.Vertices[2] = tris[len(tris)-1].Vertices[2]
 			t.OnHull = tris[len(tris)-1].OnHull
-			fmt.Printf("removing dangling face %d [%d, %d, %d]\n", i, t.A, t.B, t.C)
+			fmt.Printf("removing dangling face %d [%d, %d, %d]\n", i, t.Vertices[0], t.Vertices[1], t.Vertices[2])
 
 			tris = tris[:len(tris)-1]
 			i--
 		}
 	}
 
+	// setTriFlags(tris, hull)
+
 	return tris
 }
+
+// func setTriFlags(tris []Triangle, hull []int) {
+// 	for i := range tris {
+// 		tri := &tris[i]
+
+// 	}
+
+// }
 
 func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) ([]DetailedEdge, int) {
 	var epsilon float64 = 1e-5
@@ -778,9 +787,9 @@ func distToTri(p, a, b, c DetailedVertex) float64 {
 func distToTris(p DetailedVertex, verts []DetailedVertex, tris []Triangle) float64 {
 	dmin := math.MaxFloat64
 	for i := range len(tris) {
-		a := verts[tris[i].A]
-		b := verts[tris[i].B]
-		c := verts[tris[i].C]
+		a := verts[tris[i].Vertices[0]]
+		b := verts[tris[i].Vertices[1]]
+		c := verts[tris[i].Vertices[2]]
 		d := distToTri(p, a, b, c)
 		if d < dmin {
 			dmin = d
@@ -850,7 +859,7 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) [
 	}
 
 	var tris []Triangle
-	tris = append(tris, Triangle{A: hull[start], B: hull[left], C: hull[right]})
+	tris = append(tris, Triangle{Vertices: [3]int{hull[start], hull[left], hull[right]}})
 
 	// triangulate the polygon by moving left or right, depending on which triangle
 	// has the shorter perimeter
@@ -867,10 +876,10 @@ func triangulateHull(verts []DetailedVertex, hull []int, originalNumVerts int) [
 		dRight := dist2D(rightVert, nextRightVert) + dist2D(leftVert, nextRightVert)
 
 		if dLeft < dRight {
-			tris = append(tris, Triangle{A: hull[left], B: hull[nLeft], C: hull[right]})
+			tris = append(tris, Triangle{Vertices: [3]int{hull[left], hull[nLeft], hull[right]}})
 			left = nLeft
 		} else {
-			tris = append(tris, Triangle{A: hull[left], B: hull[nRight], C: hull[right]})
+			tris = append(tris, Triangle{Vertices: [3]int{hull[left], hull[nRight], hull[right]}})
 			right = nRight
 		}
 	}

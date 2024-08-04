@@ -148,6 +148,15 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 	var path []mgl64.Vec3
 	path = append(path, start)
 
+	if len(polyPath) == 1 {
+		if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[0] {
+			// goal is the same as the start poly, create a straight path and return
+			path = append(path, goal)
+		}
+		// TODO: clip the goal to the poly if it does not lie on the polygon
+		return path
+	}
+
 	iterCount := 0
 	maxIterCount := 2000
 
@@ -205,11 +214,10 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 		}
 	}
 
-	if iterCount == maxIterCount {
-		path = []mgl64.Vec3{start}
+	if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[len(polyPath)-1] {
+		path = append(path, goal)
 	}
 
-	path = append(path, goal)
 	return path
 }
 
@@ -310,6 +318,10 @@ func closestPointOnPoly(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, boo
 	return point, false
 }
 
+// func closestPointOnPolyEdges(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, bool) {
+
+// }
+
 func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
 	// project point onto polygon
 	// early return if it's not within the poly
@@ -321,9 +333,9 @@ func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
 	dp := tile.DetailedPolygon[poly]
 
 	for _, tri := range dp.Triangles {
-		v0 := tile.DetailedVertices[poly][tri[0]]
-		v1 := tile.DetailedVertices[poly][tri[1]]
-		v2 := tile.DetailedVertices[poly][tri[2]]
+		v0 := tile.DetailedVertices[poly][tri.Vertices[0]]
+		v1 := tile.DetailedVertices[poly][tri.Vertices[1]]
+		v2 := tile.DetailedVertices[poly][tri.Vertices[2]]
 
 		if height, success := closestHeightOnTriangle(point, v0, v1, v2); success {
 			return height, true

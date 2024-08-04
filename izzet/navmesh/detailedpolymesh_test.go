@@ -32,7 +32,7 @@ func TestTriDist(t *testing.T) {
 		{X: 1, Y: 0, Z: 0},
 		{X: 1, Y: 0, Z: -1},
 	}
-	tris := []Triangle{{A: 0, B: 1, C: 2}}
+	tris := []Triangle{Triangle{Vertices: [3]int{0, 1, 2}}}
 	vert := DetailedVertex{0, 5, 0}
 
 	d := distToTris(vert, verts, tris)

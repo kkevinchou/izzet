@@ -22,7 +22,10 @@ type CDetailedPolygon struct {
 	Triangles []CDetailedTriangle
 }
 
-type CDetailedTriangle [3]int
+type CDetailedTriangle struct {
+	Vertices [3]int
+	OnHull   [3]bool
+}
 
 func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
 	nm := &CompiledNavMesh{}
@@ -56,7 +59,7 @@ func CompileNavMesh(inNavMesh *NavigationMesh) *CompiledNavMesh {
 	tile.DetailedPolygon = make([]CDetailedPolygon, len(inNavMesh.DetailedMesh.PolyTriangles))
 	for i, tris := range inNavMesh.DetailedMesh.PolyTriangles {
 		for _, tri := range tris {
-			tile.DetailedPolygon[i].Triangles = append(tile.DetailedPolygon[i].Triangles, CDetailedTriangle{tri.A, tri.B, tri.C})
+			tile.DetailedPolygon[i].Triangles = append(tile.DetailedPolygon[i].Triangles, CDetailedTriangle{Vertices: tri.Vertices, OnHull: tri.OnHull})
 		}
 	}
 

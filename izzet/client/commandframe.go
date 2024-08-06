@@ -15,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
+	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/collision/checks"
@@ -229,6 +230,15 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 				}
 				g.Client().Send(rpcMessage, g.CommandFrame())
 			}
+		}
+	}
+
+	if event, ok := keyboardInput[input.KeyboardKeyJ]; ok {
+		if event.Event == input.KeyboardEventUp {
+			rpcMessage := network.RPCMessage{
+				CreateEntity: &network.CreateEntityRPC{EntityType: string(panels.SelectedCreateEntityComboOption)},
+			}
+			g.Client().Send(rpcMessage, g.CommandFrame())
 		}
 	}
 }

@@ -32,6 +32,11 @@ func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 				continue
 			}
 
+			if entity.ID == s.app.GetPlayerCamera().ID {
+				continue
+
+			}
+
 			if bs.Deadge {
 				world.DeleteEntity(bs.EntityID)
 			} else {

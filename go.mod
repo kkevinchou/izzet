@@ -3,7 +3,7 @@ module github.com/kkevinchou/izzet
 go 1.22
 
 require (
-	github.com/AllenDang/cimgui-go v0.0.0-20240611070805-39b5aa2438db
+	github.com/AllenDang/cimgui-go v0.0.0-20240711055741-4b4d3ac1ee30
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3

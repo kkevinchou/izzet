@@ -42,15 +42,14 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 				animationPlayer.PlayAnimation(animationName)
 			} else if entity.AIComponent != nil {
-
-				animationName := "Velociraptor_Run"
+				animationKey := entities.AnimationKeyRun
 				if entity.AIComponent.State == entities.AIStateAttack {
-					animationName = "Velociraptor_Attack"
+					animationKey = entities.AnimationKeyAttack
 				} else if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
-					animationName = "Velociraptor_Idle"
+					animationKey = entities.AnimationKeyIdle
 				}
 				animationPlayer := entity.Animation.AnimationPlayer
-				animationPlayer.PlayAnimation(animationName)
+				animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
 			}
 		}
 

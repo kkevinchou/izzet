@@ -2,6 +2,7 @@
     "entity_assets": {
         "alpha3": {"single_entity": true},
         "velociraptor": {"single_entity": true},
+        "parasaurolophus": {"single_entity": true},
         "vampire2": {"single_entity": true},
         "demo_scene_city": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },
         "elevation": {"static": true, "physics": {}, "collider": {"collidergroup": "TERRAIN", "trimeshcollider": true}, "translation": [0, 0, 0], "rotation": {"W": 1, "V": [0, 0, 0, 0]} },

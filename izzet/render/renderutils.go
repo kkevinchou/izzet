@@ -787,8 +787,7 @@ func (r *Renderer) drawSkybox(renderContext RenderContext, viewerContext ViewerC
 	if r.app.RuntimeConfig().FogDensity != 0 {
 		fog = 1
 	}
-	shader.SetUniformMat4("model", mgl32.Scale3D(1000, 1000, 1000))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrixWithoutTranslation))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)

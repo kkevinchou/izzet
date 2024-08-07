@@ -256,8 +256,9 @@ func (r *Renderer) Render(delta time.Duration) {
 		Position: position,
 		Rotation: rotation,
 
-		InverseViewMatrix: viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		ProjectionMatrix:  mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
+		InverseViewMatrix:                   viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
+		InverseViewMatrixWithoutTranslation: viewerViewMatrix.Inv(),
+		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
 	}
 
 	lightFrustumPoints := calculateFrustumPoints(

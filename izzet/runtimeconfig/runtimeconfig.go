@@ -176,9 +176,9 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshStart: 0,
 		NavigationMeshGoal:  1,
 
-		SkyboxTopColor:    [3]float32{0.01, 0.14, 0.669},
-		SkyboxBottomColor: [3]float32{0.491, 0.843, 0.847},
-		SkyboxMixValue:    0.8,
+		SkyboxTopColor:    [3]float32{0.02, 0.02, 0.32},
+		SkyboxBottomColor: [3]float32{0.11, 0.93, 0.87},
+		SkyboxMixValue:    0.4,
 	}
 	// // Define the colors for the gradient
 	// vec3 topColor = vec3(0.0, 0.4, 0.8); // Darker blue at the horizon

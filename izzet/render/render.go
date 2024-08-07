@@ -317,7 +317,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 
-	r.drawSkybox(renderContext)
+	r.drawSkybox(renderContext, cameraViewerContext)
 	_ = lightViewerContext
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)

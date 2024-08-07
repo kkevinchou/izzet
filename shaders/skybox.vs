@@ -1,10 +1,16 @@
 #version 330 core
 
-out vec2 FragPos;
+layout(location = 0) in vec3 aPos;
 
-layout (location = 0) in vec3 aPos;
+out vec3 TexCoords;
 
-void main() {
-    FragPos = aPos.xy;
-    gl_Position = vec4(aPos, 1.0);
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+
+void main()
+{
+    TexCoords = aPos;
+    vec4 pos = projection * view * model * vec4(aPos, 1.0);
+    gl_Position = pos.xyww;
 }

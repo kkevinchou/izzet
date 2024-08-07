@@ -107,6 +107,13 @@ func worldProps(app renderiface.App) {
 		panelutils.SetupRow("Bloom Upsampling Scale", func() { imgui.SliderFloat("", &runtimeConfig.BloomUpsamplingScale, 0, 5.0) }, true)
 		panelutils.SetupRow("Shadow Map Z Offset", func() { imgui.SliderFloat("", &runtimeConfig.ShadowmapZOffset, 0, 2000) }, true)
 		panelutils.SetupRow("SP Near Plane Offset", func() { imgui.SliderFloat("", &runtimeConfig.ShadowSpatialPartitionNearPlane, 0, 2000) }, true)
+		panelutils.SetupRow("Skybox Top Color", func() {
+			imgui.ColorEdit3V("", &runtimeConfig.SkyboxTopColor, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+		}, true)
+		panelutils.SetupRow("Skybox Bottom Color", func() {
+			imgui.ColorEdit3V("", &runtimeConfig.SkyboxBottomColor, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+		}, true)
+		panelutils.SetupRow("Skybox Mix Value", func() { imgui.SliderFloat("##", &runtimeConfig.SkyboxMixValue, 0, 1) }, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsNone) {

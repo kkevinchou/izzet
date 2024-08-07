@@ -101,6 +101,10 @@ type RuntimeConfig struct {
 	DebugBlob2         string
 	DebugBlob2IntMap   map[int]bool
 	DebugBlob2IntSlice []int
+
+	SkyboxTopColor    [3]float32
+	SkyboxBottomColor [3]float32
+	SkyboxMixValue    float32
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -171,5 +175,12 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		NavigationMeshStart: 0,
 		NavigationMeshGoal:  1,
+
+		SkyboxTopColor:    [3]float32{0.01, 0.14, 0.669},
+		SkyboxBottomColor: [3]float32{0.491, 0.843, 0.847},
+		SkyboxMixValue:    0.8,
 	}
+	// // Define the colors for the gradient
+	// vec3 topColor = vec3(0.0, 0.4, 0.8); // Darker blue at the horizon
+	// vec3 bottomColor = vec3(0.7, 0.9, 1.0);    // Lighter blue at the zenith
 }

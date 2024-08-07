@@ -1,70 +1,26 @@
 #version 330 core
 
-layout (location = 0) out vec4 FragColor;
-layout (location = 1) out uint PickingColor;
+out vec4 FragColor;
 
-uniform int fog;
-uniform int fogDensity;
-uniform float far;
+in vec3 TexCoords;
 
-in vec2 FragPos;
-float iTime = 7;
-uint maxUint = floatBitsToUint(uintBitsToFloat(0xFFFFFFFFu));
-
-vec3 calc(float x, vec3 a, vec3 b, vec3 c, vec3 d)
-{
-    // sin(1/x) suggested by Phillip Trudeau
-    return (b - d) * sin(1. / (vec3(x) / c + 2. / radians(180.) - a)) + d;
-}
-
-float exponentialSquaredFog(float dist, float density) {
-    return 1 - pow(2, -pow(dist * density, 2));
-}
+uniform vec3 skyboxTopColor;
+uniform vec3 skyboxBottomColor;
+uniform float skyboxMixValue;
 
 void main()
 {
-    vec4 fragColor = FragColor;
-    vec2 fragCoord = FragPos;
+    // Normalize the direction vector
+    vec3 direction = normalize(TexCoords);
 
-    vec2 uv = (FragPos + vec2(1, 1)) / 2;
+    // Calculate the mix factor based on the y coordinate (height)
+    float t = (direction.y + 1.0) * 0.5;
 
-    vec3 p_dark[4] = vec3[4](
-        vec3(0.3720705374951474, 0.3037080684557225, 0.26548632969565816),
-        vec3(0.446163834012046, 0.39405890487346595, 0.425676737673072),
-        vec3(0.16514907579431481, 0.40461292460006665, 0.8799446225003938),
-        vec3(-7.057075230154481e-17, -0.08647963850488945, -0.269042973306185)
-        // vec3(-7.057075230154481e-17, -0.08647963850488945, 0)
-    );
+    vec3 topColor = skyboxTopColor;
+    vec3 bottomColor = skyboxBottomColor;
 
-    vec3 p_bright[4] = vec3[4](
-        vec3( 0.38976745480184677, 0.31560358280318124,  0.27932656874),
-        vec3( 1.2874522895367628,  1.0100154283349794,   0.862325457544),
-        vec3( 0.12605043174959588, 0.23134451619328716,  0.526179948359),
-        vec3(-0.0929868539256387, -0.07334463258550537, -0.192877259333)
-        // vec3(-0.0929868539256387, -0.07334463258550537, 0)
-    );
+    // Interpolate between the bottom and top colors
+    vec3 color = mix(bottomColor, topColor, pow(t, skyboxMixValue));
 
-    float x = .3 + .7 * sin(uv.x * radians(60.) + (iTime - 4.) * radians(30.));
-
-    vec3 a = mix(p_dark[0], p_bright[0], x);
-    vec3 b = mix(p_dark[1], p_bright[1], x);
-    vec3 c = mix(p_dark[2], p_bright[2], x);
-    vec3 d = mix(p_dark[3], p_bright[3], x);
-
-    vec3 col = calc(uv.y, a, b, c, d);
-
-    FragColor = vec4(col, 1.0);
-    if (fog == 1) {
-        // vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
-        // float depth = texture(cameraDepthMap, textureCoords).r;
-        // float dist = depthValueToLinearDistance(depth);
-
-        float fogFactor = exponentialSquaredFog(2000, float(fogDensity) / 50000);
-        fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-        FragColor = vec4(mix(col, vec3(1,1,1), fogFactor), 1.0);
-    }
-
-
-    PickingColor = maxUint;
+    FragColor = vec4(color, 1.0);
 }

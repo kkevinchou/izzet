@@ -551,47 +551,6 @@ func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 	return linePoints
 }
 
-var backgroundVAO *uint32
-var back float32 = 1
-var backgroundVertices []float32 = []float32{
-	-1, 1, back,
-	-1, -1, back,
-	1, -1, back,
-
-	1, -1, back,
-	1, 1, back,
-	-1, 1, back,
-}
-
-func (r *Renderer) drawBackground(shaderManager *shaders.ShaderManager) {
-	if backgroundVAO == nil {
-		var vbo, vao uint32
-		apputils.GenBuffers(1, &vbo)
-		gl.GenVertexArrays(1, &vao)
-
-		gl.BindVertexArray(vao)
-		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, len(backgroundVertices)*4, gl.Ptr(backgroundVertices), gl.STATIC_DRAW)
-
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-		gl.EnableVertexAttribArray(0)
-		backgroundVAO = &vao
-	}
-
-	gl.BindVertexArray(*backgroundVAO)
-
-	shader := shaderManager.GetShaderProgram("skybox")
-	shader.Use()
-	var fog int32 = 0
-	if r.app.RuntimeConfig().FogDensity != 0 {
-		fog = 1
-	}
-	shader.SetUniformInt("fog", fog)
-	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
-	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-	r.iztDrawArrays(0, int32(len(backgroundVertices)))
-}
-
 var singleSidedQuadVAO uint32
 
 func (r *Renderer) drawBillboardTexture(
@@ -751,9 +710,94 @@ func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func (r *Renderer) drawSkybox(renderContext RenderContext) {
+var skyboxVAO *uint32
+var skyboxVertices = []float32{
+	// Front face
+	-1.0, 1.0, -1.0,
+	-1.0, -1.0, -1.0,
+	1.0, -1.0, -1.0,
+	1.0, -1.0, -1.0,
+	1.0, 1.0, -1.0,
+	-1.0, 1.0, -1.0,
+
+	// Left face
+	-1.0, -1.0, 1.0,
+	-1.0, -1.0, -1.0,
+	-1.0, 1.0, -1.0,
+	-1.0, 1.0, -1.0,
+	-1.0, 1.0, 1.0,
+	-1.0, -1.0, 1.0,
+
+	// Right face
+	1.0, -1.0, -1.0,
+	1.0, -1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, -1.0,
+	1.0, -1.0, -1.0,
+
+	// Back face
+	-1.0, -1.0, 1.0,
+	-1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, -1.0, 1.0,
+	-1.0, -1.0, 1.0,
+
+	// Top face
+	-1.0, 1.0, -1.0,
+	1.0, 1.0, -1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	-1.0, 1.0, 1.0,
+	-1.0, 1.0, -1.0,
+
+	// Bottom face
+	-1.0, -1.0, -1.0,
+	-1.0, -1.0, 1.0,
+	1.0, -1.0, -1.0,
+	1.0, -1.0, -1.0,
+	-1.0, -1.0, 1.0,
+	1.0, -1.0, 1.0,
+}
+
+func (r *Renderer) drawSkybox(renderContext RenderContext, viewerContext ViewerContext) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	r.drawBackground(r.shaderManager)
+	if skyboxVAO == nil {
+		var vbo, vao uint32
+		apputils.GenBuffers(1, &vbo)
+		gl.GenVertexArrays(1, &vao)
+
+		gl.BindVertexArray(vao)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(skyboxVertices)*4, gl.Ptr(skyboxVertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+		gl.EnableVertexAttribArray(0)
+		skyboxVAO = &vao
+	}
+
+	gl.DepthFunc(gl.LEQUAL)
+
+	gl.BindVertexArray(*skyboxVAO)
+
+	shader := r.shaderManager.GetShaderProgram("skybox")
+	shader.Use()
+	var fog int32 = 0
+	if r.app.RuntimeConfig().FogDensity != 0 {
+		fog = 1
+	}
+	shader.SetUniformMat4("model", mgl32.Scale3D(1000, 1000, 1000))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformInt("fog", fog)
+	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
+	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+	shader.SetUniformVec3("skyboxTopColor", r.app.RuntimeConfig().SkyboxTopColor)
+	shader.SetUniformVec3("skyboxBottomColor", r.app.RuntimeConfig().SkyboxBottomColor)
+	shader.SetUniformFloat("skyboxMixValue", r.app.RuntimeConfig().SkyboxMixValue)
+	r.iztDrawArrays(0, 36)
+	gl.DepthFunc(gl.LESS)
 }
 
 func (r *Renderer) CameraViewerContext() ViewerContext {

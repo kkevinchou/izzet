@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -220,8 +221,22 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
+var secondTime bool
+
 func (r *Renderer) initCompositeFBO(width, height int) {
-	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+	if !secondTime {
+		r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+		// secondTime = true
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
+		r.compositeTexture = r.createTexture(width, height)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
+		if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+			panic(errors.New("failed to initalize frame buffer"))
+		}
+		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	}
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 

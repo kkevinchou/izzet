@@ -169,9 +169,6 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
 
 	gl.Viewport(0, 0, int32(MaxBloomTextureWidth), int32(MaxBloomTextureHeight))
-	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blendTargetMip, 0)
-	gl.DrawBuffers(1, &drawBuffers[0])
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	r.iztDrawArrays(0, 6)
@@ -195,7 +192,6 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	shader.SetUniformInt("texture1", 1)
 
 	gl.Viewport(0, 0, width, height)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	r.iztDrawArrays(0, 6)
@@ -219,7 +215,6 @@ func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uin
 	shader.SetUniformFloat("bloomIntensity", r.app.RuntimeConfig().BloomIntensity)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	r.iztDrawArrays(0, 6)

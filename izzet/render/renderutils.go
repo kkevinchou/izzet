@@ -630,9 +630,27 @@ func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *sha
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *Renderer) initFrameBufferSingleColorAttachment(width, height int, internalFormat int32, format uint32) (uint32, uint32) {
-	fbo, textures := r.initFrameBuffer(width, height, []int32{internalFormat}, []uint32{format})
+func (r *Renderer) createCircleTexture(width, height int) (uint32, uint32) {
+	fbo, textures := r.initFrameBuffer(width, height, []int32{gl.RGBA}, []uint32{gl.RGBA})
 	return fbo, textures[0]
+}
+
+func (r *Renderer) initFBOAndTexture(width, height int) (uint32, uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	texture := r.createTexture(width, height, internalTextureColorFormat, gl.RGB)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
+	gl.DrawBuffers(1, &drawBuffers[0])
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return fbo, texture
 }
 
 func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
@@ -646,17 +664,8 @@ func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32
 	colorBufferCount := len(internalFormat)
 
 	for i := 0; i < colorBufferCount; i++ {
-		var texture uint32
+		texture := r.createTexture(width, height, internalFormat[i], format[i])
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-
-		gl.GenTextures(1, &texture)
-		gl.BindTexture(gl.TEXTURE_2D, texture)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-
-		gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat[i],
-			int32(width), int32(height), 0, format[i], gl.UNSIGNED_BYTE, nil)
-
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
 
 		textures = append(textures, texture)
@@ -678,12 +687,13 @@ func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32
 	return fbo, textures
 }
 
-func (r *Renderer) createTexture(width, height int) uint32 {
+func (r *Renderer) createTexture(width, height int, internalFormat int32, format uint32) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
-		int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat,
+		int32(width), int32(height), 0, format, gl.UNSIGNED_BYTE, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
@@ -692,31 +702,19 @@ func (r *Renderer) createTexture(width, height int) uint32 {
 	return texture
 }
 
-func (r *Renderer) initFBOAndTexture(width, height int) (uint32, uint32) {
-	var fbo uint32
-	gl.GenFramebuffers(1, &fbo)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-
+func (r *Renderer) createDepthTexture(width, height int) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
-		int32(width), int32(height), 0, gl.RGB, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT,
+		int32(width), int32(height), 0, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
-	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-	gl.DrawBuffers(1, &drawBuffers[0])
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return fbo, texture
+	return texture
 }
 
 func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {

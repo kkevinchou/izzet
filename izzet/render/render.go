@@ -1,7 +1,6 @@
 package render
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -134,14 +133,16 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.ReinitializeFrameBuffers()
+	r.initMainRenderFBO(width, height)
+	r.initCompositeFBO(width, height)
+	r.initDepthMapFBO(width, height)
 
 	// circles for the rotation gizmo
 
-	r.redCircleFB, r.redCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
-	r.greenCircleFB, r.greenCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
-	r.blueCircleFB, r.blueCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
-	r.yellowCircleFB, r.yellowCircleTexture = r.initFrameBufferSingleColorAttachment(1024, 1024, gl.RGBA, gl.RGBA)
+	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
+	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
+	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
+	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -177,16 +178,30 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
 	}
 
-	r.initMainRenderFBO(width, height)
-	r.initCompositeFBO(width, height)
-	r.initDepthMapFBO(width, height)
+	// recreate texture for main render fbo
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	r.mainColorTexture = r.createTexture(width, height, internalTextureColorFormat, gl.RGBA)
+	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
+
+	r.colorPickingTexture = r.createTexture(width, height, gl.R32UI, gl.RED_INTEGER)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
+
+	// recreate texture for composite fbo
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
+	r.compositeTexture = r.createTexture(width, height, internalTextureColorFormat, gl.RGB)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
+	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
+
+	// recreate texture for depth map
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+	r.cameraDepthTexture = r.createDepthTexture(width, height)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
 func (r *Renderer) initDepthMapFBO(width, height int) {
-	var storedFBO int32
-	gl.GetIntegerv(gl.FRAMEBUFFER_BINDING, &storedFBO)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(storedFBO))
-
 	var depthMapFBO uint32
 	gl.GenFramebuffers(1, &depthMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
@@ -212,6 +227,11 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
 }
 
+func (r *Renderer) initCompositeFBO(width, height int) {
+	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
+}
+
 func (r *Renderer) initMainRenderFBO(width, height int) {
 	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.renderFBO = renderFBO
@@ -219,25 +239,6 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
-}
-
-var secondTime bool
-
-func (r *Renderer) initCompositeFBO(width, height int) {
-	if !secondTime {
-		r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
-		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-		// secondTime = true
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-		r.compositeTexture = r.createTexture(width, height)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
-		if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-			panic(errors.New("failed to initalize frame buffer"))
-		}
-		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	}
-	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 
 func (r *Renderer) Render(delta time.Duration) {

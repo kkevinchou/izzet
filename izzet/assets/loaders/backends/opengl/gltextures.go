@@ -5,8 +5,6 @@ import (
 	"image/draw"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 
 	_ "image/jpeg"
 	_ "image/png"
@@ -16,7 +14,6 @@ import (
 )
 
 type TextureInfo struct {
-	Name   string
 	Width  int32
 	Height int32
 	Data   []uint8
@@ -24,6 +21,13 @@ type TextureInfo struct {
 
 func ReadTextureInfo(file string) TextureInfo {
 	imgFile, err := os.Open(file)
+	defer func() {
+		e := imgFile.Close()
+		if e != nil {
+			log.Fatalf("texture %q failed to close: %v\n", file, err)
+		}
+	}()
+
 	if err != nil {
 		log.Fatalf("texture %q not found on disk: %v\n", file, err)
 	}
@@ -44,8 +48,7 @@ func ReadTextureInfo(file string) TextureInfo {
 	draw.Draw(rgba, rgba.Bounds(), nrgba, image.Point{0, 0}, draw.Src)
 
 	size := rgba.Rect.Size()
-	textureName := strings.Split(filepath.Base(file), ".")[0]
-	return TextureInfo{Name: textureName, Width: int32(size.X), Height: int32(size.Y), Data: rgba.Pix}
+	return TextureInfo{Width: int32(size.X), Height: int32(size.Y), Data: rgba.Pix}
 }
 
 func CreateOpenGLTexture(textureInfo TextureInfo) uint32 {

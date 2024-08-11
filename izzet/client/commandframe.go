@@ -288,6 +288,7 @@ func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3,
 
 	minDistSq := math.MaxFloat64
 
+	// TODO: this should ray cast against navmesh polys, not entity geometry
 	for _, entity := range g.world.Entities() {
 		if entity.Collider == nil || entity.Collider.TriMeshCollider == nil {
 			continue

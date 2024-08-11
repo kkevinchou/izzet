@@ -201,9 +201,7 @@ func (g *Client) Start() {
 			}
 		}
 
-		if g.window.Minimized() {
-			msPerFrame = float64(1000) / float64(30)
-		} else if g.RuntimeConfig().LockRenderingToCommandFrameRate {
+		if g.RuntimeConfig().LockRenderingToCommandFrameRate {
 			msPerFrame = float64(settings.MSPerCommandFrame)
 		} else {
 			msPerFrame = float64(1000) / float64(settings.FPS)

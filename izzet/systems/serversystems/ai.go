@@ -12,6 +12,10 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+const (
+	travelThreshold = 0.5
+)
+
 type AISystem struct {
 	app App
 }
@@ -91,7 +95,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				target := aiComponent.PathfindConfig.Path[targetIndex]
 
 				var atGoal bool
-				if position.Sub(target).Len() < 1 {
+				if position.Sub(target).Len() < travelThreshold {
 					if targetIndex == len(path)-1 {
 						aiComponent.PathfindConfig.Path = nil
 						aiComponent.PathfindConfig.NextTarget = -1

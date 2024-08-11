@@ -69,7 +69,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 		polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount = r.createPolygonOutlineVAO(nm, colorStyleBlack)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		chfVAOCache, chfVertexCount = createCompactHeightFieldVAO(nm.CompactHeightField)
+		chfVAOCache, chfVertexCount = r.createCompactHeightFieldVAO(nm.CompactHeightField)
 		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
 		start = time.Now()
 		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
@@ -563,10 +563,12 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	return vao, int32(len(positions))
 }
 
-func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
+func (r *Renderer) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 	var lengths []float32
+
+	debugSlice := r.app.RuntimeConfig().DebugBlob1IntSlice
 
 	for x := range chf.Width() {
 		for z := range chf.Height() {
@@ -582,7 +584,12 @@ func createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32
 					float32(z),
 				}
 				positions = append(positions, position)
-				colors = append(colors, regionIDToColor(span.RegionID())...)
+				color := regionIDToColor(span.RegionID())
+				if len(debugSlice) >= 2 && debugSlice[0] == x && debugSlice[1] == z {
+					color = []float32{1, 1, 1}
+
+				}
+				colors = append(colors, color...)
 				lengths = append(lengths, 1)
 			}
 		}

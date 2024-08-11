@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net"
 	"os"
 	"path"
@@ -657,10 +656,10 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	cs := app.RuntimeConfig().NavigationMeshCellSize
 	ch := app.RuntimeConfig().NavigationMeshCellHeight
 	walkableRadius := app.RuntimeConfig().NavigationMeshAgentRadius
-	walkableRadius /= cs
 
-	walkableHeight = (int(math.Ceil(float64(walkableHeight) / float64(ch))))
-	climbableHeight = (int(math.Floor(float64(climbableHeight) / float64(ch))))
+	// walkableRadius /= cs
+	// walkableHeight = (int(math.Ceil(float64(walkableHeight) / float64(ch))))
+	// climbableHeight = (int(math.Floor(float64(climbableHeight) / float64(ch))))
 
 	minVertex := mgl64.Vec3{-200.0, -5.0, -200.0}
 	maxVertex := mgl64.Vec3{200.0, 80.0, 200.0}

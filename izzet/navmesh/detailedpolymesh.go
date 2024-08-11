@@ -422,17 +422,11 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 			}
 		}
 
-		debugSlice := runtimeConfig.DebugBlob2IntSlice
-
 		// progressively add samples which have the highest error until
 		// we go under the error threshold
 		for iter := 0; iter < len(samples); iter++ {
 			if len(verts) >= maxVerts {
 				break
-			}
-
-			if len(debugSlice) > 0 && iter > debugSlice[0] {
-				continue
 			}
 
 			var bestPoint DetailedVertex

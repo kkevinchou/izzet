@@ -10,7 +10,7 @@ void main() {
 
     float dist = length(uv);
 
-    if (dist > 1 || dist < 0.88) {
+    if (dist > 1 || dist < 0.8) {
         discard;
         // FragColor = vec4(0, 0, 0, 0);
     } else {

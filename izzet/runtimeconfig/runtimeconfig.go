@@ -130,7 +130,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		EnableSpatialPartition:          true,
 		FPS:                             0,
 
-		Near: 1,
+		Near: 0.1,
 		Far:  500,
 		FovX: 105,
 

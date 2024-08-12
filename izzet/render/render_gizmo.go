@@ -27,7 +27,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 		return
 	}
 	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
-	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Translate3D(renderPosition.X(), renderPosition.Y(), renderPosition.Z())))
@@ -107,7 +107,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 
 	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
-	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
@@ -155,7 +155,7 @@ func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.
 		return
 	}
 	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
-	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Mul(settings.GizmoDistanceFactor).Add(nearPlanePosition)
+	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
 

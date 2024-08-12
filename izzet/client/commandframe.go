@@ -156,24 +156,26 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 
 	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
 		if event.Event == input.KeyboardEventUp {
-			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderer.GameWindowSize()
-			ctx := g.renderer.CameraViewerContext()
+			if g.navMesh != nil {
+				mousePosition := frameInput.MouseInput.Position
+				width, height := g.renderer.GameWindowSize()
+				ctx := g.renderer.CameraViewerContext()
 
-			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
+				xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
 
-			menuBarSize := float64(render.CalculateMenuBarHeight())
-			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
+				menuBarSize := float64(render.CalculateMenuBarHeight())
+				yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
 
-			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
-			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
+				nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+				point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
 
-			if success {
-				c := navmesh.CompileNavMesh(g.navMesh)
-				pt, p, success := navmesh.FindNearestPolygon(c.Tiles[0], point)
 				if success {
-					g.runtimeConfig.NavigationMeshStart = int32(p)
-					g.runtimeConfig.NavigationMeshStartPoint = pt
+					c := navmesh.CompileNavMesh(g.navMesh)
+					pt, p, success := navmesh.FindNearestPolygon(c.Tiles[0], point)
+					if success {
+						g.runtimeConfig.NavigationMeshStart = int32(p)
+						g.runtimeConfig.NavigationMeshStartPoint = pt
+					}
 				}
 			}
 		}
@@ -254,6 +256,10 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
+
+	if event, ok := keyboardInput[input.KeyboardKeyF1]; ok && event.Event == input.KeyboardEventUp {
+		g.ConfigureUI(!g.runtimeConfig.UIEnabled)
+	}
 
 	// shutdown
 	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {

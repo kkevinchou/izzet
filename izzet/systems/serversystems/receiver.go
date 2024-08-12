@@ -111,7 +111,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	// primitives := s.app.AssetManager().GetPrimitives(handle)
 	// verts := assets.UniqueVerticesFromPrimitives(primitives)
 	// c := collider.NewCapsuleFromVertices(verts)
-	c := collider.NewCapsule(mgl64.Vec3{0, 4, 0}, mgl64.Vec3{0, 2, 0}, 2)
+	c := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
 	entity.Collider.CapsuleCollider = &c
 
 	capsule := entity.Collider.CapsuleCollider
@@ -138,7 +138,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	for _, e := range world.Entities() {
 		if e.SpawnPointComponent != nil {
 			entities.SetLocalPosition(entity, e.Position())
-			entities.SetLocalPosition(entity, mgl64.Vec3{e.Position().X() + float64(jitterX), 60, e.Position().Z() + float64(jitterZ)})
+			// entities.SetLocalPosition(entity, mgl64.Vec3{e.Position().X() + float64(jitterX), e.Position().Y(), e.Position().Z() + float64(jitterZ)})
 			break
 		}
 	}

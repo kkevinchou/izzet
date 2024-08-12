@@ -119,6 +119,7 @@ func worldProps(app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Rendering Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
+		panelutils.SetupRow("Near", func() { imgui.SliderFloat("", &runtimeConfig.Near, 0.1, 1) }, true)
 		panelutils.SetupRow("Far", func() { imgui.SliderFloat("", &runtimeConfig.Far, 0, 1500) }, true)
 		panelutils.SetupRow("FovX", func() { imgui.SliderFloat("", &runtimeConfig.FovX, 0, 170) }, true)
 

@@ -96,6 +96,8 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 
 				var atGoal bool
 				if position.Sub(target).Len() < travelThreshold {
+					entities.SetLocalPosition(entity, target)
+					position = target
 					if targetIndex == len(path)-1 {
 						aiComponent.PathfindConfig.Path = nil
 						aiComponent.PathfindConfig.NextTarget = -1

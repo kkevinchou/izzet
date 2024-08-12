@@ -56,8 +56,11 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	if gizmo.TranslationGizmo.HoveredEntityID == gizmo.GizmoXZAxisPickingID {
 		color = mgl32.Vec3{1, 1, 0}
 	}
-	var scaledSize float32 = 0.2
-	quadModelMatrix := mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y()), float32(renderPosition.Z())+scaledSize)
+
+	var scaledSize float32 = 0.25
+	var offset float32 = 0.4
+
+	quadModelMatrix := mgl32.Translate3D(float32(renderPosition.X())+offset, float32(renderPosition.Y()), float32(renderPosition.Z())+offset)
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{1, 0, 0}).Mat4())
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
 
@@ -74,7 +77,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 		color = mgl32.Vec3{1, 1, 0}
 	}
 
-	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X())+scaledSize, float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z()))
+	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X())+offset, float32(renderPosition.Y())+offset, float32(renderPosition.Z()))
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
 
 	shader.SetUniformMat4("model", quadModelMatrix)
@@ -89,7 +92,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 		color = mgl32.Vec3{1, 1, 0}
 	}
 
-	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y())+scaledSize, float32(renderPosition.Z())+scaledSize)
+	quadModelMatrix = mgl32.Translate3D(float32(renderPosition.X()), float32(renderPosition.Y())+offset, float32(renderPosition.Z())+offset)
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.QuatRotate(math.Pi/2, mgl32.Vec3{0, 1, 0}).Mat4())
 	quadModelMatrix = quadModelMatrix.Mul4(mgl32.Scale3D(scaledSize, scaledSize, scaledSize))
 

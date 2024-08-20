@@ -252,10 +252,10 @@ void main()
     if (hasPBRBaseColorTexture == 1) {
         vec4 texture_value = texture(modelTexture, fs_in.TexCoord);
         // for some reason this harms render performance, possibly due to preventing early z testing?
-        // if (texture_value.w < 1) {
-        //     discard;
-        //     return;
-        // }
+        if (texture_value.w < 0.1) {
+            discard;
+            return;
+        }
         // in_albedo = in_albedo * texture_value.xyz;
         // in_albedo = vec3(0, 0, 1);
         in_albedo = in_albedo * texture_value.xyz;

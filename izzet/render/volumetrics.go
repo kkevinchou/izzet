@@ -30,16 +30,15 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	height := 128
 
 	fbo, texture := initFBOAndTexture(width, height)
-	_ = texture
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	// Vertices for a full-screen quad in normalized device coordinates (NDC)
 	vertices := []float32{
-		-1.0, 1.0, // Top-left
-		-1.0, -1.0, // Bottom-left
-		1.0, 1.0, // Top-right
-		1.0, -1.0, // Bottom-right
+		-1.0, 1.0, 0.0, 1.0, // Top-left
+		-1.0, -1.0, 0.0, 0.0, // Bottom-left
+		1.0, 1.0, 1.0, 1.0, // Top-right
+		1.0, -1.0, 1.0, 0.0, // Bottom-right
 	}
 
 	var vao uint32
@@ -51,9 +50,11 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-	// Enable and set up the position attribute (0)
 	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 2*4, gl.PtrOffset(0))
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(0))
+
+	gl.EnableVertexAttribArray(1)
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
 
 	gl.BindVertexArray(0) // Unbind the VAO
 
@@ -65,38 +66,40 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	shader.Use()
 
 	gl.BindVertexArray(vao)
+	gl.BindTexture(gl.TEXTURE_3D, worleyNoiseTexture)
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
-	return worleyNoiseTexture
+	return texture
 }
 
 func createWorlyNoiseTexture() uint32 {
-	const width, height int = 512, 512
+	const width, height, depth int = 4, 4, 4
 
 	shaderProgram := setupComputeShader()
-	texture := setupTexture(width, height)
+	texture := setupTexture(width, height, depth)
 
 	gl.UseProgram(shaderProgram)
-	gl.DispatchCompute(uint32(width), uint32(height), 1)
+	gl.DispatchCompute(uint32(width), uint32(height), uint32(depth))
 	gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
 	return texture
 }
 
-func setupTexture(width, height int) uint32 {
+func setupTexture(width, height, depth int) uint32 {
 	var texture uint32
 
 	gl.GenTextures(1, &texture)
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.BindTexture(gl.TEXTURE_3D, texture)
 
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
+	gl.TexImage3D(gl.TEXTURE_3D, 0, gl.RGBA32F, int32(width), int32(height), int32(depth), 0, gl.RGBA, gl.FLOAT, nil)
 
-	gl.BindImageTexture(0, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+	gl.BindImageTexture(0, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
 
 	return texture
 }

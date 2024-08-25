@@ -48,7 +48,7 @@ var (
 func worldProps(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
@@ -60,11 +60,12 @@ func worldProps(app renderiface.App) {
 			viewDir := runtimeConfig.CameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
+		panelutils.SetupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
 
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Editing", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Editing", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Editing Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 		panelutils.SetupRow("Grid Snapping Size", func() {
@@ -129,7 +130,7 @@ func worldProps(app renderiface.App) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Navigation Mesh", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Navigation Mesh", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Navigation Mesh Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.SetupRow("Iterations", func() {
 			var i int32 = runtimeConfig.NavigationMeshIterations
@@ -266,11 +267,10 @@ func worldProps(app renderiface.App) {
 		}
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Other", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Other Table", 2, tableFlags, imgui.Vec2{}, 0)
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsDefaultOpen) {
+		imgui.BeginTableV("Noise Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
-		panelutils.SetupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
-		panelutils.SetupRow("Render Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.RenderSpatialPartition) }, true)
+
 		imgui.EndTable()
 	}
 }

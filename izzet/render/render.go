@@ -101,6 +101,8 @@ type Renderer struct {
 	menuBarHeight     float32
 
 	hoveredEntityID *int
+
+	volumetricTexture uint32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -161,6 +163,9 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendFBO, _ = r.initFBOAndTexture(width, height)
 
 	r.initializeCircleTextures()
+
+	r.volumetricTexture = r.setupVolumetrics(r.shaderManager)
+	r.volumetricTexture = r.createWorlyNoiseTexture()
 
 	return r
 }
@@ -370,6 +375,8 @@ func (r *Renderer) Render(delta time.Duration) {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
+			r.app.RuntimeConfig().DebugTexture = r.volumetricTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -386,6 +393,8 @@ func (r *Renderer) Render(delta time.Duration) {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
+			r.app.RuntimeConfig().DebugTexture = r.volumetricTexture
 		}
 	}
 

@@ -18,6 +18,7 @@ const (
 	ComboOptionShadowDepthMap DebugComboOption = "SHADOW DEPTH MAP"
 	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
 	ComboOptionCubeDepthMap   DebugComboOption = "CUBE DEPTH MAP"
+	ComboOptionVolumetric     DebugComboOption = "VOLUMETRIC"
 )
 
 var SelectedDebugComboOption DebugComboOption = ComboOptionFinalRender
@@ -30,6 +31,7 @@ var (
 		ComboOptionBloom,
 		ComboOptionShadowDepthMap,
 		ComboOptionCameraDepthMap,
+		ComboOptionVolumetric,
 	}
 )
 

@@ -2,6 +2,8 @@ package render
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -21,11 +23,11 @@ import (
 // rendering:
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
-func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
+func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	width := 128
 	height := 128
 
-	fbo, texture := r.initFBOAndTexture(width, height)
+	fbo, texture := initFBOAndTexture(width, height)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
@@ -56,7 +58,7 @@ func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) uint32
 		panic(err)
 	}
 
-	shader := r.shaderManager.GetShaderProgram("worley")
+	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
 
 	gl.BindVertexArray(vao)
@@ -65,27 +67,45 @@ func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) uint32
 	return texture
 }
 
-func (r *Renderer) createWorlyNoiseTexture() uint32 {
-	// set up shader
+func (r *Renderer) createWorlyNoiseTexture(shaderManager *shaders.ShaderManager) uint32 {
+	const width, height int = 512, 512
 
-	const sourceStr string = `
-	#version 430 core
-	layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-	layout(rgba32f, binding = 0) uniform image2D imgOutput;
+	shaderProgram := setupComputeShader()
+	texture := setupTexture(width, height)
 
-	void main() {
-		vec4 value = vec4(0.0, 0.0, 0.0, 1.0);
-		ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-		
-		value.x = float(texelCoord.x)/(gl_NumWorkGroups.x);
-		value.y = float(texelCoord.y)/(gl_NumWorkGroups.y);
-		
-		imageStore(imgOutput, texelCoord, value);
+	gl.UseProgram(shaderProgram)
+	gl.DispatchCompute(uint32(width), uint32(height), 1)
+	gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
+
+	return texture
+}
+
+func setupTexture(width, height int) uint32 {
+	var texture uint32
+
+	gl.GenTextures(1, &texture)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
+
+	gl.BindImageTexture(0, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
+
+	return texture
+}
+
+func setupComputeShader() uint32 {
+	sourceStr, err := os.ReadFile(filepath.Join("shaders", "worley.compute"))
+	if err != nil {
+		panic(err)
 	}
-	`
 
 	compute := gl.CreateShader(gl.COMPUTE_SHADER)
-	glSourceStr, free := gl.Strs(sourceStr + "\x00")
+	glSourceStr, free := gl.Strs(string(sourceStr) + "\x00")
 	defer free()
 
 	gl.ShaderSource(compute, 1, glSourceStr, nil)
@@ -104,27 +124,5 @@ func (r *Renderer) createWorlyNoiseTexture() uint32 {
 		gl.GetProgramInfoLog(shaderProgram, logLength, nil, gl.Str(log))
 		panic(fmt.Errorf("failed to link shader program:\n%s", log))
 	}
-
-	// set up texture
-
-	const width, height int = 512, 512
-
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
-
-	gl.BindImageTexture(0, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
-
-	gl.UseProgram(shaderProgram)
-	gl.DispatchCompute(uint32(width), uint32(height), 1)
-	gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
-
-	return texture
+	return shaderProgram
 }

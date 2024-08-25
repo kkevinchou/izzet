@@ -160,12 +160,12 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	// the texture is only needed to properly generate the FBO
 	// new textures are binded when we're in the process of blooming
-	r.blendFBO, _ = r.initFBOAndTexture(width, height)
+	r.blendFBO, _ = initFBOAndTexture(width, height)
 
 	r.initializeCircleTextures()
 
-	r.volumetricTexture = r.setupVolumetrics(r.shaderManager)
-	r.volumetricTexture = r.createWorlyNoiseTexture()
+	r.volumetricTexture = setupVolumetrics(r.shaderManager)
+	r.volumetricTexture = r.createWorlyNoiseTexture(r.shaderManager)
 
 	return r
 }
@@ -185,16 +185,16 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	r.mainColorTexture = r.createTexture(width, height, internalTextureColorFormat, gl.RGBA)
+	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA)
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
 
-	r.colorPickingTexture = r.createTexture(width, height, gl.R32UI, gl.RED_INTEGER)
+	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
 
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-	r.compositeTexture = r.createTexture(width, height, internalTextureColorFormat, gl.RGB)
+	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 
@@ -233,7 +233,7 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 }
 
 func (r *Renderer) initCompositeFBO(width, height int) {
-	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+	r.compositeFBO, r.compositeTexture = initFBOAndTexture(width, height)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 

@@ -635,12 +635,12 @@ func (r *Renderer) createCircleTexture(width, height int) (uint32, uint32) {
 	return fbo, textures[0]
 }
 
-func (r *Renderer) initFBOAndTexture(width, height int) (uint32, uint32) {
+func initFBOAndTexture(width, height int) (uint32, uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	texture := r.createTexture(width, height, internalTextureColorFormat, gl.RGB)
+	texture := createTexture(width, height, internalTextureColorFormat, gl.RGB)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
@@ -664,7 +664,7 @@ func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32
 	colorBufferCount := len(internalFormat)
 
 	for i := 0; i < colorBufferCount; i++ {
-		texture := r.createTexture(width, height, internalFormat[i], format[i])
+		texture := createTexture(width, height, internalFormat[i], format[i])
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
 
@@ -687,7 +687,7 @@ func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32
 	return fbo, textures
 }
 
-func (r *Renderer) createTexture(width, height int, internalFormat int32, format uint32) uint32 {
+func createTexture(width, height int, internalFormat int32, format uint32) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)

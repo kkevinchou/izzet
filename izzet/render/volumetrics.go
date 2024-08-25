@@ -24,10 +24,13 @@ import (
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
 func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
+	worleyNoiseTexture := createWorlyNoiseTexture()
+
 	width := 128
 	height := 128
 
 	fbo, texture := initFBOAndTexture(width, height)
+	_ = texture
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
@@ -64,10 +67,10 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	gl.BindVertexArray(vao)
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
-	return texture
+	return worleyNoiseTexture
 }
 
-func (r *Renderer) createWorlyNoiseTexture(shaderManager *shaders.ShaderManager) uint32 {
+func createWorlyNoiseTexture() uint32 {
 	const width, height int = 512, 512
 
 	shaderProgram := setupComputeShader()

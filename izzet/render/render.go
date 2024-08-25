@@ -165,7 +165,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.initializeCircleTextures()
 
 	r.volumetricTexture = setupVolumetrics(r.shaderManager)
-	r.volumetricTexture = r.createWorlyNoiseTexture(r.shaderManager)
 
 	return r
 }

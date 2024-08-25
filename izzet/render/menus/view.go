@@ -25,6 +25,10 @@ func view(app renderiface.App) {
 			app.SetShowImguiDemo(!app.ShowImguiDemo())
 		}
 
+		if imgui.MenuItemBoolV("Show Spatial Partition", "", runtimeConfig.RenderSpatialPartition, true) {
+			runtimeConfig.RenderSpatialPartition = !runtimeConfig.RenderSpatialPartition
+		}
+
 		imgui.EndMenu()
 	}
 }

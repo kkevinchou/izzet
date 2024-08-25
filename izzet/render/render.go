@@ -497,7 +497,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	}
 
 	if r.app.RuntimeConfig().EnableSpatialPartition && r.app.RuntimeConfig().RenderSpatialPartition {
-		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.5)
+		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.1)
 	}
 
 	nm := r.app.NavMesh()

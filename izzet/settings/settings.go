@@ -83,7 +83,6 @@ const (
 	AccelerationDueToGravity float64 = 75 // units per second
 )
 
-// styles
 var (
 	FontSize                  float32    = 20
 	EditorCameraStartPosition mgl64.Vec3 = mgl64.Vec3{0, 5, 5}

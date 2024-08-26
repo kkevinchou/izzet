@@ -105,6 +105,8 @@ type RuntimeConfig struct {
 	SkyboxTopColor    [3]float32
 	SkyboxBottomColor [3]float32
 	SkyboxMixValue    float32
+
+	NoiseZ float32
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {

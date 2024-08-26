@@ -89,6 +89,9 @@ func stats(app renderiface.App, renderContext RenderContext) {
 				}
 			}
 		}, true)
+		panelutils.SetupRow("Noise Z", func() {
+			imgui.SliderFloatV("", &app.RuntimeConfig().NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+		}, true)
 		imgui.EndTable()
 	}
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Server Stats", imgui.TreeNodeFlagsDefaultOpen) {

@@ -27,7 +27,7 @@ const width, height, depth int = 4, 4, 4
 // rendering:
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
-func setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) uint32 {
+func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) uint32 {
 	worleyNoiseTexture := createWorlyNoiseTexture()
 
 	gl.Viewport(0, 0, int32(width), int32(height))
@@ -69,12 +69,6 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-	// if (TexCoords.x > 0.2) {
-	//     color = vec4(1, 1, 1, 1);
-	// }
-	// } else {
-	//     color = vec4(0, 1, 0, 1);
-	// }
 
 	gl.EnableVertexAttribArray(0)
 	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(0))
@@ -90,6 +84,8 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets
 
 	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
+
+	shader.SetUniformFloat("z", r.app.RuntimeConfig().NoiseZ)
 
 	shader.SetUniformInt("tex", 0)
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -110,7 +106,6 @@ func createWorlyNoiseTexture() uint32 {
 	texture := setupTexture(width, height, depth)
 
 	gl.UseProgram(shaderProgram)
-	// 64 work groups
 	gl.DispatchCompute(uint32(width), uint32(height), uint32(depth))
 	gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
 

@@ -246,7 +246,7 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	r.volumetricTexture = setupVolumetrics(r.shaderManager, r.app.AssetManager())
+	r.volumetricTexture = r.setupVolumetrics(r.shaderManager, r.app.AssetManager())
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }

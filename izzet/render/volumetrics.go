@@ -17,6 +17,8 @@ const width, height int = 1024, 1024
 
 const workGroupWidth, workGroupHeight, workGroupDepth int = 128, 128, 128
 
+// const workGroupWidth, workGroupHeight, workGroupDepth int = 30, 30, 30
+
 // const workGroupWidth, workGroupHeight, workGroupDepth int = 4, 4, 4
 
 // - create 3D worley points (128 x 128 x 128)
@@ -32,7 +34,7 @@ const workGroupWidth, workGroupHeight, workGroupDepth int = 128, 128, 128
 // rendering:
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
-func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) (uint32, uint32, uint32, uint32) {
+func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
 	points := noise.Worley3D(workGroupWidth, workGroupHeight, workGroupDepth)
 	worleyNoiseTexture := createWorlyNoiseTexture(points)
 

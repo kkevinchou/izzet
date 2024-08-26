@@ -167,7 +167,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.initializeCircleTextures()
 
-	r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager, r.app.AssetManager())
+	r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	return r
 }

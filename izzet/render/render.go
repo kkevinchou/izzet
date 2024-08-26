@@ -184,16 +184,16 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA)
+	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
 
-	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER)
+	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
 
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB)
+	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 
@@ -246,7 +246,7 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	r.volumetricTexture = setupVolumetrics(r.shaderManager)
+	r.volumetricTexture = setupVolumetrics(r.shaderManager, r.app.AssetManager())
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }

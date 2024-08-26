@@ -15,11 +15,6 @@ void main()
     color.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
     color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    if (float(texelCoord.x) == 1)
-    {
-        color = vec4(1, 1, 1, 1);
-    }
-
     // color = vec4(1, 1, 1, 1);
 
     imageStore(imgOutput, texelCoord, color);

@@ -1,12 +1,14 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -23,22 +25,39 @@ import (
 // rendering:
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
-func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
+func setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) uint32 {
 	worleyNoiseTexture := createWorlyNoiseTexture()
 
-	width := 128
-	height := 128
+	width := 1640
+	height := 1024
 
-	fbo, texture := initFBOAndTexture(width, height)
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	texture := createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.NEAREST)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
+	gl.DrawBuffers(1, &drawBuffers[0])
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	// Vertices for a full-screen quad in normalized device coordinates (NDC)
 	vertices := []float32{
-		-1.0, 1.0, 0.0, 3.0, // Top-left
-		-1.0, -1.0, 0.0, 0.0, // Bottom-left
-		1.0, 1.0, 3.0, 3.0, // Top-right
-		1.0, -1.0, 3.0, 0.0, // Bottom-right
+		// Positions   // TexCoords
+		-1.0, 1.0, 0.0, 1.0,
+		-1.0, -1.0, 0.0, 0.0,
+		1.0, -1.0, 1.0, 0.0,
+
+		-1.0, 1.0, 0.0, 1.0,
+		1.0, -1.0, 1.0, 0.0,
+		1.0, 1.0, 1.0, 1.0,
 	}
 
 	var vao uint32
@@ -49,6 +68,12 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	// if (TexCoords.x > 0.2) {
+	//     color = vec4(1, 1, 1, 1);
+	// }
+	// } else {
+	//     color = vec4(0, 1, 0, 1);
+	// }
 
 	gl.EnableVertexAttribArray(0)
 	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(0))
@@ -65,9 +90,16 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
 
-	gl.BindVertexArray(vao)
+	shader.SetUniformInt("tex", 0)
+	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_3D, worleyNoiseTexture)
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+
+	shader.SetUniformInt("tex1", 1)
+	gl.ActiveTexture(gl.TEXTURE1)
+	gl.BindTexture(gl.TEXTURE_2D, assetManager.GetTexture("color_grid").ID)
+
+	gl.BindVertexArray(vao)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
 	return texture
 }
@@ -97,12 +129,12 @@ func setupTexture(width, height, depth int) uint32 {
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 
 	// gl.BindImageTexture(0, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
-	// gl.BindImageTexture(0, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
-	gl.BindImageTexture(0, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
+	gl.BindImageTexture(0, texture, 0, true, 0, gl.READ_WRITE, gl.RGBA32F)
+	// gl.BindImageTexture(0, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
 
 	return texture
 }

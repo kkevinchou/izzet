@@ -12,6 +12,8 @@ import (
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
+const width, height, depth int = 4, 4, 4
+
 // - create 3D worley points (128 x 128 x 128)
 // - store worley points in a compute buffer
 // - run the compute shader to create a 3d noise texture
@@ -28,8 +30,7 @@ import (
 func setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) uint32 {
 	worleyNoiseTexture := createWorlyNoiseTexture()
 
-	width := 1640
-	height := 1024
+	gl.Viewport(0, 0, int32(width), int32(height))
 
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
@@ -105,8 +106,6 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets
 }
 
 func createWorlyNoiseTexture() uint32 {
-	const width, height, depth int = 4, 4, 4
-
 	shaderProgram := setupComputeShader()
 	texture := setupTexture(width, height, depth)
 

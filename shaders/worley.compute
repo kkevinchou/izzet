@@ -8,23 +8,10 @@ void main()
     ivec3 texelCoord = ivec3(gl_GlobalInvocationID.xyz);
 
     vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    // color.x = float(texelCoord.x) / (gl_NumWorkGroups.x);
-    // color.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
-    // color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
+
     color.x = float(texelCoord.x) / (gl_NumWorkGroups.x);
     color.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
     color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    // color = vec4(1, 1, 1, 1);
-
     imageStore(imgOutput, texelCoord, color);
-
-    // vec4 value = vec4(1.0, 1.0, 1.0, 1.0);
-    // ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-
-    // value.x = float(texelCoord.x) / (gl_NumWorkGroups.x);
-    // value.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
-
-    // // imageStore(imgOutput, ivec3(texelCoord, 0), value);
-    // imageStore(imgOutput, ivec3(0, 0, 0), value);
 }

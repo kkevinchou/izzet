@@ -35,10 +35,10 @@ func setupVolumetrics(shaderManager *shaders.ShaderManager) uint32 {
 
 	// Vertices for a full-screen quad in normalized device coordinates (NDC)
 	vertices := []float32{
-		-1.0, 1.0, 0.0, 1.0, // Top-left
+		-1.0, 1.0, 0.0, 3.0, // Top-left
 		-1.0, -1.0, 0.0, 0.0, // Bottom-left
-		1.0, 1.0, 1.0, 1.0, // Top-right
-		1.0, -1.0, 1.0, 0.0, // Bottom-right
+		1.0, 1.0, 3.0, 3.0, // Top-right
+		1.0, -1.0, 3.0, 0.0, // Bottom-right
 	}
 
 	var vao uint32

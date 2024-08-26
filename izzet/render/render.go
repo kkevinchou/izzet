@@ -164,7 +164,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.initializeCircleTextures()
 
-	r.volumetricTexture = setupVolumetrics(r.shaderManager)
+	// r.volumetricTexture = setupVolumetrics(r.shaderManager)
 
 	return r
 }
@@ -246,7 +246,7 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	// r.volumetricTexture = setupVolumetrics(r.shaderManager)
+	r.volumetricTexture = setupVolumetrics(r.shaderManager)
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }

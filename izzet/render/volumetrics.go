@@ -79,6 +79,7 @@ func createWorlyNoiseTexture() uint32 {
 	texture := setupTexture(width, height, depth)
 
 	gl.UseProgram(shaderProgram)
+	// 64 work groups
 	gl.DispatchCompute(uint32(width), uint32(height), uint32(depth))
 	gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
 
@@ -99,7 +100,9 @@ func setupTexture(width, height, depth int) uint32 {
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 
-	gl.BindImageTexture(0, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
+	// gl.BindImageTexture(0, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
+	// gl.BindImageTexture(0, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
+	gl.BindImageTexture(0, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
 
 	return texture
 }

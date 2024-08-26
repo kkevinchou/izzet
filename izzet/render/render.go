@@ -102,7 +102,10 @@ type Renderer struct {
 
 	hoveredEntityID *int
 
-	volumetricTexture uint32
+	volumetricVAO           uint32
+	volumetricWorleyTexture uint32
+	volumetricFBO           uint32
+	volumetricRenderTexture uint32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -164,7 +167,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.initializeCircleTextures()
 
-	// r.volumetricTexture = setupVolumetrics(r.shaderManager, r.app.AssetManager())
+	r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager, r.app.AssetManager())
 
 	return r
 }
@@ -246,7 +249,7 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	r.volumetricTexture = r.setupVolumetrics(r.shaderManager, r.app.AssetManager())
+	r.renderVolumetrics(r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.shaderManager, r.app.AssetManager())
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }
@@ -376,7 +379,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
-			r.app.RuntimeConfig().DebugTexture = r.volumetricTexture
+			r.app.RuntimeConfig().DebugTexture = r.volumetricRenderTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -394,7 +397,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
-			r.app.RuntimeConfig().DebugTexture = r.volumetricTexture
+			r.app.RuntimeConfig().DebugTexture = r.volumetricRenderTexture
 		}
 	}
 

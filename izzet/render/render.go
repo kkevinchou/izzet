@@ -249,7 +249,14 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
-	// r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager)
+	if panels.RecreateCloudTexture {
+		gl.DeleteTextures(1, &r.volumetricWorleyTexture)
+		gl.DeleteTextures(1, &r.volumetricRenderTexture)
+		gl.DeleteVertexArrays(1, &r.volumetricVAO)
+		gl.DeleteVertexArrays(1, &r.volumetricFBO)
+		r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager)
+		panels.RecreateCloudTexture = false
+	}
 	r.renderVolumetrics(r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.shaderManager, r.app.AssetManager())
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return

@@ -8,6 +8,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
+var RecreateCloudTexture bool
+
 type DebugComboOption string
 
 const (
@@ -81,6 +83,9 @@ func stats(app renderiface.App, renderContext RenderContext) {
 
 						texture := imgui.TextureID{Data: uintptr(settings.DebugTexture)}
 						size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+						if SelectedDebugComboOption == ComboOptionVolumetric {
+							size.Y = imageWidth
+						}
 						// invert the Y axis since opengl vs texture coordinate systems differ
 						// https://learnopengl.com/Getting-started/Textures
 						imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
@@ -90,7 +95,37 @@ func stats(app renderiface.App, renderContext RenderContext) {
 			}
 		}, true)
 		panelutils.SetupRow("Noise Z", func() {
-			imgui.SliderFloatV("", &app.RuntimeConfig().NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+			imgui.SliderFloatV("noiseZ", &app.RuntimeConfig().NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+		}, true)
+		panelutils.SetupRow("Cell Width", func() {
+			if imgui.SliderInt("cellWidth", &app.RuntimeConfig().CellWidth, 1, 30) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("Cell Height", func() {
+			if imgui.SliderInt("cellHeight", &app.RuntimeConfig().CellHeight, 1, 30) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("Cell Depth", func() {
+			if imgui.SliderInt("cellDepth", &app.RuntimeConfig().CellDepth, 1, 30) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("WGroup Width", func() {
+			if imgui.SliderInt("workGroupWidth", &app.RuntimeConfig().WorkGroupWidth, 1, 512) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("WGroup Width", func() {
+			if imgui.SliderInt("workGroupHeight", &app.RuntimeConfig().WorkGroupHeight, 1, 512) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("WGroup Width", func() {
+			if imgui.SliderInt("workGroupDepth", &app.RuntimeConfig().WorkGroupDepth, 1, 512) {
+				RecreateCloudTexture = true
+			}
 		}, true)
 		imgui.EndTable()
 	}

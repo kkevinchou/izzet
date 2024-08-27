@@ -14,9 +14,9 @@ import (
 )
 
 const textureWidth, textureHeight int = 1024, 1024
-const numCells int = 30
 
-const workGroupWidth, workGroupHeight, workGroupDepth int = 128, 128, 128
+// const cellWidth, cellHeight, cellDepth int = 10, 10, 10
+// const workGroupWidth, workGroupHeight, workGroupDepth int = 512, 512, 512
 
 // - create 3D worley points (128 x 128 x 128)
 // - store worley points in a compute buffer
@@ -32,8 +32,18 @@ const workGroupWidth, workGroupHeight, workGroupDepth int = 128, 128, 128
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
 func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
-	points := noise.Worley3D(workGroupWidth, workGroupHeight, workGroupDepth)
-	worleyNoiseTexture := createWorlyNoiseTexture(points)
+	runtimeConfig := r.app.RuntimeConfig()
+	cellWidth, cellHeight, cellDepth := runtimeConfig.CellWidth, runtimeConfig.CellHeight, runtimeConfig.CellDepth
+	points := noise.Worley3D(int(cellWidth), int(cellHeight), int(cellDepth))
+	worleyNoiseTexture := createWorlyNoiseTexture(
+		points,
+		runtimeConfig.WorkGroupWidth,
+		runtimeConfig.WorkGroupHeight,
+		runtimeConfig.WorkGroupDepth,
+		runtimeConfig.CellWidth,
+		runtimeConfig.CellHeight,
+		runtimeConfig.CellDepth,
+	)
 
 	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
 
@@ -112,7 +122,7 @@ func (r *Renderer) renderVolumetrics(vao, texture, fbo uint32, shaderManager *sh
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func createWorlyNoiseTexture(points []float32) uint32 {
+func createWorlyNoiseTexture(points []float32, workGroupWidth, workGroupHeight, workGroupDepth, cellWidth, cellHeight, cellDepth int32) uint32 {
 	shaderProgram := setupComputeShader()
 	texture := setupComputeTexture(workGroupWidth, workGroupHeight, workGroupDepth)
 
@@ -136,9 +146,9 @@ func createWorlyNoiseTexture(points []float32) uint32 {
 	hu := gl.GetUniformLocation(shaderProgram, gl.Str("height"+"\x00"))
 	du := gl.GetUniformLocation(shaderProgram, gl.Str("depth"+"\x00"))
 
-	gl.Uniform1i(wu, int32(workGroupWidth))
-	gl.Uniform1i(hu, int32(workGroupHeight))
-	gl.Uniform1i(du, int32(workGroupDepth))
+	gl.Uniform1i(wu, cellWidth)
+	gl.Uniform1i(hu, cellHeight)
+	gl.Uniform1i(du, cellDepth)
 
 	gl.BindTexture(gl.TEXTURE_3D, texture)
 	gl.DispatchCompute(uint32(workGroupWidth), uint32(workGroupHeight), uint32(workGroupDepth))
@@ -147,13 +157,13 @@ func createWorlyNoiseTexture(points []float32) uint32 {
 	return texture
 }
 
-func setupComputeTexture(width, height, depth int) uint32 {
+func setupComputeTexture(width, height, depth int32) uint32 {
 	var texture uint32
 
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_3D, texture)
 
-	gl.TexImage3D(gl.TEXTURE_3D, 0, gl.RGBA32F, int32(width), int32(height), int32(depth), 0, gl.RGBA, gl.FLOAT, nil)
+	gl.TexImage3D(gl.TEXTURE_3D, 0, gl.RGBA32F, width, height, depth, 0, gl.RGBA, gl.FLOAT, nil)
 
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)

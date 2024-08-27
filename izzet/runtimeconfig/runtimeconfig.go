@@ -106,7 +106,10 @@ type RuntimeConfig struct {
 	SkyboxBottomColor [3]float32
 	SkyboxMixValue    float32
 
-	NoiseZ float32
+	// Noise - Cloud Texture
+	NoiseZ                                          float32
+	CellWidth, CellHeight, CellDepth                int32
+	WorkGroupWidth, WorkGroupHeight, WorkGroupDepth int32
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -181,6 +184,15 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		SkyboxTopColor:    [3]float32{0.02, 0.02, 0.32},
 		SkyboxBottomColor: [3]float32{0.11, 0.93, 0.87},
 		SkyboxMixValue:    0.4,
+
+		// Noise - Cloud Texture
+		NoiseZ:          0,
+		CellWidth:       10,
+		CellHeight:      10,
+		CellDepth:       10,
+		WorkGroupWidth:  512,
+		WorkGroupHeight: 512,
+		WorkGroupDepth:  512,
 	}
 	// // Define the colors for the gradient
 	// vec3 topColor = vec3(0.0, 0.4, 0.8); // Darker blue at the horizon

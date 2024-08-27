@@ -15,19 +15,15 @@ void main()
 {
     ivec3 texelCoord = ivec3(gl_GlobalInvocationID.xyz);
 
-    // vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    // color.x = float(texelCoord.x) / (gl_NumWorkGroups.x);
-    // color.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
-    // color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
+    float xRatio = float(texelCoord.x) / (gl_NumWorkGroups.x);
+    float yRatio = float(texelCoord.y) / (gl_NumWorkGroups.y);
+    float zRatio = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    // int x = int(gl_NumWorkGroups.x), y = int(gl_NumWorkGroups.y), z = int(gl_NumWorkGroups.z);
-    int x = texelCoord.x, y = texelCoord.y, z = texelCoord.z;
+    // int x = texelCoord.x, y = texelCoord.y, z = texelCoord.z;
+    int x = int(floor(xRatio * float(width))), y = int(floor(yRatio * float(height))), z = int(floor(zRatio * float(depth)));
 
     float minSqrDist = 2;
-    vec3 position = vec3(float(x), float(y), float(z));
-    // float x = float(texelCoord.x) / (gl_NumWorkGroups.x) * width;
-    // float y = float(teyelCoord.y) / (gl_NumWorkGroups.y) * height;
-    // float z = float(tezelCoord.z) / (gl_NumWorkGroups.z) * depth;
+    vec3 position = vec3(xRatio * float(width), yRatio * float(height), zRatio * float(depth));
 
     for (int dz = -1; dz <= 1; dz++)
     {
@@ -58,7 +54,7 @@ void main()
     // color.y = float(texelCoord.z) / (gl_NumWorkGroups.z);
     // color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    float dist = sqrt(minSqrDist);
+    float dist = 1 - sqrt(minSqrDist);
 
     imageStore(imgOutput, texelCoord, vec4(dist, dist, dist, 1));
     // imageStore(imgOutput, texelCoord, vec4(float(width) / 256, float(width) / 256, float(width) / 256, 1));

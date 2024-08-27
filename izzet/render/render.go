@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -102,10 +103,10 @@ type Renderer struct {
 
 	hoveredEntityID *int
 
-	volumetricVAO           uint32
-	volumetricWorleyTexture uint32
-	volumetricFBO           uint32
-	volumetricRenderTexture uint32
+	// volumetricVAO           uint32
+	// volumetricWorleyTexture uint32
+	// volumetricFBO           uint32
+	// volumetricRenderTexture uint32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -167,7 +168,11 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.initializeCircleTextures()
 
-	r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager)
+	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
+	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
+
+	cloudTexture1 := &r.app.RuntimeConfig().CloudTextures[1]
+	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	return r
 }
@@ -248,16 +253,21 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
+func (r *Renderer) activeCloudTexture() *runtimeconfig.CloudTexture {
+	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
+}
+
 func (r *Renderer) Render(delta time.Duration) {
+	cloudTexture := r.activeCloudTexture()
 	if panels.RecreateCloudTexture {
-		gl.DeleteTextures(1, &r.volumetricWorleyTexture)
-		gl.DeleteTextures(1, &r.volumetricRenderTexture)
-		gl.DeleteVertexArrays(1, &r.volumetricVAO)
-		gl.DeleteFramebuffers(1, &r.volumetricFBO)
-		r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager)
+		gl.DeleteTextures(1, &cloudTexture.WorleyTexture)
+		gl.DeleteTextures(1, &cloudTexture.RenderTexture)
+		gl.DeleteVertexArrays(1, &cloudTexture.VAO)
+		gl.DeleteFramebuffers(1, &cloudTexture.FBO)
+		cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, cloudTexture.RenderTexture = r.setupVolumetrics(r.shaderManager)
 		panels.RecreateCloudTexture = false
 	}
-	r.renderVolumetrics(r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.shaderManager, r.app.AssetManager())
+	r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }
@@ -387,7 +397,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
-			r.app.RuntimeConfig().DebugTexture = r.volumetricRenderTexture
+			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
@@ -405,7 +415,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
-			r.app.RuntimeConfig().DebugTexture = r.volumetricRenderTexture
+			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	}
 

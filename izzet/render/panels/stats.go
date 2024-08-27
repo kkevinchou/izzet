@@ -37,6 +37,22 @@ var (
 	}
 )
 
+type CloudTextureComboOption int
+
+const (
+	ComboOption0 CloudTextureComboOption = 0
+	ComboOption1 CloudTextureComboOption = 1
+)
+
+var SelectedCloudTextureComboOption CloudTextureComboOption = ComboOption0
+
+var (
+	cloudTextureComboOption []CloudTextureComboOption = []CloudTextureComboOption{
+		ComboOption0,
+		ComboOption1,
+	}
+)
+
 func stats(app renderiface.App, renderContext RenderContext) {
 	settings := app.RuntimeConfig()
 	mr := app.MetricsRegistry()
@@ -92,6 +108,18 @@ func stats(app renderiface.App, renderContext RenderContext) {
 					}
 					imgui.End()
 				}
+			}
+		}, true)
+
+		panelutils.SetupRow("Cloud Texture Index", func() {
+			if imgui.BeginCombo("##", fmt.Sprintf("%d", SelectedCloudTextureComboOption)) {
+				for _, option := range cloudTextureComboOption {
+					if imgui.SelectableBool(fmt.Sprintf("%d", option)) {
+						SelectedCloudTextureComboOption = option
+						app.RuntimeConfig().ActiveCloudTextureIndex = int(option)
+					}
+				}
+				imgui.EndCombo()
 			}
 		}, true)
 

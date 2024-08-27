@@ -106,11 +106,6 @@ type RuntimeConfig struct {
 	SkyboxBottomColor [3]float32
 	SkyboxMixValue    float32
 
-	// // Noise - Cloud Texture
-	// NoiseZ                                          float32
-	// CellWidth, CellHeight, CellDepth                int32
-	// WorkGroupWidth, WorkGroupHeight, WorkGroupDepth int32
-
 	ActiveCloudTextureIndex int
 	CloudTextures           [2]CloudTexture
 }
@@ -121,6 +116,12 @@ type CloudTexture struct {
 	CellWidth, CellHeight, CellDepth                int32
 	WorkGroupWidth, WorkGroupHeight, WorkGroupDepth int32
 	TextureWidth, TextureHeight                     int32
+
+	// rendering
+	VAO           uint32
+	WorleyTexture uint32
+	FBO           uint32
+	RenderTexture uint32
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -202,9 +203,9 @@ func DefaultRuntimeConfig() RuntimeConfig {
 				CellWidth:       10,
 				CellHeight:      10,
 				CellDepth:       10,
-				WorkGroupWidth:  512,
-				WorkGroupHeight: 512,
-				WorkGroupDepth:  512,
+				WorkGroupWidth:  128,
+				WorkGroupHeight: 128,
+				WorkGroupDepth:  128,
 			},
 			{
 
@@ -212,21 +213,10 @@ func DefaultRuntimeConfig() RuntimeConfig {
 				CellWidth:       10,
 				CellHeight:      10,
 				CellDepth:       10,
-				WorkGroupWidth:  512,
-				WorkGroupHeight: 512,
-				WorkGroupDepth:  512,
+				WorkGroupWidth:  128,
+				WorkGroupHeight: 128,
+				WorkGroupDepth:  128,
 			},
 		},
-		// // Noise - Cloud Texture
-		// NoiseZ:          0,
-		// CellWidth:       10,
-		// CellHeight:      10,
-		// CellDepth:       10,
-		// WorkGroupWidth:  512,
-		// WorkGroupHeight: 512,
-		// WorkGroupDepth:  512,
 	}
-	// // Define the colors for the gradient
-	// vec3 topColor = vec3(0.0, 0.4, 0.8); // Darker blue at the horizon
-	// vec3 bottomColor = vec3(0.7, 0.9, 1.0);    // Lighter blue at the zenith
 }

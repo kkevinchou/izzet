@@ -253,7 +253,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		gl.DeleteTextures(1, &r.volumetricWorleyTexture)
 		gl.DeleteTextures(1, &r.volumetricRenderTexture)
 		gl.DeleteVertexArrays(1, &r.volumetricVAO)
-		gl.DeleteVertexArrays(1, &r.volumetricFBO)
+		gl.DeleteFramebuffers(1, &r.volumetricFBO)
 		r.volumetricVAO, r.volumetricWorleyTexture, r.volumetricFBO, r.volumetricRenderTexture = r.setupVolumetrics(r.shaderManager)
 		panels.RecreateCloudTexture = false
 	}

@@ -117,12 +117,12 @@ func stats(app renderiface.App, renderContext RenderContext) {
 				RecreateCloudTexture = true
 			}
 		}, true)
-		panelutils.SetupRow("WGroup Width", func() {
+		panelutils.SetupRow("WGroup Height", func() {
 			if imgui.SliderInt("workGroupHeight", &app.RuntimeConfig().WorkGroupHeight, 1, 512) {
 				RecreateCloudTexture = true
 			}
 		}, true)
-		panelutils.SetupRow("WGroup Width", func() {
+		panelutils.SetupRow("WGroup Depth", func() {
 			if imgui.SliderInt("workGroupDepth", &app.RuntimeConfig().WorkGroupDepth, 1, 512) {
 				RecreateCloudTexture = true
 			}

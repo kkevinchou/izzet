@@ -32,17 +32,17 @@ const textureWidth, textureHeight int = 1024, 1024
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
 func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
-	runtimeConfig := r.app.RuntimeConfig()
-	cellWidth, cellHeight, cellDepth := runtimeConfig.CellWidth, runtimeConfig.CellHeight, runtimeConfig.CellDepth
+	cloudTexture := r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
+	cellWidth, cellHeight, cellDepth := cloudTexture.CellWidth, cloudTexture.CellHeight, cloudTexture.CellDepth
 	points := noise.Worley3D(int(cellWidth), int(cellHeight), int(cellDepth))
 	worleyNoiseTexture := createWorlyNoiseTexture(
 		points,
-		runtimeConfig.WorkGroupWidth,
-		runtimeConfig.WorkGroupHeight,
-		runtimeConfig.WorkGroupDepth,
-		runtimeConfig.CellWidth,
-		runtimeConfig.CellHeight,
-		runtimeConfig.CellDepth,
+		cloudTexture.WorkGroupWidth,
+		cloudTexture.WorkGroupHeight,
+		cloudTexture.WorkGroupDepth,
+		cloudTexture.CellWidth,
+		cloudTexture.CellHeight,
+		cloudTexture.CellDepth,
 	)
 
 	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
@@ -108,7 +108,7 @@ func (r *Renderer) renderVolumetrics(vao, texture, fbo uint32, shaderManager *sh
 	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
 
-	shader.SetUniformFloat("z", r.app.RuntimeConfig().NoiseZ)
+	shader.SetUniformFloat("z", r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex].NoiseZ)
 
 	shader.SetUniformInt("tex", 0)
 	gl.ActiveTexture(gl.TEXTURE0)

@@ -267,11 +267,12 @@ func worldProps(app renderiface.App) {
 		}
 	}
 
+	cloudTexture := &runtimeConfig.CloudTextures[runtimeConfig.ActiveCloudTextureIndex]
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Noise Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 		panelutils.SetupRow("Noise Z", func() {
-			imgui.SliderFloatV("", &runtimeConfig.NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+			imgui.SliderFloatV("", &cloudTexture.NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
 		}, true)
 		imgui.EndTable()
 	}

@@ -13,13 +13,10 @@ import (
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
-const width, height int = 1024, 1024
+const textureWidth, textureHeight int = 1024, 1024
+const numCells int = 30
 
 const workGroupWidth, workGroupHeight, workGroupDepth int = 128, 128, 128
-
-// const workGroupWidth, workGroupHeight, workGroupDepth int = 30, 30, 30
-
-// const workGroupWidth, workGroupHeight, workGroupDepth int = 4, 4, 4
 
 // - create 3D worley points (128 x 128 x 128)
 // - store worley points in a compute buffer
@@ -38,13 +35,13 @@ func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint3
 	points := noise.Worley3D(workGroupWidth, workGroupHeight, workGroupDepth)
 	worleyNoiseTexture := createWorlyNoiseTexture(points)
 
-	gl.Viewport(0, 0, int32(width), int32(height))
+	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
 
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	texture := createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.NEAREST)
+	texture := createTexture(textureWidth, textureHeight, internalTextureColorFormat, gl.RGB, gl.NEAREST)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
@@ -94,7 +91,7 @@ func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint3
 }
 
 func (r *Renderer) renderVolumetrics(vao, texture, fbo uint32, shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
-	gl.Viewport(0, 0, int32(width), int32(height))
+	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
@@ -134,6 +131,15 @@ func createWorlyNoiseTexture(points []float32) uint32 {
 	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, 0)
 
 	gl.UseProgram(shaderProgram)
+
+	wu := gl.GetUniformLocation(shaderProgram, gl.Str("width"+"\x00"))
+	hu := gl.GetUniformLocation(shaderProgram, gl.Str("height"+"\x00"))
+	du := gl.GetUniformLocation(shaderProgram, gl.Str("depth"+"\x00"))
+
+	gl.Uniform1i(wu, int32(workGroupWidth))
+	gl.Uniform1i(hu, int32(workGroupHeight))
+	gl.Uniform1i(du, int32(workGroupDepth))
+
 	gl.BindTexture(gl.TEXTURE_3D, texture)
 	gl.DispatchCompute(uint32(workGroupWidth), uint32(workGroupHeight), uint32(workGroupDepth))
 	gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)

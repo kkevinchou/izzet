@@ -7,19 +7,60 @@ layout(std430, binding = 0) buffer MyBuffer
 };
 layout(rgba32f, binding = 1) uniform image3D imgOutput;
 
+uniform int width;
+uniform int height;
+uniform int depth;
+
 void main()
 {
     ivec3 texelCoord = ivec3(gl_GlobalInvocationID.xyz);
 
-    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    // vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    // color.x = float(texelCoord.x) / (gl_NumWorkGroups.x);
+    // color.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
+    // color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    color.x = float(texelCoord.x) / (gl_NumWorkGroups.x);
-    color.y = float(texelCoord.y) / (gl_NumWorkGroups.y);
-    color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
+    // int x = int(gl_NumWorkGroups.x), y = int(gl_NumWorkGroups.y), z = int(gl_NumWorkGroups.z);
+    int x = texelCoord.x, y = texelCoord.y, z = texelCoord.z;
+
+    float minSqrDist = 2;
+    vec3 position = vec3(float(x), float(y), float(z));
+    // float x = float(texelCoord.x) / (gl_NumWorkGroups.x) * width;
+    // float y = float(teyelCoord.y) / (gl_NumWorkGroups.y) * height;
+    // float z = float(tezelCoord.z) / (gl_NumWorkGroups.z) * depth;
+
+    for (int dz = -1; dz <= 1; dz++)
+    {
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                // int nx = (x + width + dx) % width, ny = (y + height + dy) % height, nz = (z + depth + dz) % depth;
+                int nx = x + dx, ny = y + dy, nz = z + dz;
+
+                if (nx < 0 || nx >= width || ny < 0 || ny >= height || nz < 0 || nz >= depth)
+                {
+                    continue;
+                }
+
+                float px = data[(nx + (width * ny) + (width * height * nz)) * 3];
+                float py = data[(nx + (width * ny) + (width * height * nz)) * 3 + 1];
+                float pz = data[(nx + (width * ny) + (width * height * nz)) * 3 + 2];
+
+                vec3 offset = (position - vec3(px, py, pz));
+
+                minSqrDist = min(minSqrDist, dot(offset, offset));
+            }
+        }
+    }
 
     // color.x = float(texelCoord.z) / (gl_NumWorkGroups.z);
     // color.y = float(texelCoord.z) / (gl_NumWorkGroups.z);
     // color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    imageStore(imgOutput, texelCoord, color);
+    float dist = sqrt(minSqrDist);
+
+    imageStore(imgOutput, texelCoord, vec4(dist, dist, dist, 1));
+    // imageStore(imgOutput, texelCoord, vec4(float(width) / 256, float(width) / 256, float(width) / 256, 1));
+    // imageStore(imgOutput, texelCoord, vec4(0, 1, 1, 1));
 }

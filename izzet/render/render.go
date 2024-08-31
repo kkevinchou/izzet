@@ -384,37 +384,37 @@ func (r *Renderer) Render(delta time.Duration) {
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 		imguiFinalRenderTexture = r.imguiCompositeTexture
-		if panels.SelectedDebugComboOption == panels.ComboOptionFinalRender {
+		if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionColorPicking {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionHDR {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionBloom {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionShadowDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		imguiFinalRenderTexture = r.imguiMainColorTexture
-		if panels.SelectedDebugComboOption == panels.ComboOptionFinalRender {
+		if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionColorPicking {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionHDR {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = 0
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionBloom {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = 0
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionShadowDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionVolumetric {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	}
@@ -1003,13 +1003,14 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 }
 
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
+	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.app.Platform().NewFrame()
 	imgui.NewFrame()
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
-	menus.SetupMenuBar(r.app)
+	menus.SetupMenuBar(r.app, renderContext)
 	menuBarHeight := CalculateMenuBarHeight()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)
@@ -1127,8 +1128,35 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PopStyleColorV(20)
 			imgui.PopStyleVarV(7)
 
-			if r.app.ShowImguiDemo() {
+			if runtimeConfig.ShowImguiDemo {
 				imgui.ShowDemoWindow()
+			}
+
+			if runtimeConfig.ShowDebugTexture {
+				imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
+				if imgui.BeginV("Texture Viewer", &runtimeConfig.ShowDebugTexture, imgui.WindowFlagsNone) {
+					if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
+						for _, option := range menus.DebugComboOptions {
+							if imgui.SelectableBool(string(option)) {
+								menus.SelectedDebugComboOption = option
+							}
+						}
+						imgui.EndCombo()
+					}
+
+					regionSize := imgui.ContentRegionAvail()
+					imageWidth := regionSize.X
+
+					texture := imgui.TextureID{Data: uintptr(runtimeConfig.DebugTexture)}
+					size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+					if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+						size.Y = imageWidth
+					}
+					// invert the Y axis since opengl vs texture coordinate systems differ
+					// https://learnopengl.com/Getting-started/Textures
+					imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+				}
+				imgui.End()
 			}
 		}
 	}

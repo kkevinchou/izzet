@@ -45,6 +45,24 @@ var (
 	}
 )
 
+var RecreateCloudTexture bool
+
+type CloudTextureComboOption int
+
+const (
+	ComboOption0 CloudTextureComboOption = 0
+	ComboOption1 CloudTextureComboOption = 1
+)
+
+var SelectedCloudTextureComboOption CloudTextureComboOption = ComboOption0
+
+var (
+	cloudTextureComboOption []CloudTextureComboOption = []CloudTextureComboOption{
+		ComboOption0,
+		ComboOption1,
+	}
+)
+
 func worldProps(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
 
@@ -267,12 +285,55 @@ func worldProps(app renderiface.App) {
 		}
 	}
 
-	cloudTexture := &runtimeConfig.CloudTextures[runtimeConfig.ActiveCloudTextureIndex]
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("Noise Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
+
+		panelutils.SetupRow("Cloud Texture Index", func() {
+			if imgui.BeginCombo("##", fmt.Sprintf("%d", SelectedCloudTextureComboOption)) {
+				for _, option := range cloudTextureComboOption {
+					if imgui.SelectableBool(fmt.Sprintf("%d", option)) {
+						SelectedCloudTextureComboOption = option
+						app.RuntimeConfig().ActiveCloudTextureIndex = int(option)
+					}
+				}
+				imgui.EndCombo()
+			}
+		}, true)
+
+		cloudTexture := &app.RuntimeConfig().CloudTextures[app.RuntimeConfig().ActiveCloudTextureIndex]
 		panelutils.SetupRow("Noise Z", func() {
-			imgui.SliderFloatV("", &cloudTexture.NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+			imgui.SliderFloatV("noiseZ", &cloudTexture.NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+		}, true)
+		panelutils.SetupRow("Cell Width", func() {
+			if imgui.SliderInt("cellWidth", &cloudTexture.CellWidth, 1, 30) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("Cell Height", func() {
+			if imgui.SliderInt("cellHeight", &cloudTexture.CellHeight, 1, 30) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("Cell Depth", func() {
+			if imgui.SliderInt("cellDepth", &cloudTexture.CellDepth, 1, 30) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("WGroup Width", func() {
+			if imgui.SliderInt("workGroupWidth", &cloudTexture.WorkGroupWidth, 1, 512) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("WGroup Height", func() {
+			if imgui.SliderInt("workGroupHeight", &cloudTexture.WorkGroupHeight, 1, 512) {
+				RecreateCloudTexture = true
+			}
+		}, true)
+		panelutils.SetupRow("WGroup Depth", func() {
+			if imgui.SliderInt("workGroupDepth", &cloudTexture.WorkGroupDepth, 1, 512) {
+				RecreateCloudTexture = true
+			}
 		}, true)
 		imgui.EndTable()
 	}

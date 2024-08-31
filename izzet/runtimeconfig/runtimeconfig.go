@@ -25,6 +25,7 @@ type RuntimeConfig struct {
 	BloomUpsamplingScale            float32
 	Color                           [3]float32
 
+	ShowImguiDemo    bool
 	ShowDebugTexture bool
 	DebugTexture     uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 
@@ -176,6 +177,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		ShowSelectionBoundingBox: true,
 		ShowColliders:            false,
+		ShowDebugTexture:         false,
 
 		NavigationMeshIterations:           500,
 		NavigationMeshWalkableHeight:       10,

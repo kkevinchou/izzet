@@ -36,9 +36,6 @@ type App interface {
 	GetPrefabByID(id int) *prefabs.Prefab
 	Platform() platforms.Platform
 
-	SetShowImguiDemo(bool)
-	ShowImguiDemo() bool
-
 	LoadProject(name string) bool
 
 	CollisionObserver() *collisionobserver.CollisionObserver

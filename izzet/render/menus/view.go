@@ -5,7 +5,34 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
-func view(app renderiface.App) {
+type DebugComboOption string
+
+const (
+	ComboOptionFinalRender    DebugComboOption = "FINALRENDER"
+	ComboOptionColorPicking   DebugComboOption = "COLORPICKING"
+	ComboOptionHDR            DebugComboOption = "HDR (bloom only)"
+	ComboOptionBloom          DebugComboOption = "BLOOMTEXTURE (bloom only)"
+	ComboOptionShadowDepthMap DebugComboOption = "SHADOW DEPTH MAP"
+	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
+	ComboOptionCubeDepthMap   DebugComboOption = "CUBE DEPTH MAP"
+	ComboOptionVolumetric     DebugComboOption = "VOLUMETRIC"
+)
+
+var SelectedDebugComboOption DebugComboOption = ComboOptionFinalRender
+
+var (
+	DebugComboOptions []DebugComboOption = []DebugComboOption{
+		ComboOptionFinalRender,
+		ComboOptionColorPicking,
+		ComboOptionHDR,
+		ComboOptionBloom,
+		ComboOptionShadowDepthMap,
+		ComboOptionCameraDepthMap,
+		ComboOptionVolumetric,
+	}
+)
+
+func view(app renderiface.App, renderContext RenderContext) {
 	runtimeConfig := app.RuntimeConfig()
 	imgui.SetNextWindowSize(imgui.Vec2{X: 300})
 	if imgui.BeginMenu("View") {
@@ -21,12 +48,17 @@ func view(app renderiface.App) {
 			app.ConfigureUI(!runtimeConfig.UIEnabled)
 		}
 
-		if imgui.MenuItemBoolV("ShowImguiDemo", "", app.ShowImguiDemo(), true) {
-			app.SetShowImguiDemo(!app.ShowImguiDemo())
+		if imgui.MenuItemBoolV("ShowImguiDemo", "", runtimeConfig.ShowImguiDemo, true) {
+			runtimeConfig.ShowImguiDemo = !runtimeConfig.ShowImguiDemo
 		}
 
 		if imgui.MenuItemBoolV("Show Spatial Partition", "", runtimeConfig.RenderSpatialPartition, true) {
 			runtimeConfig.RenderSpatialPartition = !runtimeConfig.RenderSpatialPartition
+		}
+
+		if imgui.MenuItemBoolV("Show Debug Texture", "", runtimeConfig.ShowDebugTexture, true) {
+			runtimeConfig.ShowDebugTexture = !runtimeConfig.ShowDebugTexture
+
 		}
 
 		imgui.EndMenu()

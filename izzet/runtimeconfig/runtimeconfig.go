@@ -25,6 +25,7 @@ type RuntimeConfig struct {
 	BloomUpsamplingScale            float32
 	Color                           [3]float32
 
+	ShowImguiDemo    bool
 	ShowDebugTexture bool
 	DebugTexture     uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 
@@ -105,6 +106,29 @@ type RuntimeConfig struct {
 	SkyboxTopColor    [3]float32
 	SkyboxBottomColor [3]float32
 	SkyboxMixValue    float32
+
+	ActiveCloudTextureIndex        int
+	ActiveCloudTextureChannelIndex int
+	CloudTextures                  [2]CloudTexture
+}
+
+type CloudTextureChannel struct {
+	// Noise - Cloud Texture
+	NoiseZ                           float32
+	CellWidth, CellHeight, CellDepth int32
+}
+
+type CloudTexture struct {
+	Channels                                        [4]CloudTextureChannel
+	TextureWidth, TextureHeight                     int32
+	WorkGroupWidth, WorkGroupHeight, WorkGroupDepth int32
+
+	// rendering
+	VAO           uint32
+	WorleyTexture uint32
+	FBO           uint32
+	RenderTexture uint32
+	ColorChannel  string
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -159,6 +183,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		ShowSelectionBoundingBox: true,
 		ShowColliders:            false,
+		ShowDebugTexture:         false,
 
 		NavigationMeshIterations:           500,
 		NavigationMeshWalkableHeight:       10,
@@ -179,8 +204,70 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		SkyboxTopColor:    [3]float32{0.02, 0.02, 0.32},
 		SkyboxBottomColor: [3]float32{0.11, 0.93, 0.87},
 		SkyboxMixValue:    0.4,
+
+		CloudTextures: [2]CloudTexture{
+			{
+				Channels: [4]CloudTextureChannel{
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+				},
+				WorkGroupWidth:  128,
+				WorkGroupHeight: 128,
+				WorkGroupDepth:  128,
+			},
+			{
+				Channels: [4]CloudTextureChannel{
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+				},
+				WorkGroupWidth:  128,
+				WorkGroupHeight: 128,
+				WorkGroupDepth:  128,
+			},
+		},
 	}
-	// // Define the colors for the gradient
-	// vec3 topColor = vec3(0.0, 0.4, 0.8); // Darker blue at the horizon
-	// vec3 bottomColor = vec3(0.7, 0.9, 1.0);    // Lighter blue at the zenith
 }

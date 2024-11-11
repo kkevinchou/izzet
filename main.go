@@ -62,7 +62,7 @@ func main() {
 
 	if config.Profile {
 		go func() {
-			http.ListenAndServe(":6868", nil)
+			http.ListenAndServe("localhost:6868", nil)
 		}()
 	}
 

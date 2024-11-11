@@ -136,14 +136,6 @@ func (g *Client) ResetNavMeshVAO() {
 	render.ResetNavMeshVAO = true
 }
 
-func (g *Client) SetShowImguiDemo(value bool) {
-	g.showImguiDemo = value
-}
-
-func (g *Client) ShowImguiDemo() bool {
-	return g.showImguiDemo
-}
-
 func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {
 	return g.metricsRegistry
 }

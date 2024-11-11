@@ -54,8 +54,6 @@ type Client struct {
 
 	metricsRegistry *metrics.MetricsRegistry
 
-	showImguiDemo bool
-
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
 

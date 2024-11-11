@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -101,6 +102,11 @@ type Renderer struct {
 	menuBarHeight     float32
 
 	hoveredEntityID *int
+
+	// volumetricVAO           uint32
+	// volumetricWorleyTexture uint32
+	// volumetricFBO           uint32
+	// volumetricRenderTexture uint32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
@@ -158,9 +164,15 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	// the texture is only needed to properly generate the FBO
 	// new textures are binded when we're in the process of blooming
-	r.blendFBO, _ = r.initFBOAndTexture(width, height)
+	r.blendFBO, _ = initFBOAndTexture(width, height)
 
 	r.initializeCircleTextures()
+
+	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
+	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
+
+	cloudTexture1 := &r.app.RuntimeConfig().CloudTextures[1]
+	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	return r
 }
@@ -180,16 +192,16 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
-	r.mainColorTexture = r.createTexture(width, height, internalTextureColorFormat, gl.RGBA)
+	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
 
-	r.colorPickingTexture = r.createTexture(width, height, gl.R32UI, gl.RED_INTEGER)
+	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
 
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-	r.compositeTexture = r.createTexture(width, height, internalTextureColorFormat, gl.RGB)
+	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 
@@ -228,7 +240,7 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 }
 
 func (r *Renderer) initCompositeFBO(width, height int) {
-	r.compositeFBO, r.compositeTexture = r.initFBOAndTexture(width, height)
+	r.compositeFBO, r.compositeTexture = initFBOAndTexture(width, height)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 
@@ -241,7 +253,21 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
+func (r *Renderer) activeCloudTexture() *runtimeconfig.CloudTexture {
+	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
+}
+
 func (r *Renderer) Render(delta time.Duration) {
+	cloudTexture := r.activeCloudTexture()
+	if panels.RecreateCloudTexture {
+		gl.DeleteTextures(1, &cloudTexture.WorleyTexture)
+		gl.DeleteTextures(1, &cloudTexture.RenderTexture)
+		gl.DeleteVertexArrays(1, &cloudTexture.VAO)
+		gl.DeleteFramebuffers(1, &cloudTexture.FBO)
+		cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, cloudTexture.RenderTexture = r.setupVolumetrics(r.shaderManager)
+		panels.RecreateCloudTexture = false
+	}
+	r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }
@@ -358,34 +384,38 @@ func (r *Renderer) Render(delta time.Duration) {
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 		imguiFinalRenderTexture = r.imguiCompositeTexture
-		if panels.SelectedDebugComboOption == panels.ComboOptionFinalRender {
+		if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionColorPicking {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionHDR {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionBloom {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionShadowDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		imguiFinalRenderTexture = r.imguiMainColorTexture
-		if panels.SelectedDebugComboOption == panels.ComboOptionFinalRender {
+		if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionColorPicking {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionHDR {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = 0
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionBloom {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = 0
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionShadowDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if panels.SelectedDebugComboOption == panels.ComboOptionCameraDepthMap {
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	}
 
@@ -973,13 +1003,14 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 }
 
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
+	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.app.Platform().NewFrame()
 	imgui.NewFrame()
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
-	menus.SetupMenuBar(r.app)
+	menus.SetupMenuBar(r.app, renderContext)
 	menuBarHeight := CalculateMenuBarHeight()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)
@@ -1097,8 +1128,35 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 			imgui.PopStyleColorV(20)
 			imgui.PopStyleVarV(7)
 
-			if r.app.ShowImguiDemo() {
+			if runtimeConfig.ShowImguiDemo {
 				imgui.ShowDemoWindow()
+			}
+
+			if runtimeConfig.ShowDebugTexture {
+				imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
+				if imgui.BeginV("Texture Viewer", &runtimeConfig.ShowDebugTexture, imgui.WindowFlagsNone) {
+					if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
+						for _, option := range menus.DebugComboOptions {
+							if imgui.SelectableBool(string(option)) {
+								menus.SelectedDebugComboOption = option
+							}
+						}
+						imgui.EndCombo()
+					}
+
+					regionSize := imgui.ContentRegionAvail()
+					imageWidth := regionSize.X
+
+					texture := imgui.TextureID{Data: uintptr(runtimeConfig.DebugTexture)}
+					size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+					if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+						size.Y = imageWidth
+					}
+					// invert the Y axis since opengl vs texture coordinate systems differ
+					// https://learnopengl.com/Getting-started/Textures
+					imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+				}
+				imgui.End()
 			}
 		}
 	}

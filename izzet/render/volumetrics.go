@@ -14,6 +14,7 @@ import (
 )
 
 const textureWidth, textureHeight int = 1024, 1024
+const numChannels int = 4
 
 // const cellWidth, cellHeight, cellDepth int = 10, 10, 10
 // const workGroupWidth, workGroupHeight, workGroupDepth int = 512, 512, 512
@@ -31,18 +32,29 @@ const textureWidth, textureHeight int = 1024, 1024
 // rendering:
 //     - the fragment shader samples the 3d texture by ray marching from the view direction
 
+type WorleyOctave struct {
+	points                           []float32
+	cellWidth, cellHeight, cellDepth float32
+}
+
 func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
 	cloudTexture := r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
-	cellWidth, cellHeight, cellDepth := cloudTexture.CellWidth, cloudTexture.CellHeight, cloudTexture.CellDepth
-	points := noise.Worley3D(int(cellWidth), int(cellHeight), int(cellDepth))
+	// channel := r.app.RuntimeConfig().ActiveCloudTextureChannelIndex
+
+	var octaves []WorleyOctave
+
+	for i := range numChannels {
+		cellWidth, cellHeight, cellDepth := cloudTexture.Channels[i].CellWidth, cloudTexture.Channels[i].CellHeight, cloudTexture.Channels[i].CellDepth
+		points := noise.Worley3D(int(cellWidth), int(cellHeight), int(cellDepth))
+		octave := WorleyOctave{points: points, cellWidth: float32(cellWidth), cellHeight: float32(cellHeight), cellDepth: float32(cellDepth)}
+		octaves = append(octaves, octave)
+	}
+
 	worleyNoiseTexture := createWorlyNoiseTexture(
-		points,
+		octaves,
 		cloudTexture.WorkGroupWidth,
 		cloudTexture.WorkGroupHeight,
 		cloudTexture.WorkGroupDepth,
-		cloudTexture.CellWidth,
-		cloudTexture.CellHeight,
-		cloudTexture.CellDepth,
 	)
 
 	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
@@ -108,7 +120,10 @@ func (r *Renderer) renderVolumetrics(vao, texture, fbo uint32, shaderManager *sh
 	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
 
-	shader.SetUniformFloat("z", r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex].NoiseZ)
+	cloudTexture := r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
+	activeChannelIndex := r.app.RuntimeConfig().ActiveCloudTextureChannelIndex
+	shader.SetUniformFloat("z", cloudTexture.Channels[activeChannelIndex].NoiseZ)
+	shader.SetUniformInt("channel", int32(activeChannelIndex))
 
 	shader.SetUniformInt("tex", 0)
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -122,33 +137,36 @@ func (r *Renderer) renderVolumetrics(vao, texture, fbo uint32, shaderManager *sh
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 }
 
-func createWorlyNoiseTexture(points []float32, workGroupWidth, workGroupHeight, workGroupDepth, cellWidth, cellHeight, cellDepth int32) uint32 {
+func createWorlyNoiseTexture(octaves []WorleyOctave, workGroupWidth, workGroupHeight, workGroupDepth int32) uint32 {
 	shaderProgram := setupComputeShader()
 	texture := setupComputeTexture(workGroupWidth, workGroupHeight, workGroupDepth)
 
-	// Create the SSBO
-	var ssbo uint32
-	gl.GenBuffers(1, &ssbo)
-	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo)
+	for i := range 4 {
+		octave := octaves[i]
+		// Create the SSBO
+		var ssbo uint32
+		gl.GenBuffers(1, &ssbo)
+		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, ssbo)
 
-	// Upload the data to the SSBO
-	gl.BufferData(gl.SHADER_STORAGE_BUFFER, len(points)*4, gl.Ptr(points), gl.STATIC_DRAW)
+		// Upload the data to the SSBO
+		gl.BufferData(gl.SHADER_STORAGE_BUFFER, len(octave.points)*4, gl.Ptr(octave.points), gl.STATIC_DRAW)
 
-	// Bind the SSBO to a binding point (0 in this case)
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, ssbo)
+		// Bind the SSBO to a binding point (0 in this case)
+		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, uint32(i), ssbo)
+	}
 
 	// Unbind the SSBO
 	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, 0)
 
 	gl.UseProgram(shaderProgram)
 
-	wu := gl.GetUniformLocation(shaderProgram, gl.Str("width"+"\x00"))
-	hu := gl.GetUniformLocation(shaderProgram, gl.Str("height"+"\x00"))
-	du := gl.GetUniformLocation(shaderProgram, gl.Str("depth"+"\x00"))
+	wu := gl.GetUniformLocation(shaderProgram, gl.Str("widths"+"\x00"))
+	hu := gl.GetUniformLocation(shaderProgram, gl.Str("heights"+"\x00"))
+	du := gl.GetUniformLocation(shaderProgram, gl.Str("depths"+"\x00"))
 
-	gl.Uniform1i(wu, cellWidth)
-	gl.Uniform1i(hu, cellHeight)
-	gl.Uniform1i(du, cellDepth)
+	gl.Uniform4i(wu, int32(octaves[0].cellWidth), int32(octaves[1].cellWidth), int32(octaves[2].cellWidth), int32(octaves[3].cellWidth))
+	gl.Uniform4i(hu, int32(octaves[0].cellHeight), int32(octaves[1].cellHeight), int32(octaves[2].cellHeight), int32(octaves[3].cellHeight))
+	gl.Uniform4i(du, int32(octaves[0].cellDepth), int32(octaves[1].cellDepth), int32(octaves[2].cellDepth), int32(octaves[3].cellDepth))
 
 	gl.BindTexture(gl.TEXTURE_3D, texture)
 	gl.DispatchCompute(uint32(workGroupWidth), uint32(workGroupHeight), uint32(workGroupDepth))
@@ -173,9 +191,9 @@ func setupComputeTexture(width, height, depth int32) uint32 {
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 
-	// gl.BindImageTexture(1, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
-	gl.BindImageTexture(1, texture, 0, true, 0, gl.READ_WRITE, gl.RGBA32F)
-	// gl.BindImageTexture(1, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
+	// gl.BindImageTexture(4, texture, 0, true, 0, gl.WRITE_ONLY, gl.RGBA32F)
+	gl.BindImageTexture(4, texture, 0, true, 0, gl.READ_WRITE, gl.RGBA32F)
+	// gl.BindImageTexture(4, texture, 0, false, 0, gl.READ_ONLY, gl.RGBA32F)
 
 	return texture
 }

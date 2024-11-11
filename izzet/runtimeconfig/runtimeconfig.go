@@ -107,22 +107,28 @@ type RuntimeConfig struct {
 	SkyboxBottomColor [3]float32
 	SkyboxMixValue    float32
 
-	ActiveCloudTextureIndex int
-	CloudTextures           [2]CloudTexture
+	ActiveCloudTextureIndex        int
+	ActiveCloudTextureChannelIndex int
+	CloudTextures                  [2]CloudTexture
+}
+
+type CloudTextureChannel struct {
+	// Noise - Cloud Texture
+	NoiseZ                           float32
+	CellWidth, CellHeight, CellDepth int32
 }
 
 type CloudTexture struct {
-	// Noise - Cloud Texture
-	NoiseZ                                          float32
-	CellWidth, CellHeight, CellDepth                int32
-	WorkGroupWidth, WorkGroupHeight, WorkGroupDepth int32
+	Channels                                        [4]CloudTextureChannel
 	TextureWidth, TextureHeight                     int32
+	WorkGroupWidth, WorkGroupHeight, WorkGroupDepth int32
 
 	// rendering
 	VAO           uint32
 	WorleyTexture uint32
 	FBO           uint32
 	RenderTexture uint32
+	ColorChannel  string
 }
 
 func DefaultRuntimeConfig() RuntimeConfig {
@@ -201,20 +207,63 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		CloudTextures: [2]CloudTexture{
 			{
-				NoiseZ:          0,
-				CellWidth:       10,
-				CellHeight:      10,
-				CellDepth:       10,
+				Channels: [4]CloudTextureChannel{
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+				},
 				WorkGroupWidth:  128,
 				WorkGroupHeight: 128,
 				WorkGroupDepth:  128,
 			},
 			{
-
-				NoiseZ:          0,
-				CellWidth:       10,
-				CellHeight:      10,
-				CellDepth:       10,
+				Channels: [4]CloudTextureChannel{
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+					{
+						NoiseZ:     0,
+						CellWidth:  10,
+						CellHeight: 10,
+						CellDepth:  10,
+					},
+				},
 				WorkGroupWidth:  128,
 				WorkGroupHeight: 128,
 				WorkGroupDepth:  128,

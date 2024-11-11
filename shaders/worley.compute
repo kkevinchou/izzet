@@ -1,62 +1,99 @@
 #version 430 core
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(std430, binding = 0) buffer MyBuffer
+layout(std430, binding = 0) buffer MyBuffer0
 {
-    float data[];
+    float data_r[];
 };
-layout(rgba32f, binding = 1) uniform image3D imgOutput;
+layout(std430, binding = 1) buffer MyBuffer1
+{
+    float data_g[];
+};
+layout(std430, binding = 2) buffer MyBuffer2
+{
+    float data_b[];
+};
+layout(std430, binding = 3) buffer MyBuffer3
+{
+    float data_a[];
+};
+layout(rgba32f, binding = 4) uniform image3D imgOutput;
 
-uniform int width;
-uniform int height;
-uniform int depth;
+uniform ivec4 widths;
+uniform ivec4 heights;
+uniform ivec4 depths;
 
 void main()
 {
     ivec3 texelCoord = ivec3(gl_GlobalInvocationID.xyz);
-
     float xRatio = float(texelCoord.x) / (gl_NumWorkGroups.x);
     float yRatio = float(texelCoord.y) / (gl_NumWorkGroups.y);
     float zRatio = float(texelCoord.z) / (gl_NumWorkGroups.z);
 
-    // int x = texelCoord.x, y = texelCoord.y, z = texelCoord.z;
-    int x = int(floor(xRatio * float(width))), y = int(floor(yRatio * float(height))), z = int(floor(zRatio * float(depth)));
+    vec4 computeOutput;
 
-    float minSqrDist = 2;
-    vec3 position = vec3(xRatio * float(width), yRatio * float(height), zRatio * float(depth));
-
-    for (int dz = -1; dz <= 1; dz++)
+    for (int i = 0; i < 4; i++)
     {
-        for (int dy = -1; dy <= 1; dy++)
+        int width = widths[i];
+        int height = heights[i];
+        int depth = depths[i];
+
+        // int x = texelCoord.x, y = texelCoord.y, z = texelCoord.z;
+        int x = int(floor(xRatio * float(width))), y = int(floor(yRatio * float(height))), z = int(floor(zRatio * float(depth)));
+
+        float minSqrDist = 2;
+        vec3 position = vec3(xRatio * float(width), yRatio * float(height), zRatio * float(depth));
+
+        for (int dz = -1; dz <= 1; dz++)
         {
-            for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
             {
-                // int nx = (x + width + dx) % width, ny = (y + height + dy) % height, nz = (z + depth + dz) % depth;
-                int nx = x + dx, ny = y + dy, nz = z + dz;
-
-                if (nx < 0 || nx >= width || ny < 0 || ny >= height || nz < 0 || nz >= depth)
+                for (int dx = -1; dx <= 1; dx++)
                 {
-                    continue;
+                    // int nx = (x + width + dx) % width, ny = (y + height + dy) % height, nz = (z + depth + dz) % depth;
+                    int nx = x + dx, ny = y + dy, nz = z + dz;
+
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height || nz < 0 || nz >= depth)
+                    {
+                        continue;
+                    }
+
+                    float px;
+                    float py;
+                    float pz;
+                    if (i == 0)
+                    {
+                        px = data_r[(nx + (width * ny) + (width * height * nz)) * 3];
+                        py = data_r[(nx + (width * ny) + (width * height * nz)) * 3 + 1];
+                        pz = data_r[(nx + (width * ny) + (width * height * nz)) * 3 + 2];
+                    }
+                    else if (i == 1)
+                    {
+                        px = data_g[(nx + (width * ny) + (width * height * nz)) * 3];
+                        py = data_g[(nx + (width * ny) + (width * height * nz)) * 3 + 1];
+                        pz = data_g[(nx + (width * ny) + (width * height * nz)) * 3 + 2];
+                    }
+                    else if (i == 2)
+                    {
+                        px = data_b[(nx + (width * ny) + (width * height * nz)) * 3];
+                        py = data_b[(nx + (width * ny) + (width * height * nz)) * 3 + 1];
+                        pz = data_b[(nx + (width * ny) + (width * height * nz)) * 3 + 2];
+                    }
+                    else if (i == 3)
+                    {
+                        px = data_a[(nx + (width * ny) + (width * height * nz)) * 3];
+                        py = data_a[(nx + (width * ny) + (width * height * nz)) * 3 + 1];
+                        pz = data_a[(nx + (width * ny) + (width * height * nz)) * 3 + 2];
+                    }
+
+                    vec3 offset = (position - vec3(px, py, pz));
+                    minSqrDist = min(minSqrDist, dot(offset, offset));
                 }
-
-                float px = data[(nx + (width * ny) + (width * height * nz)) * 3];
-                float py = data[(nx + (width * ny) + (width * height * nz)) * 3 + 1];
-                float pz = data[(nx + (width * ny) + (width * height * nz)) * 3 + 2];
-
-                vec3 offset = (position - vec3(px, py, pz));
-
-                minSqrDist = min(minSqrDist, dot(offset, offset));
             }
         }
+        float dist = 1 - sqrt(minSqrDist);
+        computeOutput[i] = dist;
     }
 
-    // color.x = float(texelCoord.z) / (gl_NumWorkGroups.z);
-    // color.y = float(texelCoord.z) / (gl_NumWorkGroups.z);
-    // color.z = float(texelCoord.z) / (gl_NumWorkGroups.z);
-
-    float dist = 1 - sqrt(minSqrDist);
-
-    imageStore(imgOutput, texelCoord, vec4(dist, dist, dist, 1));
-    // imageStore(imgOutput, texelCoord, vec4(float(width) / 256, float(width) / 256, float(width) / 256, 1));
-    // imageStore(imgOutput, texelCoord, vec4(0, 1, 1, 1));
+    imageStore(imgOutput, texelCoord, computeOutput);
 }

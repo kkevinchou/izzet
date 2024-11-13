@@ -2,6 +2,7 @@
     "entity_assets": {
         "alpha3": {"single_entity": true},
         "velociraptor": {"single_entity": true},
-        "parasaurolophus": {"single_entity": true}
+        "parasaurolophus": {"single_entity": true},
+        "scene": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} }
     }
 }

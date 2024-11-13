@@ -379,44 +379,32 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	var finalRenderTexture uint32
 	var imguiFinalRenderTexture imgui.TextureID
+
 	if r.app.RuntimeConfig().Bloom {
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 		imguiFinalRenderTexture = r.imguiCompositeTexture
-		if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
-			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
-			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
+		if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
 			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
 		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
-			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
-			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
-			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		}
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		imguiFinalRenderTexture = r.imguiMainColorTexture
-		if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
-			r.app.RuntimeConfig().DebugTexture = finalRenderTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
-			r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
-			r.app.RuntimeConfig().DebugTexture = 0
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
-			r.app.RuntimeConfig().DebugTexture = 0
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
-			r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
-			r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
-			r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
-		}
+	}
+
+	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
+		r.app.RuntimeConfig().DebugTexture = finalRenderTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
+		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
+		r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
+		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 	}
 
 	// render to back buffer

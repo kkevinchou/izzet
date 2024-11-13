@@ -16,6 +16,7 @@ const (
 	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
 	ComboOptionCubeDepthMap   DebugComboOption = "CUBE DEPTH MAP"
 	ComboOptionVolumetric     DebugComboOption = "VOLUMETRIC"
+	ComboOptionKuwahara       DebugComboOption = "KUWAHARA"
 )
 
 var SelectedDebugComboOption DebugComboOption = ComboOptionFinalRender
@@ -29,6 +30,7 @@ var (
 		ComboOptionShadowDepthMap,
 		ComboOptionCameraDepthMap,
 		ComboOptionVolumetric,
+		ComboOptionKuwahara,
 	}
 )
 

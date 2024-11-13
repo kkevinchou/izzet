@@ -24,8 +24,8 @@ type Physics struct {
 }
 
 type Collider struct {
-	ColliderGroup   string
-	TriMeshCollider bool `json:"trimeshcollider"`
+	ColliderGroup   string `json:"collider_group"`
+	TriMeshCollider bool   `json:"trimesh_collider"`
 }
 
 type Data struct {

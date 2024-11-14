@@ -194,7 +194,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
 			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
 
-			if success {
+			if success && g.navMesh != nil {
 				c := navmesh.CompileNavMesh(g.navMesh)
 				pt, p, success := navmesh.FindNearestPolygon(c.Tiles[0], point)
 				if success {

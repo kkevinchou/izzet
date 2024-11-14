@@ -223,9 +223,10 @@ func (g *Client) render(delta time.Duration) {
 	start := time.Now()
 	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 	g.renderer.Render(delta)
+	g.MetricsRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
+	start = time.Now()
 	g.window.Swap()
-	renderTime := time.Since(start).Milliseconds()
-	g.MetricsRegistry().Inc("render_time", float64(renderTime))
+	g.MetricsRegistry().Inc("render_swap", float64(time.Since(start).Milliseconds()))
 
 }
 

@@ -258,6 +258,9 @@ func (r *Renderer) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *Renderer) Render(delta time.Duration) {
+	mr := r.app.MetricsRegistry()
+
+	start := time.Now()
 	cloudTexture := r.activeCloudTexture()
 	if panels.RecreateCloudTexture {
 		gl.DeleteTextures(1, &cloudTexture.WorleyTexture)
@@ -268,10 +271,12 @@ func (r *Renderer) Render(delta time.Duration) {
 		panels.RecreateCloudTexture = false
 	}
 	r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
+	mr.Inc("render_volumetrics", float64(time.Since(start).Milliseconds()))
 	// if r.app.Minimized() || !r.app.WindowFocused() {
 	// 	return
 	// }
 
+	start = time.Now()
 	initOpenGLRenderSettings()
 	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
@@ -356,31 +361,49 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.cameraViewerContext = cameraViewerContext
 
 	r.clearMainFrameBuffer(renderContext)
+	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
+	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
+	mr.Inc("render_query_renderable", float64(time.Since(start).Milliseconds()))
+	start = time.Now()
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
+	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
+	start = time.Now()
 	r.drawSkybox(renderContext, cameraViewerContext)
-	_ = lightViewerContext
+	mr.Inc("render_skybox", float64(time.Since(start).Milliseconds()))
+
+	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
+	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// main color FBO
+	start = time.Now()
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
+	start = time.Now()
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
 
 	// clear depth for gizmo rendering
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	start = time.Now()
 	r.renderGizmos(cameraViewerContext, renderContext)
+	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
 	// store color picking entity
+	start = time.Now()
 	r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
+	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
 	var finalRenderTexture uint32
 	var imguiFinalRenderTexture imgui.TextureID
 
 	if r.app.RuntimeConfig().Bloom {
+		start = time.Now()
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
 		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
@@ -390,6 +413,7 @@ func (r *Renderer) Render(delta time.Duration) {
 		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
 		}
+		mr.Inc("render_bloompass", float64(time.Since(start).Milliseconds()))
 	} else {
 		finalRenderTexture = r.mainColorTexture
 		imguiFinalRenderTexture = r.imguiMainColorTexture
@@ -408,10 +432,14 @@ func (r *Renderer) Render(delta time.Duration) {
 	}
 
 	// render to back buffer
+	start = time.Now()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
+	start = time.Now()
 	r.renderImgui(renderContext, imguiFinalRenderTexture)
+	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
 func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {

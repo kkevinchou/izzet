@@ -19,6 +19,20 @@ func stats(app renderiface.App, renderContext RenderContext) {
 
 		// Frame Profiling
 		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_time")))) }, true)
+		panelutils.SetupRow("Render Swap", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_swap")))) }, true)
+		panelutils.SetupRow("Render Context Setup", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_context_setup")))) }, true)
+		panelutils.SetupRow("Render Query Renderable", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_query_renderable")))) }, true)
+		panelutils.SetupRow("Render Query Shadowcasting", func() {
+			imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_query_shadowcasting"))))
+		}, true)
+		panelutils.SetupRow("Render Skybox", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_skybox")))) }, true)
+		panelutils.SetupRow("Render Depthmaps", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_depthmaps")))) }, true)
+		panelutils.SetupRow("Render Main Color Buffer", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_main_color_buffer")))) }, true)
+		panelutils.SetupRow("Render Gizmos", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_gizmos")))) }, true)
+		panelutils.SetupRow("Render Colorpicking", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_colorpicking")))) }, true)
+		panelutils.SetupRow("Render Bloom Pass", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_bloompass")))) }, true)
+		panelutils.SetupRow("Render Buffer Setup", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_buffer_setup")))) }, true)
+		panelutils.SetupRow("Render Imgui", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_imgui")))) }, true)
 		panelutils.SetupRow("Command Frame Time", func() {
 			imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage("command_frame_nanoseconds")/1000000))
 		}, true)

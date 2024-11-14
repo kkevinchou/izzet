@@ -32,9 +32,9 @@ type RuntimeConfig struct {
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
-	RenderTime       float64
-	FPS              float64
-	CommandFrameTime float64
+	// RenderTime       float64
+	// FPS              float64
+	// CommandFrameTime float64
 
 	FovX float32
 	Near float32
@@ -152,7 +152,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		Color:                           [3]float32{1, 1, 1},
 		RenderSpatialPartition:          false,
 		EnableSpatialPartition:          true,
-		FPS:                             0,
 
 		Near: 0.1,
 		Far:  500,

@@ -411,8 +411,6 @@ func (r *Renderer) Render(delta time.Duration) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	// r.drawTexturedQuad(&cameraViewerContext, r.shaderManager, finalRenderTexture, float32(renderContext.aspectRatio), nil, false, nil)
-
 	r.renderImgui(renderContext, imguiFinalRenderTexture)
 }
 
@@ -1152,7 +1150,9 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	imgui.PopStyleVarV(1)
 
 	imgui.Render()
+	start := time.Now()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
+	fmt.Println(time.Since(start))
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {

@@ -220,10 +220,6 @@ func (g *Client) Start() {
 func (g *Client) render(delta time.Duration) {
 	g.MetricsRegistry().Inc("fps", 1)
 
-	g.RuntimeConfig().FPS = g.MetricsRegistry().GetOneSecondSum("fps")
-	g.RuntimeConfig().CommandFrameTime = g.MetricsRegistry().GetOneSecondAverage("command_frame_nanoseconds") / 1000000
-	g.RuntimeConfig().RenderTime = g.MetricsRegistry().GetOneSecondAverage("render_time")
-
 	start := time.Now()
 	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 	g.renderer.Render(delta)

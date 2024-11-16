@@ -60,7 +60,10 @@ func view(app renderiface.App, renderContext RenderContext) {
 
 		if imgui.MenuItemBoolV("Show Debug Texture", "", runtimeConfig.ShowDebugTexture, true) {
 			runtimeConfig.ShowDebugTexture = !runtimeConfig.ShowDebugTexture
+		}
 
+		if imgui.MenuItemBoolV("Enable Post Processing", "", runtimeConfig.EnablePostProcessing, true) {
+			runtimeConfig.EnablePostProcessing = !runtimeConfig.EnablePostProcessing
 		}
 
 		imgui.EndMenu()

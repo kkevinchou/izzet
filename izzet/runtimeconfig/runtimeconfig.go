@@ -110,6 +110,8 @@ type RuntimeConfig struct {
 	ActiveCloudTextureIndex        int
 	ActiveCloudTextureChannelIndex int
 	CloudTextures                  [2]CloudTexture
+
+	EnablePostProcessing bool
 }
 
 type CloudTextureChannel struct {
@@ -268,5 +270,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 				WorkGroupDepth:  128,
 			},
 		},
+		EnablePostProcessing: true,
 	}
 }

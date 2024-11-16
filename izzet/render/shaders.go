@@ -63,6 +63,11 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 		panic(err)
 	}
 
+	// post processing
+	if err := shaderManager.CompileShaderProgram("post_processing", "post_processing", "post_processing", ""); err != nil {
+		panic(err)
+	}
+
 	// shader for rendering the depth cubemap for point shadows
 	if err := shaderManager.CompileShaderProgram("point_shadow", "point_shadow", "point_shadow", "point_shadow"); err != nil {
 		panic(err)

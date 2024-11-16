@@ -718,7 +718,7 @@ func (r *Renderer) createDepthTexture(width, height int) uint32 {
 }
 
 func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
@@ -832,9 +832,9 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 		return nil
 	}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	gl.ReadBuffer(r.colorPickingAttachment)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)

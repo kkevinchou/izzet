@@ -176,7 +176,7 @@ func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.
 
 	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	for i := 0; i < 3; i++ {
 		modelMatrix := t.Mul4(rotations[i])

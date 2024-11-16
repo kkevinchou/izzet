@@ -69,7 +69,7 @@ type Renderer struct {
 
 	cameraViewerContext ViewerContext
 
-	renderFBO              uint32
+	mainRenderFBO          uint32
 	mainColorTexture       uint32
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
@@ -86,6 +86,10 @@ type Renderer struct {
 	compositeFBO          uint32
 	compositeTexture      uint32
 	imguiCompositeTexture imgui.TextureID
+
+	postProcessingFBO          uint32
+	postProcessingTexture      uint32
+	imguiPostProcessingTexture imgui.TextureID
 
 	blendFBO uint32
 
@@ -141,6 +145,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.initMainRenderFBO(width, height)
 	r.initCompositeFBO(width, height)
+	r.initPostProcessingFBO(width, height)
 	r.initDepthMapFBO(width, height)
 
 	// circles for the rotation gizmo
@@ -191,7 +196,7 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 	}
 
 	// recreate texture for main render fbo
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
@@ -204,6 +209,12 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
+
+	// recreate texture for postprocessing
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
+	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.postProcessingTexture, 0)
+	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
 
 	// recreate texture for depth map
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
@@ -244,9 +255,14 @@ func (r *Renderer) initCompositeFBO(width, height int) {
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 
+func (r *Renderer) initPostProcessingFBO(width, height int) {
+	r.postProcessingFBO, r.postProcessingTexture = initFBOAndTexture(width, height)
+	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
+}
+
 func (r *Renderer) initMainRenderFBO(width, height int) {
-	renderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
-	r.renderFBO = renderFBO
+	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	r.mainRenderFBO = mainRenderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	r.colorPickingTexture = colorTextures[1]
@@ -399,28 +415,31 @@ func (r *Renderer) Render(delta time.Duration) {
 	r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
 	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
-	var finalRenderTexture uint32
-	var imguiFinalRenderTexture imgui.TextureID
+	var hdrColorTexture uint32
 
 	if r.app.RuntimeConfig().Bloom {
 		start = time.Now()
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
-		finalRenderTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
-		imguiFinalRenderTexture = r.imguiCompositeTexture
-		if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
-			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
+		hdrColorTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
+		mr.Inc("render_bloom", float64(time.Since(start).Milliseconds()))
+
+		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
 		}
-		mr.Inc("render_bloompass", float64(time.Since(start).Milliseconds()))
 	} else {
-		finalRenderTexture = r.mainColorTexture
-		imguiFinalRenderTexture = r.imguiMainColorTexture
+		hdrColorTexture = r.mainColorTexture
 	}
 
-	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
-		r.app.RuntimeConfig().DebugTexture = finalRenderTexture
+	start = time.Now()
+	r.postProcessingTexture = r.postProcess(renderContext, hdrColorTexture, r.app.RuntimeConfig().EnablePostProcessing)
+	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
+	imguiFinalRenderTexture := r.imguiPostProcessingTexture
+
+	if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
+		r.app.RuntimeConfig().DebugTexture = hdrColorTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
+		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
@@ -561,13 +580,6 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformInt("shadowMap", 31)
 		shader.SetUniformInt("depthCubeMap", 30)
 		shader.SetUniformInt("cameraDepthMap", 29)
-		if !r.app.RuntimeConfig().Bloom {
-			// only tone map if we're not applying bloom, otherwise
-			// we want to keep the HDR values and tone map later
-			shader.SetUniformInt("applyToneMapping", 1)
-		} else {
-			shader.SetUniformInt("applyToneMapping", 0)
-		}
 		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
 		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
@@ -727,7 +739,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.renderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
@@ -819,14 +831,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 
 	shader := shaderManager.GetShaderProgram("modelpbr")
 	shader.Use()
-
-	if !r.app.RuntimeConfig().Bloom {
-		// only tone map if we're not applying bloom, otherwise
-		// we want to keep the HDR values and tone map later
-		shader.SetUniformInt("applyToneMapping", 1)
-	} else {
-		shader.SetUniformInt("applyToneMapping", 0)
-	}
 
 	if r.app.RuntimeConfig().FogEnabled {
 		shader.SetUniformInt("fog", 1)

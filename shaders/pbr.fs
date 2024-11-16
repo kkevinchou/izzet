@@ -53,8 +53,6 @@ uniform float bias;
 
 uniform uint entityID;
 
-uniform int applyToneMapping;
-
 uniform int hasColorOverride;
 
 const float PI = 3.14159265359;
@@ -311,23 +309,6 @@ void main()
     vec3 ambient = vec3(ambientFactor) * in_albedo;
     vec3 color = ambient + Lo;
 	
-    if (applyToneMapping == 1) {
-        color = acesToneMapping(color);
-
-        // Gamma correction
-        // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally
-        // store textures in SRGB format which we then need to gamma correct here.
-        // PARAMETERS:
-        //     gl.Enable(gl.FRAMEBUFFER_SRGB)
-        //         OpenGL setting for how the fragment shader outputs colors
-        //     lightColor
-        //         The color of the light. i've tested with (1, 1, 1) to (20, 20, 20)
-        //     gamma correction in the fragment shader
-        //         I've experimented with enabling/disabling. it seems like if i gamma correct
-        //         I want to disable the OpenGL setting, and if I don't, I want to enable it instead.
-        color = pow(color, vec3(1.0/2.2));
-    }
-
     FragColor = vec4(color, 1.0);
 
     if (fog == 1) {

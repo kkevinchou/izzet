@@ -52,8 +52,6 @@ uniform float bias;
 
 uniform uint entityID;
 
-uniform int applyToneMapping;
-
 uniform int hasColorOverride;
 
 const float PI = 3.14159265359;
@@ -68,12 +66,6 @@ in VS_OUT {
     mat4 View;
 } fs_in;
 
-const float A = 2.51;
-const float B = 0.03;
-const float C = 2.43;
-const float D = 0.59;
-const float E = 0.14;
-
 uniform int fog;
 uniform int fogDensity;
 
@@ -81,13 +73,6 @@ uniform int width;
 uniform int height;
 uniform float far;
 uniform float near;
-
-// ACES tone mapping function
-vec3 acesToneMapping(vec3 color)
-{
-    color = (color * (A * color + B)) / (color * (C * color + D) + E);
-    return clamp(color, 0.0, 1.0);
-}
 
 float PointLightShadowCalculation(vec3 fragPos, vec3 lightPos)
 {
@@ -318,11 +303,6 @@ void main()
   
     vec3 ambient = vec3(ambientFactor) * in_albedo;
     vec3 color = ambient + Lo;
-	
-    if (applyToneMapping == 1) {
-        color = acesToneMapping(color);
-        color = pow(color, vec3(1.0/2.2));
-    }
 
     FragColor = vec4(color, 0.9);
 

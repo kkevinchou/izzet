@@ -1178,9 +1178,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	imgui.PopStyleVarV(1)
 
 	imgui.Render()
-	start := time.Now()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
-	fmt.Println(time.Since(start))
 }
 
 func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {

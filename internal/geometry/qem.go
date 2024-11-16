@@ -115,7 +115,6 @@ func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *
 		}
 
 		newVertexIndex := len(allVertPositions)
-		// fmt.Println("NEW VERTEX", newVertexIndex, edgeContraction.NewVertex)
 		allVertPositions = append(allVertPositions, edgeContraction.NewVertex)
 
 		// mark edges incident to v1 and v2 as invalid

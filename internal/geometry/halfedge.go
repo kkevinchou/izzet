@@ -89,21 +89,6 @@ func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *Half
 		h2.Next = h3
 		h3.Next = h1
 
-		// if h1.Vertex == 7149 {
-		// 	fmt.Println(h1.Vertex, "->", h1.NextVertex, "->", h1.Next.Next.Vertex)
-		// } else if h2.Vertex == 7149 {
-		// 	fmt.Println(h2.Vertex, "->", h2.NextVertex, "->", h2.Next.Next.Vertex)
-		// } else if h3.Vertex == 7149 {
-		// 	fmt.Println(h3.Vertex, "->", h3.NextVertex, "->", h3.Next.Next.Vertex)
-		// }
-		// if h1.Vertex == 7192 {
-		// 	fmt.Println("h1")
-		// } else if h2.Vertex == 7192 {
-		// 	fmt.Println("h2")
-		// } else if h3.Vertex == 7192 {
-		// 	fmt.Println("h3")
-		// }
-
 		surface.VertsToHalfEdge[h1.Vertex] = append(surface.VertsToHalfEdge[h1.Vertex], h1)
 		surface.VertsToHalfEdge[h2.Vertex] = append(surface.VertsToHalfEdge[h2.Vertex], h2)
 		surface.VertsToHalfEdge[h3.Vertex] = append(surface.VertsToHalfEdge[h3.Vertex], h3)
@@ -129,27 +114,20 @@ func createBoundaryHalfEdge(surface *HalfEdgeSurface, primitive *modelspec.Primi
 	for _, halfEdges := range halfEdgesWithNilNext {
 		for _, he := range halfEdges {
 			if len(halfEdgesWithNilNext[he.NextVertex]) > 1 {
-				// fmt.Println(he.Vertex, "->", he.NextVertex, "------------ more than 1")
-				// for _, j := range halfEdgesWithNilNext[he.NextVertex] {
-				// 	fmt.Println("\t", j.Vertex, "->", j.NextVertex)
-				// }
 			} else {
 				he.Next = halfEdgesWithNilNext[he.NextVertex][0]
 			}
 		}
 	}
 
-	fmt.Println("--------------TWO VERTICES FOR NEXT")
 	count := 0
 	for i := 0; i < halfEdgeCount; i++ {
 		he := surface.HalfEdges[i]
 		if he.Next != nil {
 			continue
 		}
-		fmt.Println(he.Vertex, he.NextVertex)
 		count += 1
 	}
-	fmt.Println("---------------", count)
 
 	// sort half edges by start
 	// binary search to find the next half edge to connect

@@ -82,7 +82,7 @@ func main() {
 	if mode == "SERVER" {
 		clientApp := client.New("_assets", "shaders", "izzet_data.json", config, defaultProject)
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 		clientApp.Start()
 	} else if mode == "HEADLESS" {

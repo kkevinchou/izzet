@@ -183,17 +183,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 }
 
 func (r *Renderer) ReinitializeFrameBuffers() {
-	menuBarSize := CalculateMenuBarHeight()
-	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
-
-	windowWidth, windowHeight := r.app.WindowSize()
-
-	width := windowWidth
-	height := windowHeight - int(menuBarSize) - int(footerSize)
-
-	if r.app.RuntimeConfig().UIEnabled {
-		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
-	}
+	width, height := r.calcGameWindowDimensions()
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
@@ -420,12 +410,14 @@ func (r *Renderer) Render(delta time.Duration) {
 	if r.app.RuntimeConfig().Bloom {
 		start = time.Now()
 		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
-		upsampleTexture := r.upSample(r.bloomTextureWidths, r.bloomTextureHeights)
+		upsampleTexture := r.upSampleAndBlend(r.bloomTextureWidths, r.bloomTextureHeights)
 		hdrColorTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
 		mr.Inc("render_bloom", float64(time.Since(start).Milliseconds()))
 
 		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
+		} else if menus.SelectedDebugComboOption == menus.ComboOptionPreBloomHDR {
+			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
 		}
 	} else {
 		hdrColorTexture = r.mainColorTexture
@@ -436,9 +428,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
 	imguiFinalRenderTexture := r.imguiPostProcessingTexture
 
-	if menus.SelectedDebugComboOption == menus.ComboOptionHDR {
-		r.app.RuntimeConfig().DebugTexture = hdrColorTexture
-	} else if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
+	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
@@ -572,7 +562,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 		setupLightingUniforms(shader, lightContext.Lights)
-		shader.SetUniformInt("width", int32(r.gameWindowWidth))
+		shader.SetUniformInt("width", int32(renderContext.width))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
@@ -1020,6 +1010,22 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 }
 
+func (r *Renderer) calcGameWindowDimensions() (int, int) {
+	menuBarSize := CalculateMenuBarHeight()
+	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
+
+	windowWidth, windowHeight := r.app.WindowSize()
+
+	width := windowWidth
+	height := windowHeight - int(menuBarSize) - int(footerSize)
+
+	if r.app.RuntimeConfig().UIEnabled {
+		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
+	}
+
+	return width, height
+}
+
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
 	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
@@ -1038,19 +1044,11 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.CondNone)
 	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: menuBarHeight})
 	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize|imgui.WindowFlagsNoBringToFrontOnFocus) {
-		regionSize := imgui.ContentRegionAvail()
-		imageWidth := regionSize.X
+		width, height := r.calcGameWindowDimensions()
+		r.gameWindowWidth = width
+		r.gameWindowHeight = height
 
-		var gameWindowRatio float32 = 1
-		if r.app.RuntimeConfig().UIEnabled {
-			gameWindowRatio = 1 - uiWidthRatio
-		}
-
-		// size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: imageWidth / float32(renderContext.AspectRatio())}
-		size := imgui.Vec2{X: imageWidth * gameWindowRatio, Y: regionSize.Y}
-		r.gameWindowWidth = int(size.X)
-		r.gameWindowHeight = int(size.Y)
-
+		size := imgui.Vec2{X: float32(width), Y: float32(height)}
 		if imgui.BeginChildStrV("Game Window", size, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus) {
 			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}
@@ -1150,9 +1148,9 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 				imgui.ShowDemoWindow()
 			}
 
-			if runtimeConfig.ShowDebugTexture {
+			if runtimeConfig.ShowTextureViewer {
 				imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
-				if imgui.BeginV("Texture Viewer", &runtimeConfig.ShowDebugTexture, imgui.WindowFlagsNone) {
+				if imgui.BeginV("Texture Viewer", &runtimeConfig.ShowTextureViewer, imgui.WindowFlagsNone) {
 					if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
 						for _, option := range menus.DebugComboOptions {
 							if imgui.SelectableBool(string(option)) {

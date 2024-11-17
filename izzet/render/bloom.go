@@ -122,10 +122,11 @@ func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 	}
 }
 
-// double check that the upsampling works and blends the right textures
-// welp, i need to be ping ponging GG
-func (r *Renderer) upSample(widths, heights []int) uint32 {
+// TODO: could do "pingponging" to avoid creating so many textures
+func (r *Renderer) upSampleAndBlend(widths, heights []int) uint32 {
 	mipsCount := len(r.downSampleTextures)
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.upSampleFBO)
 
 	var upSampleSource uint32
 	upSampleSource = r.downSampleTextures[mipsCount-1]
@@ -134,46 +135,33 @@ func (r *Renderer) upSample(widths, heights []int) uint32 {
 		width := int32(widths[i-1])
 		height := int32(heights[i-1])
 
-		blendTargetMip := r.blendTargetTextures[i]
-		upSampleMip := r.upSampleTextures[i]
+		blendTarget := r.blendTargetTextures[i]
+		upSampleTarget := r.upSampleTextures[i]
 
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.upSampleFBO)
-
-		shader := r.shaderManager.GetShaderProgram("bloom_upsample")
-		shader.Use()
-		shader.SetUniformFloat("upSamplingScale", r.app.RuntimeConfig().BloomUpsamplingScale)
-
-		gl.ActiveTexture(gl.TEXTURE0)
-		gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
-
-		gl.Viewport(0, 0, width, height)
-		drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, upSampleMip, 0)
-		gl.DrawBuffers(1, &drawBuffers[0])
-
-		gl.BindVertexArray(r.xyTextureVAO)
-		r.iztDrawArrays(0, 6)
-
-		r.blend(width, height, r.downSampleTextures[i-1], upSampleMip, blendTargetMip)
-		upSampleSource = blendTargetMip
+		r.upSample(width, height, upSampleSource, upSampleTarget)
+		r.blend(width, height, r.downSampleTextures[i-1], upSampleTarget, blendTarget)
+		upSampleSource = blendTarget
 	}
 
 	blendTargetMip := r.blendTargetTextures[0]
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.upSampleFBO)
+	r.upSample(int32(MaxBloomTextureWidth), int32(MaxBloomTextureHeight), upSampleSource, blendTargetMip)
 
+	return blendTargetMip
+}
+
+func (r *Renderer) upSample(width, height int32, source, target uint32) {
 	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 	shader.Use()
 	shader.SetUniformFloat("upSamplingScale", r.app.RuntimeConfig().BloomUpsamplingScale)
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, upSampleSource)
+	gl.BindTexture(gl.TEXTURE_2D, source)
 
-	gl.Viewport(0, 0, int32(MaxBloomTextureWidth), int32(MaxBloomTextureHeight))
+	gl.Viewport(0, 0, width, height)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	r.iztDrawArrays(0, 6)
-
-	return blendTargetMip
 }
 
 func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
@@ -192,6 +180,7 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	shader.SetUniformInt("texture1", 1)
 
 	gl.Viewport(0, 0, width, height)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
 	gl.BindVertexArray(r.xyTextureVAO)
 	r.iztDrawArrays(0, 6)

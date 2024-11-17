@@ -25,9 +25,9 @@ type RuntimeConfig struct {
 	BloomUpsamplingScale            float32
 	Color                           [3]float32
 
-	ShowImguiDemo    bool
-	ShowDebugTexture bool
-	DebugTexture     uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	ShowImguiDemo     bool
+	ShowTextureViewer bool
+	DebugTexture      uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
@@ -184,7 +184,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		ShowSelectionBoundingBox: true,
 		ShowColliders:            false,
-		ShowDebugTexture:         false,
+		ShowTextureViewer:        false,
 
 		NavigationMeshIterations:           500,
 		NavigationMeshWalkableHeight:       10,

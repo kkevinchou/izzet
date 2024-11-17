@@ -10,7 +10,7 @@ type DebugComboOption string
 const (
 	ComboOptionFinalRender    DebugComboOption = "FINALRENDER"
 	ComboOptionColorPicking   DebugComboOption = "COLORPICKING"
-	ComboOptionHDR            DebugComboOption = "HDR (bloom only)"
+	ComboOptionPreBloomHDR    DebugComboOption = "PRE BLOOM HDR (bloom only)"
 	ComboOptionBloom          DebugComboOption = "BLOOMTEXTURE (bloom only)"
 	ComboOptionShadowDepthMap DebugComboOption = "SHADOW DEPTH MAP"
 	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
@@ -25,7 +25,7 @@ var (
 	DebugComboOptions []DebugComboOption = []DebugComboOption{
 		ComboOptionFinalRender,
 		ComboOptionColorPicking,
-		ComboOptionHDR,
+		ComboOptionPreBloomHDR,
 		ComboOptionBloom,
 		ComboOptionShadowDepthMap,
 		ComboOptionCameraDepthMap,
@@ -58,8 +58,8 @@ func view(app renderiface.App, renderContext RenderContext) {
 			runtimeConfig.RenderSpatialPartition = !runtimeConfig.RenderSpatialPartition
 		}
 
-		if imgui.MenuItemBoolV("Show Debug Texture", "", runtimeConfig.ShowDebugTexture, true) {
-			runtimeConfig.ShowDebugTexture = !runtimeConfig.ShowDebugTexture
+		if imgui.MenuItemBoolV("Show Texture Viewer", "", runtimeConfig.ShowTextureViewer, true) {
+			runtimeConfig.ShowTextureViewer = !runtimeConfig.ShowTextureViewer
 		}
 
 		if imgui.MenuItemBoolV("Enable Post Processing", "", runtimeConfig.EnablePostProcessing, true) {

@@ -135,11 +135,12 @@ func (r *Renderer) upSampleAndBlend(widths, heights []int) uint32 {
 		width := int32(widths[i-1])
 		height := int32(heights[i-1])
 
-		blendTarget := r.blendTargetTextures[i]
 		upSampleTarget := r.upSampleTextures[i]
-
 		r.upSample(width, height, upSampleSource, upSampleTarget)
+
+		blendTarget := r.blendTargetTextures[i]
 		r.blend(width, height, r.downSampleTextures[i-1], upSampleTarget, blendTarget)
+
 		upSampleSource = blendTarget
 	}
 

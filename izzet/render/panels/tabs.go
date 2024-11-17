@@ -28,7 +28,12 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefab
 			stats(app, renderContext)
 			imgui.EndTabItem()
 		}
-
+		if app.RuntimeConfig().WindowEnablePostProcessing {
+			if imgui.BeginTabItem("Post Processing") {
+				postProcessing(app)
+				imgui.EndTabItem()
+			}
+		}
 		if app.AppMode() == mode.AppModePlay {
 			if imgui.BeginTabItem("Controls") {
 				controls(app, renderContext)

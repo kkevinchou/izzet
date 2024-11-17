@@ -239,7 +239,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			}, true)
 
 			panelutils.SetupRow("Diffuse Intensity", func() {
-				imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 20, "%.1f", imgui.SliderFlagsNone)
+				imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 100, "%.1f", imgui.SliderFlagsNone)
 			}, true)
 
 			panelutils.SetupRow("Roughness", func() {

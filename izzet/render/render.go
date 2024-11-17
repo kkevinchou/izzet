@@ -38,10 +38,11 @@ type GameWorld interface {
 }
 
 const (
-	mipsCount                  int     = 6
-	MaxBloomTextureWidth       int     = 1920
-	MaxBloomTextureHeight      int     = 1080
-	internalTextureColorFormat int32   = gl.RGB10_A2
+	mipsCount             int = 6
+	MaxBloomTextureWidth  int = 1920
+	MaxBloomTextureHeight int = 1080
+	// this internal type should support floats in order for us to store HDR values for bloom
+	internalTextureColorFormat int32   = gl.R11F_G11F_B10F
 	uiWidthRatio               float32 = 0.2
 )
 

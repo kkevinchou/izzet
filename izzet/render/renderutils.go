@@ -1367,5 +1367,17 @@ func (r *Renderer) ConfigureUI() {
 }
 
 func (r *Renderer) GameWindowSize() (int, int) {
-	return r.gameWindowWidth, r.gameWindowHeight
+	menuBarSize := CalculateMenuBarHeight()
+	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
+
+	windowWidth, windowHeight := r.app.WindowSize()
+
+	width := windowWidth
+	height := windowHeight - int(menuBarSize) - int(footerSize)
+
+	if r.app.RuntimeConfig().UIEnabled {
+		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
+	}
+
+	return width, height
 }

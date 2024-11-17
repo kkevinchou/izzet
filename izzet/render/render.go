@@ -101,9 +101,6 @@ type Renderer struct {
 	triangleVAOs  map[string]uint32
 
 	gameWindowHovered bool
-	gameWindowWidth   int
-	gameWindowHeight  int
-	menuBarHeight     float32
 
 	hoveredEntityID *int
 
@@ -114,7 +111,7 @@ type Renderer struct {
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app, gameWindowWidth: width, gameWindowHeight: height}
+	r := &Renderer{app: app}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -183,7 +180,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 }
 
 func (r *Renderer) ReinitializeFrameBuffers() {
-	width, height := r.calcGameWindowDimensions()
+	width, height := r.GameWindowSize()
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
@@ -284,7 +281,8 @@ func (r *Renderer) Render(delta time.Duration) {
 
 	start = time.Now()
 	initOpenGLRenderSettings()
-	renderContext := NewRenderContext(r.gameWindowWidth, r.gameWindowHeight, float64(r.app.RuntimeConfig().FovX))
+	width, height := r.GameWindowSize()
+	renderContext := NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
 
@@ -383,7 +381,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
-	r.drawToCameraDepthMap(cameraViewerContext, renderableEntities)
+	r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// main color FBO
@@ -607,8 +605,8 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	}
 }
 
-func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(r.gameWindowWidth), int32(r.gameWindowHeight))
+func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+	gl.Viewport(0, 0, int32(renderContext.width), int32(renderContext.height))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
@@ -836,8 +834,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
 	// TODO - this should probably be game window size?
-	shader.SetUniformInt("width", int32(r.gameWindowWidth))
-	shader.SetUniformInt("height", int32(r.gameWindowHeight))
+	shader.SetUniformInt("width", int32(renderContext.width))
+	shader.SetUniformInt("height", int32(renderContext.height))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -1010,22 +1008,6 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 }
 
-func (r *Renderer) calcGameWindowDimensions() (int, int) {
-	menuBarSize := CalculateMenuBarHeight()
-	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
-
-	windowWidth, windowHeight := r.app.WindowSize()
-
-	width := windowWidth
-	height := windowHeight - int(menuBarSize) - int(footerSize)
-
-	if r.app.RuntimeConfig().UIEnabled {
-		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
-	}
-
-	return width, height
-}
-
 func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
 	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
@@ -1044,9 +1026,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.CondNone)
 	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: menuBarHeight})
 	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize|imgui.WindowFlagsNoBringToFrontOnFocus) {
-		width, height := r.calcGameWindowDimensions()
-		r.gameWindowWidth = width
-		r.gameWindowHeight = height
+		width, height := r.GameWindowSize()
 
 		size := imgui.Vec2{X: float32(width), Y: float32(height)}
 		if imgui.BeginChildStrV("Game Window", size, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus) {

@@ -13,7 +13,8 @@ const float C = 2.43;
 const float D = 0.59;
 const float E = 0.14;
 
-const float MAX_FLOAT = 100;
+const float MAX_FLOAT = 100000000;
+const int MAX_KERNEL_SIZE = 7;
 
 // Narokowicz ACES tone mapping function
 vec3 acesToneMapping(vec3 color)
@@ -22,39 +23,38 @@ vec3 acesToneMapping(vec3 color)
     return clamp(color, 0.0, 1.0);
 }
 
-void calculatePixelColors(vec2 texel, out vec3 pixelColors[9], out vec3 meanColor, vec2 texelSize) {
-    int xOffsets[9] = int[9](-4, -3, -2, -1, 0, 1, 2, 3, 4);
-    int yOffsets[9] = int[9](-4, -3, -2, -1, 0, 1, 2, 3, 4);
-    vec3 sumPixelColors;
+void calculatePixelColors(ivec2 texel, out vec3 pixelColors[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE], out vec3 meanColor, vec2 texelSize) {
+    vec3 sumPixelColors = vec3(0);
 
-    for (int i = 0; i < 9; ++i) {
-        int xOffset = xOffsets[i];
-        for (int j = 0; j < 9; ++j) {
-            int yOffset = yOffsets[j];
-
-            vec2 localTexel = vec2(texel.x + (xOffset * texelSize.x), texel.y + (yOffset * texelSize.y));
+    int idx = 0;
+    for (int i = texel.x; i < texel.x + MAX_KERNEL_SIZE; ++i) {
+        for (int j = texel.y; j < texel.y + MAX_KERNEL_SIZE; ++j) {
+            vec2 localTexel = clamp(
+                vec2(TexCoords.x + (i * texelSize.x), TexCoords.y + (j * texelSize.y)),
+                vec2(0.0), vec2(1.0)
+            );
             vec3 pixelColor = texture(image, localTexel).rgb;
 
-            pixelColors[(9 * i) + j] = pixelColor;
+            pixelColors[idx++] = pixelColor;
             sumPixelColors += pixelColor;
         }
     }
 
-    meanColor = sumPixelColors / (9.0 * 9.0);
+    meanColor = sumPixelColors / float(MAX_KERNEL_SIZE*MAX_KERNEL_SIZE);
     return;
 }
 
-float calculateStandardDeviation(vec3 pixelColors[9], vec3 meanColor) {
+float calculateStandardDeviation(vec3 centerPixelColor, vec3 pixelColors[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE]) {
     // std calculation
-    float squaredDiff[9]; 
-    float avgSquaredDiff;
+    float squaredDiff[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE];
+    float avgSquaredDiff = 0;
 
-    for (int i = 0; i < 9; ++i) {
-        squaredDiff[i] = pow(length(pixelColors[i] - meanColor), 2);
+    for (int i = 0; i < (MAX_KERNEL_SIZE*MAX_KERNEL_SIZE); ++i) {
+        squaredDiff[i] = pow(length(pixelColors[i] - centerPixelColor), 2);
         avgSquaredDiff += squaredDiff[i];
     }
 
-    avgSquaredDiff /= 9.0;
+    avgSquaredDiff /= (MAX_KERNEL_SIZE*MAX_KERNEL_SIZE);
     return avgSquaredDiff;
 }
 
@@ -64,27 +64,21 @@ void main()
     vec2 texelSize = 1.0 / textureSize(image, 0);
 
     if (kuwahara == 1) {
-        // int xQuadrant[2] = int[2](-1, 1);
-        // int yQuadrant[2] = int[2](-1, 1);
-        // int xQuadrant[2] = int[2](-4, 4);
-        // int yQuadrant[2] = int[2](-4, 4);
-        int xQuadrant[2] = int[2](0, 0);
-        int yQuadrant[2] = int[2](0, 0);
+        vec3 centerPixelColor = color;
+        int xQuadrant[2] = int[2](-MAX_KERNEL_SIZE+1, 0);
+        int yQuadrant[2] = int[2](-MAX_KERNEL_SIZE+1, 0);
 
         float minStandardDeviation = MAX_FLOAT;
         vec3 minStandardDeviationColor;
 
+        vec3 pixelColors[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE];
+        vec3 meanColor = vec3(0);
+
         for (int i = 0; i < 2; ++i) {
             for (int j = 0; j < 2; ++j) {
-                vec2 texel = vec2(
-                    TexCoords.x + (xQuadrant[i] * texelSize.x),
-                    TexCoords.y + (yQuadrant[j] * texelSize.y)
-                );
-                vec3 pixelColors[9];
-                vec3 meanColor;
-
+                ivec2 texel = ivec2(xQuadrant[i], yQuadrant[j]);
                 calculatePixelColors(texel, pixelColors, meanColor, texelSize);
-                float standardDeviation = calculateStandardDeviation(pixelColors, meanColor);
+                float standardDeviation = calculateStandardDeviation(centerPixelColor, pixelColors);
                 if (standardDeviation < minStandardDeviation) {
                     minStandardDeviation = standardDeviation;
                     minStandardDeviationColor = meanColor;

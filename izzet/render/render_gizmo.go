@@ -147,7 +147,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 		gl.BindVertexArray(cubeVAO)
 		shader.SetUniformMat4("model", mgl32.Translate3D(float32(cubePosition.X()), float32(cubePosition.Y()), float32(cubePosition.Z())))
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-		shader.SetUniformFloat("intensity", 10)
+		shader.SetUniformFloat("intensity", 1)
 		r.iztDrawArrays(0, 36)
 	}
 }

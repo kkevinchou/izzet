@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -60,7 +61,31 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 	}
 
 	if movementDirWithoutY != apputils.ZeroVec {
-		newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, movementDirWithoutY)
+		currentRotation := entities.GetLocalRotation(entity)
+		currentViewingVector := currentRotation.Rotate(mgl64.Vec3{0, 0, -1})
+		newViewingVector := movementDirWithoutY
+
+		dot := currentViewingVector.Dot(newViewingVector)
+		dot = mgl64.Clamp(dot, -1, 1)
+		acuteAngle := math.Acos(dot)
+
+		turnAnglePerFrame := (2 * math.Pi / 1000) * 2 * float64(settings.MSPerCommandFrame)
+
+		if left := currentViewingVector.Cross(newViewingVector).Y() > 0; !left {
+			turnAnglePerFrame = -turnAnglePerFrame
+		}
+
+		var newRotation mgl64.Quat
+
+		// turning angle is less than the goal
+		if math.Abs(turnAnglePerFrame) < acuteAngle {
+			turningQuaternion := mgl64.QuatRotate(turnAnglePerFrame, mgl64.Vec3{0, 1, 0})
+			newRotation = turningQuaternion.Mul(currentRotation)
+		} else {
+			// turning angle overshoots the goal, snap
+			newRotation = mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, movementDirWithoutY)
+		}
+
 		entities.SetLocalRotation(entity, newRotation)
 	}
 

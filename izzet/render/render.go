@@ -423,7 +423,9 @@ func (r *Renderer) Render(delta time.Duration) {
 	}
 
 	start = time.Now()
-	r.postProcessingTexture = r.postProcess(renderContext, hdrColorTexture, r.app.RuntimeConfig().EnablePostProcessing)
+	r.postProcessingTexture = r.postProcess(renderContext,
+		hdrColorTexture,
+	)
 	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
 	imguiFinalRenderTexture := r.imguiPostProcessingTexture
 

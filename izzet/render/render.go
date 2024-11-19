@@ -42,6 +42,7 @@ const (
 	MaxBloomTextureWidth  int = 1920
 	MaxBloomTextureHeight int = 1080
 	// this internal type should support floats in order for us to store HDR values for bloom
+	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
 	internalTextureColorFormat int32   = gl.R11F_G11F_B10F
 	uiWidthRatio               float32 = 0.2
 )

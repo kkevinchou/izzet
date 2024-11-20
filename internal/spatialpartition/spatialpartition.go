@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -25,13 +26,23 @@ func (p *Partition) String() string {
 
 type PartitionKey [3]int
 
+type CachedPosition struct {
+	Valid    bool
+	Position mgl64.Vec3
+}
+
+type CachedPartition struct {
+	Valid      bool
+	Partitions map[PartitionKey]any
+}
+
 type SpatialPartition struct {
 	Partitions         [][][]Partition
 	PartitionDimension int
 	PartitionCount     int
 
-	entityPartitionCache map[int]map[PartitionKey]any
-	entityPositionCache  map[int]mgl64.Vec3
+	entityPartitionCache [settings.MaxEntityCount]CachedPartition
+	entityPositionCache  [settings.MaxEntityCount]CachedPosition
 
 	// pool partition keys to avoid reallocating new arrays and resizing slices
 	pooledPartitionKeys []PartitionKey
@@ -55,8 +66,8 @@ func NewSpatialPartition(partitionDimension int, partitionCount int) *SpatialPar
 func (s *SpatialPartition) initialize() {
 	s.Partitions = initializePartitions(s.PartitionDimension, s.PartitionCount)
 	s.pooledPartitionKeys = make([]PartitionKey, s.PartitionCount*s.PartitionCount*s.PartitionCount)
-	s.entityPartitionCache = map[int]map[PartitionKey]any{}
-	s.entityPositionCache = map[int]mgl64.Vec3{}
+	s.entityPartitionCache = [settings.MaxEntityCount]CachedPartition{}
+	s.entityPositionCache = [settings.MaxEntityCount]CachedPosition{}
 }
 
 func (s *SpatialPartition) Clear() {
@@ -71,7 +82,7 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 	partitions := s.IntersectingPartitions(boundingBox)
 	candidates := []Entity{}
 
-	var boolFlags [100000]bool
+	var boolFlags [settings.MaxEntityCount]bool
 
 	for _, partitionKey := range partitions {
 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
@@ -88,15 +99,16 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 	for _, entity := range entityList {
-		if position, ok := s.entityPositionCache[entity.GetID()]; ok {
-			if position == entity.Position() {
+		if s.entityPositionCache[entity.GetID()].Valid {
+			if s.entityPositionCache[entity.GetID()].Position == entity.Position() {
 				continue
 			}
 		}
-		s.entityPositionCache[entity.GetID()] = entity.Position()
+		s.entityPositionCache[entity.GetID()].Position = entity.Position()
+		s.entityPositionCache[entity.GetID()].Valid = true
 
 		// remove from old partitions
-		oldPartitions := s.entityPartitionCache[entity.GetID()]
+		oldPartitions := s.entityPartitionCache[entity.GetID()].Partitions
 		for partitionKey := range oldPartitions {
 			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 			delete(partition.entities, entity.GetID())
@@ -108,10 +120,10 @@ func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 		for _, partitionKey := range newPartitions {
 			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 			partition.entities[entity.GetID()] = entity
-			if _, ok := s.entityPartitionCache[entity.GetID()]; !ok {
-				s.entityPartitionCache[entity.GetID()] = map[PartitionKey]any{}
+			if !s.entityPartitionCache[entity.GetID()].Valid {
+				s.entityPartitionCache[entity.GetID()].Partitions = map[PartitionKey]any{}
 			}
-			s.entityPartitionCache[entity.GetID()][partition.Key] = partitionKey
+			s.entityPartitionCache[entity.GetID()].Partitions[partition.Key] = partitionKey
 		}
 	}
 }
@@ -239,10 +251,10 @@ func (s *SpatialPartition) VertexToPartitionClamped(vertex mgl64.Vec3, clampMin,
 }
 
 func (s *SpatialPartition) DeleteEntity(entityID int) {
-	partitions := s.entityPartitionCache[entityID]
+	partitions := s.entityPartitionCache[entityID].Partitions
 	for partitionKey := range partitions {
 		delete(s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]].entities, entityID)
 	}
-	delete(s.entityPartitionCache, entityID)
-	delete(s.entityPositionCache, entityID)
+	s.entityPartitionCache[entityID].Valid = false
+	s.entityPositionCache[entityID].Valid = false
 }

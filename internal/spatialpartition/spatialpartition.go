@@ -82,13 +82,13 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 	partitions := s.IntersectingPartitions(boundingBox)
 	candidates := []Entity{}
 
-	var boolFlags [settings.MaxEntityCount]bool
+	var seenEntities [settings.MaxEntityCount]bool
 
 	for _, partitionKey := range partitions {
 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 		for _, e := range partition.entities {
-			if !boolFlags[e.GetID()] {
-				boolFlags[e.GetID()] = true
+			if !seenEntities[e.GetID()] {
+				seenEntities[e.GetID()] = true
 				candidates = append(candidates, e)
 			}
 		}

@@ -12,6 +12,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	lib "github.com/kkevinchou/izzet/internal"
 	"github.com/kkevinchou/izzet/internal/renderers"
+	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -25,7 +26,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/shaders"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 	"github.com/kkevinchou/kitolib/utils"
 )
 

@@ -26,6 +26,8 @@ const (
 	LoggingLevel       = 1
 	Seed         int64 = 1234567
 
+	MaxEntities int = 10000
+
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.
 	MSPerCommandFrame    int = 8

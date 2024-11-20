@@ -2,8 +2,8 @@ package panels
 
 import (
 	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 const (

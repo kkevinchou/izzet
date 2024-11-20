@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 func (g *Server) runCommandFrame(delta time.Duration) {

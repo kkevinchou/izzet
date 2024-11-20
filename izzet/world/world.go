@@ -1,8 +1,8 @@
 package world
 
 import (
+	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/spatialpartition"
 )
 
 type GameWorld struct {

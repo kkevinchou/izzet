@@ -869,6 +869,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
+	var entityCount int
 	for _, entity := range renderableEntities {
 		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
 			continue
@@ -877,6 +878,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 		if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
 			continue
 		}
+
+		entityCount++
 
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
 
@@ -887,6 +890,8 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 			entity,
 		)
 	}
+
+	r.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
 
 	if r.app.RuntimeConfig().ShowColliders {
 		shader := shaderManager.GetShaderProgram("flat")

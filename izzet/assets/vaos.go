@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
@@ -12,7 +13,7 @@ import (
 // also, when we merged everything into one vao, we need to first apply any node transformations
 // onto the vertices since we won't be able to set uniforms for each mesh, as we now render them
 // all at once, rather than one at a time and setting the transform uniforms
-func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) [][]uint32 {
+func createVAOs(meshes []*modelspec.MeshSpecification) [][]uint32 {
 	vaos := [][]uint32{}
 	for i, mesh := range meshes {
 		vaos = append(vaos, []uint32{})
@@ -43,7 +44,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 					texture1Coords.X(), texture1Coords.Y(),
 				)
 
-				ids, weights := fillWeights(jointIDs, jointWeights, modelConfig.MaxAnimationJointWeights)
+				ids, weights := fillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
 				for _, id := range ids {
 					jointIDsAttribute = append(jointIDsAttribute, int32(id))
 				}
@@ -88,7 +89,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 			apputils.GenBuffers(1, &vboJointIDs)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
-			gl.VertexAttribIPointer(4, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+			gl.VertexAttribIPointer(4, int32(settings.MaxAnimationJointWeights), gl.INT, int32(settings.MaxAnimationJointWeights)*4, nil)
 			gl.EnableVertexAttribArray(4)
 
 			// lay out the joint weights in a VBO
@@ -96,7 +97,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 			apputils.GenBuffers(1, &vboJointWeights)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
-			gl.VertexAttribPointer(5, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+			gl.VertexAttribPointer(5, int32(settings.MaxAnimationJointWeights), gl.FLOAT, false, int32(settings.MaxAnimationJointWeights)*4, nil)
 			gl.EnableVertexAttribArray(5)
 
 			// set up the EBO, each triplet of indices point to three vertices
@@ -111,7 +112,7 @@ func createVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification)
 	return vaos
 }
 
-func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecification) [][]uint32 {
+func createGeometryVAOs(meshes []*modelspec.MeshSpecification) [][]uint32 {
 	vaos := [][]uint32{}
 	for i, mesh := range meshes {
 		vaos = append(vaos, []uint32{})
@@ -136,7 +137,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 					position.X(), position.Y(), position.Z(),
 				)
 
-				ids, weights := fillWeights(jointIDs, jointWeights, modelConfig.MaxAnimationJointWeights)
+				ids, weights := fillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
 				for _, id := range ids {
 					jointIDsAttribute = append(jointIDsAttribute, int32(id))
 				}
@@ -164,7 +165,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 			apputils.GenBuffers(1, &vboJointIDs)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointIDs)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointIDsAttribute)*4, gl.Ptr(jointIDsAttribute), gl.STATIC_DRAW)
-			gl.VertexAttribIPointer(1, int32(modelConfig.MaxAnimationJointWeights), gl.INT, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+			gl.VertexAttribIPointer(1, int32(settings.MaxAnimationJointWeights), gl.INT, int32(settings.MaxAnimationJointWeights)*4, nil)
 			gl.EnableVertexAttribArray(1)
 
 			// lay out the joint weights in a VBO
@@ -172,7 +173,7 @@ func createGeometryVAOs(modelConfig *ModelConfig, meshes []*modelspec.MeshSpecif
 			apputils.GenBuffers(1, &vboJointWeights)
 			gl.BindBuffer(gl.ARRAY_BUFFER, vboJointWeights)
 			gl.BufferData(gl.ARRAY_BUFFER, len(jointWeightsAttribute)*4, gl.Ptr(jointWeightsAttribute), gl.STATIC_DRAW)
-			gl.VertexAttribPointer(2, int32(modelConfig.MaxAnimationJointWeights), gl.FLOAT, false, int32(modelConfig.MaxAnimationJointWeights)*4, nil)
+			gl.VertexAttribPointer(2, int32(settings.MaxAnimationJointWeights), gl.FLOAT, false, int32(settings.MaxAnimationJointWeights)*4, nil)
 			gl.EnableVertexAttribArray(2)
 
 			// set up the EBO, each triplet of indices point to three vertices

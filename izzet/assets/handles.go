@@ -3,7 +3,6 @@ package assets
 import (
 	"fmt"
 
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
@@ -11,10 +10,6 @@ import (
 const (
 	NamespaceGlobal = "global"
 )
-
-type ModelConfig struct {
-	MaxAnimationJointWeights int
-}
 
 type Primitive struct {
 	Primitive *modelspec.PrimitiveSpecification
@@ -101,13 +96,11 @@ func (m *AssetManager) getPrimitives(doc *modelspec.Document, node *modelspec.No
 			if node.MeshID != nil {
 				mesh := doc.Meshes[*node.MeshID]
 
-				modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-
 				var vaos [][]uint32
 				var geometryVAOs [][]uint32
 				if m.processVisuals {
-					vaos = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-					geometryVAOs = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+					vaos = createVAOs([]*modelspec.MeshSpecification{mesh})
+					geometryVAOs = createGeometryVAOs([]*modelspec.MeshSpecification{mesh})
 				}
 
 				for i, primitive := range mesh.Primitives {
@@ -133,13 +126,11 @@ func (m *AssetManager) getPrimitives(doc *modelspec.Document, node *modelspec.No
 }
 
 func (m *AssetManager) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
-	modelConfig := &ModelConfig{MaxAnimationJointWeights: settings.MaxAnimationJointWeights}
-
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {
-		vaos = createVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
-		geometryVAOs = createGeometryVAOs(modelConfig, []*modelspec.MeshSpecification{mesh})
+		vaos = createVAOs([]*modelspec.MeshSpecification{mesh})
+		geometryVAOs = createGeometryVAOs([]*modelspec.MeshSpecification{mesh})
 	}
 
 	for i, primitive := range mesh.Primitives {

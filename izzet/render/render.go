@@ -47,7 +47,7 @@ const (
 	uiWidthRatio               float32 = 0.2
 )
 
-type Renderer struct {
+type RenderSystem struct {
 	app           renderiface.App
 	world         GameWorld
 	shaderManager *shaders.ShaderManager
@@ -112,8 +112,8 @@ type Renderer struct {
 	// volumetricRenderTexture uint32
 }
 
-func New(app renderiface.App, shaderDirectory string, width, height int) *Renderer {
-	r := &Renderer{app: app}
+func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
+	r := &RenderSystem{app: app}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 
@@ -181,7 +181,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *Renderer) ReinitializeFrameBuffers() {
+func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 
 	// recreate texture for main render fbo
@@ -213,7 +213,7 @@ func (r *Renderer) ReinitializeFrameBuffers() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
-func (r *Renderer) initDepthMapFBO(width, height int) {
+func (r *RenderSystem) initDepthMapFBO(width, height int) {
 	var depthMapFBO uint32
 	gl.GenFramebuffers(1, &depthMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
@@ -239,17 +239,17 @@ func (r *Renderer) initDepthMapFBO(width, height int) {
 	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
 }
 
-func (r *Renderer) initCompositeFBO(width, height int) {
+func (r *RenderSystem) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = initFBOAndTexture(width, height)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 
-func (r *Renderer) initPostProcessingFBO(width, height int) {
+func (r *RenderSystem) initPostProcessingFBO(width, height int) {
 	r.postProcessingFBO, r.postProcessingTexture = initFBOAndTexture(width, height)
 	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
 }
 
-func (r *Renderer) initMainRenderFBO(width, height int) {
+func (r *RenderSystem) initMainRenderFBO(width, height int) {
 	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.mainRenderFBO = mainRenderFBO
 	r.mainColorTexture = colorTextures[0]
@@ -258,11 +258,11 @@ func (r *Renderer) initMainRenderFBO(width, height int) {
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
-func (r *Renderer) activeCloudTexture() *runtimeconfig.CloudTexture {
+func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
 
-func (r *Renderer) Render(delta time.Duration) {
+func (r *RenderSystem) Render(delta time.Duration) {
 	mr := r.app.MetricsRegistry()
 
 	start := time.Now()
@@ -453,7 +453,7 @@ func (r *Renderer) Render(delta time.Duration) {
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
-func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
@@ -468,7 +468,7 @@ func (r *Renderer) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotatio
 	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.ShadowCasting)
 }
 
-func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
@@ -483,7 +483,7 @@ func (r *Renderer) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation m
 	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.Renderable)
 }
 
-func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
+func (r *RenderSystem) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
 	var renderEntities []*entities.Entity
 	if r.app.RuntimeConfig().EnableSpatialPartition {
 		spatialPartition := r.world.SpatialPartition()
@@ -504,7 +504,7 @@ func (r *Renderer) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotatio
 
 var spanLines [][2]mgl64.Vec3
 
-func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
 	shaderManager := r.shaderManager
 
 	if r.app.RuntimeConfig().ShowSelectionBoundingBox {
@@ -609,7 +609,7 @@ func (r *Renderer) drawAnnotations(viewerContext ViewerContext, lightContext Lig
 	}
 }
 
-func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToCameraDepthMap(viewerContext ViewerContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.Viewport(0, 0, int32(renderContext.width), int32(renderContext.height))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -617,7 +617,7 @@ func (r *Renderer) drawToCameraDepthMap(viewerContext ViewerContext, renderConte
 	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.Renderable)
 }
 
-func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
 	r.shadowMap.Prepare()
 	defer gl.CullFace(gl.BACK)
 
@@ -631,7 +631,7 @@ func (r *Renderer) drawToShadowDepthMap(viewerContext ViewerContext, renderableE
 	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.EmptyFilter)
 }
 
-func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity, filter entities.FilterFunction) {
+func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity, filter entities.FilterFunction) {
 	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
 
@@ -671,7 +671,7 @@ func (r *Renderer) renderGeometryWithoutColor(viewerContext ViewerContext, rende
 	}
 }
 
-func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableEntities []*entities.Entity) {
 	// we only support cube depth maps for one point light atm
 	var pointLight *entities.Entity
 	if len(lightContext.PointLights) == 0 {
@@ -730,7 +730,7 @@ func (r *Renderer) drawToCubeDepthMap(lightContext LightContext, renderableEntit
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
-func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
@@ -818,7 +818,7 @@ func (r *Renderer) drawToMainColorBuffer(viewerContext ViewerContext, lightConte
 	}
 }
 
-func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	shaderManager := r.shaderManager
 
 	shader := shaderManager.GetShaderProgram("modelpbr")
@@ -1017,7 +1017,7 @@ func (r *Renderer) renderModels(viewerContext ViewerContext, lightContext LightC
 	}
 }
 
-func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
+func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
 	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.app.Platform().NewFrame()
@@ -1172,7 +1172,7 @@ func (r *Renderer) renderImgui(renderContext RenderContext, gameWindowTexture im
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
 }
 
-func (r *Renderer) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {
+func (r *RenderSystem) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {
 	if r.app.SelectedEntity() == nil {
 		return
 	}
@@ -1193,15 +1193,15 @@ func triangleVAOKey(triangle entities.Triangle) string {
 	return fmt.Sprintf("%v_%v_%v", triangle.V1, triangle.V2, triangle.V3)
 }
 
-func (r *Renderer) SetWorld(world *world.GameWorld) {
+func (r *RenderSystem) SetWorld(world *world.GameWorld) {
 	r.world = world
 }
 
-func (r *Renderer) GameWindowHovered() bool {
+func (r *RenderSystem) GameWindowHovered() bool {
 	return r.gameWindowHovered
 }
 
-func (r *Renderer) HoveredEntityID() *int {
+func (r *RenderSystem) HoveredEntityID() *int {
 	return r.hoveredEntityID
 }
 

@@ -60,7 +60,7 @@ var (
 	debugVertexCount int32
 )
 
-func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
+func (r *RenderSystem) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		start := time.Now()
 		navmeshVAOCache, navmeshVertexCount = r.createDetailedMeshVAO(nm, colorStyleBlue)
@@ -177,7 +177,7 @@ func (r *Renderer) drawNavmesh(shaderManager *shaders.ShaderManager, viewerConte
 	}
 }
 
-func (r *Renderer) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func (r *RenderSystem) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 
@@ -206,7 +206,7 @@ func (r *Renderer) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	return vao, int32(len(positions))
 }
 
-func (r *Renderer) drawContour(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, vao uint32, count int32) {
+func (r *RenderSystem) drawContour(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, vao uint32, count int32) {
 	shader := shaderManager.GetShaderProgram("line")
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
@@ -251,7 +251,7 @@ var colorStyleRegionID colorStyle = 0
 var colorStyleBlue colorStyle = 1
 var colorStyleBlack colorStyle = 2
 
-func (r *Renderer) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
+func (r *RenderSystem) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
 	minVertex := nm.Volume.MinVertex
 
 	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
@@ -294,7 +294,7 @@ func (r *Renderer) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cstyle co
 	return createLineVAO(vertexAttributes)
 }
 
-func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
+func (r *RenderSystem) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
 	if nm.DetailedMesh == nil || len(nm.DetailedMesh.PolyTriangles) == 0 {
 		return 0, 0
 	}
@@ -340,7 +340,7 @@ func (r *Renderer) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colo
 	return vao, int32(len(triangles))
 }
 
-func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func (r *RenderSystem) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	if len(nm.DetailedMesh.PolyTriangles) == 0 {
 		return 0, 0
 	}
@@ -385,7 +385,7 @@ func (r *Renderer) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint3
 	return createLineVAO(vertexAttributes)
 }
 
-func (r *Renderer) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
+func (r *RenderSystem) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 
@@ -563,7 +563,7 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	return vao, int32(len(positions))
 }
 
-func (r *Renderer) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
+func (r *RenderSystem) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 	var lengths []float32

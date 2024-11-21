@@ -42,7 +42,7 @@ func genCacheKey(thickness, length float64) string {
 }
 
 // drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
-func (r *Renderer) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
+func (r *RenderSystem) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	var vertices []float32
 	for _, point := range points {
 		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
@@ -62,7 +62,7 @@ func (r *Renderer) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	return vao, len(vertices)
 }
 
-func (r *Renderer) drawTris(points []mgl64.Vec3) {
+func (r *RenderSystem) drawTris(points []mgl64.Vec3) {
 	vao, length := r.generateTrisVAO(points)
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
@@ -191,7 +191,7 @@ type RenderData struct {
 	GeometryVAO uint32
 }
 
-func (r *Renderer) drawModel(
+func (r *RenderSystem) drawModel(
 	viewerContext ViewerContext,
 	lightContext LightContext,
 	shader *shaders.ShaderProgram,
@@ -315,7 +315,7 @@ func toRadians(degrees float64) float64 {
 	return degrees / 180 * math.Pi
 }
 
-func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *RenderSystem) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var vao uint32
 	var length int
 
@@ -356,7 +356,7 @@ func (r *Renderer) drawLineGroup(name string, viewerContext ViewerContext, shade
 	r.iztDrawArrays(0, int32(length))
 }
 
-func (r *Renderer) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *RenderSystem) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var points []mgl64.Vec3
 	for _, line := range lines {
 		start := line[0]
@@ -553,7 +553,7 @@ func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 
 var singleSidedQuadVAO uint32
 
-func (r *Renderer) drawBillboardTexture(
+func (r *RenderSystem) drawBillboardTexture(
 	texture uint32,
 	length float32,
 ) {
@@ -592,7 +592,7 @@ func (r *Renderer) drawBillboardTexture(
 }
 
 // drawHUDTextureToQuad does a shitty perspective based rendering of a flat texture
-func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
+func (r *RenderSystem) drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
 	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{
 		// front
@@ -630,7 +630,7 @@ func (r *Renderer) drawHUDTextureToQuad(viewerContext ViewerContext, shader *sha
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *Renderer) createCircleTexture(width, height int) (uint32, uint32) {
+func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
 	fbo, textures := r.initFrameBuffer(width, height, []int32{gl.RGBA}, []uint32{gl.RGBA})
 	return fbo, textures[0]
 }
@@ -653,7 +653,7 @@ func initFBOAndTexture(width, height int) (uint32, uint32) {
 	return fbo, texture
 }
 
-func (r *Renderer) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
+func (r *RenderSystem) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -702,7 +702,7 @@ func createTexture(width, height int, internalFormat int32, format uint32, filte
 	return texture
 }
 
-func (r *Renderer) createDepthTexture(width, height int) uint32 {
+func (r *RenderSystem) createDepthTexture(width, height int) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
@@ -717,7 +717,7 @@ func (r *Renderer) createDepthTexture(width, height int) uint32 {
 	return texture
 }
 
-func (r *Renderer) clearMainFrameBuffer(renderContext RenderContext) {
+func (r *RenderSystem) clearMainFrameBuffer(renderContext RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
@@ -773,7 +773,7 @@ var skyboxVertices = []float32{
 	1.0, -1.0, 1.0,
 }
 
-func (r *Renderer) drawSkybox(renderContext RenderContext, viewerContext ViewerContext) {
+func (r *RenderSystem) drawSkybox(renderContext RenderContext, viewerContext ViewerContext) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	if skyboxVAO == nil {
 		var vbo, vao uint32
@@ -811,7 +811,7 @@ func (r *Renderer) drawSkybox(renderContext RenderContext, viewerContext ViewerC
 	gl.DepthFunc(gl.LESS)
 }
 
-func (r *Renderer) CameraViewerContext() ViewerContext {
+func (r *RenderSystem) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
 
@@ -827,7 +827,7 @@ var pickingBuffer []byte
 // a package variable outside of the getEntityByPixelPosition method. in addition, i've
 // done better vao caching for our gizmos which previously were recreated whenever the
 // camera moves
-func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+func (r *RenderSystem) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	if r.app.Minimized() || !r.app.WindowFocused() {
 		return nil
 	}
@@ -862,67 +862,11 @@ func (r *Renderer) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	return &id
 }
 
-// func (r *Renderer) ReadAllPixels() {
-// 	// start := time.Now()
-
-// 	// Specify the texture target
-// 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
-
-// 	// Allocate memory to store the pixel data
-// 	// var internalFormat uint32 = gl.RGBA    // The format of the texture data (e.g., gl.RGBA)
-// 	// var dataType uint32 = gl.UNSIGNED_BYTE // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
-
-// 	var internalFormat uint32 = gl.DEPTH_COMPONENT // The format of the texture data (e.g., gl.RGBA)
-// 	var dataType uint32 = gl.FLOAT                 // The data type of the texture (e.g., gl.UNSIGNED_BYTE)
-
-// 	// Calculate the size of the buffer
-// 	bufferSize := int(r.windowWidth * r.windowHeight * 4) // Assuming 4 components per pixel (RGBA)
-
-// 	// Allocate memory for the pixel data
-// 	pixelData := make([]byte, bufferSize)
-
-// 	// Read the texture data into the pixelData slice
-// 	gl.GetTexImage(gl.TEXTURE_2D, 0, internalFormat, dataType, gl.Ptr(pixelData))
-
-// 	// Now, pixelData contains the pixel data of the texture.
-// 	// You can process it or save it as needed.
-
-// 	start := time.Now()
-// 	// Print a few pixels as an example
-// 	for i := 0; i < r.windowWidth*r.windowHeight*4-4; i++ {
-// 		r := pixelData[i]
-// 		g := pixelData[i+1]
-// 		b := pixelData[i+2]
-// 		a := pixelData[i+3]
-
-// 		if r != 0 {
-// 			a := 5
-// 			_ = a
-// 		}
-// 		if g != 0 {
-// 			a := 5
-// 			_ = a
-// 		}
-// 		if b != 0 {
-// 			a := 5
-// 			_ = a
-// 		}
-// 		if a != 0 {
-// 			a := 5
-// 			_ = a
-// 		}
-// 		// fmt.Printf("Pixel %d: R=%d, G=%d, B=%d, A=%d\n", i/4, r, g, b, a)
-// 	}
-// 	fmt.Println(time.Since(start))
-
-// 	// fmt.Println(time.Since(start))
-// }
-
 var (
 	spatialPartitionLineCache [][]mgl64.Vec3
 )
 
-func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
+func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
 	var allLines [][]mgl64.Vec3
 
 	if len(spatialPartitionLineCache) == 0 {
@@ -985,7 +929,7 @@ func (r *Renderer) drawSpatialPartition(viewerContext ViewerContext, color mgl64
 	)
 }
 
-func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
+func (r *RenderSystem) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
 	var allLines [][2]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)
@@ -1034,7 +978,7 @@ func (r *Renderer) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb 
 	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), viewerContext, shader, allLines, thickness, color)
 }
 
-func (r *Renderer) getCubeVAO(length float32, includeNormals bool) uint32 {
+func (r *RenderSystem) getCubeVAO(length float32, includeNormals bool) uint32 {
 	hash := fmt.Sprintf("%.2f_%t", length, includeNormals)
 	if _, ok := r.cubeVAOs[hash]; !ok {
 		vao := r.initCubeVAO(length, includeNormals)
@@ -1043,7 +987,7 @@ func (r *Renderer) getCubeVAO(length float32, includeNormals bool) uint32 {
 	return r.cubeVAOs[hash]
 }
 
-func (r *Renderer) getBatchCubeVAOs(name string, length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
+func (r *RenderSystem) getBatchCubeVAOs(name string, length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
 	if _, ok := r.batchCubeVAOs[name]; !ok {
 		vao := r.initBatchCubeVAOs(length, includeNormals, positions)
 		r.batchCubeVAOs[name] = vao
@@ -1051,7 +995,7 @@ func (r *Renderer) getBatchCubeVAOs(name string, length float32, includeNormals 
 	return r.batchCubeVAOs[name]
 }
 
-func (r *Renderer) initBatchCubeVAOs(length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
+func (r *RenderSystem) initBatchCubeVAOs(length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
 	ht := length / 2
 
 	var allVertexAttribs []float32
@@ -1152,7 +1096,7 @@ func (r *Renderer) initBatchCubeVAOs(length float32, includeNormals bool, positi
 	return vao
 }
 
-func (r *Renderer) initCubeVAO(length float32, includeNormals bool) uint32 {
+func (r *RenderSystem) initCubeVAO(length float32, includeNormals bool) uint32 {
 	ht := length / 2
 
 	allVertexAttribs := []float32{
@@ -1248,7 +1192,7 @@ func (r *Renderer) initCubeVAO(length float32, includeNormals bool) uint32 {
 	return vao
 }
 
-func (r *Renderer) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
+func (r *RenderSystem) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
 	vertices := []float32{
 		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
 		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
@@ -1303,30 +1247,30 @@ func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far,
 	return verts
 }
 
-func (r *Renderer) iztDrawArrays(first, count int32) {
+func (r *RenderSystem) iztDrawArrays(first, count int32) {
 	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
 	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
 }
 
-func (r *Renderer) iztDrawLineStrip(count int32) {
+func (r *RenderSystem) iztDrawLineStrip(count int32) {
 	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.LINE_STRIP, 0, count)
 }
 
-func (r *Renderer) iztDrawLines(count int32) {
+func (r *RenderSystem) iztDrawLines(count int32) {
 	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.LINES, 0, count)
 }
 
-func (r *Renderer) iztDrawElements(count int32) {
+func (r *RenderSystem) iztDrawElements(count int32) {
 	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
 	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }
 
 // setup reusale circle textures
-func (r *Renderer) initializeCircleTextures() {
+func (r *RenderSystem) initializeCircleTextures() {
 	gl.Viewport(0, 0, 1024, 1024)
 	shaderManager := r.shaderManager
 	shader := shaderManager.GetShaderProgram("unit_circle")
@@ -1362,11 +1306,11 @@ func CalculateMenuBarHeight() float32 {
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
-func (r *Renderer) ConfigureUI() {
+func (r *RenderSystem) ConfigureUI() {
 	r.ReinitializeFrameBuffers()
 }
 
-func (r *Renderer) GameWindowSize() (int, int) {
+func (r *RenderSystem) GameWindowSize() (int, int) {
 	menuBarSize := CalculateMenuBarHeight()
 	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 

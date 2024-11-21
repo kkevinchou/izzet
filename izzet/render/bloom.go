@@ -63,7 +63,7 @@ func initSamplingBuffer(texture uint32) uint32 {
 	return fbo
 }
 
-func (r *Renderer) init2f2fVAO() uint32 {
+func (r *RenderSystem) init2f2fVAO() uint32 {
 	vertices := []float32{
 		-1, -1, 0.0, 0.0,
 		1, -1, 1.0, 0.0,
@@ -90,7 +90,7 @@ func (r *Renderer) init2f2fVAO() uint32 {
 	return vao
 }
 
-func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
+func (r *RenderSystem) downSample(srcTexture uint32, widths, heights []int) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.downSampleFBO)
 
 	shader := r.shaderManager.GetShaderProgram("bloom_downsample")
@@ -123,7 +123,7 @@ func (r *Renderer) downSample(srcTexture uint32, widths, heights []int) {
 }
 
 // TODO: could do "pingponging" to avoid creating so many textures
-func (r *Renderer) upSampleAndBlend(widths, heights []int) uint32 {
+func (r *RenderSystem) upSampleAndBlend(widths, heights []int) uint32 {
 	mipsCount := len(r.downSampleTextures)
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.upSampleFBO)
@@ -150,7 +150,7 @@ func (r *Renderer) upSampleAndBlend(widths, heights []int) uint32 {
 	return blendTargetMip
 }
 
-func (r *Renderer) upSample(width, height int32, source, target uint32) {
+func (r *RenderSystem) upSample(width, height int32, source, target uint32) {
 	shader := r.shaderManager.GetShaderProgram("bloom_upsample")
 	shader.Use()
 	shader.SetUniformFloat("upSamplingScale", r.app.RuntimeConfig().BloomUpsamplingScale)
@@ -165,7 +165,7 @@ func (r *Renderer) upSample(width, height int32, source, target uint32) {
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32) {
+func (r *RenderSystem) blend(width, height int32, texture0, texture1, target uint32) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blendFBO)
 
 	shader := r.shaderManager.GetShaderProgram("blend")
@@ -187,7 +187,7 @@ func (r *Renderer) blend(width, height int32, texture0, texture1, target uint32)
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *Renderer) composite(renderContext RenderContext, texture0, texture1 uint32) uint32 {
+func (r *RenderSystem) composite(renderContext RenderContext, texture0, texture1 uint32) uint32 {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 
 	shader := r.shaderManager.GetShaderProgram("composite")

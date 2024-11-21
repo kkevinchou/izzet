@@ -37,7 +37,7 @@ type WorleyOctave struct {
 	cellWidth, cellHeight, cellDepth float32
 }
 
-func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
+func (r *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
 	cloudTexture := r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 	// channel := r.app.RuntimeConfig().ActiveCloudTextureChannelIndex
 
@@ -112,7 +112,7 @@ func (r *Renderer) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint3
 	return vao, worleyNoiseTexture, fbo, texture
 }
 
-func (r *Renderer) renderVolumetrics(vao, texture, fbo uint32, shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
+func (r *RenderSystem) renderVolumetrics(vao, texture, fbo uint32, shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
 	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)

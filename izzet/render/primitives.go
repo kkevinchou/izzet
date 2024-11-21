@@ -97,7 +97,7 @@ func getInternedQuadVAOPosition() uint32 {
 	return internedQuadVAOPosition
 }
 
-func (r *Renderer) drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
+func (r *RenderSystem) drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
 	vao := getInternedQuadVAOPositionUV()
 
 	gl.BindVertexArray(vao)

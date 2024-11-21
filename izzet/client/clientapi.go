@@ -142,7 +142,7 @@ func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {
 
 func (g *Client) SetWorld(world *world.GameWorld) {
 	g.world = world
-	g.renderer.SetWorld(world)
+	g.renderSystem.SetWorld(world)
 }
 
 func (g *Client) StartLiveWorld() {
@@ -576,7 +576,7 @@ func (g *Client) Shutdown() {
 
 func (g *Client) ConfigureUI(enabled bool) {
 	g.runtimeConfig.UIEnabled = enabled
-	g.renderer.ConfigureUI()
+	g.renderSystem.ConfigureUI()
 }
 
 func (g *Client) SetWindowSize(width, height int) {

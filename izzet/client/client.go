@@ -46,8 +46,8 @@ type Client struct {
 
 	prefabs map[int]*prefabs.Prefab
 
-	renderer    *render.Renderer
-	editHistory *edithistory.EditHistory
+	renderSystem *render.RenderSystem
+	editHistory  *edithistory.EditHistory
 
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
@@ -132,7 +132,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	}
 
 	g.initSettings()
-	g.renderer = render.New(g, shaderDirectory, g.width, g.height)
+	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
 	data := izzetdata.LoadData(dataFilePath)
 	g.setupAssets(g.assetManager, data)
@@ -143,7 +143,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		g.LoadProject(defaultProject)
 	} else {
 		g.project = NewProject()
-		g.renderer.SetWorld(g.world)
+		g.renderSystem.SetWorld(g.world)
 	}
 
 	g.setupSystems()
@@ -222,7 +222,7 @@ func (g *Client) render(delta time.Duration) {
 
 	start := time.Now()
 	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
-	g.renderer.Render(delta)
+	g.renderSystem.Render(delta)
 	g.MetricsRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
 	start = time.Now()
 	g.window.Swap()
@@ -312,7 +312,7 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 
 	// -1 for the near plane
 	ndcP := mgl64.Vec4{((x / float64(width)) - 0.5) * 2, ((y / float64(height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := g.renderer.CameraViewerContext().InverseViewMatrix.Inv().Mul4(g.renderer.CameraViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
+	nearPlanePos := g.renderSystem.CameraViewerContext().InverseViewMatrix.Inv().Mul4(g.renderSystem.CameraViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()

@@ -14,7 +14,7 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func (r *RenderSystem) drawTranslationGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	colors := map[int]mgl64.Vec3{
 		gizmo.GizmoXAxisPickingID: mgl64.Vec3{1, 0, 0},
 		gizmo.GizmoYAxisPickingID: mgl64.Vec3{0, 0, 1},
@@ -103,7 +103,7 @@ func (r *Renderer) drawTranslationGizmo(viewerContext *ViewerContext, shader *sh
 	r.iztDrawArrays(0, 12)
 }
 
-func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func (r *RenderSystem) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
@@ -152,7 +152,7 @@ func (r *Renderer) drawScaleGizmo(viewerContext *ViewerContext, shader *shaders.
 	}
 }
 
-func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
+func (r *RenderSystem) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.Vec3, renderContext RenderContext) {
 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
@@ -191,7 +191,7 @@ func (r *Renderer) drawCircleGizmo(viewerContext *ViewerContext, position mgl64.
 	}
 }
 
-func (r *Renderer) drawCircle() {
+func (r *RenderSystem) drawCircle() {
 	var vertices []float32 = []float32{
 		-1, -1, 0,
 		1, -1, 0,

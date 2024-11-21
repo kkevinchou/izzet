@@ -34,7 +34,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	if g.platform.Resized() {
 		w, h := g.window.GetSize()
 		g.SetWindowSize(w, h)
-		g.renderer.ReinitializeFrameBuffers()
+		g.renderSystem.ReinitializeFrameBuffers()
 	}
 
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
@@ -158,8 +158,8 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 		if event.Event == input.KeyboardEventUp {
 			if g.navMesh != nil {
 				mousePosition := frameInput.MouseInput.Position
-				width, height := g.renderer.GameWindowSize()
-				ctx := g.renderer.CameraViewerContext()
+				width, height := g.renderSystem.GameWindowSize()
+				ctx := g.renderSystem.CameraViewerContext()
 
 				xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
 
@@ -183,8 +183,8 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 	if event, ok := keyboardInput[input.KeyboardKeyM]; ok {
 		if event.Event == input.KeyboardEventUp {
 			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderer.GameWindowSize()
-			ctx := g.renderer.CameraViewerContext()
+			width, height := g.renderSystem.GameWindowSize()
+			ctx := g.renderSystem.CameraViewerContext()
 
 			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
 
@@ -213,8 +213,8 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
 		if event.Event == input.KeyboardEventUp {
 			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderer.GameWindowSize()
-			ctx := g.renderer.CameraViewerContext()
+			width, height := g.renderSystem.GameWindowSize()
+			ctx := g.renderSystem.CameraViewerContext()
 
 			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
 
@@ -270,7 +270,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	if g.renderer.GameWindowHovered() {
+	if g.renderSystem.GameWindowHovered() {
 		if g.relativeMouseActive {
 			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
 		}
@@ -552,8 +552,8 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 		}
 	}
 
-	if !gizmoHovered && g.renderer.GameWindowHovered() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		entityID := g.renderer.HoveredEntityID()
+	if !gizmoHovered && g.renderSystem.GameWindowHovered() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
+		entityID := g.renderSystem.HoveredEntityID()
 		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
 			g.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone
@@ -572,9 +572,9 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 
 func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl64.Vec3, gizmo.GizmoEvent) {
 	mouseInput := frameInput.MouseInput
-	colorPickingID := g.renderer.HoveredEntityID()
+	colorPickingID := g.renderSystem.HoveredEntityID()
 
-	gameWindowWidth, gameWindowHeight := g.renderer.GameWindowSize()
+	gameWindowWidth, gameWindowHeight := g.renderSystem.GameWindowSize()
 	nearPlanePos := g.mousePosToNearPlane(mouseInput.Position, gameWindowWidth, gameWindowHeight)
 
 	cameraViewDir := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})

@@ -331,21 +331,19 @@ func (r *RenderSystem) drawModel(
 				shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
 			}
 
-			// main diffuse texture
-			gl.ActiveTexture(gl.TEXTURE0)
-			var textureID uint32
-			// textureName := settings.DefaultTexture
-			// if p.Primitive.TextureName() != "" {
-			// 	textureName = p.Primitive.TextureName()
-			// }
 			textureName := material.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
-			// HACK - fix this
-			if textureName == "" {
-				return
+			if textureName != "" {
+				// main diffuse texture
+				gl.ActiveTexture(gl.TEXTURE0)
+				var textureID uint32
+				// textureName := settings.DefaultTexture
+				// if p.Primitive.TextureName() != "" {
+				// 	textureName = p.Primitive.TextureName()
+				// }
+				texture := r.app.AssetManager().GetTexture(textureName)
+				textureID = texture.ID
+				gl.BindTexture(gl.TEXTURE_2D, textureID)
 			}
-			texture := r.app.AssetManager().GetTexture(textureName)
-			textureID = texture.ID
-			gl.BindTexture(gl.TEXTURE_2D, textureID)
 		}
 
 		modelMatrix := entities.WorldTransform(entity)

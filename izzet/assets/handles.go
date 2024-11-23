@@ -24,8 +24,8 @@ type Primitive struct {
 	GeometryVAO uint32
 }
 
-func NewGlobalHandle(id string) types.MeshHandle {
-	return NewHandle(NamespaceGlobal, id)
+func NewSingleMeshHandle(namespace string) types.MeshHandle {
+	return NewHandle(namespace, "0")
 }
 
 func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
@@ -65,7 +65,7 @@ func (m *AssetManager) GetMaterial(handle types.MaterialHandle) modelspec.Materi
 func (m *AssetManager) RegisterSingleEntityDocument(document *modelspec.Document) {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
-			handle := NewGlobalHandle(document.Name)
+			handle := NewSingleMeshHandle(document.Name)
 			primitives := m.getPrimitives(document, node)
 			m.Primitives[handle] = primitives
 		}

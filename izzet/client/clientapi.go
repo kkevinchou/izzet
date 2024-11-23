@@ -609,7 +609,7 @@ func (g *Client) SelectedEntity() *entities.Entity {
 
 func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	document := g.AssetManager().GetDocument(entityHandle)
-	handle := assets.NewGlobalHandle(entityHandle)
+	handle := assets.NewSingleMeshHandle(entityHandle)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
 	}

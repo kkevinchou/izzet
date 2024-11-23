@@ -69,7 +69,7 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *assets.AssetMa
 	entityAsset := data.EntityAssets[document.Name]
 
 	if entityAsset.SingleEntity {
-		handle := assets.NewGlobalHandle(document.Name)
+		handle := assets.NewSingleMeshHandle(document.Name)
 		// entity := InstantiateEntity(document.Name)
 		// entity.MeshComponent = &MeshC
 		var scene *modelspec.Scene

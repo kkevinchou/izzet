@@ -28,13 +28,15 @@ const (
 
 	MaxEntityCount int = 10000
 
+	// MSPerGameStateUpdate is the duration between each game state update sent from server to client
+	MSPerGameStateUpdate int = 100
+
+	// FPS is the number of rendered frames per second, separate from command frames
+	FPS int = 60
+
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.
-	MSPerCommandFrame    int = 10
-	MSPerGameStateUpdate int = 8
-
-	// number of rendered frames per second, separate from command frames
-	FPS int = 144
+	MSPerCommandFrame int = 16
 
 	// the maximum number of command frames to execute in a single loop to prevent the spiral of death
 	MaxCommandFramesPerLoop int = 3

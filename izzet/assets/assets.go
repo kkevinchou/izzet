@@ -61,7 +61,7 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 
 	if processVisualAssets {
 		handle := assetManager.GetCubeMeshHandle()
-		assetManager.registerMeshWithHandle(handle, cubeMesh(15))
+		assetManager.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
 
 		// default material
 		defaultMaterialHandle := assetManager.GetDefaultMaterialHandle()

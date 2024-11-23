@@ -15,7 +15,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
@@ -299,8 +298,8 @@ func (r *RenderSystem) drawModel(
 				shader.SetUniformFloat("metallic", material.PBR.Metallic)
 			}
 		} else if entity.Material == nil {
-			// TODO - avoid needing to hand construct the handle, it should be attached to the primitive
-			material := r.app.AssetManager().GetMaterial(types.MaterialHandle{Namespace: entity.MeshComponent.MeshHandle.Namespace, ID: p.Primitive.MaterialIndex})
+			materialHandle := p.MaterialHandle
+			material := r.app.AssetManager().GetMaterial(materialHandle)
 
 			primitiveMaterial := material.PBRMaterial.PBRMetallicRoughness
 			shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))

@@ -74,7 +74,7 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 
 		for _, document := range assetManager.documents {
 			for _, material := range document.Materials {
-				handle := types.MaterialHandle{ID: material.ID, Namespace: document.Name}
+				handle := NewMaterialHandle(document.Name, material.ID)
 				assetManager.Materials[handle] = material
 			}
 		}

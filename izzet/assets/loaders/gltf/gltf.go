@@ -520,9 +520,9 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 // parseMaterialSpecs creates MaterialSpecifications from the gltf materials list
 // we also return an id mapping from the gltf id to the internal material id
 // (this might be overkill since their ids are probably also zero index and incrementing)
-func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.MaterialSpecification, map[int]int, error) {
+func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.MaterialSpecification, map[int]string, error) {
 	var materials []modelspec.MaterialSpecification
-	idMapping := map[int]int{}
+	idMapping := map[int]string{}
 
 	for gltfIdx, gltfMaterial := range document.Materials {
 		pbr := *gltfMaterial.PBRMetallicRoughness
@@ -540,11 +540,11 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 			pbrMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
 		}
 		material := modelspec.MaterialSpecification{
-			ID:          gltfIdx,
+			ID:          fmt.Sprintf("%d", gltfIdx),
 			PBRMaterial: pbrMaterial,
 		}
 
-		idMapping[gltfIdx] = len(materials)
+		idMapping[gltfIdx] = fmt.Sprintf("%d", len(materials))
 		materials = append(materials, material)
 	}
 	return materials, idMapping, nil
@@ -554,7 +554,7 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 // index - the index of the mesh, since meshes can have multiple primitives, we can have
 // mesh model specifications with the same index. this is okay, external applications should
 // not reference this and instead use the mesh id
-func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]int, config *ParseConfig) ([]*modelspec.PrimitiveSpecification, error) {
+func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]string, config *ParseConfig) ([]*modelspec.PrimitiveSpecification, error) {
 	var primitiveSpecs []*modelspec.PrimitiveSpecification
 
 	if len(mesh.Primitives) > 1 {

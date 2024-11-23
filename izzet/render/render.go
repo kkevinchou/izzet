@@ -856,7 +856,6 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
-	// TODO - this should probably be game window size?
 	shader.SetUniformInt("width", int32(renderContext.width))
 	shader.SetUniformInt("height", int32(renderContext.height))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))

@@ -7,5 +7,5 @@ type MeshHandle struct {
 
 type MaterialHandle struct {
 	Namespace string
-	ID        int
+	ID        string
 }

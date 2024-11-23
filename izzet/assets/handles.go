@@ -22,22 +22,28 @@ type Primitive struct {
 	// i.e. vertex positions and joint indices / weights
 	// but not normals, texture coords
 	GeometryVAO uint32
+
+	MaterialHandle types.MaterialHandle
 }
 
 func NewSingleMeshHandle(namespace string) types.MeshHandle {
-	return NewHandle(namespace, "0")
+	return NewMeshHandle(namespace, "0")
 }
 
 func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
-	return NewHandle(namespace, fmt.Sprintf("%d", meshID))
+	return NewMeshHandle(namespace, fmt.Sprintf("%d", meshID))
 }
 
-func NewHandle(namespace string, id string) types.MeshHandle {
+func NewMeshHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
+func NewMaterialHandle(namespace string, id string) types.MaterialHandle {
+	return types.MaterialHandle{Namespace: namespace, ID: id}
+}
+
 func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
-	return NewHandle("global", "cube")
+	return NewMeshHandle("global", "cube")
 }
 
 func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
@@ -128,6 +134,7 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 		if m.processVisuals {
 			p.VAO = vaos[0][i]
 			p.GeometryVAO = geometryVAOs[0][i]
+			p.MaterialHandle = NewMaterialHandle(handle.Namespace, primitive.MaterialIndex)
 		}
 
 		m.Primitives[handle] = append(m.Primitives[handle], p)

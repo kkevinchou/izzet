@@ -193,11 +193,7 @@ type RenderData struct {
 }
 
 func (r *RenderSystem) drawBatch(
-	// viewerContext ViewerContext,
-	// lightContext LightContext,
 	shader *shaders.ShaderProgram,
-	// entity *entities.Entity,
-	// vao uint32,
 ) {
 	shader.SetUniformInt("isAnimated", 0)
 
@@ -215,20 +211,32 @@ func (r *RenderSystem) drawBatch(
 
 	// main diffuse texture
 
-	var textureID uint32
-	textureName := p.Primitive.TextureName()
-	texture := r.app.AssetManager().GetTexture(textureName)
-	textureID = texture.ID
+	// var textureID uint32
+	// textureName := p.Primitive.TextureName()
+	// texture := r.app.AssetManager().GetTexture(textureName)
+	// textureID = texture.ID
 
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, textureID)
+	// gl.ActiveTexture(gl.TEXTURE0)
+	// gl.BindTexture(gl.TEXTURE_2D, textureID)
 
 	// modelMatrix := entities.WorldTransform(entity)
 	// modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
-	gl.BindVertexArray(menus.BATCH_VAO)
-	r.iztDrawElements(menus.BATCH_NUM_VERTICES)
+	for _, batch := range menus.BATCHES {
+		var textureID uint32
+		textureName := settings.DefaultTexture
+		if batch.TextureName != "" {
+			textureName = batch.TextureName
+		}
+		texture := r.app.AssetManager().GetTexture(textureName)
+		textureID = texture.ID
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, textureID)
+
+		gl.BindVertexArray(batch.VAO)
+		r.iztDrawElements(batch.VertexCount)
+	}
 }
 
 func (r *RenderSystem) drawModel(

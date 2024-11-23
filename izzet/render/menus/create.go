@@ -8,6 +8,7 @@ import (
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
@@ -63,12 +64,12 @@ func create(app renderiface.App) {
 }
 
 var BATCH_CREATED bool
-var BATCH_VAO uint32
-var BATCH_NUM_VERTICES int32
 var BATCH_RENDER bool
 
+var BATCHES []assets.Batch
+
 func createStaticBatch(app renderiface.App) {
-	var primitives []types.MeshHandle
+	var meshHandles []types.MeshHandle
 
 	var modelMatrices []mgl32.Mat4
 	for _, entity := range app.World().Entities() {
@@ -77,17 +78,19 @@ func createStaticBatch(app renderiface.App) {
 		}
 
 		meshHandle := entity.MeshComponent.MeshHandle
-		primitives = append(primitives, meshHandle)
+		ps := app.AssetManager().GetPrimitives(meshHandle)
+		if ps[0].Primitive.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName == "" {
+			fmt.Println("HI")
+		}
+		meshHandles = append(meshHandles, meshHandle)
 
 		modelMatrix := entities.WorldTransform(entity)
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
 
 		modelMatrices = append(modelMatrices, modelMat)
 	}
-	vao, num_vertices := app.AssetManager().CreateBatch(primitives, modelMatrices)
+	BATCHES = app.AssetManager().CreateBatch(meshHandles, modelMatrices)
 	BATCH_CREATED = true
-	BATCH_VAO = vao
-	BATCH_NUM_VERTICES = num_vertices
 }
 
 func createMaterial(app renderiface.App) {

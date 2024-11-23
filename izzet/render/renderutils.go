@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -189,6 +190,45 @@ type RenderData struct {
 	Transform   mgl32.Mat4
 	VAO         uint32
 	GeometryVAO uint32
+}
+
+func (r *RenderSystem) drawBatch(
+	// viewerContext ViewerContext,
+	// lightContext LightContext,
+	shader *shaders.ShaderProgram,
+	// entity *entities.Entity,
+	// vao uint32,
+) {
+	shader.SetUniformInt("isAnimated", 0)
+
+	entity := r.app.World().GetEntityByID(1659)
+
+	p := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)[0]
+
+	primitiveMaterial := p.Primitive.PBRMaterial.PBRMetallicRoughness
+	shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
+
+	shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+	shader.SetUniformVec3("albedo", primitiveMaterial.BaseColorFactor.Vec3())
+	shader.SetUniformFloat("roughness", primitiveMaterial.RoughnessFactor)
+	shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
+
+	// main diffuse texture
+
+	var textureID uint32
+	textureName := p.Primitive.TextureName()
+	texture := r.app.AssetManager().GetTexture(textureName)
+	textureID = texture.ID
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, textureID)
+
+	// modelMatrix := entities.WorldTransform(entity)
+	// modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+	shader.SetUniformMat4("model", mgl32.Scale3D(0.01, 0.01, 0.01))
+
+	gl.BindVertexArray(menus.BATCH_VAO)
+	r.iztDrawElements(menus.BATCH_NUM_VERTICES)
 }
 
 func (r *RenderSystem) drawModel(

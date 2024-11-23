@@ -643,6 +643,10 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, r
 			continue
 		}
 
+		if menus.BATCH_CREATED && entity.Static {
+			continue
+		}
+
 		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
 			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
@@ -698,6 +702,10 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 
 	for _, entity := range renderableEntities {
 		if entity == nil || entity.MeshComponent == nil {
+			continue
+		}
+
+		if menus.BATCH_CREATED && entity.Static {
 			continue
 		}
 
@@ -875,6 +883,10 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 			continue
 		}
 
+		if menus.BATCH_CREATED && entity.Static {
+			continue
+		}
+
 		if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
 			continue
 		}
@@ -892,6 +904,11 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 	}
 
 	r.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
+
+	if menus.BATCH_CREATED {
+		r.drawBatch(shader)
+		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
+	}
 
 	if r.app.RuntimeConfig().ShowColliders {
 		shader := shaderManager.GetShaderProgram("flat")

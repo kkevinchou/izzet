@@ -78,10 +78,6 @@ func createStaticBatch(app renderiface.App) {
 		}
 
 		meshHandle := entity.MeshComponent.MeshHandle
-		ps := app.AssetManager().GetPrimitives(meshHandle)
-		if ps[0].Primitive.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName == "" {
-			fmt.Println("HI")
-		}
 		meshHandles = append(meshHandles, meshHandle)
 
 		modelMatrix := entities.WorldTransform(entity)

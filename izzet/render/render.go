@@ -915,6 +915,54 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 	r.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
 
 	if menus.BATCH_CREATED && menus.BATCH_RENDER {
+		shader.SetUniformInt("hasColorOverride", 0)
+		shader = r.shaderManager.GetShaderProgram("batch")
+		shader.Use()
+
+		if r.app.RuntimeConfig().FogEnabled {
+			shader.SetUniformInt("fog", 1)
+		} else {
+			shader.SetUniformInt("fog", 0)
+		}
+
+		var fog int32 = 0
+		if r.app.RuntimeConfig().FogDensity != 0 {
+			fog = 1
+		}
+		shader.SetUniformInt("fog", fog)
+		shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
+
+		shader.SetUniformInt("width", int32(renderContext.width))
+		shader.SetUniformInt("height", int32(renderContext.height))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformInt("cameraDepthMap", 29)
+
+		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+		if len(lightContext.PointLights) > 0 {
+			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+		}
+		shader.SetUniformInt("hasColorOverride", 0)
+
+		setupLightingUniforms(shader, lightContext.Lights)
+
+		gl.ActiveTexture(gl.TEXTURE29)
+		gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
+
+		gl.ActiveTexture(gl.TEXTURE30)
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+
+		gl.ActiveTexture(gl.TEXTURE31)
+		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+
 		r.drawBatch(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}

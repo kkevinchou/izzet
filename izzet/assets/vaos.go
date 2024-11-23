@@ -19,12 +19,13 @@ type Batch struct {
 	vertexAttributes      []float32
 	jointIDsAttribute     []int32
 	jointWeightsAttribute []float32
+	entityIDs             []uint32
 
 	uniqueVertexCount int
 	vertexIndices     []uint32
 }
 
-func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4) []Batch {
+func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
 	batches := map[string]*Batch{}
 
 	for i, meshHandle := range meshHandles {
@@ -56,6 +57,7 @@ func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices
 					batch.jointIDsAttribute = append(batch.jointIDsAttribute, int32(id))
 				}
 				batch.jointWeightsAttribute = append(batch.jointWeightsAttribute, weights...)
+				batch.entityIDs = append(batch.entityIDs, entityIDs[i])
 			}
 
 			vertexIndexOffset := batch.uniqueVertexCount
@@ -120,6 +122,14 @@ func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices
 		gl.BufferData(gl.ARRAY_BUFFER, len(batch.jointWeightsAttribute)*4, gl.Ptr(batch.jointWeightsAttribute), gl.STATIC_DRAW)
 		gl.VertexAttribPointer(5, int32(settings.MaxAnimationJointWeights), gl.FLOAT, false, int32(settings.MaxAnimationJointWeights)*4, nil)
 		gl.EnableVertexAttribArray(5)
+
+		// lay out the joint IDs in a VBO
+		var vboEntityIDs uint32
+		apputils.GenBuffers(1, &vboEntityIDs)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vboEntityIDs)
+		gl.BufferData(gl.ARRAY_BUFFER, len(batch.entityIDs)*4, gl.Ptr(batch.entityIDs), gl.STATIC_DRAW)
+		gl.VertexAttribIPointer(6, 1, gl.UNSIGNED_INT, 4, nil)
+		gl.EnableVertexAttribArray(6)
 
 		// set up the EBO, each triplet of indices point to three vertices
 		// that form a triangle.

@@ -72,6 +72,7 @@ func createStaticBatch(app renderiface.App) {
 	var meshHandles []types.MeshHandle
 
 	var modelMatrices []mgl32.Mat4
+	var ids []uint32
 	for _, entity := range app.World().Entities() {
 		if entity.MeshComponent == nil || !entity.Static {
 			continue
@@ -84,8 +85,9 @@ func createStaticBatch(app renderiface.App) {
 		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
 
 		modelMatrices = append(modelMatrices, modelMat)
+		ids = append(ids, uint32(entity.GetID()))
 	}
-	BATCHES = app.AssetManager().CreateBatch(meshHandles, modelMatrices)
+	BATCHES = app.AssetManager().CreateBatch(meshHandles, modelMatrices, ids)
 	BATCH_CREATED = true
 }
 

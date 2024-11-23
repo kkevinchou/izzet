@@ -402,7 +402,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// store color picking entity
 	start = time.Now()
-	r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
+	if r.app.AppMode() == mode.AppModeEditor {
+		r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
+	}
 	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
 	var hdrColorTexture uint32

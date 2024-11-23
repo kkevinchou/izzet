@@ -577,21 +577,6 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 		if primitive.Material != nil {
 			gltfMaterialIndex := int(*primitive.Material)
 			primitiveSpec.MaterialIndex = materialIndexMapping[gltfMaterialIndex]
-			// material := document.Materials[gltfMaterialIndex]
-			// pbr := *material.PBRMetallicRoughness
-			// primitiveSpec.PBRMaterial = &modelspec.PBRMaterial{
-			// 	PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
-			// 		BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
-			// 		MetalicFactor:   *pbr.MetallicFactor,
-			// 		RoughnessFactor: *pbr.RoughnessFactor,
-			// 	},
-			// }
-			// if pbr.BaseColorTexture != nil {
-			// 	var intIndex int = int(pbr.BaseColorTexture.Index)
-			// 	primitiveSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
-			// 	primitiveSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
-			// 	primitiveSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
-			// }
 		}
 
 		for attribute, index := range primitive.Attributes {

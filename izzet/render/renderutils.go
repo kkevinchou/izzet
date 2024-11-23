@@ -299,15 +299,14 @@ func (r *RenderSystem) drawModel(
 			}
 		} else if entity.Material == nil {
 			materialHandle := p.MaterialHandle
-			material := r.app.AssetManager().GetMaterial(materialHandle)
+			primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle)
+			material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 
-			primitiveMaterial := material.PBRMaterial.PBRMetallicRoughness
-			shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
-
-			if primitiveMaterial.BaseColorTextureIndex != nil {
+			if material.BaseColorTextureName != "" {
+				shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
 				shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 
-				textureName := material.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
+				textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
 				gl.ActiveTexture(gl.TEXTURE0)
 				var textureID uint32
 				texture := r.app.AssetManager().GetTexture(textureName)
@@ -317,9 +316,9 @@ func (r *RenderSystem) drawModel(
 				shader.SetUniformInt("hasPBRBaseColorTexture", 0)
 			}
 
-			shader.SetUniformVec3("albedo", primitiveMaterial.BaseColorFactor.Vec3())
-			shader.SetUniformFloat("roughness", primitiveMaterial.RoughnessFactor)
-			shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
+			shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
+			shader.SetUniformFloat("roughness", material.RoughnessFactor)
+			shader.SetUniformFloat("metallic", material.MetalicFactor)
 		}
 
 		modelMatrix := entities.WorldTransform(entity)

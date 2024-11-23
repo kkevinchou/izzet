@@ -40,6 +40,17 @@ func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 	return NewHandle("global", "cube")
 }
 
+func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
+	return types.MaterialHandle{Namespace: "global"}
+}
+
+func (m *AssetManager) GetMaterial(handle types.MaterialHandle) modelspec.MaterialSpecification {
+	if material, ok := m.Materials[handle]; ok {
+		return material
+	}
+	return m.Materials[m.GetDefaultMaterialHandle()]
+}
+
 // TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
 //		- ideally we have a static and typed handle that we can easily reference from anywhere in the code
 //		- this handle should be all we need to construct the mesh component

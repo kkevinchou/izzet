@@ -431,7 +431,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-// registerSingleEntity registers the asset found at assetFilePath with the model library and asset manager
+// registerSingleEntity registers the asset found at assetFilePath
 func (g *Client) registerSingleEntity(assetFilePath string) bool {
 	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 	if g.AssetManager().LoadDocument(baseFileName, assetFilePath) {
@@ -443,7 +443,7 @@ func (g *Client) registerSingleEntity(assetFilePath string) bool {
 }
 
 // TODO - import props? single vs multiple entities, animation, material, etc
-// ImportToContentBrowser registers the asset found at assetFilePath with the model library and asset manager
+// ImportToContentBrowser registers the asset found at assetFilePath
 // then, the asset is registered with the content browser
 func (g *Client) ImportToContentBrowser(assetFilePath string) {
 	if g.registerSingleEntity(assetFilePath) {

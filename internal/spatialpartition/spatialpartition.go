@@ -122,6 +122,7 @@ func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 			partition.entities[entity.GetID()] = entity
 			if !s.entityPartitionCache[entity.GetID()].Valid {
 				s.entityPartitionCache[entity.GetID()].Partitions = map[PartitionKey]any{}
+				s.entityPartitionCache[entity.GetID()].Valid = true
 			}
 			s.entityPartitionCache[entity.GetID()].Partitions[partition.Key] = partitionKey
 		}

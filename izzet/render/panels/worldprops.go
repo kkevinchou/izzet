@@ -7,6 +7,7 @@ import (
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
@@ -131,6 +132,9 @@ func worldProps(app renderiface.App) {
 
 		panelutils.SetupRow("Debug Color", func() {
 			imgui.ColorEdit3V("", &runtimeConfig.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+		}, true)
+		panelutils.SetupRow("Batch Render", func() {
+			imgui.Checkbox("", &menus.BATCH_RENDER)
 		}, true)
 		imgui.EndTable()
 	}

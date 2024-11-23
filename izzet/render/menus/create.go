@@ -65,6 +65,7 @@ func create(app renderiface.App) {
 var BATCH_CREATED bool
 var BATCH_VAO uint32
 var BATCH_NUM_VERTICES int32
+var BATCH_RENDER bool
 
 func createStaticBatch(app renderiface.App) {
 	var primitives []types.MeshHandle

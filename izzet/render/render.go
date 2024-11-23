@@ -643,7 +643,7 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, r
 			continue
 		}
 
-		if menus.BATCH_CREATED && entity.Static {
+		if menus.BATCH_CREATED && entity.Static && menus.BATCH_RENDER {
 			continue
 		}
 
@@ -672,6 +672,11 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, r
 			gl.BindVertexArray(p.GeometryVAO)
 			r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
+	}
+
+	if menus.BATCH_CREATED && menus.BATCH_RENDER {
+		r.drawBatch(shader)
+		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
@@ -705,7 +710,7 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 			continue
 		}
 
-		if menus.BATCH_CREATED && entity.Static {
+		if menus.BATCH_CREATED && entity.Static && menus.BATCH_RENDER {
 			continue
 		}
 
@@ -734,6 +739,10 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 			gl.BindVertexArray(p.GeometryVAO)
 			r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
+	}
+	if menus.BATCH_CREATED && menus.BATCH_RENDER {
+		r.drawBatch(shader)
+		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
@@ -883,7 +892,7 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 			continue
 		}
 
-		if menus.BATCH_CREATED && entity.Static {
+		if menus.BATCH_CREATED && entity.Static && menus.BATCH_RENDER {
 			continue
 		}
 
@@ -905,7 +914,7 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 
 	r.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
 
-	if menus.BATCH_CREATED {
+	if menus.BATCH_CREATED && menus.BATCH_RENDER {
 		r.drawBatch(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}

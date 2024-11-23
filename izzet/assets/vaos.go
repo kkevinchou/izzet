@@ -11,6 +11,11 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
+type Batch struct {
+	VAO         uint32
+	VertexCount int32
+}
+
 func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4) (uint32, int32) {
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
@@ -28,7 +33,8 @@ func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices
 		// set up the source data for the VBOs
 		for _, vertex := range p.UniqueVertices {
 			position := modelMatrices[i].Mul4x1(vertex.Position.Vec4(1))
-			normal := vertex.Normal
+			// vec3(transpose(inverse(model)) * totalNormal);
+			normal := modelMatrices[i].Inv().Transpose().Mul4x1(vertex.Normal.Vec4(1))
 			texture0Coords := vertex.Texture0Coords
 			texture1Coords := vertex.Texture1Coords
 			jointIDs := vertex.JointIDs

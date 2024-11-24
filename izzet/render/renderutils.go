@@ -208,12 +208,6 @@ func (r *RenderSystem) drawBatches(
 		shader.SetUniformFloat("roughness", material.RoughnessFactor)
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
-		// var textureID uint32
-		// texture := r.app.AssetManager().GetTexture(material.BaseColorTextureName)
-		// textureID = texture.ID
-		// gl.ActiveTexture(gl.TEXTURE0)
-		// gl.BindTexture(gl.TEXTURE_2D, textureID)
-
 		if material.BaseColorTextureName != "" {
 			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
 			shader.SetUniformInt("hasPBRBaseColorTexture", 1)

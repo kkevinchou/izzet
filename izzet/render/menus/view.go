@@ -16,7 +16,6 @@ const (
 	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
 	ComboOptionCubeDepthMap   DebugComboOption = "CUBE DEPTH MAP"
 	ComboOptionVolumetric     DebugComboOption = "VOLUMETRIC"
-	ComboOptionKuwahara       DebugComboOption = "KUWAHARA"
 )
 
 var SelectedDebugComboOption DebugComboOption = ComboOptionFinalRender
@@ -30,7 +29,6 @@ var (
 		ComboOptionShadowDepthMap,
 		ComboOptionCameraDepthMap,
 		ComboOptionVolumetric,
-		ComboOptionKuwahara,
 	}
 )
 
@@ -60,10 +58,6 @@ func view(app renderiface.App, renderContext RenderContext) {
 
 		if imgui.MenuItemBoolV("Show Texture Viewer", "", runtimeConfig.ShowTextureViewer, true) {
 			runtimeConfig.ShowTextureViewer = !runtimeConfig.ShowTextureViewer
-		}
-
-		if imgui.MenuItemBoolV("Enable Post Processing", "", runtimeConfig.EnablePostProcessing, true) {
-			runtimeConfig.EnablePostProcessing = !runtimeConfig.EnablePostProcessing
 		}
 
 		imgui.EndMenu()

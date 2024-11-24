@@ -4,7 +4,6 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform int kuwahara;
-uniform int doPostProcessing;
 uniform sampler2D image;
 
 const float A = 2.51;

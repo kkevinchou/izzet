@@ -111,7 +111,6 @@ type RuntimeConfig struct {
 	CloudTextures                  [2]CloudTexture
 
 	// post processing
-	EnablePostProcessing       bool
 	WindowEnablePostProcessing bool
 	KuwaharaFilter             bool
 
@@ -273,7 +272,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 				WorkGroupDepth:  128,
 			},
 		},
-		EnablePostProcessing:       true,
 		WindowEnablePostProcessing: true,
 	}
 }

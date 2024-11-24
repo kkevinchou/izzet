@@ -232,8 +232,6 @@ func (r *RenderSystem) drawBatches(
 }
 
 func (r *RenderSystem) drawModel(
-	viewerContext ViewerContext,
-	lightContext LightContext,
 	shader *shaders.ShaderProgram,
 	entity *entities.Entity,
 ) {

@@ -909,8 +909,6 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 		shader.SetUniformUInt("entityID", uint32(entity.ID))
 
 		r.drawModel(
-			viewerContext,
-			lightContext,
 			shader,
 			entity,
 		)

@@ -65,7 +65,6 @@ func create(app renderiface.App) {
 
 var BATCH_CREATED bool
 var BATCH_RENDER bool
-
 var BATCHES []assets.Batch
 
 func createStaticBatch(app renderiface.App) {

@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -194,49 +195,47 @@ type RenderData struct {
 func (r *RenderSystem) drawBatch(
 	shader *shaders.ShaderProgram,
 ) {
-	return
-	// shader.SetUniformInt("isAnimated", 0)
+	shader.SetUniformInt("isAnimated", 0)
+	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
-	// entity := r.app.World().GetEntityByID(1659)
+	for _, batch := range menus.BATCHES {
+		primitiveMaterial := r.app.AssetManager().GetMaterial(batch.MaterialHandle)
 
-	// p := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)[0]
+		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
+		shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
 
-	// primitiveMaterial := p.Primitive.PBRMaterial.PBRMetallicRoughness
-	// shader.SetUniformInt("colorTextureCoordIndex", int32(primitiveMaterial.BaseColorTextureCoordsIndex))
+		shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
+		shader.SetUniformFloat("roughness", material.RoughnessFactor)
+		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
-	// shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-	// shader.SetUniformVec3("albedo", primitiveMaterial.BaseColorFactor.Vec3())
-	// shader.SetUniformFloat("roughness", primitiveMaterial.RoughnessFactor)
-	// shader.SetUniformFloat("metallic", primitiveMaterial.MetalicFactor)
+		// var textureID uint32
+		// texture := r.app.AssetManager().GetTexture(material.BaseColorTextureName)
+		// textureID = texture.ID
+		// gl.ActiveTexture(gl.TEXTURE0)
+		// gl.BindTexture(gl.TEXTURE_2D, textureID)
 
-	// // main diffuse texture
+		if material.BaseColorTextureName != "" {
+			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
+			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 
-	// // var textureID uint32
-	// // textureName := p.Primitive.TextureName()
-	// // texture := r.app.AssetManager().GetTexture(textureName)
-	// // textureID = texture.ID
+			textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
+			gl.ActiveTexture(gl.TEXTURE0)
+			var textureID uint32
+			texture := r.app.AssetManager().GetTexture(textureName)
+			textureID = texture.ID
+			gl.BindTexture(gl.TEXTURE_2D, textureID)
+		} else {
+			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		}
 
-	// // gl.ActiveTexture(gl.TEXTURE0)
-	// // gl.BindTexture(gl.TEXTURE_2D, textureID)
+		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
+		shader.SetUniformFloat("roughness", material.RoughnessFactor)
+		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
-	// // modelMatrix := entities.WorldTransform(entity)
-	// // modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
-	// shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
-
-	// for _, batch := range menus.BATCHES {
-	// 	var textureID uint32
-	// 	textureName := settings.DefaultTexture
-	// 	if batch.TextureName != "" {
-	// 		textureName = batch.TextureName
-	// 	}
-	// 	texture := r.app.AssetManager().GetTexture(textureName)
-	// 	textureID = texture.ID
-	// 	gl.ActiveTexture(gl.TEXTURE0)
-	// 	gl.BindTexture(gl.TEXTURE_2D, textureID)
-
-	// 	gl.BindVertexArray(batch.VAO)
-	// 	r.iztDrawElements(batch.VertexCount)
-	// }
+		gl.BindVertexArray(batch.VAO)
+		r.iztDrawElements(batch.VertexCount)
+	}
 }
 
 func (r *RenderSystem) drawModel(

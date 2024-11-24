@@ -28,13 +28,15 @@ const (
 
 	MaxEntityCount int = 10000
 
-	// MSPerCommandFrame is the size of the simulation step for reading input,
-	// physics, etc.
-	MSPerCommandFrame    int = 10
+	// MSPerGameStateUpdate is the duration between each game state update sent from server to client
 	MSPerGameStateUpdate int = 100
 
-	// number of rendered frames per second, separate from command frames
-	FPS int = 100
+	// FPS is the number of rendered frames per second, separate from command frames
+	FPS int = 144
+
+	// MSPerCommandFrame is the size of the simulation step for reading input,
+	// physics, etc.
+	MSPerCommandFrame int = 8
 
 	// the maximum number of command frames to execute in a single loop to prevent the spiral of death
 	MaxCommandFramesPerLoop int = 3
@@ -57,7 +59,7 @@ const (
 	// ShadowMapDistanceFactor float64 = .4  // proportion of view fustrum to include in shadow cuboid
 	ShadowMapDistanceFactor float64 = 1 // proportion of view fustrum to include in shadow cuboid
 
-	DefaultTexture string = "asdf"
+	DefaultTexture string = "color_grid"
 
 	GizmoAxisThickness  float64 = 0.08
 	GizmoDistanceFactor float64 = 8

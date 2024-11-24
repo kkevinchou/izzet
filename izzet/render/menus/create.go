@@ -6,15 +6,11 @@ import (
 	"path/filepath"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/utils"
 	"github.com/sqweek/dialog"
 )
 
@@ -53,7 +49,7 @@ func create(app renderiface.App) {
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
 		}
 		if imgui.MenuItemBool("Bake Static Geometry") {
-			createStaticBatch(app)
+			app.CreateBatch()
 		}
 		imgui.EndMenu()
 	}
@@ -61,34 +57,6 @@ func create(app renderiface.App) {
 	if createMaterialModel {
 		createMaterial(app)
 	}
-}
-
-var BATCH_CREATED bool
-var BATCH_RENDER bool
-
-var BATCHES []assets.Batch
-
-func createStaticBatch(app renderiface.App) {
-	var meshHandles []types.MeshHandle
-
-	var modelMatrices []mgl32.Mat4
-	var ids []uint32
-	for _, entity := range app.World().Entities() {
-		if entity.MeshComponent == nil || !entity.Static {
-			continue
-		}
-
-		meshHandle := entity.MeshComponent.MeshHandle
-		meshHandles = append(meshHandles, meshHandle)
-
-		modelMatrix := entities.WorldTransform(entity)
-		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
-
-		modelMatrices = append(modelMatrices, modelMat)
-		ids = append(ids, uint32(entity.GetID()))
-	}
-	BATCHES = app.AssetManager().CreateBatch(meshHandles, modelMatrices, ids)
-	BATCH_CREATED = true
 }
 
 func createMaterial(app renderiface.App) {

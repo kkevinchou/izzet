@@ -431,7 +431,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-// registerSingleEntity registers the asset found at assetFilePath with the model library and asset manager
+// registerSingleEntity registers the asset found at assetFilePath
 func (g *Client) registerSingleEntity(assetFilePath string) bool {
 	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 	if g.AssetManager().LoadDocument(baseFileName, assetFilePath) {
@@ -443,7 +443,7 @@ func (g *Client) registerSingleEntity(assetFilePath string) bool {
 }
 
 // TODO - import props? single vs multiple entities, animation, material, etc
-// ImportToContentBrowser registers the asset found at assetFilePath with the model library and asset manager
+// ImportToContentBrowser registers the asset found at assetFilePath
 // then, the asset is registered with the content browser
 func (g *Client) ImportToContentBrowser(assetFilePath string) {
 	if g.registerSingleEntity(assetFilePath) {
@@ -609,7 +609,7 @@ func (g *Client) SelectedEntity() *entities.Entity {
 
 func (g *Client) InstantiateEntity(entityHandle string) *entities.Entity {
 	document := g.AssetManager().GetDocument(entityHandle)
-	handle := assets.NewGlobalHandle(entityHandle)
+	handle := assets.NewSingleMeshHandle(entityHandle)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
 	}
@@ -760,4 +760,8 @@ func (g *Client) FindPath(start, goal mgl64.Vec3) {
 	for _, p := range path {
 		navmesh.PATHPOLYGONS[p] = true
 	}
+}
+
+func (g *Client) CreateBatch() {
+	g.renderSystem.CreateBatch()
 }

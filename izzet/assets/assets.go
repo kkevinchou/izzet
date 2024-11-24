@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -24,6 +25,7 @@ type AssetManager struct {
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
 	RootJoints map[string]int
+	Materials  map[types.MaterialHandle]modelspec.MaterialSpecification
 
 	processVisuals bool
 }
@@ -50,6 +52,7 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 		documents:      documents,
 		fonts:          loadedFonts,
 		Primitives:     map[types.MeshHandle][]Primitive{},
+		Materials:      map[types.MaterialHandle]modelspec.MaterialSpecification{},
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:         map[string]map[int]*modelspec.JointSpec{},
 		RootJoints:     map[string]int{},
@@ -58,7 +61,23 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 
 	if processVisualAssets {
 		handle := assetManager.GetCubeMeshHandle()
-		assetManager.registerMeshWithHandle(handle, cubeMesh(15))
+		assetManager.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
+
+		// default material
+		defaultMaterialHandle := assetManager.GetDefaultMaterialHandle()
+		assetManager.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
+			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
+		}
+
+		// TODO: CHEATING - set up all materials prior to registering meshes
+		// this will not work for dynamically loaded assets. only the ones loaded on startup
+
+		for _, document := range assetManager.documents {
+			for _, material := range document.Materials {
+				handle := NewMaterialHandle(document.Name, material.ID)
+				assetManager.Materials[handle] = material
+			}
+		}
 	}
 
 	return &assetManager

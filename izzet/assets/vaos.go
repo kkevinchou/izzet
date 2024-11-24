@@ -12,9 +12,9 @@ import (
 )
 
 type Batch struct {
-	VAO         uint32
-	VertexCount int32
-	TextureName string
+	VAO            uint32
+	VertexCount    int32
+	MaterialHandle types.MaterialHandle
 
 	vertexAttributes      []float32
 	jointIDsAttribute     []int32
@@ -26,16 +26,14 @@ type Batch struct {
 }
 
 func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
-	batches := map[string]*Batch{}
+	batches := map[types.MaterialHandle]*Batch{}
 
 	for i, meshHandle := range meshHandles {
 		for _, p := range m.GetPrimitives(meshHandle) {
-			textureName := p.Primitive.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
-
-			if _, ok := batches[textureName]; !ok {
-				batches[textureName] = &Batch{TextureName: textureName}
+			if _, ok := batches[p.MaterialHandle]; !ok {
+				batches[p.MaterialHandle] = &Batch{MaterialHandle: p.MaterialHandle}
 			}
-			batch := batches[textureName]
+			batch := batches[p.MaterialHandle]
 
 			for _, vertex := range p.Primitive.UniqueVertices {
 				position := modelMatrices[i].Mul4x1(vertex.Position.Vec4(1))

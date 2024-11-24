@@ -22,22 +22,39 @@ type Primitive struct {
 	// i.e. vertex positions and joint indices / weights
 	// but not normals, texture coords
 	GeometryVAO uint32
+
+	MaterialHandle types.MaterialHandle
 }
 
-func NewGlobalHandle(id string) types.MeshHandle {
-	return NewHandle(NamespaceGlobal, id)
+func NewSingleMeshHandle(namespace string) types.MeshHandle {
+	return NewMeshHandle(namespace, "0")
 }
 
 func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
-	return NewHandle(namespace, fmt.Sprintf("%d", meshID))
+	return NewMeshHandle(namespace, fmt.Sprintf("%d", meshID))
 }
 
-func NewHandle(namespace string, id string) types.MeshHandle {
+func NewMeshHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
+func NewMaterialHandle(namespace string, id string) types.MaterialHandle {
+	return types.MaterialHandle{Namespace: namespace, ID: id}
+}
+
 func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
-	return NewHandle("global", "cube")
+	return NewMeshHandle("global", "cube")
+}
+
+func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
+	return types.MaterialHandle{Namespace: "global"}
+}
+
+func (m *AssetManager) GetMaterial(handle types.MaterialHandle) modelspec.MaterialSpecification {
+	if material, ok := m.Materials[handle]; ok {
+		return material
+	}
+	return m.Materials[m.GetDefaultMaterialHandle()]
 }
 
 // TODO - need to answer questions around how we know what mesh data to reference when spawning an entity
@@ -54,16 +71,14 @@ func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 func (m *AssetManager) RegisterSingleEntityDocument(document *modelspec.Document) {
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
-			handle := NewGlobalHandle(document.Name)
-			primitives := m.getPrimitives(document, node)
-			m.Primitives[handle] = primitives
+			m.registerMeshesInNode(document, node)
 		}
 	}
 }
 
 func (m *AssetManager) RegisterMesh(namespace string, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	handle := NewHandleFromMeshID(namespace, mesh.ID)
-	m.registerMeshWithHandle(handle, mesh)
+	m.registerMeshPrimitivesWithHandle(handle, mesh)
 	return handle
 }
 
@@ -85,47 +100,25 @@ func (m *AssetManager) GetPrimitives(handle types.MeshHandle) []Primitive {
 	return m.Primitives[handle]
 }
 
-func (m *AssetManager) getPrimitives(doc *modelspec.Document, node *modelspec.Node) []Primitive {
+func (m *AssetManager) registerMeshesInNode(doc *modelspec.Document, node *modelspec.Node) {
+	handle := NewSingleMeshHandle(doc.Name)
 	q := []*modelspec.Node{node}
-
-	var result []Primitive
 
 	for len(q) > 0 {
 		var nextLayerNodes []*modelspec.Node
 		for _, node := range q {
 			if node.MeshID != nil {
 				mesh := doc.Meshes[*node.MeshID]
-
-				var vaos [][]uint32
-				var geometryVAOs [][]uint32
-				if m.processVisuals {
-					vaos = createVAOs([]*modelspec.MeshSpecification{mesh})
-					geometryVAOs = createGeometryVAOs([]*modelspec.MeshSpecification{mesh})
-				}
-
-				for i, primitive := range mesh.Primitives {
-					p := Primitive{
-						Primitive: primitive,
-					}
-
-					if m.processVisuals {
-						p.VAO = vaos[0][i]
-						p.GeometryVAO = geometryVAOs[0][i]
-					}
-
-					result = append(result, p)
-				}
+				m.registerMeshPrimitivesWithHandle(handle, mesh)
 			}
 
 			nextLayerNodes = append(nextLayerNodes, node.Children...)
 		}
 		q = nextLayerNodes
 	}
-
-	return result
 }
 
-func (m *AssetManager) registerMeshWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {
@@ -141,6 +134,7 @@ func (m *AssetManager) registerMeshWithHandle(handle types.MeshHandle, mesh *mod
 		if m.processVisuals {
 			p.VAO = vaos[0][i]
 			p.GeometryVAO = geometryVAOs[0][i]
+			p.MaterialHandle = NewMaterialHandle(handle.Namespace, primitive.MaterialIndex)
 		}
 
 		m.Primitives[handle] = append(m.Primitives[handle], p)

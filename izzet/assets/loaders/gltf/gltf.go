@@ -100,16 +100,20 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		document.Textures = append(document.Textures, name)
 	}
 
-	// indexToMeshes is a map from the mesh index in the gltf document, to a list of
-	// primitive ids
+	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures)
+	if err != nil {
+		assetslog.Logger.Println(err)
+		return nil, err
+	}
+	document.Materials = materialSpecs
 
 	for i, mesh := range gltfDocument.Meshes {
-		mat := mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 0, -1}).Mat4()
-		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, mat, document.Textures, config)
+		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, materialIndexMapping, config)
 		if err != nil {
 			assetslog.Logger.Println(err)
 			return nil, err
 		}
+
 		meshSpec := &modelspec.MeshSpecification{ID: i, Primitives: primitiveSpecs}
 		document.Meshes = append(document.Meshes, meshSpec)
 	}
@@ -513,11 +517,44 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 	return parsedJoints, nil
 }
 
+// parseMaterialSpecs creates MaterialSpecifications from the gltf materials list
+// we also return an id mapping from the gltf id to the internal material id
+// (this might be overkill since their ids are probably also zero index and incrementing)
+func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.MaterialSpecification, map[int]string, error) {
+	var materials []modelspec.MaterialSpecification
+	idMapping := map[int]string{}
+
+	for gltfIdx, gltfMaterial := range document.Materials {
+		pbr := *gltfMaterial.PBRMetallicRoughness
+		pbrMaterial := &modelspec.PBRMaterial{
+			PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
+				BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
+				MetalicFactor:   *pbr.MetallicFactor,
+				RoughnessFactor: *pbr.RoughnessFactor,
+			},
+		}
+		if pbr.BaseColorTexture != nil {
+			var intIndex int = int(pbr.BaseColorTexture.Index)
+			pbrMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
+			pbrMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
+			pbrMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
+		}
+		material := modelspec.MaterialSpecification{
+			ID:          fmt.Sprintf("%d", gltfIdx),
+			PBRMaterial: pbrMaterial,
+		}
+
+		idMapping[gltfIdx] = fmt.Sprintf("%d", len(materials))
+		materials = append(materials, material)
+	}
+	return materials, idMapping, nil
+}
+
 // parsePrimitiveSpecs takes a gltf mesh and creates a primitive spec for each primitive within the mesh
 // index - the index of the mesh, since meshes can have multiple primitives, we can have
 // mesh model specifications with the same index. this is okay, external applications should
 // not reference this and instead use the mesh id
-func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, parentTransforms mgl32.Mat4, textures []string, config *ParseConfig) ([]*modelspec.PrimitiveSpecification, error) {
+func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]string, config *ParseConfig) ([]*modelspec.PrimitiveSpecification, error) {
 	var primitiveSpecs []*modelspec.PrimitiveSpecification
 
 	if len(mesh.Primitives) > 1 {
@@ -538,22 +575,8 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, parentTransfo
 		primitiveSpec.VertexIndices = meshIndices
 
 		if primitive.Material != nil {
-			materialIndex := int(*primitive.Material)
-			material := document.Materials[materialIndex]
-			pbr := *material.PBRMetallicRoughness
-			primitiveSpec.PBRMaterial = &modelspec.PBRMaterial{
-				PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
-					BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
-					MetalicFactor:   *pbr.MetallicFactor,
-					RoughnessFactor: *pbr.RoughnessFactor,
-				},
-			}
-			if pbr.BaseColorTexture != nil {
-				var intIndex int = int(pbr.BaseColorTexture.Index)
-				primitiveSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
-				primitiveSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
-				primitiveSpec.PBRMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
-			}
+			gltfMaterialIndex := int(*primitive.Material)
+			primitiveSpec.MaterialIndex = materialIndexMapping[gltfMaterialIndex]
 		}
 
 		for attribute, index := range primitive.Attributes {

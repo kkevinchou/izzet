@@ -218,7 +218,7 @@ func (r *RenderSystem) drawBatches(
 			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
 			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 
-			textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
+			textureName := material.BaseColorTextureName
 			gl.ActiveTexture(gl.TEXTURE0)
 			var textureID uint32
 			texture := r.app.AssetManager().GetTexture(textureName)

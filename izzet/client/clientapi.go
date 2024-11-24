@@ -761,3 +761,7 @@ func (g *Client) FindPath(start, goal mgl64.Vec3) {
 		navmesh.PATHPOLYGONS[p] = true
 	}
 }
+
+func (g *Client) CreateBatch() {
+	g.renderSystem.CreateBatch()
+}

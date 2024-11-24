@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/renderers"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/mode"
@@ -110,6 +111,8 @@ type RenderSystem struct {
 	// volumetricWorleyTexture uint32
 	// volumetricFBO           uint32
 	// volumetricRenderTexture uint32
+
+	batchRenders []assets.Batch
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -645,7 +648,7 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, r
 			continue
 		}
 
-		if menus.BATCH_CREATED && entity.Static && menus.BATCH_RENDER {
+		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
 			continue
 		}
 
@@ -676,8 +679,8 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, r
 		}
 	}
 
-	if menus.BATCH_CREATED && menus.BATCH_RENDER {
-		r.drawBatch(shader)
+	if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 {
+		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 }
@@ -712,7 +715,7 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 			continue
 		}
 
-		if menus.BATCH_CREATED && entity.Static && menus.BATCH_RENDER {
+		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
 			continue
 		}
 
@@ -742,8 +745,8 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 			r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
 	}
-	if menus.BATCH_CREATED && menus.BATCH_RENDER {
-		r.drawBatch(shader)
+	if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 {
+		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 }
@@ -893,7 +896,7 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 			continue
 		}
 
-		if menus.BATCH_CREATED && entity.Static && menus.BATCH_RENDER {
+		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
 			continue
 		}
 
@@ -915,7 +918,7 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 
 	r.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
 
-	if menus.BATCH_CREATED && menus.BATCH_RENDER {
+	if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 {
 		shader.SetUniformInt("hasColorOverride", 0)
 		shader = r.shaderManager.GetShaderProgram("batch")
 		shader.Use()
@@ -964,7 +967,7 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 		gl.ActiveTexture(gl.TEXTURE31)
 		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-		r.drawBatch(shader)
+		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 

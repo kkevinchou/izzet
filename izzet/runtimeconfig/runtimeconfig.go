@@ -114,6 +114,8 @@ type RuntimeConfig struct {
 	EnablePostProcessing       bool
 	WindowEnablePostProcessing bool
 	KuwaharaFilter             bool
+
+	BatchRenderingEnabled bool
 }
 
 type CloudTextureChannel struct {

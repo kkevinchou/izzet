@@ -14,7 +14,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/animation"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -192,13 +191,13 @@ type RenderData struct {
 	GeometryVAO uint32
 }
 
-func (r *RenderSystem) drawBatch(
+func (r *RenderSystem) drawBatches(
 	shader *shaders.ShaderProgram,
 ) {
 	shader.SetUniformInt("isAnimated", 0)
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
-	for _, batch := range menus.BATCHES {
+	for _, batch := range r.batchRenders {
 		primitiveMaterial := r.app.AssetManager().GetMaterial(batch.MaterialHandle)
 
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness

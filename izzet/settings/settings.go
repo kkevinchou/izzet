@@ -36,7 +36,7 @@ const (
 
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.
-	MSPerCommandFrame int = 16
+	MSPerCommandFrame int = 8
 
 	// the maximum number of command frames to execute in a single loop to prevent the spiral of death
 	MaxCommandFramesPerLoop int = 3

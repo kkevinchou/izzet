@@ -4,6 +4,8 @@
         "velociraptor": {"single_entity": true},
         "parasaurolophus": {"single_entity": true},
         "scene": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
-        "demo_scene_city": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} }
+        "demo_scene_battleroyale": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
+        "demo_scene_city": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
+        "demo_scene_dungeon": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} }
     }
 }

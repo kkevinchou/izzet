@@ -25,3 +25,7 @@ func SetupRow(label string, item func(), fillWidth bool) {
 func InitColumns() {
 	imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed|imgui.TableColumnFlagsNoResize, TableColumn0Width, 0)
 }
+
+// func InitColumns() {
+// 	imgui.TableSetupColumnV("0", imgui.TableColumnFlagsWidthFixed|imgui.TableColumnFlagsNoResize, TableColumn0Width, 0)
+// }

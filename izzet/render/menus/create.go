@@ -29,14 +29,14 @@ var (
 	tableFlags  imgui.TableFlags  = imgui.TableFlagsBordersInnerV
 )
 
-var createMaterialModel bool
+var showCreateMaterialModel bool
 
 func create(app renderiface.App) {
 	imgui.SetNextWindowSize(imgui.Vec2{X: 300})
 
 	if imgui.BeginMenu("Create") {
 		if imgui.MenuItemBool("Create Material") {
-			createMaterialModel = true
+			showCreateMaterialModel = true
 		}
 		if imgui.MenuItemBool("Build Nav Mesh") {
 			runtimeConfig := app.RuntimeConfig()
@@ -54,12 +54,12 @@ func create(app renderiface.App) {
 		imgui.EndMenu()
 	}
 
-	if createMaterialModel {
-		createMaterial(app)
+	if showCreateMaterialModel {
+		createMaterialModal(app)
 	}
 }
 
-func createMaterial(app renderiface.App) {
+func createMaterialModal(app renderiface.App) {
 	mat := &WIPMaterial
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
@@ -128,12 +128,12 @@ func createMaterial(app renderiface.App) {
 			materialIDGen++
 			WIPMaterial = defaultMaterial
 			WIPMaterial.ID = fmt.Sprintf("material-%d", materialIDGen)
-			createMaterialModel = false
+			showCreateMaterialModel = false
 			imgui.CloseCurrentPopup()
 		}
 		imgui.SameLine()
 		if imgui.Button("Cancel") {
-			createMaterialModel = false
+			showCreateMaterialModel = false
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()

@@ -3,12 +3,9 @@ package drawer
 import (
 	"C"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/sqweek/dialog"
 )
 import (
 	"unsafe"
@@ -21,26 +18,6 @@ var someBytes [3]byte
 
 func contentBrowser(app renderiface.App) bool {
 	var menuOpen bool
-
-	if imgui.Button("Import") {
-		// loading the asset
-		d := dialog.File()
-		currentDir, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		d = d.SetStartDir(filepath.Join(currentDir, "_assets", "gltf"))
-		d = d.Filter("GLTF file", "gltf")
-
-		assetFilePath, err := d.Load()
-		if err != nil {
-			if err != dialog.ErrCancelled {
-				panic(err)
-			}
-		} else {
-			app.ImportToContentBrowser(assetFilePath)
-		}
-	}
 
 	for i, item := range app.ContentBrowser().Items {
 		size := imgui.Vec2{X: 100, Y: 100}

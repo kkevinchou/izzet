@@ -26,7 +26,7 @@ const (
 	LoggingLevel       = 1
 	Seed         int64 = 1234567
 
-	MaxEntityCount int = 10000
+	MaxEntityCount int = 100000
 
 	// MSPerGameStateUpdate is the duration between each game state update sent from server to client
 	MSPerGameStateUpdate int = 100

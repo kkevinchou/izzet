@@ -432,32 +432,14 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 }
 
 // registerSingleEntity registers the asset found at assetFilePath
-func (g *Client) registerSingleEntity(assetFilePath string) bool {
+func (g *Client) registerSingleEntity(assetFilePath string) {
 	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
-	if g.AssetManager().LoadDocument(baseFileName, assetFilePath) {
-		document := g.AssetManager().GetDocument(baseFileName)
-		g.AssetManager().RegisterSingleEntityDocument(document)
-		return true
-	}
-	return false
+	g.AssetManager().LoadAndRegisterDocument(baseFileName, assetFilePath)
 }
 
-// TODO - import props? single vs multiple entities, animation, material, etc
-// ImportAsset registers the asset found at assetFilePath
-// then, the asset is registered with the content browser
 func (g *Client) ImportAsset(importAssetConfig renderiface.ImportAssetConfig) {
 	documentName := apputils.NameFromAssetFilePath(importAssetConfig.FilePath)
-	g.assetManager.LoadDocument(documentName, importAssetConfig.FilePath)
-	document := g.assetManager.GetDocument(documentName)
-	g.assetManager.RegisterSingleEntityDocument(document)
-	// if g.registerSingleEntity(importAssetConfig.FilePath) {
-	// 	g.ContentBrowser().AddGLTFModel(importAssetConfig.FilePath, document)
-
-	// 	var primitiveSpecs []*modelspec.PrimitiveSpecification
-	// 	for _, mesh := range document.Meshes {
-	// 		primitiveSpecs = append(primitiveSpecs, mesh.Primitives...)
-	// 	}
-	// }
+	g.assetManager.LoadAndRegisterDocument(documentName, importAssetConfig.FilePath)
 }
 
 func (g *Client) LoadProject(name string) bool {

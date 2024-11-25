@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -90,4 +91,25 @@ func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
 		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
 	}
 	return result
+}
+
+func (a *AssetManager) GetTexture(name string) *textures.Texture {
+	if _, ok := a.textures[name]; !ok {
+		panic(fmt.Sprintf("could not find texture %s", name))
+	}
+	return a.textures[name]
+}
+
+func (a *AssetManager) GetDocument(name string) *modelspec.Document {
+	if _, ok := a.documents[name]; !ok {
+		panic(fmt.Sprintf("could not find animated model %s", name))
+	}
+	return a.documents[name]
+}
+
+func (a *AssetManager) GetFont(name string) fonts.Font {
+	if _, ok := a.fonts[name]; !ok {
+		panic(fmt.Sprintf("could not find font %s", name))
+	}
+	return a.fonts[name]
 }

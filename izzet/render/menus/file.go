@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -81,7 +83,7 @@ func file(app renderiface.App) {
 		}
 
 		if imgui.MenuItemBool("Import Asset") {
-			wipImportAssetConfig = renderiface.ImportAssetConfig{}
+			wipImportAssetConfig = assets.ImportAssetConfig{}
 			showImportAssetModal = true
 		}
 
@@ -93,7 +95,7 @@ func file(app renderiface.App) {
 	}
 }
 
-var wipImportAssetConfig renderiface.ImportAssetConfig
+var wipImportAssetConfig assets.ImportAssetConfig
 
 func importAssetModal(app renderiface.App) {
 	center := imgui.MainViewport().Center()
@@ -125,9 +127,10 @@ func importAssetModal(app renderiface.App) {
 					}
 				} else {
 					wipImportAssetConfig.FilePath = assetFilePath
-					wipImportAssetConfig.Name = filepath.Base(assetFilePath)
+					wipImportAssetConfig.Name = apputils.NameFromAssetFilePath(assetFilePath)
 				}
 			}
+			imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
 		}, true)
 		panelutils.SetupRow("Single Entity", func() {
 			imgui.Checkbox("##", &wipImportAssetConfig.SingleEntity)

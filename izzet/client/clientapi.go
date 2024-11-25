@@ -431,15 +431,8 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-// registerSingleEntity registers the asset found at assetFilePath
-func (g *Client) registerSingleEntity(assetFilePath string) {
-	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
-	g.AssetManager().LoadAndRegisterDocument(baseFileName, assetFilePath)
-}
-
-func (g *Client) ImportAsset(importAssetConfig renderiface.ImportAssetConfig) {
-	documentName := apputils.NameFromAssetFilePath(importAssetConfig.FilePath)
-	g.assetManager.LoadAndRegisterDocument(documentName, importAssetConfig.FilePath)
+func (g *Client) ImportAsset(config assets.ImportAssetConfig) {
+	g.assetManager.LoadAndRegisterDocument(config)
 }
 
 func (g *Client) LoadProject(name string) bool {
@@ -465,10 +458,6 @@ func (g *Client) LoadProject(name string) bool {
 	}
 
 	g.project = &project
-
-	for _, item := range g.project.ContentBrowser.Items {
-		g.registerSingleEntity(item.InFilePath)
-	}
 
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
 }

@@ -9,7 +9,8 @@ import (
 )
 
 type EntityAsset struct {
-	SingleEntity bool `json:"single_entity"`
+	FilePath     string `json:"filepath"`
+	SingleEntity bool   `json:"single_entity"`
 	Collider     *Collider
 	Static       bool
 	Physics      *Physics

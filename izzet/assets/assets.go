@@ -44,13 +44,13 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 	}
 
 	start := time.Now()
-	documents := loaders.LoadDocuments(directory)
+	// documents := loaders.LoadDocuments(directory)
 	assetslog.Logger.Println(textureLoadTime, "to load textures")
 	assetslog.Logger.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
 		textures:       loadedTextures,
-		documents:      documents,
+		documents:      map[string]*modelspec.Document{},
 		fonts:          loadedFonts,
 		Primitives:     map[types.MeshHandle][]Primitive{},
 		Materials:      map[types.MaterialHandle]modelspec.MaterialSpecification{},
@@ -68,16 +68,6 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 		defaultMaterialHandle := assetManager.GetDefaultMaterialHandle()
 		assetManager.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
 			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
-		}
-
-		// TODO: CHEATING - set up all materials prior to registering meshes
-		// this will not work for dynamically loaded assets. only the ones loaded on startup
-
-		for _, document := range assetManager.documents {
-			for _, material := range document.Materials {
-				handle := NewMaterialHandle(document.Name, material.ID)
-				assetManager.Materials[handle] = material
-			}
 		}
 	}
 

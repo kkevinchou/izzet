@@ -8,32 +8,47 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-func (a *AssetManager) LoadAndRegisterDocument(name string, filepath string) bool {
-	document := loaders.LoadDocument(name, filepath)
-	if _, ok := a.documents[name]; ok {
-		fmt.Printf("warning, document with name %s already previously loaded\n", name)
+func (a *AssetManager) LoadAndRegisterDocument(config ImportAssetConfig) *modelspec.Document {
+	document := loaders.LoadDocument(config.Name, config.FilePath)
+	if _, ok := a.documents[config.Name]; ok {
+		panic(fmt.Sprintf("document with name %s already previously loaded\n", config.Name))
 	}
 
-	a.documents[name] = document
-	a.RegisterDocumentMeshWithSingleHandle(document)
-	return true
+	a.documents[config.Name] = document
+
+	if config.SingleEntity {
+		a.registerDocumentMeshWithSingleHandle(document)
+	} else {
+		a.registerDocumentMeshes(document)
+	}
+
+	for _, material := range document.Materials {
+		handle := NewMaterialHandle(document.Name, material.ID)
+		a.Materials[handle] = material
+	}
+
+	if len(document.Animations) > 0 {
+		a.registerAnimations(config.Name, document)
+	}
+
+	return document
 }
 
-func (m *AssetManager) RegisterDocumentMeshWithSingleHandle(document *modelspec.Document) {
+func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document) {
 	handle := NewSingleMeshHandle(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
 	}
 }
 
-func (m *AssetManager) RegisterDocumentMeshes(document *modelspec.Document) {
+func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document) {
 	for _, mesh := range document.Meshes {
 		handle := NewHandleFromMeshID(document.Name, mesh.ID)
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
 	}
 }
 
-func (m *AssetManager) RegisterAnimations(handle string, document *modelspec.Document) {
+func (m *AssetManager) registerAnimations(handle string, document *modelspec.Document) {
 	m.Animations[handle] = document.Animations
 	m.Joints[handle] = document.JointMap
 	m.RootJoints[handle] = document.RootJoint.ID

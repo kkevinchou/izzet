@@ -61,7 +61,7 @@ type App interface {
 	WindowFocused() bool
 	ContentBrowser() *contentbrowser.ContentBrowser
 	MaterialBrowser() *materialbrowser.MaterialBrowser
-	ImportAsset(importAssetConfig ImportAssetConfig)
+	ImportAsset(config assets.ImportAssetConfig)
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
 	InstantiateEntity(entityHandle string) *entities.Entity
@@ -86,10 +86,4 @@ type GameWorld interface {
 	AddEntity(entity *entities.Entity)
 	GetEntityByID(id int) *entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
-}
-
-type ImportAssetConfig struct {
-	SingleEntity bool
-	Name         string
-	FilePath     string
 }

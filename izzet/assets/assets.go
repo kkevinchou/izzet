@@ -56,15 +56,10 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 
 	assetManager := AssetManager{
 		textures:       loadedTextures,
-		documents:      map[string]Document{},
 		fonts:          loadedFonts,
-		Primitives:     map[types.MeshHandle][]Primitive{},
-		Materials:      map[types.MaterialHandle]modelspec.MaterialSpecification{},
-		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
-		Joints:         map[string]map[int]*modelspec.JointSpec{},
-		RootJoints:     map[string]int{},
 		processVisuals: processVisualAssets,
 	}
+	assetManager.Reset()
 
 	if processVisualAssets {
 		handle := assetManager.GetCubeMeshHandle()
@@ -113,4 +108,13 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 		panic(fmt.Sprintf("could not find font %s", name))
 	}
 	return a.fonts[name]
+}
+
+func (a *AssetManager) Reset() {
+	a.documents = map[string]Document{}
+	a.Primitives = map[types.MeshHandle][]Primitive{}
+	a.Materials = map[types.MaterialHandle]modelspec.MaterialSpecification{}
+	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
+	a.Joints = map[string]map[int]*modelspec.JointSpec{}
+	a.RootJoints = map[string]int{}
 }

@@ -69,9 +69,12 @@ func (g *Client) SaveProject(name string) error {
 	assetsJSON := AssetsJSON{}
 
 	for _, document := range g.AssetManager().GetAllDocuments() {
-		var sourceFilePaths []string
 		sourceRootDir := filepath.Dir(document.SourceFilePath)
 
+		// don't need to copy assets into the project directory if
+		// we loaded it from there
+
+		sourceFilePaths := []string{document.SourceFilePath}
 		for _, peripheralFilePath := range document.Document.PeripheralFiles {
 			sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(document.SourceFilePath), peripheralFilePath))
 		}
@@ -81,6 +84,10 @@ func (g *Client) SaveProject(name string) error {
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
 			Config: newConfig,
 		})
+
+		if sourceRootDir == contentDir {
+			continue
+		}
 
 		err := copySourceFiles(sourceFilePaths, sourceRootDir, contentDir)
 		if err != nil {
@@ -188,6 +195,30 @@ func (g *Client) LoadProject(name string) bool {
 
 	if project.MaterialBrowser == nil {
 		project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
+	}
+
+	// assets
+
+	g.assetManager.Reset()
+	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
+	_, err = os.Stat(assetsFilePath)
+	if err == nil {
+		assetsFile, err := os.Open(assetsFilePath)
+		if err != nil {
+			panic(err)
+		}
+		defer assetsFile.Close()
+
+		var assetsJSON AssetsJSON
+		decoder = json.NewDecoder(assetsFile)
+		err = decoder.Decode(&assetsJSON)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, document := range assetsJSON.Documents {
+			g.assetManager.LoadAndRegisterDocument(document.Config)
+		}
 	}
 
 	g.project = &project

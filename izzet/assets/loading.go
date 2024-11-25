@@ -11,7 +11,7 @@ import (
 func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documents[config.Name]; ok {
-		panic(fmt.Sprintf("document with name %s already previously loaded\n", config.Name))
+		fmt.Printf("document with name %s already previously loaded\n", config.Name)
 	}
 
 	a.documents[config.Name] = Document{
@@ -32,7 +32,9 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	}
 
 	if len(document.Animations) > 0 {
-		a.registerAnimations(config.Name, document)
+		a.Animations[config.Name] = document.Animations
+		a.Joints[config.Name] = document.JointMap
+		a.RootJoints[config.Name] = document.RootJoint.ID
 	}
 
 	return document
@@ -40,6 +42,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 
 func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document) {
 	handle := NewSingleMeshHandle(document.Name)
+	m.clearPrimitives(handle)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
 	}
@@ -48,14 +51,12 @@ func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.
 func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document) {
 	for _, mesh := range document.Meshes {
 		handle := NewHandleFromMeshID(document.Name, mesh.ID)
+		m.clearPrimitives(handle)
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
 	}
 }
 
 func (m *AssetManager) registerAnimations(handle string, document *modelspec.Document) {
-	m.Animations[handle] = document.Animations
-	m.Joints[handle] = document.JointMap
-	m.RootJoints[handle] = document.RootJoint.ID
 }
 
 func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
@@ -80,4 +81,8 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
+}
+
+func (m *AssetManager) clearPrimitives(handle types.MeshHandle) {
+	delete(m.Primitives, handle)
 }

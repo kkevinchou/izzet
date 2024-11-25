@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -43,13 +44,13 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 	}
 
 	start := time.Now()
-	documents := loaders.LoadDocuments(directory)
+	// documents := loaders.LoadDocuments(directory)
 	assetslog.Logger.Println(textureLoadTime, "to load textures")
 	assetslog.Logger.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
 		textures:       loadedTextures,
-		documents:      documents,
+		documents:      map[string]*modelspec.Document{},
 		fonts:          loadedFonts,
 		Primitives:     map[types.MeshHandle][]Primitive{},
 		Materials:      map[types.MaterialHandle]modelspec.MaterialSpecification{},
@@ -68,16 +69,6 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 		assetManager.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
 			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
 		}
-
-		// TODO: CHEATING - set up all materials prior to registering meshes
-		// this will not work for dynamically loaded assets. only the ones loaded on startup
-
-		for _, document := range assetManager.documents {
-			for _, material := range document.Materials {
-				handle := NewMaterialHandle(document.Name, material.ID)
-				assetManager.Materials[handle] = material
-			}
-		}
 	}
 
 	return &assetManager
@@ -90,4 +81,25 @@ func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
 		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
 	}
 	return result
+}
+
+func (a *AssetManager) GetTexture(name string) *textures.Texture {
+	if _, ok := a.textures[name]; !ok {
+		panic(fmt.Sprintf("could not find texture %s", name))
+	}
+	return a.textures[name]
+}
+
+func (a *AssetManager) GetDocument(name string) *modelspec.Document {
+	if _, ok := a.documents[name]; !ok {
+		panic(fmt.Sprintf("could not find animated model %s", name))
+	}
+	return a.documents[name]
+}
+
+func (a *AssetManager) GetFont(name string) fonts.Font {
+	if _, ok := a.fonts[name]; !ok {
+		panic(fmt.Sprintf("could not find font %s", name))
+	}
+	return a.fonts[name]
 }

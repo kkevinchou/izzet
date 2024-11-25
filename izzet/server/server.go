@@ -87,7 +87,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	g.entities = map[int]*entities.Entity{}
 	dataFilePath := "izzet_data.json"
 	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(g.assetManager, data)
+	g.setupAssets(data)
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 
@@ -204,22 +204,10 @@ func (s *Server) listen() (net.Listener, error) {
 	return listener, nil
 }
 
-func (g *Server) setupAssets(assetManager *assets.AssetManager, data *izzetdata.Data) {
-	for docName, _ := range data.EntityAssets {
-		doc := assetManager.GetDocument(docName)
-
-		if entityAsset, ok := data.EntityAssets[docName]; ok {
-			if entityAsset.SingleEntity {
-				assetManager.RegisterSingleEntityDocument(doc)
-			}
-		}
-
-		for _, mesh := range doc.Meshes {
-			assetManager.RegisterMesh(docName, mesh)
-		}
-		if len(doc.Animations) > 0 {
-			assetManager.RegisterAnimations(docName, doc)
-		}
+func (g *Server) setupAssets(data *izzetdata.Data) {
+	for docName, entityAsset := range data.EntityAssets {
+		config := assets.ImportAssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
+		g.assetManager.LoadAndRegisterDocument(config)
 	}
 }
 

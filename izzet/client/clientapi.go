@@ -431,31 +431,8 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-// registerSingleEntity registers the asset found at assetFilePath
-func (g *Client) registerSingleEntity(assetFilePath string) bool {
-	baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
-	if g.AssetManager().LoadDocument(baseFileName, assetFilePath) {
-		document := g.AssetManager().GetDocument(baseFileName)
-		g.AssetManager().RegisterSingleEntityDocument(document)
-		return true
-	}
-	return false
-}
-
-// TODO - import props? single vs multiple entities, animation, material, etc
-// ImportToContentBrowser registers the asset found at assetFilePath
-// then, the asset is registered with the content browser
-func (g *Client) ImportToContentBrowser(assetFilePath string) {
-	if g.registerSingleEntity(assetFilePath) {
-		baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
-		document := g.AssetManager().GetDocument(baseFileName)
-		g.ContentBrowser().AddGLTFModel(assetFilePath, document)
-
-		var primitiveSpecs []*modelspec.PrimitiveSpecification
-		for _, mesh := range document.Meshes {
-			primitiveSpecs = append(primitiveSpecs, mesh.Primitives...)
-		}
-	}
+func (g *Client) ImportAsset(config assets.ImportAssetConfig) {
+	g.assetManager.LoadAndRegisterDocument(config)
 }
 
 func (g *Client) LoadProject(name string) bool {
@@ -481,10 +458,6 @@ func (g *Client) LoadProject(name string) bool {
 	}
 
 	g.project = &project
-
-	for _, item := range g.project.ContentBrowser.Items {
-		g.registerSingleEntity(item.InFilePath)
-	}
 
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
 }

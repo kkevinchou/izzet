@@ -316,18 +316,18 @@ func (r *RenderSystem) drawModel(
 		shader.SetUniformMat4("model", modelMat)
 
 		gl.BindVertexArray(p.VAO)
-		// if modelMat.Det() < 0 {
-		// 	// from the gltf spec:
-		// 	// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),
-		// 	// the determinant of the node’s global transform defines the winding order of that primitive. If the determinant
-		// 	// is a positive value, the winding order triangle faces is counterclockwise; in the opposite case, the winding
-		// 	// order is clockwise.
-		// 	gl.FrontFace(gl.CW)
-		// }
+		if modelMat.Det() < 0 {
+			// from the gltf spec:
+			// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),
+			// the determinant of the node’s global transform defines the winding order of that primitive. If the determinant
+			// is a positive value, the winding order triangle faces is counterclockwise; in the opposite case, the winding
+			// order is clockwise.
+			gl.FrontFace(gl.CW)
+		}
 		r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
-		// if modelMat.Det() < 0 {
-		// 	gl.FrontFace(gl.CCW)
-		// }
+		if modelMat.Det() < 0 {
+			gl.FrontFace(gl.CCW)
+		}
 	}
 }
 

@@ -1,9 +1,11 @@
 {
     "entity_assets": {
-        "alpha3": {"single_entity": true},
-        "velociraptor": {"single_entity": true},
-        "parasaurolophus": {"single_entity": true},
-        "scene": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
-        "demo_scene_city": {"static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} }
+        "alpha3": {"filepath": ".\\_assets\\gltf\\alpha3.gltf", "single_entity": true},
+        "velociraptor": {"filepath": ".\\_assets\\gltf\\velociraptor.gltf", "single_entity": true},
+        "parasaurolophus": {"filepath": ".\\_assets\\gltf\\parasaurolophus.gltf", "single_entity": true},
+        "scene": {"filepath": ".\\_assets\\gltf\\scene.gltf", "static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
+        "demo_scene_battleroyale": {"filepath": ".\\_assets\\gltf\\demo_scene_battleroyale.gltf", "static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
+        "demo_scene_dungeon": {"filepath": ".\\_assets\\gltf\\demo_scene_dungeon.gltf", "static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} },
+        "demo_scene_city": {"filepath": ".\\_assets\\gltf\\demo_scene_city.gltf", "static": true, "collider": {"collider_group": "TERRAIN", "trimesh_collider": true} }
     }
 }

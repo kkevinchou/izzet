@@ -61,7 +61,7 @@ type App interface {
 	WindowFocused() bool
 	ContentBrowser() *contentbrowser.ContentBrowser
 	MaterialBrowser() *materialbrowser.MaterialBrowser
-	ImportToContentBrowser(assetFilePath string)
+	ImportAsset(config assets.ImportAssetConfig)
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
 	InstantiateEntity(entityHandle string) *entities.Entity

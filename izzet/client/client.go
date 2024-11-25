@@ -135,7 +135,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
 	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(g.assetManager, data)
+	g.setupAssets(data)
 	g.setupPrefabs(data)
 
 	g.initialize()
@@ -236,22 +236,10 @@ func initSeed() {
 	rand.Seed(seed)
 }
 
-func (g *Client) setupAssets(assetManager *assets.AssetManager, data *izzetdata.Data) {
-	for docName, _ := range data.EntityAssets {
-		doc := assetManager.GetDocument(docName)
-
-		if entityAsset, ok := data.EntityAssets[docName]; ok {
-			if entityAsset.SingleEntity {
-				assetManager.RegisterSingleEntityDocument(doc)
-			} else {
-				for _, mesh := range doc.Meshes {
-					assetManager.RegisterMesh(doc.Name, mesh)
-				}
-			}
-			if len(doc.Animations) > 0 {
-				assetManager.RegisterAnimations(docName, doc)
-			}
-		}
+func (g *Client) setupAssets(data *izzetdata.Data) {
+	for docName, entityAsset := range data.EntityAssets {
+		config := assets.ImportAssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
+		g.assetManager.LoadAndRegisterDocument(config)
 	}
 }
 

@@ -242,11 +242,9 @@ func (g *Client) setupAssets(assetManager *assets.AssetManager, data *izzetdata.
 
 		if entityAsset, ok := data.EntityAssets[docName]; ok {
 			if entityAsset.SingleEntity {
-				assetManager.RegisterSingleEntityDocument(doc)
+				assetManager.RegisterDocumentMeshWithSingleHandle(doc)
 			} else {
-				for _, mesh := range doc.Meshes {
-					assetManager.RegisterMesh(doc.Name, mesh)
-				}
+				assetManager.RegisterDocumentMeshes(doc)
 			}
 			if len(doc.Animations) > 0 {
 				assetManager.RegisterAnimations(docName, doc)

@@ -68,7 +68,7 @@ func (g *Client) SaveProject(name string) error {
 
 	assetsJSON := AssetsJSON{}
 
-	for _, document := range g.AssetManager().GetAllDocuments() {
+	for _, document := range g.AssetManager().GetDocuments() {
 		sourceRootDir := filepath.Dir(document.SourceFilePath)
 
 		// don't need to copy assets into the project directory if

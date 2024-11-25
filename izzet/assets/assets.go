@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -15,7 +16,8 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-type Document struct {
+type DocumentAsset struct {
+	Name           string
 	Document       *modelspec.Document `json:"-"`
 	SourceFilePath string
 	Config         AssetConfig
@@ -23,16 +25,17 @@ type Document struct {
 
 type AssetManager struct {
 	// Static Assets
-	textures  map[string]*textures.Texture
-	documents map[string]Document
-	fonts     map[string]fonts.Font
+	textures       map[string]*textures.Texture
+	documentAssets map[string]DocumentAsset
+	fonts          map[string]fonts.Font
 
 	// Asset References
-	Primitives map[types.MeshHandle][]Primitive
-	Animations map[string]map[string]*modelspec.AnimationSpec
-	Joints     map[string]map[int]*modelspec.JointSpec
-	RootJoints map[string]int
-	Materials  map[types.MaterialHandle]modelspec.MaterialSpecification
+	NamespaceToMeshHandles map[string][]types.MeshHandle
+	Primitives             map[types.MeshHandle][]Primitive
+	Animations             map[string]map[string]*modelspec.AnimationSpec
+	Joints                 map[string]map[int]*modelspec.JointSpec
+	RootJoints             map[string]int
+	Materials              map[types.MaterialHandle]modelspec.MaterialSpecification
 
 	processVisuals bool
 }
@@ -92,15 +95,21 @@ func (a *AssetManager) GetTexture(name string) *textures.Texture {
 }
 
 func (a *AssetManager) GetDocument(name string) *modelspec.Document {
-	if _, ok := a.documents[name]; !ok {
+	if _, ok := a.documentAssets[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
 	}
-	return a.documents[name].Document
+	return a.documentAssets[name].Document
 }
 
-// returns all documents - mainly used for serializing documents on project save
-func (a *AssetManager) GetAllDocuments() map[string]Document {
-	return a.documents
+func (a *AssetManager) GetDocuments() []DocumentAsset {
+	var documents []DocumentAsset
+	for _, documentAsset := range a.documentAssets {
+		documents = append(documents, documentAsset)
+	}
+	sort.Slice(documents, func(i, j int) bool {
+		return documents[i].Name < documents[j].Name
+	})
+	return documents
 }
 
 func (a *AssetManager) GetFont(name string) fonts.Font {
@@ -111,8 +120,9 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 func (a *AssetManager) Reset() {
-	a.documents = map[string]Document{}
+	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
+	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
 	a.Materials = map[types.MaterialHandle]modelspec.MaterialSpecification{}
 	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
 	a.Joints = map[string]map[int]*modelspec.JointSpec{}

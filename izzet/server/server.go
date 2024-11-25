@@ -206,7 +206,7 @@ func (s *Server) listen() (net.Listener, error) {
 
 func (g *Server) setupAssets(data *izzetdata.Data) {
 	for docName, entityAsset := range data.EntityAssets {
-		config := assets.ImportAssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
+		config := assets.AssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
 		g.assetManager.LoadAndRegisterDocument(config)
 	}
 }

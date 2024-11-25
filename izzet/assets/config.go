@@ -1,6 +1,6 @@
 package assets
 
-type ImportAssetConfig struct {
+type AssetConfig struct {
 	SingleEntity bool
 	Name         string
 	FilePath     string

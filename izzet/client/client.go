@@ -238,7 +238,7 @@ func initSeed() {
 
 func (g *Client) setupAssets(data *izzetdata.Data) {
 	for docName, entityAsset := range data.EntityAssets {
-		config := assets.ImportAssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
+		config := assets.AssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
 		g.assetManager.LoadAndRegisterDocument(config)
 	}
 }
@@ -287,11 +287,6 @@ func (g *Client) setupEntities(data *izzetdata.Data) {
 	directionalLight.LightInfo.PreScaledIntensity = 0.1
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.world.AddEntity(directionalLight)
-
-	doc := g.assetManager.GetDocument("demo_scene_scificity")
-	for _, e := range entities.CreateEntitiesFromDocument(doc, g.assetManager, data) {
-		g.world.AddEntity(e)
-	}
 }
 
 func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int) mgl64.Vec3 {

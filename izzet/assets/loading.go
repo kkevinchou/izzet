@@ -8,13 +8,17 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-func (a *AssetManager) LoadAndRegisterDocument(config ImportAssetConfig) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documents[config.Name]; ok {
 		panic(fmt.Sprintf("document with name %s already previously loaded\n", config.Name))
 	}
 
-	a.documents[config.Name] = document
+	a.documents[config.Name] = Document{
+		SourceFilePath: config.FilePath,
+		Config:         config,
+		Document:       document,
+	}
 
 	if config.SingleEntity {
 		a.registerDocumentMeshWithSingleHandle(document)

@@ -3,20 +3,14 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
-	"os"
-	"path"
-	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/platforms"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
@@ -431,116 +425,8 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-func (g *Client) ImportAsset(config assets.ImportAssetConfig) {
+func (g *Client) ImportAsset(config assets.AssetConfig) {
 	g.assetManager.LoadAndRegisterDocument(config)
-}
-
-func (g *Client) LoadProject(name string) bool {
-	if name == "" {
-		return false
-	}
-
-	f, err := os.Open(apputils.PathToProjectFile(name))
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	var project Project
-	decoder := json.NewDecoder(f)
-	err = decoder.Decode(&project)
-	if err != nil {
-		panic(err)
-	}
-
-	if project.MaterialBrowser == nil {
-		project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
-	}
-
-	g.project = &project
-
-	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
-}
-
-func (g *Client) SaveProject(name string) error {
-	if name == "" {
-		return errors.New("name cannot be empty string")
-	}
-
-	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name), os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-
-	worldFilePath := path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name))
-	g.saveWorld(worldFilePath)
-	g.project.WorldFile = worldFilePath
-
-	err = os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name, "content"), os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-
-	items := g.ContentBrowser().Items
-	for i := range items {
-		// this has already been saved, skip
-		if items[i].SavedToProjectFolder {
-			continue
-		}
-
-		baseFileName := strings.Split(filepath.Base(items[i].InFilePath), ".")[0]
-		parentDirectory := filepath.Dir(items[i].InFilePath)
-
-		var fileNames []string
-		fileNames = append(fileNames, baseFileName+filepath.Ext(items[i].InFilePath))
-		for _, fileName := range items[i].PeripheralFiles {
-			fileNames = append(fileNames, fileName)
-		}
-
-		for _, fileName := range fileNames {
-			importedFile, err := os.Open(filepath.Join(parentDirectory, fileName))
-			if err != nil {
-				panic(err)
-			}
-			defer importedFile.Close()
-
-			fileBytes, err := io.ReadAll(importedFile)
-			if err != nil {
-				panic(err)
-			}
-
-			outFilePath := filepath.Join(settings.ProjectsDirectory, name, "content", fileName)
-			outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				panic(err)
-			}
-			defer outFile.Close()
-
-			_, err = outFile.Write(fileBytes)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		// overwrite in file path to be the asset copy in in the project folder
-		items[i].SavedToProjectFolder = true
-		items[i].InFilePath = filepath.Join(settings.ProjectsDirectory, name, "content", baseFileName+filepath.Ext(items[i].InFilePath))
-	}
-
-	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"), os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	if g.project.MaterialBrowser == nil {
-		g.project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
-	}
-
-	encoder := json.NewEncoder(f)
-	encoder.Encode(g.project)
-
-	return nil
 }
 
 func (g *Client) Shutdown() {

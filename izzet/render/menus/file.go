@@ -83,7 +83,7 @@ func file(app renderiface.App) {
 		}
 
 		if imgui.MenuItemBool("Import Asset") {
-			wipImportAssetConfig = assets.ImportAssetConfig{}
+			wipImportAssetConfig = assets.AssetConfig{}
 			showImportAssetModal = true
 		}
 
@@ -95,7 +95,7 @@ func file(app renderiface.App) {
 	}
 }
 
-var wipImportAssetConfig assets.ImportAssetConfig
+var wipImportAssetConfig assets.AssetConfig
 
 func importAssetModal(app renderiface.App) {
 	center := imgui.MainViewport().Center()

@@ -15,10 +15,16 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+type Document struct {
+	Document       *modelspec.Document `json:"-"`
+	SourceFilePath string
+	Config         AssetConfig
+}
+
 type AssetManager struct {
 	// Static Assets
 	textures  map[string]*textures.Texture
-	documents map[string]*modelspec.Document
+	documents map[string]Document
 	fonts     map[string]fonts.Font
 
 	// Asset References
@@ -50,7 +56,7 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 
 	assetManager := AssetManager{
 		textures:       loadedTextures,
-		documents:      map[string]*modelspec.Document{},
+		documents:      map[string]Document{},
 		fonts:          loadedFonts,
 		Primitives:     map[types.MeshHandle][]Primitive{},
 		Materials:      map[types.MaterialHandle]modelspec.MaterialSpecification{},
@@ -94,7 +100,12 @@ func (a *AssetManager) GetDocument(name string) *modelspec.Document {
 	if _, ok := a.documents[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
 	}
-	return a.documents[name]
+	return a.documents[name].Document
+}
+
+// returns all documents - mainly used for serializing documents on project save
+func (a *AssetManager) GetAllDocuments() map[string]Document {
+	return a.documents
 }
 
 func (a *AssetManager) GetFont(name string) fonts.Font {

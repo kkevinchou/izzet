@@ -18,6 +18,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
+	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 func (g *Server) MetricsRegistry() *metrics.MetricsRegistry {
@@ -178,4 +179,14 @@ func (g *Server) SetNavMesh(nm *navmesh.CompiledNavMesh) {
 
 func (g *Server) NavMesh() *navmesh.CompiledNavMesh {
 	return g.navMesh
+}
+
+func (g *Server) CopyLoadedAnimations(
+	animations map[string]map[string]*modelspec.AnimationSpec,
+	joints map[string]map[int]*modelspec.JointSpec,
+	rootJoints map[string]int,
+) {
+	g.assetManager.Animations = animations
+	g.assetManager.Joints = joints
+	g.assetManager.RootJoints = rootJoints
 }

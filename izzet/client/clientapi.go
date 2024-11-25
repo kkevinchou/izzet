@@ -334,7 +334,6 @@ func (g *Client) StartAsyncServer() {
 	started := make(chan bool)
 
 	var compiledNavMesh *navmesh.CompiledNavMesh
-
 	if g.navMesh != nil {
 		compiledNavMesh = navmesh.CompileNavMesh(g.navMesh)
 	}
@@ -353,6 +352,12 @@ func (g *Client) StartAsyncServer() {
 		serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 		serverApp := server.NewWithWorld("_assets", world)
+		serverApp.CopyLoadedAnimations(
+			g.assetManager.Animations,
+			g.assetManager.Joints,
+			g.assetManager.RootJoints,
+		)
+
 		serverApp.SetNavMesh(compiledNavMesh)
 		serverApp.Start(started, g.asyncServerDone)
 		g.asyncServerStarted = false

@@ -11,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -85,9 +84,9 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
 	fmt.Println(time.Since(start), "spatial partition done")
 
 	g.entities = map[int]*entities.Entity{}
-	dataFilePath := "izzet_data.json"
-	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(data)
+	// dataFilePath := "izzet_data.json"
+	// data := izzetdata.LoadData(dataFilePath)
+	// g.setupAssets(data)
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 
@@ -204,12 +203,12 @@ func (s *Server) listen() (net.Listener, error) {
 	return listener, nil
 }
 
-func (g *Server) setupAssets(data *izzetdata.Data) {
-	// for docName, entityAsset := range data.EntityAssets {
-	// 	config := assets.AssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
-	// 	g.assetManager.LoadAndRegisterDocument(config)
-	// }
-}
+// func (g *Server) setupAssets(data *izzetdata.Data) {
+// 	for docName, entityAsset := range data.EntityAssets {
+// 		config := assets.AssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
+// 		g.assetManager.LoadAndRegisterDocument(config)
+// 	}
+// }
 
 func (g *Server) initSettings() {
 	config := runtimeconfig.DefaultRuntimeConfig()

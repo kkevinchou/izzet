@@ -24,6 +24,27 @@ type Primitive struct {
 	MaterialHandle types.MaterialHandle
 }
 
+// CONTEXT
+// - an entity should only ever have 1 mesh handle, which can point to many primitives for rendering
+// - when we want to create an entity from a document, we should be able to convert the document name to the mesh handle
+//   - creating an entity in this way only instantiates some baseline entity properties e.g. transforms, colliders
+//   - other parts of the entity may still need to be setup
+
+// REFACTOR
+// - ideally we deprecate the use of handles as a combination of namespace + id. it should just be a singular id
+// - when we import a collection of meshes/materials from a document, each mesh/material should be treated like its own asset
+//   and can be instantiated as such individually. right now we put everything under a singular document and it is all
+//   instantiated together
+// - documents are one:many meshes/materials
+
+// FUTURE WORK
+// - importing a document right now is doing two things:
+//   - setting up a repeatable way to instantiate the document (a form of prefab)
+//   - extracting meshes/materials/animations into the content browser
+//   - ideally we can treat this as two separate operations so that we have the ability to instantiate the entire level
+//     or just instantiatign individual meshes from the document
+//
+// - the instantiated entities should have meshes/materials that point to loaded meshes/materials
 func NewSingleEntityMeshHandle(namespace string) types.MeshHandle {
 	return NewMeshHandle(namespace, "0")
 }

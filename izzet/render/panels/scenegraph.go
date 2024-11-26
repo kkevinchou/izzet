@@ -1,12 +1,9 @@
 package panels
 
 import (
-	"math"
 	"sort"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -29,34 +26,6 @@ func sceneGraph(app renderiface.App) {
 
 	if !entityPopup {
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
-			if imgui.Button("Add Player") {
-				var radius float64 = 40
-				var length float64 = 80
-				entity := entities.InstantiateEntity("player")
-				entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
-				entity.Collider = &entities.ColliderComponent{
-					CapsuleCollider: &collider.Capsule{
-						Radius: radius,
-						Top:    mgl64.Vec3{0, radius + length, 0},
-						Bottom: mgl64.Vec3{0, radius, 0},
-					},
-					ColliderGroup: types.ColliderGroupFlagPlayer,
-					CollisionMask: types.ColliderGroupFlagTerrain,
-				}
-				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed}
-
-				capsule := entity.Collider.CapsuleCollider
-				entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
-
-				handle := assets.NewSingleEntityMeshHandle("alpha3")
-				entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-				entity.Animation = entities.NewAnimationComponent("alpha3", app.AssetManager())
-				entities.SetScale(entity, mgl64.Vec3{0.25, 0.25, 0.25})
-
-				world.AddEntity(entity)
-				app.SelectEntity(entity)
-				imgui.CloseCurrentPopup()
-			}
 			if imgui.Button("Add Cube") {
 				entity := entities.CreateCube(app.AssetManager(), 1)
 				i := 0

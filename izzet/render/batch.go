@@ -7,7 +7,7 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-func (r *RenderSystem) CreateBatch() {
+func (r *RenderSystem) SetupBatchedStaticRendering() {
 	var meshHandles []types.MeshHandle
 
 	var modelMatrices []mgl32.Mat4
@@ -26,5 +26,5 @@ func (r *RenderSystem) CreateBatch() {
 		modelMatrices = append(modelMatrices, modelMat)
 		ids = append(ids, uint32(entity.GetID()))
 	}
-	r.batchRenders = r.app.AssetManager().CreateBatch(meshHandles, modelMatrices, ids)
+	r.batchRenders = r.app.AssetManager().SetupBatchedStaticRendering(meshHandles, modelMatrices, ids)
 }

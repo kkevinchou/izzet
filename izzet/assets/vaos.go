@@ -25,7 +25,7 @@ type Batch struct {
 	vertexIndices     []uint32
 }
 
-func (m *AssetManager) CreateBatch(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
+func (m *AssetManager) SetupBatchedStaticRendering(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
 	batches := map[types.MaterialHandle]*Batch{}
 
 	for i, meshHandle := range meshHandles {

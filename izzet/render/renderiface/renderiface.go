@@ -72,7 +72,7 @@ type App interface {
 
 	GetFrameInput() input.Input
 	FindPath(start, goal mgl64.Vec3)
-	CreateBatch()
+	SetupBatchedStaticRendering()
 }
 
 type RenderContext interface {

@@ -107,6 +107,7 @@ func (g *Client) loadWorld(filepath string) bool {
 
 	g.SelectEntity(nil)
 	g.SetWorld(world)
+	g.SetupBatchedStaticRendering()
 	return true
 }
 
@@ -593,6 +594,6 @@ func (g *Client) FindPath(start, goal mgl64.Vec3) {
 	}
 }
 
-func (g *Client) CreateBatch() {
-	g.renderSystem.CreateBatch()
+func (g *Client) SetupBatchedStaticRendering() {
+	g.renderSystem.SetupBatchedStaticRendering()
 }

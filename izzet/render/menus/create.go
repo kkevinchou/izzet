@@ -49,7 +49,7 @@ func create(app renderiface.App) {
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
 		}
 		if imgui.MenuItemBool("Bake Static Geometry") {
-			app.CreateBatch()
+			app.SetupBatchedStaticRendering()
 		}
 		imgui.EndMenu()
 	}

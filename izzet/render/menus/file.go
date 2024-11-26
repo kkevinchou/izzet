@@ -111,9 +111,13 @@ func importAssetModal(app renderiface.App) {
 		imgui.BeginTableV("Import Asset", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
-		panelutils.SetupRow("Name", func() {
+		panelutils.SetupRow("ID", func() {
 			imgui.SetNextItemWidth(200)
-			imgui.InputTextWithHint("##Name", "", &wipImportAssetConfig.Name, imgui.InputTextFlagsNone, nil)
+			imgui.InputTextWithHint("##ID", "", &wipImportAssetConfig.Name, imgui.InputTextFlagsNone, nil)
+		}, true)
+		panelutils.SetupRow("File Path", func() {
+			imgui.SetNextItemWidth(200)
+			imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
 			imgui.SameLine()
 			if imgui.Button("...") {
 				d := dialog.File()
@@ -134,10 +138,8 @@ func importAssetModal(app renderiface.App) {
 					wipImportAssetConfig.Name = apputils.NameFromAssetFilePath(assetFilePath)
 				}
 			}
-			imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
 		}, true)
 		panelutils.SetupRow("Collider Type", func() {
-			// imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderType, imgui.InputTextFlagsNone, nil)
 			if imgui.BeginCombo("##", string(SelectedColliderType)) {
 				for _, option := range types.ColliderTypes {
 					if imgui.SelectableBool(string(option)) {
@@ -149,7 +151,6 @@ func importAssetModal(app renderiface.App) {
 			}
 		}, true)
 		panelutils.SetupRow("Collider Group", func() {
-			// imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderGroup, imgui.InputTextFlagsNone, nil)
 			if imgui.BeginCombo("##", string(SelectedColliderGroup)) {
 				for _, option := range types.ColliderGroups {
 					if imgui.SelectableBool(string(option)) {
@@ -160,14 +161,14 @@ func importAssetModal(app renderiface.App) {
 				imgui.EndCombo()
 			}
 		}, true)
-		panelutils.SetupRow("Single Entity", func() {
-			imgui.Checkbox("##", &wipImportAssetConfig.SingleEntity)
-		}, true)
 		panelutils.SetupRow("Static", func() {
 			imgui.Checkbox("##", &wipImportAssetConfig.Static)
 		}, true)
 		panelutils.SetupRow("Physics", func() {
 			imgui.Checkbox("##", &wipImportAssetConfig.Physics)
+		}, true)
+		panelutils.SetupRow("Single Entity", func() {
+			imgui.Checkbox("##", &wipImportAssetConfig.SingleEntity)
 		}, true)
 
 		imgui.EndTable()

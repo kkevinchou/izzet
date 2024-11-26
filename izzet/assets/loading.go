@@ -57,9 +57,6 @@ func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document) {
 	}
 }
 
-func (m *AssetManager) registerAnimations(handle string, document *modelspec.Document) {
-}
-
 func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32

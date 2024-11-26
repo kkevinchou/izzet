@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -16,7 +15,7 @@ import (
 var id int
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *assets.AssetManager) []*Entity {
-	return CreateEntitiesFromDocument(prefab.Document, ml, prefab.IzzetData)
+	return nil
 }
 
 func InstantiateBaseEntity(name string, id int) *Entity {
@@ -64,39 +63,7 @@ func RemoveParent(child *Entity) {
 	}
 }
 
-func CreateEntitiesFromDocument2(documentAsset assets.DocumentAsset, ml *assets.AssetManager) []*Entity {
-	// entityAsset := data.EntityAssets[document.Name]
-
-	// if entityAsset.SingleEntity {
-	// 	handle := assets.NewSingleMeshHandle(document.Name)
-	// 	// entity := InstantiateEntity(document.Name)
-	// 	// entity.MeshComponent = &MeshC
-	// 	var scene *modelspec.Scene
-	// 	if len(document.Scenes) != 1 {
-	// 		panic("single entity asset loading only supports a singular scene")
-	// 	}
-	// 	scene = document.Scenes[0]
-
-	// 	if len(scene.Nodes) != 1 {
-	// 		panic("single entity asset loading only supports a singular root entity")
-	// 	}
-	// 	node := scene.Nodes[0]
-
-	// 	entity := InstantiateEntity(document.Name)
-	// 	entity.MeshComponent = &MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-	// 	var vertices []modelspec.Vertex
-	// 	VerticesFromNode(node, document, &vertices)
-	// 	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-	// 	SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-	// 	SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-	// 	SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-
-	// 	if len(document.Animations) > 0 {
-	// 		entity.Animation = NewAnimationComponent(document.Name, ml)
-	// 	}
-	// 	spawnedEntities = append(spawnedEntities, entity)
-	// } else {
-
+func CreateEntitiesFromDocument(documentAsset assets.DocumentAsset, ml *assets.AssetManager) []*Entity {
 	document := documentAsset.Document
 	config := documentAsset.Config
 
@@ -157,104 +124,6 @@ func CreateEntitiesFromDocument2(documentAsset assets.DocumentAsset, ml *assets.
 	// }
 
 	// return spawnedEntities
-	return spawnedEntities
-}
-
-func CreateEntitiesFromDocument(document *modelspec.Document, ml *assets.AssetManager, data *izzetdata.Data) []*Entity {
-	var spawnedEntities []*Entity
-
-	entityAsset := data.EntityAssets[document.Name]
-
-	if entityAsset.SingleEntity {
-		handle := assets.NewSingleMeshHandle(document.Name)
-		// entity := InstantiateEntity(document.Name)
-		// entity.MeshComponent = &MeshC
-		var scene *modelspec.Scene
-		if len(document.Scenes) != 1 {
-			panic("single entity asset loading only supports a singular scene")
-		}
-		scene = document.Scenes[0]
-
-		if len(scene.Nodes) != 1 {
-			panic("single entity asset loading only supports a singular root entity")
-		}
-		node := scene.Nodes[0]
-
-		entity := InstantiateEntity(document.Name)
-		entity.MeshComponent = &MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-		var vertices []modelspec.Vertex
-		VerticesFromNode(node, document, &vertices)
-		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-		SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-		SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-
-		if len(document.Animations) > 0 {
-			entity.Animation = NewAnimationComponent(document.Name, ml)
-		}
-		spawnedEntities = append(spawnedEntities, entity)
-	} else {
-		parent := InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
-		spawnedEntities = append(spawnedEntities, parent)
-
-		for _, scene := range document.Scenes {
-			for _, node := range scene.Nodes {
-				spawnedEntities = append(spawnedEntities, parseEntities(node, nil, document.Name, document, ml)...)
-			}
-		}
-
-		var rootEntities []*Entity
-		for _, e := range spawnedEntities {
-			if e.Parent == nil {
-				rootEntities = append(rootEntities, e)
-			}
-		}
-
-		// only parent root entities
-		for _, e := range rootEntities {
-			if e.ID == parent.ID {
-				continue
-			}
-
-			parent.Children[e.ID] = e
-			e.Parent = parent
-		}
-	}
-
-	for _, entity := range spawnedEntities {
-		entity.Static = entityAsset.Static
-		if entityAsset.Physics == nil {
-			entity.Physics = &PhysicsComponent{}
-		}
-		if entityAsset.Collider != nil && entityAsset.Collider.TriMeshCollider {
-			if entity.MeshComponent == nil {
-				continue
-			}
-			meshHandle := entity.MeshComponent.MeshHandle
-			primitives := ml.GetPrimitives(meshHandle)
-			if entity.Collider == nil {
-				if _, ok := types.ColliderGroupMap[types.ColliderGroup(entityAsset.Collider.ColliderGroup)]; !ok {
-					panic(fmt.Sprintf("unrecognized collider group %s for document %s", entityAsset.Collider.ColliderGroup, document.Name))
-				}
-				entity.Collider = &ColliderComponent{ColliderGroup: types.ColliderGroupMap[types.ColliderGroup(entityAsset.Collider.ColliderGroup)]}
-			}
-			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(MLPrimitivesTospecPrimitive(primitives))
-		}
-	}
-
-	if len(spawnedEntities) > 0 {
-		rootEntity := spawnedEntities[0]
-		if entityAsset.Translation != nil {
-			SetLocalPosition(rootEntity, *entityAsset.Translation)
-		}
-		if entityAsset.Rotation != nil {
-			SetLocalRotation(rootEntity, *entityAsset.Rotation)
-		}
-		if entityAsset.Scale != nil {
-			SetScale(rootEntity, *entityAsset.Scale)
-		}
-	}
-
 	return spawnedEntities
 }
 

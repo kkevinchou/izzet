@@ -1,8 +1,6 @@
 package assets
 
 import (
-	"fmt"
-
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
@@ -28,10 +26,6 @@ type Primitive struct {
 
 func NewSingleMeshHandle(namespace string) types.MeshHandle {
 	return NewMeshHandle(namespace, "0")
-}
-
-func NewHandleFromMeshID(namespace string, meshID int) types.MeshHandle {
-	return NewMeshHandle(namespace, fmt.Sprintf("%d", meshID))
 }
 
 func NewMeshHandle(namespace string, id string) types.MeshHandle {

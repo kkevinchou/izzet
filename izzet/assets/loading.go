@@ -51,7 +51,7 @@ func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.
 func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document) {
 	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
-		handle := NewHandleFromMeshID(document.Name, mesh.ID)
+		handle := NewMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
 		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}

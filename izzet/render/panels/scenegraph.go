@@ -65,13 +65,13 @@ func sceneGraph(app renderiface.App) {
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Empty Entity") {
-				entity := entities.InstantiateEntity("empty-entity")
+				entity := entities.CreateEmptyEntity("empty-entity")
 				world.AddEntity(entity)
 				app.SelectEntity(entity)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Camera") {
-				entity := entities.InstantiateEntity("camera")
+				entity := entities.CreateEmptyEntity("camera")
 				entity.CameraComponent = &entities.CameraComponent{}
 				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
 				entity.Billboard = true

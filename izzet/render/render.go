@@ -1121,7 +1121,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			if payload := imgui.AcceptDragDropPayload("content_browser_item"); payload != nil && payload.CData != nil {
 				entityName := *(*string)(payload.CData.Data)
 				documentAsset := r.app.AssetManager().GetDocumentAsset(entityName)
-				entity := r.app.InstantiateEntity(documentAsset)
+				entity := r.app.CreateEntitiesFromDocumentAsset(documentAsset)
 				r.app.SelectEntity(entity)
 			}
 			imgui.EndDragDropTarget()

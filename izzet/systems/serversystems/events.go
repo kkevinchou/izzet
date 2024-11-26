@@ -44,7 +44,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 		var radius float64 = 40
 		var length float64 = 80
-		entity := entities.InstantiateEntity("player")
+		entity := entities.CreateEmptyEntity("player")
 		entity.PositionSync = &entities.PositionSync{}
 		entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
 		entity.Collider = &entities.ColliderComponent{
@@ -131,7 +131,7 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 }
 
 func createCamera(playerID int, targetEntityID int) *entities.Entity {
-	entity := entities.InstantiateEntity("camera")
+	entity := entities.CreateEmptyEntity("camera")
 	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
 	entity.ImageInfo = entities.NewImageInfo("camera.png", 1)
 	entity.Billboard = true

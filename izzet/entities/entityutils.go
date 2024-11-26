@@ -28,7 +28,7 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 	}
 }
 
-func InstantiateEntity(name string) *Entity {
+func CreateEmptyEntity(name string) *Entity {
 	entity := InstantiateBaseEntity(name, id)
 	id += 1
 	return entity

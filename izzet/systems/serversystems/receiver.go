@@ -102,7 +102,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	}
 
 	handle := assets.NewSingleEntityMeshHandle(modelName)
-	entity := entities.InstantiateEntity(modelName)
+	entity := entities.CreateEmptyEntity(modelName)
 	entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: false}
 	entity.Collider = &entities.ColliderComponent{
 		ColliderGroup: types.ColliderGroupFlagPlayer,

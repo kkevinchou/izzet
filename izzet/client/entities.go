@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-func (g *Client) InstantiateEntity(documentAsset assets.DocumentAsset) *entities.Entity {
+func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entities.Entity {
 	if !documentAsset.Config.SingleEntity {
 		spawnedEntities := g.createEntitiesFromDocument(documentAsset)
 		for _, entity := range spawnedEntities {
@@ -40,7 +40,7 @@ func (g *Client) InstantiateEntity(documentAsset assets.DocumentAsset) *entities
 func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle types.MeshHandle, node *modelspec.Node) *entities.Entity {
 	document := documentAsset.Document
 	config := documentAsset.Config
-	entity := entities.InstantiateEntity(name)
+	entity := entities.CreateEmptyEntity(name)
 
 	entity.MeshComponent = &entities.MeshComponent{
 		MeshHandle:    meshHandle,
@@ -72,7 +72,7 @@ func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) 
 	document := documentAsset.Document
 
 	var spawnedEntities []*entities.Entity
-	parent := entities.InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
+	parent := entities.CreateEmptyEntity(fmt.Sprintf("%s-parent", document.Name))
 	spawnedEntities = append(spawnedEntities, parent)
 
 	for _, scene := range document.Scenes {

@@ -64,7 +64,7 @@ type App interface {
 	ImportAsset(config assets.AssetConfig)
 	SelectEntity(entity *entities.Entity)
 	SelectedEntity() *entities.Entity
-	InstantiateEntity(documentAsset assets.DocumentAsset) *entities.Entity
+	CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entities.Entity
 	BuildNavMesh(App, int, int, int, int, float64, float64)
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld

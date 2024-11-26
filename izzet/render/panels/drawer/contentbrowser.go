@@ -38,7 +38,7 @@ func contentBrowser(app renderiface.App) bool {
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			menuOpen = true
 			if imgui.Button("Instantiate") {
-				app.InstantiateEntity(document)
+				app.CreateEntitiesFromDocumentAsset(document)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()

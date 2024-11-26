@@ -25,9 +25,9 @@ func InitDeserializedEntity(entity *entities.Entity, ml *assets.AssetManager) {
 			meshHandle := entity.MeshComponent.MeshHandle
 			primitives := ml.GetPrimitives(meshHandle)
 			if len(primitives) > 0 {
-				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
 				if entity.SimplifiedTriMeshIterations > 0 {
-					entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(entities.MLPrimitivesTospecPrimitive(primitives)[0], entity.SimplifiedTriMeshIterations)
+					entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(entities.AssetPrimitiveToSpecPrimitive(primitives)[0], entity.SimplifiedTriMeshIterations)
 				}
 			}
 		}

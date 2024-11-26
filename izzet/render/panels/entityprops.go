@@ -369,7 +369,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			imgui.SameLine()
 			if imgui.Button("Simplify Mesh") {
 				primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-				specPrimitives := entities.MLPrimitivesTospecPrimitive(primitives)
+				specPrimitives := entities.AssetPrimitiveToSpecPrimitive(primitives)
 				entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(specPrimitives[0], int(app.RuntimeConfig().SimplifyMeshIterations))
 				entity.SimplifiedTriMeshIterations = int(app.RuntimeConfig().SimplifyMeshIterations)
 			}

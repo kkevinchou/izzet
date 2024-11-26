@@ -77,7 +77,7 @@ func sceneGraph(app renderiface.App) {
 				meshHandle := entity.MeshComponent.MeshHandle
 				primitives := app.AssetManager().GetPrimitives(meshHandle)
 				entity.Collider = &entities.ColliderComponent{ColliderGroup: types.ColliderGroupFlagTerrain, CollisionMask: types.ColliderGroupFlagTerrain}
-				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
+				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
 
 				world.AddEntity(entity)
 				app.SelectEntity(entity)

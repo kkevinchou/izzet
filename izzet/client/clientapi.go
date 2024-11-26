@@ -474,7 +474,7 @@ func (g *Client) SelectedEntity() *entities.Entity {
 
 func (g *Client) InstantiateEntity(documentAsset assets.DocumentAsset) *entities.Entity {
 	if !documentAsset.Config.SingleEntity {
-		spawnedEntities := entities.CreateEntitiesFromDocument(documentAsset, g.assetManager)
+		spawnedEntities := g.createEntitiesFromDocument(documentAsset)
 		for _, entity := range spawnedEntities {
 			g.world.AddEntity(entity)
 		}
@@ -504,13 +504,102 @@ func (g *Client) InstantiateEntity(documentAsset assets.DocumentAsset) *entities
 	if len(primitives) > 0 {
 		entity.Collider = &entities.ColliderComponent{
 			ColliderGroup:   types.ColliderGroupMap[types.ColliderGroupTerrain],
-			TriMeshCollider: collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives)),
+			TriMeshCollider: collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives)),
 		}
 	}
 
 	g.world.AddEntity(entity)
 
 	return entity
+}
+
+func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) []*entities.Entity {
+	document := documentAsset.Document
+	config := documentAsset.Config
+
+	var spawnedEntities []*entities.Entity
+	parent := entities.InstantiateEntity(fmt.Sprintf("%s-parent", document.Name))
+	spawnedEntities = append(spawnedEntities, parent)
+
+	for _, scene := range document.Scenes {
+		for _, node := range scene.Nodes {
+			spawnedEntities = append(spawnedEntities, g.createEntitiesFromNode(node, document.Name, document)...)
+		}
+	}
+
+	var rootEntities []*entities.Entity
+	for _, e := range spawnedEntities {
+		if e.Parent == nil {
+			rootEntities = append(rootEntities, e)
+		}
+	}
+
+	// only parent root entities
+	for _, e := range rootEntities {
+		if e.ID == parent.ID {
+			continue
+		}
+
+		parent.Children[e.ID] = e
+		e.Parent = parent
+	}
+
+	for _, entity := range spawnedEntities {
+		entity.Static = config.Static
+		if config.Physics {
+			entity.Physics = &entities.PhysicsComponent{}
+		}
+		if types.ColliderType(config.ColliderType) == types.ColliderTypeMesh {
+			if entity.MeshComponent == nil {
+				continue
+			}
+			meshHandle := entity.MeshComponent.MeshHandle
+			primitives := g.assetManager.GetPrimitives(meshHandle)
+			entity.Collider = &entities.ColliderComponent{ColliderGroup: types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup))}
+			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
+		}
+	}
+
+	return spawnedEntities
+}
+
+func (g *Client) createEntitiesFromNode(node *modelspec.Node, namespace string, document *modelspec.Document) []*entities.Entity {
+	var entity *entities.Entity
+
+	if node.MeshID != nil {
+		entity = entities.InstantiateEntity(node.Name)
+		meshHandle := assets.NewHandleFromMeshID(namespace, *node.MeshID)
+		entity.MeshComponent = &entities.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
+		var vertices []modelspec.Vertex
+		entities.VerticesFromNode(node, document, &vertices)
+		entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+		entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
+		entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+		entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+
+		if len(document.Animations) > 0 {
+			entity.Animation = entities.NewAnimationComponent(document.Name, g.assetManager)
+		}
+	}
+
+	allEntities := []*entities.Entity{}
+	if entity != nil {
+		allEntities = append(allEntities, entity)
+	}
+
+	for _, childNode := range node.Children {
+		cs := g.createEntitiesFromNode(childNode, namespace, document)
+		// the first element of parseEntities is the root child node
+		if entity != nil {
+			if cs[0] != nil {
+				cs[0].Parent = entity
+				entity.Children[cs[0].ID] = cs[0]
+			}
+		}
+		allEntities = append(allEntities, cs...)
+	}
+
+	return allEntities
 }
 
 func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, sampleDist float64, maxError float64) {

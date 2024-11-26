@@ -11,11 +11,15 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/sqweek/dialog"
 )
 
 var errorModal error
 var showImportAssetModal bool
+
+var SelectedColliderType types.ColliderType = types.ColliderTypeNone
+var SelectedColliderGroup types.ColliderGroup = types.ColliderGroupPlayer
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
@@ -132,11 +136,29 @@ func importAssetModal(app renderiface.App) {
 			}
 			imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
 		}, true)
-		panelutils.SetupRow("Collider", func() {
-			imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderType, imgui.InputTextFlagsNone, nil)
+		panelutils.SetupRow("Collider Type", func() {
+			// imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderType, imgui.InputTextFlagsNone, nil)
+			if imgui.BeginCombo("##", string(SelectedColliderType)) {
+				for _, option := range types.ColliderTypes {
+					if imgui.SelectableBool(string(option)) {
+						SelectedColliderType = option
+						wipImportAssetConfig.ColliderType = string(option)
+					}
+				}
+				imgui.EndCombo()
+			}
 		}, true)
 		panelutils.SetupRow("Collider Group", func() {
-			imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderGroup, imgui.InputTextFlagsNone, nil)
+			// imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderGroup, imgui.InputTextFlagsNone, nil)
+			if imgui.BeginCombo("##", string(SelectedColliderGroup)) {
+				for _, option := range types.ColliderGroups {
+					if imgui.SelectableBool(string(option)) {
+						SelectedColliderGroup = option
+						wipImportAssetConfig.ColliderGroup = string(option)
+					}
+				}
+				imgui.EndCombo()
+			}
 		}, true)
 		panelutils.SetupRow("Single Entity", func() {
 			imgui.Checkbox("##", &wipImportAssetConfig.SingleEntity)
@@ -154,6 +176,8 @@ func importAssetModal(app renderiface.App) {
 			app.ImportAsset(wipImportAssetConfig)
 			imgui.CloseCurrentPopup()
 			showImportAssetModal = false
+			SelectedColliderType = types.ColliderTypeNone
+			SelectedColliderGroup = types.ColliderGroupNone
 		}
 		imgui.SameLine()
 		if imgui.Button("Cancel") {

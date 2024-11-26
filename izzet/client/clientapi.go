@@ -32,6 +32,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
@@ -600,7 +601,7 @@ func (g *Client) InstantiateEntity(documentAsset assets.DocumentAsset) *entities
 	primitives := g.AssetManager().GetPrimitives(handle)
 	if len(primitives) > 0 {
 		entity.Collider = &entities.ColliderComponent{
-			ColliderGroup:   entities.ColliderGroupMap[entities.ColliderGroupTerrain],
+			ColliderGroup:   types.ColliderGroupMap[types.ColliderGroupTerrain],
 			TriMeshCollider: collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives)),
 		}
 	}

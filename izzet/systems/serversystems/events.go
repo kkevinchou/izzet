@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -52,8 +53,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 				Top:    mgl64.Vec3{0, radius + length, 0},
 				Bottom: mgl64.Vec3{0, radius, 0},
 			},
-			ColliderGroup: entities.ColliderGroupFlagPlayer,
-			CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
+			ColliderGroup: types.ColliderGroupFlagPlayer,
+			CollisionMask: types.ColliderGroupFlagTerrain | types.ColliderGroupFlagPlayer,
 		}
 		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
 

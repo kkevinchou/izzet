@@ -134,10 +134,6 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.initSettings()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
-	data := izzetdata.LoadData(dataFilePath)
-	g.setupAssets(data)
-	g.setupPrefabs(data)
-
 	g.initialize()
 	if defaultProject != "" {
 		g.LoadProject(defaultProject)
@@ -234,22 +230,6 @@ func initSeed() {
 	seed := settings.Seed
 	fmt.Printf("initializing with seed %d ...\n", seed)
 	rand.Seed(seed)
-}
-
-func (g *Client) setupAssets(data *izzetdata.Data) {
-	// for docName, entityAsset := range data.EntityAssets {
-	// 	config := assets.AssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
-	// 	g.assetManager.LoadAndRegisterDocument(config)
-	// }
-}
-
-func (g *Client) setupPrefabs(data *izzetdata.Data) {
-	// g.prefabs = map[int]*prefabs.Prefab{}
-	// for name, _ := range data.EntityAssets {
-	// 	document := g.assetManager.GetDocument(name)
-	// 	pf := prefabs.CreatePrefab(document, data)
-	// 	g.prefabs[pf.ID] = pf
-	// }
 }
 
 func (g *Client) setupSystems() {

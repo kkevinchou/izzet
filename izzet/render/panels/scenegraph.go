@@ -40,8 +40,8 @@ func sceneGraph(app renderiface.App) {
 						Top:    mgl64.Vec3{0, radius + length, 0},
 						Bottom: mgl64.Vec3{0, radius, 0},
 					},
-					ColliderGroup: entities.ColliderGroupFlagPlayer,
-					CollisionMask: entities.ColliderGroupFlagTerrain,
+					ColliderGroup: types.ColliderGroupFlagPlayer,
+					CollisionMask: types.ColliderGroupFlagTerrain,
 				}
 				entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed}
 
@@ -76,7 +76,7 @@ func sceneGraph(app renderiface.App) {
 
 				meshHandle := entity.MeshComponent.MeshHandle
 				primitives := app.AssetManager().GetPrimitives(meshHandle)
-				entity.Collider = &entities.ColliderComponent{ColliderGroup: entities.ColliderGroupFlagTerrain, CollisionMask: entities.ColliderGroupFlagTerrain}
+				entity.Collider = &entities.ColliderComponent{ColliderGroup: types.ColliderGroupFlagTerrain, CollisionMask: types.ColliderGroupFlagTerrain}
 				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.MLPrimitivesTospecPrimitive(primitives))
 
 				world.AddEntity(entity)

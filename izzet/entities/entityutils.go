@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/prefabs"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
@@ -131,18 +132,13 @@ func CreateEntitiesFromDocument2(documentAsset assets.DocumentAsset, ml *assets.
 		if config.Physics {
 			entity.Physics = &PhysicsComponent{}
 		}
-		if assets.ColliderType(config.ColliderType) == assets.ColliderTypeMesh {
+		if types.ColliderType(config.ColliderType) == types.ColliderTypeMesh {
 			if entity.MeshComponent == nil {
 				continue
 			}
 			meshHandle := entity.MeshComponent.MeshHandle
 			primitives := ml.GetPrimitives(meshHandle)
-			if entity.Collider == nil {
-				if _, ok := ColliderGroupMap[ColliderGroup(config.ColliderGroup)]; !ok {
-					panic(fmt.Sprintf("unrecognized collider group %s for document %s", config.ColliderGroup, document.Name))
-				}
-				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[ColliderGroup(config.ColliderGroup)]}
-			}
+			entity.Collider = &ColliderComponent{ColliderGroup: types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup))}
 			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(MLPrimitivesTospecPrimitive(primitives))
 		}
 	}
@@ -237,10 +233,10 @@ func CreateEntitiesFromDocument(document *modelspec.Document, ml *assets.AssetMa
 			meshHandle := entity.MeshComponent.MeshHandle
 			primitives := ml.GetPrimitives(meshHandle)
 			if entity.Collider == nil {
-				if _, ok := ColliderGroupMap[ColliderGroup(entityAsset.Collider.ColliderGroup)]; !ok {
+				if _, ok := types.ColliderGroupMap[types.ColliderGroup(entityAsset.Collider.ColliderGroup)]; !ok {
 					panic(fmt.Sprintf("unrecognized collider group %s for document %s", entityAsset.Collider.ColliderGroup, document.Name))
 				}
-				entity.Collider = &ColliderComponent{ColliderGroup: ColliderGroupMap[ColliderGroup(entityAsset.Collider.ColliderGroup)]}
+				entity.Collider = &ColliderComponent{ColliderGroup: types.ColliderGroupMap[types.ColliderGroup(entityAsset.Collider.ColliderGroup)]}
 			}
 			entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(MLPrimitivesTospecPrimitive(primitives))
 		}

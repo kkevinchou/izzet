@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
@@ -104,8 +105,8 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	entity := entities.InstantiateEntity(modelName)
 	entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: false}
 	entity.Collider = &entities.ColliderComponent{
-		ColliderGroup: entities.ColliderGroupFlagPlayer,
-		CollisionMask: entities.ColliderGroupFlagTerrain | entities.ColliderGroupFlagPlayer,
+		ColliderGroup: types.ColliderGroupFlagPlayer,
+		CollisionMask: types.ColliderGroupFlagTerrain | types.ColliderGroupFlagPlayer,
 	}
 
 	// primitives := s.app.AssetManager().GetPrimitives(handle)

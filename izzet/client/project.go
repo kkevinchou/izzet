@@ -69,18 +69,19 @@ func (g *Client) SaveProject(name string) error {
 	assetsJSON := AssetsJSON{}
 
 	for _, document := range g.AssetManager().GetDocuments() {
-		sourceRootDir := filepath.Dir(document.SourceFilePath)
+		config := document.Config
+		sourceRootDir := filepath.Dir(config.FilePath)
 
 		// don't need to copy assets into the project directory if
 		// we loaded it from there
 
-		sourceFilePaths := []string{document.SourceFilePath}
+		sourceFilePaths := []string{config.FilePath}
 		for _, peripheralFilePath := range document.Document.PeripheralFiles {
-			sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(document.SourceFilePath), peripheralFilePath))
+			sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(config.FilePath), peripheralFilePath))
 		}
 
 		newConfig := document.Config
-		newConfig.FilePath = filepath.Join(contentDir, filepath.Base(document.SourceFilePath))
+		newConfig.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
 			Config: newConfig,
 		})

@@ -132,8 +132,20 @@ func importAssetModal(app renderiface.App) {
 			}
 			imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
 		}, true)
+		panelutils.SetupRow("Collider", func() {
+			imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderType, imgui.InputTextFlagsNone, nil)
+		}, true)
+		panelutils.SetupRow("Collider Group", func() {
+			imgui.InputTextWithHint("##", "", &wipImportAssetConfig.ColliderGroup, imgui.InputTextFlagsNone, nil)
+		}, true)
 		panelutils.SetupRow("Single Entity", func() {
 			imgui.Checkbox("##", &wipImportAssetConfig.SingleEntity)
+		}, true)
+		panelutils.SetupRow("Static", func() {
+			imgui.Checkbox("##", &wipImportAssetConfig.Static)
+		}, true)
+		panelutils.SetupRow("Physics", func() {
+			imgui.Checkbox("##", &wipImportAssetConfig.Physics)
 		}, true)
 
 		imgui.EndTable()

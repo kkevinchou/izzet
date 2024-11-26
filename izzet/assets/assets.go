@@ -17,10 +17,8 @@ import (
 )
 
 type DocumentAsset struct {
-	Name           string
-	Document       *modelspec.Document `json:"-"`
-	SourceFilePath string
-	Config         AssetConfig
+	Document *modelspec.Document `json:"-"`
+	Config   AssetConfig
 }
 
 type AssetManager struct {
@@ -94,6 +92,13 @@ func (a *AssetManager) GetTexture(name string) *textures.Texture {
 	return a.textures[name]
 }
 
+func (a *AssetManager) GetDocumentAsset(name string) DocumentAsset {
+	if _, ok := a.documentAssets[name]; !ok {
+		panic(fmt.Sprintf("could not find animated model %s", name))
+	}
+	return a.documentAssets[name]
+}
+
 func (a *AssetManager) GetDocument(name string) *modelspec.Document {
 	if _, ok := a.documentAssets[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
@@ -107,7 +112,7 @@ func (a *AssetManager) GetDocuments() []DocumentAsset {
 		documents = append(documents, documentAsset)
 	}
 	sort.Slice(documents, func(i, j int) bool {
-		return documents[i].Name < documents[j].Name
+		return documents[i].Config.Name < documents[j].Config.Name
 	})
 	return documents
 }

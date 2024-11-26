@@ -11,11 +11,6 @@ import (
 	"unsafe"
 )
 
-var name []byte = []byte("bob")
-var someInt int = 15
-var someString string = "asdf"
-var someBytes [3]byte
-
 func contentBrowser(app renderiface.App) bool {
 	var menuOpen bool
 
@@ -43,7 +38,7 @@ func contentBrowser(app renderiface.App) bool {
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			menuOpen = true
 			if imgui.Button("Instantiate") {
-				app.InstantiateEntity(doc.Name)
+				app.InstantiateEntity(document)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()

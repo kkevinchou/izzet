@@ -15,10 +15,8 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	}
 
 	a.documentAssets[config.Name] = DocumentAsset{
-		Name:           config.Name,
-		SourceFilePath: config.FilePath,
-		Config:         config,
-		Document:       document,
+		Config:   config,
+		Document: document,
 	}
 
 	if config.SingleEntity {

@@ -41,19 +41,13 @@ type AssetManager struct {
 func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]fonts.Font
-	var textureLoadTime time.Duration
 
 	if processVisualAssets {
 		start := time.Now()
 		loadedTextures = loaders.LoadTextures(directory)
-		textureLoadTime = time.Since(start)
 		loadedFonts = loaders.LoadFonts(directory)
+		assetslog.Logger.Println("loaded fonts and textures in", time.Since(start).Seconds(), "seconds")
 	}
-
-	start := time.Now()
-	// documents := loaders.LoadDocuments(directory)
-	assetslog.Logger.Println(textureLoadTime, "to load textures")
-	assetslog.Logger.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
 		textures:       loadedTextures,
@@ -61,17 +55,6 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 		processVisuals: processVisualAssets,
 	}
 	assetManager.Reset()
-
-	if processVisualAssets {
-		handle := assetManager.GetCubeMeshHandle()
-		assetManager.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
-
-		// default material
-		defaultMaterialHandle := assetManager.GetDefaultMaterialHandle()
-		assetManager.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
-			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
-		}
-	}
 
 	return &assetManager
 }
@@ -132,4 +115,15 @@ func (a *AssetManager) Reset() {
 	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
 	a.Joints = map[string]map[int]*modelspec.JointSpec{}
 	a.RootJoints = map[string]int{}
+
+	if a.processVisuals {
+		handle := a.GetCubeMeshHandle()
+		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
+
+		// default material
+		defaultMaterialHandle := a.GetDefaultMaterialHandle()
+		a.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
+			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
+		}
+	}
 }

@@ -101,7 +101,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 		runAnimation = "Parasaurolophus_Run"
 	}
 
-	handle := assets.NewSingleMeshHandle(modelName)
+	handle := assets.NewSingleEntityMeshHandle(modelName)
 	entity := entities.InstantiateEntity(modelName)
 	entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: false}
 	entity.Collider = &entities.ColliderComponent{

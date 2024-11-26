@@ -22,8 +22,8 @@ func (g *Client) InstantiateEntity(documentAsset assets.DocumentAsset) *entities
 	}
 
 	namespace := documentAsset.Config.Name
-	document := g.AssetManager().GetDocument(namespace)
-	handle := assets.NewSingleMeshHandle(namespace)
+	document := documentAsset.Document
+	handle := assets.NewSingleEntityMeshHandle(namespace)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
 	}

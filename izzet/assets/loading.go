@@ -40,7 +40,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 }
 
 func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document) {
-	handle := NewSingleMeshHandle(document.Name)
+	handle := NewSingleEntityMeshHandle(document.Name)
 	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh)

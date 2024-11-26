@@ -24,7 +24,7 @@ type Primitive struct {
 	MaterialHandle types.MaterialHandle
 }
 
-func NewSingleMeshHandle(namespace string) types.MeshHandle {
+func NewSingleEntityMeshHandle(namespace string) types.MeshHandle {
 	return NewMeshHandle(namespace, "0")
 }
 

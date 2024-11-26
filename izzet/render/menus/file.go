@@ -19,7 +19,7 @@ var errorModal error
 var showImportAssetModal bool
 
 var SelectedColliderType types.ColliderType = types.ColliderTypeNone
-var SelectedColliderGroup types.ColliderGroup = types.ColliderGroupPlayer
+var SelectedColliderGroup types.ColliderGroup = types.ColliderGroupNone
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {

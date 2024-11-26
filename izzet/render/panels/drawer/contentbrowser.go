@@ -11,19 +11,21 @@ import (
 	"unsafe"
 )
 
-var name []byte = []byte("bob")
-var someInt int = 15
-var someString string = "asdf"
-var someBytes [3]byte
-
 func contentBrowser(app renderiface.App) bool {
 	var menuOpen bool
 
-	for i, item := range app.ContentBrowser().Items {
-		size := imgui.Vec2{X: 100, Y: 100}
+	var width float32 = 100
+	const maxPerRow = 5
+
+	for i, document := range app.AssetManager().GetDocuments() {
+		doc := document.Document
+		size := imgui.Vec2{X: width, Y: 100}
 		// invert the Y axis since opengl vs texture coordinate systems differ
 		// https://learnopengl.com/Getting-started/Textures
 		imgui.BeginGroup()
+
+		imgui.Dummy(imgui.Vec2{X: 10, Y: 10})
+
 		imgui.PushIDStr(fmt.Sprintf("image %d", i))
 
 		if documentTexture == nil {
@@ -36,23 +38,34 @@ func contentBrowser(app renderiface.App) bool {
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			menuOpen = true
 			if imgui.Button("Instantiate") {
-				app.InstantiateEntity(item.Name)
+				app.InstantiateEntity(document)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()
 		}
 		imgui.PopID()
+		if imgui.IsItemHovered() {
+			imgui.BeginTooltip()
+			imgui.Text(doc.Name)
+			imgui.EndTooltip()
+		}
 
 		if imgui.BeginDragDropSourceV(imgui.DragDropFlagsSourceAllowNullID) {
-			s := item.Name
+			s := doc.Name
 			ptr := unsafe.Pointer(&s)
-			size := uint64(unsafe.Sizeof(item.Name))
+			size := uint64(unsafe.Sizeof(doc.Name))
 			imgui.SetDragDropPayloadV("content_browser_item", uintptr(ptr), size, imgui.CondOnce)
 			imgui.EndDragDropSource()
 		}
-		imgui.Text(item.Name)
+
+		imgui.PushItemWidth(width)
+		imgui.InputTextWithHint("##Name", doc.Name, &doc.Name, imgui.InputTextFlagsReadOnly, nil)
+
 		imgui.EndGroup()
-		imgui.SameLine()
+		if i%(maxPerRow-1) != 0 || i == 0 {
+			imgui.SameLine()
+		}
 	}
+
 	return menuOpen
 }

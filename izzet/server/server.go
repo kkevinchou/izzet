@@ -203,13 +203,6 @@ func (s *Server) listen() (net.Listener, error) {
 	return listener, nil
 }
 
-// func (g *Server) setupAssets(data *izzetdata.Data) {
-// 	for docName, entityAsset := range data.EntityAssets {
-// 		config := assets.AssetConfig{Name: docName, FilePath: entityAsset.FilePath, SingleEntity: entityAsset.SingleEntity}
-// 		g.assetManager.LoadAndRegisterDocument(config)
-// 	}
-// }
-
 func (g *Server) initSettings() {
 	config := runtimeconfig.DefaultRuntimeConfig()
 	g.runtimeConfig = &config

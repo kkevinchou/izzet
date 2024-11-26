@@ -10,14 +10,13 @@ import (
 
 func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
-	if _, ok := a.documents[config.Name]; ok {
+	if _, ok := a.documentAssets[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
 	}
 
-	a.documents[config.Name] = Document{
-		SourceFilePath: config.FilePath,
-		Config:         config,
-		Document:       document,
+	a.documentAssets[config.Name] = DocumentAsset{
+		Config:   config,
+		Document: document,
 	}
 
 	if config.SingleEntity {
@@ -42,17 +41,19 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 
 func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document) {
 	handle := NewSingleMeshHandle(document.Name)
-	m.clearPrimitives(handle)
+	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
+		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
 func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document) {
+	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		handle := NewHandleFromMeshID(document.Name, mesh.ID)
-		m.clearPrimitives(handle)
 		m.registerMeshPrimitivesWithHandle(handle, mesh)
+		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
@@ -83,6 +84,10 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 	return handle
 }
 
-func (m *AssetManager) clearPrimitives(handle types.MeshHandle) {
-	delete(m.Primitives, handle)
+func (m *AssetManager) clearNamespace(namespace string) {
+	for _, handle := range m.NamespaceToMeshHandles[namespace] {
+		delete(m.Primitives, handle)
+	}
+
+	delete(m.NamespaceToMeshHandles, namespace)
 }

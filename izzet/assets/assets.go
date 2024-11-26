@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -15,24 +16,24 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
-type Document struct {
-	Document       *modelspec.Document `json:"-"`
-	SourceFilePath string
-	Config         AssetConfig
+type DocumentAsset struct {
+	Document *modelspec.Document `json:"-"`
+	Config   AssetConfig
 }
 
 type AssetManager struct {
 	// Static Assets
-	textures  map[string]*textures.Texture
-	documents map[string]Document
-	fonts     map[string]fonts.Font
+	textures       map[string]*textures.Texture
+	documentAssets map[string]DocumentAsset
+	fonts          map[string]fonts.Font
 
 	// Asset References
-	Primitives map[types.MeshHandle][]Primitive
-	Animations map[string]map[string]*modelspec.AnimationSpec
-	Joints     map[string]map[int]*modelspec.JointSpec
-	RootJoints map[string]int
-	Materials  map[types.MaterialHandle]modelspec.MaterialSpecification
+	NamespaceToMeshHandles map[string][]types.MeshHandle
+	Primitives             map[types.MeshHandle][]Primitive
+	Animations             map[string]map[string]*modelspec.AnimationSpec
+	Joints                 map[string]map[int]*modelspec.JointSpec
+	RootJoints             map[string]int
+	Materials              map[types.MaterialHandle]modelspec.MaterialSpecification
 
 	processVisuals bool
 }
@@ -40,19 +41,13 @@ type AssetManager struct {
 func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]fonts.Font
-	var textureLoadTime time.Duration
 
 	if processVisualAssets {
 		start := time.Now()
 		loadedTextures = loaders.LoadTextures(directory)
-		textureLoadTime = time.Since(start)
 		loadedFonts = loaders.LoadFonts(directory)
+		assetslog.Logger.Println("loaded fonts and textures in", time.Since(start).Seconds(), "seconds")
 	}
-
-	start := time.Now()
-	// documents := loaders.LoadDocuments(directory)
-	assetslog.Logger.Println(textureLoadTime, "to load textures")
-	assetslog.Logger.Println(time.Since(start), "to load models")
 
 	assetManager := AssetManager{
 		textures:       loadedTextures,
@@ -60,17 +55,6 @@ func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
 		processVisuals: processVisualAssets,
 	}
 	assetManager.Reset()
-
-	if processVisualAssets {
-		handle := assetManager.GetCubeMeshHandle()
-		assetManager.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
-
-		// default material
-		defaultMaterialHandle := assetManager.GetDefaultMaterialHandle()
-		assetManager.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
-			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
-		}
-	}
 
 	return &assetManager
 }
@@ -91,16 +75,29 @@ func (a *AssetManager) GetTexture(name string) *textures.Texture {
 	return a.textures[name]
 }
 
-func (a *AssetManager) GetDocument(name string) *modelspec.Document {
-	if _, ok := a.documents[name]; !ok {
+func (a *AssetManager) GetDocumentAsset(name string) DocumentAsset {
+	if _, ok := a.documentAssets[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
 	}
-	return a.documents[name].Document
+	return a.documentAssets[name]
 }
 
-// returns all documents - mainly used for serializing documents on project save
-func (a *AssetManager) GetAllDocuments() map[string]Document {
-	return a.documents
+func (a *AssetManager) GetDocument(name string) *modelspec.Document {
+	if _, ok := a.documentAssets[name]; !ok {
+		panic(fmt.Sprintf("could not find animated model %s", name))
+	}
+	return a.documentAssets[name].Document
+}
+
+func (a *AssetManager) GetDocuments() []DocumentAsset {
+	var documents []DocumentAsset
+	for _, documentAsset := range a.documentAssets {
+		documents = append(documents, documentAsset)
+	}
+	sort.Slice(documents, func(i, j int) bool {
+		return documents[i].Config.Name < documents[j].Config.Name
+	})
+	return documents
 }
 
 func (a *AssetManager) GetFont(name string) fonts.Font {
@@ -111,10 +108,22 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 func (a *AssetManager) Reset() {
-	a.documents = map[string]Document{}
+	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
+	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
 	a.Materials = map[types.MaterialHandle]modelspec.MaterialSpecification{}
 	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
 	a.Joints = map[string]map[int]*modelspec.JointSpec{}
 	a.RootJoints = map[string]int{}
+
+	if a.processVisuals {
+		handle := a.GetCubeMeshHandle()
+		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
+
+		// default material
+		defaultMaterialHandle := a.GetDefaultMaterialHandle()
+		a.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
+			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
+		}
+	}
 }

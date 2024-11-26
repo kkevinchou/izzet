@@ -339,7 +339,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			panelutils.InitColumns()
 
 			panelutils.SetupRow("Collider Type", func() {
-				imgui.LabelText("", string(entities.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
+				imgui.LabelText("", string(types.ColliderFlagToGroupName[entity.Collider.ColliderGroup]))
 			}, true)
 			panelutils.SetupRow("Capsule", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", entity.Collider.CapsuleCollider != nil))

@@ -44,6 +44,11 @@ func contentBrowser(app renderiface.App) bool {
 			imgui.EndPopup()
 		}
 		imgui.PopID()
+		if imgui.IsItemHovered() {
+			imgui.BeginTooltip()
+			imgui.Text(doc.Name)
+			imgui.EndTooltip()
+		}
 
 		if imgui.BeginDragDropSourceV(imgui.DragDropFlagsSourceAllowNullID) {
 			s := doc.Name

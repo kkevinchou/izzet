@@ -105,7 +105,7 @@ func (r *RenderSystem) downSample(srcTexture uint32, widths, heights []int) {
 		gl.Viewport(0, 0, int32(width), int32(height))
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.downSampleTextures[i], 0)
 
-		gl.BindVertexArray(r.xyTextureVAO)
+		gl.BindVertexArray(r.fullscreenNDCQuadVAO)
 		if i == 0 {
 			shader.SetUniformInt("karis", 1)
 		} else {
@@ -161,7 +161,7 @@ func (r *RenderSystem) upSample(width, height int32, source, target uint32) {
 	gl.Viewport(0, 0, width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
-	gl.BindVertexArray(r.xyTextureVAO)
+	gl.BindVertexArray(r.fullscreenNDCQuadVAO)
 	r.iztDrawArrays(0, 6)
 }
 
@@ -183,7 +183,7 @@ func (r *RenderSystem) blend(width, height int32, texture0, texture1, target uin
 	gl.Viewport(0, 0, width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
 
-	gl.BindVertexArray(r.xyTextureVAO)
+	gl.BindVertexArray(r.fullscreenNDCQuadVAO)
 	r.iztDrawArrays(0, 6)
 }
 
@@ -206,7 +206,7 @@ func (r *RenderSystem) composite(renderContext RenderContext, texture0, texture1
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
-	gl.BindVertexArray(r.xyTextureVAO)
+	gl.BindVertexArray(r.fullscreenNDCQuadVAO)
 	r.iztDrawArrays(0, 6)
 
 	return r.compositeTexture

@@ -93,9 +93,9 @@ type RenderSystem struct {
 	imguiSSAONoiseTexture imgui.TextureID
 	ssaoSamples           [maxHemisphereSamples]mgl32.Vec3
 
-	downSampleFBO      uint32
-	xyTextureVAO       uint32
-	downSampleTextures []uint32
+	downSampleFBO        uint32
+	fullscreenNDCQuadVAO uint32
+	downSampleTextures   []uint32
 
 	upSampleFBO         uint32
 	upSampleTextures    []uint32
@@ -155,7 +155,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
-	r.xyTextureVAO = r.init2f2fVAO()
+	r.fullscreenNDCQuadVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}

@@ -11,6 +11,9 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("modelpbr", "model", "pbr", ""); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("gpass", "gapss", "gpass", ""); err != nil {
+		panic(err)
+	}
 	if err := shaderManager.CompileShaderProgram("batch", "batch", "batch", ""); err != nil {
 		panic(err)
 	}

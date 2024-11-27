@@ -794,7 +794,6 @@ var skyboxVertices = []float32{
 }
 
 func (r *RenderSystem) drawSkybox(renderContext RenderContext, viewerContext ViewerContext) {
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	if skyboxVAO == nil {
 		var vbo, vao uint32
 		apputils.GenBuffers(1, &vbo)

@@ -215,13 +215,13 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 
 	// geometry normal
 	r.gNormalTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
-	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gNormalTexture, 0)
+	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.gNormalTexture, 0)
 
 	// geometry color
 	r.gColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
-	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gColorTexture, 0)
+	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, r.gColorTexture, 0)
 
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
@@ -407,8 +407,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 
 	r.cameraViewerContext = cameraViewerContext
-
-	r.clearMainFrameBuffer(renderContext)
 	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
@@ -419,33 +417,34 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
-	r.drawSkybox(renderContext, cameraViewerContext)
-	mr.Inc("render_skybox", float64(time.Since(start).Milliseconds()))
-
-	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
-	// main color FBO
+	// GBUFFER RENDER
+
 	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
 	r.drawGPass(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
 
+	// MAIN RENDER
+
 	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
 
-	start = time.Now()
-	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
-	mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
+	// start = time.Now()
+	// r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	// mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
 
-	// clear depth for gizmo rendering
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	start = time.Now()
-	r.renderGizmos(cameraViewerContext, renderContext)
-	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
+	// // clear depth for gizmo rendering
+	// gl.Clear(gl.DEPTH_BUFFER_BIT)
+	// start = time.Now()
+	// r.renderGizmos(cameraViewerContext, renderContext)
+	// mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
 	// store color picking entity
 	start = time.Now()
@@ -796,17 +795,22 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 }
 
 func (r *RenderSystem) drawGPass(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
-
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader := r.shaderManager.GetShaderProgram("gpass")
+	r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	r.drawSkybox(renderContext, viewerContext)
+
+	shader := r.shaderManager.GetShaderProgram("modelpbr")
+	r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
 
 	if r.app.RuntimeConfig().ShowColliders {
 		shader := r.shaderManager.GetShaderProgram("flat")
@@ -1011,10 +1015,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 	}
 }
 
-func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	shaderManager := r.shaderManager
-
-	shader := shaderManager.GetShaderProgram("modelpbr")
+func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	shader.Use()
 
 	if r.app.RuntimeConfig().FogEnabled {

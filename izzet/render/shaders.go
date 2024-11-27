@@ -14,6 +14,9 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("gpass", "gpass", "gpass", ""); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("ssao", "ssao", "ssao", ""); err != nil {
+		panic(err)
+	}
 	if err := shaderManager.CompileShaderProgram("batch", "batch", "batch", ""); err != nil {
 		panic(err)
 	}

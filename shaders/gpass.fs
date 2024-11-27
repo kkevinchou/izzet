@@ -16,4 +16,4 @@ void main()
     // and the diffuse per-fragment color, ignore specular
     // gAlbedoSpec.rgb = vec3(0.95);
     gAlbedoSpec= vec4(vec3(0.95), 1);
-}  
+}

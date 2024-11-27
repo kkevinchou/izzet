@@ -21,6 +21,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_time")))) }, true)
 		panelutils.SetupRow("Render Main Color Buffer", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_main_color_buffer")))) }, true)
 		panelutils.SetupRow("Render Geometry Pass", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_gpass")))) }, true)
+		panelutils.SetupRow("Render SSAO", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_ssao")))) }, true)
 		panelutils.SetupRow("Render Depthmaps", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_depthmaps")))) }, true)
 		panelutils.SetupRow("Render Query Shadowcasting", func() {
 			imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_query_shadowcasting"))))

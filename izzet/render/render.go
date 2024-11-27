@@ -86,6 +86,13 @@ type RenderSystem struct {
 	imguiGNormalTexture   imgui.TextureID
 	imguiGColorTexture    imgui.TextureID
 
+	ssaoFBO               uint32
+	ssaoTexture           uint32
+	imguiSSAOTexture      imgui.TextureID
+	ssaoNoiseTexture      uint32
+	imguiSSAONoiseTexture imgui.TextureID
+	ssaoSamples           [maxHemisphereSamples]mgl32.Vec3
+
 	downSampleFBO      uint32
 	xyTextureVAO       uint32
 	downSampleTextures []uint32
@@ -158,6 +165,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.initCompositeFBO(width, height)
 	r.initPostProcessingFBO(width, height)
 	r.initDepthMapFBO(width, height)
+	r.initSSAOFBO(width, height)
 
 	// circles for the rotation gizmo
 
@@ -183,6 +191,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendFBO, _ = initFBOAndTexture(width, height)
 
 	r.initializeCircleTextures()
+	r.initializeSSAOTextures()
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
 	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
@@ -239,6 +248,18 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	r.cameraDepthTexture = r.createDepthTexture(width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+
+	// // recreate texture for ssao
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+	// var ssaoTexture uint32
+	// gl.GenTextures(1, &ssaoTexture)
+	// gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
+	// gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
+	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
+	// r.ssaoTexture = ssaoTexture
+	// r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
@@ -429,6 +450,13 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.drawGPass(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
 
+	// SSAO RENDER
+
+	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+	r.drawSSAO(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
+
 	// MAIN RENDER
 
 	start = time.Now()
@@ -436,15 +464,15 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
 
-	// start = time.Now()
-	// r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
-	// mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
+	start = time.Now()
+	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
 
-	// // clear depth for gizmo rendering
-	// gl.Clear(gl.DEPTH_BUFFER_BIT)
-	// start = time.Now()
-	// r.renderGizmos(cameraViewerContext, renderContext)
-	// mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
+	// clear depth for gizmo rendering
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	start = time.Now()
+	r.renderGizmos(cameraViewerContext, renderContext)
+	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
 	// store color picking entity
 	start = time.Now()

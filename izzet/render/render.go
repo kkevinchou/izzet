@@ -44,7 +44,7 @@ const (
 	MaxBloomTextureHeight int = 1080
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
-	internalTextureColorFormat     int32   = gl.R11F_G11F_B10F
+	internalTextureColorFormatRGB  int32   = gl.R11F_G11F_B10F
 	internalTextureColorFormatRGBA int32   = gl.RGBA16F
 	uiWidthRatio                   float32 = 0.2
 )
@@ -209,7 +209,7 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
+	r.mainColorTexture = createTexture(width, height, internalTextureColorFormatRGB, gl.RGBA, gl.LINEAR)
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
 
@@ -236,13 +236,13 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.compositeTexture = createTexture(width, height, internalTextureColorFormatRGB, gl.RGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 
 	// recreate texture for postprocessing
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
-	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormatRGB, gl.RGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.postProcessingTexture, 0)
 	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
 
@@ -268,7 +268,7 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	var debugTexture uint32
 	gl.GenTextures(1, &debugTexture)
 	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
 		int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -325,7 +325,7 @@ func (r *RenderSystem) initPostProcessingFBO(width, height int) {
 }
 
 func (r *RenderSystem) initMainRenderFBO(width, height int) {
-	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
 	r.mainRenderFBO = mainRenderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
@@ -334,7 +334,7 @@ func (r *RenderSystem) initMainRenderFBO(width, height int) {
 }
 
 func (r *RenderSystem) initGeometryFBO(width, height int) {
-	geometryFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, internalTextureColorFormat, internalTextureColorFormat}, []uint32{gl.RGBA, gl.RGBA, gl.RGBA})
+	geometryFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, internalTextureColorFormatRGB, internalTextureColorFormatRGB}, []uint32{gl.RGBA, gl.RGBA, gl.RGBA})
 	r.geometryFBO = geometryFBO
 	r.gPositionTexture = colorTextures[0]
 	r.gNormalTexture = colorTextures[1]

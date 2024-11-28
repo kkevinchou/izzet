@@ -25,7 +25,6 @@ void main() {
     vec3 fragPos   = texture(gPosition, TexCoords).xyz;
     vec3 normal    = texture(gNormal, TexCoords).rgb;
     vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;  
-    // vec3 randomVec = texture(texNoise, vec2(0,0)).xyz;  
 
     vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
@@ -53,7 +52,6 @@ void main() {
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
         occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;      
-        // occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0);
     }
     occlusion = 1.0 - (occlusion / kernelSize);
     

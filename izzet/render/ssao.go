@@ -64,7 +64,7 @@ func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
 	var debugTexture uint32
 	gl.GenTextures(1, &debugTexture)
 	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
 		int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -120,8 +120,6 @@ func randomHemisphereVectors() [maxHemisphereSamples]mgl32.Vec3 {
 		v = v.Mul(rand.Float32() * scale)
 		result[i] = v
 	}
-	// DEBUGGING
-	result[0] = mgl32.Vec3{0, 0, 1}
 
 	return result
 }

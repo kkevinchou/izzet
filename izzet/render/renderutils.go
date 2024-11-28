@@ -660,7 +660,7 @@ func initFBOAndTexture(width, height int) (uint32, uint32) {
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	texture := createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	texture := createTexture(width, height, internalTextureColorFormatRGB, gl.RGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}

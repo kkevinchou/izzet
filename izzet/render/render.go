@@ -44,8 +44,9 @@ const (
 	MaxBloomTextureHeight int = 1080
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
-	internalTextureColorFormat int32   = gl.R11F_G11F_B10F
-	uiWidthRatio               float32 = 0.2
+	internalTextureColorFormat     int32   = gl.R11F_G11F_B10F
+	internalTextureColorFormatRGBA int32   = gl.RGBA16F
+	uiWidthRatio                   float32 = 0.2
 )
 
 type RenderSystem struct {
@@ -219,17 +220,17 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
 
 	// geometry position
-	r.gPositionTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
+	r.gPositionTexture = createTexture(width, height, internalTextureColorFormatRGBA, gl.RGBA, gl.LINEAR)
 	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.gPositionTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gPositionTexture, 0)
 
 	// geometry normal
-	r.gNormalTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
+	r.gNormalTexture = createTexture(width, height, internalTextureColorFormatRGBA, gl.RGBA, gl.LINEAR)
 	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.gNormalTexture, 0)
 
 	// geometry color
-	r.gColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
+	r.gColorTexture = createTexture(width, height, internalTextureColorFormatRGBA, gl.RGBA, gl.LINEAR)
 	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, r.gColorTexture, 0)
 

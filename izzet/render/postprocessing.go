@@ -24,7 +24,7 @@ func (r *RenderSystem) postProcess(renderContext RenderContext, texture0 uint32)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 
-	gl.BindVertexArray(r.xyTextureVAO)
+	gl.BindVertexArray(r.ndcQuadVAO)
 	r.iztDrawArrays(0, 6)
 
 	return r.postProcessingTexture

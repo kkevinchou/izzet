@@ -1,0 +1,27 @@
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord0;
+layout (location = 3) in vec2 aTexCoord1;
+layout (location = 4) in ivec3 jointIndices;
+layout (location = 5) in vec3 jointWeights;
+
+out vec3 FragPos;
+out vec2 TexCoords;
+out vec3 Normal;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    vec4 viewPos = view * model * vec4(aPos, 1.0);
+    FragPos = viewPos.xyz; 
+    TexCoords = aTexCoord0;
+    
+    mat3 normalMatrix = transpose(inverse(mat3(view * model)));
+    Normal = normalMatrix * aNormal;
+    
+    gl_Position = projection * viewPos;
+}

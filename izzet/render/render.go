@@ -44,8 +44,16 @@ const (
 	MaxBloomTextureHeight int = 1080
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
-	internalTextureColorFormat int32   = gl.R11F_G11F_B10F
-	uiWidthRatio               float32 = 0.2
+	renderFormatRGB                  uint32 = gl.RGB
+	renderFormatRGBA                 uint32 = gl.RGBA
+	internalTextureColorFormatRGB    int32  = gl.RGB32F
+	internalTextureColorFormatRGBA   int32  = gl.RGBA32F
+	internalTextureColorFormat16RGBA int32  = gl.RGBA16F
+
+	gPassInternalFormat int32  = gl.RGB32F
+	gPassFormat         uint32 = gl.RGB
+
+	uiWidthRatio float32 = 0.2
 )
 
 type RenderSystem struct {
@@ -74,12 +82,28 @@ type RenderSystem struct {
 
 	mainRenderFBO          uint32
 	mainColorTexture       uint32
+	imguiMainColorTexture  imgui.TextureID
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
-	imguiMainColorTexture  imgui.TextureID
+
+	geometryFBO           uint32
+	gPositionTexture      uint32
+	gNormalTexture        uint32
+	gColorTexture         uint32
+	imguiGPositionTexture imgui.TextureID
+	imguiGNormalTexture   imgui.TextureID
+	imguiGColorTexture    imgui.TextureID
+
+	ssaoFBO               uint32
+	ssaoTexture           uint32
+	ssaoDebugTexture      uint32
+	imguiSSAOTexture      imgui.TextureID
+	ssaoNoiseTexture      uint32
+	imguiSSAONoiseTexture imgui.TextureID
+	ssaoSamples           [maxHemisphereSamples]mgl32.Vec3
 
 	downSampleFBO      uint32
-	xyTextureVAO       uint32
+	ndcQuadVAO         uint32
 	downSampleTextures []uint32
 
 	upSampleFBO         uint32
@@ -140,15 +164,17 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
-	r.xyTextureVAO = r.init2f2fVAO()
+	r.ndcQuadVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
 	r.initMainRenderFBO(width, height)
+	r.initGeometryFBO(width, height)
 	r.initCompositeFBO(width, height)
 	r.initPostProcessingFBO(width, height)
 	r.initDepthMapFBO(width, height)
+	r.initSSAOFBO(width, height)
 
 	// circles for the rotation gizmo
 
@@ -174,6 +200,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendFBO, _ = initFBOAndTexture(width, height)
 
 	r.initializeCircleTextures()
+	r.initializeSSAOTextures()
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
 	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
@@ -189,22 +216,40 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.mainColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
+	r.mainColorTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
 
 	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
 
+	// recreate texture for geometry fbo
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
+
+	// geometry position
+	r.gPositionTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
+	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.gPositionTexture)}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gPositionTexture, 0)
+
+	// geometry normal
+	r.gNormalTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
+	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.gNormalTexture, 0)
+
+	// geometry color
+	r.gColorTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
+	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, r.gColorTexture, 0)
+
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-	r.compositeTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.compositeTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
 	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 
 	// recreate texture for postprocessing
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
-	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.postProcessingTexture, 0)
 	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
 
@@ -212,6 +257,40 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	r.cameraDepthTexture = r.createDepthTexture(width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+
+	// recreate texture for ssao
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+
+	var ssaoTexture uint32
+	gl.GenTextures(1, &ssaoTexture)
+	gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
+	r.ssaoTexture = ssaoTexture
+
+	var debugTexture uint32
+	gl.GenTextures(1, &debugTexture)
+	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
+		int32(width), int32(height), 0, renderFormatRGB, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, debugTexture, 0)
+	r.ssaoDebugTexture = debugTexture
+
+	var drawBuffers []uint32
+	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
+	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
+
+	gl.DrawBuffers(2, &drawBuffers[0])
+
+	r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
@@ -253,12 +332,24 @@ func (r *RenderSystem) initPostProcessingFBO(width, height int) {
 }
 
 func (r *RenderSystem) initMainRenderFBO(width, height int) {
-	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, gl.R32UI}, []uint32{gl.RGBA, gl.RED_INTEGER})
+	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
 	r.mainRenderFBO = mainRenderFBO
 	r.mainColorTexture = colorTextures[0]
 	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+}
+
+func (r *RenderSystem) initGeometryFBO(width, height int) {
+	geometryFBO, colorTextures := r.initFrameBuffer(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat})
+	r.geometryFBO = geometryFBO
+	r.gPositionTexture = colorTextures[0]
+	r.gNormalTexture = colorTextures[1]
+	r.gColorTexture = colorTextures[2]
+
+	r.imguiGPositionTexture = imgui.TextureID{Data: uintptr(r.gPositionTexture)}
+	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
+	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
 }
 
 func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
@@ -368,8 +459,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 
 	r.cameraViewerContext = cameraViewerContext
-
-	r.clearMainFrameBuffer(renderContext)
 	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
@@ -380,19 +469,32 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
-	r.drawSkybox(renderContext, cameraViewerContext)
-	mr.Inc("render_skybox", float64(time.Since(start).Milliseconds()))
-
-	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
-	// main color FBO
+	// GBUFFER RENDER
+
 	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
+	r.drawGPass(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
+
+	// SSAO RENDER
+
+	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+	r.drawSSAO(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
+
+	// MAIN RENDER
+
+	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
+
 	start = time.Now()
 	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
 	mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
@@ -445,6 +547,14 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
+		r.app.RuntimeConfig().DebugTexture = r.ssaoTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
+		r.app.RuntimeConfig().DebugTexture = r.gPositionTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
+		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferDebug {
+		r.app.RuntimeConfig().DebugTexture = r.ssaoDebugTexture
 	}
 
 	// render to back buffer
@@ -751,14 +861,146 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 	}
 }
 
+func (r *RenderSystem) drawGPass(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader := r.shaderManager.GetShaderProgram("gpass")
+	r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
+}
+
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	r.renderModels(viewerContext, lightContext, renderContext, renderableEntities)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	shaderManager := r.shaderManager
+	r.drawSkybox(renderContext, viewerContext)
+
+	shader := r.shaderManager.GetShaderProgram("modelpbr")
+	r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
+
+	if r.app.RuntimeConfig().ShowColliders {
+		shader := r.shaderManager.GetShaderProgram("flat")
+		shader.Use()
+
+		for _, entity := range renderableEntities {
+			if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
+				continue
+			}
+
+			if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
+				continue
+			}
+
+			modelMatrix := entities.WorldTransform(entity)
+
+			if entity.Collider.SimplifiedTriMeshCollider != nil {
+				var lines [][2]mgl64.Vec3
+				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
+					lines = append(lines, [2]mgl64.Vec3{
+						triangles.Points[0],
+						triangles.Points[1],
+					})
+					lines = append(lines, [2]mgl64.Vec3{
+						triangles.Points[1],
+						triangles.Points[2],
+					})
+					lines = append(lines, [2]mgl64.Vec3{
+						triangles.Points[2],
+						triangles.Points[0],
+					})
+				}
+
+				if len(lines) > 0 {
+					// fmt.Println(nonNilCount, nilCount)
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
+					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
+					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.01, mgl64.Vec3{1, 0, 0})
+				}
+
+				var pointLines [][2]mgl64.Vec3
+				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
+					// 0 length lines
+					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
+				}
+				if len(pointLines) > 0 {
+					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
+				}
+			}
+
+			if entity.Collider.CapsuleCollider != nil {
+				transform := entities.WorldTransform(entity)
+				capsuleCollider := entity.Collider.CapsuleCollider.Transform(transform)
+
+				top := capsuleCollider.Top
+				bottom := capsuleCollider.Bottom
+				radius := capsuleCollider.Radius
+
+				var numCircleSegments int = 8
+				var lines [][]mgl64.Vec3
+
+				// -x +x vertical lines
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
+
+				// -z +z vertical lines
+				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
+				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
+
+				radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
+
+				// top and bottom xz plane rings
+				for i := 0; i < numCircleSegments; i++ {
+					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
+					z1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+					x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
+					z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
+
+					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
+					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
+				}
+
+				radiansPerSegment = math.Pi / float64(numCircleSegments)
+
+				// top and bottom xy plane rings
+				for i := 0; i < numCircleSegments; i++ {
+					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
+					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+					x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
+					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
+
+					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
+					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
+				}
+
+				// top and bottom yz plane rings
+				for i := 0; i < numCircleSegments; i++ {
+					z1 := math.Cos(float64(i)*radiansPerSegment) * radius
+					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+					z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
+					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
+
+					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
+					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
+				}
+
+				shader := r.shaderManager.GetShaderProgram("flat")
+				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
+				shader.Use()
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+				r.drawLines(viewerContext, shader, lines, 0.05, color)
+			}
+		}
+	}
 
 	// render non-models
 	for _, entity := range r.world.Entities() {
@@ -766,7 +1008,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 			modelMatrix := entities.WorldTransform(entity)
 
 			if len(entity.ShapeData) > 0 {
-				shader := shaderManager.GetShaderProgram("flat")
+				shader := r.shaderManager.GetShaderProgram("flat")
 				shader.Use()
 
 				shader.SetUniformUInt("entityID", uint32(entity.ID))
@@ -780,7 +1022,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 				texture := r.app.AssetManager().GetTexture(textureName)
 				if texture != nil {
 					if entity.Billboard && r.app.AppMode() == mode.AppModeEditor {
-						shader := shaderManager.GetShaderProgram("world_space_quad")
+						shader := r.shaderManager.GetShaderProgram("world_space_quad")
 						shader.Use()
 
 						position := entity.Position()
@@ -828,7 +1070,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 					{start, entity.Position().Add(entity.CharacterControllerComponent.WebVector)},
 				}
 
-				shader := shaderManager.GetShaderProgram("flat")
+				shader := r.shaderManager.GetShaderProgram("flat")
 				shader.Use()
 				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
@@ -840,10 +1082,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 	}
 }
 
-func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	shaderManager := r.shaderManager
-
-	shader := shaderManager.GetShaderProgram("modelpbr")
+func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	shader.Use()
 
 	if r.app.RuntimeConfig().FogEnabled {
@@ -967,129 +1206,6 @@ func (r *RenderSystem) renderModels(viewerContext ViewerContext, lightContext Li
 
 		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
-	}
-
-	if r.app.RuntimeConfig().ShowColliders {
-		shader := shaderManager.GetShaderProgram("flat")
-		shader.Use()
-
-		for _, entity := range renderableEntities {
-			if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
-				continue
-			}
-
-			if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
-				continue
-			}
-
-			modelMatrix := entities.WorldTransform(entity)
-
-			if entity.Collider.SimplifiedTriMeshCollider != nil {
-				var lines [][2]mgl64.Vec3
-				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[0],
-						triangles.Points[1],
-					})
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[1],
-						triangles.Points[2],
-					})
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[2],
-						triangles.Points[0],
-					})
-				}
-
-				if len(lines) > 0 {
-					// fmt.Println(nonNilCount, nilCount)
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
-					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
-					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.01, mgl64.Vec3{1, 0, 0})
-				}
-
-				var pointLines [][2]mgl64.Vec3
-				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
-					// 0 length lines
-					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
-				}
-				if len(pointLines) > 0 {
-					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
-				}
-			}
-
-			if entity.Collider.CapsuleCollider != nil {
-				transform := entities.WorldTransform(entity)
-				capsuleCollider := entity.Collider.CapsuleCollider.Transform(transform)
-
-				top := capsuleCollider.Top
-				bottom := capsuleCollider.Bottom
-				radius := capsuleCollider.Radius
-
-				var numCircleSegments int = 8
-				var lines [][]mgl64.Vec3
-
-				// -x +x vertical lines
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
-
-				// -z +z vertical lines
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
-
-				radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
-
-				// top and bottom xz plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					z1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-					z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-
-					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
-					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
-				}
-
-				radiansPerSegment = math.Pi / float64(numCircleSegments)
-
-				// top and bottom xy plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
-					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
-				}
-
-				// top and bottom yz plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					z1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
-					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
-				}
-
-				shader := shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
-				shader.Use()
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-				r.drawLines(viewerContext, shader, lines, 0.05, color)
-			}
-		}
 	}
 }
 

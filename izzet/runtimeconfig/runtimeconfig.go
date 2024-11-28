@@ -114,6 +114,10 @@ type RuntimeConfig struct {
 	WindowEnablePostProcessing bool
 	KuwaharaFilter             bool
 
+	// SSAO
+	SSAORadius float32
+	SSAOBias   float32
+
 	BatchRenderingEnabled bool
 }
 
@@ -273,5 +277,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 			},
 		},
 		WindowEnablePostProcessing: true,
+		SSAORadius:                 1,
+		SSAOBias:                   0.025,
 	}
 }

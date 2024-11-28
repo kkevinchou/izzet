@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"math/rand"
 	"net"
 	"strings"
 	"time"
@@ -163,7 +162,6 @@ func New(assetsDirectory, shaderDirectory string) *Server {
 func initSeed() {
 	seed := settings.Seed
 	fmt.Printf("initializing with seed %d ...\n", seed)
-	rand.Seed(seed)
 }
 
 type NewConnection struct {

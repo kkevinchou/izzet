@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"math/rand"
 	"net"
 	"time"
 
@@ -229,7 +228,6 @@ func (g *Client) render(delta time.Duration) {
 func initSeed() {
 	seed := settings.Seed
 	fmt.Printf("initializing with seed %d ...\n", seed)
-	rand.Seed(seed)
 }
 
 func (g *Client) setupSystems() {

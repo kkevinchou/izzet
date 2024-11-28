@@ -88,14 +88,15 @@ type RenderSystem struct {
 
 	ssaoFBO               uint32
 	ssaoTexture           uint32
+	ssaoDebugTexture      uint32
 	imguiSSAOTexture      imgui.TextureID
 	ssaoNoiseTexture      uint32
 	imguiSSAONoiseTexture imgui.TextureID
 	ssaoSamples           [maxHemisphereSamples]mgl32.Vec3
 
-	downSampleFBO        uint32
-	fullscreenNDCQuadVAO uint32
-	downSampleTextures   []uint32
+	downSampleFBO      uint32
+	ndcQuadVAO         uint32
+	downSampleTextures []uint32
 
 	upSampleFBO         uint32
 	upSampleTextures    []uint32
@@ -155,7 +156,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 	r.shadowMap = shadowMap
 	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
-	r.fullscreenNDCQuadVAO = r.init2f2fVAO()
+	r.ndcQuadVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
@@ -249,17 +250,39 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	r.cameraDepthTexture = r.createDepthTexture(width, height)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
 
-	// // recreate texture for ssao
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-	// var ssaoTexture uint32
-	// gl.GenTextures(1, &ssaoTexture)
-	// gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
-	// gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
-	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	// gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
-	// r.ssaoTexture = ssaoTexture
-	// r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
+	// recreate texture for ssao
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+
+	var ssaoTexture uint32
+	gl.GenTextures(1, &ssaoTexture)
+	gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
+	r.ssaoTexture = ssaoTexture
+
+	var debugTexture uint32
+	gl.GenTextures(1, &debugTexture)
+	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
+		int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, debugTexture, 0)
+	r.ssaoDebugTexture = debugTexture
+
+	var drawBuffers []uint32
+	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
+	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
+
+	gl.DrawBuffers(2, &drawBuffers[0])
+
+	r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
@@ -516,6 +539,14 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
+		r.app.RuntimeConfig().DebugTexture = r.ssaoTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
+		r.app.RuntimeConfig().DebugTexture = r.gPositionTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
+		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferDebug {
+		r.app.RuntimeConfig().DebugTexture = r.ssaoDebugTexture
 	}
 
 	// render to back buffer
@@ -1168,7 +1199,6 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
-
 }
 
 func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {

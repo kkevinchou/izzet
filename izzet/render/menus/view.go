@@ -8,17 +8,21 @@ import (
 type DebugComboOption string
 
 const (
-	ComboOptionFinalRender    DebugComboOption = "FINALRENDER"
-	ComboOptionColorPicking   DebugComboOption = "COLORPICKING"
-	ComboOptionPreBloomHDR    DebugComboOption = "PRE BLOOM HDR (bloom only)"
-	ComboOptionBloom          DebugComboOption = "BLOOMTEXTURE (bloom only)"
-	ComboOptionShadowDepthMap DebugComboOption = "SHADOW DEPTH MAP"
-	ComboOptionCameraDepthMap DebugComboOption = "CAMERA DEPTH MAP"
-	ComboOptionCubeDepthMap   DebugComboOption = "CUBE DEPTH MAP"
-	ComboOptionVolumetric     DebugComboOption = "VOLUMETRIC"
+	ComboOptionFinalRender     DebugComboOption = "FINALRENDER"
+	ComboOptionColorPicking    DebugComboOption = "COLORPICKING"
+	ComboOptionPreBloomHDR     DebugComboOption = "PRE BLOOM HDR (bloom only)"
+	ComboOptionBloom           DebugComboOption = "BLOOMTEXTURE (bloom only)"
+	ComboOptionShadowDepthMap  DebugComboOption = "SHADOW DEPTH MAP"
+	ComboOptionCameraDepthMap  DebugComboOption = "CAMERA DEPTH MAP"
+	ComboOptionCubeDepthMap    DebugComboOption = "CUBE DEPTH MAP"
+	ComboOptionVolumetric      DebugComboOption = "VOLUMETRIC"
+	ComboOptionSSAO            DebugComboOption = "SSAO"
+	ComboOptionGBufferPosition DebugComboOption = "GBUFFER - POSITION"
+	ComboOptionGBufferNormal   DebugComboOption = "GBUFFER - NORMAL"
+	ComboOptionGBufferDebug    DebugComboOption = "GBUFFER - DEBUG"
 )
 
-var SelectedDebugComboOption DebugComboOption = ComboOptionFinalRender
+var SelectedDebugComboOption DebugComboOption = ComboOptionSSAO
 
 var (
 	DebugComboOptions []DebugComboOption = []DebugComboOption{
@@ -29,6 +33,10 @@ var (
 		ComboOptionShadowDepthMap,
 		ComboOptionCameraDepthMap,
 		ComboOptionVolumetric,
+		ComboOptionSSAO,
+		ComboOptionGBufferPosition,
+		ComboOptionGBufferNormal,
+		ComboOptionGBufferDebug,
 	}
 )
 

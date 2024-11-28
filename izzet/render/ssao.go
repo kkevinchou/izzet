@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/kitolib/utils"
 )
 
 const maxHemisphereSamples int = 64
@@ -15,8 +16,9 @@ const maxSSAONoise int = 16
 
 func (r *RenderSystem) drawSSAO(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.ClearColor(0.5, 0.5, 0.5, 1)
+	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
 	shader := r.shaderManager.GetShaderProgram("ssao")
 	shader.Use()
 
@@ -36,9 +38,12 @@ func (r *RenderSystem) drawSSAO(viewerContext ViewerContext, lightContext LightC
 		shader.SetUniformVec3(fmt.Sprintf("samples[%d]", i), r.ssaoSamples[i])
 	}
 
-	// we should be rendering a full screen quad, not the entities
-	// entity vertices come in through the g buffer textures
-	// r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformFloat("radius", r.app.RuntimeConfig().SSAORadius)
+	shader.SetUniformFloat("bias", r.app.RuntimeConfig().SSAOBias)
+
+	gl.BindVertexArray(r.ndcQuadVAO)
+	r.iztDrawArrays(0, 6)
 }
 
 func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
@@ -50,18 +55,31 @@ func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
 	gl.GenTextures(1, &ssaoTexture)
 	gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
-
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
 
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic("Framebuffer is not complete!")
-	}
+	var debugTexture uint32
+	gl.GenTextures(1, &debugTexture)
+	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat,
+		int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, debugTexture, 0)
+
+	var drawBuffers []uint32
+	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
+	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
+	gl.DrawBuffers(2, &drawBuffers[0])
 
 	r.ssaoFBO = ssaoFBO
 	r.ssaoTexture = ssaoTexture
+	r.ssaoDebugTexture = debugTexture
 	r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
 
 	return ssaoFBO
@@ -97,11 +115,13 @@ func randomHemisphereVectors() [maxHemisphereSamples]mgl32.Vec3 {
 			rand.Float32(),
 		}
 		scale := float32(i) / 64
-		scale = lerp(0, 1, scale*scale)
+		scale = lerp(0.1, 1, scale*scale)
 		v = v.Normalize()
 		v = v.Mul(rand.Float32() * scale)
 		result[i] = v
 	}
+	// DEBUGGING
+	result[0] = mgl32.Vec3{0, 0, 1}
 
 	return result
 }

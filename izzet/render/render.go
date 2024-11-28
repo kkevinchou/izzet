@@ -219,17 +219,17 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
 
 	// geometry position
-	r.gPositionTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.gPositionTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
 	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.gPositionTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gPositionTexture, 0)
 
 	// geometry normal
-	r.gNormalTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.gNormalTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
 	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.gNormalTexture, 0)
 
 	// geometry color
-	r.gColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGB, gl.LINEAR)
+	r.gColorTexture = createTexture(width, height, internalTextureColorFormat, gl.RGBA, gl.LINEAR)
 	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, r.gColorTexture, 0)
 
@@ -333,7 +333,7 @@ func (r *RenderSystem) initMainRenderFBO(width, height int) {
 }
 
 func (r *RenderSystem) initGeometryFBO(width, height int) {
-	geometryFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, internalTextureColorFormat, internalTextureColorFormat}, []uint32{gl.RGB, gl.RGB, gl.RGB})
+	geometryFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormat, internalTextureColorFormat, internalTextureColorFormat}, []uint32{gl.RGBA, gl.RGBA, gl.RGBA})
 	r.geometryFBO = geometryFBO
 	r.gPositionTexture = colorTextures[0]
 	r.gNormalTexture = colorTextures[1]

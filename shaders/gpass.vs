@@ -7,7 +7,6 @@ layout (location = 4) in ivec3 jointIndices;
 layout (location = 5) in vec3 jointWeights;
 
 out vec3 FragPos;
-// out vec4 FragPos;
 out vec2 TexCoords;
 out vec3 Normal;
 
@@ -19,7 +18,6 @@ void main()
 {
     vec4 viewPos = view * model * vec4(aPos, 1.0);
     FragPos = viewPos.xyz; 
-    // FragPos = viewPos; 
     TexCoords = aTexCoord0;
     
     mat3 normalMatrix = transpose(inverse(mat3(view * model)));

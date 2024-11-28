@@ -23,8 +23,8 @@ const vec2 noiseScale = vec2(1639.0/4.0, 1024.0/4.0); // screen = 800x600
 
 void main() {
     vec3 fragPos   = texture(gPosition, TexCoords).xyz;
-    vec3 normal    = texture(gNormal, TexCoords).rgb;
-    vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;  
+    vec3 normal    = normalize(texture(gNormal, TexCoords).rgb);
+    vec3 randomVec = normalize(texture(texNoise, TexCoords * noiseScale).xyz);
 
     vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
@@ -50,6 +50,7 @@ void main() {
         float sampleDepth = texture(gPosition, offset.xy).z; // get depth value of kernel sample
         
         // range check & accumulate
+        // float rangeCheck = smoothstep(0.0, 1.0, radius / length(fragPos - sampleDepth));
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
         occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;      
     }

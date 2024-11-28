@@ -65,7 +65,7 @@ func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
 	gl.GenTextures(1, &debugTexture)
 	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
-		int32(width), int32(height), 0, gl.RGBA, gl.FLOAT, nil)
+		int32(width), int32(height), 0, renderFormatRGBA, gl.FLOAT, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
@@ -93,7 +93,7 @@ func (r *RenderSystem) initializeSSAOTextures() {
 	gl.BindTexture(gl.TEXTURE_2D, noiseTexture)
 
 	noiseFloats := ssaoNoise()
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, 4, 4, 0, gl.RGB, gl.FLOAT, gl.Ptr(noiseFloats))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormat16RGBA, 4, 4, 0, renderFormatRGB, gl.FLOAT, gl.Ptr(noiseFloats))
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)

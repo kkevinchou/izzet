@@ -651,7 +651,7 @@ func (r *RenderSystem) drawHUDTextureToQuad(viewerContext ViewerContext, shader 
 }
 
 func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
-	fbo, textures := r.initFrameBuffer(width, height, []int32{gl.RGBA}, []uint32{gl.RGBA})
+	fbo, textures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA})
 	return fbo, textures[0]
 }
 
@@ -660,7 +660,7 @@ func initFBOAndTexture(width, height int) (uint32, uint32) {
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	texture := createTexture(width, height, internalTextureColorFormatRGB, gl.RGB, gl.LINEAR)
+	texture := createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}

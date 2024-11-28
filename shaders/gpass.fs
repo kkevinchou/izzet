@@ -4,6 +4,7 @@ layout (location = 1) out vec4 gNormal;
 layout (location = 2) out vec4 gAlbedoSpec;
 
 in vec2 TexCoords;
+// in vec4 FragPos;
 in vec3 FragPos;
 in vec3 Normal;
 
@@ -11,6 +12,7 @@ void main()
 {    
     // store the fragment position vector in the first gbuffer texture
     gPosition = vec4(FragPos, 1);
+    // gPosition = FragPos;
     // also store the per-fragment normals into the gbuffer
     gNormal = vec4(normalize(Normal), 1);
     // and the diffuse per-fragment color, ignore specular

@@ -16,6 +16,8 @@ out VS_OUT {
     mat4 View;
     vec2 TexCoord;
     vec3 ColorOverride;
+    vec4 NDCCoord;
+    vec2 ActualNDCCoord;
 } vs_out;
 
 uniform mat4 model;
@@ -64,7 +66,13 @@ void main() {
         vs_out.TexCoord = aTexCoord1;
     }
 
+    vec4 clipPosition = projection * (view * (model * totalPos));
+    clipPosition.xyz /= clipPosition.w; // perspective divide
+    clipPosition.xyz = clipPosition.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
+    vs_out.ActualNDCCoord = clipPosition.xy;
+
     vs_out.ColorOverride = errorColor;
     vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     gl_Position = (projection * (view * (model * totalPos)));
+    vs_out.NDCCoord = gl_Position;
 }

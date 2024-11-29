@@ -119,6 +119,8 @@ type RuntimeConfig struct {
 	SSAOBias   float32
 
 	BatchRenderingEnabled bool
+
+	EnableSSAO bool
 }
 
 type CloudTextureChannel struct {

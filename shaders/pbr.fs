@@ -34,6 +34,9 @@ uniform Light lights[MAX_LIGHTS];
 uniform vec3 viewPos;
 uniform sampler2D modelTexture;
 
+// ambient occlusion blur
+uniform sampler2D ambientOcclusion;
+
 // shadows
 uniform sampler2D shadowMap;
 uniform float shadowDistance;
@@ -66,6 +69,8 @@ in VS_OUT {
     mat4 View;
     vec2 TexCoord;
     vec3 ColorOverride;
+    vec4 NDCCoord;
+    vec2 ActualNDCCoord;
 } fs_in;
 
 const float A = 2.51;
@@ -81,6 +86,8 @@ uniform int width;
 uniform int height;
 uniform float far;
 uniform float near;
+
+uniform int enableAmbientOcclusion = 0;
 
 // ACES tone mapping function
 vec3 acesToneMapping(vec3 color)
@@ -307,6 +314,13 @@ void main()
     }
   
     vec3 ambient = vec3(ambientFactor) * in_albedo;
+
+    if (enableAmbientOcclusion == 1) {
+        ambient = ambient * texture(ambientOcclusion, fs_in.ActualNDCCoord).r;
+        // FragColor = vec4(texture(ambientOcclusion, fs_in.ActualNDCCoord.xy).r, 0, 0, 1);
+        // return;
+    }
+
     vec3 color = ambient + Lo;
 	
     FragColor = vec4(color, 1.0);

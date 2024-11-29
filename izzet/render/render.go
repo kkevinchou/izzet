@@ -94,6 +94,9 @@ type RenderSystem struct {
 	imguiGNormalTexture   imgui.TextureID
 	imguiGColorTexture    imgui.TextureID
 
+	blurFBO     uint32
+	blurTexture uint32
+
 	ssaoFBO               uint32
 	ssaoTexture           uint32
 	ssaoDebugTexture      uint32
@@ -175,6 +178,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.initPostProcessingFBO(width, height)
 	r.initDepthMapFBO(width, height)
 	r.initSSAOFBO(width, height)
+	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
 
 	// circles for the rotation gizmo
 
@@ -182,6 +186,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
+
+	r.initBlurFBO(1920, 1080)
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -352,6 +358,14 @@ func (r *RenderSystem) initGeometryFBO(width, height int) {
 	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
 }
 
+func (r *RenderSystem) initBlurFBO(width, height int) {
+	blurFBO, textures := r.initFrameBuffer(2048, 1055, []int32{gl.RED}, []uint32{gl.RED})
+	// blurFBO, textures := r.initFrameBuffer(1639, 1024, []int32{gl.RED}, []uint32{gl.RED})
+	// blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	r.blurFBO = blurFBO
+	r.blurTexture = textures[0]
+}
+
 func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
@@ -488,6 +502,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.drawSSAO(cameraViewerContext, lightContext, renderContext, renderableEntities)
 	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
 
+	// BLUR
+	r.blur(renderContext)
+
 	// MAIN RENDER
 
 	start = time.Now()
@@ -555,6 +572,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferDebug {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoDebugTexture
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
+		r.app.RuntimeConfig().DebugTexture = r.blurTexture
 	}
 
 	// render to back buffer
@@ -566,6 +585,23 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	r.renderImgui(renderContext, imguiFinalRenderTexture)
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
+}
+
+func (r *RenderSystem) blur(renderContext RenderContext) {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blurFBO)
+
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.ClearColor(0, 0, 0, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, r.ssaoTexture)
+
+	shader := r.shaderManager.GetShaderProgram("blur")
+	shader.Use()
+
+	gl.BindVertexArray(r.ndcQuadVAO)
+	r.iztDrawArrays(0, 6)
 }
 
 func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
@@ -1109,6 +1145,12 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
 	shader.SetUniformInt("cameraDepthMap", 29)
+	shader.SetUniformInt("ambientOcclusion", 28)
+	if r.app.RuntimeConfig().EnableSSAO {
+		shader.SetUniformInt("enableAmbientOcclusion", 1)
+	} else {
+		shader.SetUniformInt("enableAmbientOcclusion", 0)
+	}
 
 	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
@@ -1119,6 +1161,9 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	shader.SetUniformInt("hasColorOverride", 0)
 
 	setupLightingUniforms(shader, lightContext.Lights)
+
+	gl.ActiveTexture(gl.TEXTURE28)
+	gl.BindTexture(gl.TEXTURE_2D, r.blurTexture)
 
 	gl.ActiveTexture(gl.TEXTURE29)
 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)

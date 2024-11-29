@@ -30,6 +30,7 @@ func rendering(app renderiface.App) {
 		panelutils.InitColumns()
 		panelutils.SetupRow("Radius", func() { imgui.SliderFloat("", &runtimeConfig.SSAORadius, 0, 1) }, true)
 		panelutils.SetupRow("Bias", func() { imgui.SliderFloat("", &runtimeConfig.SSAOBias, 0, 1) }, true)
+		panelutils.SetupRow("Enable SSAO", func() { imgui.Checkbox("", &runtimeConfig.EnableSSAO) }, true)
 		imgui.EndTable()
 	}
 

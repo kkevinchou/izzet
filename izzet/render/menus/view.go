@@ -20,9 +20,10 @@ const (
 	ComboOptionGBufferPosition DebugComboOption = "GBUFFER - POSITION"
 	ComboOptionGBufferNormal   DebugComboOption = "GBUFFER - NORMAL"
 	ComboOptionGBufferDebug    DebugComboOption = "GBUFFER - DEBUG"
+	ComboOptionSSAOBlur        DebugComboOption = "SSAO BLUR"
 )
 
-var SelectedDebugComboOption DebugComboOption = ComboOptionSSAO
+var SelectedDebugComboOption DebugComboOption = ComboOptionSSAOBlur
 
 var (
 	DebugComboOptions []DebugComboOption = []DebugComboOption{
@@ -37,6 +38,7 @@ var (
 		ComboOptionGBufferPosition,
 		ComboOptionGBufferNormal,
 		ComboOptionGBufferDebug,
+		ComboOptionSSAOBlur,
 	}
 )
 

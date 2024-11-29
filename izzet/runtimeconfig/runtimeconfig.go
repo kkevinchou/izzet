@@ -119,6 +119,8 @@ type RuntimeConfig struct {
 	SSAOBias   float32
 
 	BatchRenderingEnabled bool
+
+	EnableSSAO bool
 }
 
 type CloudTextureChannel struct {
@@ -277,7 +279,8 @@ func DefaultRuntimeConfig() RuntimeConfig {
 			},
 		},
 		WindowEnablePostProcessing: true,
-		SSAORadius:                 1,
+		EnableSSAO:                 true,
+		SSAORadius:                 5,
 		SSAOBias:                   0.025,
 	}
 }

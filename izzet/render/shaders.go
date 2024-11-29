@@ -14,10 +14,10 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("gpass", "gpass", "gpass", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("modelpbr2", "model2", "pbr2", ""); err != nil {
+	if err := shaderManager.CompileShaderProgram("ssao", "ssao", "ssao", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("ssao", "ssao", "ssao", ""); err != nil {
+	if err := shaderManager.CompileShaderProgram("blur", "blur", "blur", ""); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("batch", "batch", "batch", ""); err != nil {

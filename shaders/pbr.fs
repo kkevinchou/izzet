@@ -86,7 +86,7 @@ uniform int height;
 uniform float far;
 uniform float near;
 
-uniform int enableAmbientOcclusion = 0;
+uniform int enableAmbientOcclusion;
 
 // ACES tone mapping function
 vec3 acesToneMapping(vec3 color)

@@ -165,9 +165,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.InitOrReinitTextures(width, height, true)
 
-	// r.initDepthMapFBO(width, height)
-	r.initSSAOFBO(width, height)
-
 	// circles for the rotation gizmo
 
 	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
@@ -266,50 +263,25 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 		r.cameraDepthTexture = r.createDepthTexture(width, height)
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
 	}
+
+	// SSAO FBO
+	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	var ssaoTextures []uint32
+	if init {
+		r.ssaoFBO, ssaoTextures = r.initFrameBuffer2NoDepth(ssaoTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+		_, _, ssaoTextures = ssaoTextureFn()
+	}
+	r.ssaoTexture = ssaoTextures[0]
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 	r.InitOrReinitTextures(width, height, false)
 
-	// // recreate texture for depth map
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-	// r.cameraDepthTexture = r.createDepthTexture(width, height)
-	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
-
-	// recreate texture for ssao
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-
-	var ssaoTexture uint32
-	gl.GenTextures(1, &ssaoTexture)
-	gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
-	r.ssaoTexture = ssaoTexture
-
 	// SSAO BLUR
 	r.initBlurFBO(width, height)
-
-	var debugTexture uint32
-	gl.GenTextures(1, &debugTexture)
-	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
-		int32(width), int32(height), 0, renderFormatRGB, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, debugTexture, 0)
-
-	var drawBuffers []uint32
-	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
-	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
-
-	gl.DrawBuffers(2, &drawBuffers[0])
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }

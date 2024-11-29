@@ -45,32 +45,6 @@ func (r *RenderSystem) drawSSAO(viewerContext ViewerContext, lightContext LightC
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
-	var ssaoFBO uint32
-	gl.GenFramebuffers(1, &ssaoFBO)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, ssaoFBO)
-
-	var ssaoTexture uint32
-	gl.GenTextures(1, &ssaoTexture)
-	gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
-
-	var drawBuffers []uint32
-	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
-	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
-	gl.DrawBuffers(2, &drawBuffers[0])
-
-	r.ssaoFBO = ssaoFBO
-	r.ssaoTexture = ssaoTexture
-
-	return ssaoFBO
-}
-
 func (r *RenderSystem) initializeSSAOTextures() {
 	gl.Viewport(0, 0, 1024, 1024)
 

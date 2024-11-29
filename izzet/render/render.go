@@ -82,28 +82,22 @@ type RenderSystem struct {
 
 	mainRenderFBO          uint32
 	mainColorTexture       uint32
-	imguiMainColorTexture  imgui.TextureID
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
 
-	geometryFBO           uint32
-	gPositionTexture      uint32
-	gNormalTexture        uint32
-	gColorTexture         uint32
-	imguiGPositionTexture imgui.TextureID
-	imguiGNormalTexture   imgui.TextureID
-	imguiGColorTexture    imgui.TextureID
+	geometryFBO      uint32
+	gPositionTexture uint32
+	gNormalTexture   uint32
+	gColorTexture    uint32
 
 	blurFBO     uint32
 	blurTexture uint32
 
-	ssaoFBO               uint32
-	ssaoTexture           uint32
-	ssaoDebugTexture      uint32
-	imguiSSAOTexture      imgui.TextureID
-	ssaoNoiseTexture      uint32
-	imguiSSAONoiseTexture imgui.TextureID
-	ssaoSamples           [maxHemisphereSamples]mgl32.Vec3
+	ssaoFBO          uint32
+	ssaoTexture      uint32
+	ssaoDebugTexture uint32
+	ssaoNoiseTexture uint32
+	ssaoSamples      [maxHemisphereSamples]mgl32.Vec3
 
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
@@ -113,13 +107,11 @@ type RenderSystem struct {
 	upSampleTextures    []uint32
 	blendTargetTextures []uint32
 
-	compositeFBO          uint32
-	compositeTexture      uint32
-	imguiCompositeTexture imgui.TextureID
+	compositeFBO     uint32
+	compositeTexture uint32
 
-	postProcessingFBO          uint32
-	postProcessingTexture      uint32
-	imguiPostProcessingTexture imgui.TextureID
+	postProcessingFBO     uint32
+	postProcessingTexture uint32
 
 	blendFBO uint32
 
@@ -223,7 +215,6 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	// recreate texture for main render fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 	r.mainColorTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
-	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
 
 	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
@@ -234,30 +225,25 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 
 	// geometry position
 	r.gPositionTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
-	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.gPositionTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gPositionTexture, 0)
 
 	// geometry normal
 	r.gNormalTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
-	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.gNormalTexture, 0)
 
 	// geometry color
 	r.gColorTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
-	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, r.gColorTexture, 0)
 
 	// recreate texture for composite fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 	r.compositeTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
-	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 
 	// recreate texture for postprocessing
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
 	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.postProcessingTexture, 0)
-	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
 
 	// recreate texture for depth map
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
@@ -299,8 +285,6 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 
 	gl.DrawBuffers(2, &drawBuffers[0])
 
-	r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
-
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
@@ -332,19 +316,16 @@ func (r *RenderSystem) initDepthMapFBO(width, height int) {
 
 func (r *RenderSystem) initCompositeFBO(width, height int) {
 	r.compositeFBO, r.compositeTexture = initFBOAndTexture(width, height)
-	r.imguiCompositeTexture = imgui.TextureID{Data: uintptr(r.compositeTexture)}
 }
 
 func (r *RenderSystem) initPostProcessingFBO(width, height int) {
 	r.postProcessingFBO, r.postProcessingTexture = initFBOAndTexture(width, height)
-	r.imguiPostProcessingTexture = imgui.TextureID{Data: uintptr(r.postProcessingTexture)}
 }
 
 func (r *RenderSystem) initMainRenderFBO(width, height int) {
 	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
 	r.mainRenderFBO = mainRenderFBO
 	r.mainColorTexture = colorTextures[0]
-	r.imguiMainColorTexture = imgui.TextureID{Data: uintptr(r.mainColorTexture)}
 	r.colorPickingTexture = colorTextures[1]
 	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
@@ -355,10 +336,6 @@ func (r *RenderSystem) initGeometryFBO(width, height int) {
 	r.gPositionTexture = colorTextures[0]
 	r.gNormalTexture = colorTextures[1]
 	r.gColorTexture = colorTextures[2]
-
-	r.imguiGPositionTexture = imgui.TextureID{Data: uintptr(r.gPositionTexture)}
-	r.imguiGNormalTexture = imgui.TextureID{Data: uintptr(r.gNormalTexture)}
-	r.imguiGColorTexture = imgui.TextureID{Data: uintptr(r.gColorTexture)}
 }
 
 func (r *RenderSystem) initBlurFBO(width, height int) {
@@ -555,7 +532,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		hdrColorTexture,
 	)
 	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
-	imguiFinalRenderTexture := r.imguiPostProcessingTexture
 
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
@@ -586,7 +562,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
 	start = time.Now()
-	r.renderImgui(renderContext, imguiFinalRenderTexture)
+	r.renderImgui(renderContext, imgui.TextureID{Data: uintptr(r.postProcessingTexture)})
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 

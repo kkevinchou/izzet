@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/izzet/entities"
@@ -80,7 +79,6 @@ func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
 	r.ssaoFBO = ssaoFBO
 	r.ssaoTexture = ssaoTexture
 	r.ssaoDebugTexture = debugTexture
-	r.imguiSSAOTexture = imgui.TextureID{Data: uintptr(r.ssaoTexture)}
 
 	return ssaoFBO
 }
@@ -100,7 +98,6 @@ func (r *RenderSystem) initializeSSAOTextures() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
 	r.ssaoNoiseTexture = noiseTexture
-	r.imguiSSAONoiseTexture = imgui.TextureID{Data: uintptr(r.ssaoNoiseTexture)}
 
 	r.ssaoSamples = randomHemisphereVectors()
 }

@@ -163,7 +163,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.InitOrReinitTextures(width, height, true)
+	r.initorReinitTextures(width, height, true)
+	r.renderSSAOTextures()
 
 	// circles for the rotation gizmo
 
@@ -172,6 +173,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
+	r.initializeCircleTextures()
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -185,14 +187,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendTargetTextures = initSamplingTextures(widths, heights)
 	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
 
-	// the texture is only needed to properly generate the FBO
-	// new textures are binded when we're in the process of blooming
-	// r.blendFBO, _ = initFBOAndTexture(width, height)
 	blendTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
 	r.blendFBO, _ = r.initFrameBufferNoDepth(blendTextureFn)
-
-	r.initializeCircleTextures()
-	r.initializeSSAOTextures()
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
 	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
@@ -204,7 +200,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 }
 
 // this might be the most garbage code i've ever written
-func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
+func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	// main render FBO
 
 	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
@@ -289,7 +285,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
-	r.InitOrReinitTextures(width, height, false)
+	r.initorReinitTextures(width, height, false)
 }
 
 func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {

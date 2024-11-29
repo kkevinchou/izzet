@@ -45,7 +45,7 @@ func (r *RenderSystem) drawSSAO(viewerContext ViewerContext, lightContext LightC
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *RenderSystem) initializeSSAOTextures() {
+func (r *RenderSystem) renderSSAOTextures() {
 	gl.Viewport(0, 0, 1024, 1024)
 
 	var noiseTexture uint32

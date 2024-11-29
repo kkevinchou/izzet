@@ -164,7 +164,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.initMainRenderFBO(width, height)
+	// r.initMainRenderFBO(width, height)
+	r.InitOrReinitTextures(width, height, true)
 	r.initGeometryFBO(width, height)
 	r.initCompositeFBO(width, height)
 	r.initPostProcessingFBO(width, height)
@@ -209,16 +210,36 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
+// this might be the most garbage code i've ever written
+func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
+	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
+	if init {
+		mainRenderFBO, textures := r.initFrameBuffer2(mainRenderTextureFn)
+		r.mainRenderFBO = mainRenderFBO
+		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+
+		r.mainColorTexture = textures[0]
+		r.colorPickingTexture = textures[1]
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+		_, _, textures := mainRenderTextureFn()
+		r.mainColorTexture = textures[0]
+		r.colorPickingTexture = textures[1]
+	}
+}
+
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 
-	// recreate texture for main render fbo
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.mainColorTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
+	r.InitOrReinitTextures(width, height, false)
 
-	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
+	// // recreate texture for main render fbo
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+	// r.mainColorTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
+	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
+
+	// r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
+	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
 
 	// recreate texture for geometry fbo
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
@@ -323,11 +344,11 @@ func (r *RenderSystem) initPostProcessingFBO(width, height int) {
 }
 
 func (r *RenderSystem) initMainRenderFBO(width, height int) {
-	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
-	r.mainRenderFBO = mainRenderFBO
-	r.mainColorTexture = colorTextures[0]
-	r.colorPickingTexture = colorTextures[1]
-	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+	// mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
+	// r.mainRenderFBO = mainRenderFBO
+	// r.mainColorTexture = colorTextures[0]
+	// r.colorPickingTexture = colorTextures[1]
+	// r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *RenderSystem) initGeometryFBO(width, height int) {

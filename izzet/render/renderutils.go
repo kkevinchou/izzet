@@ -673,6 +673,52 @@ func initFBOAndTexture(width, height int) (uint32, uint32) {
 	return fbo, texture
 }
 
+func textureFn(width int, height int, internalFormat []int32, format []uint32) func() (int, int, []uint32) {
+	return func() (int, int, []uint32) {
+		count := len(internalFormat)
+		var textures []uint32
+		for i := 0; i < count; i++ {
+			texture := createTexture(width, height, internalFormat[i], format[i], gl.LINEAR)
+			attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
+			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+
+			textures = append(textures, texture)
+		}
+		return width, height, textures
+	}
+}
+
+type TextureFn func() (int, int, []uint32)
+
+func (r *RenderSystem) initFrameBuffer2(tf TextureFn) (uint32, []uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	width, height, textures := tf()
+	var drawBuffers []uint32
+
+	textureCount := len(textures)
+	for i := 0; i < textureCount; i++ {
+		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
+		drawBuffers = append(drawBuffers, attachment)
+	}
+
+	gl.DrawBuffers(int32(textureCount), &drawBuffers[0])
+
+	var rbo uint32
+	gl.GenRenderbuffers(1, &rbo)
+	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
+	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return fbo, textures
+}
+
 func (r *RenderSystem) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)

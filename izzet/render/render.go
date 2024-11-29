@@ -164,8 +164,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	// r.initMainRenderFBO(width, height)
 	r.InitOrReinitTextures(width, height, true)
+
 	r.initGeometryFBO(width, height)
 	r.initCompositeFBO(width, height)
 	r.initPostProcessingFBO(width, height)
@@ -341,14 +341,6 @@ func (r *RenderSystem) initCompositeFBO(width, height int) {
 
 func (r *RenderSystem) initPostProcessingFBO(width, height int) {
 	r.postProcessingFBO, r.postProcessingTexture = initFBOAndTexture(width, height)
-}
-
-func (r *RenderSystem) initMainRenderFBO(width, height int) {
-	// mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
-	// r.mainRenderFBO = mainRenderFBO
-	// r.mainColorTexture = colorTextures[0]
-	// r.colorPickingTexture = colorTextures[1]
-	// r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 }
 
 func (r *RenderSystem) initGeometryFBO(width, height int) {

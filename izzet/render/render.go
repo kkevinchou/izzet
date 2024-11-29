@@ -90,12 +90,11 @@ type RenderSystem struct {
 	gNormalTexture   uint32
 	gColorTexture    uint32
 
-	blurFBO     uint32
-	blurTexture uint32
+	ssaoBlurFBO     uint32
+	ssaoBlurTexture uint32
 
 	ssaoFBO          uint32
 	ssaoTexture      uint32
-	ssaoDebugTexture uint32
 	ssaoNoiseTexture uint32
 	ssaoSamples      [maxHemisphereSamples]mgl32.Vec3
 
@@ -164,12 +163,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
 
-	r.initMainRenderFBO(width, height)
-	r.initGeometryFBO(width, height)
-	r.initCompositeFBO(width, height)
-	r.initPostProcessingFBO(width, height)
-	r.initDepthMapFBO(width, height)
-	r.initSSAOFBO(width, height)
+	r.initorReinitTextures(width, height, true)
+	r.renderSSAOTextures()
 
 	// circles for the rotation gizmo
 
@@ -178,8 +173,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
-
-	r.initBlurFBO(width, height)
+	r.initializeCircleTextures()
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -193,12 +187,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendTargetTextures = initSamplingTextures(widths, heights)
 	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
 
-	// the texture is only needed to properly generate the FBO
-	// new textures are binded when we're in the process of blooming
-	r.blendFBO, _ = initFBOAndTexture(width, height)
-
-	r.initializeCircleTextures()
-	r.initializeSSAOTextures()
+	blendTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	r.blendFBO, _ = r.initFrameBufferNoDepth(blendTextureFn)
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
 	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
@@ -209,99 +199,101 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *RenderSystem) ReinitializeFrameBuffers() {
-	width, height := r.GameWindowSize()
+// this might be the most garbage code i've ever written
+func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
+	// main render FBO
 
-	// recreate texture for main render fbo
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.mainColorTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.mainColorTexture, 0)
+	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
+	var mainRenderTextures []uint32
+	if init {
+		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
+		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+		_, _, mainRenderTextures = mainRenderTextureFn()
+	}
+	r.mainColorTexture = mainRenderTextures[0]
+	r.colorPickingTexture = mainRenderTextures[1]
 
-	r.colorPickingTexture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.colorPickingTexture, 0)
+	// geometry FBO
 
-	// recreate texture for geometry fbo
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
+	geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat})
+	var geometryTextures []uint32
+	if init {
+		r.geometryFBO, geometryTextures = r.initFrameBuffer(geometryTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
+		_, _, geometryTextures = geometryTextureFn()
+	}
+	r.gPositionTexture = geometryTextures[0]
+	r.gNormalTexture = geometryTextures[1]
+	r.gColorTexture = geometryTextures[2]
 
-	// geometry position
-	r.gPositionTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.gPositionTexture, 0)
+	// composite FBO
+	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	var compositeTextures []uint32
+	if init {
+		r.compositeFBO, compositeTextures = r.initFrameBufferNoDepth(compositeTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
+		_, _, compositeTextures = compositeTextureFn()
+	}
+	r.compositeTexture = compositeTextures[0]
 
-	// geometry normal
-	r.gNormalTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, r.gNormalTexture, 0)
+	// post processing FBO
+	postProcessingTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	var postProcessingTextures []uint32
+	if init {
+		r.postProcessingFBO, postProcessingTextures = r.initFrameBufferNoDepth(postProcessingTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
+		_, _, postProcessingTextures = postProcessingTextureFn()
+	}
+	r.postProcessingTexture = postProcessingTextures[0]
 
-	// geometry color
-	r.gColorTexture = createTexture(width, height, gPassInternalFormat, gPassFormat, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, r.gColorTexture, 0)
+	// depth map FBO
+	if init {
+		r.cameraDepthMapFBO, r.cameraDepthTexture = r.initDepthMapFBO(width, height)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+		r.cameraDepthTexture = r.createDepthTexture(width, height)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+	}
 
-	// recreate texture for composite fbo
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-	r.compositeTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.compositeTexture, 0)
+	// SSAO FBO
+	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	var ssaoTextures []uint32
+	if init {
+		r.ssaoFBO, ssaoTextures = r.initFrameBufferNoDepth(ssaoTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+		_, _, ssaoTextures = ssaoTextureFn()
+	}
+	r.ssaoTexture = ssaoTextures[0]
 
-	// recreate texture for postprocessing
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
-	r.postProcessingTexture = createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, r.postProcessingTexture, 0)
-
-	// recreate texture for depth map
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-	r.cameraDepthTexture = r.createDepthTexture(width, height)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
-
-	// recreate texture for ssao
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-
-	var ssaoTexture uint32
-	gl.GenTextures(1, &ssaoTexture)
-	gl.BindTexture(gl.TEXTURE_2D, ssaoTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
-	r.ssaoTexture = ssaoTexture
-
-	// SSAO BLUR
-	r.initBlurFBO(width, height)
-
-	var debugTexture uint32
-	gl.GenTextures(1, &debugTexture)
-	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
-		int32(width), int32(height), 0, renderFormatRGB, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, debugTexture, 0)
-	r.ssaoDebugTexture = debugTexture
-
-	var drawBuffers []uint32
-	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
-	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
-
-	gl.DrawBuffers(2, &drawBuffers[0])
-
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	// SSAO BLUR FBO
+	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	var ssaoBlurTextures []uint32
+	if init {
+		r.ssaoBlurFBO, ssaoBlurTextures = r.initFrameBufferNoDepth(ssaoBlurTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
+		_, _, ssaoBlurTextures = ssaoBlurTextureFn()
+	}
+	r.ssaoBlurTexture = ssaoBlurTextures[0]
 }
 
-func (r *RenderSystem) initDepthMapFBO(width, height int) {
+func (r *RenderSystem) ReinitializeFrameBuffers() {
+	width, height := r.GameWindowSize()
+	r.initorReinitTextures(width, height, false)
+}
+
+func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {
 	var depthMapFBO uint32
 	gl.GenFramebuffers(1, &depthMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
 
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT,
-		int32(width), int32(height), 0, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	texture := r.createDepthTexture(width, height)
 
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0)
 	gl.DrawBuffer(gl.NONE)
@@ -311,39 +303,7 @@ func (r *RenderSystem) initDepthMapFBO(width, height int) {
 		panic("failed to initialize shadow map frame buffer - in the past this was due to an overly large shadow map dimension configuration")
 	}
 
-	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
-}
-
-func (r *RenderSystem) initCompositeFBO(width, height int) {
-	r.compositeFBO, r.compositeTexture = initFBOAndTexture(width, height)
-}
-
-func (r *RenderSystem) initPostProcessingFBO(width, height int) {
-	r.postProcessingFBO, r.postProcessingTexture = initFBOAndTexture(width, height)
-}
-
-func (r *RenderSystem) initMainRenderFBO(width, height int) {
-	mainRenderFBO, colorTextures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
-	r.mainRenderFBO = mainRenderFBO
-	r.mainColorTexture = colorTextures[0]
-	r.colorPickingTexture = colorTextures[1]
-	r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
-}
-
-func (r *RenderSystem) initGeometryFBO(width, height int) {
-	geometryFBO, colorTextures := r.initFrameBuffer(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat})
-	r.geometryFBO = geometryFBO
-	r.gPositionTexture = colorTextures[0]
-	r.gNormalTexture = colorTextures[1]
-	r.gColorTexture = colorTextures[2]
-}
-
-func (r *RenderSystem) initBlurFBO(width, height int) {
-	blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
-	// blurFBO, textures := r.initFrameBuffer(1639, 1024, []int32{gl.RED}, []uint32{gl.RED})
-	// blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
-	r.blurFBO = blurFBO
-	r.blurTexture = textures[0]
+	return depthMapFBO, texture
 }
 
 func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
@@ -549,10 +509,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.gPositionTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
 		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
-	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferDebug {
-		r.app.RuntimeConfig().DebugTexture = r.ssaoDebugTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
-		r.app.RuntimeConfig().DebugTexture = r.blurTexture
+		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture
 	}
 
 	// render to back buffer
@@ -567,7 +525,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 }
 
 func (r *RenderSystem) blur(renderContext RenderContext) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blurFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 1)
@@ -1142,7 +1100,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	setupLightingUniforms(shader, lightContext.Lights)
 
 	gl.ActiveTexture(gl.TEXTURE28)
-	gl.BindTexture(gl.TEXTURE_2D, r.blurTexture)
+	gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
 
 	gl.ActiveTexture(gl.TEXTURE29)
 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
@@ -1226,7 +1184,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		setupLightingUniforms(shader, lightContext.Lights)
 
 		gl.ActiveTexture(gl.TEXTURE28)
-		gl.BindTexture(gl.TEXTURE_2D, r.blurTexture)
+		gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
 
 		gl.ActiveTexture(gl.TEXTURE29)
 		gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)

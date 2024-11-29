@@ -440,7 +440,7 @@ func (g *Client) Shutdown() {
 
 func (g *Client) ConfigureUI(enabled bool) {
 	g.runtimeConfig.UIEnabled = enabled
-	g.renderSystem.ConfigureUI()
+	g.renderSystem.ReinitializeFrameBuffers()
 }
 
 func (g *Client) SetWindowSize(width, height int) {

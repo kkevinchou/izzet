@@ -288,7 +288,6 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 	r.InitOrReinitTextures(width, height, false)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
 func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {

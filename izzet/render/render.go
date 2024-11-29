@@ -212,20 +212,20 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 // this might be the most garbage code i've ever written
 func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
-	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
-	if init {
-		mainRenderFBO, textures := r.initFrameBuffer2(mainRenderTextureFn)
-		r.mainRenderFBO = mainRenderFBO
-		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
+	// main render FBO
 
-		r.mainColorTexture = textures[0]
-		r.colorPickingTexture = textures[1]
+	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
+	var mainRenderTextures []uint32
+	if init {
+		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer2(mainRenderTextureFn)
+		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-		_, _, textures := mainRenderTextureFn()
-		r.mainColorTexture = textures[0]
-		r.colorPickingTexture = textures[1]
+		_, _, mainRenderTextures = mainRenderTextureFn()
 	}
+	r.mainColorTexture = mainRenderTextures[0]
+	r.colorPickingTexture = mainRenderTextures[1]
+
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {

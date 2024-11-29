@@ -11,7 +11,6 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -22,13 +21,11 @@ type Project struct {
 	AssetsFile string
 	Name       string
 
-	ContentBrowser  *contentbrowser.ContentBrowser
 	MaterialBrowser *materialbrowser.MaterialBrowser
 }
 
 func NewProject() *Project {
 	return &Project{
-		ContentBrowser:  &contentbrowser.ContentBrowser{},
 		MaterialBrowser: &materialbrowser.MaterialBrowser{},
 	}
 }
@@ -109,52 +106,6 @@ func (g *Client) SaveProject(name string) error {
 	if err != nil {
 		panic(err)
 	}
-
-	// items := g.ContentBrowser().Items
-	// for i := range items {
-	// 	// this has already been saved, skip
-	// 	if items[i].SavedToProjectFolder {
-	// 		continue
-	// 	}
-
-	// 	baseFileName := strings.Split(filepath.Base(items[i].InFilePath), ".")[0]
-	// 	parentDirectory := filepath.Dir(items[i].InFilePath)
-
-	// 	var fileNames []string
-	// 	fileNames = append(fileNames, baseFileName+filepath.Ext(items[i].InFilePath))
-	// 	for _, fileName := range items[i].PeripheralFiles {
-	// 		fileNames = append(fileNames, fileName)
-	// 	}
-
-	// 	for _, fileName := range fileNames {
-	// 		importedFile, err := os.Open(filepath.Join(parentDirectory, fileName))
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-	// 		defer importedFile.Close()
-
-	// 		fileBytes, err := io.ReadAll(importedFile)
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-
-	// 		outFilePath := filepath.Join(settings.ProjectsDirectory, name, "content", fileName)
-	// 		outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY, 0644)
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-	// 		defer outFile.Close()
-
-	// 		_, err = outFile.Write(fileBytes)
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-	// 	}
-
-	// 	// overwrite in file path to be the asset copy in in the project folder
-	// 	items[i].SavedToProjectFolder = true
-	// 	items[i].InFilePath = filepath.Join(settings.ProjectsDirectory, name, "content", baseFileName+filepath.Ext(items[i].InFilePath))
-	// }
 
 	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"), os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {

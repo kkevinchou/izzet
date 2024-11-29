@@ -6,7 +6,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/materialbrowser"
@@ -59,7 +58,6 @@ type App interface {
 	WindowSize() (int, int)
 	Minimized() bool
 	WindowFocused() bool
-	ContentBrowser() *contentbrowser.ContentBrowser
 	MaterialBrowser() *materialbrowser.MaterialBrowser
 	ImportAsset(config assets.AssetConfig)
 	SelectEntity(entity *entities.Entity)

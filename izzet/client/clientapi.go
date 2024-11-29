@@ -15,7 +15,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/contentbrowser"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/material"
@@ -457,10 +456,6 @@ func (g *Client) Minimized() bool {
 
 func (g *Client) WindowFocused() bool {
 	return g.window.WindowFocused()
-}
-
-func (g *Client) ContentBrowser() *contentbrowser.ContentBrowser {
-	return g.project.ContentBrowser
 }
 
 func (g *Client) SelectEntity(entity *entities.Entity) {

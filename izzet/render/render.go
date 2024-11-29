@@ -165,7 +165,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.InitOrReinitTextures(width, height, true)
 
-	r.initDepthMapFBO(width, height)
+	// r.initDepthMapFBO(width, height)
 	r.initSSAOFBO(width, height)
 
 	// circles for the rotation gizmo
@@ -258,24 +258,24 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	}
 	r.postProcessingTexture = postProcessingTextures[0]
 
-	// // depth map FBO
-	// if init {
-	// 	r.postProcessingFBO, postProcessingTextures = r.initFrameBuffer2NoDepth(postProcessingTextureFn)
-	// } else {
-	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
-	// 	_, _, postProcessingTextures = postProcessingTextureFn()
-	// }
-	// r.postProcessingTexture = postProcessingTextures[0]
+	// depth map FBO
+	if init {
+		r.cameraDepthMapFBO, r.cameraDepthTexture = r.initDepthMapFBO(width, height)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+		r.cameraDepthTexture = r.createDepthTexture(width, height)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+	}
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 	r.InitOrReinitTextures(width, height, false)
 
-	// recreate texture for depth map
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-	r.cameraDepthTexture = r.createDepthTexture(width, height)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+	// // recreate texture for depth map
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+	// r.cameraDepthTexture = r.createDepthTexture(width, height)
+	// gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
 
 	// recreate texture for ssao
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
@@ -314,20 +314,12 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
-func (r *RenderSystem) initDepthMapFBO(width, height int) {
+func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {
 	var depthMapFBO uint32
 	gl.GenFramebuffers(1, &depthMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
 
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT,
-		int32(width), int32(height), 0, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	texture := r.createDepthTexture(width, height)
 
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0)
 	gl.DrawBuffer(gl.NONE)
@@ -337,7 +329,7 @@ func (r *RenderSystem) initDepthMapFBO(width, height int) {
 		panic("failed to initialize shadow map frame buffer - in the past this was due to an overly large shadow map dimension configuration")
 	}
 
-	r.cameraDepthMapFBO, r.cameraDepthTexture = depthMapFBO, texture
+	return depthMapFBO, texture
 }
 
 func (r *RenderSystem) initBlurFBO(width, height int) {

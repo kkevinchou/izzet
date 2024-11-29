@@ -1,7 +1,6 @@
 #version 330 core
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 DebugTexture;
   
 in vec2 TexCoords;
 
@@ -35,10 +34,6 @@ void main() {
         // get sample position
         vec3 samplePos = TBN * samples[i]; // from tangent to view-space
         samplePos = fragPos + samplePos * radius; 
-        if (i == 0) {
-            // DebugTexture = vec4((samplePos * radius).xyz, 1);
-            DebugTexture = vec4((samplePos * radius).xyz, 1);
-        }
 
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);

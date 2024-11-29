@@ -60,17 +60,6 @@ func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
 
-	var debugTexture uint32
-	gl.GenTextures(1, &debugTexture)
-	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalTextureColorFormatRGB,
-		int32(width), int32(height), 0, renderFormatRGBA, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, debugTexture, 0)
-
 	var drawBuffers []uint32
 	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT0)
 	drawBuffers = append(drawBuffers, gl.COLOR_ATTACHMENT1)
@@ -78,7 +67,6 @@ func (r *RenderSystem) initSSAOFBO(width, height int) uint32 {
 
 	r.ssaoFBO = ssaoFBO
 	r.ssaoTexture = ssaoTexture
-	r.ssaoDebugTexture = debugTexture
 
 	return ssaoFBO
 }

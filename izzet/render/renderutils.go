@@ -651,7 +651,8 @@ func (r *RenderSystem) drawHUDTextureToQuad(viewerContext ViewerContext, shader 
 }
 
 func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
-	fbo, textures := r.initFrameBuffer(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA})
+	circleTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA})
+	fbo, textures := r.initFrameBuffer(circleTextureFn)
 	return fbo, textures[0]
 }
 
@@ -672,7 +673,7 @@ func textureFn(width int, height int, internalFormat []int32, format []uint32) f
 
 type TextureFn func() (int, int, []uint32)
 
-func (r *RenderSystem) initFrameBuffer2(tf TextureFn) (uint32, []uint32) {
+func (r *RenderSystem) initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -701,7 +702,7 @@ func (r *RenderSystem) initFrameBuffer2(tf TextureFn) (uint32, []uint32) {
 	return fbo, textures
 }
 
-func (r *RenderSystem) initFrameBuffer2NoDepth(tf TextureFn) (uint32, []uint32) {
+func (r *RenderSystem) initFrameBufferNoDepth(tf TextureFn) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -716,58 +717,6 @@ func (r *RenderSystem) initFrameBuffer2NoDepth(tf TextureFn) (uint32, []uint32) 
 	}
 
 	gl.DrawBuffers(int32(textureCount), &drawBuffers[0])
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return fbo, textures
-}
-
-func initFBOAndTexture(width, height int) (uint32, uint32) {
-	var fbo uint32
-	gl.GenFramebuffers(1, &fbo)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-
-	texture := createTexture(width, height, internalTextureColorFormatRGB, renderFormatRGB, gl.LINEAR)
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}
-	gl.DrawBuffers(1, &drawBuffers[0])
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return fbo, texture
-}
-
-func (r *RenderSystem) initFrameBuffer(width int, height int, internalFormat []int32, format []uint32) (uint32, []uint32) {
-	var fbo uint32
-	gl.GenFramebuffers(1, &fbo)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-
-	var textures []uint32
-	var drawBuffers []uint32
-
-	colorBufferCount := len(internalFormat)
-
-	for i := 0; i < colorBufferCount; i++ {
-		texture := createTexture(width, height, internalFormat[i], format[i], gl.LINEAR)
-		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
-
-		textures = append(textures, texture)
-		drawBuffers = append(drawBuffers, attachment)
-	}
-
-	gl.DrawBuffers(int32(colorBufferCount), &drawBuffers[0])
-
-	var rbo uint32
-	gl.GenRenderbuffers(1, &rbo)
-	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
-	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
 
 	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
 		panic(errors.New("failed to initalize frame buffer"))

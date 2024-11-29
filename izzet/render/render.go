@@ -187,7 +187,9 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	// the texture is only needed to properly generate the FBO
 	// new textures are binded when we're in the process of blooming
-	r.blendFBO, _ = initFBOAndTexture(width, height)
+	// r.blendFBO, _ = initFBOAndTexture(width, height)
+	blendTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	r.blendFBO, _ = r.initFrameBufferNoDepth(blendTextureFn)
 
 	r.initializeCircleTextures()
 	r.initializeSSAOTextures()
@@ -208,7 +210,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
 	var mainRenderTextures []uint32
 	if init {
-		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer2(mainRenderTextureFn)
+		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
 		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
@@ -222,7 +224,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat})
 	var geometryTextures []uint32
 	if init {
-		r.geometryFBO, geometryTextures = r.initFrameBuffer2(geometryTextureFn)
+		r.geometryFBO, geometryTextures = r.initFrameBuffer(geometryTextureFn)
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
 		_, _, geometryTextures = geometryTextureFn()
@@ -235,7 +237,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
 	var compositeTextures []uint32
 	if init {
-		r.compositeFBO, compositeTextures = r.initFrameBuffer2NoDepth(compositeTextureFn)
+		r.compositeFBO, compositeTextures = r.initFrameBufferNoDepth(compositeTextureFn)
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 		_, _, compositeTextures = compositeTextureFn()
@@ -246,7 +248,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	postProcessingTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
 	var postProcessingTextures []uint32
 	if init {
-		r.postProcessingFBO, postProcessingTextures = r.initFrameBuffer2NoDepth(postProcessingTextureFn)
+		r.postProcessingFBO, postProcessingTextures = r.initFrameBufferNoDepth(postProcessingTextureFn)
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
 		_, _, postProcessingTextures = postProcessingTextureFn()
@@ -266,7 +268,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
 	var ssaoTextures []uint32
 	if init {
-		r.ssaoFBO, ssaoTextures = r.initFrameBuffer2NoDepth(ssaoTextureFn)
+		r.ssaoFBO, ssaoTextures = r.initFrameBufferNoDepth(ssaoTextureFn)
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
 		_, _, ssaoTextures = ssaoTextureFn()
@@ -277,7 +279,7 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
 	var ssaoBlurTextures []uint32
 	if init {
-		r.ssaoBlurFBO, ssaoBlurTextures = r.initFrameBuffer2NoDepth(ssaoBlurTextureFn)
+		r.ssaoBlurFBO, ssaoBlurTextures = r.initFrameBufferNoDepth(ssaoBlurTextureFn)
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
 		_, _, ssaoBlurTextures = ssaoBlurTextureFn()

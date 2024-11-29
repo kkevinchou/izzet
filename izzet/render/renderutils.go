@@ -1394,10 +1394,6 @@ func CalculateMenuBarHeight() float32 {
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
-func (r *RenderSystem) ConfigureUI() {
-	r.ReinitializeFrameBuffers()
-}
-
 func (r *RenderSystem) GameWindowSize() (int, int) {
 	menuBarSize := CalculateMenuBarHeight()
 	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)

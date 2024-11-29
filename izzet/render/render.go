@@ -90,8 +90,8 @@ type RenderSystem struct {
 	gNormalTexture   uint32
 	gColorTexture    uint32
 
-	blurFBO     uint32
-	blurTexture uint32
+	ssaoBlurFBO     uint32
+	ssaoBlurTexture uint32
 
 	ssaoFBO          uint32
 	ssaoTexture      uint32
@@ -172,8 +172,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
-
-	r.initBlurFBO(width, height)
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -274,15 +272,22 @@ func (r *RenderSystem) InitOrReinitTextures(width, height int, init bool) {
 		_, _, ssaoTextures = ssaoTextureFn()
 	}
 	r.ssaoTexture = ssaoTextures[0]
+
+	// SSAO BLUR FBO
+	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	var ssaoBlurTextures []uint32
+	if init {
+		r.ssaoBlurFBO, ssaoBlurTextures = r.initFrameBuffer2NoDepth(ssaoBlurTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
+		_, _, ssaoBlurTextures = ssaoBlurTextureFn()
+	}
+	r.ssaoBlurTexture = ssaoBlurTextures[0]
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 	r.InitOrReinitTextures(width, height, false)
-
-	// SSAO BLUR
-	r.initBlurFBO(width, height)
-
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
@@ -302,14 +307,6 @@ func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {
 	}
 
 	return depthMapFBO, texture
-}
-
-func (r *RenderSystem) initBlurFBO(width, height int) {
-	blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
-	// blurFBO, textures := r.initFrameBuffer(1639, 1024, []int32{gl.RED}, []uint32{gl.RED})
-	// blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
-	r.blurFBO = blurFBO
-	r.blurTexture = textures[0]
 }
 
 func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
@@ -516,7 +513,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
 		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
-		r.app.RuntimeConfig().DebugTexture = r.blurTexture
+		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture
 	}
 
 	// render to back buffer
@@ -531,7 +528,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 }
 
 func (r *RenderSystem) blur(renderContext RenderContext) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blurFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 1)
@@ -1106,7 +1103,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	setupLightingUniforms(shader, lightContext.Lights)
 
 	gl.ActiveTexture(gl.TEXTURE28)
-	gl.BindTexture(gl.TEXTURE_2D, r.blurTexture)
+	gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
 
 	gl.ActiveTexture(gl.TEXTURE29)
 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
@@ -1190,7 +1187,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		setupLightingUniforms(shader, lightContext.Lights)
 
 		gl.ActiveTexture(gl.TEXTURE28)
-		gl.BindTexture(gl.TEXTURE_2D, r.blurTexture)
+		gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
 
 		gl.ActiveTexture(gl.TEXTURE29)
 		gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)

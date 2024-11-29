@@ -1232,6 +1232,12 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		shader.SetUniformInt("shadowMap", 31)
 		shader.SetUniformInt("depthCubeMap", 30)
 		shader.SetUniformInt("cameraDepthMap", 29)
+		shader.SetUniformInt("ambientOcclusion", 28)
+		if r.app.RuntimeConfig().EnableSSAO {
+			shader.SetUniformInt("enableAmbientOcclusion", 1)
+		} else {
+			shader.SetUniformInt("enableAmbientOcclusion", 0)
+		}
 
 		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
 		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
@@ -1242,6 +1248,9 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		shader.SetUniformInt("hasColorOverride", 0)
 
 		setupLightingUniforms(shader, lightContext.Lights)
+
+		gl.ActiveTexture(gl.TEXTURE28)
+		gl.BindTexture(gl.TEXTURE_2D, r.blurTexture)
 
 		gl.ActiveTexture(gl.TEXTURE29)
 		gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)

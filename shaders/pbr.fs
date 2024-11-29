@@ -69,7 +69,6 @@ in VS_OUT {
     mat4 View;
     vec2 TexCoord;
     vec3 ColorOverride;
-    vec2 NDCCoord;
 } fs_in;
 
 const float A = 2.51;

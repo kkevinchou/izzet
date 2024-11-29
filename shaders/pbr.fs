@@ -69,8 +69,7 @@ in VS_OUT {
     mat4 View;
     vec2 TexCoord;
     vec3 ColorOverride;
-    vec4 NDCCoord;
-    vec2 ActualNDCCoord;
+    vec2 NDCCoord;
 } fs_in;
 
 const float A = 2.51;
@@ -316,9 +315,7 @@ void main()
     vec3 ambient = vec3(ambientFactor) * in_albedo;
 
     if (enableAmbientOcclusion == 1) {
-        ambient = ambient * texture(ambientOcclusion, fs_in.ActualNDCCoord).r;
-        // FragColor = vec4(texture(ambientOcclusion, fs_in.ActualNDCCoord.xy).r, 0, 0, 1);
-        // return;
+        ambient = ambient * texture(ambientOcclusion, (gl_FragCoord.xy / vec2(width, height))).r;
     }
 
     vec3 color = ambient + Lo;

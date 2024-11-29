@@ -28,7 +28,7 @@ func rendering(app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("SSAO", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("SSAO", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
-		panelutils.SetupRow("Radius", func() { imgui.SliderFloat("", &runtimeConfig.SSAORadius, 0, 1) }, true)
+		panelutils.SetupRow("Radius", func() { imgui.SliderFloat("", &runtimeConfig.SSAORadius, 0, 10) }, true)
 		panelutils.SetupRow("Bias", func() { imgui.SliderFloat("", &runtimeConfig.SSAOBias, 0, 1) }, true)
 		panelutils.SetupRow("Enable SSAO", func() { imgui.Checkbox("", &runtimeConfig.EnableSSAO) }, true)
 		imgui.EndTable()

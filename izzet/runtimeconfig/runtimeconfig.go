@@ -279,7 +279,8 @@ func DefaultRuntimeConfig() RuntimeConfig {
 			},
 		},
 		WindowEnablePostProcessing: true,
-		SSAORadius:                 1,
+		EnableSSAO:                 true,
+		SSAORadius:                 5,
 		SSAOBias:                   0.025,
 	}
 }

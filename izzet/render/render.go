@@ -178,16 +178,16 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.initPostProcessingFBO(width, height)
 	r.initDepthMapFBO(width, height)
 	r.initSSAOFBO(width, height)
-	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
 
 	// circles for the rotation gizmo
 
+	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
 	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
 	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
 	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
 
-	r.initBlurFBO(1920, 1080)
+	r.initBlurFBO(width, height)
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -278,6 +278,9 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ssaoTexture, 0)
 	r.ssaoTexture = ssaoTexture
 
+	// SSAO BLUR
+	r.initBlurFBO(width, height)
+
 	var debugTexture uint32
 	gl.GenTextures(1, &debugTexture)
 	gl.BindTexture(gl.TEXTURE_2D, debugTexture)
@@ -359,7 +362,7 @@ func (r *RenderSystem) initGeometryFBO(width, height int) {
 }
 
 func (r *RenderSystem) initBlurFBO(width, height int) {
-	blurFBO, textures := r.initFrameBuffer(2048, 1055, []int32{gl.RED}, []uint32{gl.RED})
+	blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
 	// blurFBO, textures := r.initFrameBuffer(1639, 1024, []int32{gl.RED}, []uint32{gl.RED})
 	// blurFBO, textures := r.initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED})
 	r.blurFBO = blurFBO

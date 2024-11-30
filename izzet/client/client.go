@@ -87,7 +87,7 @@ type Client struct {
 	navMesh *navmesh.NavigationMesh
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, defaultProject string) *Client {
+func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, projectName string) *Client {
 	initSeed()
 
 	sdlPlatform, window, err := platforms.NewSDLPlatform()
@@ -134,9 +134,9 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
 	g.initialize()
-	if defaultProject != "" {
-		g.initializeAssetManagerWithProject(defaultProject)
-		g.LoadProject(defaultProject)
+	if projectName != "" {
+		g.initializeAssetManagerWithProject(projectName)
+		g.LoadProject(projectName)
 	} else {
 		g.project = NewProject()
 		g.initializeAssetManagerWithProject(settings.DefaultProject)

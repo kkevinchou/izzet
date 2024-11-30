@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -23,6 +24,18 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		a.registerDocumentMeshWithSingleHandle(document)
 	} else {
 		a.registerDocumentMeshes(document)
+	}
+
+	if a.processVisuals {
+		for _, file := range document.PeripheralFiles {
+			extension := filepath.Ext(file)
+			if extension != ".png" {
+				continue
+			}
+
+			key := file[0 : len(file)-len(extension)]
+			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
+		}
 	}
 
 	for _, material := range document.Materials {

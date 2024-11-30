@@ -94,6 +94,12 @@ func LoadTextures(directory string) map[string]*textures.Texture {
 	return textureMap
 }
 
+func LoadTexture(filepath string) *textures.Texture {
+	textureInfo := opengl.ReadTextureInfo(filepath)
+	textureID := opengl.CreateOpenGLTexture(textureInfo)
+	return &textures.Texture{ID: textureID}
+}
+
 func LoadDocuments(directory string) map[string]*modelspec.Document {
 	var subDirectories []string = []string{"gltf"}
 

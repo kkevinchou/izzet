@@ -11,6 +11,7 @@ var (
 		"config.json":     true,
 		"izzet_data.json": true,
 	}
+	tableFlags imgui.TableFlags = imgui.TableFlagsBordersInnerV
 )
 
 var worldName string = settings.DefaultProject

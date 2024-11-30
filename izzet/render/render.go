@@ -22,6 +22,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -1209,6 +1210,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 
 	r.gameWindowHovered = false
 	menus.SetupMenuBar(r.app, renderContext)
+	windows.RenderWindows(r.app)
 	menuBarHeight := CalculateMenuBarHeight()
 	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
 	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)

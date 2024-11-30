@@ -40,7 +40,7 @@ type AssetManager struct {
 	Animations             map[string]map[string]*modelspec.AnimationSpec
 	Joints                 map[string]map[int]*modelspec.JointSpec
 	RootJoints             map[string]int
-	Materials              map[types.MaterialHandle]modelspec.MaterialSpecification
+	Materials              map[types.MaterialHandle]*modelspec.MaterialSpecification
 
 	processVisuals bool
 }
@@ -113,7 +113,7 @@ func (a *AssetManager) GetMaterials() []MaterialAsset {
 		materials = append(materials, MaterialAsset{
 			ID:       fmt.Sprintf("%s-%s", handle.Namespace, handle.ID),
 			Handle:   handle,
-			Material: material,
+			Material: *material,
 		})
 	}
 	sort.Slice(materials, func(i, j int) bool {
@@ -122,7 +122,7 @@ func (a *AssetManager) GetMaterials() []MaterialAsset {
 	return materials
 }
 
-func (m *AssetManager) GetMaterial(handle types.MaterialHandle) modelspec.MaterialSpecification {
+func (m *AssetManager) GetMaterial(handle types.MaterialHandle) *modelspec.MaterialSpecification {
 	if material, ok := m.Materials[handle]; ok {
 		return material
 	}
@@ -140,7 +140,7 @@ func (a *AssetManager) Reset() {
 	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
 	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
-	a.Materials = map[types.MaterialHandle]modelspec.MaterialSpecification{}
+	a.Materials = map[types.MaterialHandle]*modelspec.MaterialSpecification{}
 	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
 	a.Joints = map[string]map[int]*modelspec.JointSpec{}
 	a.RootJoints = map[string]int{}
@@ -151,9 +151,9 @@ func (a *AssetManager) Reset() {
 
 		// default material
 		defaultMaterialHandle := a.GetDefaultMaterialHandle()
-		a.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
-			PBRMaterial: &modelspec.PBRMaterial{
-				PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
+		a.Materials[defaultMaterialHandle] = &modelspec.MaterialSpecification{
+			PBRMaterial: modelspec.PBRMaterial{
+				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 					BaseColorTextureName: settings.DefaultTexture,
 					// BaseColorTextureName: "",
 					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},

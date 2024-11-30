@@ -11,7 +11,7 @@ func create(app renderiface.App) {
 
 	if imgui.BeginMenu("Create") {
 		if imgui.MenuItemBool("Create Material") {
-			windows.ShowCreateMaterialWindow()
+			windows.ShowCreateMaterialWindow(nil)
 		}
 		if imgui.MenuItemBool("Build Nav Mesh") {
 			runtimeConfig := app.RuntimeConfig()

@@ -11,7 +11,6 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/materialbrowser"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
@@ -20,14 +19,10 @@ type Project struct {
 	WorldFile  string
 	AssetsFile string
 	Name       string
-
-	MaterialBrowser *materialbrowser.MaterialBrowser
 }
 
 func NewProject() *Project {
-	return &Project{
-		MaterialBrowser: &materialbrowser.MaterialBrowser{},
-	}
+	return &Project{}
 }
 
 type DocumentJSON struct {
@@ -113,10 +108,6 @@ func (g *Client) SaveProject(name string) error {
 	}
 	defer f.Close()
 
-	if g.project.MaterialBrowser == nil {
-		g.project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
-	}
-
 	encoder = json.NewEncoder(f)
 	encoder.SetIndent("", "    ")
 	err = encoder.Encode(g.project)
@@ -143,10 +134,6 @@ func (g *Client) LoadProject(name string) bool {
 	err = decoder.Decode(&project)
 	if err != nil {
 		panic(err)
-	}
-
-	if project.MaterialBrowser == nil {
-		project.MaterialBrowser = &materialbrowser.MaterialBrowser{}
 	}
 
 	// assets

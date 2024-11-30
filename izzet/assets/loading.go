@@ -25,9 +25,10 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		a.registerDocumentMeshes(document)
 	}
 
-	for _, material := range document.Materials {
+	for _, docMaterial := range document.Materials {
+		material := docMaterial // make a copy from the slice
 		handle := NewMaterialHandle(document.Name, material.ID)
-		a.Materials[handle] = material
+		a.Materials[handle] = &material
 	}
 
 	if len(document.Animations) > 0 {

@@ -526,8 +526,8 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 
 	for gltfIdx, gltfMaterial := range document.Materials {
 		pbr := *gltfMaterial.PBRMetallicRoughness
-		pbrMaterial := &modelspec.PBRMaterial{
-			PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
+		pbrMaterial := modelspec.PBRMaterial{
+			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 				BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
 				MetalicFactor:   *pbr.MetallicFactor,
 				RoughnessFactor: *pbr.RoughnessFactor,
@@ -535,7 +535,7 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 		}
 		if pbr.BaseColorTexture != nil {
 			var intIndex int = int(pbr.BaseColorTexture.Index)
-			pbrMaterial.PBRMetallicRoughness.BaseColorTextureIndex = &intIndex
+			pbrMaterial.PBRMetallicRoughness.BaseColorTextureIndex = intIndex
 			pbrMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
 			pbrMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
 		}

@@ -10,7 +10,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/material"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -32,7 +31,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 }
 
 var (
-	selectedMaterial material.Material
+	selectedMaterialHandle types.MaterialHandle
 )
 
 func entityProps(entity *entities.Entity, app renderiface.App) {
@@ -231,34 +230,32 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			panelutils.InitColumns()
 
-			panelutils.SetupRow("Diffuse", func() {
-				imgui.ColorEdit3V("", &entity.Material.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
-			}, true)
-			panelutils.SetupRow("Invisible", func() {
-				imgui.Checkbox("", &entity.Material.Material.Invisible)
-			}, true)
+			// panelutils.SetupRow("Diffuse", func() {
+			// 	imgui.ColorEdit3V("", &entity.Material.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
+			// }, true)
+			// panelutils.SetupRow("Invisible", func() {
+			// 	imgui.Checkbox("", &entity.Material.Material.Invisible)
+			// }, true)
 
-			panelutils.SetupRow("Diffuse Intensity", func() {
-				imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 100, "%.1f", imgui.SliderFlagsNone)
-			}, true)
+			// panelutils.SetupRow("Diffuse Intensity", func() {
+			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 100, "%.1f", imgui.SliderFlagsNone)
+			// }, true)
 
-			panelutils.SetupRow("Roughness", func() {
-				imgui.SliderFloatV("", &entity.Material.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone)
-			}, true)
-			panelutils.SetupRow("Metallic Factor", func() {
-				imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			// panelutils.SetupRow("Roughness", func() {
+			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			// }, true)
+			// panelutils.SetupRow("Metallic Factor", func() {
+			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
+			// }, true)
+			panelutils.SetupRow("Current Material", func() {
+				imgui.LabelText("", entity.Material.MaterialHandle.String())
 			}, true)
 			imgui.EndTable()
-			imgui.PushIDStr("remove material")
-			if imgui.Button("Remove") {
-				entity.Material = nil
-			}
-			imgui.PopID()
 			imgui.PushIDStr("Material Combo")
-			if imgui.BeginCombo("", selectedMaterial.ID) {
-				for _, material := range app.MaterialBrowser().Items {
+			if imgui.BeginCombo("", selectedMaterialHandle.String()) {
+				for _, material := range app.AssetManager().GetMaterials() {
 					if imgui.SelectableBool(material.ID) {
-						selectedMaterial = material
+						selectedMaterialHandle = material.Handle
 					}
 				}
 				imgui.EndCombo()
@@ -266,7 +263,14 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			imgui.PopID()
 			imgui.PushIDStr("assign")
 			if imgui.Button("Assign") {
-				entity.Material.Material = selectedMaterial
+				// material := app.AssetManager().GetMaterial(selectedMaterialHandle)
+				entity.Material.MaterialHandle = selectedMaterialHandle
+			}
+			imgui.PopID()
+			imgui.SameLine()
+			imgui.PushIDStr("remove material")
+			if imgui.Button("Remove") {
+				entity.Material = nil
 			}
 			imgui.PopID()
 		}
@@ -392,14 +396,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		if entity != nil {
 			if SelectedComponentComboOption == MaterialComboOption {
 				entity.Material = &entities.MaterialComponent{
-					Material: material.Material{
-						PBR: types.PBR{
-							Roughness:        0.85,
-							Metallic:         0,
-							Diffuse:          [3]float32{1, 1, 1},
-							DiffuseIntensity: 1,
-						},
-					},
+					MaterialHandle: app.AssetManager().GetDefaultMaterialHandle(),
 				}
 			} else if SelectedComponentComboOption == LightComboOption {
 				entity.LightInfo = &entities.LightInfo{

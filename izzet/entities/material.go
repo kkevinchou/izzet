@@ -1,9 +1,9 @@
 package entities
 
 import (
-	"github.com/kkevinchou/izzet/izzet/material"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type MaterialComponent struct {
-	Material material.Material
+	MaterialHandle types.MaterialHandle
 }

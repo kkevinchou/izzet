@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
@@ -19,6 +20,12 @@ import (
 type DocumentAsset struct {
 	Document *modelspec.Document `json:"-"`
 	Config   AssetConfig
+}
+
+type MaterialAsset struct {
+	Material modelspec.MaterialSpecification
+	ID       string
+	Handle   types.MaterialHandle
 }
 
 type AssetManager struct {
@@ -100,6 +107,28 @@ func (a *AssetManager) GetDocuments() []DocumentAsset {
 	return documents
 }
 
+func (a *AssetManager) GetMaterials() []MaterialAsset {
+	var materials []MaterialAsset
+	for handle, material := range a.Materials {
+		materials = append(materials, MaterialAsset{
+			ID:       fmt.Sprintf("%s-%s", handle.Namespace, handle.ID),
+			Handle:   handle,
+			Material: material,
+		})
+	}
+	sort.Slice(materials, func(i, j int) bool {
+		return materials[i].ID < materials[j].ID
+	})
+	return materials
+}
+
+func (m *AssetManager) GetMaterial(handle types.MaterialHandle) modelspec.MaterialSpecification {
+	if material, ok := m.Materials[handle]; ok {
+		return material
+	}
+	return m.Materials[m.GetDefaultMaterialHandle()]
+}
+
 func (a *AssetManager) GetFont(name string) fonts.Font {
 	if _, ok := a.fonts[name]; !ok {
 		panic(fmt.Sprintf("could not find font %s", name))
@@ -123,7 +152,15 @@ func (a *AssetManager) Reset() {
 		// default material
 		defaultMaterialHandle := a.GetDefaultMaterialHandle()
 		a.Materials[defaultMaterialHandle] = modelspec.MaterialSpecification{
-			PBRMaterial: &modelspec.PBRMaterial{PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{BaseColorTextureName: settings.DefaultTexture}},
+			PBRMaterial: &modelspec.PBRMaterial{
+				PBRMetallicRoughness: &modelspec.PBRMetallicRoughness{
+					BaseColorTextureName: settings.DefaultTexture,
+					// BaseColorTextureName: "",
+					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
+					RoughnessFactor: .55,
+					MetalicFactor:   0,
+				},
+			},
 		}
 	}
 }

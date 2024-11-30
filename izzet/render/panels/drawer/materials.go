@@ -6,7 +6,7 @@ import (
 )
 
 func materialssUI(app renderiface.App) {
-	for _, material := range app.MaterialBrowser().Items {
+	for _, material := range app.AssetManager().GetMaterials() {
 		var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
 		open := imgui.TreeNodeExStrV(material.ID, nodeFlags)
 		if open {

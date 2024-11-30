@@ -62,14 +62,7 @@ func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 }
 
 func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
-	return types.MaterialHandle{Namespace: "global"}
-}
-
-func (m *AssetManager) GetMaterial(handle types.MaterialHandle) modelspec.MaterialSpecification {
-	if material, ok := m.Materials[handle]; ok {
-		return material
-	}
-	return m.Materials[m.GetDefaultMaterialHandle()]
+	return types.MaterialHandle{Namespace: "default", ID: "0"}
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally

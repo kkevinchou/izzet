@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	activeMaterial     *assets.MaterialAsset
+	activeMaterial     assets.MaterialAsset
 	isCreatingMaterial bool
 	backupMaterial     assets.MaterialAsset
 	materialWindow     string
@@ -35,7 +35,7 @@ func ShowEditMaterialWindow(material assets.MaterialAsset) {
 	isCreatingMaterial = false
 	materialWindow = "Edit Material"
 	backupMaterial = material
-	activeMaterial = &material
+	activeMaterial = material
 }
 
 func init() {
@@ -128,7 +128,7 @@ func renderMaterialWindow(app renderiface.App) {
 
 		if materialUpdated {
 			if !isCreatingMaterial {
-				app.AssetManager().UpdateMaterialAsset(*activeMaterial)
+				app.AssetManager().UpdateMaterialAsset(activeMaterial)
 			}
 		}
 
@@ -150,12 +150,18 @@ func renderMaterialWindow(app renderiface.App) {
 			}
 			assignDefaultMaterial()
 		}
+		imgui.SameLine()
+
+		if imgui.Button("Restore") {
+			app.AssetManager().UpdateMaterialAsset(backupMaterial)
+			activeMaterial = backupMaterial
+		}
 	}
 	imgui.End()
 }
 
 func assignDefaultMaterial() {
-	activeMaterial = &assets.MaterialAsset{
+	activeMaterial = assets.MaterialAsset{
 		Material: modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{

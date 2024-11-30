@@ -32,6 +32,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 
 var (
 	selectedMaterialHandle types.MaterialHandle
+	selectedMaterialName   string
 )
 
 func entityProps(entity *entities.Entity, app renderiface.App) {
@@ -248,14 +249,16 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
 			// }, true)
 			panelutils.SetupRow("Current Material", func() {
-				imgui.LabelText("", entity.Material.MaterialHandle.String())
+				materialName := app.AssetManager().GetMaterial(entity.Material.MaterialHandle).Name
+				imgui.LabelText("", materialName)
 			}, true)
 			imgui.EndTable()
 			imgui.PushIDStr("Material Combo")
-			if imgui.BeginCombo("", selectedMaterialHandle.String()) {
+			if imgui.BeginCombo("", selectedMaterialName) {
 				for _, material := range app.AssetManager().GetMaterials() {
-					if imgui.SelectableBool(material.ID) {
+					if imgui.SelectableBool(material.Name) {
 						selectedMaterialHandle = material.Handle
+						selectedMaterialName = material.Name
 					}
 				}
 				imgui.EndCombo()

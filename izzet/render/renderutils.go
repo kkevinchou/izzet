@@ -198,7 +198,7 @@ func (r *RenderSystem) drawBatches(
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
 	for _, batch := range r.batchRenders {
-		primitiveMaterial := r.app.AssetManager().GetMaterial(batch.MaterialHandle)
+		primitiveMaterial := r.app.AssetManager().GetMaterial(batch.MaterialHandle).Material
 
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 		shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
@@ -263,7 +263,7 @@ func (r *RenderSystem) drawModel(
 		if entity.Material != nil {
 			materialHandle = entity.Material.MaterialHandle
 		}
-		primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle)
+		primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle).Material
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 
 		if material.BaseColorTextureName != "" {

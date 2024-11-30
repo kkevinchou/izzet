@@ -28,7 +28,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	for _, docMaterial := range document.Materials {
 		material := docMaterial // make a copy from the slice
 		handle := NewMaterialHandle(document.Name, material.ID)
-		a.Materials[handle] = &material
+		a.CreateMaterialWithHandle(handle.String(), material, handle)
 	}
 
 	if len(document.Animations) > 0 {

@@ -17,6 +17,10 @@ import (
 	"github.com/kkevinchou/kitolib/utils"
 )
 
+const (
+	defaultMaterialName string = "default material"
+)
+
 type DocumentAsset struct {
 	Document *modelspec.Document `json:"-"`
 	Config   AssetConfig
@@ -24,7 +28,7 @@ type DocumentAsset struct {
 
 type MaterialAsset struct {
 	Material modelspec.MaterialSpecification
-	ID       string
+	Name     string
 	Handle   types.MaterialHandle
 }
 
@@ -33,6 +37,7 @@ type AssetManager struct {
 	textures       map[string]*textures.Texture
 	documentAssets map[string]DocumentAsset
 	fonts          map[string]fonts.Font
+	materialAssets map[types.MaterialHandle]MaterialAsset
 
 	// Asset References
 	NamespaceToMeshHandles map[string][]types.MeshHandle
@@ -40,7 +45,6 @@ type AssetManager struct {
 	Animations             map[string]map[string]*modelspec.AnimationSpec
 	Joints                 map[string]map[int]*modelspec.JointSpec
 	RootJoints             map[string]int
-	Materials              map[types.MaterialHandle]*modelspec.MaterialSpecification
 
 	processVisuals bool
 }
@@ -109,24 +113,42 @@ func (a *AssetManager) GetDocuments() []DocumentAsset {
 
 func (a *AssetManager) GetMaterials() []MaterialAsset {
 	var materials []MaterialAsset
-	for handle, material := range a.Materials {
-		materials = append(materials, MaterialAsset{
-			ID:       fmt.Sprintf("%s-%s", handle.Namespace, handle.ID),
-			Handle:   handle,
-			Material: *material,
-		})
+	for _, material := range a.materialAssets {
+		materials = append(materials, material)
 	}
 	sort.Slice(materials, func(i, j int) bool {
-		return materials[i].ID < materials[j].ID
+		return materials[i].Name < materials[j].Name
 	})
 	return materials
 }
 
-func (m *AssetManager) GetMaterial(handle types.MaterialHandle) *modelspec.MaterialSpecification {
-	if material, ok := m.Materials[handle]; ok {
-		return material
+func (m *AssetManager) GetMaterial(handle types.MaterialHandle) MaterialAsset {
+	if materialAsset, ok := m.materialAssets[handle]; ok {
+		return materialAsset
 	}
-	return m.Materials[m.GetDefaultMaterialHandle()]
+	material := m.materialAssets[m.GetDefaultMaterialHandle()]
+	return material
+}
+
+func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
+	if _, ok := m.materialAssets[material.Handle]; ok {
+		m.materialAssets[material.Handle] = material
+		return
+	}
+	panic(fmt.Sprintf("%s handle not found", material.Handle.String()))
+}
+
+var materialIDGen int
+
+func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
+	handle := NewMaterialHandle("global", fmt.Sprintf("%d", materialIDGen))
+	materialIDGen++
+	return m.CreateMaterialWithHandle(name, material, handle)
+}
+
+func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) types.MaterialHandle {
+	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+	return handle
 }
 
 func (a *AssetManager) GetFont(name string) fonts.Font {
@@ -140,7 +162,7 @@ func (a *AssetManager) Reset() {
 	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
 	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
-	a.Materials = map[types.MaterialHandle]*modelspec.MaterialSpecification{}
+	a.materialAssets = map[types.MaterialHandle]MaterialAsset{}
 	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
 	a.Joints = map[string]map[int]*modelspec.JointSpec{}
 	a.RootJoints = map[string]int{}
@@ -151,7 +173,7 @@ func (a *AssetManager) Reset() {
 
 		// default material
 		defaultMaterialHandle := a.GetDefaultMaterialHandle()
-		a.Materials[defaultMaterialHandle] = &modelspec.MaterialSpecification{
+		material := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 					BaseColorTextureName: settings.DefaultTexture,
@@ -162,5 +184,6 @@ func (a *AssetManager) Reset() {
 				},
 			},
 		}
+		a.CreateMaterialWithHandle(defaultMaterialName, material, defaultMaterialHandle)
 	}
 }

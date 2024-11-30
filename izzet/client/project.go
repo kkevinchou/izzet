@@ -136,8 +136,6 @@ func (g *Client) LoadProject(name string) bool {
 		panic(err)
 	}
 
-	g.initializeAssetManagerWithProject(name)
-
 	g.project = &project
 
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))

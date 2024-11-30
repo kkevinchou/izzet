@@ -47,15 +47,6 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 			last = ShelfContent
 			imgui.EndTabItem()
 		}
-		if imgui.BeginTabItem("Prefabs") {
-			if last != ShelfPrefabs {
-				expanded = true
-			} else if imgui.IsItemClicked() {
-				expanded = !expanded
-			}
-			last = ShelfPrefabs
-			imgui.EndTabItem()
-		}
 		if imgui.BeginTabItem("Materials") {
 			if last != ShelfMaterials {
 				expanded = true
@@ -63,6 +54,15 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 				expanded = !expanded
 			}
 			last = ShelfMaterials
+			imgui.EndTabItem()
+		}
+		if imgui.BeginTabItem("Prefabs") {
+			if last != ShelfPrefabs {
+				expanded = true
+			} else if imgui.IsItemClicked() {
+				expanded = !expanded
+			}
+			last = ShelfPrefabs
 			imgui.EndTabItem()
 		}
 

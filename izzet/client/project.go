@@ -136,11 +136,17 @@ func (g *Client) LoadProject(name string) bool {
 		panic(err)
 	}
 
-	// assets
+	g.initializeAssetManagerWithProject(name)
 
+	g.project = &project
+
+	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
+}
+
+func (g *Client) initializeAssetManagerWithProject(name string) {
 	g.assetManager.Reset()
 	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
-	_, err = os.Stat(assetsFilePath)
+	_, err := os.Stat(assetsFilePath)
 	if err == nil {
 		assetsFile, err := os.Open(assetsFilePath)
 		if err != nil {
@@ -149,7 +155,7 @@ func (g *Client) LoadProject(name string) bool {
 		defer assetsFile.Close()
 
 		var assetsJSON AssetsJSON
-		decoder = json.NewDecoder(assetsFile)
+		decoder := json.NewDecoder(assetsFile)
 		err = decoder.Decode(&assetsJSON)
 		if err != nil {
 			panic(err)
@@ -159,10 +165,6 @@ func (g *Client) LoadProject(name string) bool {
 			g.assetManager.LoadAndRegisterDocument(document.Config)
 		}
 	}
-
-	g.project = &project
-
-	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
 }
 
 func copySourceFiles(filePaths []string, rootDir, dstDir string) error {

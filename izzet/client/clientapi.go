@@ -191,6 +191,9 @@ func (g *Client) Connect() error {
 		return nil
 	}
 
+	g.assetManager.Reset()
+	g.initializeAssetManagerWithProject(settings.DefaultProject)
+
 	fmt.Println("connecting to " + g.serverAddress)
 
 	conn, err := net.Dial("tcp", g.serverAddress)

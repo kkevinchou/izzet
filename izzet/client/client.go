@@ -138,6 +138,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 		g.LoadProject(defaultProject)
 	} else {
 		g.project = NewProject()
+		g.initializeAssetManagerWithProject(defaultProject)
 		g.renderSystem.SetWorld(g.world)
 	}
 

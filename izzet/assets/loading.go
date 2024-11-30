@@ -25,8 +25,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		a.registerDocumentMeshes(document)
 	}
 
-	for _, docMaterial := range document.Materials {
-		material := docMaterial // make a copy from the slice
+	for _, material := range document.Materials {
 		handle := NewMaterialHandle(document.Name, material.ID)
 		a.CreateMaterialWithHandle(handle.String(), material, handle)
 	}

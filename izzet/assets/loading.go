@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMaterials bool) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
@@ -36,11 +36,13 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 			key := file[0 : len(file)-len(extension)]
 			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
 		}
-	}
 
-	for _, material := range document.Materials {
-		handle := NewMaterialHandle(document.Name, material.ID)
-		a.CreateMaterialWithHandle(handle.String(), material, handle)
+		if importMaterials {
+			for _, material := range document.Materials {
+				handle := NewMaterialHandle(document.Name, material.ID)
+				a.CreateMaterialWithHandle(handle.String(), material, handle)
+			}
+		}
 	}
 
 	if len(document.Animations) > 0 {

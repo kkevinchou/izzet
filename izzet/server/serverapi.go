@@ -190,3 +190,7 @@ func (g *Server) CopyLoadedAnimations(
 	g.assetManager.Joints = joints
 	g.assetManager.RootJoints = rootJoints
 }
+
+func (g *Server) ProjectName() string {
+	return g.projectName
+}

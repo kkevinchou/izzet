@@ -5,6 +5,7 @@ type AckPlayerJoinMessage struct {
 	EntityBytes []byte
 	CameraBytes []byte
 	Snapshot    []byte
+	ProjectName string
 }
 
 func (m AckPlayerJoinMessage) Type() MessageType {

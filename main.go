@@ -90,7 +90,7 @@ func main() {
 		go func() {
 			<-started
 		}()
-		serverApp := server.NewWithFile("_assets", apputils.PathToProjectFile(defaultProject))
+		serverApp := server.NewWithFile("_assets", apputils.PathToProjectFile(defaultProject), settings.DefaultProject)
 		serverApp.Start(started, make(chan bool))
 	} else if mode == "CLIENT" {
 		config.Fullscreen = false

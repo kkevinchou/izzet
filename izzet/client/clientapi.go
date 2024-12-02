@@ -213,6 +213,9 @@ func (g *Client) Connect() error {
 		return err
 	}
 
+	fmt.Println("connected to server hosting project", message.ProjectName)
+
+	g.initializeAssetManagerWithProject(message.ProjectName)
 	g.playerID = message.PlayerID
 	g.connection = conn
 	g.networkMessages = make(chan network.MessageTransport, 100)
@@ -348,7 +351,7 @@ func (g *Client) StartAsyncServer() {
 		}
 		serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
-		serverApp := server.NewWithWorld("_assets", world)
+		serverApp := server.NewWithWorld("_assets", world, g.project.Name)
 		serverApp.CopyLoadedAnimations(
 			g.assetManager.Animations,
 			g.assetManager.Joints,
@@ -428,7 +431,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 }
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
-	g.assetManager.LoadAndRegisterDocument(config)
+	g.assetManager.LoadAndRegisterDocument(config, true)
 }
 
 func (g *Client) Shutdown() {

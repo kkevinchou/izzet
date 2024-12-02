@@ -29,4 +29,5 @@ type App interface {
 	SystemNames() []string
 	World() *world.GameWorld
 	NavMesh() *navmesh.CompiledNavMesh
+	ProjectName() string
 }

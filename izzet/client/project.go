@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -29,8 +28,13 @@ type DocumentJSON struct {
 	Config assets.AssetConfig
 }
 
+type MaterialsJSON struct {
+	MaterialAsset assets.MaterialAsset
+}
+
 type AssetsJSON struct {
 	Documents []DocumentJSON
+	Materials []MaterialsJSON
 }
 
 func (g *Client) SaveProject(name string) error {
@@ -44,7 +48,7 @@ func (g *Client) SaveProject(name string) error {
 		panic(err)
 	}
 
-	worldFilePath := path.Join(settings.ProjectsDirectory, name, fmt.Sprintf("./%s.json", name))
+	worldFilePath := path.Join(settings.ProjectsDirectory, name, "world.json")
 	g.saveWorld(worldFilePath)
 	g.project.WorldFile = worldFilePath
 
@@ -56,9 +60,9 @@ func (g *Client) SaveProject(name string) error {
 		panic(err)
 	}
 
-	// assets
-
 	assetsJSON := AssetsJSON{}
+
+	// documents
 
 	for _, document := range g.AssetManager().GetDocuments() {
 		config := document.Config
@@ -88,6 +92,12 @@ func (g *Client) SaveProject(name string) error {
 		}
 	}
 
+	// materials
+
+	for _, material := range g.AssetManager().GetMaterials() {
+		assetsJSON.Materials = append(assetsJSON.Materials, MaterialsJSON{MaterialAsset: material})
+	}
+
 	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
 	assetsFile, err := os.OpenFile(assetsFilePath, os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -101,6 +111,8 @@ func (g *Client) SaveProject(name string) error {
 	if err != nil {
 		panic(err)
 	}
+
+	g.project.AssetsFile = assetsFilePath
 
 	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"), os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -116,6 +128,10 @@ func (g *Client) SaveProject(name string) error {
 	}
 
 	return nil
+}
+
+func (g *Client) CreateAndLoadEmptyProject() {
+	g.project = NewProject()
 }
 
 func (g *Client) LoadProject(name string) bool {
@@ -137,31 +153,38 @@ func (g *Client) LoadProject(name string) bool {
 	}
 
 	g.project = &project
+	g.initializeAssetManagerWithProject(name)
 
-	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, name+".json"))
+	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
 }
 
 func (g *Client) initializeAssetManagerWithProject(name string) {
 	g.assetManager.Reset()
 	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
 	_, err := os.Stat(assetsFilePath)
-	if err == nil {
-		assetsFile, err := os.Open(assetsFilePath)
-		if err != nil {
-			panic(err)
-		}
-		defer assetsFile.Close()
+	if err != nil {
+		panic(err)
+	}
 
-		var assetsJSON AssetsJSON
-		decoder := json.NewDecoder(assetsFile)
-		err = decoder.Decode(&assetsJSON)
-		if err != nil {
-			panic(err)
-		}
+	assetsFile, err := os.Open(assetsFilePath)
+	if err != nil {
+		panic(err)
+	}
+	defer assetsFile.Close()
 
-		for _, document := range assetsJSON.Documents {
-			g.assetManager.LoadAndRegisterDocument(document.Config)
-		}
+	var assetsJSON AssetsJSON
+	decoder := json.NewDecoder(assetsFile)
+	err = decoder.Decode(&assetsJSON)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, document := range assetsJSON.Documents {
+		g.assetManager.LoadAndRegisterDocument(document.Config, false)
+	}
+
+	for _, material := range assetsJSON.Materials {
+		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
 	}
 }
 

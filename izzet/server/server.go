@@ -51,10 +51,12 @@ type Server struct {
 	eventManager *events.EventManager
 
 	navMesh *navmesh.CompiledNavMesh
+
+	projectName string
 }
 
-func NewWithFile(assetsDirectory string, filepath string) *Server {
-	s := NewWithWorld(assetsDirectory, nil)
+func NewWithFile(assetsDirectory string, filepath string, projectName string) *Server {
+	s := NewWithWorld(assetsDirectory, nil, projectName)
 	world, err := serialization.ReadFromFile(filepath)
 	if err != nil {
 		panic(err)
@@ -64,13 +66,14 @@ func NewWithFile(assetsDirectory string, filepath string) *Server {
 	return s
 }
 
-func NewWithWorld(assetsDirectory string, world *world.GameWorld) *Server {
+func NewWithWorld(assetsDirectory string, world *world.GameWorld, projectName string) *Server {
 	initSeed()
 	g := &Server{
 		players:      map[int]*network.Player{},
 		inputBuffer:  inputbuffer.New(),
 		playerInput:  map[int]input.Input{},
 		eventManager: events.NewEventManager(),
+		projectName:  projectName,
 	}
 	g.initSettings()
 
@@ -154,9 +157,9 @@ func (g *Server) Start(started chan bool, done chan bool) {
 	}
 }
 
-func New(assetsDirectory, shaderDirectory string) *Server {
+func New(assetsDirectory, shaderDirectory string, projectName string) *Server {
 	world := world.New(map[int]*entities.Entity{})
-	return NewWithWorld(assetsDirectory, world)
+	return NewWithWorld(assetsDirectory, world, projectName)
 }
 
 func initSeed() {

@@ -21,6 +21,10 @@ var (
 	materialWindow     string
 )
 
+const (
+	defaultMaterialName string = "<my new material>"
+)
+
 var showCreateMaterialModel bool
 
 func ShowCreateMaterialWindow() {
@@ -136,9 +140,13 @@ func renderMaterialWindow(app renderiface.App) {
 
 		if isCreatingMaterial {
 			if imgui.Button("Create Material") {
-				app.AssetManager().CreateMaterial(activeMaterial.Name, activeMaterial.Material)
-				showCreateMaterialModel = false
-				assignDefaultMaterial()
+				if activeMaterial.Name != "" {
+					app.AssetManager().CreateMaterial(activeMaterial.Name, activeMaterial.Material)
+					showCreateMaterialModel = false
+					assignDefaultMaterial()
+				} else {
+					activeMaterial.Name = defaultMaterialName
+				}
 			}
 			imgui.SameLine()
 		}
@@ -162,6 +170,7 @@ func renderMaterialWindow(app renderiface.App) {
 
 func assignDefaultMaterial() {
 	activeMaterial = assets.MaterialAsset{
+		Name: defaultMaterialName,
 		Material: modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{

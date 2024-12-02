@@ -62,8 +62,7 @@ release: clean
 	cp config.json $(RELEASE_FOLDER)/
 	cp -r shaders $(RELEASE_FOLDER)/
 	cp -r _assets $(RELEASE_FOLDER)/
-	cp config.json $(RELEASE_FOLDER)/
+	cp -r .project $(RELEASE_FOLDER)/
 	cp izzet_data.json $(RELEASE_FOLDER)/
-	cp scene.json $(RELEASE_FOLDER)/
-	CGO_ENABLED=1 CGO_LDFLAGS="-static -static-libgcc -static-libstdc++" CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -tags static -ldflags "-s -w" -o $(RELEASE_FOLDER)/izzet.exe
+	CGO_ENABLED=1 CGO_LDFLAGS="-static" CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -tags static -ldflags "-s -w" -o $(RELEASE_FOLDER)/izzet.exe
 	# tar -zcf $(TAR_FILE) $(RELEASE_FOLDER)

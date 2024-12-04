@@ -3,6 +3,7 @@ package assets
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -185,5 +186,24 @@ func (a *AssetManager) Reset() {
 			},
 		}
 		a.CreateMaterialWithHandle(defaultMaterialName, material, defaultMaterialHandle)
+
+		// load builtin assets
+
+		var subDirectories []string = []string{"gltf"}
+		extensions := map[string]any{
+			".gltf": nil,
+		}
+		fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
+		for _, metaData := range fileMetaData {
+			if strings.HasPrefix(metaData.Name, "_") {
+				continue
+			}
+
+			a.LoadAndRegisterDocument(AssetConfig{
+				Name:         metaData.Name,
+				FilePath:     metaData.Path,
+				SingleEntity: true,
+			}, true)
+		}
 	}
 }

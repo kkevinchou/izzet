@@ -86,6 +86,11 @@ func file(app renderiface.App) {
 			imgui.CloseCurrentPopup()
 		}
 
+		if imgui.MenuItemBool("New") {
+			wipImportAssetConfig = assets.AssetConfig{}
+			showImportAssetModal = true
+		}
+
 		if imgui.MenuItemBool("Import Asset") {
 			wipImportAssetConfig = assets.AssetConfig{}
 			showImportAssetModal = true

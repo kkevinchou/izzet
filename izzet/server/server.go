@@ -55,8 +55,8 @@ type Server struct {
 	projectName string
 }
 
-func NewWithFile(assetsDirectory string, filepath string, projectName string) *Server {
-	s := NewWithWorld(assetsDirectory, nil, projectName)
+func NewWithFile(filepath string, projectName string) *Server {
+	s := NewWithWorld(nil, projectName)
 	world, err := serialization.ReadFromFile(filepath)
 	if err != nil {
 		panic(err)
@@ -66,7 +66,7 @@ func NewWithFile(assetsDirectory string, filepath string, projectName string) *S
 	return s
 }
 
-func NewWithWorld(assetsDirectory string, world *world.GameWorld, projectName string) *Server {
+func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	initSeed()
 	g := &Server{
 		players:      map[int]*network.Player{},
@@ -77,7 +77,7 @@ func NewWithWorld(assetsDirectory string, world *world.GameWorld, projectName st
 	}
 	g.initSettings()
 
-	g.assetManager = assets.NewAssetManager(assetsDirectory, false)
+	g.assetManager = assets.NewAssetManager(false)
 
 	start := time.Now()
 
@@ -157,9 +157,9 @@ func (g *Server) Start(started chan bool, done chan bool) {
 	}
 }
 
-func New(assetsDirectory, shaderDirectory string, projectName string) *Server {
+func New(shaderDirectory string, projectName string) *Server {
 	world := world.New(map[int]*entities.Entity{})
-	return NewWithWorld(assetsDirectory, world, projectName)
+	return NewWithWorld(world, projectName)
 }
 
 func initSeed() {

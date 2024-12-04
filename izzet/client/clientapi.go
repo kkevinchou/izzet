@@ -351,7 +351,7 @@ func (g *Client) StartAsyncServer() {
 		}
 		serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
-		serverApp := server.NewWithWorld("_assets", world, g.project.Name)
+		serverApp := server.NewWithWorld(world, g.project.Name)
 		serverApp.CopyLoadedAnimations(
 			g.assetManager.Animations,
 			g.assetManager.Joints,

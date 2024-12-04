@@ -85,6 +85,8 @@ const (
 	CameraSpeed              float64 = 85
 	CameraSlowSpeed          float64 = 10
 	AccelerationDueToGravity float64 = 75 // units per second
+
+	BuiltinAssetsDir string = "_assets"
 )
 
 var (

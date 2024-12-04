@@ -125,7 +125,7 @@ func importAssetModal(app renderiface.App) {
 				if err != nil {
 					panic(err)
 				}
-				d = d.SetStartDir(filepath.Join(currentDir, "_assets", "gltf"))
+				d = d.SetStartDir(filepath.Join(currentDir, settings.BuiltinAssetsDir, "gltf"))
 				d = d.Filter("GLTF file", "gltf")
 
 				assetFilePath, err := d.Load()

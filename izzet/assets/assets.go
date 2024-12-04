@@ -49,14 +49,14 @@ type AssetManager struct {
 	processVisuals bool
 }
 
-func NewAssetManager(directory string, processVisualAssets bool) *AssetManager {
+func NewAssetManager(processVisualAssets bool) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]fonts.Font
 
 	if processVisualAssets {
 		start := time.Now()
-		loadedTextures = loaders.LoadTextures(directory)
-		loadedFonts = loaders.LoadFonts(directory)
+		loadedTextures = loaders.LoadTextures(settings.BuiltinAssetsDir)
+		loadedFonts = loaders.LoadFonts(settings.BuiltinAssetsDir)
 		assetslog.Logger.Println("loaded fonts and textures in", time.Since(start).Seconds(), "seconds")
 	}
 

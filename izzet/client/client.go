@@ -87,7 +87,7 @@ type Client struct {
 	navMesh *navmesh.NavigationMesh
 }
 
-func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.Config, projectName string) *Client {
+func New(shaderDirectory, dataFilePath string, config settings.Config, projectName string) *Client {
 	initSeed()
 
 	sdlPlatform, window, err := platforms.NewSDLPlatform()
@@ -115,7 +115,7 @@ func New(assetsDirectory, shaderDirectory, dataFilePath string, config settings.
 	metricsRegistry := metrics.New()
 	globals.SetClientMetricsRegistry(metricsRegistry)
 
-	assetManager := assets.NewAssetManager(assetsDirectory, true)
+	assetManager := assets.NewAssetManager(true)
 
 	g := &Client{
 		asyncServerDone: make(chan bool),

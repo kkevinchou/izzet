@@ -179,6 +179,9 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		panic(err)
 	}
 
+	// load builtin assets
+
+	// load materials from the materials section. only use the documents for mesh info
 	for _, document := range assetsJSON.Documents {
 		g.assetManager.LoadAndRegisterDocument(document.Config, false)
 	}

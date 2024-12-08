@@ -152,6 +152,13 @@ func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.
 	return handle
 }
 
+func (m *AssetManager) CreateMaterialWithHandleNoOverride(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) types.MaterialHandle {
+	if _, ok := m.materialAssets[handle]; !ok {
+		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+	}
+	return handle
+}
+
 func (a *AssetManager) GetFont(name string) fonts.Font {
 	if _, ok := a.fonts[name]; !ok {
 		panic(fmt.Sprintf("could not find font %s", name))
@@ -185,7 +192,7 @@ func (a *AssetManager) Reset() {
 				},
 			},
 		}
-		a.CreateMaterialWithHandle(defaultMaterialName, material, defaultMaterialHandle)
+		a.CreateMaterialWithHandleNoOverride(defaultMaterialName, material, defaultMaterialHandle)
 
 		// load builtin assets
 

@@ -139,7 +139,7 @@ func renderMaterialWindow(app renderiface.App) {
 		imgui.EndTable()
 
 		if isCreatingMaterial {
-			if imgui.Button("Create Material") {
+			if imgui.Button("Save") {
 				if activeMaterial.Name != "" {
 					app.AssetManager().CreateMaterial(activeMaterial.Name, activeMaterial.Material)
 					showCreateMaterialModel = false
@@ -148,8 +148,18 @@ func renderMaterialWindow(app renderiface.App) {
 					activeMaterial.Name = defaultMaterialName
 				}
 			}
-			imgui.SameLine()
+		} else {
+			if imgui.Button("Save") {
+				showCreateMaterialModel = false
+			}
 		}
+		imgui.SameLine()
+
+		if imgui.Button("Restore") {
+			app.AssetManager().UpdateMaterialAsset(backupMaterial)
+			activeMaterial = backupMaterial
+		}
+		imgui.SameLine()
 
 		if imgui.Button("Cancel") {
 			showCreateMaterialModel = false
@@ -157,12 +167,6 @@ func renderMaterialWindow(app renderiface.App) {
 				app.AssetManager().UpdateMaterialAsset(backupMaterial)
 			}
 			assignDefaultMaterial()
-		}
-		imgui.SameLine()
-
-		if imgui.Button("Restore") {
-			app.AssetManager().UpdateMaterialAsset(backupMaterial)
-			activeMaterial = backupMaterial
 		}
 	}
 	imgui.End()

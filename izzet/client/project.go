@@ -153,13 +153,13 @@ func (g *Client) LoadProject(name string) bool {
 	}
 
 	g.project = &project
+	g.assetManager.Reset()
 	g.initializeAssetManagerWithProject(name)
 
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
 }
 
 func (g *Client) initializeAssetManagerWithProject(name string) {
-	g.assetManager.Reset()
 	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
 	_, err := os.Stat(assetsFilePath)
 	if err != nil {
@@ -179,15 +179,15 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		panic(err)
 	}
 
-	// load builtin assets
-
 	// load materials from the materials section. only use the documents for mesh info
 	for _, document := range assetsJSON.Documents {
 		g.assetManager.LoadAndRegisterDocument(document.Config, false)
 	}
 
+	// don't overwrite materials since the user may have edited materials that haven't
+	// been persisted to the asset file yet
 	for _, material := range assetsJSON.Materials {
-		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
+		g.assetManager.CreateMaterialWithHandleNoOverride(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
 	}
 }
 

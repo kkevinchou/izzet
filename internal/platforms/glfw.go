@@ -5,7 +5,7 @@ import (
 	"math"
 	"runtime"
 
-	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 

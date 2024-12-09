@@ -1,7 +1,7 @@
 package windows
 
 import (
-	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 

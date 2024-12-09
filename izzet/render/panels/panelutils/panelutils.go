@@ -1,6 +1,6 @@
 package panelutils
 
-import imgui "github.com/AllenDang/cimgui-go"
+import "github.com/AllenDang/cimgui-go/imgui"
 
 var (
 	TableColumn0Width float32 = 180

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	imgui "github.com/AllenDang/cimgui-go"
+	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/veandco/go-sdl2/sdl"
 )

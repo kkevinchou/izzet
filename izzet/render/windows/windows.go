@@ -11,4 +11,5 @@ var (
 
 func RenderWindows(app renderiface.App) {
 	renderMaterialWindow(app)
+	renderAnimationEditorWindow(app)
 }

@@ -25,17 +25,15 @@ const (
 	defaultMaterialName string = "<my new material>"
 )
 
-var showCreateMaterialModel bool
-
-func ShowCreateMaterialWindow() {
-	showCreateMaterialModel = true
+func ShowCreateMaterialWindow(app renderiface.App) {
+	app.RuntimeConfig().ShowMaterialEditor = true
 	isCreatingMaterial = true
 	materialWindow = "Create Material"
 	assignDefaultMaterial()
 }
 
-func ShowEditMaterialWindow(material assets.MaterialAsset) {
-	showCreateMaterialModel = true
+func ShowEditMaterialWindow(app renderiface.App, material assets.MaterialAsset) {
+	app.RuntimeConfig().ShowMaterialEditor = true
 	isCreatingMaterial = false
 	materialWindow = "Edit Material"
 	backupMaterial = material
@@ -47,14 +45,14 @@ func init() {
 }
 
 func renderMaterialWindow(app renderiface.App) {
-	if !showCreateMaterialModel {
+	if !app.RuntimeConfig().ShowMaterialEditor {
 		return
 	}
 
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
 
-	if imgui.BeginV(materialWindow, &showCreateMaterialModel, imgui.WindowFlagsNone) {
+	if imgui.BeginV(materialWindow, &app.RuntimeConfig().ShowMaterialEditor, imgui.WindowFlagsNone) {
 		imgui.BeginTableV("Material Editor", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
@@ -142,7 +140,7 @@ func renderMaterialWindow(app renderiface.App) {
 			if imgui.Button("Save") {
 				if activeMaterial.Name != "" {
 					app.AssetManager().CreateMaterial(activeMaterial.Name, activeMaterial.Material)
-					showCreateMaterialModel = false
+					app.RuntimeConfig().ShowMaterialEditor = false
 					assignDefaultMaterial()
 				} else {
 					activeMaterial.Name = defaultMaterialName
@@ -150,7 +148,7 @@ func renderMaterialWindow(app renderiface.App) {
 			}
 		} else {
 			if imgui.Button("Save") {
-				showCreateMaterialModel = false
+				app.RuntimeConfig().ShowMaterialEditor = false
 			}
 		}
 		imgui.SameLine()
@@ -162,7 +160,7 @@ func renderMaterialWindow(app renderiface.App) {
 		imgui.SameLine()
 
 		if imgui.Button("Cancel") {
-			showCreateMaterialModel = false
+			app.RuntimeConfig().ShowMaterialEditor = false
 			if !isCreatingMaterial {
 				app.AssetManager().UpdateMaterialAsset(backupMaterial)
 			}

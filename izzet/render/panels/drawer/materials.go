@@ -17,7 +17,7 @@ func materialssUI(app renderiface.App) {
 		if imgui.BeginPopupContextItemV(id, imgui.PopupFlagsMouseButtonRight) {
 			if imgui.Button("Edit") {
 				material := app.AssetManager().GetMaterial(material.Handle)
-				windows.ShowEditMaterialWindow(material)
+				windows.ShowEditMaterialWindow(app, material)
 				imgui.CloseCurrentPopup()
 			} else {
 			}

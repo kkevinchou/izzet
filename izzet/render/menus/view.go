@@ -68,6 +68,10 @@ func view(app renderiface.App, renderContext RenderContext) {
 			runtimeConfig.ShowTextureViewer = !runtimeConfig.ShowTextureViewer
 		}
 
+		if imgui.MenuItemBoolV("Show Animation Editor", "", runtimeConfig.ShowAnimationEditor, true) {
+			runtimeConfig.ShowAnimationEditor = !runtimeConfig.ShowAnimationEditor
+		}
+
 		imgui.EndMenu()
 	}
 }

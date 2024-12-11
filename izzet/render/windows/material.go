@@ -92,7 +92,7 @@ func renderMaterialWindow(app renderiface.App) {
 
 		if activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName != "" {
 			t := app.AssetManager().GetTexture(activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName)
-			texture := imgui.TextureID{Data: uintptr(t.ID)}
+			texture := imgui.TextureID(t.ID)
 			size := imgui.Vec2{X: 150, Y: 150}
 			imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 		}

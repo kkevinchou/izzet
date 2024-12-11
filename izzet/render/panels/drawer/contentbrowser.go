@@ -4,11 +4,12 @@ import (
 	"C"
 	"fmt"
 
-	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 import (
 	"unsafe"
+
+	"github.com/AllenDang/cimgui-go/imgui"
 )
 
 func contentBrowser(app renderiface.App) bool {
@@ -30,7 +31,7 @@ func contentBrowser(app renderiface.App) bool {
 
 		if documentTexture == nil {
 			t := app.AssetManager().GetTexture("document")
-			texture := imgui.TextureID{Data: uintptr(t.ID)}
+			texture := imgui.TextureID(t.ID)
 			documentTexture = &texture
 		}
 

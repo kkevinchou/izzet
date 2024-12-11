@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
@@ -520,7 +521,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
 	start = time.Now()
-	r.renderImgui(renderContext, imgui.TextureID{Data: uintptr(r.postProcessingTexture)})
+	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
@@ -1297,9 +1298,9 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			imgui.PushStyleColorVec4(imgui.ColButton, InActiveColorControl)
 			imgui.PushStyleColorVec4(imgui.ColButtonActive, ActiveColorControl)
 			imgui.PushStyleColorVec4(imgui.ColButtonHovered, HoverColorControl)
-			imgui.PushStyleColorVec4(imgui.ColTabActive, ActiveColorBg)
-			imgui.PushStyleColorVec4(imgui.ColTabUnfocused, InActiveColorBg)
-			imgui.PushStyleColorVec4(imgui.ColTabUnfocusedActive, InActiveColorBg)
+			// imgui.PushStyleColorVec4(imgui.ColTabActive, ActiveColorBg)
+			// imgui.PushStyleColorVec4(imgui.ColTabUnfocused, InActiveColorBg)
+			// imgui.PushStyleColorVec4(imgui.ColTabUnfocusedActive, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
@@ -1315,7 +1316,8 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 				r.app.Prefabs(),
 			)
 
-			imgui.PopStyleColorV(20)
+			imgui.PopStyleColorV(17)
+			// imgui.PopStyleColorV(20)
 			imgui.PopStyleVarV(7)
 
 			if runtimeConfig.ShowImguiDemo {
@@ -1337,7 +1339,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 					regionSize := imgui.ContentRegionAvail()
 					imageWidth := regionSize.X
 
-					texture := imgui.TextureID{Data: uintptr(runtimeConfig.DebugTexture)}
+					texture := imgui.TextureID(runtimeConfig.DebugTexture)
 					size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
 					if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 						size.Y = imageWidth

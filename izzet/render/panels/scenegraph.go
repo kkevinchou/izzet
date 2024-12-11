@@ -3,6 +3,7 @@ package panels
 import (
 	"sort"
 
+	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -12,7 +13,7 @@ import (
 func sceneGraph(app renderiface.App) {
 	world := app.World()
 	entityPopup := false
-	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, imgui.ChildFlagsBorder, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
+	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, imgui.ChildFlagsBorders, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)
 	for _, entity := range world.Entities() {
 		if entity.Parent == nil {
 			popup := drawSceneGraphEntity(entity, app)

@@ -188,7 +188,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendTargetTextures = initSamplingTextures(widths, heights)
 	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
 
-	blendTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	blendTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
 	r.blendFBO, _ = r.initFrameBufferNoDepth(blendTextureFn)
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
@@ -204,7 +204,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	// main render FBO
 
-	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER})
+	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
 	var mainRenderTextures []uint32
 	if init {
 		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
@@ -218,7 +218,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 
 	// geometry FBO
 
-	geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat})
+	geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat}, []uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT})
 	var geometryTextures []uint32
 	if init {
 		r.geometryFBO, geometryTextures = r.initFrameBuffer(geometryTextureFn)
@@ -231,7 +231,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.gColorTexture = geometryTextures[2]
 
 	// composite FBO
-	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
 	var compositeTextures []uint32
 	if init {
 		r.compositeFBO, compositeTextures = r.initFrameBufferNoDepth(compositeTextureFn)
@@ -242,7 +242,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.compositeTexture = compositeTextures[0]
 
 	// post processing FBO
-	postProcessingTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB})
+	postProcessingTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
 	var postProcessingTextures []uint32
 	if init {
 		r.postProcessingFBO, postProcessingTextures = r.initFrameBufferNoDepth(postProcessingTextureFn)
@@ -262,7 +262,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	}
 
 	// SSAO FBO
-	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
 	var ssaoTextures []uint32
 	if init {
 		r.ssaoFBO, ssaoTextures = r.initFrameBufferNoDepth(ssaoTextureFn)
@@ -273,7 +273,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.ssaoTexture = ssaoTextures[0]
 
 	// SSAO BLUR FBO
-	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED})
+	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
 	var ssaoBlurTextures []uint32
 	if init {
 		r.ssaoBlurFBO, ssaoBlurTextures = r.initFrameBufferNoDepth(ssaoBlurTextureFn)

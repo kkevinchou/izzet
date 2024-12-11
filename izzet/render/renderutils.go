@@ -624,17 +624,17 @@ func (r *RenderSystem) drawHUDTextureToQuad(viewerContext ViewerContext, shader 
 }
 
 func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
-	circleTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA})
+	circleTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE})
 	fbo, textures := r.initFrameBuffer(circleTextureFn)
 	return fbo, textures[0]
 }
 
-func textureFn(width int, height int, internalFormat []int32, format []uint32) func() (int, int, []uint32) {
+func textureFn(width int, height int, internalFormat []int32, format []uint32, xtype []uint32) func() (int, int, []uint32) {
 	return func() (int, int, []uint32) {
 		count := len(internalFormat)
 		var textures []uint32
 		for i := 0; i < count; i++ {
-			texture := createTexture(width, height, internalFormat[i], format[i], gl.LINEAR)
+			texture := createTexture(width, height, internalFormat[i], format[i], xtype[i], gl.LINEAR)
 			attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
 			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
 
@@ -698,13 +698,13 @@ func (r *RenderSystem) initFrameBufferNoDepth(tf TextureFn) (uint32, []uint32) {
 	return fbo, textures
 }
 
-func createTexture(width, height int, internalFormat int32, format uint32, filtering int32) uint32 {
+func createTexture(width, height int, internalFormat int32, format uint32, xtype uint32, filtering int32) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
 	gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat,
-		int32(width), int32(height), 0, format, gl.UNSIGNED_BYTE, nil)
+		int32(width), int32(height), 0, format, xtype, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filtering)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filtering)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)

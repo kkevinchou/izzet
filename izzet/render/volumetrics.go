@@ -63,7 +63,7 @@ func (r *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (u
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	texture := createTexture(textureWidth, textureHeight, internalTextureColorFormatRGB, gl.RGB, gl.NEAREST)
+	texture := createTexture(textureWidth, textureHeight, internalTextureColorFormatRGB, renderFormatRGB, gl.FLOAT, gl.NEAREST)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}

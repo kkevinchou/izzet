@@ -271,21 +271,25 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	}
 
 	if g.renderSystem.GameWindowHovered() {
-		if g.relativeMouseActive {
-			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-		}
-
 		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
 			g.relativeMouseActive = true
 			g.relativeMouseOrigin[0] = int32(mouseInput.Position[0])
 			g.relativeMouseOrigin[1] = int32(mouseInput.Position[1])
 			g.platform.SetRelativeMouse(true)
-		} else if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
-			g.relativeMouseActive = false
-			g.platform.SetRelativeMouse(false)
 		}
 	}
 
+	// we should continue to keep the mouse at the origin, regardless of
+	// whether we're hoving the game window or not
+	if g.relativeMouseActive {
+		g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
+
+		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
+			g.relativeMouseActive = false
+			g.platform.SetRelativeMouse(false)
+			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
+		}
+	}
 }
 
 func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {

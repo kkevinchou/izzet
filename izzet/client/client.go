@@ -14,7 +14,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
-	"github.com/kkevinchou/izzet/izzet/izzetdata"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -87,7 +86,7 @@ type Client struct {
 	navMesh *navmesh.NavigationMesh
 }
 
-func New(shaderDirectory, dataFilePath string, config settings.Config, projectName string) *Client {
+func New(shaderDirectory string, config settings.Config, projectName string) *Client {
 	initSeed()
 
 	sdlPlatform, window, err := platforms.NewSDLPlatform()
@@ -244,7 +243,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 }
 
-func (g *Client) setupEntities(data *izzetdata.Data) {
+func (g *Client) setupEntities() {
 	pointLight := entities.CreatePointLight()
 	pointLight.AIComponent = &entities.AIComponent{
 		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},

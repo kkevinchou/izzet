@@ -86,8 +86,6 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	fmt.Println(time.Since(start), "spatial partition done")
 
 	g.entities = map[int]*entities.Entity{}
-	// dataFilePath := "izzet_data.json"
-	// data := izzetdata.LoadData(dataFilePath)
 	// g.setupAssets(data)
 	g.metricsRegistry = metrics.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()

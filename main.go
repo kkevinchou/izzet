@@ -80,7 +80,7 @@ func main() {
 	defaultProject := settings.DefaultProject
 
 	if mode == "SERVER" {
-		clientApp := client.New("shaders", "izzet_data.json", config, defaultProject)
+		clientApp := client.New("shaders", config, defaultProject)
 		if err != nil {
 			panic(err)
 		}
@@ -95,7 +95,7 @@ func main() {
 	} else if mode == "CLIENT" {
 		config.Fullscreen = false
 		config.Profile = false
-		clientApp := client.New("shaders", "izzet_data.json", config, "")
+		clientApp := client.New("shaders", config, "")
 		clientApp.Connect()
 		clientApp.Start()
 	}

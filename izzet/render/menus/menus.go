@@ -7,10 +7,6 @@ import (
 )
 
 var (
-	ignoredJsonFiles map[string]any = map[string]any{
-		"config.json":     true,
-		"izzet_data.json": true,
-	}
 	tableFlags imgui.TableFlags = imgui.TableFlagsBordersInnerV
 )
 

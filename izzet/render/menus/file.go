@@ -61,9 +61,6 @@ func file(app renderiface.App) {
 		var savedWorlds []string
 		for _, file := range files {
 			extension := filepath.Ext(file.Name())
-			if _, ok := ignoredJsonFiles[file.Name()]; ok {
-				continue
-			}
 
 			name := file.Name()[0 : len(file.Name())-len(extension)]
 			savedWorlds = append(savedWorlds, name)

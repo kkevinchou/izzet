@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
@@ -34,4 +35,5 @@ type App interface {
 	MetricsRegistry() *metrics.MetricsRegistry
 	CollisionObserver() *collisionobserver.CollisionObserver
 	World() *world.GameWorld
+	AppMode() mode.AppMode
 }

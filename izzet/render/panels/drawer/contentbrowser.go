@@ -45,6 +45,7 @@ func contentBrowser(app renderiface.App) bool {
 			imgui.EndPopup()
 		}
 		imgui.PopID()
+
 		if imgui.IsItemHovered() {
 			imgui.BeginTooltip()
 			imgui.Text(doc.Name)
@@ -59,8 +60,15 @@ func contentBrowser(app renderiface.App) bool {
 			imgui.EndDragDropSource()
 		}
 
-		imgui.PushItemWidth(width)
-		imgui.InputTextWithHint("##Name", doc.Name, &doc.Name, imgui.InputTextFlagsReadOnly, nil)
+		if imgui.BeginChildStrV(
+			fmt.Sprintf("##%s", doc.Name),
+			imgui.Vec2{X: width, Y: 0},
+			imgui.ChildFlagsNone,
+			imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse,
+		) {
+			imgui.Text(doc.Name)
+		}
+		imgui.EndChild()
 
 		imgui.EndGroup()
 		if i%(maxPerRow-1) != 0 || i == 0 {

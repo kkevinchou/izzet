@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"strconv"
 
 	"github.com/AllenDang/cimgui-go/imgui"
@@ -431,6 +432,30 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			panelutils.SetupRow("Collision Resolutions", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionResolution[entity.GetID()])) }, true)
 
 			imgui.EndTable()
+		}
+	}
+
+	if entity.Animation != nil {
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Animation", imgui.TreeNodeFlagsNone) {
+			// imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			// panelutils.InitColumns()
+
+			// imgui.EndTable()
+			var animationList []string
+			for animation := range entity.Animation.Animations {
+				animationList = append(animationList, animation)
+			}
+			slices.Sort(animationList)
+
+			imgui.PushIDStr("Animation Combo")
+			if imgui.BeginCombo("", animationList[0]) {
+				for _, option := range animationList {
+					if imgui.SelectableBool(option) {
+					}
+				}
+				imgui.EndCombo()
+			}
+			imgui.PopID()
 		}
 	}
 }

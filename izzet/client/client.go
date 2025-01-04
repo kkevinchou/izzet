@@ -241,6 +241,8 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, systems.NewCleanupSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
+
+	g.editorModeSystems = append(g.editorModeSystems, systems.NewAnimationSystem(g))
 }
 
 func (g *Client) setupEntities() {

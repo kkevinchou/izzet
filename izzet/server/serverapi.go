@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -193,4 +194,8 @@ func (g *Server) CopyLoadedAnimations(
 
 func (g *Server) ProjectName() string {
 	return g.projectName
+}
+
+func (g *Server) AppMode() mode.AppMode {
+	panic("app mode should not be called in server, conslidate app mode with isClient/isServer")
 }

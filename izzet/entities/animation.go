@@ -3,6 +3,7 @@ package entities
 import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/kitolib/animation"
+	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 const (
@@ -15,6 +16,7 @@ type AnimationComponent struct {
 	AnimationHandle string
 	AnimationPlayer *animation.AnimationPlayer `json:"-"`
 	RootJointID     int
+	Animations      map[string]*modelspec.AnimationSpec
 
 	AnimationNames map[string]string
 }
@@ -28,6 +30,7 @@ func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *Ani
 		RootJointID:     rootJointID,
 		AnimationHandle: animationHandle,
 		AnimationPlayer: animationPlayer,
+		Animations:      animations,
 		AnimationNames:  make(map[string]string),
 	}
 }

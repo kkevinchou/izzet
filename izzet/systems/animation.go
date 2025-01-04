@@ -5,6 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/mode"
 )
 
 type AnimationSystem struct {
@@ -25,32 +26,37 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		// for entities that dont belong to the current player animation selection
-		// is synchronized from the gamestate update message
-		if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == entity.GetID()) || s.app.IsServer() {
-			if entity.CharacterControllerComponent != nil {
-				animationPlayer := entity.Animation.AnimationPlayer
-				var animationName = "Walk"
-				if !entity.Physics.GravityEnabled {
-					animationName = "Floating"
-				} else if !entity.Physics.Grounded {
-					animationName = "Falling"
-				} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
-					animationName = "Running"
-				} else {
-					animationName = "Idle"
+		// animations for remote entities is synchronized from the server
+		if s.app.IsClient() {
+			if s.app.AppMode() == mode.AppModePlay {
+				if s.app.GetPlayerEntity().GetID() != entity.GetID() {
+					continue
 				}
-				animationPlayer.PlayAnimation(animationName)
-			} else if entity.AIComponent != nil {
-				animationKey := entities.AnimationKeyRun
-				if entity.AIComponent.State == entities.AIStateAttack {
-					animationKey = entities.AnimationKeyAttack
-				} else if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
-					animationKey = entities.AnimationKeyIdle
-				}
-				animationPlayer := entity.Animation.AnimationPlayer
-				animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
 			}
+		}
+
+		if entity.CharacterControllerComponent != nil {
+			animationPlayer := entity.Animation.AnimationPlayer
+			var animationName = "Walk"
+			if !entity.Physics.GravityEnabled {
+				animationName = "Floating"
+			} else if !entity.Physics.Grounded {
+				animationName = "Falling"
+			} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
+				animationName = "Running"
+			} else {
+				animationName = "Idle"
+			}
+			animationPlayer.PlayAnimation(animationName)
+		} else if entity.AIComponent != nil {
+			animationKey := entities.AnimationKeyRun
+			if entity.AIComponent.State == entities.AIStateAttack {
+				animationKey = entities.AnimationKeyAttack
+			} else if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
+				animationKey = entities.AnimationKeyIdle
+			}
+			animationPlayer := entity.Animation.AnimationPlayer
+			animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
 		}
 
 		entity.Animation.AnimationPlayer.Update(delta)

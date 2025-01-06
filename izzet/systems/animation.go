@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"strings"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -28,10 +29,8 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 
 		// animations for remote entities is synchronized from the server
 		if s.app.IsClient() {
-			if s.app.AppMode() == mode.AppModePlay {
-				if s.app.GetPlayerEntity().GetID() != entity.GetID() {
-					continue
-				}
+			if s.app.AppMode() == mode.AppModePlay && s.app.GetPlayerEntity().GetID() != entity.GetID() {
+				continue
 			}
 		}
 
@@ -57,6 +56,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			}
 			animationPlayer := entity.Animation.AnimationPlayer
 			animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
+		} else if strings.Contains(entity.Name, "gun") {
+			animationPlayer := entity.Animation.AnimationPlayer
+			animationPlayer.PlayAnimation("Test")
 		}
 
 		entity.Animation.AnimationPlayer.Update(delta)

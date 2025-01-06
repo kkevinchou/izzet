@@ -474,10 +474,21 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 
 		jointID := nodeIDToJointID[nodeID]
 
+		translation := node.Translation
+		rotation := node.Rotation
+		scale := node.Scale
+		// from the gltf spec:
+		//
+		// When a node is targeted for animation (referenced by an animation.channel.target),
+		// only TRS properties MAY be present; matrix MUST NOT be present.
+		translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
+		rotationMatrix := mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}.Mat4()
+		scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
+
 		joints[jointID] = &modelspec.JointSpec{
-			Name: fmt.Sprintf("joint_%s_%d", node.Name, jointID),
-			ID:   jointID,
-			// LocalBindTransform:   translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix)),
+			Name:                 fmt.Sprintf("joint_%s_%d", node.Name, jointID),
+			ID:                   jointID,
+			LocalBindTransform:   translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix)),
 			InverseBindTransform: jms[jointID].inverseBindMatrix,
 			FullBindTransform:    jms[jointID].inverseBindMatrix.Inv(),
 		}

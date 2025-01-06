@@ -467,7 +467,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 
 				val := int32(app.RuntimeConfig().SelectedKeyFrame)
 				if animation != nil {
-					if imgui.SliderInt("##", &val, 0, int32(len(animation.KeyFrames))) {
+					if imgui.SliderInt("##", &val, 0, int32(len(animation.KeyFrames)-1)) {
 						app.RuntimeConfig().SelectedKeyFrame = int(val)
 					}
 				}

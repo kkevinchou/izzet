@@ -29,7 +29,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 
 		// animations for remote entities is synchronized from the server
 		if s.app.IsClient() {
-			if s.app.AppMode() == mode.AppModePlay && s.app.GetPlayerEntity().GetID() != entity.GetID() {
+			if s.app.AppMode() == mode.AppModePlay && s.app.GetPlayerEntity().GetID() != entity.GetID() && !entity.Static {
 				continue
 			}
 		}
@@ -57,6 +57,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			animationPlayer := entity.Animation.AnimationPlayer
 			animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
 		} else if strings.Contains(entity.Name, "gun") {
+			if s.app.IsServer() {
+				continue
+			}
 			runtimeConfig := s.app.RuntimeConfig()
 			if runtimeConfig.LoopAnimation {
 				animationPlayer := entity.Animation.AnimationPlayer

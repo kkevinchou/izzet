@@ -41,6 +41,7 @@ func (g *Client) SaveProject(name string) error {
 	if name == "" {
 		return errors.New("name cannot be empty string")
 	}
+	g.project.Name = name
 
 	// project folder
 	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name), os.ModePerm)

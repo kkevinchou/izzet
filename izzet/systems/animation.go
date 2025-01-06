@@ -57,8 +57,15 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			animationPlayer := entity.Animation.AnimationPlayer
 			animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
 		} else if strings.Contains(entity.Name, "gun") {
-			animationPlayer := entity.Animation.AnimationPlayer
-			animationPlayer.PlayAnimation("Test")
+			runtimeConfig := s.app.RuntimeConfig()
+			if runtimeConfig.LoopAnimation {
+				animationPlayer := entity.Animation.AnimationPlayer
+				animationPlayer.PlayAnimation("Test")
+				entity.Animation.AnimationPlayer.Update(delta)
+			} else {
+				entity.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
+			}
+			continue
 		}
 
 		entity.Animation.AnimationPlayer.Update(delta)

@@ -123,6 +123,10 @@ type RuntimeConfig struct {
 	BatchRenderingEnabled bool
 
 	EnableSSAO bool
+
+	SelectedAnimation string
+	SelectedKeyFrame  int
+	LoopAnimation     bool
 }
 
 type CloudTextureChannel struct {

@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -36,4 +37,5 @@ type App interface {
 	CollisionObserver() *collisionobserver.CollisionObserver
 	World() *world.GameWorld
 	AppMode() mode.AppMode
+	RuntimeConfig() *runtimeconfig.RuntimeConfig
 }

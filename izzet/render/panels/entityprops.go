@@ -437,25 +437,52 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 
 	if entity.Animation != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Animation", imgui.TreeNodeFlagsNone) {
-			// imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			// panelutils.InitColumns()
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			panelutils.InitColumns()
 
-			// imgui.EndTable()
-			var animationList []string
-			for animation := range entity.Animation.Animations {
-				animationList = append(animationList, animation)
-			}
-			slices.Sort(animationList)
-
-			imgui.PushIDStr("Animation Combo")
-			if imgui.BeginCombo("", animationList[0]) {
-				for _, option := range animationList {
-					if imgui.SelectableBool(option) {
-					}
+			panelutils.SetupRow("Animation", func() {
+				var animationList []string
+				for animation := range entity.Animation.Animations {
+					animationList = append(animationList, animation)
 				}
-				imgui.EndCombo()
-			}
-			imgui.PopID()
+				slices.Sort(animationList)
+
+				imgui.PushIDStr("Animation Combo")
+				if imgui.BeginCombo("", app.RuntimeConfig().SelectedAnimation) {
+					for _, option := range animationList {
+						if imgui.SelectableBool(option) {
+							app.RuntimeConfig().SelectedAnimation = option
+							app.RuntimeConfig().SelectedKeyFrame = 0
+						}
+					}
+					imgui.EndCombo()
+				}
+				imgui.PopID()
+			}, true)
+
+			panelutils.SetupRow("Key Frame", func() {
+				currentAnimation := app.RuntimeConfig().SelectedAnimation
+				animations, _, _ := app.AssetManager().GetAnimations(entity.Animation.AnimationHandle)
+				animation := animations[currentAnimation]
+
+				imgui.PushIDStr("Key Frame Combo")
+				if imgui.BeginCombo("", fmt.Sprintf("%d", app.RuntimeConfig().SelectedKeyFrame)) {
+					if animation != nil {
+						for i := range len(animation.KeyFrames) {
+							if imgui.SelectableBool(fmt.Sprintf("%d", i)) {
+								app.RuntimeConfig().SelectedKeyFrame = i
+							}
+						}
+					}
+					imgui.EndCombo()
+				}
+				imgui.PopID()
+
+			}, true)
+
+			panelutils.SetupRow("LoopAnimation", func() { imgui.Checkbox("", &app.RuntimeConfig().LoopAnimation) }, true)
+
+			imgui.EndTable()
 		}
 	}
 }

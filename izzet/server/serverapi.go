@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/navmesh"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -198,4 +199,8 @@ func (g *Server) ProjectName() string {
 
 func (g *Server) AppMode() mode.AppMode {
 	panic("app mode should not be called in server, conslidate app mode with isClient/isServer")
+}
+
+func (g *Server) RuntimeConfig() *runtimeconfig.RuntimeConfig {
+	panic("server should not be accessing runtime config")
 }

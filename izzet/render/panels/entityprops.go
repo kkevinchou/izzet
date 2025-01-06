@@ -465,19 +465,12 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				animations, _, _ := app.AssetManager().GetAnimations(entity.Animation.AnimationHandle)
 				animation := animations[currentAnimation]
 
-				imgui.PushIDStr("Key Frame Combo")
-				if imgui.BeginCombo("", fmt.Sprintf("%d", app.RuntimeConfig().SelectedKeyFrame)) {
-					if animation != nil {
-						for i := range len(animation.KeyFrames) {
-							if imgui.SelectableBool(fmt.Sprintf("%d", i)) {
-								app.RuntimeConfig().SelectedKeyFrame = i
-							}
-						}
+				val := int32(app.RuntimeConfig().SelectedKeyFrame)
+				if animation != nil {
+					if imgui.SliderInt("##", &val, 0, int32(len(animation.KeyFrames))) {
+						app.RuntimeConfig().SelectedKeyFrame = int(val)
 					}
-					imgui.EndCombo()
 				}
-				imgui.PopID()
-
 			}, true)
 
 			panelutils.SetupRow("LoopAnimation", func() { imgui.Checkbox("", &app.RuntimeConfig().LoopAnimation) }, true)

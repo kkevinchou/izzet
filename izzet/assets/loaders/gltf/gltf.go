@@ -287,6 +287,13 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		sampler := animation.Samplers[(*channel.Sampler)]
 		inputAccessorIndex := int(sampler.Input)
 		outputAccessorIndex := int(sampler.Output)
+		if sampler.Interpolation != gltf.InterpolationStep && sampler.Interpolation != gltf.InterpolationLinear {
+			return nil, fmt.Errorf("unsupported interpolation \"%s\" found. only \"%s\" and \"%s\" interpolations are supported",
+				sampler.Interpolation.String(),
+				gltf.InterpolationStep.String(),
+				gltf.InterpolationLinear.String(),
+			)
+		}
 
 		inputAccessor := document.Accessors[inputAccessorIndex]
 		if inputAccessor.ComponentType != gltf.ComponentFloat {

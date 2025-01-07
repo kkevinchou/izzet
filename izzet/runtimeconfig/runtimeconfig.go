@@ -127,6 +127,7 @@ type RuntimeConfig struct {
 	SelectedAnimation string
 	SelectedKeyFrame  int
 	LoopAnimation     bool
+	ShowHUD           bool
 }
 
 type CloudTextureChannel struct {

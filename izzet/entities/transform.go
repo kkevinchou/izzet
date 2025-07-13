@@ -16,7 +16,6 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	// transforms for entities that have animations
 	if entity.Dirty() {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
-
 		localPosition := GetLocalPosition(entity)
 		translationMatrix := mgl64.Translate3D(localPosition[0], localPosition[1], localPosition[2])
 		rotationMatrix := GetLocalRotation(entity).Mat4()
@@ -68,13 +67,11 @@ func SetDirty(entity *Entity) {
 }
 
 func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
-	parentModelMatrix := mgl64.Ident4()
-	animModelMatrix := mgl64.Ident4()
 	if entity.Parent != nil {
-		parentModelMatrix = WorldTransform(entity.Parent)
+		// TODO: handle animations
+		return WorldTransform(entity.Parent)
 	}
-
-	return parentModelMatrix.Mul4(animModelMatrix)
+	return mgl64.Ident4()
 }
 
 func (e *Entity) WorldRotation() mgl64.Quat {

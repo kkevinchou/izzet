@@ -51,7 +51,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 		entityState := network.EntityState{
 			EntityID: entity.ID,
 			Position: entities.GetLocalPosition(entity),
-			Rotation: entities.GetLocalRotation(entity),
+			Rotation: entity.GetLocalRotation(),
 		}
 		if entity.Physics != nil {
 			entityState.Velocity = entity.Physics.Velocity

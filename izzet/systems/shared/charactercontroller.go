@@ -61,7 +61,7 @@ func UpdateCharacterController(delta time.Duration, world GameWorld, frameInput 
 	}
 
 	if movementDirWithoutY != apputils.ZeroVec {
-		currentRotation := entities.GetLocalRotation(entity)
+		currentRotation := entity.GetLocalRotation()
 		currentViewingVector := currentRotation.Rotate(mgl64.Vec3{0, 0, -1})
 		newViewingVector := movementDirWithoutY
 

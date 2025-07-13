@@ -52,7 +52,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 		}
 
 		if aiComponent.RotationConfig != nil {
-			r := entities.GetLocalRotation(entity)
+			r := entity.GetLocalRotation()
 			finalRotation := aiComponent.RotationConfig.Quat.Mul(r)
 			frameRotation := utils.QInterpolate64(r, finalRotation, float64(delta.Milliseconds())/1000)
 			entities.SetLocalRotation(entity, frameRotation)

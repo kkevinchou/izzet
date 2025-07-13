@@ -18,7 +18,7 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
 		localPosition := GetLocalPosition(entity)
 		translationMatrix := mgl64.Translate3D(localPosition[0], localPosition[1], localPosition[2])
-		rotationMatrix := GetLocalRotation(entity).Mat4()
+		rotationMatrix := entity.GetLocalRotation().Mat4()
 		scale := entity.Scale()
 		scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
 		modelMatrix := translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
@@ -32,10 +32,6 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 
 func GetLocalPosition(entity *Entity) mgl64.Vec3 {
 	return entity.LocalPosition
-}
-
-func GetLocalRotation(entity *Entity) mgl64.Quat {
-	return entity.LocalRotation
 }
 
 func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
@@ -74,6 +70,10 @@ func (e *Entity) Rotation() mgl64.Quat {
 	m := WorldTransform(e)
 	_, r, _ := utils.DecomposeF64(m)
 	return r
+}
+
+func (e *Entity) GetLocalRotation() mgl64.Quat {
+	return e.LocalRotation
 }
 
 func (e *Entity) Position() mgl64.Vec3 {

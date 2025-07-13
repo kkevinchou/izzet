@@ -51,7 +51,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			entityIDStr = fmt.Sprintf("%d", entity.ID)
 			entityNameStr = entity.NameID()
 
-			rotation := entities.GetLocalRotation(entity)
+			rotation := entity.GetLocalRotation()
 			euler := QuatToEuler(rotation)
 			localRotationStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z())
 			localQuaternionStr = fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", rotation.X(), rotation.Y(), rotation.Z(), rotation.W)

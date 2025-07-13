@@ -48,7 +48,7 @@ func update(delta time.Duration, world GameWorld, camera *entities.Entity) {
 	if settings.FirstPersonCamera {
 		cameraOffset = 0
 	}
-	position := entities.GetLocalRotation(camera).Rotate(mgl64.Vec3{0, 0, cameraOffset}).Add(targetPosition)
+	position := camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, cameraOffset}).Add(targetPosition)
 
 	entities.SetLocalPosition(camera, position)
 }

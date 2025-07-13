@@ -520,17 +520,17 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 					worldToLocalMatrix := transformMatrix.Inv()
 					_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
 					computedRotation := r.Mul(newRotationAdjustment)
-					entities.SetLocalRotation(entity, computedRotation.Mul(entities.GetLocalRotation(entity)))
+					entities.SetLocalRotation(entity, computedRotation.Mul(entity.GetLocalRotation()))
 				} else {
-					entities.SetLocalRotation(entity, newRotationAdjustment.Mul(entities.GetLocalRotation(entity)))
+					entities.SetLocalRotation(entity, newRotationAdjustment.Mul(entity.GetLocalRotation()))
 				}
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
-					edithistory.NewRotationEdit(gizmo.TranslationGizmo.ActivationRotation, entities.GetLocalRotation(entity), entity),
+					edithistory.NewRotationEdit(gizmo.TranslationGizmo.ActivationRotation, entity.GetLocalRotation(), entity),
 				)
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
-				gizmo.RotationGizmo.ActivationRotation = entities.GetLocalRotation(entity)
+				gizmo.RotationGizmo.ActivationRotation = entity.GetLocalRotation()
 				// gizmo.TranslationGizmo.LastSnapVector = mgl64.Vec3{}
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1

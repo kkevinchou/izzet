@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -50,7 +49,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 
 		entityState := network.EntityState{
 			EntityID: entity.ID,
-			Position: entities.GetLocalPosition(entity),
+			Position: entity.GetLocalPosition(),
 			Rotation: entity.GetLocalRotation(),
 		}
 		if entity.Physics != nil {

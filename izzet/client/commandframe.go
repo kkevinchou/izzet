@@ -469,12 +469,12 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				}
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
-					edithistory.NewPositionEdit(gizmo.TranslationGizmo.ActivationPosition, entities.GetLocalPosition(entity), entity),
+					edithistory.NewPositionEdit(gizmo.TranslationGizmo.ActivationPosition, entity.GetLocalPosition(), entity),
 				)
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
-				gizmo.TranslationGizmo.ActivationPosition = entities.GetLocalPosition(entity)
-				gizmo.TranslationGizmo.LastSnapVector = entities.GetLocalPosition(entity)
+				gizmo.TranslationGizmo.ActivationPosition = entity.GetLocalPosition()
+				gizmo.TranslationGizmo.LastSnapVector = entity.GetLocalPosition()
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {

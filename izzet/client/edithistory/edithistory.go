@@ -17,11 +17,11 @@ func New() *EditHistory {
 }
 
 // func (eh *EditHistory) SetActivationPosition(entity *entities.Entity) {
-// 	eh.activationPosition = entities.GetLocalPosition(entity)
+// 	eh.activationPosition = entity.GetLocalPosition()
 // }
 
 // func (eh *EditHistory) AppendPositionUpdate(entity *entities.Entity) {
-// 	eh.Append(NewPositionEdit(eh.activationPosition, entities.GetLocalPosition(entity), entity))
+// 	eh.Append(NewPositionEdit(eh.activationPosition, entity.GetLocalPosition(), entity))
 // }
 
 func (eh *EditHistory) Append(e Edit) {

@@ -58,7 +58,7 @@ func (s *PositionSyncSystem) Update(delta time.Duration, world systems.GameWorld
 			return
 		}
 
-		startPos := entities.GetLocalPosition(player)
+		startPos := player.GetLocalPosition()
 		endPos := player.PositionSync.Goal
 		delta := endPos.Sub(startPos).Mul(x)
 		entities.SetLocalPosition(player, startPos.Add(delta))

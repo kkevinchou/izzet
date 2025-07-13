@@ -16,7 +16,7 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	// transforms for entities that have animations
 	if entity.Dirty() {
 		parentAndJointTransformMatrix := ComputeParentAndJointTransformMatrix(entity)
-		localPosition := GetLocalPosition(entity)
+		localPosition := entity.GetLocalPosition()
 		translationMatrix := mgl64.Translate3D(localPosition[0], localPosition[1], localPosition[2])
 		rotationMatrix := entity.GetLocalRotation().Mat4()
 		scale := entity.Scale()
@@ -30,8 +30,28 @@ func WorldTransform(entity *Entity) mgl64.Mat4 {
 	return entity.cachedWorldTransform
 }
 
-func GetLocalPosition(entity *Entity) mgl64.Vec3 {
-	return entity.LocalPosition
+func (e *Entity) Position() mgl64.Vec3 {
+	m := WorldTransform(e)
+	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
+}
+
+func (e *Entity) GetLocalPosition() mgl64.Vec3 {
+	return e.LocalPosition
+}
+
+func (e *Entity) Rotation() mgl64.Quat {
+	m := WorldTransform(e)
+	_, r, _ := utils.DecomposeF64(m)
+	return r
+}
+
+func (e *Entity) GetLocalRotation() mgl64.Quat {
+	return e.LocalRotation
+}
+
+func (e *Entity) Scale() mgl64.Vec3 {
+	// hope i don't regret this in the future
+	return e.LocalScale
 }
 
 func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
@@ -64,24 +84,4 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 		return WorldTransform(entity.Parent)
 	}
 	return mgl64.Ident4()
-}
-
-func (e *Entity) Rotation() mgl64.Quat {
-	m := WorldTransform(e)
-	_, r, _ := utils.DecomposeF64(m)
-	return r
-}
-
-func (e *Entity) GetLocalRotation() mgl64.Quat {
-	return e.LocalRotation
-}
-
-func (e *Entity) Position() mgl64.Vec3 {
-	m := WorldTransform(e)
-	return m.Mul4x1(mgl64.Vec4{0, 0, 0, 1}).Vec3()
-}
-
-func (e *Entity) Scale() mgl64.Vec3 {
-	// hope i don't regret this in the future
-	return e.LocalScale
 }

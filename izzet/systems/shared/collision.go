@@ -318,7 +318,7 @@ func collide(e1 *entities.Entity, e2 *entities.Entity, observer ICollisionObserv
 
 func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact, observer ICollisionObserver) {
 	separatingVector := contact.SeparatingVector
-	entities.SetLocalPosition(entity, entities.GetLocalPosition(entity).Add(separatingVector))
+	entities.SetLocalPosition(entity, entity.GetLocalPosition().Add(separatingVector))
 	observer.OnCollisionResolution(entity.GetID())
 }
 

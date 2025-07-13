@@ -74,7 +74,7 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 	return mgl64.Ident4()
 }
 
-func (e *Entity) WorldRotation() mgl64.Quat {
+func (e *Entity) Rotation() mgl64.Quat {
 	m := WorldTransform(e)
 	_, r, _ := utils.DecomposeF64(m)
 	return r

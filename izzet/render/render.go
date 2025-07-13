@@ -348,7 +348,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	} else {
 		camera := r.app.GetPlayerCamera()
 		position = camera.Position()
-		rotation = camera.WorldRotation()
+		rotation = camera.Rotation()
 	}
 
 	viewerViewMatrix := rotation.Mat4()

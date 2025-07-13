@@ -62,7 +62,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			worldPosition := entity.Position()
 			worldPositionStr = fmt.Sprintf("{%.1f, %.1f, %.1f}", worldPosition.X(), worldPosition.Y(), worldPosition.Z())
 
-			euler = QuatToEuler(entity.WorldRotation())
+			euler = QuatToEuler(entity.Rotation())
 			eulerRotationStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z())
 
 			if entity.Parent != nil {

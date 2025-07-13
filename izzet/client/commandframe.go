@@ -542,15 +542,15 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 					magnitude = 0.005
 				}
-				scale := entities.GetLocalScale(entity)
+				scale := entity.Scale()
 				entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
-					edithistory.NewScaleEdit(gizmo.ScaleGizmo.ActivationScale, entities.GetLocalScale(entity), entity),
+					edithistory.NewScaleEdit(gizmo.ScaleGizmo.ActivationScale, entity.Scale(), entity),
 				)
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
-				gizmo.ScaleGizmo.ActivationScale = entities.GetLocalScale(entity)
+				gizmo.ScaleGizmo.ActivationScale = entity.Scale()
 			}
 			gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
 		}

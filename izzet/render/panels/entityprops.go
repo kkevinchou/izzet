@@ -56,7 +56,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			localRotationStr = fmt.Sprintf("{%.0f, %.0f, %.0f}", euler.X(), euler.Y(), euler.Z())
 			localQuaternionStr = fmt.Sprintf("{%.2f, %.2f, %.2f, %.2f}", rotation.X(), rotation.Y(), rotation.Z(), rotation.W)
 
-			scale := entities.GetLocalScale(entity)
+			scale := entity.Scale()
 			scaleStr = fmt.Sprintf("{%.2f, %.2f, %.2f}", scale.X(), scale.Y(), scale.Z())
 
 			worldPosition := entity.Position()

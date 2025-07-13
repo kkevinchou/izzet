@@ -463,6 +463,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.renderGizmos(cameraViewerContext, renderContext)
 	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
+	// draw hud
+	r.hud()
+
 	// store color picking entity
 	start = time.Now()
 	if r.app.AppMode() == mode.AppModeEditor {

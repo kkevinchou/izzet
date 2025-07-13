@@ -1,7 +1,6 @@
 package systems
 
 import (
-	"strings"
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -56,14 +55,14 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			}
 			animationPlayer := entity.Animation.AnimationPlayer
 			animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
-		} else if strings.Contains(entity.Name, "gun") {
+		} else {
 			if s.app.IsServer() {
 				continue
 			}
 			runtimeConfig := s.app.RuntimeConfig()
 			if runtimeConfig.LoopAnimation {
 				animationPlayer := entity.Animation.AnimationPlayer
-				animationPlayer.PlayAnimation("Test")
+				animationPlayer.PlayAnimation(runtimeConfig.SelectedAnimation)
 				entity.Animation.AnimationPlayer.Update(delta)
 			} else {
 				entity.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)

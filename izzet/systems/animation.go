@@ -26,48 +26,54 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		// animations for remote entities is synchronized from the server
+		var selectAnimation bool
 		if s.app.IsClient() {
-			if s.app.AppMode() == mode.AppModePlay && s.app.GetPlayerEntity().GetID() != entity.GetID() && !entity.Static {
-				continue
+			if s.app.AppMode() == mode.AppModePlay && s.app.GetPlayerEntity().GetID() == entity.GetID() {
+				selectAnimation = true
+			} else if s.app.AppMode() == mode.AppModeEditor {
+				selectAnimation = true
 			}
+		} else {
+			selectAnimation = true
 		}
 
-		if entity.CharacterControllerComponent != nil {
-			animationPlayer := entity.Animation.AnimationPlayer
-			var animationName = "Walk"
-			if !entity.Physics.GravityEnabled {
-				animationName = "Floating"
-			} else if !entity.Physics.Grounded {
-				animationName = "Falling"
-			} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
-				animationName = "Running"
+		if selectAnimation {
+			if entity.CharacterControllerComponent != nil {
+				animationPlayer := entity.Animation.AnimationPlayer
+				var animationName = "Walk"
+				if !entity.Physics.GravityEnabled {
+					animationName = "Floating"
+				} else if !entity.Physics.Grounded {
+					animationName = "Falling"
+				} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
+					animationName = "Running"
+				} else {
+					animationName = "Idle"
+				}
+				animationPlayer.PlayAnimation(animationName)
+			} else if entity.AIComponent != nil {
+				animationKey := entities.AnimationKeyRun
+				if entity.AIComponent.State == entities.AIStateAttack {
+					animationKey = entities.AnimationKeyAttack
+				} else if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
+					animationKey = entities.AnimationKeyIdle
+				}
+				animationPlayer := entity.Animation.AnimationPlayer
+				animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
 			} else {
-				animationName = "Idle"
-			}
-			animationPlayer.PlayAnimation(animationName)
-		} else if entity.AIComponent != nil {
-			animationKey := entities.AnimationKeyRun
-			if entity.AIComponent.State == entities.AIStateAttack {
-				animationKey = entities.AnimationKeyAttack
-			} else if entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
-				animationKey = entities.AnimationKeyIdle
-			}
-			animationPlayer := entity.Animation.AnimationPlayer
-			animationPlayer.PlayAnimation(entity.Animation.AnimationNames[animationKey])
-		} else {
-			if s.app.IsServer() {
+				if s.app.IsServer() {
+					continue
+				}
+				runtimeConfig := s.app.RuntimeConfig()
+				if runtimeConfig.LoopAnimation {
+					animationPlayer := entity.Animation.AnimationPlayer
+					animationPlayer.PlayAnimation(runtimeConfig.SelectedAnimation)
+					entity.Animation.AnimationPlayer.Update(delta)
+				} else {
+					entity.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
+				}
 				continue
 			}
-			runtimeConfig := s.app.RuntimeConfig()
-			if runtimeConfig.LoopAnimation {
-				animationPlayer := entity.Animation.AnimationPlayer
-				animationPlayer.PlayAnimation(runtimeConfig.SelectedAnimation)
-				entity.Animation.AnimationPlayer.Update(delta)
-			} else {
-				entity.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
-			}
-			continue
 		}
 
 		entity.Animation.AnimationPlayer.Update(delta)

@@ -96,6 +96,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					// gravityEnabled := player.Physics.GravityEnabled
 
 					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
+					player.RenderBlend.Active = true
+					player.RenderBlend.StartTime = time.Now()
 
 					// correctedPosition := entities.GetLocalPosition(player)
 					// // correctedRotation := entities.GetLocalRotation(player)

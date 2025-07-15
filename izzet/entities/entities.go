@@ -21,6 +21,7 @@ type Entity struct {
 	ShapeData                   []*ShapeData
 	Material                    *MaterialComponent
 	Animation                   *AnimationComponent
+	RenderBlend                 *RenderBlend
 	CameraComponent             *CameraComponent
 	Static                      bool
 	ClientSidePredicted         bool

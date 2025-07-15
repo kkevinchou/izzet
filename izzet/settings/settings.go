@@ -71,7 +71,7 @@ const (
 	CameraEntityFollowDistance       float64 = 5
 	CameraEntityFollowVerticalOffset float64 = 1.5
 	ProjectsDirectory                string  = ".project/"
-	DefaultProject                   string  = "anim_test"
+	DefaultProject                   string  = "room"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210

@@ -285,7 +285,36 @@ func (r *RenderSystem) drawModel(
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
 		modelMatrix := entities.WorldTransform(entity)
-		modelMat := utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+		var modelMat mgl32.Mat4
+
+		// apply smooth blending between mispredicted position and actual real position
+		if entity.RenderBlend != nil && entity.RenderBlend.Active {
+			// blend over 1 second
+
+			var interpolationDuration float64 = 1000 // 1 second
+			deltaMs := time.Since(entity.RenderBlend.StartTime).Milliseconds()
+			var t float64 = float64(deltaMs) / interpolationDuration
+			if t >= 1 {
+				t = 1
+			} else {
+				t = 1 - math.Pow(2, -10*t)
+			}
+
+			blendedPosition := entity.Position().Sub(entity.RenderBlend.BlendStartPosition).Mul(t).Add(entity.RenderBlend.BlendStartPosition)
+
+			translationMatrix := mgl64.Translate3D(blendedPosition[0], blendedPosition[1], blendedPosition[2])
+			rotationMatrix := entity.GetLocalRotation().Mat4()
+			scale := entity.Scale()
+			scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
+			modelMatrix = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
+
+			if deltaMs >= int64(interpolationDuration) {
+				entity.RenderBlend.Active = false
+			}
+		}
+
+		modelMat = utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+
 		shader.SetUniformMat4("model", modelMat)
 
 		gl.BindVertexArray(p.VAO)

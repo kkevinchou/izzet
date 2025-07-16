@@ -95,9 +95,14 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					// velocity := player.Physics.Velocity
 					// gravityEnabled := player.Physics.GravityEnabled
 
-					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
+					if !player.RenderBlend.Active {
+						player.RenderBlend.StartTime = time.Now()
+					}
+					fmt.Println("BLEND START", time.Now())
 					player.RenderBlend.Active = true
-					player.RenderBlend.StartTime = time.Now()
+					player.RenderBlend.BlendStartPosition = player.Position()
+
+					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
 
 					// correctedPosition := entities.GetLocalPosition(player)
 					// // correctedRotation := entities.GetLocalRotation(player)
@@ -130,6 +135,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				}
 
 				serialization.InitDeserializedEntity(&entity, s.app.AssetManager())
+				fmt.Println("INIT ENTITY", entity.GetID(), entity.Position())
 				world.AddEntity(&entity)
 			} else if message.MessageType == network.MsgTypePing {
 				pingMessage, err := network.ExtractMessage[network.PingMessage](message)

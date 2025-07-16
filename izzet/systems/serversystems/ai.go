@@ -47,8 +47,12 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				aiComponent.PatrolConfig.Index = (aiComponent.PatrolConfig.Index + 1) % len(aiComponent.PatrolConfig.Points)
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
-			movementDirection := target.Sub(position).Normalize()
-			entity.Physics.Velocity = movementDirection.Mul(aiComponent.Speed)
+			dir := target.Sub(position).Normalize()
+			aiComponent.AIVelocity = dir.Mul(aiComponent.Speed)
+			if dir != apputils.ZeroVec {
+				newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+				entities.SetLocalRotation(entity, newRotation)
+			}
 		}
 
 		if aiComponent.RotationConfig != nil {
@@ -65,8 +69,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
-					newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
-					entities.SetLocalPosition(entity, newPosition)
+					aiComponent.AIVelocity = dir.Mul(aiComponent.Speed)
 
 					if dir != apputils.ZeroVec {
 						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
@@ -96,7 +99,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 
 				var atGoal bool
 				if position.Sub(target).Len() < travelThreshold {
-					entities.SetLocalPosition(entity, target)
+					// entities.SetLocalPosition(entity, target)
 					position = target
 					if targetIndex == len(path)-1 {
 						aiComponent.PathfindConfig.Path = nil
@@ -115,8 +118,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						newPosition := position.Add(dir.Mul(aiComponent.Speed / 1000 * float64(delta.Milliseconds())))
-						entities.SetLocalPosition(entity, newPosition)
+						aiComponent.AIVelocity = dir.Mul(aiComponent.Speed)
 
 						if dir != apputils.ZeroVec {
 							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)

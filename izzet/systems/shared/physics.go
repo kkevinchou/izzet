@@ -31,6 +31,14 @@ func PhysicsStep(delta time.Duration, worldEntities []*entities.Entity) {
 				}
 			}
 		}
-		entities.SetLocalPosition(entity, entity.GetLocalPosition().Add(physicsComponent.Velocity.Mul(delta.Seconds())))
+
+		aiComponent := entity.AIComponent
+		newPosition := entity.GetLocalPosition()
+		if aiComponent != nil {
+			newPosition = newPosition.Add(aiComponent.AIVelocity.Mul(delta.Seconds()))
+		}
+		newPosition = newPosition.Add(physicsComponent.Velocity.Mul(delta.Seconds()))
+
+		entities.SetLocalPosition(entity, newPosition)
 	}
 }

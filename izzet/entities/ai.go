@@ -9,6 +9,8 @@ type AIComponent struct {
 	PathfindConfig *PathfindConfig
 	Speed          float64
 
+	AIVelocity mgl64.Vec3
+
 	AttackConfig *AttackConfig
 	State        AIState
 }

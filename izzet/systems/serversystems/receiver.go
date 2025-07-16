@@ -130,9 +130,9 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	entities.SetScale(entity, mgl64.Vec3{0.5, 0.5, 0.5})
 
 	entity.AIComponent = &entities.AIComponent{
-		Speed:          2,
+		Speed:          7,
 		PathfindConfig: &entities.PathfindConfig{},
-		PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{mgl64.Vec3{}, mgl64.Vec3{10, 0, 0}}},
+		PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{mgl64.Vec3{}, mgl64.Vec3{20, 0, 0}}},
 		// AttackConfig:   &entities.AttackConfig{},
 	}
 

@@ -55,7 +55,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				animationKey := entities.AnimationKeyRun
 				if entity.AIComponent.State == entities.AIStateAttack {
 					animationKey = entities.AnimationKeyAttack
-				} else if entity.AIComponent.PathfindConfig != nil && entity.AIComponent.PathfindConfig.State == entities.PathfindingStateNoGoal {
+				} else if !apputils.IsZeroVec(entity.AIComponent.AIVelocity) {
+					animationKey = entities.AnimationKeyRun
+				} else {
 					animationKey = entities.AnimationKeyIdle
 				}
 				animationPlayer := entity.Animation.AnimationPlayer

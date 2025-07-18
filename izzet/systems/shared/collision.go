@@ -56,18 +56,21 @@ type collisionContext struct {
 
 // no pointers, meant to be very quickly iterated
 type collisionData struct {
-	entityID      int
-	shouldResolve bool
-	boundingBox   collider.BoundingBox
-	collisionMask types.ColliderGroupFlag
+	entityID               int
+	shouldResolve          bool
+	collisionMask          types.ColliderGroupFlag
+	boundingBox            collider.BoundingBox
+	boundingBoxInitialized bool
 
-	capsuleCollider collider.Capsule
-	triMeshCollider collider.TriMesh
+	capsuleCollider     collider.Capsule
+	triMeshCollider     collider.TriMesh
+	colliderInitialized bool
 
 	hasCapsuleCollider bool
 	hasTriMeshCollider bool
 
 	collidersInitialized bool
+	static               bool
 }
 
 func ResolveCollisions2(app App, observer ICollisionObserver) {
@@ -94,8 +97,9 @@ func NewCollisionContext(app App, observer ICollisionObserver) *collisionContext
 		}
 
 		context.packedCollisionData[i].entityID = e.GetID()
-		context.packedCollisionData[i].boundingBox = e.BoundingBox()
 		context.packedCollisionData[i].collisionMask = e.Collider.CollisionMask
+		context.packedCollisionData[i].static = e.Static
+		context.idToPackedIdx[e.GetID()] = i
 
 		if context.localPlayerCollision {
 			if e.GetID() == app.GetPlayerEntity().GetID() {
@@ -107,10 +111,6 @@ func NewCollisionContext(app App, observer ICollisionObserver) *collisionContext
 			// we will rely on resolving the non-static entities that collide with them
 			context.packedCollisionData[i].shouldResolve = !e.Static
 		}
-	}
-
-	for i, collisionData := range context.packedCollisionData {
-		context.idToPackedIdx[collisionData.entityID] = i
 	}
 
 	return context
@@ -125,7 +125,8 @@ func broadPhaseCollectPairs(context *collisionContext) {
 		if !e1.shouldResolve {
 			continue
 		}
-		candidates := world.SpatialPartition().QueryEntities(e1.boundingBox)
+		bb := context.world.GetEntityByID(e1.entityID).BoundingBox()
+		candidates := world.SpatialPartition().QueryEntities(bb)
 		observer.OnSpatialQuery(e1.entityID, len(candidates))
 		for _, c := range candidates {
 			e2 := world.GetEntityByID(c.GetID())
@@ -169,9 +170,18 @@ func detectAndResolve(context *collisionContext) {
 		}
 
 		contact := collisionCandidates[0]
+
 		resolveCollision(context, contact, context.observer)
-		setupTransformedCollider(context, contact.PackedIndexA)
-		setupTransformedCollider(context, contact.PackedIndexB)
+
+		// mark colliders and bounding boxes as uninitialized so future iterations will initialize them
+		if !context.packedCollisionData[contact.PackedIndexA].static {
+			context.packedCollisionData[contact.PackedIndexA].boundingBoxInitialized = false
+			context.packedCollisionData[contact.PackedIndexA].colliderInitialized = false
+		}
+		if !context.packedCollisionData[contact.PackedIndexB].static {
+			context.packedCollisionData[contact.PackedIndexB].boundingBoxInitialized = false
+			context.packedCollisionData[contact.PackedIndexB].colliderInitialized = false
+		}
 		context.contacts = append(context.contacts, contact)
 	}
 
@@ -180,55 +190,52 @@ func detectAndResolve(context *collisionContext) {
 	}
 }
 
-func initializeColliders(context *collisionContext) {
-	for _, pair := range context.pairs {
-		collisionData := context.packedCollisionData[pair.PackedIndexA]
-		if !collisionData.collidersInitialized {
-			setupTransformedCollider(context, pair.PackedIndexA)
-			collisionData.collidersInitialized = true
-		}
-		collisionData = context.packedCollisionData[pair.PackedIndexB]
-		if !collisionData.collidersInitialized {
-			setupTransformedCollider(context, pair.PackedIndexB)
-		}
+func setupTransformedBoundingBox(context *collisionContext, packedIndex int) {
+	if !context.packedCollisionData[packedIndex].boundingBoxInitialized {
+		context.packedCollisionData[packedIndex].boundingBox = context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID).BoundingBox()
+		context.packedCollisionData[packedIndex].boundingBoxInitialized = true
 	}
 }
 
 func setupTransformedCollider(context *collisionContext, packedIndex int) {
-	entity := context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID)
-
-	modelMatrix := entities.WorldTransform(entity)
-	context.packedCollisionData[packedIndex].boundingBox = entity.InternalBoundingBox.Transform(modelMatrix)
-
-	// TODO: seems like the old code only transform the colliders for non static entities
-	// for tri meshes. is that what we actually want? seems like a bug
-	cc := entity.Collider
-	if cc.CapsuleCollider != nil {
-		transformMatrix := entities.WorldTransform(entity)
-		capsule := cc.CapsuleCollider.Transform(transformMatrix)
-		context.packedCollisionData[packedIndex].capsuleCollider = capsule
-		context.packedCollisionData[packedIndex].hasCapsuleCollider = true
-	} else if cc.TriMeshCollider != nil {
-		transformMatrix := entities.WorldTransform(entity)
-		var triMesh collider.TriMesh
-		if cc.SimplifiedTriMeshCollider != nil {
-			triMesh = cc.SimplifiedTriMeshCollider.Transform(transformMatrix)
-		} else {
-			triMesh = cc.TriMeshCollider.Transform(transformMatrix)
+	if !context.packedCollisionData[packedIndex].colliderInitialized {
+		entity := context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID)
+		cc := entity.Collider
+		if cc.CapsuleCollider != nil {
+			transformMatrix := entities.WorldTransform(entity)
+			capsule := cc.CapsuleCollider.Transform(transformMatrix)
+			context.packedCollisionData[packedIndex].capsuleCollider = capsule
+			context.packedCollisionData[packedIndex].hasCapsuleCollider = true
+		} else if cc.TriMeshCollider != nil {
+			transformMatrix := entities.WorldTransform(entity)
+			var triMesh collider.TriMesh
+			if cc.SimplifiedTriMeshCollider != nil {
+				triMesh = cc.SimplifiedTriMeshCollider.Transform(transformMatrix)
+			} else {
+				triMesh = cc.TriMeshCollider.Transform(transformMatrix)
+			}
+			context.packedCollisionData[packedIndex].triMeshCollider = triMesh
+			context.packedCollisionData[packedIndex].hasTriMeshCollider = true
 		}
-		context.packedCollisionData[packedIndex].triMeshCollider = triMesh
-		context.packedCollisionData[packedIndex].hasTriMeshCollider = true
 	}
+	context.packedCollisionData[packedIndex].colliderInitialized = true
 }
 
 func collectSortedCollisionCandidates(context *collisionContext) []collision.Contact2 {
 	var allContacts []collision.Contact2
 	for _, pair := range context.pairs {
+		setupTransformedBoundingBox(context, pair.PackedIndexA)
+		setupTransformedBoundingBox(context, pair.PackedIndexB)
+
 		if !collideBoundingBox(context.packedCollisionData[pair.PackedIndexA].boundingBox, context.packedCollisionData[pair.PackedIndexB].boundingBox) {
 			continue
 		}
 
+		setupTransformedCollider(context, pair.PackedIndexA)
+		setupTransformedCollider(context, pair.PackedIndexB)
+
 		contacts := collide(context, pair.PackedIndexA, pair.PackedIndexB)
+
 		if len(contacts) == 0 {
 			continue
 		}
@@ -262,9 +269,6 @@ func collideBoundingBox(bb1, bb2 collider.BoundingBox) bool {
 
 func collide(context *collisionContext, a, b int) []collision.Contact2 {
 	var result []collision.Contact2
-
-	setupTransformedCollider(context, a)
-	setupTransformedCollider(context, b)
 
 	collisionDataA := context.packedCollisionData[a]
 	collisionDataB := context.packedCollisionData[b]

@@ -85,31 +85,34 @@ func NewCollisionContext(app App, observer ICollisionObserver) *collisionContext
 		localPlayerCollision: app.IsClient(),
 		observer:             observer,
 		maxResolves:          resolveCountMax,
-		packedCollisionData:  make([]collisionData, len(app.World().Entities())),
-		idToPackedIdx:        make(map[int]int, len(app.World().Entities())),
+		packedCollisionData:  nil,
+		idToPackedIdx:        make(map[int]int),
 	}
 
 	// set up the full list of entities that can be involved in collisions
-	for i, e := range app.World().Entities() {
+	for _, e := range app.World().Entities() {
 		if e.Collider == nil {
 			continue
 		}
 
-		context.packedCollisionData[i].entityID = e.GetID()
-		context.packedCollisionData[i].collisionMask = e.Collider.CollisionMask
-		context.packedCollisionData[i].static = e.Static
-		context.idToPackedIdx[e.GetID()] = i
+		context.idToPackedIdx[e.GetID()] = len(context.packedCollisionData)
+		var cd collisionData
+		cd.entityID = e.GetID()
+		cd.collisionMask = e.Collider.CollisionMask
+		cd.static = e.Static
 
 		if context.localPlayerCollision {
 			if e.GetID() == app.GetPlayerEntity().GetID() {
-				context.packedCollisionData[i].shouldResolve = true
+				cd.shouldResolve = true
 			}
 		} else {
 			// while static entities can be involved in collisions
 			// we do not need to resolve collisions for them since they do not move
 			// we will rely on resolving the non-static entities that collide with them
-			context.packedCollisionData[i].shouldResolve = !e.Static
+			cd.shouldResolve = !e.Static
 		}
+
+		context.packedCollisionData = append(context.packedCollisionData, cd)
 	}
 
 	return context

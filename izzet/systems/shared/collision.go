@@ -69,8 +69,7 @@ type collisionData struct {
 	hasCapsuleCollider bool
 	hasTriMeshCollider bool
 
-	collidersInitialized bool
-	static               bool
+	static bool
 }
 
 func ResolveCollisions2(app App, observer ICollisionObserver) {
@@ -308,12 +307,12 @@ func collide(context *collisionContext, a, b int) []collision.Contact {
 			result = append(result, c)
 		}
 	} else if collisionDataA.hasCapsuleCollider && collisionDataB.hasCapsuleCollider {
-		contact, hasCollision := collision.CheckCollisionCapsuleCapsule(
+		contact, collisionDetected := collision.CheckCollisionCapsuleCapsule(
 			collisionDataA.capsuleCollider,
 			collisionDataB.capsuleCollider,
 		)
 
-		if !hasCollision {
+		if !collisionDetected {
 			return nil
 		}
 

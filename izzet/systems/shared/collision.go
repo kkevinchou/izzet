@@ -51,7 +51,7 @@ type collisionContext struct {
 
 	packedCollisionData []collisionData
 	idToPackedIdx       map[int]int
-	contacts            []collision.Contact2
+	contacts            []collision.Contact
 }
 
 // no pointers, meant to be very quickly iterated
@@ -121,21 +121,21 @@ func broadPhaseCollectPairs(context *collisionContext) {
 	observer := context.observer
 	uniquePairMap := map[packedIdxPair]any{}
 
-	for i, e1 := range context.packedCollisionData {
-		if !e1.shouldResolve {
+	for i, cd := range context.packedCollisionData {
+		if !cd.shouldResolve {
 			continue
 		}
-		bb := context.world.GetEntityByID(e1.entityID).BoundingBox()
-		candidates := world.SpatialPartition().QueryEntities(bb)
-		observer.OnSpatialQuery(e1.entityID, len(candidates))
+		setupTransformedBoundingBox(context, i)
+		candidates := world.SpatialPartition().QueryEntities(context.packedCollisionData[i].boundingBox)
+		observer.OnSpatialQuery(cd.entityID, len(candidates))
 		for _, c := range candidates {
 			e2 := world.GetEntityByID(c.GetID())
 			// TODO: remove this hack, the nil check handles deleted entities
-			if e2 == nil || e2.Collider == nil || e1.entityID == e2.ID {
+			if e2 == nil || e2.Collider == nil || cd.entityID == e2.ID {
 				continue
 			}
 
-			if e1.collisionMask&e2.Collider.ColliderGroup == 0 {
+			if cd.collisionMask&e2.Collider.ColliderGroup == 0 {
 				continue
 			}
 
@@ -221,8 +221,8 @@ func setupTransformedCollider(context *collisionContext, packedIndex int) {
 	context.packedCollisionData[packedIndex].colliderInitialized = true
 }
 
-func collectSortedCollisionCandidates(context *collisionContext) []collision.Contact2 {
-	var allContacts []collision.Contact2
+func collectSortedCollisionCandidates(context *collisionContext) []collision.Contact {
+	var allContacts []collision.Contact
 	for _, pair := range context.pairs {
 		setupTransformedBoundingBox(context, pair.PackedIndexA)
 		setupTransformedBoundingBox(context, pair.PackedIndexB)
@@ -244,7 +244,7 @@ func collectSortedCollisionCandidates(context *collisionContext) []collision.Con
 	}
 
 	// TODO: optimization here would be to just maintain the shallowest collision rather than sorting
-	sort.Sort(collision.ContactsBySeparatingDistance2(allContacts))
+	sort.Sort(collision.ContactsBySeparatingDistance(allContacts))
 
 	return allContacts
 }
@@ -267,8 +267,8 @@ func collideBoundingBox(bb1, bb2 collider.BoundingBox) bool {
 	return true
 }
 
-func collide(context *collisionContext, a, b int) []collision.Contact2 {
-	var result []collision.Contact2
+func collide(context *collisionContext, a, b int) []collision.Contact {
+	var result []collision.Contact
 
 	collisionDataA := context.packedCollisionData[a]
 	collisionDataB := context.packedCollisionData[b]
@@ -295,7 +295,7 @@ func collide(context *collisionContext, a, b int) []collision.Contact2 {
 		}
 
 		for _, contact := range contacts {
-			c := collision.Contact2{
+			c := collision.Contact{
 				PackedIndexA:       a,
 				PackedIndexB:       b,
 				Type:               contact.Type,
@@ -308,15 +308,16 @@ func collide(context *collisionContext, a, b int) []collision.Contact2 {
 			result = append(result, c)
 		}
 	} else if collisionDataA.hasCapsuleCollider && collisionDataB.hasCapsuleCollider {
-		contact := collision.CheckCollisionCapsuleCapsule(
+		contact, hasCollision := collision.CheckCollisionCapsuleCapsule(
 			collisionDataA.capsuleCollider,
 			collisionDataB.capsuleCollider,
 		)
-		if contact == nil {
+
+		if !hasCollision {
 			return nil
 		}
 
-		result = append(result, collision.Contact2{
+		result = append(result, collision.Contact{
 			PackedIndexA:       a,
 			PackedIndexB:       b,
 			Type:               contact.Type,
@@ -327,7 +328,7 @@ func collide(context *collisionContext, a, b int) []collision.Contact2 {
 
 	// filter out contacts that have tiny separating distances
 	threshold := 0.00005
-	var filteredContacts []collision.Contact2
+	var filteredContacts []collision.Contact
 	for _, contact := range result {
 		if contact.SeparatingDistance > threshold {
 			filteredContacts = append(filteredContacts, contact)
@@ -336,7 +337,7 @@ func collide(context *collisionContext, a, b int) []collision.Contact2 {
 	return filteredContacts
 }
 
-func resolveCollision(context *collisionContext, contact collision.Contact2, observer ICollisionObserver) {
+func resolveCollision(context *collisionContext, contact collision.Contact, observer ICollisionObserver) {
 	separatingVector := contact.SeparatingVector
 	collisionDataA := context.packedCollisionData[contact.PackedIndexA]
 	collisionDataB := context.packedCollisionData[contact.PackedIndexB]

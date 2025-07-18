@@ -72,7 +72,7 @@ type collisionData struct {
 	static bool
 }
 
-func ResolveCollisions2(app App, observer ICollisionObserver) {
+func ResolveCollisions(app App, observer ICollisionObserver) {
 	context := NewCollisionContext(app, observer)
 	broadPhaseCollectPairs(context)
 	detectAndResolve(context)
@@ -398,12 +398,4 @@ func postProcessing(context *collisionContext) {
 			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
 		}
 	}
-}
-
-func ResolveCollisionsSingle(app App, entity *entities.Entity, observer ICollisionObserver) {
-	ResolveCollisions2(app, observer)
-}
-
-func ResolveCollisions(app App, ents []*entities.Entity, observer ICollisionObserver) {
-	ResolveCollisions2(app, observer)
 }

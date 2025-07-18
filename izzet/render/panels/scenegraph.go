@@ -29,6 +29,7 @@ func sceneGraph(app renderiface.App) {
 				entity.Material = &entities.MaterialComponent{
 					MaterialHandle: app.AssetManager().GetDefaultMaterialHandle(),
 				}
+				entity.Static = true
 
 				meshHandle := entity.MeshComponent.MeshHandle
 				primitives := app.AssetManager().GetPrimitives(meshHandle)

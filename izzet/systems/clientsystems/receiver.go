@@ -98,9 +98,9 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					if !player.RenderBlend.Active {
 						player.RenderBlend.StartTime = time.Now()
 					}
-					fmt.Println("BLEND START", time.Now())
 					player.RenderBlend.Active = true
 					player.RenderBlend.BlendStartPosition = player.Position()
+					// fmt.Println("BLEND START", time.Now())
 
 					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
 

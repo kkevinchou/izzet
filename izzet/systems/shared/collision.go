@@ -150,7 +150,7 @@ func broadPhaseCollectPairs(context *collisionContext) {
 }
 
 func detectAndResolve(context *collisionContext) {
-	initializeColliders(context)
+	// initializeColliders(context)
 
 	// 1. collect pairs of entities that are colliding, sorted by separating vector
 	// 2. perform collision resolution for any colliding entities
@@ -185,6 +185,7 @@ func initializeColliders(context *collisionContext) {
 		collisionData := context.packedCollisionData[pair.PackedIndexA]
 		if !collisionData.collidersInitialized {
 			setupTransformedCollider(context, pair.PackedIndexA)
+			collisionData.collidersInitialized = true
 		}
 		collisionData = context.packedCollisionData[pair.PackedIndexB]
 		if !collisionData.collidersInitialized {
@@ -195,6 +196,10 @@ func initializeColliders(context *collisionContext) {
 
 func setupTransformedCollider(context *collisionContext, packedIndex int) {
 	entity := context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID)
+
+	modelMatrix := entities.WorldTransform(entity)
+	context.packedCollisionData[packedIndex].boundingBox = entity.InternalBoundingBox.Transform(modelMatrix)
+
 	// TODO: seems like the old code only transform the colliders for non static entities
 	// for tri meshes. is that what we actually want? seems like a bug
 	cc := entity.Collider
@@ -257,6 +262,9 @@ func collideBoundingBox(bb1, bb2 collider.BoundingBox) bool {
 
 func collide(context *collisionContext, a, b int) []collision.Contact2 {
 	var result []collision.Contact2
+
+	setupTransformedCollider(context, a)
+	setupTransformedCollider(context, b)
 
 	collisionDataA := context.packedCollisionData[a]
 	collisionDataB := context.packedCollisionData[b]

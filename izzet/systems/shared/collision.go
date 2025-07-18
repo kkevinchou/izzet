@@ -45,7 +45,6 @@ func pairKey(a, b int) packedIdxPair {
 type collisionContext struct {
 	world                *world.GameWorld
 	observer             ICollisionObserver
-	maxResolves          int
 	pairs                []packedIdxPair
 	localPlayerCollision bool
 
@@ -84,7 +83,6 @@ func NewCollisionContext(app App, observer ICollisionObserver) *collisionContext
 		world:                app.World(),
 		localPlayerCollision: app.IsClient(),
 		observer:             observer,
-		maxResolves:          resolveCountMax,
 		packedCollisionData:  nil,
 		idToPackedIdx:        make(map[int]int),
 	}
@@ -153,8 +151,6 @@ func broadPhaseCollectPairs(context *collisionContext) {
 }
 
 func detectAndResolve(context *collisionContext) {
-	// initializeColliders(context)
-
 	// 1. collect pairs of entities that are colliding, sorted by separating vector
 	// 2. perform collision resolution for any colliding entities
 	// 3. this can cause more collisions, repeat until no more further detected collisions, or we hit the configured max
@@ -348,16 +344,16 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 		// allocate the whole separating distance to the player. the player is denoted with "shouldResolve"
 		// maybe there's a cleaner way to do this?
 		if collisionDataA.shouldResolve {
-			entityA := context.world.GetEntityByID(collisionDataA.entityID)
-			entities.SetLocalPosition(entityA, entityA.GetLocalPosition().Add(separatingVector))
+			entity := getEntity(context, contact.PackedIndexA)
+			entities.SetLocalPosition(entity, entity.GetLocalPosition().Add(separatingVector))
 		} else if collisionDataB.shouldResolve {
-			entityB := context.world.GetEntityByID(collisionDataB.entityID)
-			entities.SetLocalPosition(entityB, entityB.GetLocalPosition().Sub(separatingVector))
+			entity := getEntity(context, contact.PackedIndexB)
+			entities.SetLocalPosition(entity, entity.GetLocalPosition().Sub(separatingVector))
 		}
 	} else {
 		// allocate half the separating distance between the two entities
-		entityA := context.world.GetEntityByID(collisionDataA.entityID)
-		entityB := context.world.GetEntityByID(collisionDataB.entityID)
+		entityA := getEntity(context, contact.PackedIndexA)
+		entityB := getEntity(context, contact.PackedIndexB)
 
 		if !entityA.Static {
 			var factor float64 = 0.5
@@ -379,11 +375,11 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 
 func postProcessing(context *collisionContext) {
 	for _, pair := range context.pairs {
-		e1 := context.world.GetEntityByID(context.packedCollisionData[pair.PackedIndexA].entityID)
+		e1 := getEntity(context, pair.PackedIndexA)
 		if e1.Physics != nil {
 			e1.Physics.Grounded = false
 		}
-		e2 := context.world.GetEntityByID(context.packedCollisionData[pair.PackedIndexB].entityID)
+		e2 := getEntity(context, pair.PackedIndexB)
 		if e2.Physics != nil {
 			e2.Physics.Grounded = false
 		}
@@ -391,14 +387,18 @@ func postProcessing(context *collisionContext) {
 
 	for _, contact := range context.contacts {
 		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
-			entity := context.world.GetEntityByID(context.packedCollisionData[contact.PackedIndexA].entityID)
+			entity := getEntity(context, contact.PackedIndexA)
 			entity.Physics.Grounded = true
 			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
 		}
 		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, -1, 0}) > GroundedThreshold {
-			entity := context.world.GetEntityByID(context.packedCollisionData[contact.PackedIndexB].entityID)
+			entity := getEntity(context, contact.PackedIndexB)
 			entity.Physics.Grounded = true
 			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
 		}
 	}
+}
+
+func getEntity(context *collisionContext, index int) *entities.Entity {
+	return context.world.GetEntityByID(context.packedCollisionData[index].entityID)
 }

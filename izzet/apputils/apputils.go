@@ -1,6 +1,7 @@
 package apputils
 
 import (
+	"fmt"
 	"math"
 	"path/filepath"
 	"strings"
@@ -75,4 +76,18 @@ func GetControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {
 	}
 
 	return controlVector
+}
+
+func RenderBlendMath(deltaMs int64) float64 {
+	var t float64 = float64(deltaMs) / settings.RenderBlendDurationMilliseconds
+	if t >= 1 {
+		t = 1
+	} else {
+		t = 1 - math.Pow(2, -10*t)
+	}
+	return t
+}
+
+func FormatVec(vec mgl64.Vec3) string {
+	return fmt.Sprintf("{%.2f, %.2f, %.2f}", vec.X(), vec.Y(), vec.Z())
 }

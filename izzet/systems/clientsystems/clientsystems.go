@@ -31,4 +31,6 @@ type App interface {
 	GetFrameInputPtr() *input.Input
 	SetServerStats(stats serverstats.ServerStats)
 	World() *world.GameWorld
+	PredictionDebugLogging() bool
+	SetPredictionDebugLogging(value bool)
 }

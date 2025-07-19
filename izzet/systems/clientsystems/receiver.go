@@ -85,39 +85,29 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				state := cf.PostCFState
 				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
+					if s.app.PredictionDebugLogging() {
+						fmt.Printf("\t - Predictiton Hit [Frame: %d]\n",
+							gamestateUpdateMessage.LastInputCommandFrame,
+						)
+					}
 					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
+					player := s.app.GetPlayerEntity()
+					player.RenderBlend.Active = false
 				} else {
 					mr.Inc("prediction_miss", 1)
 					player := s.app.GetPlayerEntity()
 
-					// position := entities.GetLocalPosition(player)
-					// rotation := entities.GetLocalRotation(player)
-					// velocity := player.Physics.Velocity
-					// gravityEnabled := player.Physics.GravityEnabled
-
-					if !player.RenderBlend.Active {
-						player.RenderBlend.StartTime = time.Now()
+					if s.app.PredictionDebugLogging() {
+						fmt.Printf("\t - Predictiton Miss [Frame: %d] [Client: %s] [Server: %s]\n",
+							gamestateUpdateMessage.LastInputCommandFrame,
+							apputils.FormatVec(state.Position),
+							apputils.FormatVec(serverTransform.Position),
+						)
 					}
-					player.RenderBlend.Active = true
+
+					player.RenderBlend.StartTime = time.Now()
 					player.RenderBlend.BlendStartPosition = player.Position()
-					// fmt.Println("BLEND START", time.Now())
-
 					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
-
-					// correctedPosition := entities.GetLocalPosition(player)
-					// // correctedRotation := entities.GetLocalRotation(player)
-					// // correctedVelocity := player.Physics.Velocity
-					// // correctedGravityEnabled := player.Physics.GravityEnabled
-					// if !player.PositionSync.Active {
-					// 	player.PositionSync.Active = true
-					// 	player.PositionSync.StartTime = time.Now()
-					// 	player.PositionSync.Goal = correctedPosition
-					// }
-
-					// entities.SetLocalPosition(player, position)
-					// entities.SetLocalRotation(player, rotation)
-					// player.Physics.Velocity = velocity
-					// player.Physics.GravityEnabled = gravityEnabled
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage

@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/kitolib/input"
 )
@@ -25,8 +26,34 @@ func (s *InputSystem) Name() string {
 	return "InputSystem"
 }
 
+var predictionDebugLoggingStart time.Time
+
 func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	frameInput := s.app.GetFrameInputPtr()
+
+	if settings.SoloClient {
+		if time.Since(predictionDebugLoggingStart).Seconds() > 2 {
+			s.app.SetPredictionDebugLogging(false)
+		}
+
+		if _, ok := frameInput.KeyboardInput[input.KeyboardKeyA]; ok {
+			if !s.app.PredictionDebugLogging() {
+				fmt.Println("---------------------")
+				fmt.Println("---------------------")
+				fmt.Println("---------------------")
+				predictionDebugLoggingStart = time.Now()
+				s.app.SetPredictionDebugLogging(true)
+			}
+		}
+		if s.app.PredictionDebugLogging() {
+			var hasInput bool
+			if _, ok := frameInput.KeyboardInput[input.KeyboardKeyA]; ok {
+				hasInput = true
+			}
+			fmt.Printf("[%d] - Frame Start [Input: %t]\n", s.app.CommandFrame(), hasInput)
+		}
+	}
+
 	cameraRotation := s.computePlayerCameraRotation(world, *frameInput)
 	frameInput.CameraRotation = cameraRotation
 

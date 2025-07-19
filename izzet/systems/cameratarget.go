@@ -1,10 +1,10 @@
 package systems
 
 import (
-	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -45,15 +45,8 @@ func update(delta time.Duration, world GameWorld, camera *entities.Entity) {
 	target := world.GetEntityByID(*camera.CameraComponent.Target)
 	position := target.Position()
 	if target.RenderBlend.Active {
-		var interpolationDuration float64 = 1000 // 1 second
 		deltaMs := time.Since(target.RenderBlend.StartTime).Milliseconds()
-		var t float64 = float64(deltaMs) / interpolationDuration
-		if t >= 1 {
-			t = 1
-		} else {
-			t = 1 - math.Pow(2, -10*t)
-		}
-
+		t := apputils.RenderBlendMath(deltaMs)
 		position = position.Sub(target.RenderBlend.BlendStartPosition).Mul(t).Add(target.RenderBlend.BlendStartPosition)
 	}
 	targetPosition := position.Add(camera.CameraComponent.TargetPositionOffset)

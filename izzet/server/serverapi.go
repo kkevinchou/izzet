@@ -204,3 +204,10 @@ func (g *Server) AppMode() mode.AppMode {
 func (g *Server) RuntimeConfig() *runtimeconfig.RuntimeConfig {
 	panic("server should not be accessing runtime config")
 }
+
+func (g *Server) PredictionDebugLogging() bool {
+	return g.predictionDebugLogging
+}
+func (g *Server) SetPredictionDebugLogging(value bool) {
+	g.predictionDebugLogging = value
+}

@@ -83,7 +83,8 @@ type Client struct {
 
 	project *Project
 
-	navMesh *navmesh.NavigationMesh
+	navMesh                *navmesh.NavigationMesh
+	predictionDebugLogging bool
 }
 
 func New(shaderDirectory string, config settings.Config, projectName string) *Client {

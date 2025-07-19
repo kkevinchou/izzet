@@ -30,4 +30,6 @@ type App interface {
 	World() *world.GameWorld
 	NavMesh() *navmesh.CompiledNavMesh
 	ProjectName() string
+	SetPredictionDebugLogging(value bool)
+	PredictionDebugLogging() bool
 }

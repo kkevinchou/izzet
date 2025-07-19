@@ -1,8 +1,10 @@
 package clientsystems
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -31,6 +33,10 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		entities.SetLocalRotation(entity, transform.Rotation)
 		entity.Physics.Velocity = transform.Velocity
 		entity.Physics.GravityEnabled = transform.GravityEnabled
+
+		if app.PredictionDebugLogging() {
+			fmt.Printf("\t - Intialized Entity [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), gamestateUpdateMessage.LastInputCommandFrame, apputils.FormatVec(transform.Position))
+		}
 	}
 
 	cfHistory.Reset()
@@ -51,6 +57,9 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
 		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
 		shared.ResolveCollisions(app, observer)
+		if app.PredictionDebugLogging() {
+			fmt.Printf("\t - Replayed Frame [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), commandFrame.FrameNumber, apputils.FormatVec(entity.Position()))
+		}
 		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, entity)
 	}
 	return nil

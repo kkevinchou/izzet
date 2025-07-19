@@ -585,3 +585,10 @@ func (g *Client) FindPath(start, goal mgl64.Vec3) {
 func (g *Client) SetupBatchedStaticRendering() {
 	g.renderSystem.SetupBatchedStaticRendering()
 }
+
+func (g *Client) PredictionDebugLogging() bool {
+	return g.predictionDebugLogging
+}
+func (g *Client) SetPredictionDebugLogging(value bool) {
+	g.predictionDebugLogging = value
+}

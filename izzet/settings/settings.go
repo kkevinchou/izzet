@@ -86,10 +86,12 @@ const (
 	CameraSlowSpeed          float64 = 10
 	AccelerationDueToGravity float64 = 75 // units per second
 
-	BuiltinAssetsDir string = "_assets"
+	BuiltinAssetsDir                string  = "_assets"
+	RenderBlendDurationMilliseconds float64 = 3000
 )
 
 var (
 	FontSize                  float32    = 20
 	EditorCameraStartPosition mgl64.Vec3 = mgl64.Vec3{0, 5, 5}
+	SoloClient                bool
 )

@@ -38,4 +38,5 @@ type App interface {
 	World() *world.GameWorld
 	AppMode() mode.AppMode
 	RuntimeConfig() *runtimeconfig.RuntimeConfig
+	PredictionDebugLogging() bool
 }

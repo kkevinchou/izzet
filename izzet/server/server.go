@@ -52,7 +52,8 @@ type Server struct {
 
 	navMesh *navmesh.CompiledNavMesh
 
-	projectName string
+	projectName            string
+	predictionDebugLogging bool
 }
 
 func NewWithFile(filepath string, projectName string) *Server {

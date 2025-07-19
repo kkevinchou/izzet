@@ -355,10 +355,24 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 		entityA := getEntity(context, contact.PackedIndexA)
 		entityB := getEntity(context, contact.PackedIndexB)
 
+		var aOnly bool
+		var bOnly bool
+		if entityA.CharacterControllerComponent != nil && entityA.CharacterControllerComponent.ControlVector.Len() > 0 {
+			aOnly = true
+		}
+		if entityB.CharacterControllerComponent != nil && entityB.CharacterControllerComponent.ControlVector.Len() > 0 {
+			bOnly = true
+		}
+
 		if !entityA.Static {
 			var factor float64 = 0.5
 			if entityB.Static {
 				factor = 1
+			}
+			if aOnly {
+				factor = 1
+			} else if bOnly {
+				factor = 0
 			}
 			entities.SetLocalPosition(entityA, entityA.GetLocalPosition().Add(separatingVector.Mul(factor)))
 		}
@@ -367,6 +381,11 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 			var factor float64 = 0.5
 			if entityA.Static {
 				factor = 1
+			}
+			if bOnly {
+				factor = 1
+			} else if aOnly {
+				factor = 0
 			}
 			entities.SetLocalPosition(entityB, entityB.GetLocalPosition().Sub(separatingVector.Mul(factor)))
 		}

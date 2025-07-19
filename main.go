@@ -93,6 +93,7 @@ func main() {
 		serverApp := server.NewWithFile(apputils.PathToProjectFile(defaultProject), settings.DefaultProject)
 		serverApp.Start(started, make(chan bool))
 	} else if mode == "CLIENT" {
+		settings.SoloClient = true
 		config.Fullscreen = false
 		config.Profile = false
 		clientApp := client.New("shaders", config, "")

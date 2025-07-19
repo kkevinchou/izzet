@@ -50,7 +50,7 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
 		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
-		shared.ResolveCollisionsSingle(app, entity, observer)
+		shared.ResolveCollisions(app, observer)
 		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, entity)
 	}
 	return nil

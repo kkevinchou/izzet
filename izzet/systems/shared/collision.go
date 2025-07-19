@@ -6,9 +6,10 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/physicsutils"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/collision"
+	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type App interface {
@@ -16,6 +17,7 @@ type App interface {
 	IsClient() bool
 	IsServer() bool
 	World() *world.GameWorld
+	GetPlayerEntity() *entities.Entity
 }
 
 type ICollisionObserver interface {
@@ -31,225 +33,222 @@ const (
 	GroundedThreshold float64 = 0.85
 )
 
-func ResolveCollisionsSingle(app App, entity *entities.Entity, observer ICollisionObserver) {
-	ResolveCollisions(app, []*entities.Entity{entity}, observer)
+type packedIdxPair struct{ PackedIndexA, PackedIndexB int }
+
+func pairKey(a, b int) packedIdxPair {
+	if a < b {
+		return packedIdxPair{PackedIndexA: a, PackedIndexB: b}
+	}
+	return packedIdxPair{PackedIndexA: b, PackedIndexB: a}
 }
 
-func ResolveCollisions(app App, worldEntities []*entities.Entity, observer ICollisionObserver) {
-	world := app.World()
-	uniquePairMap := map[string]any{}
-	seen := map[int]bool{}
+type collisionContext struct {
+	world                *world.GameWorld
+	observer             ICollisionObserver
+	pairs                []packedIdxPair
+	localPlayerCollision bool
 
-	entityPairs := [][]*entities.Entity{}
-	var entityList []*entities.Entity
-	for _, e1 := range worldEntities {
-		if e1.Static {
-			// allow other entities to collide against a static entity. static entities
-			// are picked up when the spatial partition query is done below for e2
-			continue
-		}
-		if e1.Collider == nil {
-			continue
-		}
+	packedCollisionData []collisionData
+	idToPackedIdx       map[int]int
+	contacts            []collision.Contact
+}
 
-		entitiesInPartition := world.SpatialPartition().QueryEntities(e1.BoundingBox())
-		observer.OnSpatialQuery(e1.GetID(), len(entitiesInPartition))
-		for _, spatialEntity := range entitiesInPartition {
-			e2 := world.GetEntityByID(spatialEntity.GetID())
-			// todo: remove this hack, entities that are deleted should be removed
-			// from the spatial partition
-			if e2 == nil {
-				continue
-			}
-			if e2.Collider == nil {
-				continue
-			}
+// no pointers, meant to be very quickly iterated
+type collisionData struct {
+	entityID               int
+	shouldResolve          bool
+	collisionMask          types.ColliderGroupFlag
+	boundingBox            collider.BoundingBox
+	boundingBoxInitialized bool
 
-			if e1.ID == e2.ID {
-				continue
-			}
+	capsuleCollider     collider.Capsule
+	triMeshCollider     collider.TriMesh
+	colliderInitialized bool
 
-			if e1.Collider.CollisionMask&e2.Collider.ColliderGroup == 0 {
-				continue
-			}
+	hasCapsuleCollider bool
+	hasTriMeshCollider bool
 
-			if _, ok := uniquePairMap[generateUniquePairKey(e1, e2)]; ok {
-				continue
-			}
-			if _, ok := uniquePairMap[generateUniquePairKey(e2, e1)]; ok {
-				continue
-			}
+	static bool
+}
 
-			if !seen[e1.ID] {
-				entityList = append(entityList, e1)
-			}
-			if !seen[e2.ID] {
-				entityList = append(entityList, e2)
-			}
+func ResolveCollisions(app App, observer ICollisionObserver) {
+	context := NewCollisionContext(app, observer)
+	broadPhaseCollectPairs(context)
+	detectAndResolve(context)
+	postProcessing(context)
+}
 
-			entityPairs = append(entityPairs, []*entities.Entity{e1, e2})
-			uniquePairMap[generateUniquePairKey(e1, e2)] = true
-			uniquePairMap[generateUniquePairKey(e2, e1)] = true
-		}
+func NewCollisionContext(app App, observer ICollisionObserver) *collisionContext {
+	context := &collisionContext{
+		world:                app.World(),
+		localPlayerCollision: app.IsClient(),
+		observer:             observer,
+		packedCollisionData:  nil,
+		idToPackedIdx:        make(map[int]int),
 	}
 
-	if len(entityPairs) > 0 {
-		detectAndResolveCollisionsForEntityPairs(entityPairs, entityList, world, observer)
-	}
-
-	for _, entity := range worldEntities {
-		if entity.Static || entity.Collider == nil {
+	// set up the full list of entities that can be involved in collisions
+	for _, e := range app.World().Entities() {
+		if e.Collider == nil {
 			continue
 		}
 
-		if entity.Physics != nil {
-			entity.Physics.Grounded = false
+		context.idToPackedIdx[e.GetID()] = len(context.packedCollisionData)
+		var cd collisionData
+		cd.entityID = e.GetID()
+		cd.collisionMask = e.Collider.CollisionMask
+		cd.static = e.Static
+
+		if context.localPlayerCollision {
+			if e.GetID() == app.GetPlayerEntity().GetID() {
+				cd.shouldResolve = true
+			}
+		} else {
+			// while static entities can be involved in collisions
+			// we do not need to resolve collisions for them since they do not move
+			// we will rely on resolving the non-static entities that collide with them
+			cd.shouldResolve = !e.Static
 		}
 
-		// for _, contact := range entity.Collider.Contacts {
-		// 	e1ID := *contact.EntityID
-		// 	e2ID := *contact.SourceEntityID
+		context.packedCollisionData = append(context.packedCollisionData, cd)
+	}
 
-		// 	e1 := world.GetEntityByID(e1ID)
-		// 	e2 := world.GetEntityByID(e2ID)
+	return context
+}
 
-		// 	if e2.AIComponent != nil && e1.CharacterControllerComponent != nil {
-		// 		if app.IsServer() {
-		// 			fmt.Println(e2.GetID(), "died on server")
-		// 		}
-		// 		e2.Deadge = true
-		// 	} else if e1.AIComponent != nil && e2.CharacterControllerComponent != nil {
-		// 		if app.IsServer() {
-		// 			fmt.Println(e1.GetID(), "died on server")
-		// 		}
-		// 		e1.Deadge = true
-		// 	}
-		// }
+func broadPhaseCollectPairs(context *collisionContext) {
+	world := context.world
+	observer := context.observer
+	uniquePairMap := map[packedIdxPair]any{}
 
-		if entity.Collider.Contacts != nil && entity.Physics != nil {
-			for _, contact := range entity.Collider.Contacts {
-				if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
-					entity.Physics.Grounded = true
-					entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
-				}
+	for i, cd := range context.packedCollisionData {
+		if !cd.shouldResolve {
+			continue
+		}
+		setupTransformedBoundingBox(context, i)
+		candidates := world.SpatialPartition().QueryEntities(context.packedCollisionData[i].boundingBox)
+		observer.OnSpatialQuery(cd.entityID, len(candidates))
+		for _, c := range candidates {
+			e2 := world.GetEntityByID(c.GetID())
+			// TODO: remove this hack, the nil check handles deleted entities
+			if e2 == nil || e2.Collider == nil || cd.entityID == e2.ID {
+				continue
 			}
+
+			if cd.collisionMask&e2.Collider.ColliderGroup == 0 {
+				continue
+			}
+
+			key := pairKey(i, context.idToPackedIdx[e2.GetID()])
+			if _, ok := uniquePairMap[key]; ok {
+				continue
+			}
+
+			uniquePairMap[key] = struct{}{}
+			context.pairs = append(context.pairs, key)
 		}
 	}
 }
 
-func detectAndResolveCollisionsForEntityPairs(entityPairs [][]*entities.Entity, entityList []*entities.Entity, world GameWorld, observer ICollisionObserver) {
+func detectAndResolve(context *collisionContext) {
 	// 1. collect pairs of entities that are colliding, sorted by separating vector
 	// 2. perform collision resolution for any colliding entities
 	// 3. this can cause more collisions, repeat until no more further detected collisions, or we hit the configured max
 
-	resolveCount := map[int]int{}
-	maximallyCollidingEntities := map[int]bool{}
-	absoluteMaxRunCount := len(entityList) * resolveCountMax
+	maxRunCount := len(context.pairs) * 2 * resolveCountMax // very rough estimate
 
 	// collisionRuns acts as a fail safe for when we run collision detection and resolution infinitely.
 	// given that we have a cap on collision resolution for each entity, we should never run more than
 	// the number of entities times the cap.
 	collisionRuns := 0
-	for collisionRuns = 0; collisionRuns < absoluteMaxRunCount; collisionRuns++ {
-		// TODO: update entityPairs to not include collisions that have already been resolved
-		// in fact, we may want to do the looping at the ResolveCollisions level
-		collisionCandidates := collectSortedCollisionCandidates(entityPairs, entityList, maximallyCollidingEntities, world, observer)
+	for collisionRuns = 0; collisionRuns < maxRunCount; collisionRuns++ {
+		collisionCandidates := collectSortedCollisionCandidates(context)
 		if len(collisionCandidates) == 0 {
 			break
 		}
 
-		collisionCandidates = filterCollisionCandidates(collisionCandidates)
+		contact := collisionCandidates[0]
 
-		for _, contact := range collisionCandidates {
-			entity := world.GetEntityByID(*contact.EntityID)
-			sourceEntity := world.GetEntityByID(*contact.SourceEntityID)
-			resolveCollision(entity, sourceEntity, contact, observer)
+		resolveCollision(context, contact, context.observer)
 
-			entity.Collider.Contacts = append(entity.Collider.Contacts, *contact)
-
-			resolveCount[entity.ID]++
-			if resolveCount[entity.ID] > resolveCountMax {
-				maximallyCollidingEntities[entity.ID] = true
-			}
+		// mark colliders and bounding boxes as uninitialized so future iterations will initialize them
+		if !context.packedCollisionData[contact.PackedIndexA].static {
+			context.packedCollisionData[contact.PackedIndexA].boundingBoxInitialized = false
+			context.packedCollisionData[contact.PackedIndexA].colliderInitialized = false
 		}
+		if !context.packedCollisionData[contact.PackedIndexB].static {
+			context.packedCollisionData[contact.PackedIndexB].boundingBoxInitialized = false
+			context.packedCollisionData[contact.PackedIndexB].colliderInitialized = false
+		}
+		context.contacts = append(context.contacts, contact)
 	}
 
-	if collisionRuns == absoluteMaxRunCount && collisionRuns != 0 {
+	if collisionRuns == maxRunCount && collisionRuns != 0 {
 		fmt.Println("hit absolute max collision run count", collisionRuns)
 	}
 }
 
-// only resolve collisions for an entity, one collision at a time. resolving one collision may, as a side-effect, resolve other collisions as well
-func filterCollisionCandidates(contacts []*collision.Contact) []*collision.Contact {
-	var filteredSlice []*collision.Contact
-
-	seen := map[int]bool{}
-	for i := range contacts {
-		contact := contacts[i]
-		if _, ok := seen[*contact.EntityID]; !ok {
-			seen[*contact.EntityID] = true
-			filteredSlice = append(filteredSlice, contact)
-		}
+func setupTransformedBoundingBox(context *collisionContext, packedIndex int) {
+	if !context.packedCollisionData[packedIndex].boundingBoxInitialized {
+		context.packedCollisionData[packedIndex].boundingBox = context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID).BoundingBox()
+		context.packedCollisionData[packedIndex].boundingBoxInitialized = true
 	}
-
-	return filteredSlice
 }
 
-// collectSortedCollisionCandidates collects all potential collisions that can occur in the frame.
-// these are "candidates" in that they are not guaranteed to have actually happened since
-// if we resolve some of the collisions in the list, some will be invalidated
-func collectSortedCollisionCandidates(entityPairs [][]*entities.Entity, entityList []*entities.Entity, skipEntitySet map[int]bool, world GameWorld, observer ICollisionObserver) []*collision.Contact {
-	// initialize collision state
-
-	for _, e := range entityList {
-		cc := e.Collider
+func setupTransformedCollider(context *collisionContext, packedIndex int) {
+	if !context.packedCollisionData[packedIndex].colliderInitialized {
+		entity := context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID)
+		cc := entity.Collider
 		if cc.CapsuleCollider != nil {
-			transformMatrix := entities.WorldTransform(e)
+			transformMatrix := entities.WorldTransform(entity)
 			capsule := cc.CapsuleCollider.Transform(transformMatrix)
-			cc.TransformedCapsuleCollider = &capsule
-		} else if cc.TriMeshCollider != nil && (!e.Static || cc.TransformedTriMeshCollider == nil) {
-			// localPosition := entities.GetLocalPosition(e)
-			// transformMatrix := mgl64.Translate3D(localPosition.X(), localPosition.Y(), localPosition.Z())
-			transformMatrix := entities.WorldTransform(e)
-			// triMesh := cc.TriMeshCollider.Transform(transformMatrix)
-			triMesh := cc.TriMeshCollider.Transform(transformMatrix)
+			context.packedCollisionData[packedIndex].capsuleCollider = capsule
+			context.packedCollisionData[packedIndex].hasCapsuleCollider = true
+		} else if cc.TriMeshCollider != nil {
+			transformMatrix := entities.WorldTransform(entity)
+			var triMesh collider.TriMesh
 			if cc.SimplifiedTriMeshCollider != nil {
 				triMesh = cc.SimplifiedTriMeshCollider.Transform(transformMatrix)
+			} else {
+				triMesh = cc.TriMeshCollider.Transform(transformMatrix)
 			}
-			cc.TransformedTriMeshCollider = &triMesh
+			context.packedCollisionData[packedIndex].triMeshCollider = triMesh
+			context.packedCollisionData[packedIndex].hasTriMeshCollider = true
 		}
 	}
+	context.packedCollisionData[packedIndex].colliderInitialized = true
+}
 
-	var allContacts []*collision.Contact
-	for _, pair := range entityPairs {
-		if _, ok := skipEntitySet[pair[0].ID]; ok {
+func collectSortedCollisionCandidates(context *collisionContext) []collision.Contact {
+	var allContacts []collision.Contact
+	for _, pair := range context.pairs {
+		setupTransformedBoundingBox(context, pair.PackedIndexA)
+		setupTransformedBoundingBox(context, pair.PackedIndexB)
+
+		if !collideBoundingBox(context.packedCollisionData[pair.PackedIndexA].boundingBox, context.packedCollisionData[pair.PackedIndexB].boundingBox) {
 			continue
 		}
-		if _, ok := skipEntitySet[pair[1].ID]; ok {
-			continue
-		}
 
-		if !collideBoundingBox(pair[0], pair[1], observer) {
-			continue
-		}
+		setupTransformedCollider(context, pair.PackedIndexA)
+		setupTransformedCollider(context, pair.PackedIndexB)
 
-		contacts := collide(pair[0], pair[1], observer)
+		contacts := collide(context, pair.PackedIndexA, pair.PackedIndexB)
+
 		if len(contacts) == 0 {
 			continue
 		}
 
 		allContacts = append(allContacts, contacts...)
 	}
+
+	// TODO: optimization here would be to just maintain the shallowest collision rather than sorting
 	sort.Sort(collision.ContactsBySeparatingDistance(allContacts))
 
 	return allContacts
 }
 
-func collideBoundingBox(e1 *entities.Entity, e2 *entities.Entity, observer ICollisionObserver) bool {
-	observer.OnBoundingBoxCheck(e1, e2)
-
-	bb1 := e1.BoundingBox()
-	bb2 := e2.BoundingBox()
+func collideBoundingBox(bb1, bb2 collider.BoundingBox) bool {
+	// observer.OnBoundingBoxCheck(e1, e2)
 
 	if bb1.MaxVertex.X() < bb2.MinVertex.X() || bb2.MaxVertex.X() < bb1.MinVertex.X() {
 		return false
@@ -266,48 +265,68 @@ func collideBoundingBox(e1 *entities.Entity, e2 *entities.Entity, observer IColl
 	return true
 }
 
-func collide(e1 *entities.Entity, e2 *entities.Entity, observer ICollisionObserver) []*collision.Contact {
-	observer.OnCollisionCheck(e1, e2)
+func collide(context *collisionContext, a, b int) []collision.Contact {
+	var result []collision.Contact
 
-	var result []*collision.Contact
+	collisionDataA := context.packedCollisionData[a]
+	collisionDataB := context.packedCollisionData[b]
 
-	if ok, capsuleEntity, triMeshEntity := physicsutils.IsCapsuleTriMeshCollision(e1, e2); ok {
+	if (collisionDataA.hasCapsuleCollider && collisionDataB.hasTriMeshCollider) || (collisionDataB.hasCapsuleCollider && collisionDataA.hasTriMeshCollider) {
+		var capsuleCollider collider.Capsule
+		var triMeshCollider collider.TriMesh
+
+		if collisionDataA.hasCapsuleCollider {
+			capsuleCollider = collisionDataA.capsuleCollider
+			triMeshCollider = collisionDataB.triMeshCollider
+		} else {
+			capsuleCollider = collisionDataB.capsuleCollider
+			triMeshCollider = collisionDataA.triMeshCollider
+		}
+
 		contacts := collision.CheckCollisionCapsuleTriMesh(
-			*capsuleEntity.Collider.TransformedCapsuleCollider,
-			*triMeshEntity.Collider.TransformedTriMeshCollider,
+			capsuleCollider,
+			triMeshCollider,
 		)
+
 		if len(contacts) == 0 {
 			return nil
 		}
 
-		triEntityID := triMeshEntity.ID
-		capsuleEntityID := capsuleEntity.ID
-
 		for _, contact := range contacts {
-			contact.EntityID = &capsuleEntityID
-			contact.SourceEntityID = &triEntityID
+			c := collision.Contact{
+				PackedIndexA:       a,
+				PackedIndexB:       b,
+				Type:               contact.Type,
+				SeparatingVector:   contact.SeparatingVector,
+				SeparatingDistance: contact.SeparatingDistance,
+			}
+			if collisionDataB.hasCapsuleCollider {
+				c.SeparatingVector = c.SeparatingVector.Mul(-1)
+			}
+			result = append(result, c)
 		}
-
-		result = contacts
-	} else if ok := physicsutils.IsCapsuleCapsuleCollision(e1, e2); ok {
-		contact := collision.CheckCollisionCapsuleCapsule(
-			*e1.Collider.TransformedCapsuleCollider,
-			*e2.Collider.TransformedCapsuleCollider,
+	} else if collisionDataA.hasCapsuleCollider && collisionDataB.hasCapsuleCollider {
+		contact, collisionDetected := collision.CheckCollisionCapsuleCapsule(
+			collisionDataA.capsuleCollider,
+			collisionDataB.capsuleCollider,
 		)
-		if contact == nil {
+
+		if !collisionDetected {
 			return nil
 		}
 
-		e1ID := e1.ID
-		e2ID := e2.ID
-		contact.EntityID = &e1ID
-		contact.SourceEntityID = &e2ID
-		result = append(result, contact)
+		result = append(result, collision.Contact{
+			PackedIndexA:       a,
+			PackedIndexB:       b,
+			Type:               contact.Type,
+			SeparatingVector:   contact.SeparatingVector,
+			SeparatingDistance: contact.SeparatingDistance,
+		})
 	}
 
 	// filter out contacts that have tiny separating distances
 	threshold := 0.00005
-	var filteredContacts []*collision.Contact
+	var filteredContacts []collision.Contact
 	for _, contact := range result {
 		if contact.SeparatingDistance > threshold {
 			filteredContacts = append(filteredContacts, contact)
@@ -316,12 +335,70 @@ func collide(e1 *entities.Entity, e2 *entities.Entity, observer ICollisionObserv
 	return filteredContacts
 }
 
-func resolveCollision(entity *entities.Entity, sourceEntity *entities.Entity, contact *collision.Contact, observer ICollisionObserver) {
+func resolveCollision(context *collisionContext, contact collision.Contact, observer ICollisionObserver) {
 	separatingVector := contact.SeparatingVector
-	entities.SetLocalPosition(entity, entity.GetLocalPosition().Add(separatingVector))
-	observer.OnCollisionResolution(entity.GetID())
+	collisionDataA := context.packedCollisionData[contact.PackedIndexA]
+	collisionDataB := context.packedCollisionData[contact.PackedIndexB]
+
+	if context.localPlayerCollision {
+		// allocate the whole separating distance to the player. the player is denoted with "shouldResolve"
+		// maybe there's a cleaner way to do this?
+		if collisionDataA.shouldResolve {
+			entity := getEntity(context, contact.PackedIndexA)
+			entities.SetLocalPosition(entity, entity.GetLocalPosition().Add(separatingVector))
+		} else if collisionDataB.shouldResolve {
+			entity := getEntity(context, contact.PackedIndexB)
+			entities.SetLocalPosition(entity, entity.GetLocalPosition().Sub(separatingVector))
+		}
+	} else {
+		// allocate half the separating distance between the two entities
+		entityA := getEntity(context, contact.PackedIndexA)
+		entityB := getEntity(context, contact.PackedIndexB)
+
+		if !entityA.Static {
+			var factor float64 = 0.5
+			if entityB.Static {
+				factor = 1
+			}
+			entities.SetLocalPosition(entityA, entityA.GetLocalPosition().Add(separatingVector.Mul(factor)))
+		}
+
+		if !entityB.Static {
+			var factor float64 = 0.5
+			if entityA.Static {
+				factor = 1
+			}
+			entities.SetLocalPosition(entityB, entityB.GetLocalPosition().Sub(separatingVector.Mul(factor)))
+		}
+	}
 }
 
-func generateUniquePairKey(e1, e2 *entities.Entity) string {
-	return fmt.Sprintf("%d_%d", e1.GetID(), e2.GetID())
+func postProcessing(context *collisionContext) {
+	for _, pair := range context.pairs {
+		e1 := getEntity(context, pair.PackedIndexA)
+		if e1.Physics != nil {
+			e1.Physics.Grounded = false
+		}
+		e2 := getEntity(context, pair.PackedIndexB)
+		if e2.Physics != nil {
+			e2.Physics.Grounded = false
+		}
+	}
+
+	for _, contact := range context.contacts {
+		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
+			entity := getEntity(context, contact.PackedIndexA)
+			entity.Physics.Grounded = true
+			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
+		}
+		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, -1, 0}) > GroundedThreshold {
+			entity := getEntity(context, contact.PackedIndexB)
+			entity.Physics.Grounded = true
+			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
+		}
+	}
+}
+
+func getEntity(context *collisionContext, index int) *entities.Entity {
+	return context.world.GetEntityByID(context.packedCollisionData[index].entityID)
 }

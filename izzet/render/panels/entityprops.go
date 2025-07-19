@@ -70,6 +70,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			} else {
 				parentStr = "nil"
 			}
+
 		}
 
 		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
@@ -123,6 +124,9 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		uiTableRow("World Position", worldPositionStr)
 		uiTableRow("World Rotation", eulerRotationStr)
 		uiTableRow("Parent", parentStr)
+		if entity != nil {
+			uiTableRow("Static", fmt.Sprintf("%v", entity.Static))
+		}
 		imgui.EndTable()
 	}
 

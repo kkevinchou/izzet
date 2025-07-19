@@ -85,11 +85,11 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				state := cf.PostCFState
 				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
-					if s.app.PredictionDebugLogging() {
-						fmt.Printf("\t - Predictiton Hit [Frame: %d]\n",
-							gamestateUpdateMessage.LastInputCommandFrame,
-						)
-					}
+					// if s.app.PredictionDebugLogging() {
+					// 	fmt.Printf("\t - Predictiton Hit [Frame: %d]\n",
+					// 		gamestateUpdateMessage.LastInputCommandFrame,
+					// 	)
+					// }
 					cfHistory.ClearUntilFrameNumber(gamestateUpdateMessage.LastInputCommandFrame)
 					player := s.app.GetPlayerEntity()
 					player.RenderBlend.Active = false
@@ -97,13 +97,13 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					mr.Inc("prediction_miss", 1)
 					player := s.app.GetPlayerEntity()
 
-					if s.app.PredictionDebugLogging() {
-						fmt.Printf("\t - Predictiton Miss [Frame: %d] [Client: %s] [Server: %s]\n",
-							gamestateUpdateMessage.LastInputCommandFrame,
-							apputils.FormatVec(state.Position),
-							apputils.FormatVec(serverTransform.Position),
-						)
-					}
+					// if s.app.PredictionDebugLogging() {
+					// 	fmt.Printf("\t - Predictiton Miss [Frame: %d] [Client: %s] [Server: %s]\n",
+					// 		gamestateUpdateMessage.LastInputCommandFrame,
+					// 		apputils.FormatVec(state.Position),
+					// 		apputils.FormatVec(serverTransform.Position),
+					// 	)
+					// }
 
 					player.RenderBlend.StartTime = time.Now()
 					player.RenderBlend.BlendStartPosition = player.Position()

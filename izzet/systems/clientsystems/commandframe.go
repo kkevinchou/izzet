@@ -45,8 +45,8 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 			ID:             player.GetID(),
 			Position:       player.LocalPosition,
 			Rotation:       player.LocalRotation,
-			Velocity:       player.Physics.Velocity,
-			GravityEnabled: player.Physics.GravityEnabled,
+			Velocity:       player.Kinematic.Velocity,
+			GravityEnabled: player.Kinematic.GravityEnabled,
 		},
 	}
 

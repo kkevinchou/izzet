@@ -52,7 +52,7 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		// reset entity positions, (if they exist on the client)
 		// rerun spatial partioning over these entities ?
 
-		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
+		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, entity)
 		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
 		shared.ResolveCollisions(app, observer)
 		// if app.PredictionDebugLogging() {

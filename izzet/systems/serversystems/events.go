@@ -46,7 +46,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		var length float64 = 80
 		entity := entities.CreateEmptyEntity("player")
 		entity.PositionSync = &entities.PositionSync{}
-		entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
+		// entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
+		entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
 		entity.Collider = &entities.ColliderComponent{
 			CapsuleCollider: &collider.Capsule{
 				Radius: radius,

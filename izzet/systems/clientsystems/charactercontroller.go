@@ -32,5 +32,5 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 	}
 
 	frameInput := s.app.GetFrameInput()
-	shared.UpdateCharacterController(delta, world, frameInput, entity)
+	shared.UpdateCharacterController(delta, frameInput, entity)
 }

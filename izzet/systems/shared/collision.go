@@ -407,13 +407,13 @@ func postProcessing(context *collisionContext) {
 	for _, contact := range context.contacts {
 		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
 			entity := getEntity(context, contact.PackedIndexA)
-			entity.Physics.Grounded = true
-			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
+			entity.Kinematic.Grounded = true
+			entity.Kinematic.Velocity = mgl64.Vec3{0, 0, 0}
 		}
 		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, -1, 0}) > GroundedThreshold {
 			entity := getEntity(context, contact.PackedIndexB)
-			entity.Physics.Grounded = true
-			entity.Physics.Velocity = mgl64.Vec3{0, 0, 0}
+			entity.Kinematic.Grounded = true
+			entity.Kinematic.Velocity = mgl64.Vec3{0, 0, 0}
 		}
 	}
 }

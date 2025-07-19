@@ -13,6 +13,7 @@ type Entity struct {
 	Name                        string
 	Billboard                   bool
 	Physics                     *PhysicsComponent
+	Kinematic                   *KinematicComponent
 	Collider                    *ColliderComponent
 	Particles                   *ParticleGenerator
 	IsSocket                    bool

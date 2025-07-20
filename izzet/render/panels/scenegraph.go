@@ -6,8 +6,6 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 func sceneGraph(app renderiface.App) {
@@ -30,11 +28,6 @@ func sceneGraph(app renderiface.App) {
 					MaterialHandle: app.AssetManager().GetDefaultMaterialHandle(),
 				}
 				entity.Static = true
-
-				meshHandle := entity.MeshComponent.MeshHandle
-				primitives := app.AssetManager().GetPrimitives(meshHandle)
-				entity.Collider = &entities.ColliderComponent{ColliderGroup: types.ColliderGroupFlagTerrain, CollisionMask: types.ColliderGroupFlagTerrain}
-				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
 
 				world.AddEntity(entity)
 				app.SelectEntity(entity)

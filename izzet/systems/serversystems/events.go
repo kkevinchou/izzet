@@ -48,20 +48,13 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		entity.PositionSync = &entities.PositionSync{}
 		// entity.Physics = &entities.PhysicsComponent{GravityEnabled: true}
 		entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
-		entity.Collider = &entities.ColliderComponent{
-			CapsuleCollider: &collider.Capsule{
-				Radius: radius,
-				Top:    mgl64.Vec3{0, radius + length, 0},
-				Bottom: mgl64.Vec3{0, radius, 0},
-			},
-			ColliderGroup: types.ColliderGroupFlagPlayer,
-			CollisionMask: types.ColliderGroupFlagTerrain | types.ColliderGroupFlagPlayer,
+		capsule := collider.Capsule{
+			Radius: radius,
+			Top:    mgl64.Vec3{0, radius + length, 0},
+			Bottom: mgl64.Vec3{0, radius, 0},
 		}
+		entity.Collider = entities.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
 		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
-
-		capsule := entity.Collider.CapsuleCollider
-		entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{radius, radius, radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{radius, radius, radius})}
-
 		handle := assets.NewSingleEntityMeshHandle("alpha3")
 
 		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}

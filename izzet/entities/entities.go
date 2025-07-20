@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
-
-	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type Entity struct {
@@ -39,8 +37,7 @@ type Entity struct {
 	LocalRotation mgl64.Quat
 	LocalScale    mgl64.Vec3
 
-	MeshComponent       *MeshComponent
-	InternalBoundingBox collider.BoundingBox
+	MeshComponent *MeshComponent
 
 	CharacterControllerComponent *CharacterControllerComponent
 
@@ -69,13 +66,4 @@ func (e *Entity) Dirty() bool {
 
 func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
-}
-
-func (e *Entity) HasBoundingBox() bool {
-	return e.InternalBoundingBox != collider.EmptyBoundingBox
-}
-
-func (e *Entity) BoundingBox() collider.BoundingBox {
-	modelMatrix := WorldTransform(e)
-	return e.InternalBoundingBox.Transform(modelMatrix)
 }

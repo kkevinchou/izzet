@@ -72,13 +72,13 @@ type collisionData struct {
 }
 
 func ResolveCollisions(app App, observer ICollisionObserver) {
-	context := NewCollisionContext(app, observer)
+	context := NewPhysCollisionContext(app, observer)
 	broadPhaseCollectPairs(context)
 	detectAndResolve(context)
 	postProcessing(context)
 }
 
-func NewCollisionContext(app App, observer ICollisionObserver) *collisionContext {
+func NewPhysCollisionContext(app App, observer ICollisionObserver) *collisionContext {
 	context := &collisionContext{
 		world:                app.World(),
 		localPlayerCollision: app.IsClient(),

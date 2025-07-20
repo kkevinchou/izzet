@@ -7,6 +7,7 @@ import (
 
 type GameWorld interface {
 	GetEntityByID(int) *entities.Entity
+	GetKinematicEntityByID(int) *entities.Entity
 	Entities() []*entities.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 }

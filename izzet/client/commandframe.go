@@ -143,7 +143,6 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 				if err == nil {
 					id := entities.GetNextIDAndAdvance()
 					newEntity.ID = id
-
 					serialization.InitDeserializedEntity(&newEntity, g.AssetManager())
 
 					g.world.AddEntity(&newEntity)

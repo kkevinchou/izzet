@@ -75,6 +75,19 @@ func SetDirty(entity *Entity) {
 	for _, child := range entity.Children {
 		SetDirty(child)
 	}
+
+	if entity.Collider != nil {
+		if entity.Collider.proxyCapsuleCollider != nil {
+			entity.Collider.proxyCapsuleCollider.Dirty = true
+		}
+		if entity.Collider.proxyTriMeshCollider != nil {
+			entity.Collider.proxyTriMeshCollider.Dirty = true
+		}
+		if entity.Collider.proxyBoundingBoxCollider != nil {
+			entity.Collider.proxyBoundingBoxCollider.Dirty = true
+		}
+	}
+
 	entity.DirtyTransformFlag = true
 }
 

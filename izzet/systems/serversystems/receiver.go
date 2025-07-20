@@ -104,19 +104,10 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	handle := assets.NewSingleEntityMeshHandle(modelName)
 	entity := entities.CreateEmptyEntity(modelName)
 	entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: false}
-	entity.Collider = &entities.ColliderComponent{
-		ColliderGroup: types.ColliderGroupFlagPlayer,
-		CollisionMask: types.ColliderGroupFlagTerrain | types.ColliderGroupFlagPlayer,
-	}
 
-	// primitives := s.app.AssetManager().GetPrimitives(handle)
-	// verts := assets.UniqueVerticesFromPrimitives(primitives)
-	// c := collider.NewCapsuleFromVertices(verts)
-	c := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
-	entity.Collider.CapsuleCollider = &c
-
-	capsule := entity.Collider.CapsuleCollider
-	entity.InternalBoundingBox = collider.BoundingBox{MinVertex: capsule.Bottom.Sub(mgl64.Vec3{c.Radius, c.Radius, c.Radius}), MaxVertex: capsule.Top.Add(mgl64.Vec3{c.Radius, c.Radius, c.Radius})}
+	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
+	entity.Collider = entities.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
+	entity.Collider.CapsuleCollider = &capsule
 
 	entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 	entity.Animation = entities.NewAnimationComponent(modelName, s.app.AssetManager())

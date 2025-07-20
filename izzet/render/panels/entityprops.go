@@ -332,14 +332,56 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 				imgui.PopID()
 			}, true)
-			panelutils.SetupRow("Grounded", func() {
-				imgui.LabelText("", fmt.Sprintf("%t", entity.Physics.Grounded))
-			}, true)
-			panelutils.SetupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
+			// panelutils.SetupRow("Grounded", func() {
+			// 	imgui.LabelText("", fmt.Sprintf("%t", entity.Physics.Grounded))
+			// }, true)
+			// panelutils.SetupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
 			imgui.EndTable()
 			imgui.PushIDStr("remove phys")
 			if imgui.Button("Remove") {
 				entity.Physics = nil
+			}
+			imgui.PopID()
+		}
+	}
+	if entity.Kinematic != nil {
+		kinematicComponent := entity.Kinematic
+		velocity := &kinematicComponent.Velocity
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Kinematic Properties", imgui.TreeNodeFlagsNone) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			panelutils.InitColumns()
+
+			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
+
+			panelutils.SetupRow("Velocity X", func() {
+				imgui.PushIDStr("velocity x")
+				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
+					velocity[0] = float64(x)
+				}
+				imgui.PopID()
+			}, true)
+			panelutils.SetupRow("Velocity Y", func() {
+				imgui.PushIDStr("velocity y")
+				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
+					velocity[1] = float64(y)
+				}
+				imgui.PopID()
+			}, true)
+			panelutils.SetupRow("Velocity Z", func() {
+				imgui.PushIDStr("velocity z")
+				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
+					velocity[2] = float64(z)
+				}
+				imgui.PopID()
+			}, true)
+			panelutils.SetupRow("Grounded", func() {
+				imgui.LabelText("", fmt.Sprintf("%t", entity.Kinematic.Grounded))
+			}, true)
+			panelutils.SetupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Kinematic.GravityEnabled) }, true)
+			imgui.EndTable()
+			imgui.PushIDStr("remove kinematic")
+			if imgui.Button("Remove") {
+				entity.Kinematic = nil
 			}
 			imgui.PopID()
 		}

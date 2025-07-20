@@ -3,10 +3,7 @@ package shared
 import (
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 func PhysicsStepSingle(delta time.Duration, entity *entities.Entity) {
@@ -20,17 +17,17 @@ func PhysicsStep(delta time.Duration, worldEntities []*entities.Entity) {
 			continue
 		}
 
-		if physicsComponent.GravityEnabled {
-			velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
-			physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
-			if physicsComponent.RotateOnVelocity {
+		// if physicsComponent.GravityEnabled {
+		// 	velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
+		// 	physicsComponent.Velocity = physicsComponent.Velocity.Add(velocityFromGravity)
+		// 	if physicsComponent.RotateOnVelocity {
 
-				if physicsComponent.Velocity != apputils.ZeroVec {
-					newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{physicsComponent.Velocity.X(), 0, physicsComponent.Velocity.Y()})
-					entities.SetLocalRotation(entity, newRotation)
-				}
-			}
-		}
+		// 		if physicsComponent.Velocity != apputils.ZeroVec {
+		// 			newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{physicsComponent.Velocity.X(), 0, physicsComponent.Velocity.Y()})
+		// 			entities.SetLocalRotation(entity, newRotation)
+		// 		}
+		// 	}
+		// }
 
 		aiComponent := entity.AIComponent
 		newPosition := entity.GetLocalPosition()

@@ -20,11 +20,14 @@ func (h MaterialHandle) String() string {
 }
 
 type KinematicEntity interface {
+	GetID() int
 	IsKinematic() bool
 	IsStatic() bool
 	GravityEnabled() bool
-	KinematicVelocity() mgl64.Vec3
-	AddKinematicVelocity(v mgl64.Vec3)
+	TotalKinematicVelocity() mgl64.Vec3
+	AccumulateKinematicVelocity(v mgl64.Vec3)
+	ClearKinematicVelocity()
+	SetGrounded(v bool)
 	Position() mgl64.Vec3
 	AddPosition(v mgl64.Vec3)
 	SetPosition(v mgl64.Vec3)

@@ -15,25 +15,24 @@ func UpdateCharacterController(delta time.Duration, frameInput input.Input, enti
 	c := entity.CharacterControllerComponent
 	c.ControlVector = apputils.GetControlVector(frameInput.KeyboardInput)
 
-	updateKinematicComponent(delta, frameInput, entity)
-
 	movementDir := calculateMovementDir(frameInput.CameraRotation, c.ControlVector)
-	movementDirWithoutY := removeYMovement(movementDir)
+	updateKinematicComponent(delta, frameInput, entity, movementDir)
 
-	var speed float64
-	if entity.Kinematic.Grounded {
-		movementDir = movementDirWithoutY
-		speed = c.Speed
-	} else {
-		speed = c.FlySpeed
-	}
+	//
+	// var speed float64
+	// if entity.Kinematic.Grounded {
+	// 	movementDir = movementDirWithoutY
+	// 	speed = c.Speed
+	// } else {
+	// 	speed = c.FlySpeed
+	// }
 
-	finalMovementDir := movementDir.Mul(speed)
-	finalMovementDir = finalMovementDir.Add(c.WebVector)
-	finalMovementDir = finalMovementDir.Mul(float64(delta.Milliseconds()) / 1000)
+	// finalMovementDir := movementDir.Mul(speed)
+	// finalMovementDir = finalMovementDir.Add(c.WebVector)
+	// finalMovementDir = finalMovementDir.Mul(float64(delta.Milliseconds()) / 1000)
 
-	entities.SetLocalPosition(entity, entity.LocalPosition.Add(finalMovementDir))
-	rotateEntityToFaceMovement(entity, movementDirWithoutY)
+	// entities.SetLocalPosition(entity, entity.LocalPosition.Add(finalMovementDir))
+	rotateEntityToFaceMovement(entity, removeYMovement(movementDir))
 }
 
 func rotateEntityToFaceMovement(entity *entities.Entity, movementDirWithoutY mgl64.Vec3) {
@@ -67,35 +66,40 @@ func rotateEntityToFaceMovement(entity *entities.Entity, movementDirWithoutY mgl
 	}
 }
 
-func updateKinematicComponent(delta time.Duration, frameInput input.Input, entity *entities.Entity) {
+func updateKinematicComponent(delta time.Duration, frameInput input.Input, entity *entities.Entity, movementDir mgl64.Vec3) {
 	keyboardInput := frameInput.KeyboardInput
-	cameraRotation := frameInput.CameraRotation
+	// cameraRotation := frameInput.CameraRotation
+
+	entity.Kinematic.Velocity = mgl64.Vec3{}
 
 	if event, ok := keyboardInput[input.KeyboardKeyG]; ok {
 		if event.Event == input.KeyboardEventUp {
 			entity.Kinematic.GravityEnabled = !entity.Kinematic.GravityEnabled
 			entity.Kinematic.Velocity = mgl64.Vec3{}
+			entity.Kinematic.AccumulatedVelocity = mgl64.Vec3{}
 		}
 	}
 
 	if entity.Kinematic.GravityEnabled {
 		if entity.Kinematic.Grounded {
-			entity.Kinematic.Velocity = mgl64.Vec3{}
 			if entity.CharacterControllerComponent.ControlVector.Y() > 0 {
 				entity.Kinematic.Grounded = false
-				entity.Kinematic.Velocity = entity.Kinematic.Velocity.Add(mgl64.Vec3{0, settings.CharacterJumpVelocity, 0})
-
-				dir := cameraRotation.Rotate(mgl64.Vec3{0, 1, -5}).Normalize()
-				entity.Kinematic.Velocity = entity.Kinematic.Velocity.Add(dir.Mul(50))
+				v := mgl64.Vec3{0, settings.CharacterJumpVelocity, 0}
+				entity.Kinematic.AccumulatedVelocity = entity.Kinematic.AccumulatedVelocity.Add(v)
 			}
 		}
+		entity.Kinematic.Velocity = entity.Kinematic.Velocity.Add(removeYMovement(movementDir).Mul(entity.CharacterControllerComponent.Speed))
 
-		viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
-		if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
-			if event.Event == input.KeyboardEventUp {
-				entity.Kinematic.Velocity = entity.Kinematic.Velocity.Add(viewVector.Mul(settings.CharacterWebLaunchSpeed))
-			}
-		}
+		// cameraRotation := frameInput.CameraRotation
+		// viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
+		// if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
+		// 	if event.Event == input.KeyboardEventUp {
+		// 		entity.Kinematic.Velocity = entity.Kinematic.Velocity.Add(viewVector.Mul(settings.CharacterWebLaunchSpeed))
+		// 	}
+		// }
+	} else {
+		c := entity.CharacterControllerComponent
+		entity.Kinematic.Velocity = entity.Kinematic.Velocity.Add(movementDir.Mul(c.FlySpeed))
 	}
 }
 

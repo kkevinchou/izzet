@@ -47,30 +47,24 @@ type ProxyBoundingBox struct {
 
 func (c *ColliderComponent) ProxyCapsule(transform mgl64.Mat4) collider.Capsule {
 	if c.proxyCapsuleCollider.Dirty {
-		c.proxyCapsuleCollider = &ProxyCapsule{
-			Capsule: c.CapsuleCollider.Transform(transform),
-			Dirty:   false,
-		}
+		c.proxyCapsuleCollider.Capsule = c.CapsuleCollider.Transform(transform)
+		c.proxyCapsuleCollider.Dirty = false
 	}
 	return c.proxyCapsuleCollider.Capsule
 }
 
 func (c *ColliderComponent) ProxyTriMesh(transform mgl64.Mat4) collider.TriMesh {
 	if c.proxyTriMeshCollider.Dirty {
-		c.proxyTriMeshCollider = &ProxyTriMesh{
-			TriMesh: c.TriMeshCollider.Transform(transform),
-			Dirty:   false,
-		}
+		c.proxyTriMeshCollider.TriMesh = c.TriMeshCollider.Transform(transform)
+		c.proxyTriMeshCollider.Dirty = false
 	}
 	return c.proxyTriMeshCollider.TriMesh
 }
 
 func (c *ColliderComponent) ProxyBoundingBox(transform mgl64.Mat4) collider.BoundingBox {
 	if c.proxyBoundingBoxCollider.Dirty {
-		c.proxyBoundingBoxCollider = &ProxyBoundingBox{
-			BoundingBox: c.BoundingBoxCollider.Transform(transform),
-			Dirty:       false,
-		}
+		c.proxyBoundingBoxCollider.BoundingBox = c.BoundingBoxCollider.Transform(transform)
+		c.proxyBoundingBoxCollider.Dirty = false
 	}
 	return c.proxyBoundingBoxCollider.BoundingBox
 }
@@ -103,11 +97,24 @@ func CreateTriMeshColliderComponent(colliderGroup, collisionMask types.ColliderG
 }
 
 func (e *Entity) HasCapsuleCollider() bool {
+	if e.Collider == nil {
+		return false
+	}
 	return e.Collider.CapsuleCollider != nil
 }
 
 func (e *Entity) HasTriMeshCollider() bool {
+	if e.Collider == nil {
+		return false
+	}
 	return e.Collider.TriMeshCollider != nil
+}
+
+func (e *Entity) HasBoundingBox() bool {
+	if e.Collider == nil {
+		return false
+	}
+	return e.Collider.BoundingBoxCollider != nil
 }
 
 func (e *Entity) CapsuleCollider() collider.Capsule {
@@ -116,13 +123,6 @@ func (e *Entity) CapsuleCollider() collider.Capsule {
 
 func (e *Entity) TriMeshCollider() collider.TriMesh {
 	return e.Collider.ProxyTriMesh(WorldTransform(e))
-}
-
-func (e *Entity) HasBoundingBox() bool {
-	if e.Collider == nil {
-		return false
-	}
-	return e.Collider.BoundingBoxCollider != nil
 }
 
 func (e *Entity) BoundingBox() collider.BoundingBox {

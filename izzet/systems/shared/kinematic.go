@@ -1,0 +1,143 @@
+package shared
+
+import (
+	"fmt"
+	"math"
+	"time"
+
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/collision"
+	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
+	"github.com/kkevinchou/kitolib/collision/collider"
+)
+
+func KinematicStepSingle(delta time.Duration, entity types.KinematicEntity, world GameWorld, app App) {
+	KinematicStep(delta, []types.KinematicEntity{entity}, world, app)
+}
+
+func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world GameWorld, app App) {
+	for _, e1 := range ents {
+		if e1.IsStatic() || !e1.IsKinematic() {
+			continue
+		}
+
+		if e1.GravityEnabled() {
+			velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
+			e1.AccumulateKinematicVelocity(velocityFromGravity)
+		}
+
+		e1.AddPosition(e1.TotalKinematicVelocity().Mul(delta.Seconds()))
+
+		maxRun := 15
+		var runCount int = 0
+		var grounded bool
+		for runCount = range maxRun {
+			candidates := world.SpatialPartition().QueryEntities(e1.BoundingBox())
+
+			if len(candidates) == 0 {
+				break
+			}
+
+			var minDist float64 = math.MaxFloat64
+			var minContact collision.Contact
+
+			for _, partitionEntity := range candidates {
+				var e2 types.KinematicEntity = world.GetEntityByID(partitionEntity.GetID())
+				if e1.GetID() == e2.GetID() {
+					continue
+				}
+
+				contacts := collide2(e1, e2)
+				for _, contact := range contacts {
+					if contact.SeparatingDistance < minDist {
+						minDist = contact.SeparatingDistance
+						minContact = contact
+					}
+				}
+			}
+
+			if minDist == math.MaxFloat64 {
+				break
+			}
+
+			if minContact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
+				grounded = true
+			}
+
+			e1.AddPosition(minContact.SeparatingVector)
+		}
+
+		e1.SetGrounded(grounded)
+		if grounded {
+			e1.ClearKinematicVelocity()
+		}
+
+		if runCount == maxRun-1 {
+			fmt.Println("HIT KINEMATIC MAX RUNCOUNT")
+		}
+	}
+}
+
+func collide2(e1, e2 types.KinematicEntity) []collision.Contact {
+	var result []collision.Contact
+
+	if (e1.HasCapsuleCollider() && e2.HasTriMeshCollider()) || (e2.HasCapsuleCollider() && e1.HasTriMeshCollider()) {
+		var capsuleCollider collider.Capsule
+		var triMeshCollider collider.TriMesh
+
+		if e1.HasCapsuleCollider() {
+			capsuleCollider = e1.CapsuleCollider()
+			triMeshCollider = e2.TriMeshCollider()
+		} else {
+			capsuleCollider = e2.CapsuleCollider()
+			triMeshCollider = e1.TriMeshCollider()
+		}
+
+		contacts := collision.CheckCollisionCapsuleTriMesh(
+			capsuleCollider,
+			triMeshCollider,
+		)
+
+		if len(contacts) == 0 {
+			return nil
+		}
+
+		for _, contact := range contacts {
+			c := collision.Contact{
+				Type:               contact.Type,
+				SeparatingVector:   contact.SeparatingVector,
+				SeparatingDistance: contact.SeparatingDistance,
+			}
+			if e2.HasCapsuleCollider() {
+				c.SeparatingVector = c.SeparatingVector.Mul(-1)
+			}
+			result = append(result, c)
+		}
+	} else if e1.HasCapsuleCollider() && e2.HasCapsuleCollider() {
+		contact, collisionDetected := collision.CheckCollisionCapsuleCapsule(
+			e1.CapsuleCollider(),
+			e2.CapsuleCollider(),
+		)
+
+		if !collisionDetected {
+			return nil
+		}
+
+		result = append(result, collision.Contact{
+			Type:               contact.Type,
+			SeparatingVector:   contact.SeparatingVector,
+			SeparatingDistance: contact.SeparatingDistance,
+		})
+	}
+
+	// filter out contacts that have tiny separating distances
+	threshold := 0.00005
+	var filteredContacts []collision.Contact
+	for _, contact := range result {
+		if contact.SeparatingDistance > threshold {
+			filteredContacts = append(filteredContacts, contact)
+		}
+	}
+	return filteredContacts
+}

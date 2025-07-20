@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -393,29 +392,29 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 }
 
 func postProcessing(context *collisionContext) {
-	for _, pair := range context.pairs {
-		e1 := getEntity(context, pair.PackedIndexA)
-		if e1.Physics != nil {
-			e1.Physics.Grounded = false
-		}
-		e2 := getEntity(context, pair.PackedIndexB)
-		if e2.Physics != nil {
-			e2.Physics.Grounded = false
-		}
-	}
+	// for _, pair := range context.pairs {
+	// 	e1 := getEntity(context, pair.PackedIndexA)
+	// 	if e1.Physics != nil {
+	// 		e1.Physics.Grounded = false
+	// 	}
+	// 	e2 := getEntity(context, pair.PackedIndexB)
+	// 	if e2.Physics != nil {
+	// 		e2.Physics.Grounded = false
+	// 	}
+	// }
 
-	for _, contact := range context.contacts {
-		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
-			entity := getEntity(context, contact.PackedIndexA)
-			entity.Kinematic.Grounded = true
-			entity.Kinematic.Velocity = mgl64.Vec3{0, 0, 0}
-		}
-		if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, -1, 0}) > GroundedThreshold {
-			entity := getEntity(context, contact.PackedIndexB)
-			entity.Kinematic.Grounded = true
-			entity.Kinematic.Velocity = mgl64.Vec3{0, 0, 0}
-		}
-	}
+	// for _, contact := range context.contacts {
+	// 	if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
+	// 		entity := getEntity(context, contact.PackedIndexA)
+	// 		entity.Kinematic.Grounded = true
+	// 		entity.Kinematic.Velocity = mgl64.Vec3{0, 0, 0}
+	// 	}
+	// 	if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, -1, 0}) > GroundedThreshold {
+	// 		entity := getEntity(context, contact.PackedIndexB)
+	// 		entity.Kinematic.Grounded = true
+	// 		entity.Kinematic.Velocity = mgl64.Vec3{0, 0, 0}
+	// 	}
+	// }
 }
 
 func getEntity(context *collisionContext, index int) *entities.Entity {

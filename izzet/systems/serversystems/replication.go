@@ -52,9 +52,9 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 			Position: entity.GetLocalPosition(),
 			Rotation: entity.GetLocalRotation(),
 		}
-		if entity.Physics != nil {
-			entityState.Velocity = entity.Physics.Velocity
-			entityState.GravityEnabled = entity.Physics.GravityEnabled
+		if entity.Kinematic != nil {
+			// entityState.Velocity = entity.Kinematic.Velocity
+			entityState.GravityEnabled = entity.Kinematic.GravityEnabled
 		}
 		if entity.Animation != nil {
 			entityState.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()

@@ -70,7 +70,7 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 func (s *InputSystem) computePlayerCameraRotation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {
 	camera := s.app.GetPlayerCamera()
 	newRotation := computeCameraRotation(frameInput, camera)
-	entities.SetLocalRotation(camera, newRotation)
+	camera.SetLocalRotation(newRotation)
 	return newRotation
 }
 

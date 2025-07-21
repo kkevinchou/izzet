@@ -28,7 +28,7 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		}
 
 		entities.SetLocalPosition(entity, transform.Position)
-		entities.SetLocalRotation(entity, transform.Rotation)
+		entity.SetLocalRotation(transform.Rotation)
 		entity.Kinematic.Velocity = transform.Velocity
 		entity.Kinematic.GravityEnabled = transform.GravityEnabled
 

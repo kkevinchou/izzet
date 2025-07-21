@@ -332,10 +332,6 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 				}
 				imgui.PopID()
 			}, true)
-			// panelutils.SetupRow("Grounded", func() {
-			// 	imgui.LabelText("", fmt.Sprintf("%t", entity.Physics.Grounded))
-			// }, true)
-			// panelutils.SetupRow("Enable Gravity", func() { imgui.Checkbox("", &entity.Physics.GravityEnabled) }, true)
 			imgui.EndTable()
 			imgui.PushIDStr("remove phys")
 			if imgui.Button("Remove") {

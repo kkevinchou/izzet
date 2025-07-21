@@ -56,7 +56,7 @@ func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, m
 	var vertices []modelspec.Vertex
 	entities.VerticesFromNode(node, document, &vertices)
 	entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-	entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
+	entity.SetLocalRotation(utils.QuatF32ToF64(node.Rotation))
 	entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
 
 	entity.Static = config.Static

@@ -55,7 +55,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 			r := entity.GetLocalRotation()
 			finalRotation := aiComponent.RotationConfig.Quat.Mul(r)
 			frameRotation := utils.QInterpolate64(r, finalRotation, float64(delta.Milliseconds())/1000)
-			entities.SetLocalRotation(entity, frameRotation)
+			entity.SetLocalRotation(frameRotation)
 		}
 
 		if aiComponent.TargetConfig != nil {
@@ -69,7 +69,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 
 					if dir != apputils.ZeroVec {
 						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
-						entities.SetLocalRotation(entity, newRotation)
+						entity.SetLocalRotation(newRotation)
 					}
 				}
 			}
@@ -117,7 +117,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 
 						if dir != apputils.ZeroVec {
 							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
-							entities.SetLocalRotation(entity, newRotation)
+							entity.SetLocalRotation(newRotation)
 						}
 					}
 				} else {
@@ -155,7 +155,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				} else {
 					aiComponent.State = entities.AIStateAttack
 					newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{dirToTarget.X(), 0, dirToTarget.Z()})
-					entities.SetLocalRotation(entity, newRotation)
+					entity.SetLocalRotation(newRotation)
 					aiComponent.PathfindConfig.State = entities.PathfindingStateNoGoal
 				}
 			}

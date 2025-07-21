@@ -519,9 +519,9 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 					worldToLocalMatrix := transformMatrix.Inv()
 					_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
 					computedRotation := r.Mul(newRotationAdjustment)
-					entities.SetLocalRotation(entity, computedRotation.Mul(entity.GetLocalRotation()))
+					entity.SetLocalRotation(computedRotation.Mul(entity.GetLocalRotation()))
 				} else {
-					entities.SetLocalRotation(entity, newRotationAdjustment.Mul(entity.GetLocalRotation()))
+					entity.SetLocalRotation(newRotationAdjustment.Mul(entity.GetLocalRotation()))
 				}
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(

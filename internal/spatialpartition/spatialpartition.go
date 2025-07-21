@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type Entity interface {

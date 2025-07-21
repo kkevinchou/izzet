@@ -1,10 +1,10 @@
 package serialization
 
 import (
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 func InitDeserializedEntity(entity *entities.Entity, ml *assets.AssetManager) {

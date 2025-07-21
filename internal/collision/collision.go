@@ -2,12 +2,26 @@ package collision
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/collision/checks"
-	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/izzet/internal/collision/checks"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 )
 
+type ContactsBySeparatingDistance []Contact
+
+func (c ContactsBySeparatingDistance) Len() int {
+	return len(c)
+}
+func (c ContactsBySeparatingDistance) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+func (c ContactsBySeparatingDistance) Less(i, j int) bool {
+	return c[i].SeparatingDistance < c[j].SeparatingDistance
+}
+
 type Contact struct {
-	Type ContactType
+	PackedIndexA int
+	PackedIndexB int
+	Type         ContactType
 
 	SeparatingVector   mgl64.Vec3
 	SeparatingDistance float64
@@ -17,36 +31,6 @@ type ContactType string
 
 var ContactTypeCapsuleTriMesh ContactType = "TRIMESH"
 var ContactTypeCapsuleCapsule ContactType = "CAPSULE"
-
-// for now assumes vertical capsules only
-func CheckCollisionCapsuleCapsule(capsule1 collider.Capsule, capsule2 collider.Capsule) (Contact, bool) {
-	closestPoints, closestPointsDistance := checks.ClosestPointsLineVSLine(
-		collider.Line{P1: capsule1.Top, P2: capsule1.Bottom},
-		collider.Line{P1: capsule2.Top, P2: capsule2.Bottom},
-	)
-
-	separatingDistance := (capsule1.Radius + capsule2.Radius) - closestPointsDistance
-	if separatingDistance > 0 {
-		capsule2To1 := closestPoints[0].Sub(closestPoints[1])
-
-		// if the two capsules are directly atop one another, push the capsule up
-		if capsule2To1.LenSqr() == 0 {
-			separatingDistance = capsule2.Top.Sub(capsule2.Bottom).Len() + 2*capsule2.Radius
-			capsule2To1 = mgl64.Vec3{0, 1, 0}
-		}
-
-		capsule2To1Dir := capsule2To1.Normalize()
-		separatingVec := capsule2To1Dir.Mul(separatingDistance)
-		return Contact{
-			// Point:              capsule2To1Dir.Mul(closestPointsDistance),
-			SeparatingVector:   separatingVec,
-			SeparatingDistance: separatingDistance,
-			Type:               ContactTypeCapsuleCapsule,
-		}, true
-	}
-
-	return Contact{}, false
-}
 
 func CheckCollisionCapsuleTriMesh(capsule collider.Capsule, triangulatedMesh collider.TriMesh) []Contact {
 	var contacts []Contact
@@ -91,4 +75,50 @@ func CheckCollisionCapsuleTriangle(capsule collider.Capsule, triangle collider.T
 	}
 
 	return Contact{}, false
+}
+
+// for now assumes vertical capsules only
+func CheckCollisionCapsuleCapsule(capsule1 collider.Capsule, capsule2 collider.Capsule) (Contact, bool) {
+	closestPoints, closestPointsDistance := checks.ClosestPointsLineVSLine(
+		collider.Line{P1: capsule1.Top, P2: capsule1.Bottom},
+		collider.Line{P1: capsule2.Top, P2: capsule2.Bottom},
+	)
+
+	separatingDistance := (capsule1.Radius + capsule2.Radius) - closestPointsDistance
+	if separatingDistance > 0 {
+		capsule2To1 := closestPoints[0].Sub(closestPoints[1])
+
+		// if the two capsules are directly atop one another, push the capsule up
+		if capsule2To1.LenSqr() == 0 {
+			separatingDistance = capsule2.Top.Sub(capsule2.Bottom).Len() + 2*capsule2.Radius
+			capsule2To1 = mgl64.Vec3{0, 1, 0}
+		}
+
+		capsule2To1Dir := capsule2To1.Normalize()
+		separatingVec := capsule2To1Dir.Mul(separatingDistance)
+		return Contact{
+			// Point:              capsule2To1Dir.Mul(closestPointsDistance),
+			SeparatingVector:   separatingVec,
+			SeparatingDistance: separatingDistance,
+			Type:               ContactTypeCapsuleCapsule,
+		}, true
+	}
+
+	return Contact{}, false
+}
+
+func CheckOverlapAABBAABB(aabb1 *collider.BoundingBox, aabb2 *collider.BoundingBox) bool {
+	if aabb1.MaxVertex.X() < aabb2.MinVertex.X() || aabb1.MinVertex.X() > aabb2.MaxVertex.X() {
+		return false
+	}
+
+	if aabb1.MaxVertex.Y() < aabb2.MinVertex.Y() || aabb1.MinVertex.Y() > aabb2.MaxVertex.Y() {
+		return false
+	}
+
+	if aabb1.MaxVertex.Z() < aabb2.MinVertex.Z() || aabb1.MinVertex.Z() > aabb2.MaxVertex.Z() {
+		return false
+	}
+
+	return true
 }

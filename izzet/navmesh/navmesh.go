@@ -4,7 +4,7 @@ import (
 	"cmp"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 )
 
 const maxHeight int = 0xffff

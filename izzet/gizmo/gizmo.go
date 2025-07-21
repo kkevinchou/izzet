@@ -4,8 +4,8 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/collision/checks"
-	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/izzet/internal/collision/checks"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/kitolib/input"
 )
 

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/kkevinchou/izzet/internal/collision"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/collision"
-	"github.com/kkevinchou/kitolib/collision/collider"
 )
 
 type App interface {

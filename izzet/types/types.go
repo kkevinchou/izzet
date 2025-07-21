@@ -2,7 +2,7 @@ package types
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/collision/collider"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 )
 
 type MeshHandle struct {

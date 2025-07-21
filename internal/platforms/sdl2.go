@@ -20,12 +20,12 @@ type SDLPlatform struct {
 	keyMap  map[sdl.Scancode]imgui.Key
 }
 
-func NewSDLPlatform() (*SDLPlatform, *SDLWindow, error) {
+func NewSDLPlatform(width, height int, fullscreen bool) (*SDLPlatform, *SDLWindow, error) {
 	imgui.CreateContext()
 	imguiIO := imgui.CurrentIO()
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
 
-	window, err := InitSDL()
+	window, err := InitSDL(width, height, fullscreen)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -225,7 +225,7 @@ func (platform *SDLPlatform) MoveMouse(x, y int32) {
 	platform.window.WarpMouseInWindow(x, y)
 }
 
-func InitSDL() (*sdl.Window, error) {
+func InitSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
 	}
@@ -241,20 +241,15 @@ func InitSDL() (*sdl.Window, error) {
 
 	sdl.SetRelativeMouseMode(false)
 
-	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE | sdl.WINDOW_MAXIMIZED
-	// if config.Fullscreen {
-	// 	dm, err := sdl.GetCurrentDisplayMode(0)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	config.Width = int(dm.W)
-	// 	config.Height = int(dm.H)
-	// 	// windowFlags |= sdl.WINDOW_MAXIMIZED
-	// 	windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
-	// 	// windowFlags |= sdl.WINDOW_FULLSCREEN
-	// }
+	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
+	if fullscreen {
+		windowFlags |= sdl.WINDOW_MAXIMIZED
+		// windowFlags |= sdl.WINDOW_MAXIMIZED
+		// windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
+		// windowFlags |= sdl.WINDOW_FULLSCREEN
+	}
 
-	win, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, windowWidth, windowHeight, uint32(windowFlags))
+	win, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(width), int32(height), uint32(windowFlags))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create window %s", err)
 	}

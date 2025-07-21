@@ -6,38 +6,56 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
+const maxBufferedInput int = 3
+
 type BufferedInput struct {
 	Input             input.Input
 	LocalCommandFrame int
 }
 
 type InputBuffer struct {
-	inputs map[int][]BufferedInput
-	cursor map[int]int
+	playerBuffers map[int]*PlayerBuffer
+}
+
+type PlayerBuffer struct {
+	count  int
+	inputs []BufferedInput
+	cursor int
 }
 
 func New() *InputBuffer {
-	return &InputBuffer{
-		inputs: map[int][]BufferedInput{}, // TOOD -  use a ring buffer of inputs
-		cursor: map[int]int{},
+	return &InputBuffer{playerBuffers: map[int]*PlayerBuffer{}}
+}
+
+func (b *InputBuffer) RegisterPlayer(playerID int) {
+	b.playerBuffers[playerID] = &PlayerBuffer{inputs: make([]BufferedInput, maxBufferedInput)}
+}
+
+func (b *InputBuffer) DeregisterPlayer(playerID int) {
+	delete(b.playerBuffers, playerID)
+}
+
+func (b *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input) {
+	buffer := b.playerBuffers[playerID]
+	buffer.inputs[buffer.count%maxBufferedInput] = BufferedInput{LocalCommandFrame: localCommandFrame, Input: frameInput}
+	buffer.count++
+	if buffer.count-buffer.cursor > maxBufferedInput {
+		buffer.cursor++
 	}
 }
 
-func (i *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input) {
-	i.inputs[playerID] = append(i.inputs[playerID], BufferedInput{Input: frameInput, LocalCommandFrame: localCommandFrame})
-}
-
-func (i *InputBuffer) PullInput(playerID int) BufferedInput {
-	cursor := i.cursor[playerID]
-	if cursor >= len(i.inputs[playerID]) {
-		cursor = len(i.inputs[playerID]) - 1
-	}
-	if cursor == -1 {
+func (b *InputBuffer) PullInput(playerID int) BufferedInput {
+	buffer := b.playerBuffers[playerID]
+	if buffer.count == 0 {
 		fmt.Println("no input found for player", playerID)
 		return BufferedInput{}
 	}
 
-	bufferedInput := i.inputs[playerID][cursor]
-	i.cursor[playerID] = cursor + 1 // todo - should we skip incrementing if we pull an input that matches the last frame? i.e. if we detect that we have a late input?
+	if buffer.cursor >= buffer.count && buffer.count != 0 {
+		buffer.cursor = buffer.count - 1
+	}
+
+	bufferedInput := buffer.inputs[buffer.cursor%maxBufferedInput]
+	buffer.cursor++
 	return bufferedInput
 }

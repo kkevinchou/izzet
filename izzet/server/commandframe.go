@@ -10,10 +10,7 @@ import (
 
 func (g *Server) runCommandFrame(delta time.Duration) {
 	g.commandFrame += 1
-	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
-	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
 	g.handleSpatialPartition()
-
 	g.handlePlayerConnections()
 	for _, s := range g.systems {
 		start := time.Now()

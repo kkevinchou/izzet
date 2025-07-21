@@ -140,6 +140,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	compileShaders(r.shaderManager)
 
 	imguiIO := imgui.CurrentIO()
+	imguiIO.SetConfigDebugIsDebuggerPresent(true)
 	imguiRenderer, err := renderers.NewOpenGL3(imguiIO)
 	if err != nil {
 		panic(err)

@@ -70,6 +70,7 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 	inMessageChannel := make(chan network.MessageTransport, 100)
 	disconnectChannel := make(chan bool, 1)
 	c := network.NewClient(connection)
+	g.inputBuffer.RegisterPlayer(playerID)
 	g.players[playerID] = &network.Player{
 		ID: playerID, Connection: connection,
 		InMessageChannel:  inMessageChannel,
@@ -106,6 +107,7 @@ func (g *Server) RegisterPlayer(playerID int, connection net.Conn) *network.Play
 }
 
 func (g *Server) DeregisterPlayer(playerID int) {
+	g.inputBuffer.DeregisterPlayer(playerID)
 	delete(g.players, playerID)
 }
 

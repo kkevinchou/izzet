@@ -90,7 +90,7 @@ type Client struct {
 func New(shaderDirectory string, config settings.Config, projectName string) *Client {
 	initSeed()
 
-	sdlPlatform, window, err := platforms.NewSDLPlatform()
+	sdlPlatform, window, err := platforms.NewSDLPlatform(config.Width, config.Height, config.Fullscreen)
 	if err != nil {
 		panic(err)
 	}

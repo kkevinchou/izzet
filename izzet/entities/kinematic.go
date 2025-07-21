@@ -9,7 +9,6 @@ type KinematicComponent struct {
 	AccumulatedVelocity mgl64.Vec3
 	Grounded            bool
 	GravityEnabled      bool
-	RotateOnVelocity    bool
 }
 
 func (e *Entity) IsKinematic() bool {
@@ -40,9 +39,9 @@ func (e *Entity) SetPosition(v mgl64.Vec3) {
 	SetLocalPosition(e, v)
 }
 
-func (e *Entity) ClearKinematicVelocity() {
-	e.Kinematic.Velocity = mgl64.Vec3{}
-	e.Kinematic.AccumulatedVelocity = mgl64.Vec3{}
+func (e *Entity) ClearVerticalKinematicVelocity() {
+	e.Kinematic.Velocity = mgl64.Vec3{e.Kinematic.Velocity.X(), 0, e.Kinematic.Velocity.Z()}
+	e.Kinematic.AccumulatedVelocity = mgl64.Vec3{e.Kinematic.AccumulatedVelocity.X(), 0, e.Kinematic.AccumulatedVelocity.Z()}
 }
 
 func (e *Entity) SetGrounded(v bool) {

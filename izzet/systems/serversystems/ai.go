@@ -48,11 +48,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
 			dir := target.Sub(position).Normalize()
-			aiComponent.AIVelocity = dir.Mul(aiComponent.Speed)
-			if dir != apputils.ZeroVec {
-				newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
-				entities.SetLocalRotation(entity, newRotation)
-			}
+			entity.Kinematic.Velocity = dir.Mul(aiComponent.Speed)
 		}
 
 		if aiComponent.RotationConfig != nil {
@@ -69,7 +65,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
-					aiComponent.AIVelocity = dir.Mul(aiComponent.Speed)
+					entity.Kinematic.Velocity = dir.Mul(aiComponent.Speed)
 
 					if dir != apputils.ZeroVec {
 						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
@@ -99,7 +95,6 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 
 				var atGoal bool
 				if position.Sub(target).Len() < travelThreshold {
-					// entities.SetLocalPosition(entity, target)
 					position = target
 					if targetIndex == len(path)-1 {
 						aiComponent.PathfindConfig.Path = nil
@@ -118,7 +113,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						aiComponent.AIVelocity = dir.Mul(aiComponent.Speed)
+						entity.Kinematic.Velocity = dir.Mul(aiComponent.Speed)
 
 						if dir != apputils.ZeroVec {
 							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)

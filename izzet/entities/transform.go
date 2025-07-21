@@ -98,3 +98,7 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 	}
 	return mgl64.Ident4()
 }
+
+func (entity *Entity) SetLocalRotation(q mgl64.Quat) {
+	SetLocalRotation(entity, q)
+}

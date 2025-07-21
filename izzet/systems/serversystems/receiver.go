@@ -104,6 +104,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	handle := assets.NewSingleEntityMeshHandle(modelName)
 	entity := entities.CreateEmptyEntity(modelName)
 	// entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: false}
+	entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
 
 	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
 	entity.Collider = entities.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)

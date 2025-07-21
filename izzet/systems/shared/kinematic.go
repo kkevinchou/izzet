@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
@@ -27,12 +28,21 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 			e1.AccumulateKinematicVelocity(velocityFromGravity)
 		}
 
+		if e1.GravityEnabled() {
+			v := e1.TotalKinematicVelocity()
+			vWithoutY := mgl64.Vec3{v.X(), 0, v.Z()}
+			if vWithoutY != apputils.ZeroVec {
+				vWithoutY = vWithoutY.Normalize()
+				rotateEntityToFaceMovement(e1, vWithoutY)
+			}
+		}
+
 		e1.AddPosition(e1.TotalKinematicVelocity().Mul(delta.Seconds()))
 
-		maxRun := 15
+		maxRunCount := 100
 		var runCount int = 0
 		var grounded bool
-		for runCount = range maxRun {
+		for runCount = range maxRunCount {
 			candidates := world.SpatialPartition().QueryEntities(e1.BoundingBox())
 
 			if len(candidates) == 0 {
@@ -70,11 +80,11 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 
 		e1.SetGrounded(grounded)
 		if grounded {
-			e1.ClearKinematicVelocity()
+			e1.ClearVerticalKinematicVelocity()
 		}
 
-		if runCount == maxRun-1 {
-			fmt.Println("HIT KINEMATIC MAX RUNCOUNT")
+		if runCount == maxRunCount-1 {
+			fmt.Printf("HIT KINEMATIC MAX RUNCOUNT OF %d\n", maxRunCount)
 		}
 	}
 }
@@ -140,4 +150,35 @@ func collide2(e1, e2 types.KinematicEntity) []collision.Contact {
 		}
 	}
 	return filteredContacts
+}
+
+func rotateEntityToFaceMovement(entity types.KinematicEntity, movementDirWithoutY mgl64.Vec3) {
+	if movementDirWithoutY != apputils.ZeroVec {
+		currentRotation := entity.GetLocalRotation()
+		currentViewingVector := currentRotation.Rotate(mgl64.Vec3{0, 0, -1})
+		newViewingVector := movementDirWithoutY
+
+		dot := currentViewingVector.Dot(newViewingVector)
+		dot = mgl64.Clamp(dot, -1, 1)
+		acuteAngle := math.Acos(dot)
+
+		turnAnglePerFrame := (2 * math.Pi / 1000) * 2 * float64(settings.MSPerCommandFrame)
+
+		if left := currentViewingVector.Cross(newViewingVector).Y() > 0; !left {
+			turnAnglePerFrame = -turnAnglePerFrame
+		}
+
+		var newRotation mgl64.Quat
+
+		// turning angle is less than the goal
+		if math.Abs(turnAnglePerFrame) < acuteAngle {
+			turningQuaternion := mgl64.QuatRotate(turnAnglePerFrame, mgl64.Vec3{0, 1, 0})
+			newRotation = turningQuaternion.Mul(currentRotation)
+		} else {
+			// turning angle overshoots the goal, snap
+			newRotation = mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, movementDirWithoutY)
+		}
+
+		entity.SetLocalRotation(newRotation)
+	}
 }

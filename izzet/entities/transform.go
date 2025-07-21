@@ -59,11 +59,6 @@ func SetLocalPosition(entity *Entity, position mgl64.Vec3) {
 	entity.LocalPosition = position
 }
 
-func SetLocalRotation(entity *Entity, rotation mgl64.Quat) {
-	SetDirty(entity)
-	entity.LocalRotation = rotation
-}
-
 func SetScale(entity *Entity, scale mgl64.Vec3) {
 	SetDirty(entity)
 	entity.LocalScale = scale
@@ -75,6 +70,19 @@ func SetDirty(entity *Entity) {
 	for _, child := range entity.Children {
 		SetDirty(child)
 	}
+
+	if entity.Collider != nil {
+		if entity.Collider.proxyCapsuleCollider != nil {
+			entity.Collider.proxyCapsuleCollider.Dirty = true
+		}
+		if entity.Collider.proxyTriMeshCollider != nil {
+			entity.Collider.proxyTriMeshCollider.Dirty = true
+		}
+		if entity.Collider.proxyBoundingBoxCollider != nil {
+			entity.Collider.proxyBoundingBoxCollider.Dirty = true
+		}
+	}
+
 	entity.DirtyTransformFlag = true
 }
 
@@ -84,4 +92,9 @@ func ComputeParentAndJointTransformMatrix(entity *Entity) mgl64.Mat4 {
 		return WorldTransform(entity.Parent)
 	}
 	return mgl64.Ident4()
+}
+
+func (entity *Entity) SetLocalRotation(q mgl64.Quat) {
+	SetDirty(entity)
+	entity.LocalRotation = q
 }

@@ -41,7 +41,7 @@ func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 				world.DeleteEntity(bs.EntityID)
 			} else {
 				entities.SetLocalPosition(entity, bs.Position)
-				entities.SetLocalRotation(entity, bs.Rotation)
+				entity.SetLocalRotation(bs.Rotation)
 			}
 		}
 	}

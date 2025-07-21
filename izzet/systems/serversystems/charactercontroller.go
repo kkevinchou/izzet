@@ -3,7 +3,6 @@ package serversystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
@@ -44,7 +43,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 
 		frameInput := s.app.GetPlayerInput(camera.PlayerInput.PlayerID)
 
-		entities.SetLocalRotation(camera, frameInput.CameraRotation)
-		shared.UpdateCharacterController(delta, world, frameInput, targetEntity)
+		camera.SetLocalRotation(frameInput.CameraRotation)
+		shared.UpdateCharacterController(delta, frameInput, targetEntity)
 	}
 }

@@ -3,8 +3,8 @@ package entities
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/collision/collider"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type ShapeType string
@@ -56,11 +56,10 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 
 	// cube only has a singular primitives
 	primitives := ml.GetPrimitives(handle)
-	uniqueVertices := utils.ModelSpecVertsToVec3(primitives[0].Primitive.UniqueVertices)
-	entity.InternalBoundingBox = collider.BoundingBoxFromVertices(uniqueVertices)
-
-	rotation := mgl64.QuatRotate(90, mgl64.Vec3{1, 0, 0})
-	rotation = rotation.Mul(mgl64.QuatRotate(90, mgl64.Vec3{0, 0, -1}))
+	uniqueVertices := assets.UniqueVerticesFromPrimitives(primitives)
+	bb := collider.BoundingBoxFromVertices(uniqueVertices)
+	t := collider.CreateTriMeshFromPrimitives(AssetPrimitiveToSpecPrimitive(primitives))
+	entity.Collider = CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, types.ColliderGroupFlagTerrain, *t, bb)
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
 
 	id += 1

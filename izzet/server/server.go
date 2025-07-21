@@ -98,6 +98,7 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, serversystems.NewAISystemSystem(g))
 	g.systems = append(g.systems, systems.NewPhysicsSystem(g))
+	g.systems = append(g.systems, systems.NewKinematicSystem(g))
 	g.systems = append(g.systems, systems.NewCollisionSystem(g))
 	g.systems = append(g.systems, &systems.CameraTargetSystem{})
 	g.systems = append(g.systems, serversystems.NewRulesSystem(g))

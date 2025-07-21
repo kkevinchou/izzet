@@ -28,9 +28,9 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		}
 
 		entities.SetLocalPosition(entity, transform.Position)
-		entities.SetLocalRotation(entity, transform.Rotation)
-		entity.Physics.Velocity = transform.Velocity
-		entity.Physics.GravityEnabled = transform.GravityEnabled
+		entity.SetLocalRotation(transform.Rotation)
+		entity.Kinematic.Velocity = transform.Velocity
+		entity.Kinematic.GravityEnabled = transform.GravityEnabled
 
 		// if app.PredictionDebugLogging() {
 		// 	fmt.Printf("\t - Intialized Entity [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), gamestateUpdateMessage.LastInputCommandFrame, apputils.FormatVec(transform.Position))
@@ -52,7 +52,8 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		// reset entity positions, (if they exist on the client)
 		// rerun spatial partioning over these entities ?
 
-		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, world, commandFrame.FrameInput, entity)
+		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, entity)
+		shared.KinematicStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity, app.World(), app)
 		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
 		shared.ResolveCollisions(app, observer)
 		// if app.PredictionDebugLogging() {

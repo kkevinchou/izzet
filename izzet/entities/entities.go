@@ -49,7 +49,6 @@ type Entity struct {
 	AIComponent *AIComponent
 
 	SpawnPointComponent *SpawnPoint
-	PositionSync        *PositionSync
 }
 
 func (e *Entity) GetID() int {

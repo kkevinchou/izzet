@@ -232,7 +232,6 @@ func initSeed() {
 func (g *Client) setupSystems() {
 	// input system depends on the camera system to update the camera rotation
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPositionSyncSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, systems.NewKinematicSystem(g))

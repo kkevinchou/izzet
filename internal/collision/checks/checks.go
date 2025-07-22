@@ -330,3 +330,21 @@ func ClosestPointsInfiniteLineVSLine(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl
 
 	return l1, p2, nonParallel
 }
+
+func BoundingBoxOverlaps(bb1, bb2 collider.BoundingBox) bool {
+	// observer.OnBoundingBoxCheck(e1, e2)
+
+	if bb1.MaxVertex.X() < bb2.MinVertex.X() || bb2.MaxVertex.X() < bb1.MinVertex.X() {
+		return false
+	}
+
+	if bb1.MaxVertex.Y() < bb2.MinVertex.Y() || bb2.MaxVertex.Y() < bb1.MinVertex.Y() {
+		return false
+	}
+
+	if bb1.MaxVertex.Z() < bb2.MinVertex.Z() || bb2.MaxVertex.Z() < bb1.MinVertex.Z() {
+		return false
+	}
+
+	return true
+}

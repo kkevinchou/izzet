@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/internal/collision"
+	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -72,7 +73,7 @@ type collisionData struct {
 
 func ResolveCollisions(app App, observer ICollisionObserver) {
 	context := NewPhysCollisionContext(app, observer)
-	broadPhaseCollectPairs(context)
+	broadPhaseCollectPairs(context, app)
 	detectAndResolve(context)
 	postProcessing(context)
 }
@@ -115,7 +116,7 @@ func NewPhysCollisionContext(app App, observer ICollisionObserver) *collisionCon
 	return context
 }
 
-func broadPhaseCollectPairs(context *collisionContext) {
+func broadPhaseCollectPairs(context *collisionContext, app App) {
 	world := context.world
 	observer := context.observer
 	uniquePairMap := map[packedIdxPair]any{}
@@ -125,7 +126,8 @@ func broadPhaseCollectPairs(context *collisionContext) {
 			continue
 		}
 		setupTransformedBoundingBox(context, i)
-		candidates := world.SpatialPartition().QueryEntities(context.packedCollisionData[i].boundingBox)
+		// candidates := world.SpatialPartition().QueryEntities(context.packedCollisionData[i].boundingBox)
+		candidates := world.SpatialPartition().QueryEntities(getEntity(context, i).BoundingBox())
 		observer.OnSpatialQuery(cd.entityID, len(candidates))
 		for _, c := range candidates {
 			e2 := world.GetEntityByID(c.GetID())
@@ -224,7 +226,7 @@ func collectSortedCollisionCandidates(context *collisionContext) []collision.Con
 		setupTransformedBoundingBox(context, pair.PackedIndexA)
 		setupTransformedBoundingBox(context, pair.PackedIndexB)
 
-		if !collideBoundingBox(context.packedCollisionData[pair.PackedIndexA].boundingBox, context.packedCollisionData[pair.PackedIndexB].boundingBox) {
+		if !checks.BoundingBoxOverlaps(context.packedCollisionData[pair.PackedIndexA].boundingBox, context.packedCollisionData[pair.PackedIndexB].boundingBox) {
 			continue
 		}
 
@@ -244,24 +246,6 @@ func collectSortedCollisionCandidates(context *collisionContext) []collision.Con
 	sort.Sort(collision.ContactsBySeparatingDistance(allContacts))
 
 	return allContacts
-}
-
-func collideBoundingBox(bb1, bb2 collider.BoundingBox) bool {
-	// observer.OnBoundingBoxCheck(e1, e2)
-
-	if bb1.MaxVertex.X() < bb2.MinVertex.X() || bb2.MaxVertex.X() < bb1.MinVertex.X() {
-		return false
-	}
-
-	if bb1.MaxVertex.Y() < bb2.MinVertex.Y() || bb2.MaxVertex.Y() < bb1.MinVertex.Y() {
-		return false
-	}
-
-	if bb1.MaxVertex.Z() < bb2.MinVertex.Z() || bb2.MaxVertex.Z() < bb1.MinVertex.Z() {
-		return false
-	}
-
-	return true
 }
 
 func collide(context *collisionContext, a, b int) []collision.Contact {

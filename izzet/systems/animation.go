@@ -39,18 +39,20 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 
 		if selectAnimation {
 			if entity.CharacterControllerComponent != nil {
-				animationPlayer := entity.Animation.AnimationPlayer
-				var animationName = "Walk"
-				if !entity.Kinematic.GravityEnabled {
-					animationName = "Floating"
-				} else if !entity.Kinematic.Grounded {
-					animationName = "Falling"
-				} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
-					animationName = "Running"
-				} else {
-					animationName = "Idle"
+				if entity.Kinematic != nil {
+					animationPlayer := entity.Animation.AnimationPlayer
+					var animationName = "Walk"
+					if !entity.Kinematic.GravityEnabled {
+						animationName = "Floating"
+					} else if !entity.Kinematic.Grounded {
+						animationName = "Falling"
+					} else if !apputils.IsZeroVec(entity.CharacterControllerComponent.ControlVector) {
+						animationName = "Running"
+					} else {
+						animationName = "Idle"
+					}
+					animationPlayer.PlayAnimation(animationName)
 				}
-				animationPlayer.PlayAnimation(animationName)
 			} else if entity.AIComponent != nil && entity.Kinematic != nil {
 				animationKey := entities.AnimationKeyRun
 				if entity.AIComponent.State == entities.AIStateAttack {

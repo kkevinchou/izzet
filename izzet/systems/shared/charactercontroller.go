@@ -11,6 +11,9 @@ import (
 )
 
 func UpdateCharacterController(delta time.Duration, frameInput input.Input, entity *entities.Entity) {
+	if entity.Kinematic == nil {
+		return
+	}
 	c := entity.CharacterControllerComponent
 	c.ControlVector = apputils.GetControlVector(frameInput.KeyboardInput)
 

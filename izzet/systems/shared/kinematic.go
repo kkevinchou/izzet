@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision"
+	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -58,7 +59,11 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 					continue
 				}
 
-				contacts := collide2(e1, e2)
+				if !checks.BoundingBoxOverlaps(e1.BoundingBox(), e2.BoundingBox()) {
+					continue
+				}
+
+				contacts := collideKinematicEntities(e1, e2)
 				for _, contact := range contacts {
 					if contact.SeparatingDistance < minDist {
 						minDist = contact.SeparatingDistance
@@ -89,7 +94,7 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 	}
 }
 
-func collide2(e1, e2 types.KinematicEntity) []collision.Contact {
+func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact {
 	var result []collision.Contact
 
 	if (e1.HasCapsuleCollider() && e2.HasTriMeshCollider()) || (e2.HasCapsuleCollider() && e1.HasTriMeshCollider()) {

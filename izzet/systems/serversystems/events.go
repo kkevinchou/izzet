@@ -45,9 +45,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		var radius float64 = 40
 		var length float64 = 80
 		entity := entities.CreateEmptyEntity("player")
-		entity.Kinematic = &entities.KinematicComponent{}
-		// entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
-		entity.Physics = &entities.PhysicsComponent{}
+		entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
 		capsule := collider.Capsule{
 			Radius: radius,
 			Top:    mgl64.Vec3{0, radius + length, 0},

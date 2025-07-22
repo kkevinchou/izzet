@@ -9,16 +9,14 @@ import (
 )
 
 type StateBuffer struct {
-	frames                [settings.MaxStateBufferSize]Frame
-	prevGSUpdate          network.GameStateUpdateMessage
-	prevLocalCommandFrame int
-	cursor                int
-	count                 int
-	pullCount             int
+	frames       [settings.MaxStateBufferSize]Frame
+	prevGSUpdate network.GameStateUpdateMessage
+	cursor       int
+	count        int
+	pullCount    int
 }
 
 type Frame struct {
-	CommandFrame int
 	EntityStates []EntityState
 }
 
@@ -36,7 +34,6 @@ func NewStateBuffer() *StateBuffer {
 func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localCommandFrame int) {
 	if sb.prevGSUpdate.LastInputCommandFrame == -1 {
 		sb.prevGSUpdate = updateMsg
-		sb.prevLocalCommandFrame = localCommandFrame
 		return
 	}
 
@@ -51,7 +48,6 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 		}
 	}
 
-	var startFrame int = sb.prevGSUpdate.GlobalCommandFrame
 	if sb.count >= 1 {
 		// if we have interpolated frames remaining, we essentially
 		// toss out the remaining interpolated frames and start generating
@@ -66,7 +62,6 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 		}
 
 		sb.count = 1
-		startFrame = sb.frames[sb.cursor].CommandFrame
 	} else {
 		for _, entity := range sb.prevGSUpdate.EntityStates {
 			blendStart[entity.EntityID] = EntityState{
@@ -90,18 +85,17 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 		}
 	}
 
-	numFrames := updateMsg.GlobalCommandFrame - startFrame + 1
-	sb.writeInterpolatedStates(updateMsg, blendStart, blendEnd, startFrame, numFrames)
+	sb.writeInterpolatedStates(updateMsg, blendStart, blendEnd)
 
 	sb.prevGSUpdate = updateMsg
-	sb.prevLocalCommandFrame = localCommandFrame
 }
 
-func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdateMessage, blendStart map[int]EntityState, blendEnd map[int]EntityState, startFrame, numFrames int) {
+func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdateMessage, blendStart map[int]EntityState, blendEnd map[int]EntityState) {
+	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame + 1
 	cfStep := float64(1) / float64(numFrames)
 
 	for i := 1; i <= numFrames; i++ {
-		frame := Frame{CommandFrame: startFrame + i}
+		frame := Frame{}
 
 		for id := range blendStart {
 			endSnapshot := blendEnd[id]

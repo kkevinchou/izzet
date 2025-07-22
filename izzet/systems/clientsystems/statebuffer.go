@@ -13,7 +13,6 @@ type StateBuffer struct {
 	prevGSUpdate network.GameStateUpdateMessage
 	cursor       int
 	count        int
-	pullCount    int
 }
 
 type Frame struct {
@@ -127,8 +126,6 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 }
 
 func (sb *StateBuffer) Pull(localCommandFrame int) (Frame, bool) {
-	sb.pullCount++
-
 	if sb.count == 0 {
 		return Frame{}, false
 	}

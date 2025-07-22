@@ -113,17 +113,6 @@ func (sb *StateBuffer) writeInterpolatedStates(gamestateUpdateMessage network.Ga
 			endSnapshot := blendEnd[id]
 			startSnapshot := blendStart[id]
 
-			if id >= 5160 {
-				if !Log[id] {
-					zero := mgl64.Vec3{}
-					if blendStart[id].Position == zero {
-						fmt.Println("No last entity state")
-					}
-					fmt.Println(startSnapshot.Position, "---", endSnapshot.Position)
-					Log[id] = true
-				}
-			}
-
 			bs := BufferedState{
 				EntityID: id,
 				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),

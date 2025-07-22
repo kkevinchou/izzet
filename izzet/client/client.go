@@ -193,6 +193,10 @@ func (g *Client) Start() {
 			}
 		}
 
+		sleepStart := time.Now()
+		time.Sleep(2 * time.Millisecond)
+		g.MetricsRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
+
 		if g.RuntimeConfig().LockRenderingToCommandFrameRate {
 			msPerFrame = float64(settings.MSPerCommandFrame)
 		} else {

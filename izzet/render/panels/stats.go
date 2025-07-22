@@ -38,6 +38,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.SetupRow("Render Buffer Setup", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_buffer_setup")))) }, true)
 		panelutils.SetupRow("Render Post Process", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_post_process")))) }, true)
 		panelutils.SetupRow("Render Imgui", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_imgui")))) }, true)
+		panelutils.SetupRow("Render Sleep", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_sleep")))) }, true)
 		panelutils.SetupRow("Command Frame Time", func() {
 			imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage("command_frame_nanoseconds")/1000000))
 		}, true)

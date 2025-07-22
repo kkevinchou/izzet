@@ -50,9 +50,6 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 	entityIDs := []int{}
 
 	for _, entity := range gamestateUpdateMessage.EntityStates {
-		// if entity.EntityID >= 5160 && !Log[entity.EntityID] {
-		// 	fmt.Println("STATE BUFFER PUSH", entity.EntityID)
-		// }
 		blendEnd[entity.EntityID] = BufferedState{
 			EntityID: entity.EntityID,
 			Position: entity.Position,

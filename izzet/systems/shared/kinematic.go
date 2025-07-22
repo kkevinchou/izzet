@@ -29,13 +29,11 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 			e1.AccumulateKinematicVelocity(velocityFromGravity)
 		}
 
-		if e1.GravityEnabled() {
-			v := e1.TotalKinematicVelocity()
-			vWithoutY := mgl64.Vec3{v.X(), 0, v.Z()}
-			if vWithoutY != apputils.ZeroVec {
-				vWithoutY = vWithoutY.Normalize()
-				rotateEntityToFaceMovement(e1, vWithoutY)
-			}
+		v := e1.TotalKinematicVelocity()
+		vWithoutY := mgl64.Vec3{v.X(), 0, v.Z()}
+		if vWithoutY != apputils.ZeroVec {
+			vWithoutY = vWithoutY.Normalize()
+			rotateEntityToFaceMovement(e1, vWithoutY)
 		}
 
 		e1.AddPosition(e1.TotalKinematicVelocity().Mul(delta.Seconds()))

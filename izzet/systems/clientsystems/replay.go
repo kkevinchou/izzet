@@ -3,7 +3,6 @@ package clientsystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -45,7 +44,7 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 	}
 
 	// TODO: make this a dummy physics observer
-	observer := collisionobserver.NewCollisionObserver()
+	// observer := collisionobserver.NewCollisionObserver()
 	for i := 1; i < len(commandFrames); i++ {
 		commandFrame := commandFrames[i]
 
@@ -54,8 +53,8 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, entity)
 		shared.KinematicStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity, app.World(), app)
-		shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
-		shared.ResolveCollisions(app, observer)
+		// shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
+		// shared.ResolveCollisions(app, observer)
 		// if app.PredictionDebugLogging() {
 		// 	fmt.Printf("\t - Replayed Frame [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), commandFrame.FrameNumber, apputils.FormatVec(entity.Position()))
 		// }

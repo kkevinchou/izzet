@@ -22,7 +22,7 @@ func (s *PostFrameSystem) Name() string {
 func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 	sb := s.app.StateBuffer()
 	if bi, ok := sb.Pull(s.app.CommandFrame()); ok {
-		for _, bs := range bi.BufferedStates {
+		for _, bs := range bi.EntityStates {
 			if bs.EntityID == s.app.GetPlayerEntity().ID {
 				continue
 			}

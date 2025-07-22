@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/kitolib/input"
 )
 
-type EntityState struct {
+type PostCommandFrameState struct {
 	ID             int
 	Position       mgl64.Vec3
 	Rotation       mgl64.Quat
@@ -20,7 +20,7 @@ type EntityState struct {
 type CommandFrame struct {
 	FrameNumber int
 	FrameInput  input.Input
-	PostCFState EntityState
+	PostCFState PostCommandFrameState
 }
 
 type CommandFrameHistory struct {
@@ -41,7 +41,7 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 	cf := CommandFrame{
 		FrameNumber: frameNumber,
 		FrameInput:  frameInput,
-		PostCFState: EntityState{
+		PostCFState: PostCommandFrameState{
 			ID:             player.GetID(),
 			Position:       player.LocalPosition,
 			Rotation:       player.LocalRotation,

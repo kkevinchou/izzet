@@ -32,13 +32,8 @@ func NewStateBuffer() *StateBuffer {
 	return &StateBuffer{lastGameStateUpdate: network.GameStateUpdateMessage{LastInputCommandFrame: -1}}
 }
 
-func init() {
-	Log = map[int]bool{}
-}
-
-var Log map[int]bool
-
 func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessage, localCommandFrame int) {
+	fmt.Println("PUSH", localCommandFrame)
 	if sb.lastGameStateUpdate.LastInputCommandFrame == -1 {
 		sb.lastGameStateUpdate = gamestateUpdateMessage
 		sb.lastGameStateLocalFrame = localCommandFrame
@@ -95,6 +90,8 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 
 	sb.writeInterpolatedStates(gamestateUpdateMessage, blendStart, blendEnd, entityIDs)
 
+	fmt.Println("\t COUNT", sb.count)
+
 	sb.lastGameStateUpdate = gamestateUpdateMessage
 	sb.lastGameStateLocalFrame = localCommandFrame
 }
@@ -136,6 +133,7 @@ func (sb *StateBuffer) writeInterpolatedStates(gamestateUpdateMessage network.Ga
 }
 
 func (sb *StateBuffer) Pull(localCommandFrame int) (BufferedInterpolation, bool) {
+	fmt.Println("PULL", localCommandFrame)
 	if sb.count == 0 || sb.bufferedInterpolations[sb.cursor].CommandFrame > localCommandFrame {
 		return BufferedInterpolation{}, false
 	}

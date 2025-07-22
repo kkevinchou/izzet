@@ -52,9 +52,6 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				var serverTransform network.EntityState
 
 				for _, transform := range gamestateUpdateMessage.EntityStates {
-					// if !Log[transform.EntityID] && transform.EntityID >= 5160 {
-					// 	fmt.Println("GAMESTATE UPDATE ENTITY", transform.EntityID)
-					// }
 					entity := world.GetEntityByID(transform.EntityID)
 					if entity == nil {
 						continue
@@ -129,9 +126,6 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 				serialization.InitDeserializedEntity(&entity, s.app.AssetManager())
 				world.AddEntity(&entity)
-				if entity.GetID() >= 5160 {
-					fmt.Println("CREATE ENTITY MESSAGE", entity.GetID())
-				}
 			} else if message.MessageType == network.MsgTypePing {
 				pingMessage, err := network.ExtractMessage[network.PingMessage](message)
 				if err != nil {

@@ -465,7 +465,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
 	// draw hud
-	r.hud()
+	// r.hud()
 
 	// store color picking entity
 	start = time.Now()

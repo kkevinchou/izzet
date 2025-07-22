@@ -32,6 +32,12 @@ func NewStateBuffer() *StateBuffer {
 	return &StateBuffer{lastGameStateUpdate: network.GameStateUpdateMessage{LastInputCommandFrame: -1}}
 }
 
+func init() {
+	Log = map[int]bool{}
+}
+
+var Log map[int]bool
+
 func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessage, localCommandFrame int) {
 	if sb.lastGameStateUpdate.LastInputCommandFrame == -1 {
 		sb.lastGameStateUpdate = gamestateUpdateMessage
@@ -44,6 +50,9 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 	entityIDs := []int{}
 
 	for _, entity := range gamestateUpdateMessage.EntityStates {
+		if entity.EntityID >= 5160 && !Log[entity.EntityID] {
+			fmt.Println("STATE BUFFER PUSH", entity.EntityID)
+		}
 		currentEntityStates[entity.EntityID] = BufferedState{
 			Position: entity.Position,
 			Rotation: entity.Rotation,
@@ -82,6 +91,17 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 		for _, id := range entityIDs {
 			endSnapshot := currentEntityStates[id]
 			startSnapshot := lastEntityStates[id]
+
+			if id >= 5160 {
+				if !Log[id] {
+					zero := mgl64.Vec3{}
+					if lastEntityStates[id].Position == zero {
+						fmt.Println("No last entity state")
+					}
+					fmt.Println(startSnapshot.Position, "---", endSnapshot.Position)
+					Log[id] = true
+				}
+			}
 
 			bs := BufferedState{
 				EntityID: id,

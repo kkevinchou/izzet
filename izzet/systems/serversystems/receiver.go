@@ -118,13 +118,13 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 
 	jitterX := rand.Intn(10)
 	jitterZ := rand.Intn(10)
-	entities.SetLocalPosition(entity, mgl64.Vec3{float64(jitterX), 60, float64(jitterZ)})
+	entities.SetLocalPosition(entity, mgl64.Vec3{float64(jitterX), 20, float64(jitterZ)})
 	entities.SetScale(entity, mgl64.Vec3{0.5, 0.5, 0.5})
 
 	entity.AIComponent = &entities.AIComponent{
 		Speed:          7,
 		PathfindConfig: &entities.PathfindConfig{},
-		PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{mgl64.Vec3{}, mgl64.Vec3{20, 0, 0}}},
+		// PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{mgl64.Vec3{}, mgl64.Vec3{20, 0, 0}}},
 		// AttackConfig:   &entities.AttackConfig{},
 	}
 

@@ -52,9 +52,9 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				var serverTransform network.EntityState
 
 				for _, transform := range gamestateUpdateMessage.EntityStates {
-					if !Log[transform.EntityID] && transform.EntityID >= 5160 {
-						fmt.Println("GAMESTATE UPDATE ENTITY", transform.EntityID)
-					}
+					// if !Log[transform.EntityID] && transform.EntityID >= 5160 {
+					// 	fmt.Println("GAMESTATE UPDATE ENTITY", transform.EntityID)
+					// }
 					entity := world.GetEntityByID(transform.EntityID)
 					if entity == nil {
 						continue

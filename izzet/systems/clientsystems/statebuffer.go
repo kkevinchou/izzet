@@ -45,15 +45,16 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 		return
 	}
 
-	currentEntityStates := map[int]BufferedState{}
-	lastEntityStates := map[int]BufferedState{}
+	blendEnd := map[int]BufferedState{}
+	blendStart := map[int]BufferedState{}
 	entityIDs := []int{}
 
 	for _, entity := range gamestateUpdateMessage.EntityStates {
-		if entity.EntityID >= 5160 && !Log[entity.EntityID] {
-			fmt.Println("STATE BUFFER PUSH", entity.EntityID)
-		}
-		currentEntityStates[entity.EntityID] = BufferedState{
+		// if entity.EntityID >= 5160 && !Log[entity.EntityID] {
+		// 	fmt.Println("STATE BUFFER PUSH", entity.EntityID)
+		// }
+		blendEnd[entity.EntityID] = BufferedState{
+			EntityID: entity.EntityID,
 			Position: entity.Position,
 			Rotation: entity.Rotation,
 		}
@@ -61,7 +62,8 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 
 	if sb.count >= 1 {
 		for _, entity := range sb.bufferedInterpolations[sb.cursor].BufferedStates {
-			lastEntityStates[entity.EntityID] = BufferedState{
+			blendStart[entity.EntityID] = BufferedState{
+				EntityID: entity.EntityID,
 				Position: entity.Position,
 				Rotation: entity.Rotation,
 			}
@@ -69,19 +71,38 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 		sb.count = 1
 	} else {
 		for _, entity := range sb.lastGameStateUpdate.EntityStates {
-			lastEntityStates[entity.EntityID] = BufferedState{
+			blendStart[entity.EntityID] = BufferedState{
 				Position: entity.Position,
 				Rotation: entity.Rotation,
 			}
 		}
 	}
 
-	for _, entity := range sb.lastGameStateUpdate.EntityStates {
-		if _, ok := currentEntityStates[entity.EntityID]; ok {
-			entityIDs = append(entityIDs, entity.EntityID)
+	// case where entity exists in the current game state update, but not the previous one
+	for _, endEntity := range blendEnd {
+		if _, ok := blendStart[endEntity.EntityID]; !ok {
+			blendStart[endEntity.EntityID] = blendEnd[endEntity.EntityID]
 		}
 	}
 
+	// case where entity exists in the last game state update, but not the current one
+	for _, startEntity := range blendStart {
+		if _, ok := blendEnd[startEntity.EntityID]; !ok {
+			blendEnd[startEntity.EntityID] = blendStart[startEntity.EntityID]
+		}
+	}
+
+	for _, entity := range blendStart {
+		entityIDs = append(entityIDs, entity.EntityID)
+	}
+
+	sb.writeInterpolatedStates(gamestateUpdateMessage, blendStart, blendEnd, entityIDs)
+
+	sb.lastGameStateUpdate = gamestateUpdateMessage
+	sb.lastGameStateLocalFrame = localCommandFrame
+}
+
+func (sb *StateBuffer) writeInterpolatedStates(gamestateUpdateMessage network.GameStateUpdateMessage, blendStart map[int]BufferedState, blendEnd map[int]BufferedState, entityIDs []int) {
 	numStates := gamestateUpdateMessage.GlobalCommandFrame - sb.lastGameStateUpdate.GlobalCommandFrame + 1
 	cfStep := float64(1) / float64(numStates)
 
@@ -89,13 +110,13 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 		bi := BufferedInterpolation{CommandFrame: 0}
 
 		for _, id := range entityIDs {
-			endSnapshot := currentEntityStates[id]
-			startSnapshot := lastEntityStates[id]
+			endSnapshot := blendEnd[id]
+			startSnapshot := blendStart[id]
 
 			if id >= 5160 {
 				if !Log[id] {
 					zero := mgl64.Vec3{}
-					if lastEntityStates[id].Position == zero {
+					if blendStart[id].Position == zero {
 						fmt.Println("No last entity state")
 					}
 					fmt.Println(startSnapshot.Position, "---", endSnapshot.Position)
@@ -126,9 +147,6 @@ func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessag
 		}
 		sb.count += 1
 	}
-
-	sb.lastGameStateUpdate = gamestateUpdateMessage
-	sb.lastGameStateLocalFrame = localCommandFrame
 }
 
 func (sb *StateBuffer) Pull(localCommandFrame int) (BufferedInterpolation, bool) {

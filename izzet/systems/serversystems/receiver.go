@@ -103,7 +103,6 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 
 	handle := assets.NewSingleEntityMeshHandle(modelName)
 	entity := entities.CreateEmptyEntity(modelName)
-	// entity.Physics = &entities.PhysicsComponent{GravityEnabled: true, RotateOnVelocity: false}
 	entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
 
 	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
@@ -118,13 +117,18 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 
 	jitterX := rand.Intn(10)
 	jitterZ := rand.Intn(10)
-	entities.SetLocalPosition(entity, mgl64.Vec3{float64(jitterX), 60, float64(jitterZ)})
+	entities.SetLocalPosition(entity, mgl64.Vec3{float64(jitterX), 20, float64(jitterZ)})
 	entities.SetScale(entity, mgl64.Vec3{0.5, 0.5, 0.5})
+
+	targetDist := 20
+	jitterTargetX := rand.Intn(targetDist) - 10
+	jitterTargetZ := rand.Intn(targetDist) - 10
+	target := mgl64.Vec3{float64(jitterTargetX), 0, float64(jitterTargetZ)}.Normalize().Mul(float64(targetDist))
 
 	entity.AIComponent = &entities.AIComponent{
 		Speed:          7,
 		PathfindConfig: &entities.PathfindConfig{},
-		PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{mgl64.Vec3{}, mgl64.Vec3{20, 0, 0}}},
+		PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{{float64(jitterX), 0, float64(jitterZ)}, target}},
 		// AttackConfig:   &entities.AttackConfig{},
 	}
 

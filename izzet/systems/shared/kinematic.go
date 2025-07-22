@@ -41,6 +41,7 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 		maxRunCount := 100
 		var runCount int = 0
 		var grounded bool
+
 		for runCount = range maxRunCount {
 			candidates := world.SpatialPartition().QueryEntities(e1.BoundingBox())
 

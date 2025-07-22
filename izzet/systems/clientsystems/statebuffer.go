@@ -9,19 +9,17 @@ import (
 )
 
 type StateBuffer struct {
-	bufferedInterpolations  [settings.MaxStateBufferSize]BufferedInterpolation
-	lastGameStateUpdate     network.GameStateUpdateMessage
-	lastGameStateLocalFrame int
-	cursor                  int
-	count                   int
+	frames       [settings.MaxStateBufferSize]Frame
+	prevGSUpdate network.GameStateUpdateMessage
+	cursor       int
+	count        int
 }
 
-type BufferedInterpolation struct {
-	CommandFrame   int
-	BufferedStates []BufferedState
+type Frame struct {
+	EntityStates []EntityState
 }
 
-type BufferedState struct {
+type EntityState struct {
 	EntityID int
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
@@ -29,100 +27,113 @@ type BufferedState struct {
 }
 
 func NewStateBuffer() *StateBuffer {
-	return &StateBuffer{lastGameStateUpdate: network.GameStateUpdateMessage{LastInputCommandFrame: -1}}
+	return &StateBuffer{prevGSUpdate: network.GameStateUpdateMessage{LastInputCommandFrame: -1}}
 }
 
-func (sb *StateBuffer) Push(gamestateUpdateMessage network.GameStateUpdateMessage, localCommandFrame int) {
-	if sb.lastGameStateUpdate.LastInputCommandFrame == -1 {
-		sb.lastGameStateUpdate = gamestateUpdateMessage
-		sb.lastGameStateLocalFrame = localCommandFrame
+func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localCommandFrame int) {
+	if sb.prevGSUpdate.LastInputCommandFrame == -1 {
+		sb.prevGSUpdate = updateMsg
 		return
 	}
 
-	currentEntityStates := map[int]BufferedState{}
-	lastEntityStates := map[int]BufferedState{}
-	entityIDs := []int{}
+	blendEnd := map[int]EntityState{}
+	blendStart := map[int]EntityState{}
 
-	for _, entity := range gamestateUpdateMessage.EntityStates {
-		currentEntityStates[entity.EntityID] = BufferedState{
+	for _, entity := range updateMsg.EntityStates {
+		blendEnd[entity.EntityID] = EntityState{
+			EntityID: entity.EntityID,
 			Position: entity.Position,
 			Rotation: entity.Rotation,
 		}
 	}
 
 	if sb.count >= 1 {
-		for _, entity := range sb.bufferedInterpolations[sb.cursor].BufferedStates {
-			lastEntityStates[entity.EntityID] = BufferedState{
+		// if we have interpolated frames remaining, we essentially
+		// toss out the remaining interpolated frames and start generating
+		// new ones from the new incoming game state update
+
+		for _, entity := range sb.frames[sb.cursor].EntityStates {
+			blendStart[entity.EntityID] = EntityState{
+				EntityID: entity.EntityID,
 				Position: entity.Position,
 				Rotation: entity.Rotation,
 			}
 		}
+
 		sb.count = 1
 	} else {
-		for _, entity := range sb.lastGameStateUpdate.EntityStates {
-			lastEntityStates[entity.EntityID] = BufferedState{
+		for _, entity := range sb.prevGSUpdate.EntityStates {
+			blendStart[entity.EntityID] = EntityState{
 				Position: entity.Position,
 				Rotation: entity.Rotation,
 			}
 		}
 	}
 
-	for _, entity := range sb.lastGameStateUpdate.EntityStates {
-		if _, ok := currentEntityStates[entity.EntityID]; ok {
-			entityIDs = append(entityIDs, entity.EntityID)
+	// case where entity exists in the current game state update, but not the previous one
+	for _, endEntity := range blendEnd {
+		if _, ok := blendStart[endEntity.EntityID]; !ok {
+			blendStart[endEntity.EntityID] = blendEnd[endEntity.EntityID]
 		}
 	}
 
-	numStates := gamestateUpdateMessage.GlobalCommandFrame - sb.lastGameStateUpdate.GlobalCommandFrame + 1
-	cfStep := float64(1) / float64(numStates)
+	// case where entity exists in the last game state update, but not the current one
+	for _, startEntity := range blendStart {
+		if _, ok := blendEnd[startEntity.EntityID]; !ok {
+			blendEnd[startEntity.EntityID] = blendStart[startEntity.EntityID]
+		}
+	}
 
-	for i := 1; i <= numStates; i++ {
-		bi := BufferedInterpolation{CommandFrame: 0}
+	sb.writeInterpolatedStates(updateMsg, blendStart, blendEnd)
 
-		for _, id := range entityIDs {
-			endSnapshot := currentEntityStates[id]
-			startSnapshot := lastEntityStates[id]
+	sb.prevGSUpdate = updateMsg
+}
 
-			bs := BufferedState{
+func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdateMessage, blendStart map[int]EntityState, blendEnd map[int]EntityState) {
+	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame + 1
+	cfStep := float64(1) / float64(numFrames)
+
+	for i := 1; i <= numFrames; i++ {
+		frame := Frame{}
+
+		for id := range blendStart {
+			endSnapshot := blendEnd[id]
+			startSnapshot := blendStart[id]
+
+			bs := EntityState{
 				EntityID: id,
 				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
 				Rotation: QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
 			}
 
-			bi.BufferedStates = append(bi.BufferedStates, bs)
+			frame.EntityStates = append(frame.EntityStates, bs)
 		}
 
-		for _, id := range gamestateUpdateMessage.DestroyedEntities {
-			bs := BufferedState{
+		for _, id := range updateMsg.DestroyedEntities {
+			bs := EntityState{
 				EntityID: id,
 				Deadge:   true,
 			}
-			bi.BufferedStates = append(bi.BufferedStates, bs)
+			frame.EntityStates = append(frame.EntityStates, bs)
 		}
 
-		sb.bufferedInterpolations[(sb.cursor+sb.count)%settings.MaxStateBufferSize] = bi
+		sb.frames[(sb.cursor+sb.count)%settings.MaxStateBufferSize] = frame
 		if sb.count == settings.MaxStateBufferSize {
 			panic(fmt.Sprintf("buffer has filled with max capacity %d", settings.MaxStateBufferSize))
 		}
 		sb.count += 1
 	}
-
-	sb.lastGameStateUpdate = gamestateUpdateMessage
-	sb.lastGameStateLocalFrame = localCommandFrame
 }
 
-func (sb *StateBuffer) Pull(localCommandFrame int) (BufferedInterpolation, bool) {
-	if sb.count == 0 || sb.bufferedInterpolations[sb.cursor].CommandFrame > localCommandFrame {
-		return BufferedInterpolation{}, false
+func (sb *StateBuffer) Pull(localCommandFrame int) (Frame, bool) {
+	if sb.count == 0 {
+		return Frame{}, false
 	}
 
-	// TODO - this should probably advance all command frames that are <= local command frame to quickly
-	// catch up
-
-	snapshot := sb.bufferedInterpolations[sb.cursor]
+	frame := sb.frames[sb.cursor]
 	sb.cursor = (sb.cursor + 1) % settings.MaxStateBufferSize
 	sb.count -= 1
-	return snapshot, true
+	return frame, true
 }
 
 // Quaternion interpolation, reimplemented from: https://github.com/TheThinMatrix/OpenGL-Animation/blob/dde792fe29767192bcb60d30ac3e82d6bcff1110/Animation/animation/Quaternion.java#L158

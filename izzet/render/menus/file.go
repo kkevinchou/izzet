@@ -87,6 +87,7 @@ func file(app renderiface.App) {
 		if imgui.MenuItemBool("New Project") {
 			app.ResetWorld()
 			app.AssetManager().Reset()
+			app.SelectEntity(nil)
 
 			// set up the default scene
 

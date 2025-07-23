@@ -6,7 +6,13 @@ import (
 )
 
 const (
-	NamespaceGlobal = "global"
+	NamespaceGlobal  = "global"
+	NamespaceDefault = "default"
+)
+
+var (
+	DefaultMaterialHandle = types.MaterialHandle{Namespace: "global", ID: "0"}
+	WhiteMaterialHandle   = types.MaterialHandle{Namespace: "global", ID: "1"}
 )
 
 type Primitive struct {
@@ -58,11 +64,7 @@ func NewMaterialHandle(namespace string, id string) types.MaterialHandle {
 }
 
 func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
-	return NewMeshHandle("global", "cube")
-}
-
-func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
-	return types.MaterialHandle{Namespace: "default", ID: "0"}
+	return NewMeshHandle(NamespaceGlobal, "cube")
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally

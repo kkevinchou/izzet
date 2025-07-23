@@ -10,6 +10,7 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -260,8 +261,8 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 			imgui.EndTable()
 			imgui.PushIDStr("Material Combo")
 			if imgui.BeginCombo("", selectedMaterialName) {
-				for _, material := range app.AssetManager().GetMaterials() {
-					if imgui.SelectableBool(material.Name) {
+				for i, material := range app.AssetManager().GetMaterials() {
+					if imgui.SelectableBool(fmt.Sprintf("%s##%d", material.Name, i)) {
 						selectedMaterialHandle = material.Handle
 						selectedMaterialName = material.Name
 					}
@@ -442,7 +443,7 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		if entity != nil {
 			if SelectedComponentComboOption == MaterialComboOption {
 				entity.Material = &entities.MaterialComponent{
-					MaterialHandle: app.AssetManager().GetDefaultMaterialHandle(),
+					MaterialHandle: assets.DefaultMaterialHandle,
 				}
 			} else if SelectedComponentComboOption == LightComboOption {
 				entity.LightInfo = &entities.LightInfo{

@@ -158,7 +158,7 @@ func (g *Server) Start(started chan bool, done chan bool) {
 }
 
 func New(shaderDirectory string, projectName string) *Server {
-	world := world.New(map[int]*entities.Entity{})
+	world := world.New()
 	return NewWithWorld(world, projectName)
 }
 

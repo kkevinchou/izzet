@@ -13,11 +13,13 @@ type GameWorld struct {
 
 	sortFrame      int
 	sortedEntities []*entities.Entity
-
-	// events []events.Event
 }
 
-func New(entities map[int]*entities.Entity) *GameWorld {
+func New() *GameWorld {
+	return NewWithEntities(map[int]*entities.Entity{})
+}
+
+func NewWithEntities(entities map[int]*entities.Entity) *GameWorld {
 	g := &GameWorld{
 		sortFrame:        -1,
 		entities:         entities,

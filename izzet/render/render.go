@@ -26,7 +26,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/shaders"
 	"github.com/kkevinchou/kitolib/utils"
 )
@@ -58,8 +57,8 @@ const (
 )
 
 type RenderSystem struct {
-	app           renderiface.App
-	world         GameWorld
+	app renderiface.App
+	// world         GameWorld
 	shaderManager *shaders.ShaderManager
 
 	shadowMap           *ShadowMap
@@ -376,7 +375,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	)
 
 	// find the directional light if there is one
-	lights := r.world.Lights()
+	lights := r.app.World().Lights()
 	var directionalLights []*entities.Entity
 	var pointLights []*entities.Entity
 
@@ -410,7 +409,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
-		Lights:           r.world.Lights(),
+		Lights:           r.app.World().Lights(),
 		PointLights:      pointLights,
 	}
 
@@ -579,17 +578,17 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 func (r *RenderSystem) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
 	var renderEntities []*entities.Entity
 	if r.app.RuntimeConfig().EnableSpatialPartition {
-		spatialPartition := r.world.SpatialPartition()
+		spatialPartition := r.app.World().SpatialPartition()
 		frustumEntities := spatialPartition.QueryEntities(boundingBox)
 		for _, entity := range frustumEntities {
-			e := r.world.GetEntityByID(entity.GetID())
+			e := r.app.World().GetEntityByID(entity.GetID())
 			if !filter(e) {
 				continue
 			}
 			renderEntities = append(renderEntities, e)
 		}
 	} else {
-		renderEntities = r.world.Entities()
+		renderEntities = r.app.World().Entities()
 	}
 
 	return renderEntities
@@ -616,7 +615,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 	}
 
 	if r.app.AppMode() == mode.AppModeEditor {
-		for _, entity := range r.world.Entities() {
+		for _, entity := range r.app.World().Entities() {
 			lightInfo := entity.LightInfo
 			if lightInfo != nil {
 				if lightInfo.Type == 0 {
@@ -645,7 +644,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 	}
 
 	if r.app.RuntimeConfig().EnableSpatialPartition && r.app.RuntimeConfig().RenderSpatialPartition {
-		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.world.SpatialPartition(), 0.1)
+		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.app.World().SpatialPartition(), 0.1)
 	}
 
 	nm := r.app.NavMesh()
@@ -981,7 +980,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 	}
 
 	// render non-models
-	for _, entity := range r.world.Entities() {
+	for _, entity := range r.app.World().Entities() {
 		if entity.MeshComponent == nil {
 			modelMatrix := entities.WorldTransform(entity)
 
@@ -1368,7 +1367,7 @@ func (r *RenderSystem) renderGizmos(viewerContext ViewerContext, renderContext R
 		return
 	}
 
-	entity := r.world.GetEntityByID(r.app.SelectedEntity().ID)
+	entity := r.app.World().GetEntityByID(r.app.SelectedEntity().ID)
 	position := entity.Position()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
@@ -1382,10 +1381,6 @@ func (r *RenderSystem) renderGizmos(viewerContext ViewerContext, renderContext R
 
 func triangleVAOKey(triangle entities.Triangle) string {
 	return fmt.Sprintf("%v_%v_%v", triangle.V1, triangle.V2, triangle.V3)
-}
-
-func (r *RenderSystem) SetWorld(world *world.GameWorld) {
-	r.world = world
 }
 
 func (r *RenderSystem) GameWindowHovered() bool {

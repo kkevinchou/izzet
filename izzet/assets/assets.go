@@ -20,6 +20,7 @@ import (
 
 const (
 	defaultMaterialName string = "default material"
+	whiteMaterialName   string = "white material"
 )
 
 type DocumentAsset struct {
@@ -127,7 +128,7 @@ func (m *AssetManager) GetMaterial(handle types.MaterialHandle) MaterialAsset {
 	if materialAsset, ok := m.materialAssets[handle]; ok {
 		return materialAsset
 	}
-	material := m.materialAssets[m.GetDefaultMaterialHandle()]
+	material := m.materialAssets[DefaultMaterialHandle]
 	return material
 }
 
@@ -139,10 +140,10 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 	panic(fmt.Sprintf("%s handle not found", material.Handle.String()))
 }
 
-var materialIDGen int
+var materialIDGen int = 100
 
 func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := NewMaterialHandle("global", fmt.Sprintf("%d", materialIDGen))
+	handle := NewMaterialHandle(NamespaceGlobal, fmt.Sprintf("%d", materialIDGen))
 	materialIDGen++
 	return m.CreateMaterialWithHandle(name, material, handle)
 }
@@ -179,8 +180,7 @@ func (a *AssetManager) Reset() {
 		handle := a.GetCubeMeshHandle()
 		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
 
-		// default material
-		defaultMaterialHandle := a.GetDefaultMaterialHandle()
+		// default materials
 		material := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
@@ -192,7 +192,20 @@ func (a *AssetManager) Reset() {
 				},
 			},
 		}
-		a.CreateMaterialWithHandleNoOverride(defaultMaterialName, material, defaultMaterialHandle)
+		a.CreateMaterialWithHandleNoOverride(defaultMaterialName, material, DefaultMaterialHandle)
+
+		whiteMaterial := modelspec.MaterialSpecification{
+			PBRMaterial: modelspec.PBRMaterial{
+				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
+					// BaseColorTextureName: settings.DefaultTexture,
+					// BaseColorTextureName: "",
+					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
+					RoughnessFactor: .55,
+					MetalicFactor:   0,
+				},
+			},
+		}
+		a.CreateMaterialWithHandleNoOverride(whiteMaterialName, whiteMaterial, DefaultMaterialHandle)
 
 		// load builtin assets
 
@@ -207,9 +220,11 @@ func (a *AssetManager) Reset() {
 			}
 
 			a.LoadAndRegisterDocument(AssetConfig{
-				Name:         metaData.Name,
-				FilePath:     metaData.Path,
-				SingleEntity: true,
+				Name:          metaData.Name,
+				FilePath:      metaData.Path,
+				ColliderType:  string(types.ColliderTypeMesh),
+				ColliderGroup: string(types.ColliderGroupPlayer),
+				SingleEntity:  true,
 			}, true)
 		}
 	}

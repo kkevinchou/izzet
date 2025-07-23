@@ -103,7 +103,7 @@ func (g *Client) loadWorld(filepath string) bool {
 	entities.SetNextID(maxID + 1)
 
 	g.SelectEntity(nil)
-	g.SetWorld(world)
+	g.world = world
 	g.SetupBatchedStaticRendering()
 	return true
 }
@@ -131,11 +131,6 @@ func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {
 	return g.metricsRegistry
 }
 
-func (g *Client) SetWorld(world *world.GameWorld) {
-	g.world = world
-	g.renderSystem.SetWorld(world)
-}
-
 func (g *Client) StartLiveWorld() {
 	if g.AppMode() != mode.AppModeEditor {
 		return
@@ -157,7 +152,7 @@ func (g *Client) StartLiveWorld() {
 
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
-	g.SetWorld(liveWorld)
+	g.world = liveWorld
 }
 
 func (g *Client) StopLiveWorld() {
@@ -167,7 +162,7 @@ func (g *Client) StopLiveWorld() {
 	g.appMode = mode.AppModeEditor
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
-	g.SetWorld(g.editorWorld)
+	g.world = g.editorWorld
 }
 
 func (g *Client) AppMode() mode.AppMode {
@@ -589,6 +584,12 @@ func (g *Client) SetupBatchedStaticRendering() {
 func (g *Client) PredictionDebugLogging() bool {
 	return g.predictionDebugLogging
 }
+
 func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
+}
+
+func (g *Client) ResetWorld() {
+	g.world = world.New()
+	g.editorWorld = world.New()
 }

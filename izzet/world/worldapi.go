@@ -46,7 +46,7 @@ func (g *GameWorld) Entities() []*entities.Entity {
 		g.sortFrame = g.CommandFrame()
 
 		var ids []int
-		for id, _ := range g.entities {
+		for id := range g.entities {
 			ids = append(ids, id)
 		}
 

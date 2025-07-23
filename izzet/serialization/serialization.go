@@ -103,5 +103,5 @@ func Read(reader io.Reader) (*world.GameWorld, error) {
 		child.Parent = parent
 	}
 
-	return world.New(entityMap), nil
+	return world.NewWithEntities(entityMap), nil
 }

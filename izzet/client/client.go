@@ -125,11 +125,10 @@ func New(shaderDirectory string, config settings.Config, projectName string) *Cl
 		width:           w,
 		height:          h,
 		assetManager:    assetManager,
-		world:           world.New(map[int]*entities.Entity{}),
 		serverAddress:   config.ServerAddress,
 		metricsRegistry: metricsRegistry,
 	}
-
+	g.ResetWorld()
 	g.initSettings()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 

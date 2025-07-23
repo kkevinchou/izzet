@@ -16,7 +16,7 @@ type MaterialHandle struct {
 }
 
 func (h MaterialHandle) String() string {
-	return h.Namespace + "-" + h.ID
+	return h.ID
 }
 
 type KinematicEntity interface {

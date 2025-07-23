@@ -54,12 +54,8 @@ func (g *Server) LoadWorld(name string) bool {
 		entities.SetNextID(maxID + 1)
 	}
 
-	g.SetWorld(world)
-	return true
-}
-
-func (g *Server) SetWorld(world *world.GameWorld) {
 	g.world = world
+	return true
 }
 
 func (g *Server) GetPlayers() map[int]*network.Player {

@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -82,10 +84,25 @@ func file(app renderiface.App) {
 			}
 			imgui.CloseCurrentPopup()
 		}
+		if imgui.MenuItemBool("New Project") {
+			app.ResetWorld()
+			app.AssetManager().Reset()
 
-		if imgui.MenuItemBool("New") {
-			wipImportAssetConfig = assets.AssetConfig{}
-			showImportAssetModal = true
+			// set up the default scene
+
+			cube := entities.CreateCube(app.AssetManager(), 1)
+			cube.Material = &entities.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
+			entities.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
+			entities.SetScale(cube, mgl64.Vec3{7, 0.05, 7})
+			app.World().AddEntity(cube)
+
+			directionalLight := entities.CreateDirectionalLight()
+			directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
+			directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, -1}
+			directionalLight.Name = "directional_light"
+			directionalLight.LightInfo.PreScaledIntensity = 4
+			entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
+			app.World().AddEntity(directionalLight)
 		}
 
 		if imgui.MenuItemBool("Import Asset") {

@@ -1,9 +1,9 @@
 package entities
 
 func CreateSocket() *Entity {
-	entity := InstantiateBaseEntity("socket", id)
+	entity := InstantiateBaseEntity("socket", entityIDGen)
 	entity.IsSocket = true
-	id += 1
+	entityIDGen += 1
 
 	return entity
 }

@@ -589,7 +589,9 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
 }
 
-func (g *Client) ResetWorld() {
+func (g *Client) Reset() {
 	g.world = world.New()
 	g.editorWorld = world.New()
+	entities.SetNextID(0)
+	g.initialize()
 }

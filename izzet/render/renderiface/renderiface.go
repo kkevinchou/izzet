@@ -67,7 +67,7 @@ type App interface {
 	GetFrameInput() input.Input
 	FindPath(start, goal mgl64.Vec3)
 	SetupBatchedStaticRendering()
-	ResetWorld()
+	Reset()
 }
 
 type RenderContext interface {

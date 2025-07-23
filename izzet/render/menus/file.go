@@ -85,7 +85,7 @@ func file(app renderiface.App) {
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.MenuItemBool("New Project") {
-			app.ResetWorld()
+			app.Reset()
 			app.AssetManager().Reset()
 			app.SelectEntity(nil)
 

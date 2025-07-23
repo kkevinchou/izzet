@@ -128,7 +128,7 @@ func New(shaderDirectory string, config settings.Config, projectName string) *Cl
 		serverAddress:   config.ServerAddress,
 		metricsRegistry: metricsRegistry,
 	}
-	g.ResetWorld()
+	g.Reset()
 	g.initSettings()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 

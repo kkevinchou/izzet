@@ -7,7 +7,7 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-var id int
+var entityIDGen int
 
 func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *assets.AssetManager) []*Entity {
 	return nil
@@ -29,18 +29,18 @@ func InstantiateBaseEntity(name string, id int) *Entity {
 }
 
 func CreateEmptyEntity(name string) *Entity {
-	entity := InstantiateBaseEntity(name, id)
-	id += 1
+	entity := InstantiateBaseEntity(name, entityIDGen)
+	entityIDGen += 1
 	return entity
 }
 
 func SetNextID(nextID int) {
-	id = nextID
+	entityIDGen = nextID
 }
 
 func GetNextIDAndAdvance() int {
-	oldID := id
-	id += 1
+	oldID := entityIDGen
+	entityIDGen += 1
 	return oldID
 }
 

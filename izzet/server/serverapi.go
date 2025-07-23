@@ -27,37 +27,6 @@ func (g *Server) MetricsRegistry() *metrics.MetricsRegistry {
 	return g.metricsRegistry
 }
 
-func (g *Server) LoadWorld(name string) bool {
-	if name == "" {
-		return false
-	}
-
-	filename := fmt.Sprintf("./%s.json", name)
-	world, err := serialization.ReadFromFile(filename)
-	if err != nil {
-		fmt.Println("failed to load world", filename, err)
-		panic(err)
-	}
-	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
-
-	g.world.SpatialPartition().Clear()
-
-	var maxID int
-	for _, e := range world.Entities() {
-		if e.ID > maxID {
-			maxID = e.ID
-		}
-		g.entities[e.ID] = e
-	}
-
-	if len(g.entities) > 0 {
-		entities.SetNextID(maxID + 1)
-	}
-
-	g.world = world
-	return true
-}
-
 func (g *Server) GetPlayers() map[int]*network.Player {
 	return g.players
 }

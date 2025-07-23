@@ -426,7 +426,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 }
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
-	g.assetManager.LoadAndRegisterDocument(config, true)
+	g.assetManager.LoadAndRegisterDocument(config)
 }
 
 func (g *Client) Shutdown() {
@@ -589,9 +589,11 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
 }
 
-func (g *Client) Reset() {
+func (g *Client) ResetApp() {
 	g.world = world.New()
 	g.editorWorld = world.New()
-	entities.SetNextID(0)
+	// entities.SetNextID(0)
 	g.initialize()
+	// g.AssetManager().Reset()
+	// g.SelectEntity(nil)
 }

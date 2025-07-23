@@ -182,14 +182,14 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 
 	// load meshes, skip materials
 	for _, document := range assetsJSON.Documents {
-		g.assetManager.LoadAndRegisterDocument(document.Config, true)
+		g.assetManager.LoadAndRegisterDocument(document.Config)
 	}
 
-	// // don't overwrite materials since the user may have edited materials that haven't
-	// // been persisted to the asset file yet
-	// for _, material := range assetsJSON.Materials {
-	// 	g.assetManager.CreateMaterialWithHandleNoOverride(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
-	// }
+	// don't overwrite materials since the user may have edited materials that haven't
+	// been persisted to the asset file yet
+	for _, material := range assetsJSON.Materials {
+		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
+	}
 }
 
 func copySourceFiles(filePaths []string, rootDir, dstDir string) error {

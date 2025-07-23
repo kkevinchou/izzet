@@ -80,12 +80,13 @@ func file(app renderiface.App) {
 		if imgui.Button("Load") {
 			fmt.Println("Load from", selectedWorldName)
 			if app.LoadProject(selectedWorldName) {
+				app.ResetApp()
 				worldName = selectedWorldName
 			}
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.MenuItemBool("New Project") {
-			app.Reset()
+			app.ResetApp()
 			app.AssetManager().Reset()
 			app.SelectEntity(nil)
 

@@ -152,11 +152,10 @@ func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSp
 	return handle
 }
 
-func (m *AssetManager) CreateMaterialWithHandleNoOverride(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) types.MaterialHandle {
+func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) {
 	if _, ok := m.materialAssets[handle]; !ok {
 		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	}
-	return handle
 }
 
 func (a *AssetManager) GetFont(name string) fonts.Font {
@@ -169,7 +168,7 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 var materialIDGen int = 0
 
 func (a *AssetManager) Reset() {
-	materialIDGen = 0
+	// materialIDGen = 0
 	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
 	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
@@ -225,7 +224,7 @@ func (a *AssetManager) Reset() {
 				ColliderType:  string(types.ColliderTypeMesh),
 				ColliderGroup: string(types.ColliderGroupPlayer),
 				SingleEntity:  true,
-			}, true)
+			})
 		}
 	}
 }

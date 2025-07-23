@@ -92,7 +92,7 @@ func file(app renderiface.App) {
 			// set up the default scene
 
 			cube := entities.CreateCube(app.AssetManager(), 1)
-			cube.Material = &entities.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
+			cube.Material = &entities.MaterialComponent{MaterialHandle: app.AssetManager().GetDefaultMaterialHandle()}
 			entities.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
 			entities.SetScale(cube, mgl64.Vec3{7, 0.05, 7})
 			app.World().AddEntity(cube)
@@ -104,6 +104,9 @@ func file(app renderiface.App) {
 			directionalLight.LightInfo.PreScaledIntensity = 4
 			entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
 			app.World().AddEntity(directionalLight)
+
+			selectedWorldName = ""
+			worldName = ""
 		}
 
 		if imgui.MenuItemBool("Import Asset") {

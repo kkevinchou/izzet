@@ -24,8 +24,9 @@ const (
 )
 
 type DocumentAsset struct {
-	Document *modelspec.Document `json:"-"`
-	Config   AssetConfig
+	MatIDToHandle map[string]types.MaterialHandle
+	Document      *modelspec.Document `json:"-"`
+	Config        AssetConfig
 }
 
 type MaterialAsset struct {
@@ -47,6 +48,11 @@ type AssetManager struct {
 	Animations             map[string]map[string]*modelspec.AnimationSpec
 	Joints                 map[string]map[int]*modelspec.JointSpec
 	RootJoints             map[string]int
+
+	// cubeMeshHandle types.MaterialHandle
+
+	defaultMaterialHandle types.MaterialHandle
+	whiteMaterialHandle   types.MaterialHandle
 
 	processVisuals bool
 }
@@ -128,7 +134,7 @@ func (m *AssetManager) GetMaterial(handle types.MaterialHandle) MaterialAsset {
 	if materialAsset, ok := m.materialAssets[handle]; ok {
 		return materialAsset
 	}
-	material := m.materialAssets[DefaultMaterialHandle]
+	material := m.materialAssets[m.defaultMaterialHandle]
 	return material
 }
 
@@ -143,12 +149,7 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 var materialIDGen int = 100
 
 func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := NewMaterialHandle(NamespaceGlobal, fmt.Sprintf("%d", materialIDGen))
-	materialIDGen++
-	return m.CreateMaterialWithHandle(name, material, handle)
-}
-
-func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) types.MaterialHandle {
+	handle := NewMaterialHandle()
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
 }
@@ -178,34 +179,32 @@ func (a *AssetManager) Reset() {
 
 	if a.processVisuals {
 		handle := a.GetCubeMeshHandle()
-		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
+		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15), nil)
 
 		// default materials
-		material := modelspec.MaterialSpecification{
+
+		defaultMaterial := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 					BaseColorTextureName: settings.DefaultTexture,
-					// BaseColorTextureName: "",
-					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
-					RoughnessFactor: .55,
-					MetalicFactor:   0,
+					BaseColorFactor:      mgl32.Vec4{1, 1, 1, 1},
+					RoughnessFactor:      .55,
+					MetalicFactor:        0,
 				},
 			},
 		}
-		a.CreateMaterialWithHandleNoOverride(defaultMaterialName, material, DefaultMaterialHandle)
+		a.defaultMaterialHandle = a.CreateMaterial("default material", defaultMaterial)
 
 		whiteMaterial := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
-					// BaseColorTextureName: settings.DefaultTexture,
-					// BaseColorTextureName: "",
 					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
 					RoughnessFactor: .55,
 					MetalicFactor:   0,
 				},
 			},
 		}
-		a.CreateMaterialWithHandleNoOverride(whiteMaterialName, whiteMaterial, DefaultMaterialHandle)
+		a.whiteMaterialHandle = a.CreateMaterial("white material", whiteMaterial)
 
 		// load builtin assets
 

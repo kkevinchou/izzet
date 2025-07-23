@@ -46,7 +46,7 @@ func (g *Client) SaveProject(name string) error {
 	// project folder
 	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name), os.ModePerm)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	worldFilePath := path.Join(settings.ProjectsDirectory, name, "world.json")
@@ -182,14 +182,14 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 
 	// load meshes, skip materials
 	for _, document := range assetsJSON.Documents {
-		g.assetManager.LoadAndRegisterDocument(document.Config, false)
+		g.assetManager.LoadAndRegisterDocument(document.Config, true)
 	}
 
-	// don't overwrite materials since the user may have edited materials that haven't
-	// been persisted to the asset file yet
-	for _, material := range assetsJSON.Materials {
-		g.assetManager.CreateMaterialWithHandleNoOverride(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
-	}
+	// // don't overwrite materials since the user may have edited materials that haven't
+	// // been persisted to the asset file yet
+	// for _, material := range assetsJSON.Materials {
+	// 	g.assetManager.CreateMaterialWithHandleNoOverride(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
+	// }
 }
 
 func copySourceFiles(filePaths []string, rootDir, dstDir string) error {

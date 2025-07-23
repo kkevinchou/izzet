@@ -1,19 +1,13 @@
 package assets
 
 import (
+	"fmt"
+
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-const (
-	NamespaceGlobal  = "global"
-	NamespaceDefault = "default"
-)
-
-var (
-	DefaultMaterialHandle = types.MaterialHandle{Namespace: "global", ID: "0"}
-	WhiteMaterialHandle   = types.MaterialHandle{Namespace: "global", ID: "1"}
-)
+var ()
 
 type Primitive struct {
 	Primitive *modelspec.PrimitiveSpecification
@@ -59,12 +53,14 @@ func NewMeshHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
-func NewMaterialHandle(namespace string, id string) types.MaterialHandle {
-	return types.MaterialHandle{Namespace: namespace, ID: id}
+func NewMaterialHandle() types.MaterialHandle {
+	id := materialIDGen
+	materialIDGen++
+	return types.MaterialHandle{ID: fmt.Sprintf("%d", id)}
 }
 
 func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
-	return NewMeshHandle(NamespaceGlobal, "cube")
+	return NewMeshHandle("global", "cube")
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally
@@ -77,4 +73,8 @@ func (m *AssetManager) GetPrimitives(handle types.MeshHandle) []Primitive {
 		return nil
 	}
 	return m.Primitives[handle]
+}
+
+func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
+	return m.defaultMaterialHandle
 }

@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/AllenDang/cimgui-go/imgui"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
@@ -26,7 +25,7 @@ func sceneGraph(app renderiface.App) {
 			if imgui.Button("Add Cube") {
 				entity := entities.CreateCube(app.AssetManager(), 1)
 				entity.Material = &entities.MaterialComponent{
-					MaterialHandle: assets.DefaultMaterialHandle,
+					MaterialHandle: app.AssetManager().GetDefaultMaterialHandle(),
 				}
 				entity.Static = true
 

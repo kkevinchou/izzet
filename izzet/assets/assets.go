@@ -146,8 +146,6 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 	panic(fmt.Sprintf("%s handle not found", material.Handle.String()))
 }
 
-var materialIDGen int = 100
-
 func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
 	handle := NewMaterialHandle()
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
@@ -168,7 +166,10 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 	return a.fonts[name]
 }
 
+var materialIDGen int = 0
+
 func (a *AssetManager) Reset() {
+	materialIDGen = 0
 	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
 	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}

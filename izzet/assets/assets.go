@@ -51,9 +51,6 @@ type AssetManager struct {
 
 	// cubeMeshHandle types.MaterialHandle
 
-	defaultMaterialHandle types.MaterialHandle
-	whiteMaterialHandle   types.MaterialHandle
-
 	processVisuals bool
 }
 
@@ -134,7 +131,7 @@ func (m *AssetManager) GetMaterial(handle types.MaterialHandle) MaterialAsset {
 	if materialAsset, ok := m.materialAssets[handle]; ok {
 		return materialAsset
 	}
-	material := m.materialAssets[m.defaultMaterialHandle]
+	material := m.materialAssets[DefaultMaterialHandle]
 	return material
 }
 
@@ -146,15 +143,8 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 	panic(fmt.Sprintf("%s handle not found", material.Handle.String()))
 }
 
-func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := types.MaterialHandle{ID: fmt.Sprintf("custotm/%d", materialIDGen)}
-	materialIDGen++
-	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
-	return handle
-}
-
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := types.MaterialHandle{ID: fmt.Sprintf("custotm/%d", materialIDGen)}
+	handle := types.MaterialHandle{ID: fmt.Sprintf("custom/%d", materialIDGen)}
 	materialIDGen++
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
@@ -208,7 +198,7 @@ func (a *AssetManager) Reset() {
 			},
 		}
 
-		a.defaultMaterialHandle = a.CreateMaterial("default material", defaultMaterial)
+		a.CreateMaterialWithHandle("default material", defaultMaterial, DefaultMaterialHandle)
 
 		whiteMaterial := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
@@ -219,7 +209,7 @@ func (a *AssetManager) Reset() {
 				},
 			},
 		}
-		a.whiteMaterialHandle = a.CreateMaterial("white material", whiteMaterial)
+		a.CreateMaterialWithHandle("white material", whiteMaterial, WhiteMaterialHandle)
 
 		// load builtin assets
 

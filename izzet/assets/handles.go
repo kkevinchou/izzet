@@ -5,7 +5,10 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-var ()
+var (
+	DefaultMaterialHandle = types.MaterialHandle{ID: "custom/default"}
+	WhiteMaterialHandle   = types.MaterialHandle{ID: "custom/white"}
+)
 
 type Primitive struct {
 	Primitive *modelspec.PrimitiveSpecification
@@ -53,10 +56,6 @@ func NewMeshHandle(namespace string, id string) types.MeshHandle {
 
 func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 	return NewMeshHandle("global", "cube")
-}
-
-func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
-	return m.defaultMaterialHandle
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally

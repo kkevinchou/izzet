@@ -147,7 +147,21 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 }
 
 func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := NewMaterialHandle()
+	handle := types.MaterialHandle{ID: fmt.Sprintf("custotm/%d", materialIDGen)}
+	materialIDGen++
+	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+	return handle
+}
+
+func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
+	handle := types.MaterialHandle{ID: fmt.Sprintf("custotm/%d", materialIDGen)}
+	materialIDGen++
+	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+	return handle
+}
+
+func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) types.MaterialHandle {
+	handle := types.MaterialHandle{ID: id}
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
 }
@@ -193,6 +207,7 @@ func (a *AssetManager) Reset() {
 				},
 			},
 		}
+
 		a.defaultMaterialHandle = a.CreateMaterial("default material", defaultMaterial)
 
 		whiteMaterial := modelspec.MaterialSpecification{

@@ -1,8 +1,6 @@
 package assets
 
 import (
-	"fmt"
-
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
@@ -53,14 +51,12 @@ func NewMeshHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
 }
 
-func NewMaterialHandle() types.MaterialHandle {
-	id := materialIDGen
-	materialIDGen++
-	return types.MaterialHandle{ID: fmt.Sprintf("%d", id)}
-}
-
 func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
 	return NewMeshHandle("global", "cube")
+}
+
+func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
+	return m.defaultMaterialHandle
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally
@@ -73,8 +69,4 @@ func (m *AssetManager) GetPrimitives(handle types.MeshHandle) []Primitive {
 		return nil
 	}
 	return m.Primitives[handle]
-}
-
-func (m *AssetManager) GetDefaultMaterialHandle() types.MaterialHandle {
-	return m.defaultMaterialHandle
 }

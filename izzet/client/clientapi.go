@@ -596,6 +596,7 @@ func (g *Client) ResetApp() {
 }
 
 func (g *Client) NewProject() {
+	g.project.Name = ""
 	g.ResetApp()
 	g.AssetManager().Reset()
 	g.SelectEntity(nil)

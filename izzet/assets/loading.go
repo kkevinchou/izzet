@@ -33,7 +33,8 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		}
 
 		for _, material := range document.Materials {
-			matIDToHandle[material.ID] = a.CreateMaterial(fmt.Sprintf("%s/%s", document.Name, material.ID), material)
+			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
+			matIDToHandle[material.ID] = a.createMaterial(name, fmt.Sprintf("%s/%s", config.FilePath, material.ID), material)
 		}
 	}
 

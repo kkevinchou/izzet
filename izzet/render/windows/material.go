@@ -139,7 +139,7 @@ func renderMaterialWindow(app renderiface.App) {
 		if isCreatingMaterial {
 			if imgui.Button("Save") {
 				if activeMaterial.Name != "" {
-					app.AssetManager().CreateMaterial(activeMaterial.Name, activeMaterial.Material)
+					app.AssetManager().CreateCustomMaterial(activeMaterial.Name, activeMaterial.Material)
 					app.RuntimeConfig().ShowMaterialEditor = false
 					assignDefaultMaterial()
 				} else {

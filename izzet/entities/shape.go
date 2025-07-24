@@ -43,7 +43,7 @@ type ShapeData struct {
 }
 
 func CreateCube(ml *assets.AssetManager, length float64) *Entity {
-	entity := InstantiateBaseEntity("cube", id)
+	entity := InstantiateBaseEntity("cube", entityIDGen)
 	entity.LocalScale = mgl64.Vec3{length, length, length}
 
 	handle := ml.GetCubeMeshHandle()
@@ -62,12 +62,12 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	entity.Collider = CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, types.ColliderGroupFlagTerrain, *t, bb)
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
 
-	id += 1
+	entityIDGen += 1
 	return entity
 }
 
 func CreateTriangle(v1, v2, v3 mgl64.Vec3) *Entity {
-	entity := InstantiateBaseEntity("triangle", id)
+	entity := InstantiateBaseEntity("triangle", entityIDGen)
 	entity.ShapeData = []*ShapeData{
 		&ShapeData{
 			Triangle: &Triangle{
@@ -77,6 +77,6 @@ func CreateTriangle(v1, v2, v3 mgl64.Vec3) *Entity {
 			},
 		},
 	}
-	id += 1
+	entityIDGen += 1
 	return entity
 }

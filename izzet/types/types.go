@@ -11,8 +11,7 @@ type MeshHandle struct {
 }
 
 type MaterialHandle struct {
-	Namespace string
-	ID        string
+	ID string
 }
 
 func (h MaterialHandle) String() string {

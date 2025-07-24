@@ -426,7 +426,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 }
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
-	g.assetManager.LoadAndRegisterDocument(config, true)
+	g.assetManager.LoadAndRegisterDocument(config)
 }
 
 func (g *Client) Shutdown() {
@@ -589,7 +589,31 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
 }
 
-func (g *Client) ResetWorld() {
+func (g *Client) ResetApp() {
 	g.world = world.New()
 	g.editorWorld = world.New()
+	g.initialize()
+}
+
+func (g *Client) NewProject() {
+	g.project.Name = ""
+	g.ResetApp()
+	g.AssetManager().Reset()
+	g.SelectEntity(nil)
+
+	// set up the default scene
+
+	cube := entities.CreateCube(g.AssetManager(), 1)
+	cube.Material = &entities.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
+	entities.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
+	entities.SetScale(cube, mgl64.Vec3{7, 0.05, 7})
+	g.World().AddEntity(cube)
+
+	directionalLight := entities.CreateDirectionalLight()
+	directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
+	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, -1}
+	directionalLight.Name = "directional_light"
+	directionalLight.LightInfo.PreScaledIntensity = 4
+	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
+	g.World().AddEntity(directionalLight)
 }

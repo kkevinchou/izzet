@@ -40,11 +40,11 @@ func CreateDirectionalLight() *Entity {
 		Direction3F:        [3]float32{-1, -1, -1},
 	}
 
-	entity := InstantiateBaseEntity("directional-light", id)
+	entity := InstantiateBaseEntity("directional-light", entityIDGen)
 	entity.ImageInfo = NewImageInfo("lamp.png", 1)
 	entity.LightInfo = lightInfo
 	entity.Billboard = true
-	id += 1
+	entityIDGen += 1
 	return entity
 }
 
@@ -56,10 +56,10 @@ func CreatePointLight() *Entity {
 		Range:              800,
 	}
 
-	entity := InstantiateBaseEntity("point-light", id)
+	entity := InstantiateBaseEntity("point-light", entityIDGen)
 	entity.ImageInfo = NewImageInfo("lamp.png", 1)
 	entity.LightInfo = lightInfo
 	entity.Billboard = true
-	id += 1
+	entityIDGen += 1
 	return entity
 }

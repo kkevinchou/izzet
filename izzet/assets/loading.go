@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
-func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMaterials bool) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
@@ -19,12 +19,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 		Config:   config,
 		Document: document,
 	}
-
-	if config.SingleEntity {
-		a.registerDocumentMeshWithSingleHandle(document)
-	} else {
-		a.registerDocumentMeshes(document)
-	}
+	matIDToHandle := map[string]types.MaterialHandle{}
 
 	if a.processVisuals {
 		for _, file := range document.PeripheralFiles {
@@ -37,12 +32,16 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
 		}
 
-		if importMaterials {
-			for _, material := range document.Materials {
-				handle := NewMaterialHandle(document.Name, material.ID)
-				a.CreateMaterialWithHandle(handle.String(), material, handle)
-			}
+		for _, material := range document.Materials {
+			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
+			matIDToHandle[material.ID] = a.createMaterial(name, fmt.Sprintf("%s/%s", config.FilePath, material.ID), material)
 		}
+	}
+
+	if config.SingleEntity {
+		a.registerDocumentMeshWithSingleHandle(document, matIDToHandle)
+	} else {
+		a.registerDocumentMeshes(document, matIDToHandle)
 	}
 
 	if len(document.Animations) > 0 {
@@ -54,25 +53,25 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 	return document
 }
 
-func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document) {
+func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
 	handle := NewSingleEntityMeshHandle(document.Name)
 	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
-		m.registerMeshPrimitivesWithHandle(handle, mesh)
+		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
-func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document) {
+func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
 	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		handle := NewMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
-		m.registerMeshPrimitivesWithHandle(handle, mesh)
+		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
-func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification) types.MeshHandle {
+func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification, matIDToHandle map[string]types.MaterialHandle) types.MeshHandle {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {
@@ -88,7 +87,9 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 		if m.processVisuals {
 			p.VAO = vaos[0][i]
 			p.GeometryVAO = geometryVAOs[0][i]
-			p.MaterialHandle = NewMaterialHandle(handle.Namespace, primitive.MaterialIndex)
+			if len(matIDToHandle) > 0 {
+				p.MaterialHandle = matIDToHandle[primitive.MaterialIndex]
+			}
 		}
 
 		m.Primitives[handle] = append(m.Primitives[handle], p)

@@ -34,6 +34,7 @@ type App interface {
 	Platform() platforms.Platform
 
 	LoadProject(name string) bool
+	NewProject()
 
 	CollisionObserver() *collisionobserver.CollisionObserver
 	RuntimeConfig() *runtimeconfig.RuntimeConfig
@@ -67,7 +68,7 @@ type App interface {
 	GetFrameInput() input.Input
 	FindPath(start, goal mgl64.Vec3)
 	SetupBatchedStaticRendering()
-	ResetWorld()
+	ResetApp()
 }
 
 type RenderContext interface {

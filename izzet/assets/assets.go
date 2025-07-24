@@ -3,7 +3,6 @@ package assets
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -24,8 +23,9 @@ const (
 )
 
 type DocumentAsset struct {
-	Document *modelspec.Document `json:"-"`
-	Config   AssetConfig
+	MatIDToHandle map[string]types.MaterialHandle
+	Document      *modelspec.Document `json:"-"`
+	Config        AssetConfig
 }
 
 type MaterialAsset struct {
@@ -47,6 +47,8 @@ type AssetManager struct {
 	Animations             map[string]map[string]*modelspec.AnimationSpec
 	Joints                 map[string]map[int]*modelspec.JointSpec
 	RootJoints             map[string]int
+
+	// cubeMeshHandle types.MaterialHandle
 
 	processVisuals bool
 }
@@ -140,24 +142,23 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 	panic(fmt.Sprintf("%s handle not found", material.Handle.String()))
 }
 
-var materialIDGen int = 100
-
-func (m *AssetManager) CreateMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := NewMaterialHandle(NamespaceGlobal, fmt.Sprintf("%d", materialIDGen))
+func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
+	handle := types.MaterialHandle{ID: fmt.Sprintf("custom/%d", materialIDGen)}
 	materialIDGen++
-	return m.CreateMaterialWithHandle(name, material, handle)
-}
-
-func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) types.MaterialHandle {
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
 }
 
-func (m *AssetManager) CreateMaterialWithHandleNoOverride(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) types.MaterialHandle {
+func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) types.MaterialHandle {
+	handle := types.MaterialHandle{ID: id}
+	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+	return handle
+}
+
+func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) {
 	if _, ok := m.materialAssets[handle]; !ok {
 		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	}
-	return handle
 }
 
 func (a *AssetManager) GetFont(name string) fonts.Font {
@@ -167,7 +168,10 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 	return a.fonts[name]
 }
 
+var materialIDGen int = 0
+
 func (a *AssetManager) Reset() {
+	// materialIDGen = 0
 	a.documentAssets = map[string]DocumentAsset{}
 	a.Primitives = map[types.MeshHandle][]Primitive{}
 	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
@@ -178,54 +182,53 @@ func (a *AssetManager) Reset() {
 
 	if a.processVisuals {
 		handle := a.GetCubeMeshHandle()
-		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15))
+		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15), nil)
 
 		// default materials
-		material := modelspec.MaterialSpecification{
+
+		defaultMaterial := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 					BaseColorTextureName: settings.DefaultTexture,
-					// BaseColorTextureName: "",
-					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
-					RoughnessFactor: .55,
-					MetalicFactor:   0,
+					BaseColorFactor:      mgl32.Vec4{1, 1, 1, 1},
+					RoughnessFactor:      .55,
+					MetalicFactor:        0,
 				},
 			},
 		}
-		a.CreateMaterialWithHandleNoOverride(defaultMaterialName, material, DefaultMaterialHandle)
+
+		a.CreateMaterialWithHandle("default material", defaultMaterial, DefaultMaterialHandle)
 
 		whiteMaterial := modelspec.MaterialSpecification{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
-					// BaseColorTextureName: settings.DefaultTexture,
-					// BaseColorTextureName: "",
 					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
 					RoughnessFactor: .55,
 					MetalicFactor:   0,
 				},
 			},
 		}
-		a.CreateMaterialWithHandleNoOverride(whiteMaterialName, whiteMaterial, DefaultMaterialHandle)
+		a.CreateMaterialWithHandle("white material", whiteMaterial, WhiteMaterialHandle)
 
-		// load builtin assets
+		// // load builtin assets
 
-		var subDirectories []string = []string{"gltf"}
-		extensions := map[string]any{
-			".gltf": nil,
-		}
-		fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
-		for _, metaData := range fileMetaData {
-			if strings.HasPrefix(metaData.Name, "_") {
-				continue
-			}
+		// var subDirectories []string = []string{"gltf"}
+		// extensions := map[string]any{
+		// 	".gltf": nil,
+		// }
+		// fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
+		// for _, metaData := range fileMetaData {
+		// 	if strings.HasPrefix(metaData.Name, "_") {
+		// 		continue
+		// 	}
 
-			a.LoadAndRegisterDocument(AssetConfig{
-				Name:          metaData.Name,
-				FilePath:      metaData.Path,
-				ColliderType:  string(types.ColliderTypeMesh),
-				ColliderGroup: string(types.ColliderGroupPlayer),
-				SingleEntity:  true,
-			}, true)
-		}
+		// 	a.LoadAndRegisterDocument(AssetConfig{
+		// 		Name:          metaData.Name,
+		// 		FilePath:      metaData.Path,
+		// 		ColliderType:  string(types.ColliderTypeMesh),
+		// 		ColliderGroup: string(types.ColliderGroupPlayer),
+		// 		SingleEntity:  true,
+		// 	})
+		// }
 	}
 }

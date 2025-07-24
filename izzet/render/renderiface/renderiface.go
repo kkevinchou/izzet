@@ -34,6 +34,7 @@ type App interface {
 	Platform() platforms.Platform
 
 	LoadProject(name string) bool
+	NewProject()
 
 	CollisionObserver() *collisionobserver.CollisionObserver
 	RuntimeConfig() *runtimeconfig.RuntimeConfig

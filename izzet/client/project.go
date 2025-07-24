@@ -154,7 +154,7 @@ func (g *Client) LoadProject(name string) bool {
 	}
 
 	g.project = &project
-	g.assetManager.Reset()
+	g.ResetApp()
 	g.initializeAssetManagerWithProject(name)
 
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
@@ -179,6 +179,8 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 	if err != nil {
 		panic(err)
 	}
+
+	g.assetManager.Reset()
 
 	// load meshes, skip materials
 	for _, document := range assetsJSON.Documents {

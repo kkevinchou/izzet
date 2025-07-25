@@ -16,7 +16,7 @@ type AnimationComponent struct {
 	AnimationHandle string
 	AnimationPlayer *animation.AnimationPlayer `json:"-"`
 	RootJointID     int
-	Animations      map[string]*modelspec.AnimationSpec
+	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
 
 	AnimationNames map[string]string
 }

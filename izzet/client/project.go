@@ -180,15 +180,17 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		panic(err)
 	}
 
-	g.assetManager.Reset()
+	// broken when second param is false
+	g.assetManager = assets.NewAssetManager(true)
 
 	// load meshes, skip materials
+	// materials are skipped because the materials from the document should already
+	// be saved to our assets.json file which is loaded independently
+	// we still need to implement the wiring to point these models to the correct asset though
 	for _, document := range assetsJSON.Documents {
-		g.assetManager.LoadAndRegisterDocument(document.Config)
+		g.assetManager.LoadAndRegisterDocument(document.Config, false)
 	}
 
-	// don't overwrite materials since the user may have edited materials that haven't
-	// been persisted to the asset file yet
 	for _, material := range assetsJSON.Materials {
 		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
 	}

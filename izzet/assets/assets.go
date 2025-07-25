@@ -3,6 +3,7 @@ package assets
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -15,11 +16,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
-)
-
-const (
-	defaultMaterialName string = "default material"
-	whiteMaterialName   string = "white material"
 )
 
 type DocumentAsset struct {
@@ -65,11 +61,20 @@ func NewAssetManager(processVisualAssets bool) *AssetManager {
 	}
 
 	assetManager := AssetManager{
-		textures:       loadedTextures,
-		fonts:          loadedFonts,
-		processVisuals: processVisualAssets,
+		textures:               loadedTextures,
+		fonts:                  loadedFonts,
+		processVisuals:         processVisualAssets,
+		documentAssets:         map[string]DocumentAsset{},
+		Primitives:             map[types.MeshHandle][]Primitive{},
+		NamespaceToMeshHandles: map[string][]types.MeshHandle{},
+		materialAssets:         map[types.MaterialHandle]MaterialAsset{},
+		Animations:             map[string]map[string]*modelspec.AnimationSpec{},
+		Joints:                 map[string]map[int]*modelspec.JointSpec{},
+		RootJoints:             map[string]int{},
 	}
-	assetManager.Reset()
+
+	handle := assetManager.GetCubeMeshHandle()
+	assetManager.registerMeshPrimitivesWithHandle(handle, cubeMesh(15), nil)
 
 	return &assetManager
 }
@@ -170,65 +175,51 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 
 var materialIDGen int = 0
 
-func (a *AssetManager) Reset() {
-	// materialIDGen = 0
-	a.documentAssets = map[string]DocumentAsset{}
-	a.Primitives = map[types.MeshHandle][]Primitive{}
-	a.NamespaceToMeshHandles = map[string][]types.MeshHandle{}
-	a.materialAssets = map[types.MaterialHandle]MaterialAsset{}
-	a.Animations = map[string]map[string]*modelspec.AnimationSpec{}
-	a.Joints = map[string]map[int]*modelspec.JointSpec{}
-	a.RootJoints = map[string]int{}
+func (a *AssetManager) LoadDefaultAssets() {
+	// default materials
 
-	if a.processVisuals {
-		handle := a.GetCubeMeshHandle()
-		a.registerMeshPrimitivesWithHandle(handle, cubeMesh(15), nil)
-
-		// default materials
-
-		defaultMaterial := modelspec.MaterialSpecification{
-			PBRMaterial: modelspec.PBRMaterial{
-				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
-					BaseColorTextureName: settings.DefaultTexture,
-					BaseColorFactor:      mgl32.Vec4{1, 1, 1, 1},
-					RoughnessFactor:      .55,
-					MetalicFactor:        0,
-				},
+	defaultMaterial := modelspec.MaterialSpecification{
+		PBRMaterial: modelspec.PBRMaterial{
+			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
+				BaseColorTextureName: settings.DefaultTexture,
+				BaseColorFactor:      mgl32.Vec4{1, 1, 1, 1},
+				RoughnessFactor:      .55,
+				MetalicFactor:        0,
 			},
+		},
+	}
+
+	a.CreateMaterialWithHandle("default material", defaultMaterial, DefaultMaterialHandle)
+
+	whiteMaterial := modelspec.MaterialSpecification{
+		PBRMaterial: modelspec.PBRMaterial{
+			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
+				BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
+				RoughnessFactor: .55,
+				MetalicFactor:   0,
+			},
+		},
+	}
+	a.CreateMaterialWithHandle("white material", whiteMaterial, WhiteMaterialHandle)
+
+	// default models
+
+	var subDirectories []string = []string{"gltf"}
+	extensions := map[string]any{
+		".gltf": nil,
+	}
+	fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
+	for _, metaData := range fileMetaData {
+		if strings.HasPrefix(metaData.Name, "_") {
+			continue
 		}
 
-		a.CreateMaterialWithHandle("default material", defaultMaterial, DefaultMaterialHandle)
-
-		whiteMaterial := modelspec.MaterialSpecification{
-			PBRMaterial: modelspec.PBRMaterial{
-				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
-					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
-					RoughnessFactor: .55,
-					MetalicFactor:   0,
-				},
-			},
-		}
-		a.CreateMaterialWithHandle("white material", whiteMaterial, WhiteMaterialHandle)
-
-		// // load builtin assets
-
-		// var subDirectories []string = []string{"gltf"}
-		// extensions := map[string]any{
-		// 	".gltf": nil,
-		// }
-		// fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
-		// for _, metaData := range fileMetaData {
-		// 	if strings.HasPrefix(metaData.Name, "_") {
-		// 		continue
-		// 	}
-
-		// 	a.LoadAndRegisterDocument(AssetConfig{
-		// 		Name:          metaData.Name,
-		// 		FilePath:      metaData.Path,
-		// 		ColliderType:  string(types.ColliderTypeMesh),
-		// 		ColliderGroup: string(types.ColliderGroupPlayer),
-		// 		SingleEntity:  true,
-		// 	})
-		// }
+		a.LoadAndRegisterDocument(AssetConfig{
+			Name:          metaData.Name,
+			FilePath:      metaData.Path,
+			ColliderType:  string(types.ColliderTypeMesh),
+			ColliderGroup: string(types.ColliderGroupPlayer),
+			SingleEntity:  true,
+		}, true)
 	}
 }

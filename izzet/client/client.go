@@ -127,17 +127,15 @@ func New(shaderDirectory string, config settings.Config, projectName string) *Cl
 		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
 		metricsRegistry: metricsRegistry,
+		project:         NewProject(),
 	}
 	g.ResetApp()
 	g.initSettings()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
-	// g.initialize()
-	if projectName != "" {
-		g.LoadProject(projectName)
-	} else {
-		g.CreateAndLoadEmptyProject()
-	}
+	g.NewProject()
+	worldName := "my_new_project"
+	g.SaveProject(worldName)
 
 	g.setupSystems()
 

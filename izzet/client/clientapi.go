@@ -426,7 +426,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 }
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
-	g.assetManager.LoadAndRegisterDocument(config)
+	g.assetManager.LoadAndRegisterDocument(config, true)
 }
 
 func (g *Client) Shutdown() {
@@ -598,7 +598,8 @@ func (g *Client) ResetApp() {
 func (g *Client) NewProject() {
 	g.project.Name = ""
 	g.ResetApp()
-	g.AssetManager().Reset()
+	g.assetManager = assets.NewAssetManager(true)
+	g.assetManager.LoadDefaultAssets()
 	g.SelectEntity(nil)
 
 	// set up the default scene

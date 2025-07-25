@@ -86,11 +86,7 @@ func file(app renderiface.App) {
 			app.NewProject()
 			selectedWorldName = ""
 			worldName = "my_new_project"
-			if err := app.SaveProject(worldName); err != nil {
-				errorModal = err
-			} else {
-				imgui.CloseCurrentPopup()
-			}
+			app.SaveProject(worldName)
 		}
 
 		if imgui.MenuItemBool("Import Asset") {

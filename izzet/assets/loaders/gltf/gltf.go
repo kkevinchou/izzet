@@ -505,7 +505,11 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 	childIDSet := map[int]bool{}
 	for jointID, nodeID := range jointNodeIDs {
 		children := uint32SliceToIntSlice(document.Nodes[nodeID].Children)
+		// there can be children that aren't joints, need to make an explicit check
 		for _, childNodeID := range children {
+			if _, ok := nodeIDToJointID[childNodeID]; !ok {
+				continue
+			}
 			childJointID := nodeIDToJointID[childNodeID]
 			childIDSet[childJointID] = true
 			joints[jointID].Children = append(joints[jointID].Children, joints[childJointID])

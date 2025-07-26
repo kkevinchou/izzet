@@ -25,7 +25,7 @@ func NewProject() *Project {
 }
 
 type DocumentJSON struct {
-	Config assets.AssetConfig
+	DocumentAsset assets.DocumentAsset
 }
 
 type MaterialsJSON struct {
@@ -80,7 +80,7 @@ func (g *Client) SaveProject(name string) error {
 		newConfig := document.Config
 		newConfig.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
-			Config: newConfig,
+			DocumentAsset: document,
 		})
 
 		if sourceRootDir == contentDir {
@@ -180,15 +180,20 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		panic(err)
 	}
 
-	// broken when second param is false
 	g.assetManager = assets.NewAssetManager(true)
 
 	// load meshes, skip materials
 	// materials are skipped because the materials from the document should already
 	// be saved to our assets.json file which is loaded independently
-	// we still need to implement the wiring to point these models to the correct asset though
+
+	// TODO - take assetJSON as the input?
 	for _, document := range assetsJSON.Documents {
-		g.assetManager.LoadAndRegisterDocument(document.Config, false)
+		// TODO - issue: the document in document asset is populated by reading the config
+		// which still points to the default location for assets. actually is this an issue?
+		// ideally all assets are pointed to the .project folder. perhaps we should have a new project
+		// setup step that copies assets over from _assets rather than loading directly from _assets?
+		g.assetManager.LoadAndRegisterDocumentAsset(document.DocumentAsset)
+		// g.assetManager.LoadAndRegisterDocument(document.DocumentAsset.Config, false)
 	}
 
 	for _, material := range assetsJSON.Materials {

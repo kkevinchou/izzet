@@ -9,6 +9,50 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
+func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.Document {
+	config := d.Config
+	document := loaders.LoadDocument(config.Name, config.FilePath)
+	if _, ok := a.documentAssets[config.Name]; ok {
+		fmt.Printf("document with name %s already previously loaded\n", config.Name)
+	}
+
+	d.Document = document
+	a.documentAssets[d.Config.Name] = d
+
+	if a.processVisuals {
+		for _, file := range document.PeripheralFiles {
+			extension := filepath.Ext(file)
+			if extension != ".png" {
+				continue
+			}
+
+			key := file[0 : len(file)-len(extension)]
+			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
+		}
+	}
+
+	if config.SingleEntity {
+		// look up the material -> handle setup on the load call
+		// materials have been saved to the assets json and should be initialized
+		// in initializeAssetManagerWithProject()
+		// 1. LoadAndRegisterDocument
+		// 2. CreateMaterialWithHandle for each material
+		//
+		// document should contain a mapping from the gltf material -> a material handle
+		a.registerDocumentMeshWithSingleHandle(document, d.MatIDToHandle)
+	} else {
+		a.registerDocumentMeshes(document, d.MatIDToHandle)
+	}
+
+	if len(document.Animations) > 0 {
+		a.Animations[config.Name] = document.Animations
+		a.Joints[config.Name] = document.JointMap
+		a.RootJoints[config.Name] = document.RootJoint.ID
+	}
+
+	return document
+}
+
 func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMaterials bool) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
@@ -16,10 +60,10 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 	}
 
 	a.documentAssets[config.Name] = DocumentAsset{
-		Config:   config,
-		Document: document,
+		Config:        config,
+		Document:      document,
+		MatIDToHandle: map[string]types.MaterialHandle{},
 	}
-	matIDToHandle := map[string]types.MaterialHandle{}
 
 	if a.processVisuals {
 		for _, file := range document.PeripheralFiles {
@@ -35,15 +79,23 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 		if importMaterials {
 			for _, material := range document.Materials {
 				name := fmt.Sprintf("%s/%s", document.Name, material.ID)
-				matIDToHandle[material.ID] = a.createMaterial(name, fmt.Sprintf("%s/%s", config.FilePath, material.ID), material)
+				handle := a.createMaterial(name, fmt.Sprintf("%s/%s", config.FilePath, material.ID), material)
+				a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
 			}
 		}
 	}
 
 	if config.SingleEntity {
-		a.registerDocumentMeshWithSingleHandle(document, matIDToHandle)
+		// look up the material -> handle setup on the load call
+		// materials have been saved to the assets json and should be initialized
+		// in initializeAssetManagerWithProject()
+		// 1. LoadAndRegisterDocument
+		// 2. CreateMaterialWithHandle for each material
+		//
+		// document should contain a mapping from the gltf material -> a material handle
+		a.registerDocumentMeshWithSingleHandle(document, a.documentAssets[config.Name].MatIDToHandle)
 	} else {
-		a.registerDocumentMeshes(document, matIDToHandle)
+		a.registerDocumentMeshes(document, a.documentAssets[config.Name].MatIDToHandle)
 	}
 
 	if len(document.Animations) > 0 {

@@ -18,8 +18,8 @@ import (
 var errorModal error
 var showImportAssetModal bool
 
-var SelectedColliderType types.ColliderType = types.ColliderTypeNone
-var SelectedColliderGroup types.ColliderGroup = types.ColliderGroupNone
+var SelectedColliderType types.ColliderType = types.ColliderTypeMesh
+var SelectedColliderGroup types.ColliderGroup = types.ColliderGroupTerrain
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {

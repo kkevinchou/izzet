@@ -1,6 +1,6 @@
 package network
 
-import "github.com/kkevinchou/kitolib/input"
+import "github.com/kkevinchou/izzet/internal/input"
 
 type InputMessage struct {
 	Input input.Input

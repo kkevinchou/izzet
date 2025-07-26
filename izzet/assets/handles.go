@@ -1,8 +1,8 @@
 package assets
 
 import (
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var (

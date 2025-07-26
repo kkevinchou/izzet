@@ -1,9 +1,9 @@
 package entities
 
 import (
+	"github.com/kkevinchou/izzet/internal/animation"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/kitolib/animation"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 const (

@@ -7,6 +7,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
@@ -18,9 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 func (g *Server) MetricsRegistry() *metrics.MetricsRegistry {

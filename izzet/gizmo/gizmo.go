@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
-	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/izzet/internal/input"
 )
 
 type GizmoMode string

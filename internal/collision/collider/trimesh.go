@@ -2,8 +2,8 @@ package collider
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
+	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/utils"
 )
 
 type Mesh interface {

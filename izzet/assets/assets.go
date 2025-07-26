@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type DocumentAsset struct {

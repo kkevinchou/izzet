@@ -2,8 +2,8 @@ package entities
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var entityIDGen int

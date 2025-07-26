@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/kitolib/modelspec"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 )
 
 type HalfEdgeSurface struct {

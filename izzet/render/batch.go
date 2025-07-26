@@ -2,9 +2,9 @@ package render
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 func (r *RenderSystem) SetupBatchedStaticRendering() {

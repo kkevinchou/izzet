@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/types"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.Document {

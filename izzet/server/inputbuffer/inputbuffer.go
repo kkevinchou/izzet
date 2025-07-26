@@ -3,7 +3,7 @@ package inputbuffer
 import (
 	"fmt"
 
-	"github.com/kkevinchou/kitolib/input"
+	"github.com/kkevinchou/izzet/internal/input"
 )
 
 const maxBufferedInput int = 3

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var val int32

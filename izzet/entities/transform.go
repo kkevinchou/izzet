@@ -2,7 +2,7 @@ package entities
 
 import (
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/utils"
+	"github.com/kkevinchou/izzet/internal/utils"
 )
 
 // WorldTransform computes a transform matrix that represents all

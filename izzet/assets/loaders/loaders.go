@@ -7,12 +7,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/backends/opengl"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
-	"github.com/kkevinchou/kitolib/modelspec"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 type TextureLoadJob struct {

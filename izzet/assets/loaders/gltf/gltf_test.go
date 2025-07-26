@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var testFile string = "../../../_assets/gltf/dude.gltf"

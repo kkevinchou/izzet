@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/geometry"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
-	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 func TestQ(t *testing.T) {

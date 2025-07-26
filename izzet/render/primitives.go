@@ -3,9 +3,9 @@ package render
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/kitolib/shaders"
-	"github.com/kkevinchou/kitolib/utils"
 )
 
 var internedQuadVAOPositionUV uint32

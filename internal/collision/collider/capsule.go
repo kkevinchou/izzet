@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/kitolib/utils"
+	"github.com/kkevinchou/izzet/internal/utils"
 )
 
 type Capsule struct {

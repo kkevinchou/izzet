@@ -693,7 +693,7 @@ func (g *Client) NewProject(name string) {
 
 	directionalLight := entities.CreateDirectionalLight()
 	directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
-	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, -1}
+	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, 1}
 	directionalLight.Name = "directional_light"
 	directionalLight.LightInfo.PreScaledIntensity = 4
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})

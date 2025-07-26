@@ -34,7 +34,7 @@ type App interface {
 	Platform() platforms.Platform
 
 	LoadProject(name string) bool
-	NewProject()
+	NewProject(name string)
 
 	CollisionObserver() *collisionobserver.CollisionObserver
 	RuntimeConfig() *runtimeconfig.RuntimeConfig
@@ -50,7 +50,8 @@ type App interface {
 	DisconnectClient()
 
 	GetServerStats() serverstats.ServerStats
-	SaveProject(name string) error
+	SaveProject() error
+	SaveProjectAs(name string) error
 
 	GetPlayerEntity() *entities.Entity
 	ConfigureUI(enabled bool)

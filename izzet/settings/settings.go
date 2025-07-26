@@ -71,7 +71,7 @@ const (
 	CameraEntityFollowDistance       float64 = 5
 	CameraEntityFollowVerticalOffset float64 = 1.5
 	ProjectsDirectory                string  = ".project/"
-	DefaultProject                   string  = ""
+	NewProjectName                   string  = "my_new_project"
 
 	FooterSize  float32 = 31
 	ShelfHeight float32 = 210

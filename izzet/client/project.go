@@ -20,10 +20,6 @@ type Project struct {
 	Name       string
 }
 
-func NewProject() *Project {
-	return &Project{}
-}
-
 type DocumentJSON struct {
 	DocumentAsset assets.DocumentAsset
 }
@@ -37,11 +33,10 @@ type AssetsJSON struct {
 	Materials []MaterialsJSON
 }
 
-func (g *Client) SaveProject(name string) error {
+func (g *Client) InitializeProjectFolders(name string) error {
 	if name == "" {
 		return errors.New("name cannot be empty string")
 	}
-	g.project.Name = name
 
 	// project folder
 	err := os.MkdirAll(filepath.Join(settings.ProjectsDirectory, name), os.ModePerm)
@@ -49,22 +44,41 @@ func (g *Client) SaveProject(name string) error {
 		return err
 	}
 
+	// content directory
+
+	err = os.MkdirAll(getContentDir(name), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getContentDir(name string) string {
+	return filepath.Join(settings.ProjectsDirectory, name, "content")
+}
+
+func (g *Client) SaveProject() error {
+	return g.SaveProjectAs(g.project.Name)
+}
+
+func (g *Client) SaveProjectAs(name string) error {
+	if g.project.Name != name {
+		err := g.InitializeProjectFolders(name)
+		if err != nil {
+			return nil
+		}
+		g.project.Name = name
+	}
+
+	contentDir := getContentDir(name)
 	worldFilePath := path.Join(settings.ProjectsDirectory, name, "world.json")
 	g.saveWorld(worldFilePath)
 	g.project.WorldFile = worldFilePath
 
-	// content directory
-
-	contentDir := filepath.Join(settings.ProjectsDirectory, name, "content")
-	err = os.MkdirAll(contentDir, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-
 	assetsJSON := AssetsJSON{}
 
 	// documents
-
 	for _, document := range g.AssetManager().GetDocuments() {
 		config := document.Config
 		sourceRootDir := filepath.Dir(config.FilePath)
@@ -77,10 +91,12 @@ func (g *Client) SaveProject(name string) error {
 			sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(config.FilePath), peripheralFilePath))
 		}
 
-		newConfig := document.Config
-		newConfig.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
+		newDocument := document
+		// in the event where we're saving a new project from the original, we want to overwrite the
+		// filepaths so that we reference the documents in the new project directory and not the old one.
+		newDocument.Config.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
-			DocumentAsset: document,
+			DocumentAsset: newDocument,
 		})
 
 		if sourceRootDir == contentDir {
@@ -129,10 +145,6 @@ func (g *Client) SaveProject(name string) error {
 	}
 
 	return nil
-}
-
-func (g *Client) CreateAndLoadEmptyProject() {
-	g.project = NewProject()
 }
 
 func (g *Client) LoadProject(name string) bool {

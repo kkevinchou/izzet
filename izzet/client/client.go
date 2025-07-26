@@ -87,7 +87,7 @@ type Client struct {
 	predictionDebugLogging bool
 }
 
-func New(shaderDirectory string, config settings.Config, projectName string) *Client {
+func New(shaderDirectory string, config settings.Config) *Client {
 	initSeed()
 
 	sdlPlatform, window, err := platforms.NewSDLPlatform(config.Width, config.Height, config.Fullscreen)
@@ -127,15 +127,12 @@ func New(shaderDirectory string, config settings.Config, projectName string) *Cl
 		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
 		metricsRegistry: metricsRegistry,
-		project:         NewProject(),
 	}
 	g.ResetApp()
 	g.initSettings()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
-	g.NewProject()
-	worldName := "my_new_project"
-	g.SaveProject(worldName)
+	g.NewProject(settings.NewProjectName)
 
 	g.setupSystems()
 

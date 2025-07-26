@@ -2,7 +2,6 @@ package collisionobserver
 
 import (
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/physicsutils"
 )
 
 // OnSpatialQuery(entityID int, count int)
@@ -39,9 +38,9 @@ func (o *CollisionObserver) OnSpatialQuery(entityID int, count int) {
 }
 func (o *CollisionObserver) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
 	o.CollisionCheck[e1.GetID()] += 1
-	if physicsutils.IsCapsuleCapsuleCollision(e1, e2) {
+	if isCapsuleCapsuleCollision(e1, e2) {
 		o.CollisionCheckCapsule[e1.GetID()] += 1
-	} else if ok, _, _ := physicsutils.IsCapsuleTriMeshCollision(e1, e2); ok {
+	} else if ok, _, _ := isCapsuleTriMeshCollision(e1, e2); ok {
 		o.CollisionCheckTriMesh[e1.GetID()] += 1
 		o.CollisionCheckTriangle[e1.GetID()] += len(e2.Collider.TriMeshCollider.Triangles)
 	}
@@ -87,4 +86,30 @@ func (o nullCollisionObserverType) OnCollisionCheck(e1 *entities.Entity, e2 *ent
 func (o nullCollisionObserverType) OnCollisionResolution(entityID int) {
 }
 func (o nullCollisionObserverType) Clear() {
+}
+
+func isCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity, *entities.Entity) {
+	if e1.Collider.CapsuleCollider != nil {
+		if e2.Collider.TriMeshCollider != nil {
+			return true, e1, e2
+		}
+	}
+
+	if e2.Collider.CapsuleCollider != nil {
+		if e1.Collider.TriMeshCollider != nil {
+			return true, e2, e1
+		}
+	}
+
+	return false, nil, nil
+}
+
+func isCapsuleCapsuleCollision(e1, e2 *entities.Entity) bool {
+	if e1.Collider.CapsuleCollider != nil {
+		if e2.Collider.CapsuleCollider != nil {
+			return true
+		}
+	}
+
+	return false
 }

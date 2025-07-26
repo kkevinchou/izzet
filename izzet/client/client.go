@@ -17,7 +17,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -41,8 +40,6 @@ type Client struct {
 	assetManager *assets.AssetManager
 
 	camera *editorcamera.Camera
-
-	prefabs map[int]*prefabs.Prefab
 
 	renderSystem *render.RenderSystem
 	editHistory  *edithistory.EditHistory

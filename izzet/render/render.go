@@ -1310,13 +1310,11 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			panels.BuildTabsSet(
 				r.app,
 				renderContext,
-				r.app.Prefabs(),
 			)
 
 			drawer.BuildFooter(
 				r.app,
 				renderContext,
-				r.app.Prefabs(),
 			)
 
 			imgui.PopStyleColorV(17)

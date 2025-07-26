@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -21,7 +20,6 @@ type App interface {
 	AssetManager() *assets.AssetManager
 	GetEditorCameraPosition() mgl64.Vec3
 	GetEditorCameraRotation() mgl64.Quat
-	Prefabs() []*prefabs.Prefab
 	ResetNavMeshVAO()
 	CommandFrame() int
 
@@ -30,7 +28,6 @@ type App interface {
 	AppMode() mode.AppMode
 
 	// for panels
-	GetPrefabByID(id int) *prefabs.Prefab
 	Platform() platforms.Platform
 
 	LoadProject(name string) bool

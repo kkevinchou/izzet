@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -25,7 +24,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -41,26 +39,6 @@ import (
 	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
-
-func (g *Client) GetPrefabByID(id int) *prefabs.Prefab {
-	return g.prefabs[id]
-}
-
-func (g *Client) Prefabs() []*prefabs.Prefab {
-	var ids []int
-	for id, _ := range g.prefabs {
-		ids = append(ids, id)
-	}
-
-	sort.Ints(ids)
-
-	ps := []*prefabs.Prefab{}
-	for _, id := range ids {
-		ps = append(ps, g.prefabs[id])
-	}
-
-	return ps
-}
 
 func (g *Client) AssetManager() *assets.AssetManager {
 	return g.assetManager

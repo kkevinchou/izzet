@@ -3,13 +3,12 @@ package panels
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/mode"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
 var open bool
 
-func BuildTabsSet(app renderiface.App, renderContext RenderContext, ps []*prefabs.Prefab) {
+func BuildTabsSet(app renderiface.App, renderContext RenderContext) {
 	imgui.BeginChildStrV("Right Window", imgui.Vec2{}, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus)
 	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("Details") {

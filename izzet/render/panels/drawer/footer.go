@@ -2,7 +2,6 @@ package drawer
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -17,13 +16,12 @@ type ShelfType string
 
 const ShelfNone ShelfType = "NONE"
 const ShelfContent ShelfType = "CONTENT"
-const ShelfPrefabs ShelfType = "PREFABS"
 const ShelfMaterials ShelfType = "MATERIALS"
 
 var last = ShelfContent
 var expanded bool
 
-func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, ps []*prefabs.Prefab) {
+func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext) {
 	_, windowHeight := app.WindowSize()
 
 	imgui.SetNextWindowBgAlpha(1)
@@ -56,15 +54,6 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 			last = ShelfMaterials
 			imgui.EndTabItem()
 		}
-		// if imgui.BeginTabItem("Prefabs") {
-		// 	if last != ShelfPrefabs {
-		// 		expanded = true
-		// 	} else if imgui.IsItemClicked() {
-		// 		expanded = !expanded
-		// 	}
-		// 	last = ShelfPrefabs
-		// 	imgui.EndTabItem()
-		// }
 
 		imgui.EndTabBar()
 	}
@@ -79,8 +68,6 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, p
 		imgui.BeginV("Shelf", &open, shelfFlags)
 		if last == ShelfContent {
 			contentBrowser(app)
-		} else if last == ShelfPrefabs {
-			prefabsUI(app, ps)
 		} else if last == ShelfMaterials {
 			materialssUI(app)
 		}

@@ -3,15 +3,10 @@ package entities
 import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/prefabs"
 	"github.com/kkevinchou/kitolib/modelspec"
 )
 
 var entityIDGen int
-
-func InstantiateFromPrefab(prefab *prefabs.Prefab, ml *assets.AssetManager) []*Entity {
-	return nil
-}
 
 func InstantiateBaseEntity(name string, id int) *Entity {
 	return &Entity{

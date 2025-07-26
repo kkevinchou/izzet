@@ -14,11 +14,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -164,7 +164,7 @@ func (g *Server) ProjectName() string {
 	return g.projectName
 }
 
-func (g *Server) AppMode() mode.AppMode {
+func (g *Server) AppMode() types.AppMode {
 	panic("app mode should not be called in server, conslidate app mode with isClient/isServer")
 }
 

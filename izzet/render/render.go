@@ -19,7 +19,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
@@ -27,6 +26,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -342,7 +342,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	var position mgl64.Vec3
 	var rotation mgl64.Quat = mgl64.QuatIdent()
 
-	if r.app.AppMode() == mode.AppModeEditor {
+	if r.app.AppMode() == types.AppModeEditor {
 		position = r.app.GetEditorCameraPosition()
 		rotation = r.app.GetEditorCameraRotation()
 	} else {
@@ -468,7 +468,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// store color picking entity
 	start = time.Now()
-	if r.app.AppMode() == mode.AppModeEditor {
+	if r.app.AppMode() == types.AppModeEditor {
 		r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
 	}
 	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
@@ -614,7 +614,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 		}
 	}
 
-	if r.app.AppMode() == mode.AppModeEditor {
+	if r.app.AppMode() == types.AppModeEditor {
 		for _, entity := range r.app.World().Entities() {
 			lightInfo := entity.LightInfo
 			if lightInfo != nil {
@@ -998,7 +998,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 				textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
 				texture := r.app.AssetManager().GetTexture(textureName)
 				if texture != nil {
-					if entity.Billboard && r.app.AppMode() == mode.AppModeEditor {
+					if entity.Billboard && r.app.AppMode() == types.AppModeEditor {
 						shader := r.shaderManager.GetShaderProgram("world_space_quad")
 						shader.Use()
 

@@ -1,4 +1,4 @@
-package mode
+package types
 
 type AppMode string
 

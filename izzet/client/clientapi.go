@@ -25,7 +25,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
-	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -116,10 +115,10 @@ func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {
 }
 
 func (g *Client) StartLiveWorld() {
-	if g.AppMode() != mode.AppModeEditor {
+	if g.AppMode() != types.AppModeEditor {
 		return
 	}
-	g.appMode = mode.AppModePlay
+	g.appMode = types.AppModePlay
 	g.editorWorld = g.world
 
 	var buffer bytes.Buffer
@@ -140,16 +139,16 @@ func (g *Client) StartLiveWorld() {
 }
 
 func (g *Client) StopLiveWorld() {
-	if g.AppMode() != mode.AppModePlay {
+	if g.AppMode() != types.AppModePlay {
 		return
 	}
-	g.appMode = mode.AppModeEditor
+	g.appMode = types.AppModeEditor
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
 	g.world = g.editorWorld
 }
 
-func (g *Client) AppMode() mode.AppMode {
+func (g *Client) AppMode() types.AppMode {
 	return g.appMode
 }
 

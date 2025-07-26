@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -20,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -36,7 +36,7 @@ type Server struct {
 	world *world.GameWorld
 
 	systems           []systems.System
-	appMode           mode.AppMode
+	appMode           types.AppMode
 	collisionObserver *collisionobserver.CollisionObserver
 
 	runtimeConfig *runtimeconfig.RuntimeConfig

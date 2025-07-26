@@ -17,12 +17,12 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 // Systems Context
@@ -43,11 +43,11 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 		g.handleSpatialPartition()
 	}
 
-	if g.AppMode() == mode.AppModePlay {
+	if g.AppMode() == types.AppModePlay {
 		for _, s := range g.playModeSystems {
 			s.Update(delta, g.world)
 		}
-	} else if g.AppMode() == mode.AppModeEditor {
+	} else if g.AppMode() == types.AppModeEditor {
 		for _, s := range g.editorModeSystems {
 			s.Update(delta, g.world)
 		}
@@ -55,11 +55,11 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 
 	g.handleInputCommands(frameInput)
 
-	if g.AppMode() == mode.AppModeEditor {
+	if g.AppMode() == types.AppModeEditor {
 		g.handleEditorInputCommands(frameInput)
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)
-	} else if g.AppMode() == mode.AppModePlay {
+	} else if g.AppMode() == types.AppModePlay {
 		g.handlePlayInputCommands(frameInput)
 	}
 
@@ -262,9 +262,9 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 
 	// shutdown
 	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {
-		if g.AppMode() == mode.AppModeEditor {
+		if g.AppMode() == types.AppModeEditor {
 			g.Shutdown()
-		} else if g.AppMode() == mode.AppModePlay {
+		} else if g.AppMode() == types.AppModePlay {
 			g.DisconnectClient()
 		}
 	}

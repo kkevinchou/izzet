@@ -9,9 +9,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/mode"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/metrics"
 )
@@ -25,7 +25,7 @@ type App interface {
 
 	StartLiveWorld()
 	StopLiveWorld()
-	AppMode() mode.AppMode
+	AppMode() types.AppMode
 
 	// for panels
 	Platform() platforms.Platform

@@ -5,7 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/mode"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type AnimationSystem struct {
@@ -28,9 +28,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 
 		var selectAnimation bool
 		if s.app.IsClient() {
-			if s.app.AppMode() == mode.AppModePlay && s.app.GetPlayerEntity().GetID() == entity.GetID() {
+			if s.app.AppMode() == types.AppModePlay && s.app.GetPlayerEntity().GetID() == entity.GetID() {
 				selectAnimation = true
-			} else if s.app.AppMode() == mode.AppModeEditor {
+			} else if s.app.AppMode() == types.AppModeEditor {
 				selectAnimation = true
 			}
 		} else {

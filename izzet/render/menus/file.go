@@ -180,8 +180,8 @@ func importAssetModal(app renderiface.App) {
 			app.ImportAsset(wipImportAssetConfig)
 			imgui.CloseCurrentPopup()
 			showImportAssetModal = false
-			SelectedColliderType = types.ColliderTypeNone
-			SelectedColliderGroup = types.ColliderGroupNone
+			SelectedColliderType = types.ColliderTypeMesh
+			SelectedColliderGroup = types.ColliderGroupTerrain
 		}
 		imgui.SameLine()
 		if imgui.Button("Cancel") {

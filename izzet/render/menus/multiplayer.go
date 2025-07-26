@@ -11,6 +11,13 @@ func multiplayer(app renderiface.App) {
 	imgui.SetNextWindowSize(imgui.Vec2{X: 200})
 	if imgui.BeginMenu("Multiplayer") {
 		if imgui.MenuItemBoolV("Connect Client", "", app.IsConnected(), !app.IsConnected()) {
+			// save project before attempting to connect. There may be imported assets
+			// that have not been persisted to our project's disk yet which will cause them
+			// to fail to load on connect.
+			//
+			// i might revisit this in the future so that importing always immediately saves
+			// the asset to disk
+			app.SaveProject()
 			err := app.ConnectAndInitialize()
 			if err != nil {
 				fmt.Println(err)
@@ -22,6 +29,13 @@ func multiplayer(app renderiface.App) {
 		}
 
 		if imgui.MenuItemBoolV("Start Async Server", "", app.AsyncServerStarted(), !app.AsyncServerStarted()) {
+			// save project before attempting to start the server. There may be imported assets
+			// that have not been persisted to our project's disk yet which will cause them
+			// to fail to load on connect.
+			//
+			// i might revisit this in the future so that importing always immediately saves
+			// the asset to disk
+			app.SaveProject()
 			app.StartAsyncServer()
 		}
 

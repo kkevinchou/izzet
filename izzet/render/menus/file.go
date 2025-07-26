@@ -18,8 +18,11 @@ import (
 var errorModal error
 var showImportAssetModal bool
 
-var SelectedColliderType types.ColliderType = types.ColliderTypeMesh
-var SelectedColliderGroup types.ColliderGroup = types.ColliderGroupTerrain
+var defaultColliderType types.ColliderType = types.ColliderTypeMesh
+var defaultColliderGroup types.ColliderGroup = types.ColliderGroupTerrain
+
+var SelectedColliderType types.ColliderType = defaultColliderType
+var SelectedColliderGroup types.ColliderGroup = defaultColliderGroup
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
@@ -31,7 +34,7 @@ func file(app renderiface.App) {
 		imgui.SameLine()
 		if imgui.Button("Save") {
 			fmt.Println("Save to", worldName)
-			if err := app.SaveProject(worldName); err != nil {
+			if err := app.SaveProjectAs(worldName); err != nil {
 				errorModal = err
 			} else {
 				imgui.CloseCurrentPopup()
@@ -83,14 +86,17 @@ func file(app renderiface.App) {
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.MenuItemBool("New Project") {
-			app.NewProject()
+			app.NewProject(settings.NewProjectName)
+
 			selectedWorldName = ""
-			worldName = "my_new_project"
-			app.SaveProject(worldName)
+			worldName = settings.NewProjectName
 		}
 
 		if imgui.MenuItemBool("Import Asset") {
-			wipImportAssetConfig = assets.AssetConfig{}
+			wipImportAssetConfig = assets.AssetConfig{
+				ColliderType:  string(defaultColliderType),
+				ColliderGroup: string(defaultColliderGroup),
+			}
 			showImportAssetModal = true
 		}
 
@@ -180,8 +186,8 @@ func importAssetModal(app renderiface.App) {
 			app.ImportAsset(wipImportAssetConfig)
 			imgui.CloseCurrentPopup()
 			showImportAssetModal = false
-			SelectedColliderType = types.ColliderTypeMesh
-			SelectedColliderGroup = types.ColliderGroupTerrain
+			SelectedColliderType = defaultColliderType
+			SelectedColliderGroup = defaultColliderGroup
 		}
 		imgui.SameLine()
 		if imgui.Button("Cancel") {

@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
@@ -30,9 +34,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/kkevinchou/kitolib/input"
 	"github.com/kkevinchou/kitolib/metrics"
+	"github.com/kkevinchou/kitolib/modelspec"
 	"github.com/kkevinchou/kitolib/utils"
 )
 
@@ -426,7 +432,81 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 }
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
-	g.assetManager.LoadAndRegisterDocument(config, true)
+	newConfig := g.CopyDocumentToProjectFolder(config)
+	g.assetManager.LoadAndRegisterDocument(newConfig, true)
+}
+
+func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {
+	// copy asset to project
+	sourceRootDir := filepath.Dir(config.FilePath)
+
+	// kinda wasteful since we're going to technicall load the document twice
+	document := loaders.LoadDocument("asdf", config.FilePath)
+
+	sourceFilePaths := []string{config.FilePath}
+	for _, peripheralFilePath := range document.PeripheralFiles {
+		sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(config.FilePath), peripheralFilePath))
+	}
+
+	contentDir := filepath.Join(settings.ProjectsDirectory, g.project.Name, "content")
+	newConfig := config
+	newConfig.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
+
+	err := copySourceFiles(sourceFilePaths, sourceRootDir, contentDir)
+	if err != nil {
+		panic(err)
+	}
+	return newConfig
+}
+
+func (g *Client) LoadDefaultAssets() {
+	// default materials
+
+	defaultMaterial := modelspec.MaterialSpecification{
+		PBRMaterial: modelspec.PBRMaterial{
+			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
+				BaseColorTextureName: settings.DefaultTexture,
+				BaseColorFactor:      mgl32.Vec4{1, 1, 1, 1},
+				RoughnessFactor:      .55,
+				MetalicFactor:        0,
+			},
+		},
+	}
+
+	g.assetManager.CreateMaterialWithHandle("default material", defaultMaterial, assets.DefaultMaterialHandle)
+
+	whiteMaterial := modelspec.MaterialSpecification{
+		PBRMaterial: modelspec.PBRMaterial{
+			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
+				BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
+				RoughnessFactor: .55,
+				MetalicFactor:   0,
+			},
+		},
+	}
+	g.assetManager.CreateMaterialWithHandle("white material", whiteMaterial, assets.WhiteMaterialHandle)
+
+	// default models
+
+	var subDirectories []string = []string{"gltf"}
+	extensions := map[string]any{
+		".gltf": nil,
+	}
+	fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
+	for _, metaData := range fileMetaData {
+		if strings.HasPrefix(metaData.Name, "_") {
+			continue
+		}
+
+		config := assets.AssetConfig{
+			Name:          metaData.Name,
+			FilePath:      metaData.Path,
+			ColliderType:  string(types.ColliderTypeMesh),
+			ColliderGroup: string(types.ColliderGroupPlayer),
+			SingleEntity:  true,
+		}
+		g.ImportAsset(config)
+	}
 }
 
 func (g *Client) Shutdown() {
@@ -595,11 +675,12 @@ func (g *Client) ResetApp() {
 	g.initialize()
 }
 
-func (g *Client) NewProject() {
-	g.project.Name = ""
+func (g *Client) NewProject(name string) {
+	g.project = &Project{Name: name}
+	g.InitializeProjectFolders(name)
 	g.ResetApp()
 	g.assetManager = assets.NewAssetManager(true)
-	g.assetManager.LoadDefaultAssets()
+	g.LoadDefaultAssets()
 	g.SelectEntity(nil)
 
 	// set up the default scene
@@ -617,4 +698,6 @@ func (g *Client) NewProject() {
 	directionalLight.LightInfo.PreScaledIntensity = 4
 	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
 	g.World().AddEntity(directionalLight)
+
+	g.SaveProjectAs(name)
 }

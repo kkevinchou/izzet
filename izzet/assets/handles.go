@@ -8,6 +8,7 @@ import (
 var (
 	DefaultMaterialHandle = types.MaterialHandle{ID: "custom/default"}
 	WhiteMaterialHandle   = types.MaterialHandle{ID: "custom/white"}
+	DefaultCubeHandle     = types.MeshHandle{Namespace: "global", ID: "cube"}
 )
 
 type Primitive struct {
@@ -52,10 +53,6 @@ func NewSingleEntityMeshHandle(namespace string) types.MeshHandle {
 
 func NewMeshHandle(namespace string, id string) types.MeshHandle {
 	return types.MeshHandle{Namespace: namespace, ID: id}
-}
-
-func (m *AssetManager) GetCubeMeshHandle() types.MeshHandle {
-	return NewMeshHandle("global", "cube")
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally

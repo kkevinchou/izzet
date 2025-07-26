@@ -3,10 +3,8 @@ package assets
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
@@ -73,8 +71,7 @@ func NewAssetManager(processVisualAssets bool) *AssetManager {
 		RootJoints:             map[string]int{},
 	}
 
-	handle := assetManager.GetCubeMeshHandle()
-	assetManager.registerMeshPrimitivesWithHandle(handle, cubeMesh(15), nil)
+	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, cubeMesh(15), nil)
 
 	return &assetManager
 }
@@ -174,52 +171,3 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 var materialIDGen int = 0
-
-func (a *AssetManager) LoadDefaultAssets() {
-	// default materials
-
-	defaultMaterial := modelspec.MaterialSpecification{
-		PBRMaterial: modelspec.PBRMaterial{
-			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
-				BaseColorTextureName: settings.DefaultTexture,
-				BaseColorFactor:      mgl32.Vec4{1, 1, 1, 1},
-				RoughnessFactor:      .55,
-				MetalicFactor:        0,
-			},
-		},
-	}
-
-	a.CreateMaterialWithHandle("default material", defaultMaterial, DefaultMaterialHandle)
-
-	whiteMaterial := modelspec.MaterialSpecification{
-		PBRMaterial: modelspec.PBRMaterial{
-			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
-				BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
-				RoughnessFactor: .55,
-				MetalicFactor:   0,
-			},
-		},
-	}
-	a.CreateMaterialWithHandle("white material", whiteMaterial, WhiteMaterialHandle)
-
-	// default models
-
-	var subDirectories []string = []string{"gltf"}
-	extensions := map[string]any{
-		".gltf": nil,
-	}
-	fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
-	for _, metaData := range fileMetaData {
-		if strings.HasPrefix(metaData.Name, "_") {
-			continue
-		}
-
-		a.LoadAndRegisterDocument(AssetConfig{
-			Name:          metaData.Name,
-			FilePath:      metaData.Path,
-			ColliderType:  string(types.ColliderTypeMesh),
-			ColliderGroup: string(types.ColliderGroupPlayer),
-			SingleEntity:  true,
-		}, true)
-	}
-}

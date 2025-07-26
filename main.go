@@ -11,10 +11,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/client"
-	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/log"
 	"github.com/veandco/go-sdl2/sdl"
@@ -77,26 +75,18 @@ func main() {
 		}
 	}
 
-	defaultProject := settings.DefaultProject
-
 	if mode == "SERVER" {
-		clientApp := client.New("shaders", config, defaultProject)
+		clientApp := client.New("shaders", config)
 		if err != nil {
 			panic(err)
 		}
 		clientApp.Start()
 	} else if mode == "HEADLESS" {
-		started := make(chan bool)
-		go func() {
-			<-started
-		}()
-		serverApp := server.NewWithFile(apputils.PathToProjectFile(defaultProject), settings.DefaultProject)
-		serverApp.Start(started, make(chan bool))
 	} else if mode == "CLIENT" {
 		settings.SoloClient = true
 		config.Fullscreen = false
 		config.Profile = false
-		clientApp := client.New("shaders", config, "")
+		clientApp := client.New("shaders", config)
 		clientApp.Connect()
 		clientApp.Start()
 	}

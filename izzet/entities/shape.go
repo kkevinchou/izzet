@@ -46,7 +46,7 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	entity := InstantiateBaseEntity("cube", entityIDGen)
 	entity.LocalScale = mgl64.Vec3{length, length, length}
 
-	handle := ml.GetCubeMeshHandle()
+	handle := assets.DefaultCubeHandle
 	entity.MeshComponent = &MeshComponent{
 		MeshHandle:    handle,
 		Transform:     mgl64.Ident4(),

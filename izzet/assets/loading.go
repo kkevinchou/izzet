@@ -3,6 +3,7 @@ package assets
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -79,7 +80,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 		if importMaterials {
 			for _, material := range document.Materials {
 				name := fmt.Sprintf("%s/%s", document.Name, material.ID)
-				handle := a.createMaterial(name, fmt.Sprintf("%s/%s", config.FilePath, material.ID), material)
+				handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
 				a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
 			}
 		}
@@ -105,6 +106,11 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 	}
 
 	return document
+}
+
+func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification) string {
+	split := strings.Split(filepath.ToSlash(fp), "/")
+	return fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID)
 }
 
 func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {

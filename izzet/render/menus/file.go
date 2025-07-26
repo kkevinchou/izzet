@@ -87,7 +87,6 @@ func file(app renderiface.App) {
 		}
 		if imgui.MenuItemBool("New Project") {
 			app.NewProject(settings.NewProjectName)
-
 			selectedWorldName = ""
 			worldName = settings.NewProjectName
 		}

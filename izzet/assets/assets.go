@@ -71,7 +71,7 @@ func NewAssetManager(processVisualAssets bool) *AssetManager {
 		RootJoints:             map[string]int{},
 	}
 
-	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, cubeMesh(15), nil)
+	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, cubeMesh(1), nil)
 
 	return &assetManager
 }

@@ -82,7 +82,7 @@ type Positionable interface {
 	Position() mgl64.Vec3
 }
 
-func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewDir mgl64.Vec3, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize int) (*mgl64.Vec3, GizmoEvent) {
+func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewDir mgl64.Vec3, gizmoPosition mgl64.Vec3, cameraPosition mgl64.Vec3, nearPlanePosition mgl64.Vec3, hoveredEntityID *int, snapSize float64) (*mgl64.Vec3, GizmoEvent) {
 	gizmoEvent := GizmoEventNone
 	startStatus := targetGizmo.Active
 	mouseInput := frameInput.MouseInput
@@ -154,9 +154,9 @@ func CalculateGizmoDelta(targetGizmo *Gizmo, frameInput input.Input, cameraViewD
 			targetGizmo.AccumulatedDelta = targetGizmo.AccumulatedDelta.Add(delta)
 			calculatedPosition := targetGizmo.LastSnapVector.Add(targetGizmo.AccumulatedDelta)
 
-			snappedXPosition := math.Trunc(calculatedPosition.X()/float64(snapSize)) * float64(snapSize)
-			snappedYPosition := math.Trunc(calculatedPosition.Y()/float64(snapSize)) * float64(snapSize)
-			snappedZPosition := math.Trunc(calculatedPosition.Z()/float64(snapSize)) * float64(snapSize)
+			snappedXPosition := math.Trunc(calculatedPosition.X()/snapSize) * snapSize
+			snappedYPosition := math.Trunc(calculatedPosition.Y()/snapSize) * snapSize
+			snappedZPosition := math.Trunc(calculatedPosition.Z()/snapSize) * snapSize
 
 			var snappedDelta mgl64.Vec3
 			if math.Trunc(targetGizmo.LastSnapVector.X()) != snappedXPosition {

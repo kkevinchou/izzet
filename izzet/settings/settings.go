@@ -59,7 +59,8 @@ const (
 	// ShadowMapDistanceFactor float64 = .4  // proportion of view fustrum to include in shadow cuboid
 	ShadowMapDistanceFactor float64 = 1 // proportion of view fustrum to include in shadow cuboid
 
-	DefaultTexture string = "color_grid"
+	// DefaultTexture string = "color_grid"
+	DefaultTexture string = "prototype"
 
 	GizmoAxisThickness  float64 = 0.08
 	GizmoDistanceFactor float64 = 8
@@ -78,16 +79,20 @@ const (
 	ShelfWidth  float32 = 800
 
 	CharacterSpeed           float64 = 10
-	CharacterFlySpeed        float64 = 50
+	CharacterFlySpeed        float64 = 30
 	CharacterJumpVelocity    float64 = 25
 	CharacterWebSpeed        float64 = 110
 	CharacterWebLaunchSpeed  float64 = 80
-	CameraSpeed              float64 = 85
-	CameraSlowSpeed          float64 = 10
+	CameraSpeed              float64 = 20
+	CameraSlowSpeed          float64 = 2
 	AccelerationDueToGravity float64 = 75 // units per second
 
 	BuiltinAssetsDir                string  = "_assets"
 	RenderBlendDurationMilliseconds float64 = 3000
+
+	// Gizmos
+	ScaleSensitivity        float64 = 0.8
+	ScaleAllAxisSensitivity float64 = 0.035
 )
 
 var (

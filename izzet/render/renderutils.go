@@ -17,6 +17,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -258,6 +259,11 @@ func (r *RenderSystem) drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
+	if entity.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
+		shader.SetUniformInt("repeatTexture", 1)
+	} else {
+		shader.SetUniformInt("repeatTexture", 0)
+	}
 	for _, p := range primitives {
 		materialHandle := p.MaterialHandle
 		if entity.Material != nil {
@@ -283,6 +289,7 @@ func (r *RenderSystem) drawModel(
 		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
 		shader.SetUniformFloat("roughness", material.RoughnessFactor)
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
+		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(entity.Position()))
 
 		modelMatrix := entities.WorldTransform(entity)
 		var modelMat mgl32.Mat4

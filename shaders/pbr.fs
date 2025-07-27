@@ -7,6 +7,9 @@ layout (location = 1) out uint PickingColor;
 uniform vec3  albedo;
 uniform float metallic;
 uniform float roughness;
+uniform vec3  translation;
+
+uniform int repeatTexture;
 
 // lights
 const int MAX_LIGHTS = 10;
@@ -254,6 +257,39 @@ void main()
     vec3 in_albedo = albedo;
     if (hasPBRBaseColorTexture == 1) {
         vec4 texture_value = texture(modelTexture, fs_in.TexCoord);
+
+        if (repeatTexture == 1) {
+            vec2 uv;
+            vec3 worldPos = fs_in.FragPos;
+            vec3 absNormal = abs(normal);
+
+            float textureFactor = 4;
+            float textureOffset = 0.5;
+
+            if (absNormal.z >= absNormal.x && absNormal.z >= absNormal.y) {
+                // Front/Back (Z)
+                uv = worldPos.xy / textureFactor - translation.xy / textureFactor + textureOffset / textureFactor;
+                if (normal.z < 0.0) {
+                    uv.x = 1.0 - uv.x;
+                }
+            } else if (absNormal.x >= absNormal.y && absNormal.x >= absNormal.z) {
+                // Left/Right (X)
+                uv = worldPos.zy / textureFactor - translation.zy / textureFactor + textureOffset / textureFactor;
+                if (normal.x > 0.0) {
+                    // uv.y = 1.0 - uv.y;
+                    uv.x = 1.0 - uv.x;
+                }
+            } else {
+                // Top/Bottom (Y)
+                uv = worldPos.xz / textureFactor - translation.xz / textureFactor + textureOffset / textureFactor;
+                if (normal.y > 0.0) {
+                    uv.y = 1.0 - uv.y;
+                }
+            }
+
+            texture_value = texture(modelTexture, uv);
+        }
+
         // for some reason this harms render performance, possibly due to preventing early z testing?
         if (texture_value.w < 0.1) {
             discard;

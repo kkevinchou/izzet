@@ -74,10 +74,9 @@ func worldProps(app renderiface.App) {
 		imgui.BeginTableV("Editing Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 		panelutils.SetupRow("Grid Snapping Size", func() {
-			if imgui.InputIntV("", &runtimeConfig.SnapSize, 0, 0, imgui.InputTextFlagsNone) {
-				if runtimeConfig.SnapSize < 1 {
-					runtimeConfig.SnapSize = 1
-				}
+			var value float32 = float32(app.RuntimeConfig().SnapSize)
+			if imgui.SliderFloatV("noiseZ", &value, 0.1, 2, "%.3f", imgui.SliderFlagsNone) {
+				app.RuntimeConfig().SnapSize = float64(value)
 			}
 		}, true)
 		panelutils.SetupRow("Rotation Snapping Size", func() {

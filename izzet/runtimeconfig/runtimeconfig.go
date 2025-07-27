@@ -66,7 +66,7 @@ type RuntimeConfig struct {
 	PhysicsConfirmedCollisionCount int32
 
 	// Editing
-	SnapSize            int32
+	SnapSize            float64
 	RotationSnapSize    int32
 	RotationSensitivity int32
 
@@ -193,7 +193,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		UIEnabled: true,
 
-		SnapSize:            1,
+		SnapSize:            0.1,
 		RotationSnapSize:    20,
 		RotationSensitivity: 200,
 

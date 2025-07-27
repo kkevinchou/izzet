@@ -447,8 +447,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 
 	if entity != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-			snapSize := int(g.runtimeConfig.SnapSize)
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, entity, snapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, entity, g.runtimeConfig.SnapSize)
 			if delta != nil {
 				if entity.Parent != nil {
 					// the computed position is in world space but entity.LocalPosition is in local space
@@ -477,8 +476,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-			snapSize := int(g.runtimeConfig.RotationSnapSize)
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity, snapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity, g.runtimeConfig.SnapSize)
 			if delta != nil {
 				var magnitude float64 = 0
 
@@ -534,12 +532,11 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-			snapSize := int(g.runtimeConfig.SnapSize)
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity, snapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity, g.runtimeConfig.SnapSize)
 			if delta != nil {
-				magnitude := 0.05
+				magnitude := settings.ScaleSensitivity
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
-					magnitude = 0.005
+					magnitude = settings.ScaleAllAxisSensitivity
 				}
 				scale := entity.Scale()
 				entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
@@ -573,7 +570,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 }
 
-func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize int) (*mgl64.Vec3, gizmo.GizmoEvent) {
+func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize float64) (*mgl64.Vec3, gizmo.GizmoEvent) {
 	mouseInput := frameInput.MouseInput
 	colorPickingID := g.renderSystem.HoveredEntityID()
 

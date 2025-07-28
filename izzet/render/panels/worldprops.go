@@ -27,7 +27,7 @@ const (
 	ComboOptionDebug                  NavMeshRenderComboOption = "Debug"
 )
 
-var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionNavMesh
+var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
 
 var (
 	navmeshRenderComboOptions []NavMeshRenderComboOption = []NavMeshRenderComboOption{

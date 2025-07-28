@@ -77,6 +77,10 @@ func (s *ReceiverSystem) handlePathfindRPC(rpc network.RPCMessage) {
 		if e.AIComponent == nil {
 			continue
 		}
+
+		if e.AIComponent.PathfindConfig == nil {
+			continue
+		}
 		e.AIComponent.PathfindConfig.Goal = rpc.Pathfind.Goal
 		e.AIComponent.PathfindConfig.State = entities.PathfindingStateGoalSet
 	}
@@ -120,16 +124,20 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	entities.SetLocalPosition(entity, mgl64.Vec3{float64(jitterX), 20, float64(jitterZ)})
 	entities.SetScale(entity, mgl64.Vec3{0.5, 0.5, 0.5})
 
-	targetDist := 20
-	jitterTargetX := rand.Intn(targetDist) - 10
-	jitterTargetZ := rand.Intn(targetDist) - 10
-	target := mgl64.Vec3{float64(jitterTargetX), 0, float64(jitterTargetZ)}.Normalize().Mul(float64(targetDist))
-
 	entity.AIComponent = &entities.AIComponent{
-		Speed:          7,
-		PathfindConfig: &entities.PathfindConfig{},
-		PatrolConfig:   &entities.PatrolConfig{Points: []mgl64.Vec3{{float64(jitterX), 0, float64(jitterZ)}, target}},
+		Speed: 7,
 		// AttackConfig:   &entities.AttackConfig{},
+	}
+
+	if rpc.CreateEntity.Patrol {
+		targetDist := 20
+		jitterTargetX := rand.Intn(targetDist) - 10
+		jitterTargetZ := rand.Intn(targetDist) - 10
+		target := mgl64.Vec3{float64(jitterTargetX), 0, float64(jitterTargetZ)}.Normalize().Mul(float64(targetDist))
+		entity.AIComponent.PatrolConfig = &entities.PatrolConfig{Points: []mgl64.Vec3{{float64(jitterX), 0, float64(jitterZ)}, target}}
+	} else {
+		entity.AIComponent.PathfindConfig = &entities.PathfindConfig{}
+
 	}
 
 	world := s.app.World()

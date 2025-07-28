@@ -237,6 +237,15 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 	if event, ok := keyboardInput[input.KeyboardKeyJ]; ok {
 		if event.Event == input.KeyboardEventUp {
 			rpcMessage := network.RPCMessage{
+				CreateEntity: &network.CreateEntityRPC{EntityType: string(panels.SelectedCreateEntityComboOption), Patrol: true},
+			}
+			g.Client().Send(rpcMessage, g.CommandFrame())
+		}
+	}
+
+	if event, ok := keyboardInput[input.KeyboardKeyK]; ok {
+		if event.Event == input.KeyboardEventUp {
+			rpcMessage := network.RPCMessage{
 				CreateEntity: &network.CreateEntityRPC{EntityType: string(panels.SelectedCreateEntityComboOption)},
 			}
 			g.Client().Send(rpcMessage, g.CommandFrame())

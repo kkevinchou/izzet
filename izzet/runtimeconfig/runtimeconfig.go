@@ -205,7 +205,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		NavigationMeshWalkableHeight:       10,
 		NavigationMeshClimbableHeight:      3,
 		NavigationMeshMinRegionArea:        4,
-		NavigationMeshAgentRadius:          1,
+		NavigationMeshAgentRadius:          5,
 		NavigationMeshCellSize:             0.1,
 		NavigationMeshCellHeight:           0.1,
 		NavigationmeshMaxError:             1,

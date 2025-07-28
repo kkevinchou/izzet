@@ -13,6 +13,7 @@ type Pathfind struct {
 
 type CreateEntityRPC struct {
 	EntityType string
+	Patrol     bool
 	// Position   mgl64.Vec3
 }
 

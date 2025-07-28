@@ -39,6 +39,8 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 			continue
 		}
 
+		entity.Kinematic.Velocity = mgl64.Vec3{}
+
 		position := entity.Position()
 
 		if aiComponent.PatrolConfig != nil {

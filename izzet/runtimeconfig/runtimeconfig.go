@@ -193,7 +193,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 
 		UIEnabled: true,
 
-		SnapSize:            0.1,
+		SnapSize:            0.2,
 		RotationSnapSize:    20,
 		RotationSensitivity: 200,
 

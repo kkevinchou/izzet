@@ -80,41 +80,35 @@ func entityProps(entity *entities.Entity, app renderiface.App) {
 		uiTableRow("Name", entityNameStr)
 
 		var position *mgl64.Vec3
-		var x, y, z int32
+		var x, y, z float32
 		if entity != nil {
 			position = &entity.LocalPosition
-			x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
+			x, y, z = float32(position.X()), float32(position.Y()), float32(position.Z())
 		}
 
 		panelutils.SetupRow("Local Position", func() {
 			if entity != nil {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
-				imgui.PushIDStr("position x")
-				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
+				if imgui.InputFloatV("##x", &x, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[0] = float64(x)
 						entities.SetDirty(entity)
 					}
 				}
-				imgui.PopID()
 				imgui.SameLine()
-				imgui.PushIDStr("position y")
-				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
+				if imgui.InputFloatV("##y", &y, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[1] = float64(y)
 						entities.SetDirty(entity)
 					}
 				}
-				imgui.PopID()
 				imgui.SameLine()
-				imgui.PushIDStr("position z")
-				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
+				if imgui.InputFloatV("##z", &z, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
 					if entity != nil {
 						position[2] = float64(z)
 						entities.SetDirty(entity)
 					}
 				}
-				imgui.PopID()
 				imgui.PopItemWidth()
 			}
 		}, false)

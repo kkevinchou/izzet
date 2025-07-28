@@ -56,7 +56,7 @@ const (
 
 	// shadow map properties
 	ShadowmapZOffset float64 = 0 // Z offset relative to the light's view. if this is too small, objects behind a camera may fail to cast shadows
-	// ShadowMapDistanceFactor float64 = .4  // proportion of view fustrum to include in shadow cuboid
+	// ShadowMapDistanceFactor float64 = .4 // proportion of view fustrum to include in shadow cuboid
 	ShadowMapDistanceFactor float64 = 1 // proportion of view fustrum to include in shadow cuboid
 
 	// DefaultTexture string = "color_grid"

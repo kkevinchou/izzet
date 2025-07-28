@@ -156,7 +156,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		Metallic:                        0,
 		PointLightBias:                  0.5,
 		EnableShadowMapping:             true,
-		ShadowFarDistance:               200,
+		ShadowFarDistance:               50,
 		ShadowSpatialPartitionNearPlane: 1000,
 		ShadowmapZOffset:                1000,
 		BloomIntensity:                  0.04,

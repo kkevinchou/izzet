@@ -290,6 +290,7 @@ func (r *RenderSystem) drawModel(
 		shader.SetUniformFloat("roughness", material.RoughnessFactor)
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
 		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(entity.Position()))
+		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(entity.Scale()))
 
 		modelMatrix := entities.WorldTransform(entity)
 		var modelMat mgl32.Mat4

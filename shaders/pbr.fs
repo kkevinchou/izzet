@@ -8,6 +8,7 @@ uniform vec3  albedo;
 uniform float metallic;
 uniform float roughness;
 uniform vec3  translation;
+uniform vec3  scale;
 
 uniform int repeatTexture;
 
@@ -264,26 +265,33 @@ void main()
             vec3 absNormal = abs(normal);
 
             float textureFactor = 4;
-            float textureOffset = 0.5;
 
             if (absNormal.z >= absNormal.x && absNormal.z >= absNormal.y) {
                 // Front/Back (Z)
-                uv = worldPos.xy / textureFactor - translation.xy / textureFactor + textureOffset / textureFactor;
+                uv = worldPos.xy / textureFactor - translation.xy / textureFactor;
                 if (normal.z < 0.0) {
+                    uv += vec2(-0.5 * scale.x, -0.5 * scale.y) / textureFactor;
                     uv.x = 1.0 - uv.x;
+                } else {
+                    uv += vec2(0.5 * scale.x, -0.5 * scale.y) / textureFactor;
                 }
             } else if (absNormal.x >= absNormal.y && absNormal.x >= absNormal.z) {
                 // Left/Right (X)
-                uv = worldPos.zy / textureFactor - translation.zy / textureFactor + textureOffset / textureFactor;
+                uv = worldPos.zy / textureFactor - translation.zy / textureFactor;
                 if (normal.x > 0.0) {
-                    // uv.y = 1.0 - uv.y;
+                    uv += vec2(-0.5 * scale.z, -0.5 * scale.y) / textureFactor;
                     uv.x = 1.0 - uv.x;
+                } else {
+                    uv += vec2(0.5 * scale.z, -0.5 * scale.y) / textureFactor;
                 }
             } else {
                 // Top/Bottom (Y)
-                uv = worldPos.xz / textureFactor - translation.xz / textureFactor + textureOffset / textureFactor;
+                uv = worldPos.xz / textureFactor - translation.xz / textureFactor;
                 if (normal.y > 0.0) {
+                    uv += vec2(0.5 * scale.x, 0.5 * scale.z) / textureFactor;
                     uv.y = 1.0 - uv.y;
+                } else {
+                    uv += vec2(0.5 * scale.x, -0.5 * scale.z) / textureFactor;
                 }
             }
 

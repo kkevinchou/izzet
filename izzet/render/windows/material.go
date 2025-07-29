@@ -65,7 +65,6 @@ func renderMaterialWindow(app renderiface.App) {
 		}, true)
 
 		panelutils.SetupRow("Diffuse", func() {
-			// color := [3]float32{}
 			var color [3]float32 = activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.BaseColorFactor.Vec3()
 			if imgui.ColorEdit3V("", &color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel) {
 				activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.BaseColorFactor[0] = color[0]
@@ -116,7 +115,7 @@ func renderMaterialWindow(app renderiface.App) {
 				// i := 0
 				baseFileName := apputils.NameFromAssetFilePath(assetFilePath)
 				activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName = baseFileName
-				activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.RoughnessFactor = 0.55
+				activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.RoughnessFactor = 1
 				activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.MetalicFactor = 0
 				activeMaterial.Material.PBRMaterial.PBRMetallicRoughness.BaseColorFactor = mgl32.Vec4{1, 1, 1, 1}
 				materialUpdated = true
@@ -177,8 +176,8 @@ func assignDefaultMaterial() {
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},
-					RoughnessFactor: 0.55,
-					MetalicFactor:   1,
+					RoughnessFactor: 1,
+					MetalicFactor:   0,
 				},
 			},
 		},

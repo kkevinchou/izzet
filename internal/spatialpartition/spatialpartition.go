@@ -2,6 +2,7 @@ package spatialpartition
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
@@ -72,6 +73,106 @@ func (s *SpatialPartition) initialize() {
 
 func (s *SpatialPartition) Clear() {
 	s.initialize()
+}
+
+func (s *SpatialPartition) EntitiesByLineSegment(line collider.Line) []Entity {
+	partitions := s.PartitionsByLineSegment(line)
+	candidates := []Entity{}
+
+	var seenEntities [settings.MaxEntityCount]bool
+
+	for _, partitionKey := range partitions {
+		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
+		for _, e := range partition.entities {
+			if !seenEntities[e.GetID()] {
+				seenEntities[e.GetID()] = true
+				candidates = append(candidates, e)
+			}
+		}
+	}
+
+	return candidates
+}
+
+func (s *SpatialPartition) PartitionsByLineSegment(inLine collider.Line) []PartitionKey {
+	// spatial partition is centered at 0,0, transform the line to be relative to that origin
+	transformOffset := float64(s.PartitionCount*s.PartitionDimension) / 2
+	transformVec := mgl64.Vec3{transformOffset, transformOffset, transformOffset}
+	line := collider.Line{P1: inLine.P1.Add(transformVec), P2: inLine.P2.Add(transformVec)}
+
+	// DDA algorithm
+
+	ix0 := int(math.Floor(line.P1.X() / float64(s.PartitionDimension)))
+	iy0 := int(math.Floor(line.P1.Y() / float64(s.PartitionDimension)))
+	iz0 := int(math.Floor(line.P1.Z() / float64(s.PartitionDimension)))
+
+	ix1 := int(math.Floor(line.P2.X() / float64(s.PartitionDimension)))
+	iy1 := int(math.Floor(line.P2.Y() / float64(s.PartitionDimension)))
+	iz1 := int(math.Floor(line.P2.Z() / float64(s.PartitionDimension)))
+
+	dx := line.P2.X() - line.P1.X()
+	dy := line.P2.Y() - line.P1.Y()
+	dz := line.P2.Z() - line.P1.Z()
+
+	stepX := sign(dx)
+	stepY := sign(dy)
+	stepZ := sign(dz)
+
+	tMaxX := intBound(line.P1.X(), dx, float64(s.PartitionDimension))
+	tMaxY := intBound(line.P1.Y(), dy, float64(s.PartitionDimension))
+	tMaxZ := intBound(line.P1.Z(), dz, float64(s.PartitionDimension))
+
+	tDeltaX := float64(s.PartitionDimension) / math.Abs(dx)
+	tDeltaY := float64(s.PartitionDimension) / math.Abs(dy)
+	tDeltaZ := float64(s.PartitionDimension) / math.Abs(dz)
+
+	x, y, z := ix0, iy0, iz0
+	endX, endY, endZ := ix1, iy1, iz1
+
+	var result []PartitionKey
+
+	for {
+		result = append(result, PartitionKey{x, y, z})
+
+		if x == endX && y == endY && z == endZ {
+			break
+		}
+
+		if tMaxX < tMaxY && tMaxX < tMaxZ {
+			x += stepX
+			tMaxX += tDeltaX
+		} else if tMaxY < tMaxZ {
+			y += stepY
+			tMaxY += tDeltaY
+		} else {
+			z += stepZ
+			tMaxZ += tDeltaZ
+		}
+	}
+
+	return result
+}
+
+func sign(x float64) int {
+	if x > 0 {
+		return 1
+	}
+	if x < 0 {
+		return -1
+	}
+	return 0
+}
+
+func intBound(s, ds, cellSize float64) float64 {
+	if ds == 0 {
+		return math.Inf(1)
+	}
+	s = s / cellSize
+	s = s - math.Floor(s)
+	if ds > 0 {
+		return (1 - s) * cellSize / math.Abs(ds)
+	}
+	return s * cellSize / math.Abs(ds)
 }
 
 // QueryEntities queries for entities that exist in partitions that the boundingBox is a part of

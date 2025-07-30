@@ -65,6 +65,7 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 	}
 
 	cameraPosition := camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, cameraOffset}).Add(targetPosition)
+	ents := s.app.World().SpatialPartition().EntitiesByLineSegment(collider.Line{P1: targetPosition, P2: cameraPosition})
 
 	dir := cameraPosition.Sub(targetPosition)
 	cameraDistanceSqr := dir.LenSqr()
@@ -75,7 +76,8 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 
 	minDistSq := math.MaxFloat64
 
-	for _, entity := range world.Entities() {
+	for _, e := range ents {
+		entity := s.app.World().GetEntityByID(e.GetID())
 		if entity.Collider == nil || entity.Collider.TriMeshCollider == nil {
 			continue
 		}

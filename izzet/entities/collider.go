@@ -45,7 +45,7 @@ type ProxyBoundingBox struct {
 	Dirty bool
 }
 
-func (c *ColliderComponent) ProxyCapsule(transform mgl64.Mat4) collider.Capsule {
+func (c *ColliderComponent) proxyCapsule(transform mgl64.Mat4) collider.Capsule {
 	if c.proxyCapsuleCollider.Dirty {
 		c.proxyCapsuleCollider.Capsule = c.CapsuleCollider.Transform(transform)
 		c.proxyCapsuleCollider.Dirty = false
@@ -53,7 +53,7 @@ func (c *ColliderComponent) ProxyCapsule(transform mgl64.Mat4) collider.Capsule 
 	return c.proxyCapsuleCollider.Capsule
 }
 
-func (c *ColliderComponent) ProxyTriMesh(transform mgl64.Mat4) collider.TriMesh {
+func (c *ColliderComponent) proxyTriMesh(transform mgl64.Mat4) collider.TriMesh {
 	if c.proxyTriMeshCollider.Dirty {
 		c.proxyTriMeshCollider.TriMesh = c.TriMeshCollider.Transform(transform)
 		c.proxyTriMeshCollider.Dirty = false
@@ -61,7 +61,7 @@ func (c *ColliderComponent) ProxyTriMesh(transform mgl64.Mat4) collider.TriMesh 
 	return c.proxyTriMeshCollider.TriMesh
 }
 
-func (c *ColliderComponent) ProxyBoundingBox(transform mgl64.Mat4) collider.BoundingBox {
+func (c *ColliderComponent) proxyBoundingBox(transform mgl64.Mat4) collider.BoundingBox {
 	if c.proxyBoundingBoxCollider.Dirty {
 		c.proxyBoundingBoxCollider.BoundingBox = c.BoundingBoxCollider.Transform(transform)
 		c.proxyBoundingBoxCollider.Dirty = false
@@ -118,13 +118,13 @@ func (e *Entity) HasBoundingBox() bool {
 }
 
 func (e *Entity) CapsuleCollider() collider.Capsule {
-	return e.Collider.ProxyCapsule(WorldTransform(e))
+	return e.Collider.proxyCapsule(WorldTransform(e))
 }
 
 func (e *Entity) TriMeshCollider() collider.TriMesh {
-	return e.Collider.ProxyTriMesh(WorldTransform(e))
+	return e.Collider.proxyTriMesh(WorldTransform(e))
 }
 
 func (e *Entity) BoundingBox() collider.BoundingBox {
-	return e.Collider.ProxyBoundingBox(WorldTransform(e))
+	return e.Collider.proxyBoundingBox(WorldTransform(e))
 }

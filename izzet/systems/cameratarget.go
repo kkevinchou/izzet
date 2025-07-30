@@ -65,7 +65,8 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 	}
 
 	cameraPosition := camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, cameraOffset}).Add(targetPosition)
-	ents := s.app.World().SpatialPartition().EntitiesByLineSegment(collider.Line{P1: targetPosition, P2: cameraPosition})
+	entityCameraLine := collider.Line{P1: targetPosition, P2: cameraPosition}
+	ents := s.app.World().SpatialPartition().EntitiesByLineSegment(entityCameraLine)
 
 	dir := cameraPosition.Sub(targetPosition)
 	cameraDistanceSqr := dir.LenSqr()
@@ -86,10 +87,12 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 		}
 
 		ray := collider.Ray{Origin: targetPosition, Direction: dir}
-		transformMatrix := entities.WorldTransform(entity)
-		collider := entity.Collider.TriMeshCollider.Transform(transformMatrix)
 
-		point, success := checks.IntersectRayTriMesh(ray, collider)
+		if _, _, success := checks.IntersectLineAABB(entityCameraLine, entity.BoundingBox()); !success {
+			continue
+		}
+
+		point, success := checks.IntersectRayTriMesh(ray, entity.TriMeshCollider())
 		if !success {
 			continue
 		}

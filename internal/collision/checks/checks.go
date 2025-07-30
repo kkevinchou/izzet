@@ -90,6 +90,74 @@ func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3
 	return mgl64.Vec3{}, false
 }
 
+func IntersectLineAABB(line collider.Line, bb collider.BoundingBox) (mgl64.Vec3, mgl64.Vec3, bool) {
+	tMin := 0.0
+	tMax := 1.0
+
+	p1 := line.P1
+	p2 := line.P2
+	boxMin := bb.MinVertex
+	boxMax := bb.MaxVertex
+
+	d := mgl64.Vec3{p2.X() - p1.X(), p2.Y() - p1.Y(), p2.Z() - p1.Z()}
+
+	for i := 0; i < 3; i++ {
+		var p0i, di, minI, maxI float64
+
+		switch i {
+		case 0:
+			p0i = p1.X()
+			di = d.X()
+			minI = boxMin.X()
+			maxI = boxMax.X()
+		case 1:
+			p0i = p1.Y()
+			di = d.Y()
+			minI = boxMin.Y()
+			maxI = boxMax.Y()
+		case 2:
+			p0i = p1.Z()
+			di = d.Z()
+			minI = boxMin.Z()
+			maxI = boxMax.Z()
+		}
+
+		if di == 0 {
+			// Line is parallel to slab
+			if p0i < minI || p0i > maxI {
+				return mgl64.Vec3{}, mgl64.Vec3{}, false // Outside the box
+			}
+		} else {
+			t1 := (minI - p0i) / di
+			t2 := (maxI - p0i) / di
+			tEnter := math.Min(t1, t2)
+			tExit := math.Max(t1, t2)
+
+			tMin = math.Max(tMin, tEnter)
+			tMax = math.Min(tMax, tExit)
+
+			if tMin > tMax {
+				return mgl64.Vec3{}, mgl64.Vec3{}, false // No intersection
+			}
+		}
+	}
+
+	// Compute intersection points
+	enter := mgl64.Vec3{
+		p1.X() + tMin*d.X(),
+		p1.Y() + tMin*d.Y(),
+		p1.Z() + tMin*d.Z(),
+	}
+
+	exit := mgl64.Vec3{
+		p1.X() + tMax*d.X(),
+		p1.Y() + tMax*d.Y(),
+		p1.Z() + tMax*d.Z(),
+	}
+
+	return enter, exit, true
+}
+
 // ClosestPointOnLineToPoint returns the point on line segment AB that is closest
 // to point C
 func ClosestPointOnLineToPoint(a, b, c mgl64.Vec3) mgl64.Vec3 {

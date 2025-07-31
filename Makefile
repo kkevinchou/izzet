@@ -41,7 +41,7 @@ build:
 
 .PHONY: client
 client:
-	go run main.go CLIENT
+	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT
 
 .PHONY: server
 server:

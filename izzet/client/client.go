@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"time"
 
@@ -183,12 +184,6 @@ func (g *Client) Start() {
 				accumulator = 0
 			}
 
-			sleepTime := float64(settings.MSPerCommandFrame) - accumulator - 1
-			if sleepTime >= 1 {
-				sleepStart := time.Now()
-				time.Sleep(time.Duration(int64(sleepTime) * 1000000))
-				g.MetricsRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
-			}
 		}
 
 		if g.RuntimeConfig().LockRenderingToCommandFrameRate {
@@ -205,6 +200,16 @@ func (g *Client) Start() {
 			for renderAccumulator > msPerFrame {
 				renderAccumulator -= msPerFrame
 			}
+		}
+
+		commandFrameSleepTime := float64(settings.MSPerCommandFrame) - accumulator - 1
+		renderSleepTime := msPerFrame - renderAccumulator - 1
+		sleepTime := math.Min(commandFrameSleepTime, renderSleepTime)
+
+		if sleepTime >= 1 {
+			sleepStart := time.Now()
+			time.Sleep(time.Duration(int64(sleepTime) * 1000000))
+			g.MetricsRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
 		}
 	}
 }

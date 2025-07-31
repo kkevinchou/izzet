@@ -103,9 +103,15 @@ func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact 
 		if e1.HasCapsuleCollider() {
 			capsuleCollider = e1.CapsuleCollider()
 			triMeshCollider = e2.TriMeshCollider()
+			if e2.HasSimplifiedTriMeshCollider() {
+				triMeshCollider = e2.SimplifiedTriMeshCollider()
+			}
 		} else {
 			capsuleCollider = e2.CapsuleCollider()
 			triMeshCollider = e1.TriMeshCollider()
+			if e1.HasSimplifiedTriMeshCollider() {
+				triMeshCollider = e1.SimplifiedTriMeshCollider()
+			}
 		}
 
 		contacts := collision.CheckCollisionCapsuleTriMesh(

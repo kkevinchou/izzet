@@ -25,9 +25,10 @@ type ColliderComponent struct {
 	BoundingBoxCollider       *collider.BoundingBox
 
 	// stores the transformed collider (e.g. if the entity moves)
-	proxyCapsuleCollider     *ProxyCapsule     `json:"-"`
-	proxyTriMeshCollider     *ProxyTriMesh     `json:"-"`
-	proxyBoundingBoxCollider *ProxyBoundingBox `json:"-"`
+	proxyCapsuleCollider           *ProxyCapsule     `json:"-"`
+	proxyTriMeshCollider           *ProxyTriMesh     `json:"-"`
+	proxySimplifiedTriMeshCollider *ProxyTriMesh     `json:"-"`
+	proxyBoundingBoxCollider       *ProxyBoundingBox `json:"-"`
 }
 
 type ProxyCapsule struct {
@@ -61,6 +62,14 @@ func (c *ColliderComponent) proxyTriMesh(transform mgl64.Mat4) collider.TriMesh 
 	return c.proxyTriMeshCollider.TriMesh
 }
 
+func (c *ColliderComponent) proxySimplifiedTriMesh(transform mgl64.Mat4) collider.TriMesh {
+	if c.proxySimplifiedTriMeshCollider.Dirty {
+		c.proxySimplifiedTriMeshCollider.TriMesh = c.SimplifiedTriMeshCollider.Transform(transform)
+		c.proxySimplifiedTriMeshCollider.Dirty = false
+	}
+	return c.proxySimplifiedTriMeshCollider.TriMesh
+}
+
 func (c *ColliderComponent) proxyBoundingBox(transform mgl64.Mat4) collider.BoundingBox {
 	if c.proxyBoundingBoxCollider.Dirty {
 		c.proxyBoundingBoxCollider.BoundingBox = c.BoundingBoxCollider.Transform(transform)
@@ -85,15 +94,21 @@ func CreateCapsuleColliderComponent(colliderGroup, collisionMask types.ColliderG
 	}
 }
 
-func CreateTriMeshColliderComponent(colliderGroup, collisionMask types.ColliderGroupFlag, triMesh collider.TriMesh, boundingBox collider.BoundingBox) *ColliderComponent {
-	return &ColliderComponent{
-		ColliderGroup:            colliderGroup,
-		CollisionMask:            collisionMask,
-		TriMeshCollider:          &triMesh,
-		proxyTriMeshCollider:     &ProxyTriMesh{TriMesh: triMesh, Dirty: true},
-		BoundingBoxCollider:      &boundingBox,
-		proxyBoundingBoxCollider: &ProxyBoundingBox{BoundingBox: boundingBox, Dirty: true},
+func CreateTriMeshColliderComponent(colliderGroup, collisionMask types.ColliderGroupFlag, triMesh collider.TriMesh, simplifiedTriMesh *collider.TriMesh, boundingBox collider.BoundingBox) *ColliderComponent {
+	c := &ColliderComponent{
+		ColliderGroup:             colliderGroup,
+		CollisionMask:             collisionMask,
+		TriMeshCollider:           &triMesh,
+		proxyTriMeshCollider:      &ProxyTriMesh{TriMesh: triMesh, Dirty: true},
+		SimplifiedTriMeshCollider: simplifiedTriMesh,
+		BoundingBoxCollider:       &boundingBox,
+		proxyBoundingBoxCollider:  &ProxyBoundingBox{BoundingBox: boundingBox, Dirty: true},
 	}
+
+	if simplifiedTriMesh != nil {
+		c.proxySimplifiedTriMeshCollider = &ProxyTriMesh{TriMesh: *simplifiedTriMesh, Dirty: true}
+	}
+	return c
 }
 
 func (e *Entity) HasCapsuleCollider() bool {
@@ -110,6 +125,13 @@ func (e *Entity) HasTriMeshCollider() bool {
 	return e.Collider.TriMeshCollider != nil
 }
 
+func (e *Entity) HasSimplifiedTriMeshCollider() bool {
+	if e.Collider == nil {
+		return false
+	}
+	return e.Collider.SimplifiedTriMeshCollider != nil
+}
+
 func (e *Entity) HasBoundingBox() bool {
 	if e.Collider == nil {
 		return false
@@ -123,6 +145,10 @@ func (e *Entity) CapsuleCollider() collider.Capsule {
 
 func (e *Entity) TriMeshCollider() collider.TriMesh {
 	return e.Collider.proxyTriMesh(WorldTransform(e))
+}
+
+func (e *Entity) SimplifiedTriMeshCollider() collider.TriMesh {
+	return e.Collider.proxySimplifiedTriMesh(WorldTransform(e))
 }
 
 func (e *Entity) BoundingBox() collider.BoundingBox {

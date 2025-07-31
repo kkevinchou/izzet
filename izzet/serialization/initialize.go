@@ -25,14 +25,14 @@ func InitDeserializedEntity(entity *entities.Entity, ml *assets.AssetManager) {
 			meshHandle := entity.MeshComponent.MeshHandle
 			primitives := ml.GetPrimitives(meshHandle)
 			if len(primitives) > 0 {
-				entity.Collider.TriMeshCollider = collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
-				if entity.SimplifiedTriMeshIterations > 0 {
-					entity.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(entities.AssetPrimitiveToSpecPrimitive(primitives)[0], entity.SimplifiedTriMeshIterations)
-				}
 				primitives := ml.GetPrimitives(meshHandle)
 				t := collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
 				bb := collider.BoundingBoxFromVertices(assets.UniqueVerticesFromPrimitives(primitives))
-				entity.Collider = entities.CreateTriMeshColliderComponent(entity.Collider.ColliderGroup, 0, *t, bb)
+				var simplifiedTriMesh *collider.TriMesh
+				if entity.SimplifiedTriMeshIterations > 0 {
+					simplifiedTriMesh = geometry.SimplifyMesh(entities.AssetPrimitiveToSpecPrimitive(primitives)[0], entity.SimplifiedTriMeshIterations)
+				}
+				entity.Collider = entities.CreateTriMeshColliderComponent(entity.Collider.ColliderGroup, 0, *t, simplifiedTriMesh, bb)
 			}
 		} else {
 			entity.Collider = entities.CreateCapsuleColliderComponent(entity.Collider.ColliderGroup, entity.Collider.CollisionMask, *entity.Collider.CapsuleCollider)

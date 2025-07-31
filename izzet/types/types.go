@@ -35,7 +35,9 @@ type KinematicEntity interface {
 
 	HasCapsuleCollider() bool
 	HasTriMeshCollider() bool
+	HasSimplifiedTriMeshCollider() bool
 	CapsuleCollider() collider.Capsule
 	TriMeshCollider() collider.TriMesh
+	SimplifiedTriMeshCollider() collider.TriMesh
 	GetLocalRotation() mgl64.Quat
 }

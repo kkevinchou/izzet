@@ -59,7 +59,7 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	uniqueVertices := assets.UniqueVerticesFromPrimitives(primitives)
 	bb := collider.BoundingBoxFromVertices(uniqueVertices)
 	t := collider.CreateTriMeshFromPrimitives(AssetPrimitiveToSpecPrimitive(primitives))
-	entity.Collider = CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, types.ColliderGroupFlagTerrain, *t, bb)
+	entity.Collider = CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, types.ColliderGroupFlagTerrain, *t, nil, bb)
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
 
 	entityIDGen += 1

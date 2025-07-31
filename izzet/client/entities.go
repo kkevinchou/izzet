@@ -68,7 +68,7 @@ func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, m
 		primitives := g.assetManager.GetPrimitives(meshHandle)
 		t := collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
 		bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		entity.Collider = entities.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, bb)
+		entity.Collider = entities.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, nil, bb)
 	}
 	return entity
 }

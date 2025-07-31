@@ -17,6 +17,9 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.InitColumns()
 
 		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_time")))) }, true)
+		panelutils.SetupRow("Command Frame Time", func() {
+			imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage("command_frame_nanoseconds")/1000000))
+		}, true)
 		panelutils.SetupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondSum("fps"))) }, true)
 		panelutils.SetupRow("CFPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondSum("command_frames"))) }, true)
 		panelutils.SetupRow("Command Frame", func() { imgui.LabelText("", fmt.Sprintf("%d", app.CommandFrame())) }, true)
@@ -57,9 +60,6 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.SetupRow("Render Post Process", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_post_process")))) }, true)
 		panelutils.SetupRow("Render Imgui", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_imgui")))) }, true)
 		panelutils.SetupRow("Render Sleep", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_sleep")))) }, true)
-		panelutils.SetupRow("Command Frame Time", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage("command_frame_nanoseconds")/1000000))
-		}, true)
 
 		imgui.EndTable()
 	}

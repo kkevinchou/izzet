@@ -637,7 +637,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-					r.drawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), viewerContext, shader, lines, 0.05, color)
+					r.drawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), shader, lines, 0.05, color)
 				}
 			}
 		}
@@ -694,7 +694,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), viewerContext, shader, nm.DebugLines, 0.05, color)
+			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), shader, nm.DebugLines, 0.05, color)
 		}
 
 		nm.Invalidated = false
@@ -892,7 +892,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.01, mgl64.Vec3{1, 0, 0})
+					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), shader, lines, 0.01, mgl64.Vec3{1, 0, 0})
 				}
 
 				var pointLines [][2]mgl64.Vec3
@@ -901,28 +901,27 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
 				}
 				if len(pointLines) > 0 {
-					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), viewerContext, shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
+					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
 				}
 			}
 
 			if entity.Collider.CapsuleCollider != nil {
-				transform := entities.WorldTransform(entity)
-				capsuleCollider := entity.Collider.CapsuleCollider.Transform(transform)
+				capsuleCollider := entity.Collider.CapsuleCollider
 
 				top := capsuleCollider.Top
 				bottom := capsuleCollider.Bottom
 				radius := capsuleCollider.Radius
 
 				var numCircleSegments int = 8
-				var lines [][]mgl64.Vec3
+				var lines [][2]mgl64.Vec3
 
 				// -x +x vertical lines
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
+				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
+				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
 
 				// -z +z vertical lines
-				lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
-				lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
+				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
+				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
 
 				radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
 
@@ -934,8 +933,8 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 					x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
 					z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
 
-					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
-					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
+					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
+					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
 				}
 
 				radiansPerSegment = math.Pi / float64(numCircleSegments)
@@ -948,8 +947,8 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 					x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
 					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
 
-					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
-					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
+					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
+					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
 				}
 
 				// top and bottom yz plane rings
@@ -960,18 +959,21 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 					z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
 					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
 
-					lines = append(lines, []mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
-					lines = append(lines, []mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
+					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
+					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
 				}
 
 				shader := r.shaderManager.GetShaderProgram("flat")
 				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
 				shader.Use()
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+				position := entity.Position()
+				scale := entity.Scale()
+				modelMat := mgl64.Translate3D(position.X(), position.Y(), position.Z()).Mul4(mgl64.Scale3D(scale.X(), scale.Y(), scale.Z()))
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMat))
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-				r.drawLines(viewerContext, shader, lines, 0.05, color)
+				r.drawLineGroup(fmt.Sprintf("%d_capsule_collider", entity.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
 			}
 		}
 	}
@@ -1040,17 +1042,17 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 				rightVector := forwardVector.Cross(upVector)
 
 				start := entity.Position().Add(rightVector.Mul(1)).Add(mgl64.Vec3{0, 2, 0})
-				lines := [][]mgl64.Vec3{
+				lines := [][2]mgl64.Vec3{
 					{start, entity.Position().Add(entity.CharacterControllerComponent.WebVector)},
 				}
 
 				shader := r.shaderManager.GetShaderProgram("flat")
 				shader.Use()
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+				shader.SetUniformMat4("model", mgl32.Translate3D(float32(entity.Position().X()), float32(entity.Position().Y()), float32(entity.Position().Z())))
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-				r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 1, 1})
+				r.drawLineGroup(fmt.Sprintf("web_%d", len(lines)), shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
 			}
 		}
 	}

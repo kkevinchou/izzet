@@ -46,7 +46,7 @@ func (r *RenderSystem) drawTranslationGizmo(viewerContext *ViewerContext, shader
 		}
 
 		// TODO: refactor to do a single draw call
-		r.drawLineGroup(fmt.Sprintf("translation_gizmo_%d", entityID), *viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+		r.drawLineGroup(fmt.Sprintf("translation_gizmo_%d", entityID), shader, lines, settings.GizmoAxisThickness, color)
 	}
 
 	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
@@ -140,7 +140,7 @@ func (r *RenderSystem) drawScaleGizmo(viewerContext *ViewerContext, shader *shad
 
 		if entityID != gizmo.GizmoAllAxisPickingID {
 			// TODO: refactor to do a single draw call
-			r.drawLineGroup(fmt.Sprintf("scale_gizmo_%d", entityID), *viewerContext, shader, lines, settings.GizmoAxisThickness, color)
+			r.drawLineGroup(fmt.Sprintf("scale_gizmo_%d", entityID), shader, lines, settings.GizmoAxisThickness, color)
 		}
 
 		cubePosition := renderPosition.Add(axis.Direction)

@@ -26,17 +26,83 @@ import (
 var lineCache map[string][]mgl64.Vec3
 var cubeCache map[string][]mgl64.Vec3
 var triangleVAOCache map[string]TriangleVAO
+var singleSidedQuadVAO uint32
+var pickingBuffer []byte
 
-type TriangleVAO struct {
-	VAO    uint32
-	length int
+var skyboxVAO *uint32
+var skyboxVertices = []float32{
+	// Front face
+	-1.0, 1.0, -1.0,
+	-1.0, -1.0, -1.0,
+	1.0, -1.0, -1.0,
+	1.0, -1.0, -1.0,
+	1.0, 1.0, -1.0,
+	-1.0, 1.0, -1.0,
+
+	// Left face
+	-1.0, -1.0, 1.0,
+	-1.0, -1.0, -1.0,
+	-1.0, 1.0, -1.0,
+	-1.0, 1.0, -1.0,
+	-1.0, 1.0, 1.0,
+	-1.0, -1.0, 1.0,
+
+	// Right face
+	1.0, -1.0, -1.0,
+	1.0, -1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, -1.0,
+	1.0, -1.0, -1.0,
+
+	// Back face
+	-1.0, -1.0, 1.0,
+	-1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	1.0, -1.0, 1.0,
+	-1.0, -1.0, 1.0,
+
+	// Top face
+	-1.0, 1.0, -1.0,
+	1.0, 1.0, -1.0,
+	1.0, 1.0, 1.0,
+	1.0, 1.0, 1.0,
+	-1.0, 1.0, 1.0,
+	-1.0, 1.0, -1.0,
+
+	// Bottom face
+	-1.0, -1.0, -1.0,
+	-1.0, -1.0, 1.0,
+	1.0, -1.0, -1.0,
+	1.0, -1.0, -1.0,
+	-1.0, -1.0, 1.0,
+	1.0, -1.0, 1.0,
 }
+
+var (
+	spatialPartitionLineCache [][2]mgl64.Vec3
+)
 
 func init() {
 	lineCache = map[string][]mgl64.Vec3{}
 	cubeCache = map[string][]mgl64.Vec3{}
 	triangleVAOCache = map[string]TriangleVAO{}
 }
+
+type TriangleVAO struct {
+	VAO    uint32
+	length int
+}
+
+type RenderData struct {
+	Primitive   *modelspec.PrimitiveSpecification
+	Transform   mgl32.Mat4
+	VAO         uint32
+	GeometryVAO uint32
+}
+
+type TextureFn func() (int, int, []uint32)
 
 func genCacheKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
@@ -60,12 +126,6 @@ func (r *RenderSystem) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	gl.EnableVertexAttribArray(0)
 
 	return vao, len(vertices)
-}
-
-func (r *RenderSystem) drawTris(points []mgl64.Vec3) {
-	vao, length := r.generateTrisVAO(points)
-	gl.BindVertexArray(vao)
-	r.iztDrawArrays(0, int32(length))
 }
 
 func RGBtoHSV(rgb mgl32.Vec3) mgl32.Vec3 {
@@ -174,13 +234,6 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.Position()))
 		shader.SetUniformFloat(fmt.Sprintf("lights[%d].range", i), lightInfo.Range)
 	}
-}
-
-type RenderData struct {
-	Primitive   *modelspec.PrimitiveSpecification
-	Transform   mgl32.Mat4
-	VAO         uint32
-	GeometryVAO uint32
 }
 
 func (r *RenderSystem) drawBatches(
@@ -324,7 +377,7 @@ func (r *RenderSystem) drawModel(
 	}
 }
 
-func (r *RenderSystem) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+func (r *RenderSystem) drawLineGroup(name string, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var vao uint32
 	var length int
 
@@ -363,26 +416,6 @@ func (r *RenderSystem) drawLineGroup(name string, viewerContext ViewerContext, s
 	shader.SetUniformFloat("intensity", 1.0)
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
-}
-
-func (r *RenderSystem) drawLines(viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
-	var points []mgl64.Vec3
-	for _, line := range lines {
-		start := line[0]
-		end := line[1]
-		length := end.Sub(start).Len()
-
-		dir := end.Sub(start).Normalize()
-		q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
-
-		for _, dp := range linePoints(thickness, length) {
-			newEnd := q.Rotate(dp).Add(start)
-			points = append(points, newEnd)
-		}
-	}
-	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
-	shader.SetUniformFloat("intensity", 1.0)
-	r.drawTris(points)
 }
 
 func cubePoints(thickness float64) []mgl64.Vec3 {
@@ -519,8 +552,6 @@ func linePoints(thickness float64, length float64) []mgl64.Vec3 {
 	return linePoints
 }
 
-var singleSidedQuadVAO uint32
-
 func (r *RenderSystem) drawBillboardTexture(
 	texture uint32,
 	length float32,
@@ -619,8 +650,6 @@ func textureFn(width int, height int, internalFormat []int32, format []uint32, x
 	}
 }
 
-type TextureFn func() (int, int, []uint32)
-
 func (r *RenderSystem) initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
@@ -703,62 +732,6 @@ func (r *RenderSystem) createDepthTexture(width, height int) uint32 {
 	return texture
 }
 
-func (r *RenderSystem) clearMainFrameBuffer(renderContext RenderContext) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-}
-
-var skyboxVAO *uint32
-var skyboxVertices = []float32{
-	// Front face
-	-1.0, 1.0, -1.0,
-	-1.0, -1.0, -1.0,
-	1.0, -1.0, -1.0,
-	1.0, -1.0, -1.0,
-	1.0, 1.0, -1.0,
-	-1.0, 1.0, -1.0,
-
-	// Left face
-	-1.0, -1.0, 1.0,
-	-1.0, -1.0, -1.0,
-	-1.0, 1.0, -1.0,
-	-1.0, 1.0, -1.0,
-	-1.0, 1.0, 1.0,
-	-1.0, -1.0, 1.0,
-
-	// Right face
-	1.0, -1.0, -1.0,
-	1.0, -1.0, 1.0,
-	1.0, 1.0, 1.0,
-	1.0, 1.0, 1.0,
-	1.0, 1.0, -1.0,
-	1.0, -1.0, -1.0,
-
-	// Back face
-	-1.0, -1.0, 1.0,
-	-1.0, 1.0, 1.0,
-	1.0, 1.0, 1.0,
-	1.0, 1.0, 1.0,
-	1.0, -1.0, 1.0,
-	-1.0, -1.0, 1.0,
-
-	// Top face
-	-1.0, 1.0, -1.0,
-	1.0, 1.0, -1.0,
-	1.0, 1.0, 1.0,
-	1.0, 1.0, 1.0,
-	-1.0, 1.0, 1.0,
-	-1.0, 1.0, -1.0,
-
-	// Bottom face
-	-1.0, -1.0, -1.0,
-	-1.0, -1.0, 1.0,
-	1.0, -1.0, -1.0,
-	1.0, -1.0, -1.0,
-	-1.0, -1.0, 1.0,
-	1.0, -1.0, 1.0,
-}
-
 func (r *RenderSystem) drawSkybox(renderContext RenderContext, viewerContext ViewerContext) {
 	if skyboxVAO == nil {
 		var vbo, vao uint32
@@ -799,8 +772,6 @@ func (r *RenderSystem) drawSkybox(renderContext RenderContext, viewerContext Vie
 func (r *RenderSystem) CameraViewerContext() ViewerContext {
 	return r.cameraViewerContext
 }
-
-var pickingBuffer []byte
 
 // NOTE: this method should only be called from within the render loop. if the frame
 // buffer is swapped, then the data in the buffer can be undefined. so, we should make
@@ -846,10 +817,6 @@ func (r *RenderSystem) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	id := int(uintID)
 	return &id
 }
-
-var (
-	spatialPartitionLineCache [][2]mgl64.Vec3
-)
 
 func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
 	var allLines [][2]mgl64.Vec3
@@ -905,7 +872,7 @@ func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color m
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	r.drawLineGroup("spatial_partition", viewerContext, shader, allLines, thickness, color)
+	r.drawLineGroup("spatial_partition", shader, allLines, thickness, color)
 }
 
 func (r *RenderSystem) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
@@ -954,7 +921,7 @@ func (r *RenderSystem) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, a
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), viewerContext, shader, allLines, thickness, color)
+	r.drawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), shader, allLines, thickness, color)
 }
 
 func (r *RenderSystem) getCubeVAO(length float32, includeNormals bool) uint32 {
@@ -964,107 +931,6 @@ func (r *RenderSystem) getCubeVAO(length float32, includeNormals bool) uint32 {
 		r.cubeVAOs[hash] = vao
 	}
 	return r.cubeVAOs[hash]
-}
-
-func (r *RenderSystem) initBatchCubeVAOs(length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
-	ht := length / 2
-
-	var allVertexAttribs []float32
-
-	for _, position := range positions {
-		allVertexAttribs = append(
-			allVertexAttribs,
-			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
-			ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
-			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
-
-			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
-			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 0, -1,
-			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, 0, -1,
-
-			// back
-			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
-			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
-			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
-
-			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, 0, 1,
-			-ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
-			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 0, 1,
-
-			// right
-			ht+position.X(), -ht+position.Y(), ht+position.Z(), 1, 0, 0,
-			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 1, 0, 0,
-			ht+position.X(), ht+position.Y(), -ht+position.Z(), 1, 0, 0,
-
-			ht+position.X(), ht+position.Y(), -ht+position.Z(), 1, 0, 0,
-			ht+position.X(), ht+position.Y(), ht+position.Z(), 1, 0, 0,
-			ht+position.X(), -ht+position.Y(), ht+position.Z(), 1, 0, 0,
-
-			// left
-			-ht+position.X(), ht+position.Y(), -ht+position.Z(), -1, 0, 0,
-			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), -1, 0, 0,
-			-ht+position.X(), -ht+position.Y(), ht+position.Z(), -1, 0, 0,
-
-			-ht+position.X(), -ht+position.Y(), ht+position.Z(), -1, 0, 0,
-			-ht+position.X(), ht+position.Y(), ht+position.Z(), -1, 0, 0,
-			-ht+position.X(), ht+position.Y(), -ht+position.Z(), -1, 0, 0,
-
-			// top
-			ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
-			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
-			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
-
-			-ht+position.X(), ht+position.Y(), ht+position.Z(), 0, 1, 0,
-			ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
-			-ht+position.X(), ht+position.Y(), -ht+position.Z(), 0, 1, 0,
-
-			// bottom
-			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
-			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
-			ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
-
-			-ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
-			ht+position.X(), -ht+position.Y(), -ht+position.Z(), 0, -1, 0,
-			-ht+position.X(), -ht+position.Y(), ht+position.Z(), 0, -1, 0,
-		)
-
-	}
-
-	var vertices []float32
-
-	totalVertexAttributesSize := 6
-	actualVertexAttributesSize := totalVertexAttributesSize
-	if !includeNormals {
-		actualVertexAttributesSize -= 3
-	}
-
-	for i := 0; i < len(allVertexAttribs); i += totalVertexAttributesSize {
-		for j := range actualVertexAttributesSize {
-			vertices = append(vertices, allVertexAttribs[i+j])
-		}
-	}
-
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	ptrOffset := 0
-	floatSize := 4
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), nil)
-	gl.EnableVertexAttribArray(0)
-
-	if includeNormals {
-		ptrOffset += 3
-		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
-		gl.EnableVertexAttribArray(1)
-	}
-
-	return vao
 }
 
 func (r *RenderSystem) initCubeVAO(length float32, includeNormals bool) uint32 {
@@ -1159,34 +1025,6 @@ func (r *RenderSystem) initCubeVAO(length float32, includeNormals bool) uint32 {
 		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
 		gl.EnableVertexAttribArray(1)
 	}
-
-	return vao
-}
-
-func (r *RenderSystem) initTriangleVAO(v1, v2, v3 mgl64.Vec3) uint32 {
-	vertices := []float32{
-		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
-		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
-		float32(v3.X()), float32(v3.Y()), float32(v3.Z()),
-
-		float32(v1.X()), float32(v1.Y()), float32(v1.Z()),
-		float32(v3.X()), float32(v3.Y()), float32(v3.Z()),
-		float32(v2.X()), float32(v2.Y()), float32(v2.Z()),
-	}
-
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.BindVertexArray(vao)
-	r.iztDrawArrays(0, int32(len(vertices))/3)
 
 	return vao
 }

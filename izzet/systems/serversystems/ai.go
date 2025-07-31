@@ -77,7 +77,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 			}
 		}
 
-		if aiComponent.PathfindConfig != nil {
+		if aiComponent.PathfindConfig != nil && s.app.NavMesh() != nil {
 			if aiComponent.PathfindConfig.State == entities.PathfindingStateGoalSet {
 				polyPath := navmesh.FindPath(s.app.NavMesh(), entity.Position(), aiComponent.PathfindConfig.Goal)
 				straightPath := navmesh.FindStraightPath(s.app.NavMesh().Tiles[0], entity.Position(), aiComponent.PathfindConfig.Goal, polyPath)

@@ -182,11 +182,14 @@ func (g *Client) Start() {
 			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
 				accumulator = 0
 			}
-		}
 
-		sleepStart := time.Now()
-		time.Sleep(2 * time.Millisecond)
-		g.MetricsRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
+			sleepTime := float64(settings.MSPerCommandFrame) - accumulator - 1
+			if sleepTime >= 1 {
+				sleepStart := time.Now()
+				time.Sleep(time.Duration(int64(sleepTime) * 1000000))
+				g.MetricsRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
+			}
+		}
 
 		if g.RuntimeConfig().LockRenderingToCommandFrameRate {
 			msPerFrame = float64(settings.MSPerCommandFrame)

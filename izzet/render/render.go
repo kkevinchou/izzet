@@ -889,12 +889,9 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 				}
 
 				if len(lines) > 0 {
-					// fmt.Println(nonNilCount, nilCount)
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 1})
-					// r.drawLines(viewerContext, shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
 					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), viewerContext, shader, lines, 0.01, mgl64.Vec3{1, 0, 0})
 				}
 

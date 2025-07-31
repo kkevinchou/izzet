@@ -848,11 +848,11 @@ func (r *RenderSystem) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 }
 
 var (
-	spatialPartitionLineCache [][]mgl64.Vec3
+	spatialPartitionLineCache [][2]mgl64.Vec3
 )
 
 func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
-	var allLines [][]mgl64.Vec3
+	var allLines [][2]mgl64.Vec3
 
 	if len(spatialPartitionLineCache) == 0 {
 		d := spatialPartition.PartitionDimension * spatialPartition.PartitionCount
@@ -875,7 +875,7 @@ func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color m
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			for _, b := range baseHorizontalLines {
 				allLines = append(allLines,
-					[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0}), b[1].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0})},
+					[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0}), b[1].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0})},
 				)
 			}
 		}
@@ -891,7 +891,7 @@ func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color m
 		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
 			for _, b := range baseVerticalLines {
 				allLines = append(allLines,
-					[]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)}), b[1].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)})},
+					[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)}), b[1].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)})},
 				)
 			}
 		}
@@ -905,13 +905,7 @@ func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color m
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	r.drawLines(
-		viewerContext,
-		shader,
-		allLines,
-		thickness,
-		color,
-	)
+	r.drawLineGroup("spatial_partition", viewerContext, shader, allLines, thickness, color)
 }
 
 func (r *RenderSystem) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {

@@ -26,7 +26,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -104,10 +103,6 @@ func (g *Client) Redo() {
 // game world
 func (g *Client) Undo() {
 	g.editHistory.Undo()
-}
-
-func (g *Client) ResetNavMeshVAO() {
-	render.ResetNavMeshVAO = true
 }
 
 func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {

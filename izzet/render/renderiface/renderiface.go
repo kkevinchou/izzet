@@ -20,7 +20,6 @@ type App interface {
 	AssetManager() *assets.AssetManager
 	GetEditorCameraPosition() mgl64.Vec3
 	GetEditorCameraRotation() mgl64.Quat
-	ResetNavMeshVAO()
 	CommandFrame() int
 
 	StartLiveWorld()

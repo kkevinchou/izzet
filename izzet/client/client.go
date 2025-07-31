@@ -175,6 +175,7 @@ func (g *Client) Start() {
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
 			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			g.MetricsRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 			commandFrameCountBeforeRender += 1
 

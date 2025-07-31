@@ -42,7 +42,6 @@ func genCacheKey(thickness, length float64) string {
 	return fmt.Sprintf("%.3f_%.3f", thickness, length)
 }
 
-// drawTris draws a list of triangles in winding order. each triangle is defined with 3 consecutive points
 func (r *RenderSystem) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	var vertices []float32
 	for _, point := range points {
@@ -68,14 +67,6 @@ func (r *RenderSystem) drawTris(points []mgl64.Vec3) {
 	gl.BindVertexArray(vao)
 	r.iztDrawArrays(0, int32(length))
 }
-
-var navMeshTrisVAO uint32
-var navMeshVBO uint32
-var lastVoxelCount = 0
-var lastVertexCount = 0
-var ResetNavMeshVAO bool = false
-
-var lastMeshUpdate time.Time = time.Now()
 
 func RGBtoHSV(rgb mgl32.Vec3) mgl32.Vec3 {
 	// Normalize RGB values to be between 0 and 1
@@ -333,10 +324,6 @@ func (r *RenderSystem) drawModel(
 	}
 }
 
-func toRadians(degrees float64) float64 {
-	return degrees / 180 * math.Pi
-}
-
 func (r *RenderSystem) drawLineGroup(name string, viewerContext ViewerContext, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
 	var vao uint32
 	var length int
@@ -396,47 +383,6 @@ func (r *RenderSystem) drawLines(viewerContext ViewerContext, shader *shaders.Sh
 	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 	shader.SetUniformFloat("intensity", 1.0)
 	r.drawTris(points)
-}
-
-func cubeLines(length float64) [][]mgl64.Vec3 {
-	directions := [][]float64{
-		[]float64{-1, 1, 0.5},
-		[]float64{-1, -1, 0.5},
-		[]float64{1, -1, 0.5},
-		[]float64{1, 1, 0.5},
-	}
-
-	position := mgl64.Vec3{}
-	var lines [][]mgl64.Vec3
-	var frontPoints []mgl64.Vec3
-
-	// front points
-	for _, direction := range directions {
-		point := position.Add(mgl64.Vec3{direction[0] * length / 2, direction[1] * length / 2, direction[2] * length})
-		frontPoints = append(frontPoints, point)
-	}
-	for i := range frontPoints {
-		line := []mgl64.Vec3{frontPoints[i], frontPoints[(i+1)%len(frontPoints)]}
-		lines = append(lines, line)
-	}
-
-	// back points
-	var backPoints []mgl64.Vec3
-	for _, point := range frontPoints {
-		backPoints = append(backPoints, point.Add(mgl64.Vec3{0, 0, -length}))
-	}
-	for i := range backPoints {
-		line := []mgl64.Vec3{backPoints[i], backPoints[(i+1)%len(backPoints)]}
-		lines = append(lines, line)
-	}
-
-	// connect front and back
-	for i := range frontPoints {
-		line := []mgl64.Vec3{frontPoints[i], backPoints[i]}
-		lines = append(lines, line)
-	}
-
-	return lines
 }
 
 func cubePoints(thickness float64) []mgl64.Vec3 {
@@ -1026,14 +972,6 @@ func (r *RenderSystem) getCubeVAO(length float32, includeNormals bool) uint32 {
 	return r.cubeVAOs[hash]
 }
 
-func (r *RenderSystem) getBatchCubeVAOs(name string, length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
-	if _, ok := r.batchCubeVAOs[name]; !ok {
-		vao := r.initBatchCubeVAOs(length, includeNormals, positions)
-		r.batchCubeVAOs[name] = vao
-	}
-	return r.batchCubeVAOs[name]
-}
-
 func (r *RenderSystem) initBatchCubeVAOs(length float32, includeNormals bool, positions []mgl32.Vec3) uint32 {
 	ht := length / 2
 
@@ -1290,11 +1228,6 @@ func (r *RenderSystem) iztDrawArrays(first, count int32) {
 	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
 	r.app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
-}
-
-func (r *RenderSystem) iztDrawLineStrip(count int32) {
-	r.app.RuntimeConfig().DrawCount += 1
-	gl.DrawArrays(gl.LINE_STRIP, 0, count)
 }
 
 func (r *RenderSystem) iztDrawLines(count int32) {

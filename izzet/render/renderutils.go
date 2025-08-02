@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -274,6 +275,38 @@ func (r *RenderSystem) drawBatches(
 		gl.BindVertexArray(batch.VAO)
 		r.iztDrawElements(batch.VertexCount)
 	}
+}
+
+func (r *RenderSystem) drawSpherePBR(shader *shaders.ShaderProgram, materialHandle types.MaterialHandle, vao uint32, vertexCount int32) {
+	shader.SetUniformInt("isAnimated", 0)
+	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
+
+	primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle).Material
+
+	material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
+	shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
+
+	shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+	shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
+	shader.SetUniformFloat("roughness", material.RoughnessFactor)
+	shader.SetUniformFloat("metallic", material.MetalicFactor)
+
+	if material.BaseColorTextureName != "" {
+		shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
+		shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+
+		textureName := material.BaseColorTextureName
+		gl.ActiveTexture(gl.TEXTURE0)
+		var textureID uint32
+		texture := r.app.AssetManager().GetTexture(textureName)
+		textureID = texture.ID
+		gl.BindTexture(gl.TEXTURE_2D, textureID)
+	} else {
+		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+	}
+
+	gl.BindVertexArray(vao)
+	r.iztDrawElements(vertexCount)
 }
 
 func (r *RenderSystem) drawModel(

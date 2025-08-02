@@ -93,6 +93,9 @@ type RenderSystem struct {
 	ssaoBlurFBO     uint32
 	ssaoBlurTexture uint32
 
+	materialFBO     uint32
+	materialTexture uint32
+
 	ssaoFBO          uint32
 	ssaoTexture      uint32
 	ssaoNoiseTexture uint32
@@ -176,6 +179,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
 	r.initializeCircleTextures()
 
+	r.materialFBO, r.materialTexture = r.createCircleTexture(1024, 1024)
+
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
 	r.bloomTextureWidths = widths
@@ -198,6 +203,96 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	return r
+}
+
+func (r *RenderSystem) renderMaterialTexture(renderContext RenderContext, viewerContext ViewerContext, lightContext LightContext, ents []*entities.Entity) {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.materialFBO)
+	gl.Viewport(0, 0, 1024, 1024)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	shaderManager := r.shaderManager
+	shader := shaderManager.GetShaderProgram("modelpbr")
+	// shader.Use()
+	r.drawSkybox(renderContext, viewerContext)
+	// r.renderModels(shader, viewerContext, lightContext, renderContext, ents)
+
+	if r.app.RuntimeConfig().FogEnabled {
+		shader.SetUniformInt("fog", 1)
+	} else {
+		shader.SetUniformInt("fog", 0)
+	}
+
+	var fog int32 = 0
+	if r.app.RuntimeConfig().FogDensity != 0 {
+		fog = 1
+	}
+	shader.SetUniformInt("fog", fog)
+	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
+
+	shader.SetUniformInt("width", int32(renderContext.width))
+	shader.SetUniformInt("height", int32(renderContext.height))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+	shader.SetUniformInt("shadowMap", 31)
+	shader.SetUniformInt("depthCubeMap", 30)
+	shader.SetUniformInt("cameraDepthMap", 29)
+	shader.SetUniformInt("ambientOcclusion", 28)
+	if r.app.RuntimeConfig().EnableSSAO {
+		shader.SetUniformInt("enableAmbientOcclusion", 1)
+	} else {
+		shader.SetUniformInt("enableAmbientOcclusion", 0)
+	}
+
+	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+	shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+	if len(lightContext.PointLights) > 0 {
+		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+	}
+	shader.SetUniformInt("hasColorOverride", 0)
+
+	setupLightingUniforms(shader, lightContext.Lights)
+
+	gl.ActiveTexture(gl.TEXTURE28)
+	gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
+
+	gl.ActiveTexture(gl.TEXTURE29)
+	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
+
+	gl.ActiveTexture(gl.TEXTURE30)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+
+	gl.ActiveTexture(gl.TEXTURE31)
+	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+
+	var entityCount int
+	for _, entity := range ents {
+		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
+			continue
+		}
+
+		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
+			continue
+		}
+
+		if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
+			continue
+		}
+
+		entityCount++
+
+		shader.SetUniformUInt("entityID", uint32(entity.ID))
+
+		r.drawModel(
+			shader,
+			entity,
+		)
+	}
 }
 
 // this might be the most garbage code i've ever written
@@ -311,7 +406,10 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
 
+var loaded bool
+
 func (r *RenderSystem) Render(delta time.Duration) {
+
 	mr := r.app.MetricsRegistry()
 
 	start := time.Now()
@@ -423,6 +521,11 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
+	if !loaded {
+		loaded = true
+		r.renderMaterialTexture(renderContext, cameraViewerContext, lightContext, renderableEntities)
+	}
+
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
@@ -499,22 +602,34 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
 		r.app.RuntimeConfig().DebugTexture = r.gPositionTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
 		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionMaterial {
+		r.app.RuntimeConfig().DebugTexture = r.materialTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 1
 	}
 
 	// render to back buffer
@@ -1341,7 +1456,11 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 					imageWidth := regionSize.X
 
 					texture := imgui.TextureID(runtimeConfig.DebugTexture)
-					size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+					aspectRatio := float32(renderContext.AspectRatio())
+					if runtimeConfig.DebugAspectRatio != 0 {
+						aspectRatio = float32(runtimeConfig.DebugAspectRatio)
+					}
+					size := imgui.Vec2{X: imageWidth, Y: imageWidth / aspectRatio}
 					if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 						size.Y = imageWidth
 					}

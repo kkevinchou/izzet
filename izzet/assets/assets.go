@@ -170,8 +170,8 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 // meant to be called when a mesh is created at runtime and needs to be registered
-func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, materialHandle types.MaterialHandle) {
+func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, matIDToHandle map[string]types.MaterialHandle) types.MeshHandle {
 	handle := NewMeshHandle("runtime", fmt.Sprintf("%d", runtimeMeshIDGen))
 	runtimeMeshIDGen++
-	m.registerMeshPrimitivesWithHandle(handle, mesh, nil)
+	return m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 }

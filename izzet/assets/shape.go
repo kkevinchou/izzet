@@ -52,6 +52,7 @@ func createCubePrimitive(length int) *modelspec.PrimitiveSpecification {
 		VertexIndices:  vertexIndices,
 		UniqueVertices: uniqueVertices,
 		Vertices:       vertices,
+		MaterialIndex:  "0",
 	}
 }
 

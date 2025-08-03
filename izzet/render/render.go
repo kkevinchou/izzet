@@ -208,7 +208,27 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *RenderSystem) CreateMaterialTexture(renderContext RenderContext, viewerContext ViewerContext, lightContext LightContext, vertexCount int32, ents []*entities.Entity) {
+func (r *RenderSystem) CreateMaterialTexture(viewerContext2 ViewerContext, lightContext LightContext) {
+	renderContext := NewRenderContext(512, 512, float64(r.app.RuntimeConfig().TestFOV))
+
+	position := mgl64.Vec3{
+		float64(r.app.RuntimeConfig().TestPosition.X()),
+		float64(r.app.RuntimeConfig().TestPosition.Y()),
+		float64(r.app.RuntimeConfig().TestPosition.Z()),
+	}
+	rotation := mgl64.QuatRotate(mgl64.DegToRad(float64(r.app.RuntimeConfig().TestAngle)), mgl64.Vec3{1, 0, 0})
+	translationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+
+	viewerContext := ViewerContext{
+		Position: position,
+		Rotation: rotation,
+
+		InverseViewMatrix:                   translationMatrix.Mul4(rotation.Mat4()).Inv(),
+		InverseViewMatrixWithoutTranslation: rotation.Mat4().Inv(),
+		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
+	}
+	// viewerContext = viewerContext2
+
 	CreateMaterialTexture = false
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.materialFBO)
@@ -218,25 +238,10 @@ func (r *RenderSystem) CreateMaterialTexture(renderContext RenderContext, viewer
 
 	r.drawSkybox(renderContext, viewerContext)
 
-	shaderManager := r.shaderManager
-	shader := shaderManager.GetShaderProgram("modelpbr")
+	shader := r.shaderManager.GetShaderProgram("modelpbr")
 	shader.Use()
 
-	// r.renderModels(shader, viewerContext, lightContext, renderContext, ents)
-
-	vao := r.getCubeVAO(1, true)
-	if r.app.RuntimeConfig().FogEnabled {
-		shader.SetUniformInt("fog", 1)
-	} else {
-		shader.SetUniformInt("fog", 0)
-	}
-
-	var fog int32 = 0
-	if r.app.RuntimeConfig().FogDensity != 0 {
-		fog = 1
-	}
-	shader.SetUniformInt("fog", fog)
-	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
+	shader.SetUniformInt("fog", 0)
 
 	shader.SetUniformInt("width", int32(renderContext.width))
 	shader.SetUniformInt("height", int32(renderContext.height))
@@ -278,60 +283,41 @@ func (r *RenderSystem) CreateMaterialTexture(renderContext RenderContext, viewer
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
+	materialHandle := types.MaterialHandle{ID: "alpha3.gltf/0"}
+	mesh := assets.CreateCubeMesh(5)
+	meshHandle := r.app.AssetManager().RegisterRuntimeMesh(mesh, map[string]types.MaterialHandle{"0": materialHandle})
+
 	// entity drawing code
-	shader.SetUniformUInt("entityID", uint32(0))
-
-	shader.SetUniformInt("isAnimated", 0)
-
-	// material setup
 	shader.SetUniformInt("repeatTexture", 0)
 
-	materialHandle := types.MaterialHandle{ID: "alpha3.gltf/0"}
-	material := r.app.AssetManager().GetMaterial(materialHandle).Material
-	pbrMaterial := material.PBRMaterial.PBRMetallicRoughness
+	primitives := r.app.AssetManager().GetPrimitives(meshHandle)
+	for _, p := range primitives {
+		materialHandle := p.MaterialHandle
+		primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle).Material
+		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 
-	if pbrMaterial.BaseColorTextureName != "" {
-		shader.SetUniformInt("colorTextureCoordIndex", int32(pbrMaterial.BaseColorTextureCoordsIndex))
-		shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+		if material.BaseColorTextureName != "" {
+			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
+			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 
-		textureName := pbrMaterial.BaseColorTextureName
-		gl.ActiveTexture(gl.TEXTURE0)
-		var textureID uint32
-		texture := r.app.AssetManager().GetTexture(textureName)
-		textureID = texture.ID
-		gl.BindTexture(gl.TEXTURE_2D, textureID)
-	} else {
-		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-	}
+			textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
+			gl.ActiveTexture(gl.TEXTURE0)
+			var textureID uint32
+			texture := r.app.AssetManager().GetTexture(textureName)
+			textureID = texture.ID
+			gl.BindTexture(gl.TEXTURE_2D, textureID)
+		} else {
+			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		}
 
-	// next stuff
+		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
+		shader.SetUniformFloat("roughness", material.RoughnessFactor)
+		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
-	shader.SetUniformVec3("albedo", pbrMaterial.BaseColorFactor.Vec3())
-	shader.SetUniformFloat("roughness", pbrMaterial.RoughnessFactor)
-	shader.SetUniformFloat("metallic", pbrMaterial.MetalicFactor)
-	shader.SetUniformVec3("translation", mgl32.Vec3{})
-	shader.SetUniformVec3("scale", mgl32.Vec3{})
+		shader.SetUniformMat4("model", mgl32.QuatRotate(mgl32.DegToRad(float32(r.app.RuntimeConfig().TestObjectRotation)), mgl32.Vec3{0, 1, 0}).Mat4())
 
-	// apply smooth blending between mispredicted position and actual real position
-	shader.SetUniformMat4("model", mgl32.Ident4())
-
-	// iterate over each material, create a mesh with that material
-
-	// _ = vao
-	// gl.BindVertexArray(10)
-	gl.BindVertexArray(vao)
-	r.iztDrawElements(vertexCount)
-
-	// for each material
-	// render the cube with the material
-	// store that in a texture map whose key is the material id
-	// when rendering the materials drawer, look up the texture for each material
-	for _, material := range r.app.AssetManager().GetMaterials() {
-		mesh := assets.CreateCubeMesh(1)
-		r.app.AssetManager().RegisterRuntimeMesh(mesh, materialHandle)
-		_ = material.Handle
-		// create a mesh?
-		// render the cube
+		gl.BindVertexArray(p.VAO)
+		r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
 	}
 }
 
@@ -562,7 +548,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
 	if CreateMaterialTexture {
-		r.CreateMaterialTexture(renderContext, cameraViewerContext, lightContext, 36, renderableEntities)
+		r.CreateMaterialTexture(cameraViewerContext, lightContext)
 	}
 
 	start = time.Now()

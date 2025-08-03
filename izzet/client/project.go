@@ -205,7 +205,6 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		// ideally all assets are pointed to the .project folder. perhaps we should have a new project
 		// setup step that copies assets over from _assets rather than loading directly from _assets?
 		g.assetManager.LoadAndRegisterDocumentAsset(document.DocumentAsset)
-		// g.assetManager.LoadAndRegisterDocument(document.DocumentAsset.Config, false)
 	}
 
 	for _, material := range assetsJSON.Materials {

@@ -54,7 +54,7 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.
 	return document
 }
 
-func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMaterials bool) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
@@ -77,12 +77,10 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
 		}
 
-		if importMaterials {
-			for _, material := range document.Materials {
-				name := fmt.Sprintf("%s/%s", document.Name, material.ID)
-				handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
-				a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
-			}
+		for _, material := range document.Materials {
+			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
+			handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
+			a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
 		}
 	}
 

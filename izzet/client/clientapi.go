@@ -405,7 +405,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
 	newConfig := g.CopyDocumentToProjectFolder(config)
-	g.assetManager.LoadAndRegisterDocument(newConfig, true)
+	g.assetManager.LoadAndRegisterDocument(newConfig)
 }
 
 func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {

@@ -42,6 +42,9 @@ const (
 	mipsCount             int = 6
 	MaxBloomTextureWidth  int = 1920
 	MaxBloomTextureHeight int = 1080
+
+	materialTextureWidth  int32 = 256
+	materialTextureHeight int32 = 256
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
 	renderFormatRGB                  uint32 = gl.RGB
@@ -179,7 +182,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
 	r.initializeCircleTextures()
 
-	r.materialFBO, r.materialTexture = r.createCircleTexture(1024, 1024)
+	r.materialFBO, r.materialTexture = r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -205,18 +208,23 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *RenderSystem) renderMaterialTexture(renderContext RenderContext, viewerContext ViewerContext, lightContext LightContext, ents []*entities.Entity) {
+func (r *RenderSystem) CreateMaterialTexture(renderContext RenderContext, viewerContext ViewerContext, lightContext LightContext, vertexCount int32, ents []*entities.Entity) {
+	CreateMaterialTexture = false
+
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.materialFBO)
-	gl.Viewport(0, 0, 1024, 1024)
+	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
 	gl.ClearColor(0, 0.5, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+	r.drawSkybox(renderContext, viewerContext)
+
 	shaderManager := r.shaderManager
 	shader := shaderManager.GetShaderProgram("modelpbr")
-	// shader.Use()
-	r.drawSkybox(renderContext, viewerContext)
+	shader.Use()
+
 	// r.renderModels(shader, viewerContext, lightContext, renderContext, ents)
 
+	vao := r.getCubeVAO(1, true)
 	if r.app.RuntimeConfig().FogEnabled {
 		shader.SetUniformInt("fog", 1)
 	} else {
@@ -270,28 +278,60 @@ func (r *RenderSystem) renderMaterialTexture(renderContext RenderContext, viewer
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
 
-	var entityCount int
-	for _, entity := range ents {
-		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
-			continue
-		}
+	// entity drawing code
+	shader.SetUniformUInt("entityID", uint32(0))
 
-		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
-			continue
-		}
+	shader.SetUniformInt("isAnimated", 0)
 
-		if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
-			continue
-		}
+	// material setup
+	shader.SetUniformInt("repeatTexture", 0)
 
-		entityCount++
+	materialHandle := types.MaterialHandle{ID: "alpha3.gltf/0"}
+	material := r.app.AssetManager().GetMaterial(materialHandle).Material
+	pbrMaterial := material.PBRMaterial.PBRMetallicRoughness
 
-		shader.SetUniformUInt("entityID", uint32(entity.ID))
+	if pbrMaterial.BaseColorTextureName != "" {
+		shader.SetUniformInt("colorTextureCoordIndex", int32(pbrMaterial.BaseColorTextureCoordsIndex))
+		shader.SetUniformInt("hasPBRBaseColorTexture", 1)
 
-		r.drawModel(
-			shader,
-			entity,
-		)
+		textureName := pbrMaterial.BaseColorTextureName
+		gl.ActiveTexture(gl.TEXTURE0)
+		var textureID uint32
+		texture := r.app.AssetManager().GetTexture(textureName)
+		textureID = texture.ID
+		gl.BindTexture(gl.TEXTURE_2D, textureID)
+	} else {
+		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+	}
+
+	// next stuff
+
+	shader.SetUniformVec3("albedo", pbrMaterial.BaseColorFactor.Vec3())
+	shader.SetUniformFloat("roughness", pbrMaterial.RoughnessFactor)
+	shader.SetUniformFloat("metallic", pbrMaterial.MetalicFactor)
+	shader.SetUniformVec3("translation", mgl32.Vec3{})
+	shader.SetUniformVec3("scale", mgl32.Vec3{})
+
+	// apply smooth blending between mispredicted position and actual real position
+	shader.SetUniformMat4("model", mgl32.Ident4())
+
+	// iterate over each material, create a mesh with that material
+
+	// _ = vao
+	// gl.BindVertexArray(10)
+	gl.BindVertexArray(vao)
+	r.iztDrawElements(vertexCount)
+
+	// for each material
+	// render the cube with the material
+	// store that in a texture map whose key is the material id
+	// when rendering the materials drawer, look up the texture for each material
+	for _, material := range r.app.AssetManager().GetMaterials() {
+		mesh := assets.CreateCubeMesh(1)
+		r.app.AssetManager().RegisterRuntimeMesh(mesh, materialHandle)
+		_ = material.Handle
+		// create a mesh?
+		// render the cube
 	}
 }
 
@@ -406,7 +446,7 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
 
-var loaded bool
+var CreateMaterialTexture bool
 
 func (r *RenderSystem) Render(delta time.Duration) {
 
@@ -521,9 +561,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
-	if !loaded {
-		loaded = true
-		r.renderMaterialTexture(renderContext, cameraViewerContext, lightContext, renderableEntities)
+	if CreateMaterialTexture {
+		r.CreateMaterialTexture(renderContext, cameraViewerContext, lightContext, 36, renderableEntities)
 	}
 
 	start = time.Now()

@@ -113,19 +113,15 @@ func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification)
 
 func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
 	handle := NewSingleEntityMeshHandle(document.Name)
-	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
-		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
 func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
-	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		handle := NewMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
-		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
@@ -146,6 +142,9 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 			p.VAO = vaos[0][i]
 			p.GeometryVAO = geometryVAOs[0][i]
 			if len(matIDToHandle) > 0 {
+				if _, ok := matIDToHandle[primitive.MaterialIndex]; !ok {
+					panic("did not find material index in matIDToHandle map")
+				}
 				p.MaterialHandle = matIDToHandle[primitive.MaterialIndex]
 			}
 		}
@@ -153,12 +152,4 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
-}
-
-func (m *AssetManager) clearNamespace(namespace string) {
-	for _, handle := range m.NamespaceToMeshHandles[namespace] {
-		delete(m.Primitives, handle)
-	}
-
-	delete(m.NamespaceToMeshHandles, namespace)
 }

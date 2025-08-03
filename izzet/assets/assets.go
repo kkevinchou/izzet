@@ -16,6 +16,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
+var materialIDGen int = 0
+var runtimeMeshIDGen int = 0
+
 type DocumentAsset struct {
 	MatIDToHandle map[string]types.MaterialHandle
 	Document      *modelspec.Document `json:"-"`
@@ -36,13 +39,10 @@ type AssetManager struct {
 	materialAssets map[types.MaterialHandle]MaterialAsset
 
 	// Asset References
-	NamespaceToMeshHandles map[string][]types.MeshHandle
-	Primitives             map[types.MeshHandle][]Primitive
-	Animations             map[string]map[string]*modelspec.AnimationSpec
-	Joints                 map[string]map[int]*modelspec.JointSpec
-	RootJoints             map[string]int
-
-	// cubeMeshHandle types.MaterialHandle
+	Primitives map[types.MeshHandle][]Primitive
+	Animations map[string]map[string]*modelspec.AnimationSpec
+	Joints     map[string]map[int]*modelspec.JointSpec
+	RootJoints map[string]int
 
 	processVisuals bool
 }
@@ -59,19 +59,18 @@ func NewAssetManager(processVisualAssets bool) *AssetManager {
 	}
 
 	assetManager := AssetManager{
-		textures:               loadedTextures,
-		fonts:                  loadedFonts,
-		processVisuals:         processVisualAssets,
-		documentAssets:         map[string]DocumentAsset{},
-		Primitives:             map[types.MeshHandle][]Primitive{},
-		NamespaceToMeshHandles: map[string][]types.MeshHandle{},
-		materialAssets:         map[types.MaterialHandle]MaterialAsset{},
-		Animations:             map[string]map[string]*modelspec.AnimationSpec{},
-		Joints:                 map[string]map[int]*modelspec.JointSpec{},
-		RootJoints:             map[string]int{},
+		textures:       loadedTextures,
+		fonts:          loadedFonts,
+		processVisuals: processVisualAssets,
+		documentAssets: map[string]DocumentAsset{},
+		Primitives:     map[types.MeshHandle][]Primitive{},
+		materialAssets: map[types.MaterialHandle]MaterialAsset{},
+		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
+		Joints:         map[string]map[int]*modelspec.JointSpec{},
+		RootJoints:     map[string]int{},
 	}
 
-	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, cubeMesh(1), nil)
+	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, CreateCubeMesh(1), nil)
 
 	return &assetManager
 }
@@ -170,4 +169,9 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 	return a.fonts[name]
 }
 
-var materialIDGen int = 0
+// meant to be called when a mesh is created at runtime and needs to be registered
+func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, materialHandle types.MaterialHandle) {
+	handle := NewMeshHandle("runtime", fmt.Sprintf("%d", runtimeMeshIDGen))
+	runtimeMeshIDGen++
+	m.registerMeshPrimitivesWithHandle(handle, mesh, nil)
+}

@@ -26,6 +26,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -672,4 +673,8 @@ func (g *Client) NewProject(name string) {
 	g.World().AddEntity(directionalLight)
 
 	g.SaveProjectAs(name)
+}
+
+func (g *Client) CreateMaterialTexture() {
+	render.CreateMaterialTexture = true
 }

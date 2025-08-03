@@ -7,7 +7,7 @@ import (
 
 var nextGlobalID int
 
-func cubeMesh(length int) *modelspec.MeshSpecification {
+func CreateCubeMesh(length int) *modelspec.MeshSpecification {
 	primitive := createCubePrimitive(length)
 	mesh := &modelspec.MeshSpecification{ID: nextGlobalID, Primitives: []*modelspec.PrimitiveSpecification{primitive}}
 	nextGlobalID += 1
@@ -15,7 +15,7 @@ func cubeMesh(length int) *modelspec.MeshSpecification {
 }
 
 func createCubePrimitive(length int) *modelspec.PrimitiveSpecification {
-	vertFloats := cubeVertexFloatsByLength(length)
+	vertFloats := cubeVertexAttributesByLength(length)
 
 	vertexIndices := []uint32{}
 	for i := 0; i < 36; i++ {
@@ -55,7 +55,7 @@ func createCubePrimitive(length int) *modelspec.PrimitiveSpecification {
 	}
 }
 
-func cubeVertexFloatsByLength(length int) []float32 {
+func cubeVertexAttributesByLength(length int) []float32 {
 	ht := float32(length) / 2
 
 	return []float32{

@@ -84,4 +84,8 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("point_shadow", "point_shadow", "point_shadow", "point_shadow"); err != nil {
 		panic(err)
 	}
+
+	if err := shaderManager.CompileShaderProgram("material_preview", "material_preview", "material_preview", ""); err != nil {
+		panic(err)
+	}
 }

@@ -43,8 +43,8 @@ const (
 	MaxBloomTextureWidth  int = 1920
 	MaxBloomTextureHeight int = 1080
 
-	materialTextureWidth  int32 = 256
-	materialTextureHeight int32 = 256
+	materialTextureWidth  int32 = 512
+	materialTextureHeight int32 = 512
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
 	renderFormatRGB                  uint32 = gl.RGB
@@ -208,117 +208,33 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *RenderSystem) CreateMaterialTexture(viewerContext2 ViewerContext, lightContext LightContext) {
-	renderContext := NewRenderContext(512, 512, float64(r.app.RuntimeConfig().TestFOV))
-
-	position := mgl64.Vec3{
-		float64(r.app.RuntimeConfig().TestPosition.X()),
-		float64(r.app.RuntimeConfig().TestPosition.Y()),
-		float64(r.app.RuntimeConfig().TestPosition.Z()),
-	}
-	rotation := mgl64.QuatRotate(mgl64.DegToRad(float64(r.app.RuntimeConfig().TestAngle)), mgl64.Vec3{1, 0, 0})
-	translationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
-
-	viewerContext := ViewerContext{
-		Position: position,
-		Rotation: rotation,
-
-		InverseViewMatrix:                   translationMatrix.Mul4(rotation.Mat4()).Inv(),
-		InverseViewMatrixWithoutTranslation: rotation.Mat4().Inv(),
-		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
-	}
-	// viewerContext = viewerContext2
-
-	CreateMaterialTexture = false
-
+func (r *RenderSystem) CreateMaterialTexture() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.materialFBO)
 	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
-	gl.ClearColor(0, 0.5, 0, 0)
+	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	r.drawSkybox(renderContext, viewerContext)
-
-	shader := r.shaderManager.GetShaderProgram("modelpbr")
+	shader := r.shaderManager.GetShaderProgram("material_preview")
 	shader.Use()
 
-	shader.SetUniformInt("fog", 0)
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
 
-	shader.SetUniformInt("width", int32(renderContext.width))
-	shader.SetUniformInt("height", int32(renderContext.height))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-	shader.SetUniformInt("shadowMap", 31)
-	shader.SetUniformInt("depthCubeMap", 30)
-	shader.SetUniformInt("cameraDepthMap", 29)
-	shader.SetUniformInt("ambientOcclusion", 28)
-	if r.app.RuntimeConfig().EnableSSAO {
-		shader.SetUniformInt("enableAmbientOcclusion", 1)
-	} else {
-		shader.SetUniformInt("enableAmbientOcclusion", 0)
-	}
+	shader.SetUniformInt("uUseAlbedoMap", 0)
+	shader.SetUniformInt("uUseMetallicMap", 0)
+	shader.SetUniformInt("uUseRoughnessMap", 0)
+	shader.SetUniformInt("uUseAOMap", 0)
 
-	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-	shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-	if len(lightContext.PointLights) > 0 {
-		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-	}
-	shader.SetUniformInt("hasColorOverride", 0)
+	shader.SetUniformVec3("uAlbedo", r.app.RuntimeConfig().TestAlbedo)
+	shader.SetUniformFloat("uMetallic", r.app.RuntimeConfig().TestMetallic)
+	shader.SetUniformFloat("uRoughness", r.app.RuntimeConfig().Roughness)
+	shader.SetUniformFloat("uAO", r.app.RuntimeConfig().TestAO)
 
-	setupLightingUniforms(shader, lightContext.Lights)
+	shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
+	shader.SetUniformVec3("uLightColor", mgl32.Vec3{1, 1, 1})
 
-	gl.ActiveTexture(gl.TEXTURE28)
-	gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
-
-	gl.ActiveTexture(gl.TEXTURE29)
-	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
-
-	gl.ActiveTexture(gl.TEXTURE30)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
-
-	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
-
-	materialHandle := types.MaterialHandle{ID: "alpha3.gltf/0"}
-	mesh := assets.CreateCubeMesh(5)
-	meshHandle := r.app.AssetManager().RegisterRuntimeMesh(mesh, map[string]types.MaterialHandle{"0": materialHandle})
-
-	// entity drawing code
-	shader.SetUniformInt("repeatTexture", 0)
-
-	primitives := r.app.AssetManager().GetPrimitives(meshHandle)
-	for _, p := range primitives {
-		materialHandle := p.MaterialHandle
-		primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle).Material
-		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
-
-		if material.BaseColorTextureName != "" {
-			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
-			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-
-			textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
-			gl.ActiveTexture(gl.TEXTURE0)
-			var textureID uint32
-			texture := r.app.AssetManager().GetTexture(textureName)
-			textureID = texture.ID
-			gl.BindTexture(gl.TEXTURE_2D, textureID)
-		} else {
-			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-		}
-
-		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
-		shader.SetUniformFloat("roughness", material.RoughnessFactor)
-		shader.SetUniformFloat("metallic", material.MetalicFactor)
-
-		shader.SetUniformMat4("model", mgl32.QuatRotate(mgl32.DegToRad(float32(r.app.RuntimeConfig().TestObjectRotation)), mgl32.Vec3{0, 1, 0}).Mat4())
-
-		gl.BindVertexArray(p.VAO)
-		r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
-	}
+	r.iztDrawArrays(0, 6)
 }
 
 // this might be the most garbage code i've ever written
@@ -548,7 +464,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
 	if CreateMaterialTexture {
-		r.CreateMaterialTexture(cameraViewerContext, lightContext)
+		r.CreateMaterialTexture()
 	}
 
 	start = time.Now()

@@ -134,6 +134,11 @@ type RuntimeConfig struct {
 	TestAngle          int32
 	TestObjectRotation int32
 	TestFOV            int32
+
+	TestAlbedo    [3]float32
+	TestMetallic  float32
+	TestRoughness float32
+	TestAO        float32
 }
 
 type CloudTextureChannel struct {
@@ -299,5 +304,9 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		TestAngle:                  -35,
 		TestObjectRotation:         35,
 		TestFOV:                    70,
+		TestAlbedo:                 [3]float32{0.5, 0.5, 0.5},
+		TestMetallic:               0,
+		TestRoughness:              1,
+		TestAO:                     1,
 	}
 }

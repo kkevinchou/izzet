@@ -1304,34 +1304,6 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 				r.app.SelectEntity(entity)
 			}
 			imgui.EndDragDropTarget()
-			// if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
-			// 	fmt.Println(payload)
-			// 	// data := payload.Data()
-			// 	// ptr := (*string)(data)
-
-			// 	// itemName := *ptr
-			// 	// document := r.app.AssetManager().GetDocument(itemName)
-			// 	// handle := assets.NewGlobalHandle(itemName)
-			// 	// if len(document.Scenes) != 1 {
-			// 	// 	panic("single entity asset loading only supports a singular scene")
-			// 	// }
-
-			// 	// scene := document.Scenes[0]
-			// 	// node := scene.Nodes[0]
-
-			// 	// entity := entities.InstantiateEntity(document.Name)
-			// 	// entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-			// 	// var vertices []modelspec.Vertex
-			// 	// entities.VerticesFromNode(node, document, &vertices)
-			// 	// entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-			// 	// entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-			// 	// entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-			// 	// entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-
-			// 	// r.world.AddEntity(entity)
-			// 	// imgui.CloseCurrentPopup()
-			// }
-			// imgui.EndDragDropTarget()
 		}
 
 		if imgui.IsWindowHovered() {
@@ -1345,13 +1317,10 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 		if r.app.RuntimeConfig().UIEnabled {
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-			// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
-			// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
 			imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-			// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 			imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 			imgui.PushStyleColorVec4(imgui.ColHeader, HeaderColor)
 			imgui.PushStyleColorVec4(imgui.ColHeaderActive, HeaderColor)
@@ -1367,9 +1336,6 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			imgui.PushStyleColorVec4(imgui.ColButton, InActiveColorControl)
 			imgui.PushStyleColorVec4(imgui.ColButtonActive, ActiveColorControl)
 			imgui.PushStyleColorVec4(imgui.ColButtonHovered, HoverColorControl)
-			// imgui.PushStyleColorVec4(imgui.ColTabActive, ActiveColorBg)
-			// imgui.PushStyleColorVec4(imgui.ColTabUnfocused, InActiveColorBg)
-			// imgui.PushStyleColorVec4(imgui.ColTabUnfocusedActive, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
@@ -1385,8 +1351,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			)
 
 			imgui.PopStyleColorV(17)
-			// imgui.PopStyleColorV(20)
-			imgui.PopStyleVarV(7)
+			imgui.PopStyleVarV(6)
 
 			if runtimeConfig.ShowImguiDemo {
 				imgui.ShowDemoWindow()
@@ -1425,6 +1390,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 		}
 	}
 	imgui.End()
+	imgui.PopStyleVarV(1)
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())

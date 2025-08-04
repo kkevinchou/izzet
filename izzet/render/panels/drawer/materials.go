@@ -1,8 +1,6 @@
 package drawer
 
 import (
-	"fmt"
-
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -18,6 +16,13 @@ const (
 
 func materialssUI(app renderiface.App, materialTextureMap map[string]uint32) {
 	mats := app.AssetManager().GetMaterials()
+
+	style := imgui.CurrentStyle()
+	imgui.PushStyleVarVec2(
+		imgui.StyleVarCellPadding,
+		imgui.Vec2{X: style.CellPadding().X, Y: 5},
+	)
+	defer imgui.PopStyleVar()
 
 	// 1) Begin a fixed-column table to handle layout for us
 	if imgui.BeginTableV("MaterialsTable", itemsPerRow,
@@ -68,15 +73,31 @@ func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textur
 		imgui.EndTooltip()
 	}
 
-	// label below the image
-	// we give the child an automatic height so it shrinks to fit text
-	label := fmt.Sprintf("##label_%s", material.Name)
-	if imgui.BeginChildStrV(label,
-		imgui.Vec2{X: cellWidth, Y: 0},
-		imgui.ChildFlagsNone,
-		imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse,
-	) {
-		imgui.Text(material.Name)
+	label := ellipsize(material.Name, cellWidth)
+	imgui.TextUnformatted(label)
+}
+
+// ellipsize returns a version of s that fits within maxWidth, adding "…" if it had to cut.
+func ellipsize(s string, maxWidth float32) string {
+	// measure full string
+	fullSize := imgui.CalcTextSizeV(s, false, 0)
+	if fullSize.X <= maxWidth {
+		return s
 	}
-	imgui.EndChild()
+
+	ell := "..."
+	ellSize := imgui.CalcTextSizeV(ell, false, 0)
+
+	// accumulate runes until we hit (maxWidth - ellipsis width)
+	var out []rune
+	width := float32(0)
+	for _, r := range s {
+		w := imgui.CalcTextSizeV(string(r), false, 0).X
+		if width+w+ellSize.X > maxWidth {
+			break
+		}
+		out = append(out, r)
+		width += w
+	}
+	return string(out) + ell
 }

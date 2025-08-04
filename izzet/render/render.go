@@ -1343,7 +1343,6 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 		imgui.SameLine()
 
 		if r.app.RuntimeConfig().UIEnabled {
-			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
 			// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
@@ -1426,7 +1425,6 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 		}
 	}
 	imgui.End()
-	imgui.PopStyleVarV(1)
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())

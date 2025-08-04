@@ -26,9 +26,6 @@ func create(app renderiface.App) {
 		if imgui.MenuItemBool("Bake Static Geometry") {
 			app.SetupBatchedStaticRendering()
 		}
-		if imgui.MenuItemBool("Create Material Texture") {
-			app.CreateMaterialTexture()
-		}
 		imgui.EndMenu()
 	}
 }

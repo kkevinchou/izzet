@@ -96,9 +96,6 @@ type RenderSystem struct {
 	ssaoBlurFBO     uint32
 	ssaoBlurTexture uint32
 
-	materialFBO     uint32
-	materialTexture uint32
-
 	ssaoFBO          uint32
 	ssaoTexture      uint32
 	ssaoNoiseTexture uint32
@@ -136,6 +133,8 @@ type RenderSystem struct {
 	// volumetricFBO           uint32
 	// volumetricRenderTexture uint32
 
+	materialTextureMap map[string]uint32
+
 	batchRenders []assets.Batch
 }
 
@@ -169,6 +168,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
+	r.materialTextureMap = map[string]uint32{}
 
 	r.initorReinitTextures(width, height, true)
 	r.renderSSAOTextures()
@@ -181,8 +181,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
 	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
 	r.initializeCircleTextures()
-
-	r.materialFBO, r.materialTexture = r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -208,33 +206,53 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *RenderSystem) CreateMaterialTexture() {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.materialFBO)
-	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
-	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+func (r *RenderSystem) CreateMaterialTextures() {
+	for _, material := range r.app.AssetManager().GetMaterials() {
+		if _, ok := r.materialTextureMap[material.Name]; ok {
+			continue
+		}
 
-	shader := r.shaderManager.GetShaderProgram("material_preview")
-	shader.Use()
+		materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
+		r.materialTextureMap[material.Name] = materialTexture
 
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, materialFBO)
+		gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
+		gl.ClearColor(0, 0, 0, 0)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	shader.SetUniformInt("uUseAlbedoMap", 0)
-	shader.SetUniformInt("uUseMetallicMap", 0)
-	shader.SetUniformInt("uUseRoughnessMap", 0)
-	shader.SetUniformInt("uUseAOMap", 0)
+		shader := r.shaderManager.GetShaderProgram("material_preview")
+		shader.Use()
 
-	shader.SetUniformVec3("uAlbedo", r.app.RuntimeConfig().TestAlbedo)
-	shader.SetUniformFloat("uMetallic", r.app.RuntimeConfig().TestMetallic)
-	shader.SetUniformFloat("uRoughness", r.app.RuntimeConfig().Roughness)
-	shader.SetUniformFloat("uAO", r.app.RuntimeConfig().TestAO)
+		var vao uint32
+		gl.GenVertexArrays(1, &vao)
+		gl.BindVertexArray(vao)
 
-	shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
-	shader.SetUniformVec3("uLightColor", mgl32.Vec3{1, 1, 1})
+		pbr := material.Material.PBRMaterial.PBRMetallicRoughness
 
-	r.iztDrawArrays(0, 6)
+		if pbr.BaseColorTextureName != "" {
+			shader.SetUniformInt("uUseAlbedoMap", 1)
+			shader.SetUniformInt("uAlbedoMap", int32(pbr.BaseColorTextureCoordsIndex))
+
+			gl.ActiveTexture(gl.TEXTURE0)
+			texture := r.app.AssetManager().GetTexture(pbr.BaseColorTextureName)
+			gl.BindTexture(gl.TEXTURE_2D, texture.ID)
+		} else {
+			shader.SetUniformInt("uUseAlbedoMap", 0)
+		}
+		shader.SetUniformInt("uUseMetallicMap", 0)
+		shader.SetUniformInt("uUseRoughnessMap", 0)
+		shader.SetUniformInt("uUseAOMap", 0)
+
+		shader.SetUniformVec3("uAlbedo", pbr.BaseColorFactor.Vec3())
+		shader.SetUniformFloat("uMetallic", pbr.MetalicFactor)
+		shader.SetUniformFloat("uRoughness", pbr.RoughnessFactor)
+		shader.SetUniformFloat("uAO", 1)
+
+		shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
+		shader.SetUniformVec3("uLightColor", mgl32.Vec3{5, 5, 5})
+
+		r.iztDrawArrays(0, 6)
+	}
 }
 
 // this might be the most garbage code i've ever written
@@ -347,8 +365,6 @@ func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {
 func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
-
-var CreateMaterialTexture bool
 
 func (r *RenderSystem) Render(delta time.Duration) {
 
@@ -463,9 +479,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
-	if CreateMaterialTexture {
-		r.CreateMaterialTexture()
-	}
+	r.CreateMaterialTextures()
 
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
@@ -568,9 +582,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
-	} else if menus.SelectedDebugComboOption == menus.ComboOptionMaterial {
-		r.app.RuntimeConfig().DebugTexture = r.materialTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 1
 	}
 
 	// render to back buffer
@@ -1371,6 +1382,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			drawer.BuildFooter(
 				r.app,
 				renderContext,
+				r.materialTextureMap,
 			)
 
 			imgui.PopStyleColorV(17)

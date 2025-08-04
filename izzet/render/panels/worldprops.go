@@ -67,56 +67,6 @@ func worldProps(app renderiface.App) {
 		}, true)
 		panelutils.SetupRow("Enable Spatial Partition", func() { imgui.Checkbox("", &runtimeConfig.EnableSpatialPartition) }, true)
 
-		imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
-		if imgui.InputFloatV("##x", &app.RuntimeConfig().TestPosition[0], 0, 0, "%.2f", imgui.InputTextFlagsNone) {
-			app.CreateMaterialTexture()
-		}
-		imgui.SameLine()
-		if imgui.InputFloatV("##y", &app.RuntimeConfig().TestPosition[1], 0, 0, "%.2f", imgui.InputTextFlagsNone) {
-			app.CreateMaterialTexture()
-		}
-		imgui.SameLine()
-		if imgui.InputFloatV("##z", &app.RuntimeConfig().TestPosition[2], 0, 0, "%.2f", imgui.InputTextFlagsNone) {
-			app.CreateMaterialTexture()
-		}
-		imgui.PopItemWidth()
-		panelutils.SetupRow("Test Angle", func() {
-			if imgui.InputIntV("", &runtimeConfig.TestAngle, -360, 360, imgui.InputTextFlagsNone) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-		panelutils.SetupRow("Test Object Angle", func() {
-			if imgui.InputIntV("", &runtimeConfig.TestObjectRotation, -360, 360, imgui.InputTextFlagsNone) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-		panelutils.SetupRow("Test FOV", func() {
-			if imgui.InputIntV("", &runtimeConfig.TestFOV, -360, 360, imgui.InputTextFlagsNone) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-
-		panelutils.SetupRow("Color", func() {
-			if imgui.ColorEdit3V("", &app.RuntimeConfig().TestAlbedo, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-		panelutils.SetupRow("Test Metallic", func() {
-			if imgui.SliderFloat("", &app.RuntimeConfig().Metallic, 0, 1) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-		panelutils.SetupRow("Test Roughness", func() {
-			if imgui.SliderFloat("", &app.RuntimeConfig().Roughness, 0, 1) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-		panelutils.SetupRow("Test AO", func() {
-			if imgui.SliderFloat("", &app.RuntimeConfig().TestAO, 0, 1) {
-				app.CreateMaterialTexture()
-			}
-		}, true)
-
 		imgui.EndTable()
 	}
 

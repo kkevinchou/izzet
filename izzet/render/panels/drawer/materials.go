@@ -4,30 +4,79 @@ import (
 	"fmt"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 )
 
-var materialPopupMenu bool
+const (
+	cellWidth   float32 = 100
+	cellHeight  float32 = 100
+	itemsPerRow int32   = 7
+	iconPadding float32 = 10
+)
 
-func materialssUI(app renderiface.App) {
-	for i, material := range app.AssetManager().GetMaterials() {
-		var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone //| imgui.TreeNodeFlagsLeaf
-		open := imgui.TreeNodeExStrV(fmt.Sprintf("%s##%d", material.Name, i), nodeFlags)
+func materialssUI(app renderiface.App, materialTextureMap map[string]uint32) {
+	mats := app.AssetManager().GetMaterials()
 
-		id := material.Handle.ID
-		if imgui.BeginPopupContextItemV(id, imgui.PopupFlagsMouseButtonRight) {
-			if imgui.Button("Edit") {
-				material := app.AssetManager().GetMaterial(material.Handle)
-				windows.ShowEditMaterialWindow(app, material)
-				imgui.CloseCurrentPopup()
-			} else {
-			}
-			imgui.EndPopup()
+	// 1) Begin a fixed-column table to handle layout for us
+	if imgui.BeginTableV("MaterialsTable", itemsPerRow,
+		imgui.TableFlagsSizingFixedSame, imgui.Vec2{X: 0, Y: 0}, 0) {
+
+		for i, mat := range mats {
+			imgui.TableNextColumn()
+			drawMaterialCell(app, mat, materialTextureMap[mat.Name], i)
 		}
 
-		if open {
-			imgui.TreePop()
-		}
+		imgui.EndTable()
 	}
+}
+
+func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textureID uint32, idx int) {
+	// push a stable ID so nothing collides
+	imgui.PushIDInt(int32(idx))
+	defer imgui.PopID()
+
+	if textureID == 0 {
+		textureID = app.AssetManager().GetTexture("document").ID
+	}
+
+	// draw the thumbnail
+	imgui.ImageV(
+		imgui.TextureID(textureID),
+		imgui.Vec2{X: cellWidth, Y: cellHeight},
+		imgui.Vec2{X: 0, Y: 1},
+		imgui.Vec2{X: 1, Y: 0},
+		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},
+		imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0},
+	)
+
+	// right-click menu
+	if imgui.BeginPopupContextItemV(material.Name, imgui.PopupFlagsMouseButtonRight) {
+		if imgui.Button("Edit") {
+			material := app.AssetManager().GetMaterial(material.Handle)
+			windows.ShowEditMaterialWindow(app, material)
+			imgui.CloseCurrentPopup()
+		}
+		imgui.EndPopup()
+	}
+
+	// tooltip on hover
+	if imgui.IsItemHovered() {
+		imgui.BeginTooltip()
+		imgui.Text(material.Name)
+		imgui.EndTooltip()
+	}
+
+	// label below the image
+	// we give the child an automatic height so it shrinks to fit text
+	label := fmt.Sprintf("##label_%s", material.Name)
+	if imgui.BeginChildStrV(label,
+		imgui.Vec2{X: cellWidth, Y: 0},
+		imgui.ChildFlagsNone,
+		imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse,
+	) {
+		imgui.Text(material.Name)
+	}
+	imgui.EndChild()
 }

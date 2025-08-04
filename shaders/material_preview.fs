@@ -63,8 +63,8 @@ void main() {
 
     // 2) Spherical UV (for textures)
     vec2 uv = vec2(
-        0.5 + atan(N.z, N.x)/(2.0*PI),
-        acos(N.y)/PI
+        -(0.25 + atan(N.z, N.x)/(2.0*PI)),
+        -acos(N.y)/PI
     );
 
     // 3) Material inputs

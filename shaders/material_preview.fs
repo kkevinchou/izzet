@@ -104,6 +104,10 @@ void main() {
     vec3 Lo = (diffuse + specular) * uLightColor * NdotL;
     vec3 color = ambient + Lo;
 
+    if (uUseAlbedoMap == true) {
+        color = albedo;
+    }
+
     // 10) Gamma correction
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));

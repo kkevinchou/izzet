@@ -74,6 +74,11 @@ func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textur
 	}
 
 	label := ellipsize(material.Name, cellWidth)
+
+	// center text
+	textSize := imgui.CalcTextSizeV(label, false, 0)
+	cur := imgui.CursorPos()
+	imgui.SetCursorPosX(cur.X + (cellWidth-textSize.X)*0.5)
 	imgui.TextUnformatted(label)
 }
 

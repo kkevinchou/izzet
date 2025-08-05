@@ -20,7 +20,7 @@ import (
 
 var materialIDGen int = 0
 var runtimeMeshIDGen int = 0
-var customMaterialPrefix = "custom/"
+var izzetMaterialPrefix = "izzet/"
 
 type DocumentAsset struct {
 	MatIDToHandle map[string]types.MaterialHandle
@@ -147,7 +147,7 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 }
 
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := types.MaterialHandle{ID: fmt.Sprintf("%s%d", customMaterialPrefix, materialIDGen)}
+	handle := types.MaterialHandle{ID: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
 	materialIDGen++
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
@@ -163,7 +163,7 @@ func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.
 	if _, ok := m.materialAssets[handle]; !ok {
 		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	}
-	if strings.HasPrefix(handle.ID, customMaterialPrefix) {
+	if strings.HasPrefix(handle.ID, izzetMaterialPrefix) {
 		// this is an ugly hack, pls fix
 		split := strings.Split(handle.ID, "/")
 		if len(split) == 2 {

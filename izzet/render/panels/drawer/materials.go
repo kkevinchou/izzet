@@ -47,6 +47,9 @@ func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textur
 		textureID = app.AssetManager().GetTexture("document").ID
 	}
 
+	// invert the Y axis since opengl vs texture coordinate systems differ
+	// https://learnopengl.com/Getting-started/Textures
+
 	// draw the thumbnail
 	imgui.ImageV(
 		imgui.TextureID(textureID),

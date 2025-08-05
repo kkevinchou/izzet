@@ -48,7 +48,6 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 
 	// invert the Y axis since opengl vs texture coordinate systems differ
 	// https://learnopengl.com/Getting-started/Textures
-	// imgui.ImageV(*documentTexture, imgui.Vec2{X: cellWidth, Y: cellHeight}, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 
 	// draw the thumbnail
 	imgui.ImageV(
@@ -89,5 +88,4 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 	cur := imgui.CursorPos()
 	imgui.SetCursorPosX(cur.X + (cellWidth-textSize.X)*0.5)
 	imgui.TextUnformatted(label)
-
 }

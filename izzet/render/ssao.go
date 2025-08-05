@@ -23,11 +23,11 @@ func (r *RenderSystem) drawSSAO(viewerContext context.ViewerContext, lightContex
 	shader.Use()
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, r.gPositionTexture)
+	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.GPositionTexture)
 	shader.SetUniformInt("gPosition", 0)
 
 	gl.ActiveTexture(gl.TEXTURE1)
-	gl.BindTexture(gl.TEXTURE_2D, r.gNormalTexture)
+	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.GNormalTexture)
 	shader.SetUniformInt("gNormal", 1)
 
 	gl.ActiveTexture(gl.TEXTURE2)

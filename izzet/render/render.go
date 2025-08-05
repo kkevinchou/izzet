@@ -24,6 +24,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/renderpass"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -54,8 +55,8 @@ const (
 	internalTextureColorFormatRGBA   int32  = gl.RGBA32F
 	internalTextureColorFormat16RGBA int32  = gl.RGBA16F
 
-	gPassInternalFormat int32  = gl.RGB32F
-	gPassFormat         uint32 = gl.RGB
+	// gPassInternalFormat int32  = gl.RGB32F
+	// gPassFormat         uint32 = gl.RGB
 
 	uiWidthRatio float32 = 0.2
 )
@@ -89,10 +90,10 @@ type RenderSystem struct {
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
 
-	geometryFBO      uint32
-	gPositionTexture uint32
-	gNormalTexture   uint32
-	gColorTexture    uint32
+	// geometryFBO      uint32
+	// gPositionTexture uint32
+	// gNormalTexture   uint32
+	// gColorTexture    uint32
 
 	ssaoBlurFBO     uint32
 	ssaoBlurTexture uint32
@@ -135,6 +136,9 @@ type RenderSystem struct {
 	materialTextureQueue []types.MaterialHandle
 
 	batchRenders []assets.Batch
+
+	renderPasses      []renderpass.RenderPass
+	renderPassContext *context.RenderPassContext
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -201,6 +205,13 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	cloudTexture1 := &r.app.RuntimeConfig().CloudTextures[1]
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
+
+	r.renderPassContext = &context.RenderPassContext{}
+	r.renderPasses = append(r.renderPasses, &renderpass.GBufferPass{})
+
+	for _, pass := range r.renderPasses {
+		pass.Init(app, width, height, r.shaderManager, r.renderPassContext)
+	}
 
 	return r
 }
@@ -286,17 +297,17 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 
 	// geometry FBO
 
-	geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat}, []uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT})
-	var geometryTextures []uint32
-	if init {
-		r.geometryFBO, geometryTextures = r.initFrameBuffer(geometryTextureFn)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
-		_, _, geometryTextures = geometryTextureFn()
-	}
-	r.gPositionTexture = geometryTextures[0]
-	r.gNormalTexture = geometryTextures[1]
-	r.gColorTexture = geometryTextures[2]
+	// geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat}, []uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT})
+	// var geometryTextures []uint32
+	// if init {
+	// 	r.geometryFBO, geometryTextures = r.initFrameBuffer(geometryTextureFn)
+	// } else {
+	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
+	// 	_, _, geometryTextures = geometryTextureFn()
+	// }
+	// r.gPositionTexture = geometryTextures[0]
+	// r.gNormalTexture = geometryTextures[1]
+	// r.gColorTexture = geometryTextures[2]
 
 	// composite FBO
 	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
@@ -355,6 +366,9 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
 	r.initorReinitTextures(width, height, false)
+	for _, pass := range r.renderPasses {
+		pass.Resize(width, height, r.renderPassContext)
+	}
 }
 
 func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {
@@ -502,10 +516,14 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// GBUFFER RENDER
 
-	start = time.Now()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
-	r.drawGPass(cameraViewerContext, lightContext, renderContext, renderableEntities)
-	mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
+	// start = time.Now()
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
+	// r.drawGPass(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	// mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
+
+	for _, pass := range r.renderPasses {
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, renderableEntities)
+	}
 
 	// SSAO RENDER
 
@@ -587,10 +605,10 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
-		r.app.RuntimeConfig().DebugTexture = r.gPositionTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.GPositionTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
-		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.GNormalTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture

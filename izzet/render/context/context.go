@@ -30,6 +30,14 @@ type RenderContext struct {
 	fovY        float64
 }
 
+type RenderPassContext struct {
+	// Gpass
+	GeometryFBO      uint32
+	GPositionTexture uint32
+	GNormalTexture   uint32
+	GColorTexture    uint32
+}
+
 func NewRenderContext(width, height int, fovX float64) RenderContext {
 	aspectRatio := float64(width) / float64(height)
 	return RenderContext{

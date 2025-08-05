@@ -16,14 +16,14 @@ const (
 )
 
 func materialssUI(app renderiface.App, materialTextureMap map[types.MaterialHandle]uint32) {
-	mats := app.AssetManager().GetMaterials()
-
 	style := imgui.CurrentStyle()
 	imgui.PushStyleVarVec2(
 		imgui.StyleVarCellPadding,
 		imgui.Vec2{X: style.CellPadding().X, Y: 5},
 	)
 	defer imgui.PopStyleVar()
+
+	mats := app.AssetManager().GetMaterials()
 
 	// 1) Begin a fixed-column table to handle layout for us
 	if imgui.BeginTableV("MaterialsTable", itemsPerRow,

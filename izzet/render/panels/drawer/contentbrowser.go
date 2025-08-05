@@ -2,7 +2,6 @@ package drawer
 
 import (
 	"C"
-	"fmt"
 
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
@@ -10,71 +9,85 @@ import (
 	"unsafe"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/izzet/assets"
 )
 
-func contentBrowser(app renderiface.App) bool {
-	var menuOpen bool
+// const (
+// 	width       float32 = 100
+// 	maxPerRow   int     = 7
+// 	cellWidth   float32 = 100
+// 	cellHeight  float32 = 100
+// 	itemsPerRow int32   = 7
+// 	iconPadding float32 = 10
+// )
 
-	var width float32 = 100
-	const maxPerRow = 5
+func contentBrowser(app renderiface.App) {
+	style := imgui.CurrentStyle()
+	imgui.PushStyleVarVec2(
+		imgui.StyleVarCellPadding,
+		imgui.Vec2{X: style.CellPadding().X, Y: 5},
+	)
+	defer imgui.PopStyleVar()
 
-	for i, document := range app.AssetManager().GetDocuments() {
-		doc := document.Document
-		size := imgui.Vec2{X: width, Y: 100}
-		// invert the Y axis since opengl vs texture coordinate systems differ
-		// https://learnopengl.com/Getting-started/Textures
-		imgui.BeginGroup()
+	if imgui.BeginTableV("DocumentsTable", itemsPerRow,
+		imgui.TableFlagsSizingFixedSame, imgui.Vec2{X: 0, Y: 0}, 0) {
 
-		imgui.Dummy(imgui.Vec2{X: 10, Y: 10})
-
-		imgui.PushIDStr(fmt.Sprintf("image %d", i))
-
-		if documentTexture == nil {
-			t := app.AssetManager().GetTexture("document")
-			texture := imgui.TextureID(t.ID)
-			documentTexture = &texture
+		for i, document := range app.AssetManager().GetDocuments() {
+			imgui.TableNextColumn()
+			drawDocumentCell(app, document, i)
 		}
+		imgui.EndTable()
+	}
+}
 
-		imgui.ImageV(*documentTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
-			menuOpen = true
-			if imgui.Button("Instantiate") {
-				app.CreateEntitiesFromDocumentAsset(document)
-				imgui.CloseCurrentPopup()
-			}
-			imgui.EndPopup()
-		}
-		imgui.PopID()
+func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, idx int) {
+	documentName := documentAsset.Document.Name
+	imgui.PushIDInt(int32(idx))
 
-		if imgui.IsItemHovered() {
-			imgui.BeginTooltip()
-			imgui.Text(doc.Name)
-			imgui.EndTooltip()
-		}
+	t := app.AssetManager().GetTexture("document")
 
-		if imgui.BeginDragDropSourceV(imgui.DragDropFlagsSourceAllowNullID) {
-			s := doc.Name
-			ptr := unsafe.Pointer(&s)
-			size := uint64(unsafe.Sizeof(doc.Name))
-			imgui.SetDragDropPayloadV("content_browser_item", uintptr(ptr), size, imgui.CondOnce)
-			imgui.EndDragDropSource()
-		}
+	// invert the Y axis since opengl vs texture coordinate systems differ
+	// https://learnopengl.com/Getting-started/Textures
+	// imgui.ImageV(*documentTexture, imgui.Vec2{X: cellWidth, Y: cellHeight}, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 
-		if imgui.BeginChildStrV(
-			fmt.Sprintf("##%s", doc.Name),
-			imgui.Vec2{X: width, Y: 0},
-			imgui.ChildFlagsNone,
-			imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse,
-		) {
-			imgui.Text(doc.Name)
-		}
-		imgui.EndChild()
+	// draw the thumbnail
+	imgui.ImageV(
+		imgui.TextureID(t.ID),
+		imgui.Vec2{X: cellWidth, Y: cellHeight},
+		imgui.Vec2{X: 0, Y: 1},
+		imgui.Vec2{X: 1, Y: 0},
+		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},
+		imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0},
+	)
 
-		imgui.EndGroup()
-		if (i+1)%(maxPerRow) != 0 {
-			imgui.SameLine()
+	if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
+		if imgui.Button("Instantiate") {
+			app.CreateEntitiesFromDocumentAsset(documentAsset)
+			imgui.CloseCurrentPopup()
 		}
+		imgui.EndPopup()
+	}
+	imgui.PopID()
+
+	if imgui.IsItemHovered() {
+		imgui.BeginTooltip()
+		imgui.Text(documentName)
+		imgui.EndTooltip()
 	}
 
-	return menuOpen
+	if imgui.BeginDragDropSourceV(imgui.DragDropFlagsSourceAllowNullID) {
+		s := documentName
+		ptr := unsafe.Pointer(&s)
+		size := uint64(unsafe.Sizeof(documentName))
+		imgui.SetDragDropPayloadV("content_browser_item", uintptr(ptr), size, imgui.CondOnce)
+		imgui.EndDragDropSource()
+	}
+
+	label := ellipsize(documentName, cellWidth)
+	// center text
+	textSize := imgui.CalcTextSizeV(label, false, 0)
+	cur := imgui.CursorPos()
+	imgui.SetCursorPosX(cur.X + (cellWidth-textSize.X)*0.5)
+	imgui.TextUnformatted(label)
+
 }

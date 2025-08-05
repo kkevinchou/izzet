@@ -148,6 +148,9 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
 	handle := types.MaterialHandle{ID: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
+	if mat, ok := m.materialAssets[handle]; ok {
+		panic(fmt.Sprintf("material with id %s already exists in asset manager. %v", handle, mat))
+	}
 	materialIDGen++
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle

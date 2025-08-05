@@ -67,11 +67,7 @@ type App interface {
 	SetupBatchedStaticRendering()
 	ResetApp()
 
-	CreateMaterialTexture(handle types.MaterialHandle)
-}
-
-type Renderer interface {
-	CreateMaterialTexture(handle types.MaterialHandle)
+	QueueCreateMaterialTexture(handle types.MaterialHandle)
 }
 
 type RenderContext interface {

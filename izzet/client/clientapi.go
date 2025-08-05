@@ -674,6 +674,6 @@ func (g *Client) NewProject(name string) {
 	g.SaveProjectAs(name)
 }
 
-func (g *Client) CreateMaterialTexture(handle types.MaterialHandle) {
-	g.renderSystem.CreateMaterialTexture(handle)
+func (g *Client) QueueCreateMaterialTexture(handle types.MaterialHandle) {
+	g.renderSystem.QueueCreateMaterialTexture(handle)
 }

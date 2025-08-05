@@ -135,6 +135,9 @@ type RenderSystem struct {
 
 	materialTextureMap map[types.MaterialHandle]uint32
 
+	// list of materials whose textures need to be generated
+	materialTextureQueue []types.MaterialHandle
+
 	batchRenders []assets.Batch
 }
 
@@ -255,9 +258,18 @@ func (r *RenderSystem) CreateMaterialTextures() {
 		if _, ok := r.materialTextureMap[material.Handle]; ok {
 			continue
 		}
-
 		r.CreateMaterialTexture(material.Handle)
 	}
+
+	// queued texture creations (e.g. from a material being updated)
+	for _, materialHandle := range r.materialTextureQueue {
+		r.CreateMaterialTexture(materialHandle)
+	}
+	r.materialTextureQueue = []types.MaterialHandle{}
+}
+
+func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {
+	r.materialTextureQueue = append(r.materialTextureQueue, handle)
 }
 
 // this might be the most garbage code i've ever written

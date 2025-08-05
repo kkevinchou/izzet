@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
@@ -81,7 +82,7 @@ type RenderSystem struct {
 	yellowCircleFB      uint32
 	yellowCircleTexture uint32
 
-	cameraViewerContext ViewerContext
+	cameraViewerContext context.ViewerContext
 
 	mainRenderFBO          uint32
 	mainColorTexture       uint32
@@ -127,11 +128,6 @@ type RenderSystem struct {
 	gameWindowHovered bool
 
 	hoveredEntityID *int
-
-	// volumetricVAO           uint32
-	// volumetricWorleyTexture uint32
-	// volumetricFBO           uint32
-	// volumetricRenderTexture uint32
 
 	materialTextureMap map[types.MaterialHandle]uint32
 
@@ -406,7 +402,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	initOpenGLRenderSettings()
 	width, height := r.GameWindowSize()
-	renderContext := NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
+	renderContext := context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
 
@@ -427,7 +423,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	viewerViewMatrix := rotation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 
-	cameraViewerContext := ViewerContext{
+	cameraViewerContext := context.ViewerContext{
 		Position: position,
 		Rotation: rotation,
 
@@ -471,14 +467,14 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
 
-	lightViewerContext := ViewerContext{
+	lightViewerContext := context.ViewerContext{
 		Position:          lightPosition,
 		Rotation:          lightRotation,
 		InverseViewMatrix: lightViewMatrix,
 		ProjectionMatrix:  lightProjectionMatrix,
 	}
 
-	lightContext := LightContext{
+	lightContext := context.LightContext{
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
 		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
@@ -612,7 +608,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
-func (r *RenderSystem) blur(renderContext RenderContext) {
+func (r *RenderSystem) blur(renderContext context.RenderContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
@@ -629,7 +625,7 @@ func (r *RenderSystem) blur(renderContext RenderContext) {
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
@@ -644,7 +640,7 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.ShadowCasting)
 }
 
-func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext) []*entities.Entity {
+func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
@@ -659,7 +655,7 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.Renderable)
 }
 
-func (r *RenderSystem) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
+func (r *RenderSystem) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
 	var renderEntities []*entities.Entity
 	if r.app.RuntimeConfig().EnableSpatialPartition {
 		spatialPartition := r.app.World().SpatialPartition()
@@ -680,7 +676,7 @@ func (r *RenderSystem) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rot
 
 var spanLines [][2]mgl64.Vec3
 
-func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext) {
+func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext) {
 	shaderManager := r.shaderManager
 
 	if r.app.RuntimeConfig().ShowSelectionBoundingBox {
@@ -740,7 +736,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 		setupLightingUniforms(shader, lightContext.Lights)
-		shader.SetUniformInt("width", int32(renderContext.width))
+		shader.SetUniformInt("width", int32(renderContext.Width()))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
@@ -785,15 +781,15 @@ func (r *RenderSystem) drawAnnotations(viewerContext ViewerContext, lightContext
 	}
 }
 
-func (r *RenderSystem) drawToCameraDepthMap(viewerContext ViewerContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(renderContext.width), int32(renderContext.height))
+func (r *RenderSystem) drawToCameraDepthMap(viewerContext context.ViewerContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.Renderable)
 }
 
-func (r *RenderSystem) drawToShadowDepthMap(viewerContext ViewerContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
 	r.shadowMap.Prepare()
 	defer gl.CullFace(gl.BACK)
 
@@ -807,7 +803,7 @@ func (r *RenderSystem) drawToShadowDepthMap(viewerContext ViewerContext, rendera
 	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.EmptyFilter)
 }
 
-func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, renderableEntities []*entities.Entity, filter entities.FilterFunction) {
+func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerContext, renderableEntities []*entities.Entity, filter entities.FilterFunction) {
 	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
 
@@ -856,7 +852,7 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext ViewerContext, r
 	}
 }
 
-func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToCubeDepthMap(lightContext context.LightContext, renderableEntities []*entities.Entity) {
 	// we only support cube depth maps for one point light atm
 	var pointLight *entities.Entity
 	if len(lightContext.PointLights) == 0 {
@@ -922,7 +918,7 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext LightContext, renderableE
 	}
 }
 
-func (r *RenderSystem) drawGPass(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawGPass(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -931,7 +927,7 @@ func (r *RenderSystem) drawGPass(viewerContext ViewerContext, lightContext Light
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
-func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToMainColorBuffer(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -1143,7 +1139,7 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext ViewerContext, lightC
 	}
 }
 
-func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
 	shader.Use()
 
 	if r.app.RuntimeConfig().FogEnabled {
@@ -1159,8 +1155,8 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
-	shader.SetUniformInt("width", int32(renderContext.width))
-	shader.SetUniformInt("height", int32(renderContext.height))
+	shader.SetUniformInt("width", int32(renderContext.Width()))
+	shader.SetUniformInt("height", int32(renderContext.Height()))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -1243,8 +1239,8 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		shader.SetUniformInt("fog", fog)
 		shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
 
-		shader.SetUniformInt("width", int32(renderContext.width))
-		shader.SetUniformInt("height", int32(renderContext.height))
+		shader.SetUniformInt("width", int32(renderContext.Width()))
+		shader.SetUniformInt("height", int32(renderContext.Height()))
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
@@ -1288,7 +1284,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	}
 }
 
-func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTexture imgui.TextureID) {
+func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
 	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	r.app.Platform().NewFrame()
@@ -1413,7 +1409,7 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
 }
 
-func (r *RenderSystem) renderGizmos(viewerContext ViewerContext, renderContext RenderContext) {
+func (r *RenderSystem) renderGizmos(viewerContext context.ViewerContext, renderContext context.RenderContext) {
 	if r.app.SelectedEntity() == nil {
 		return
 	}
@@ -1428,10 +1424,6 @@ func (r *RenderSystem) renderGizmos(viewerContext ViewerContext, renderContext R
 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
 		r.drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
 	}
-}
-
-func triangleVAOKey(triangle entities.Triangle) string {
-	return fmt.Sprintf("%v_%v_%v", triangle.V1, triangle.V2, triangle.V3)
 }
 
 func (r *RenderSystem) GameWindowHovered() bool {

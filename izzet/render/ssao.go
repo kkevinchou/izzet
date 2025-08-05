@@ -8,12 +8,13 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/render/context"
 )
 
 const maxHemisphereSamples int = 64
 const maxSSAONoise int = 16
 
-func (r *RenderSystem) drawSSAO(viewerContext ViewerContext, lightContext LightContext, renderContext RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawSSAO(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

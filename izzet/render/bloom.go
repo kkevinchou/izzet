@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/render/context"
 )
 
 func createSamplingDimensions(startWidth int, startHeight int, count int) ([]int, []int) {
@@ -187,7 +188,7 @@ func (r *RenderSystem) blend(width, height int32, texture0, texture1, target uin
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *RenderSystem) composite(renderContext RenderContext, texture0, texture1 uint32) uint32 {
+func (r *RenderSystem) composite(renderContext context.RenderContext, texture0, texture1 uint32) uint32 {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 
 	shader := r.shaderManager.GetShaderProgram("composite")

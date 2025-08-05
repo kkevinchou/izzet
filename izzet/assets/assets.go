@@ -3,6 +3,8 @@ package assets
 import (
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -18,6 +20,7 @@ import (
 
 var materialIDGen int = 0
 var runtimeMeshIDGen int = 0
+var customMaterialPrefix = "custom/"
 
 type DocumentAsset struct {
 	MatIDToHandle map[string]types.MaterialHandle
@@ -144,7 +147,7 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 }
 
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) types.MaterialHandle {
-	handle := types.MaterialHandle{ID: fmt.Sprintf("custom/%d", materialIDGen)}
+	handle := types.MaterialHandle{ID: fmt.Sprintf("%s%d", customMaterialPrefix, materialIDGen)}
 	materialIDGen++
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
@@ -159,6 +162,17 @@ func (m *AssetManager) createMaterial(name string, id string, material modelspec
 func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle types.MaterialHandle) {
 	if _, ok := m.materialAssets[handle]; !ok {
 		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+	}
+	if strings.HasPrefix(handle.ID, customMaterialPrefix) {
+		// this is an ugly hack, pls fix
+		split := strings.Split(handle.ID, "/")
+		if len(split) == 2 {
+			if id, err := strconv.Atoi(split[1]); err == nil {
+				if materialIDGen <= id {
+					materialIDGen = id + 1
+				}
+			}
+		}
 	}
 }
 

@@ -673,3 +673,7 @@ func (g *Client) NewProject(name string) {
 
 	g.SaveProjectAs(name)
 }
+
+func (g *Client) CreateMaterialTexture(handle types.MaterialHandle) {
+	g.renderSystem.CreateMaterialTexture(handle)
+}

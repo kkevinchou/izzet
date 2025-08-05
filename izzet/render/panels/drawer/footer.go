@@ -4,6 +4,7 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 const (
@@ -21,7 +22,7 @@ const ShelfMaterials ShelfType = "MATERIALS"
 var last = ShelfContent
 var expanded bool
 
-func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, materialTextureMap map[string]uint32) {
+func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, materialTextureMap map[types.MaterialHandle]uint32) {
 	_, windowHeight := app.WindowSize()
 
 	imgui.SetNextWindowBgAlpha(1)

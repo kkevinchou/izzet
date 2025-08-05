@@ -133,7 +133,7 @@ type RenderSystem struct {
 	// volumetricFBO           uint32
 	// volumetricRenderTexture uint32
 
-	materialTextureMap map[string]uint32
+	materialTextureMap map[types.MaterialHandle]uint32
 
 	batchRenders []assets.Batch
 }
@@ -168,7 +168,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
-	r.materialTextureMap = map[string]uint32{}
+	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
 	r.initorReinitTextures(width, height, true)
 	r.renderSSAOTextures()
@@ -206,52 +206,57 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
+func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
+	material := r.app.AssetManager().GetMaterial(handle)
+	materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
+	r.materialTextureMap[material.Handle] = materialTexture
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, materialFBO)
+	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	shader := r.shaderManager.GetShaderProgram("material_preview")
+	shader.Use()
+
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
+	pbr := material.Material.PBRMaterial.PBRMetallicRoughness
+
+	if pbr.BaseColorTextureName != "" {
+		shader.SetUniformInt("uUseAlbedoMap", 1)
+		shader.SetUniformInt("uAlbedoMap", int32(pbr.BaseColorTextureCoordsIndex))
+
+		gl.ActiveTexture(gl.TEXTURE0)
+		texture := r.app.AssetManager().GetTexture(pbr.BaseColorTextureName)
+		gl.BindTexture(gl.TEXTURE_2D, texture.ID)
+	} else {
+		shader.SetUniformInt("uUseAlbedoMap", 0)
+	}
+	shader.SetUniformInt("uUseMetallicMap", 0)
+	shader.SetUniformInt("uUseRoughnessMap", 0)
+	shader.SetUniformInt("uUseAOMap", 0)
+
+	shader.SetUniformVec3("uAlbedo", pbr.BaseColorFactor.Vec3())
+	shader.SetUniformFloat("uMetallic", pbr.MetalicFactor)
+	shader.SetUniformFloat("uRoughness", pbr.RoughnessFactor)
+	shader.SetUniformFloat("uAO", 1)
+
+	shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
+	shader.SetUniformVec3("uLightColor", mgl32.Vec3{5, 5, 5})
+
+	r.iztDrawArrays(0, 6)
+}
+
 func (r *RenderSystem) CreateMaterialTextures() {
 	for _, material := range r.app.AssetManager().GetMaterials() {
-		if _, ok := r.materialTextureMap[material.Name]; ok {
+		if _, ok := r.materialTextureMap[material.Handle]; ok {
 			continue
 		}
 
-		materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
-		r.materialTextureMap[material.Name] = materialTexture
-
-		gl.BindFramebuffer(gl.FRAMEBUFFER, materialFBO)
-		gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
-		gl.ClearColor(0, 0, 0, 0)
-		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-		shader := r.shaderManager.GetShaderProgram("material_preview")
-		shader.Use()
-
-		var vao uint32
-		gl.GenVertexArrays(1, &vao)
-		gl.BindVertexArray(vao)
-
-		pbr := material.Material.PBRMaterial.PBRMetallicRoughness
-
-		if pbr.BaseColorTextureName != "" {
-			shader.SetUniformInt("uUseAlbedoMap", 1)
-			shader.SetUniformInt("uAlbedoMap", int32(pbr.BaseColorTextureCoordsIndex))
-
-			gl.ActiveTexture(gl.TEXTURE0)
-			texture := r.app.AssetManager().GetTexture(pbr.BaseColorTextureName)
-			gl.BindTexture(gl.TEXTURE_2D, texture.ID)
-		} else {
-			shader.SetUniformInt("uUseAlbedoMap", 0)
-		}
-		shader.SetUniformInt("uUseMetallicMap", 0)
-		shader.SetUniformInt("uUseRoughnessMap", 0)
-		shader.SetUniformInt("uUseAOMap", 0)
-
-		shader.SetUniformVec3("uAlbedo", pbr.BaseColorFactor.Vec3())
-		shader.SetUniformFloat("uMetallic", pbr.MetalicFactor)
-		shader.SetUniformFloat("uRoughness", pbr.RoughnessFactor)
-		shader.SetUniformFloat("uAO", 1)
-
-		shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
-		shader.SetUniformVec3("uLightColor", mgl32.Vec3{5, 5, 5})
-
-		r.iztDrawArrays(0, 6)
+		r.CreateMaterialTexture(material.Handle)
 	}
 }
 

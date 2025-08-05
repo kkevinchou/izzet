@@ -5,6 +5,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 	iconPadding float32 = 10
 )
 
-func materialssUI(app renderiface.App, materialTextureMap map[string]uint32) {
+func materialssUI(app renderiface.App, materialTextureMap map[types.MaterialHandle]uint32) {
 	mats := app.AssetManager().GetMaterials()
 
 	style := imgui.CurrentStyle()
@@ -30,7 +31,7 @@ func materialssUI(app renderiface.App, materialTextureMap map[string]uint32) {
 
 		for i, mat := range mats {
 			imgui.TableNextColumn()
-			drawMaterialCell(app, mat, materialTextureMap[mat.Name], i)
+			drawMaterialCell(app, mat, materialTextureMap[mat.Handle], i)
 		}
 
 		imgui.EndTable()

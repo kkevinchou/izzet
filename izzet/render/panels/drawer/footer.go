@@ -4,6 +4,7 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 const (
@@ -21,7 +22,7 @@ const ShelfMaterials ShelfType = "MATERIALS"
 var last = ShelfContent
 var expanded bool
 
-func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext) {
+func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, materialTextureMap map[types.MaterialHandle]uint32) {
 	_, windowHeight := app.WindowSize()
 
 	imgui.SetNextWindowBgAlpha(1)
@@ -61,15 +62,19 @@ func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext) {
 	if expanded {
 		_, height := app.WindowSize()
 		var shelfFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
-		shelfFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
+		shelfFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsMenuBar
 
 		imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: float32(height) - settings.FooterSize - settings.ShelfHeight - 2})
 		imgui.SetNextWindowSize(imgui.Vec2{X: settings.ShelfWidth, Y: settings.ShelfHeight})
 		imgui.BeginV("Shelf", &open, shelfFlags)
+		if imgui.BeginMenuBar() {
+			imgui.EndMenuBar()
+		}
+
 		if last == ShelfContent {
 			contentBrowser(app)
 		} else if last == ShelfMaterials {
-			materialssUI(app)
+			materialssUI(app, materialTextureMap)
 		}
 		imgui.End()
 	}

@@ -1,6 +1,7 @@
 package runtimeconfig
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -24,11 +25,11 @@ type RuntimeConfig struct {
 	BloomUpsamplingScale            float32
 	Color                           [3]float32
 
-	ShowImguiDemo       bool
-	ShowTextureViewer   bool
-	ShowAnimationEditor bool
-	ShowMaterialEditor  bool
-	DebugTexture        uint32 // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	ShowImguiDemo      bool
+	ShowTextureViewer  bool
+	ShowMaterialEditor bool
+	DebugTexture       uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	DebugAspectRatio   float64 // the aspect ratio of the debug texture
 
 	EnableSpatialPartition bool
 	RenderSpatialPartition bool
@@ -128,6 +129,16 @@ type RuntimeConfig struct {
 	SelectedKeyFrame  int
 	LoopAnimation     bool
 	ShowHUD           bool
+
+	TestPosition       mgl32.Vec3
+	TestAngle          int32
+	TestObjectRotation int32
+	TestFOV            int32
+
+	TestAlbedo    [3]float32
+	TestMetallic  float32
+	TestRoughness float32
+	TestAO        float32
 }
 
 type CloudTextureChannel struct {
@@ -289,5 +300,13 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		EnableSSAO:                 true,
 		SSAORadius:                 5,
 		SSAOBias:                   0.025,
+		TestPosition:               mgl32.Vec3{0, 4, 6},
+		TestAngle:                  -35,
+		TestObjectRotation:         35,
+		TestFOV:                    70,
+		TestAlbedo:                 [3]float32{0.5, 0.5, 0.5},
+		TestMetallic:               0,
+		TestRoughness:              1,
+		TestAO:                     1,
 	}
 }

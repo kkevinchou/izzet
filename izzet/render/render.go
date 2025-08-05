@@ -42,6 +42,9 @@ const (
 	mipsCount             int = 6
 	MaxBloomTextureWidth  int = 1920
 	MaxBloomTextureHeight int = 1080
+
+	materialTextureWidth  int32 = 512
+	materialTextureHeight int32 = 512
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
 	renderFormatRGB                  uint32 = gl.RGB
@@ -130,6 +133,11 @@ type RenderSystem struct {
 	// volumetricFBO           uint32
 	// volumetricRenderTexture uint32
 
+	materialTextureMap map[types.MaterialHandle]uint32
+
+	// list of materials whose textures need to be generated
+	materialTextureQueue []types.MaterialHandle
+
 	batchRenders []assets.Batch
 }
 
@@ -163,6 +171,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
 	r.triangleVAOs = map[string]uint32{}
+	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
 	r.initorReinitTextures(width, height, true)
 	r.renderSSAOTextures()
@@ -198,6 +207,69 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	return r
+}
+
+func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
+	material := r.app.AssetManager().GetMaterial(handle)
+	materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
+	r.materialTextureMap[material.Handle] = materialTexture
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, materialFBO)
+	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	shader := r.shaderManager.GetShaderProgram("material_preview")
+	shader.Use()
+
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
+	pbr := material.Material.PBRMaterial.PBRMetallicRoughness
+
+	if pbr.BaseColorTextureName != "" {
+		shader.SetUniformInt("uUseAlbedoMap", 1)
+		shader.SetUniformInt("uAlbedoMap", int32(pbr.BaseColorTextureCoordsIndex))
+
+		gl.ActiveTexture(gl.TEXTURE0)
+		texture := r.app.AssetManager().GetTexture(pbr.BaseColorTextureName)
+		gl.BindTexture(gl.TEXTURE_2D, texture.ID)
+	} else {
+		shader.SetUniformInt("uUseAlbedoMap", 0)
+	}
+	shader.SetUniformInt("uUseMetallicMap", 0)
+	shader.SetUniformInt("uUseRoughnessMap", 0)
+	shader.SetUniformInt("uUseAOMap", 0)
+
+	shader.SetUniformVec3("uAlbedo", pbr.BaseColorFactor.Vec3())
+	shader.SetUniformFloat("uMetallic", pbr.MetalicFactor)
+	shader.SetUniformFloat("uRoughness", pbr.RoughnessFactor)
+	shader.SetUniformFloat("uAO", 1)
+
+	shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
+	shader.SetUniformVec3("uLightColor", mgl32.Vec3{5, 5, 5})
+
+	r.iztDrawArrays(0, 6)
+}
+
+func (r *RenderSystem) CreateMaterialTextures() {
+	for _, material := range r.app.AssetManager().GetMaterials() {
+		if _, ok := r.materialTextureMap[material.Handle]; ok {
+			continue
+		}
+		r.CreateMaterialTexture(material.Handle)
+	}
+
+	// queued texture creations (e.g. from a material being updated)
+	for _, materialHandle := range r.materialTextureQueue {
+		r.CreateMaterialTexture(materialHandle)
+	}
+	r.materialTextureQueue = []types.MaterialHandle{}
+}
+
+func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {
+	r.materialTextureQueue = append(r.materialTextureQueue, handle)
 }
 
 // this might be the most garbage code i've ever written
@@ -312,6 +384,7 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *RenderSystem) Render(delta time.Duration) {
+
 	mr := r.app.MetricsRegistry()
 
 	start := time.Now()
@@ -423,6 +496,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
+	r.CreateMaterialTextures()
+
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
@@ -499,22 +574,31 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
 		r.app.RuntimeConfig().DebugTexture = r.gPositionTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
 		r.app.RuntimeConfig().DebugTexture = r.gNormalTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
 		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
 	}
 
 	// render to back buffer
@@ -1237,34 +1321,6 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 				r.app.SelectEntity(entity)
 			}
 			imgui.EndDragDropTarget()
-			// if payload := imgui.AcceptDragDropPayloadV("content_browser_item", imgui.DragDropFlagsSourceAllowNullID); payload != nil {
-			// 	fmt.Println(payload)
-			// 	// data := payload.Data()
-			// 	// ptr := (*string)(data)
-
-			// 	// itemName := *ptr
-			// 	// document := r.app.AssetManager().GetDocument(itemName)
-			// 	// handle := assets.NewGlobalHandle(itemName)
-			// 	// if len(document.Scenes) != 1 {
-			// 	// 	panic("single entity asset loading only supports a singular scene")
-			// 	// }
-
-			// 	// scene := document.Scenes[0]
-			// 	// node := scene.Nodes[0]
-
-			// 	// entity := entities.InstantiateEntity(document.Name)
-			// 	// entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Ident4(), Visible: true, ShadowCasting: true}
-			// 	// var vertices []modelspec.Vertex
-			// 	// entities.VerticesFromNode(node, document, &vertices)
-			// 	// entity.InternalBoundingBox = collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-			// 	// entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-			// 	// entities.SetLocalRotation(entity, utils.QuatF32ToF64(node.Rotation))
-			// 	// entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
-
-			// 	// r.world.AddEntity(entity)
-			// 	// imgui.CloseCurrentPopup()
-			// }
-			// imgui.EndDragDropTarget()
 		}
 
 		if imgui.IsWindowHovered() {
@@ -1276,16 +1332,12 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 		imgui.SameLine()
 
 		if r.app.RuntimeConfig().UIEnabled {
-			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{5, 5})
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-			// imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{})
-			// imgui.PushStyleVarVec2(imgui.StyleVarItemInnerSpacing, imgui.Vec2{})
 			imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
 			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-			// imgui.PushStyleVarVec2(imgui.StyleVarFramePadding, imgui.Vec2{})
 			imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 			imgui.PushStyleColorVec4(imgui.ColHeader, HeaderColor)
 			imgui.PushStyleColorVec4(imgui.ColHeaderActive, HeaderColor)
@@ -1301,9 +1353,6 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			imgui.PushStyleColorVec4(imgui.ColButton, InActiveColorControl)
 			imgui.PushStyleColorVec4(imgui.ColButtonActive, ActiveColorControl)
 			imgui.PushStyleColorVec4(imgui.ColButtonHovered, HoverColorControl)
-			// imgui.PushStyleColorVec4(imgui.ColTabActive, ActiveColorBg)
-			// imgui.PushStyleColorVec4(imgui.ColTabUnfocused, InActiveColorBg)
-			// imgui.PushStyleColorVec4(imgui.ColTabUnfocusedActive, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
 			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
 
@@ -1315,11 +1364,11 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 			drawer.BuildFooter(
 				r.app,
 				renderContext,
+				r.materialTextureMap,
 			)
 
 			imgui.PopStyleColorV(17)
-			// imgui.PopStyleColorV(20)
-			imgui.PopStyleVarV(7)
+			imgui.PopStyleVarV(6)
 
 			if runtimeConfig.ShowImguiDemo {
 				imgui.ShowDemoWindow()
@@ -1341,7 +1390,11 @@ func (r *RenderSystem) renderImgui(renderContext RenderContext, gameWindowTextur
 					imageWidth := regionSize.X
 
 					texture := imgui.TextureID(runtimeConfig.DebugTexture)
-					size := imgui.Vec2{X: imageWidth, Y: imageWidth / float32(renderContext.AspectRatio())}
+					aspectRatio := float32(renderContext.AspectRatio())
+					if runtimeConfig.DebugAspectRatio != 0 {
+						aspectRatio = float32(runtimeConfig.DebugAspectRatio)
+					}
+					size := imgui.Vec2{X: imageWidth, Y: imageWidth / aspectRatio}
 					if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 						size.Y = imageWidth
 					}

@@ -54,7 +54,7 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.
 	return document
 }
 
-func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMaterials bool) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
@@ -77,12 +77,10 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig, importMateria
 			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
 		}
 
-		if importMaterials {
-			for _, material := range document.Materials {
-				name := fmt.Sprintf("%s/%s", document.Name, material.ID)
-				handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
-				a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
-			}
+		for _, material := range document.Materials {
+			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
+			handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
+			a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
 		}
 	}
 
@@ -115,19 +113,15 @@ func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification)
 
 func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
 	handle := NewSingleEntityMeshHandle(document.Name)
-	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
-		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
 func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
-	m.clearNamespace(document.Name)
 	for _, mesh := range document.Meshes {
 		handle := NewMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
-		m.NamespaceToMeshHandles[document.Name] = append(m.NamespaceToMeshHandles[document.Name], handle)
 	}
 }
 
@@ -148,6 +142,9 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 			p.VAO = vaos[0][i]
 			p.GeometryVAO = geometryVAOs[0][i]
 			if len(matIDToHandle) > 0 {
+				if _, ok := matIDToHandle[primitive.MaterialIndex]; !ok {
+					panic("did not find material index in matIDToHandle map")
+				}
 				p.MaterialHandle = matIDToHandle[primitive.MaterialIndex]
 			}
 		}
@@ -155,12 +152,4 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle,
 		m.Primitives[handle] = append(m.Primitives[handle], p)
 	}
 	return handle
-}
-
-func (m *AssetManager) clearNamespace(namespace string) {
-	for _, handle := range m.NamespaceToMeshHandles[namespace] {
-		delete(m.Primitives, handle)
-	}
-
-	delete(m.NamespaceToMeshHandles, namespace)
 }

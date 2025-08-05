@@ -20,9 +20,10 @@ const (
 	ComboOptionGBufferPosition DebugComboOption = "GBUFFER - POSITION"
 	ComboOptionGBufferNormal   DebugComboOption = "GBUFFER - NORMAL"
 	ComboOptionSSAOBlur        DebugComboOption = "SSAO BLUR"
+	ComboOptionMaterial        DebugComboOption = "MATERIAL"
 )
 
-var SelectedDebugComboOption DebugComboOption = ComboOptionSSAOBlur
+var SelectedDebugComboOption DebugComboOption = ComboOptionMaterial
 
 var (
 	DebugComboOptions []DebugComboOption = []DebugComboOption{
@@ -37,6 +38,7 @@ var (
 		ComboOptionGBufferPosition,
 		ComboOptionGBufferNormal,
 		ComboOptionSSAOBlur,
+		ComboOptionMaterial,
 	}
 )
 
@@ -66,10 +68,6 @@ func view(app renderiface.App, renderContext RenderContext) {
 
 		if imgui.MenuItemBoolV("Show Texture Viewer", "", runtimeConfig.ShowTextureViewer, true) {
 			runtimeConfig.ShowTextureViewer = !runtimeConfig.ShowTextureViewer
-		}
-
-		if imgui.MenuItemBoolV("Show Animation Editor", "", runtimeConfig.ShowAnimationEditor, true) {
-			runtimeConfig.ShowAnimationEditor = !runtimeConfig.ShowAnimationEditor
 		}
 
 		imgui.EndMenu()

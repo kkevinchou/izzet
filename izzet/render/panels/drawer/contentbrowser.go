@@ -71,7 +71,7 @@ func contentBrowser(app renderiface.App) bool {
 		imgui.EndChild()
 
 		imgui.EndGroup()
-		if i%(maxPerRow-1) != 0 || i == 0 {
+		if (i+1)%(maxPerRow) != 0 {
 			imgui.SameLine()
 		}
 	}

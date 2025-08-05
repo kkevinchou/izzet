@@ -405,7 +405,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 
 func (g *Client) ImportAsset(config assets.AssetConfig) {
 	newConfig := g.CopyDocumentToProjectFolder(config)
-	g.assetManager.LoadAndRegisterDocument(newConfig, true)
+	g.assetManager.LoadAndRegisterDocument(newConfig)
 }
 
 func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {
@@ -672,4 +672,8 @@ func (g *Client) NewProject(name string) {
 	g.World().AddEntity(directionalLight)
 
 	g.SaveProjectAs(name)
+}
+
+func (g *Client) QueueCreateMaterialTexture(handle types.MaterialHandle) {
+	g.renderSystem.QueueCreateMaterialTexture(handle)
 }

@@ -55,9 +55,6 @@ const (
 	internalTextureColorFormatRGBA   int32  = gl.RGBA32F
 	internalTextureColorFormat16RGBA int32  = gl.RGBA16F
 
-	// gPassInternalFormat int32  = gl.RGB32F
-	// gPassFormat         uint32 = gl.RGB
-
 	uiWidthRatio float32 = 0.2
 )
 
@@ -295,20 +292,6 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.mainColorTexture = mainRenderTextures[0]
 	r.colorPickingTexture = mainRenderTextures[1]
 
-	// geometry FBO
-
-	// geometryTextureFn := textureFn(width, height, []int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat}, []uint32{gPassFormat, gPassFormat, gPassFormat}, []uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT})
-	// var geometryTextures []uint32
-	// if init {
-	// 	r.geometryFBO, geometryTextures = r.initFrameBuffer(geometryTextureFn)
-	// } else {
-	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
-	// 	_, _, geometryTextures = geometryTextureFn()
-	// }
-	// r.gPositionTexture = geometryTextures[0]
-	// r.gNormalTexture = geometryTextures[1]
-	// r.gColorTexture = geometryTextures[2]
-
 	// composite FBO
 	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
 	var compositeTextures []uint32
@@ -506,6 +489,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
+	r.renderPassContext.RenderableEntities = renderableEntities
+	r.renderPassContext.ShadowCastingEntities = shadowEntities
+
 	r.CreateMaterialTextures()
 
 	start = time.Now()
@@ -516,13 +502,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// GBUFFER RENDER
 
-	// start = time.Now()
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.geometryFBO)
-	// r.drawGPass(cameraViewerContext, lightContext, renderContext, renderableEntities)
-	// mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
-
 	for _, pass := range r.renderPasses {
-		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, renderableEntities)
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
 	}
 
 	// SSAO RENDER
@@ -934,14 +915,6 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext context.LightContext, ren
 		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
-}
-
-func (r *RenderSystem) drawGPass(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	shader := r.shaderManager.GetShaderProgram("gpass")
-	r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer

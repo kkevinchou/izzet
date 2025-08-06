@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/utils"
@@ -58,7 +57,9 @@ func (p *GBufferPass) Resize(width, height int, ctx *context.RenderPassContext) 
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
 }
 
-func (p *GBufferPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, ents []*entities.Entity) {
+// TODO - in general could make some better help methods to set uniforms
+// TODO - do the entity query ourselves? take in a world?
+func (p *GBufferPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext) {
 	mr := p.app.MetricsRegistry()
 	start := time.Now()
 
@@ -72,11 +73,12 @@ func (p *GBufferPass) Render(ctx context.RenderContext, rctx *context.RenderPass
 	p.shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	p.shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for _, entity := range ents {
+	for _, entity := range rctx.RenderableEntities {
 		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
 			continue
 		}
 
+		// TODO - helper method to set animation uniforms
 		var animationPlayer *animation.AnimationPlayer
 		if entity.Animation != nil {
 			animationPlayer = entity.Animation.AnimationPlayer
@@ -100,9 +102,9 @@ func (p *GBufferPass) Render(ctx context.RenderContext, rctx *context.RenderPass
 
 		primitives := p.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
 		for _, prim := range primitives {
-			modelMatrix := entities.WorldTransform(entity)
-			var modelMat mgl32.Mat4
+			var modelMatrix mgl64.Mat4
 
+			// TODO - package this into the render blend component?
 			// apply smooth blending between mispredicted position and actual real position
 			if entity.RenderBlend != nil && entity.RenderBlend.Active {
 				deltaMs := time.Since(entity.RenderBlend.StartTime).Milliseconds()
@@ -119,11 +121,13 @@ func (p *GBufferPass) Render(ctx context.RenderContext, rctx *context.RenderPass
 				if deltaMs >= int64(settings.RenderBlendDurationMilliseconds) {
 					entity.RenderBlend.Active = false
 				}
+			} else {
+				modelMatrix = entities.WorldTransform(entity)
 			}
 
-			modelMat = utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+			modelMatrix = modelMatrix.Mul4(entity.MeshComponent.Transform)
 
-			p.shader.SetUniformMat4("model", modelMat)
+			p.shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 			gl.BindVertexArray(prim.VAO)
 			iztDrawElements(p.app, int32(len(prim.Primitive.VertexIndices)))
 		}

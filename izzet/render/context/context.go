@@ -31,6 +31,10 @@ type RenderContext struct {
 }
 
 type RenderPassContext struct {
+	// entities
+	ShadowCastingEntities []*entities.Entity
+	RenderableEntities    []*entities.Entity
+
 	// Gpass
 	GeometryFBO      uint32
 	GPositionTexture uint32

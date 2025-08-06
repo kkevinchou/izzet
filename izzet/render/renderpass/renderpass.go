@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -38,7 +37,7 @@ type RenderPass interface {
 
 	// Render executes the pass. It may read from
 	// previous-output textures and write into its own FBO.
-	Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, ents []*entities.Entity)
+	Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext)
 }
 
 func initFrameBuffer(tf TextureFn) (uint32, []uint32) {

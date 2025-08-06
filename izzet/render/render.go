@@ -25,6 +25,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/renderpass"
+	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -47,13 +48,6 @@ const (
 
 	materialTextureWidth  int32 = 512
 	materialTextureHeight int32 = 512
-	// this internal type should support floats in order for us to store HDR values for bloom
-	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
-	renderFormatRGB                  uint32 = gl.RGB
-	renderFormatRGBA                 uint32 = gl.RGBA
-	internalTextureColorFormatRGB    int32  = gl.RGB32F
-	internalTextureColorFormatRGBA   int32  = gl.RGBA32F
-	internalTextureColorFormat16RGBA int32  = gl.RGBA16F
 
 	uiWidthRatio float32 = 0.2
 )
@@ -183,7 +177,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.blendTargetTextures = initSamplingTextures(widths, heights)
 	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
 
-	blendTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
+	blendTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	r.blendFBO, _ = r.initFrameBufferNoDepth(blendTextureFn)
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
@@ -270,7 +264,7 @@ func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	// main render FBO
 
-	mainRenderTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB, gl.R32UI}, []uint32{renderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
+	mainRenderTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
 	var mainRenderTextures []uint32
 	if init {
 		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
@@ -283,7 +277,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.colorPickingTexture = mainRenderTextures[1]
 
 	// composite FBO
-	compositeTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
+	compositeTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	var compositeTextures []uint32
 	if init {
 		r.compositeFBO, compositeTextures = r.initFrameBufferNoDepth(compositeTextureFn)
@@ -294,7 +288,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.compositeTexture = compositeTextures[0]
 
 	// post processing FBO
-	postProcessingTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGB}, []uint32{renderFormatRGB}, []uint32{gl.FLOAT})
+	postProcessingTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	var postProcessingTextures []uint32
 	if init {
 		r.postProcessingFBO, postProcessingTextures = r.initFrameBufferNoDepth(postProcessingTextureFn)

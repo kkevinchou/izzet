@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
+	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -664,7 +665,7 @@ func (r *RenderSystem) drawHUDTextureToQuad(viewerContext context.ViewerContext,
 }
 
 func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
-	circleTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE})
+	circleTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE})
 	fbo, textures := r.initFrameBuffer(circleTextureFn)
 	return fbo, textures[0]
 }

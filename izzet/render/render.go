@@ -87,18 +87,8 @@ type RenderSystem struct {
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
 
-	// geometryFBO      uint32
-	// gPositionTexture uint32
-	// gNormalTexture   uint32
-	// gColorTexture    uint32
-
 	ssaoBlurFBO     uint32
 	ssaoBlurTexture uint32
-
-	// ssaoFBO          uint32
-	// ssaoTexture      uint32
-	// ssaoNoiseTexture uint32
-	// ssaoSamples      [maxHemisphereSamples]mgl32.Vec3
 
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
@@ -171,7 +161,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
 	r.initorReinitTextures(width, height, true)
-	r.renderSSAOTextures()
 
 	// circles for the rotation gizmo
 
@@ -325,15 +314,6 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	}
 
 	// SSAO FBO
-	// ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
-	// var ssaoTextures []uint32
-	// if init {
-	// 	r.ssaoFBO, ssaoTextures = r.initFrameBufferNoDepth(ssaoTextureFn)
-	// } else {
-	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-	// 	_, _, ssaoTextures = ssaoTextureFn()
-	// }
-	// r.ssaoTexture = ssaoTextures[0]
 
 	// SSAO BLUR FBO
 	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
@@ -508,11 +488,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 
 	// SSAO RENDER
-
-	// start = time.Now()
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-	// r.drawSSAO(cameraViewerContext, lightContext, renderContext, renderableEntities)
-	// mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
 
 	// BLUR
 	r.blur(renderContext)

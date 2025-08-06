@@ -95,10 +95,10 @@ type RenderSystem struct {
 	ssaoBlurFBO     uint32
 	ssaoBlurTexture uint32
 
-	ssaoFBO          uint32
-	ssaoTexture      uint32
-	ssaoNoiseTexture uint32
-	ssaoSamples      [maxHemisphereSamples]mgl32.Vec3
+	// ssaoFBO          uint32
+	// ssaoTexture      uint32
+	// ssaoNoiseTexture uint32
+	// ssaoSamples      [maxHemisphereSamples]mgl32.Vec3
 
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
@@ -204,10 +204,11 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	r.renderPassContext = &context.RenderPassContext{}
-	r.renderPasses = append(r.renderPasses, &renderpass.GBufferPass{})
+	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
 
 	for _, pass := range r.renderPasses {
-		pass.Init(app, width, height, r.shaderManager, r.renderPassContext)
+		pass.Init(width, height, r.renderPassContext)
 	}
 
 	return r
@@ -324,15 +325,15 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	}
 
 	// SSAO FBO
-	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
-	var ssaoTextures []uint32
-	if init {
-		r.ssaoFBO, ssaoTextures = r.initFrameBufferNoDepth(ssaoTextureFn)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-		_, _, ssaoTextures = ssaoTextureFn()
-	}
-	r.ssaoTexture = ssaoTextures[0]
+	// ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
+	// var ssaoTextures []uint32
+	// if init {
+	// 	r.ssaoFBO, ssaoTextures = r.initFrameBufferNoDepth(ssaoTextureFn)
+	// } else {
+	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+	// 	_, _, ssaoTextures = ssaoTextureFn()
+	// }
+	// r.ssaoTexture = ssaoTextures[0]
 
 	// SSAO BLUR FBO
 	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
@@ -508,10 +509,10 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// SSAO RENDER
 
-	start = time.Now()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
-	r.drawSSAO(cameraViewerContext, lightContext, renderContext, renderableEntities)
-	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
+	// start = time.Now()
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoFBO)
+	// r.drawSSAO(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	// mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
 
 	// BLUR
 	r.blur(renderContext)
@@ -583,7 +584,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
-		r.app.RuntimeConfig().DebugTexture = r.ssaoTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.SSAOTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.GPositionTexture
@@ -615,7 +616,7 @@ func (r *RenderSystem) blur(renderContext context.RenderContext) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, r.ssaoTexture)
+	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOTexture)
 
 	shader := r.shaderManager.GetShaderProgram("blur")
 	shader.Use()

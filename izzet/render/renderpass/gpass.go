@@ -26,11 +26,11 @@ type GBufferPass struct {
 	shader *shaders.ShaderProgram
 }
 
-func (p *GBufferPass) Name() string { return "G-Buffer" }
+func NewGPass(app renderiface.App, sm *shaders.ShaderManager) *GBufferPass {
+	return &GBufferPass{app: app, shader: sm.GetShaderProgram("gpass")}
+}
 
-func (p *GBufferPass) Init(app renderiface.App, width, height int, sm *shaders.ShaderManager, ctx *context.RenderPassContext) error {
-	p.app = app
-
+func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) error {
 	// create FBO + 3 render targets
 	geometryTextureFn := textureFn(width, height,
 		[]int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat},
@@ -40,7 +40,6 @@ func (p *GBufferPass) Init(app renderiface.App, width, height int, sm *shaders.S
 	geometryFBO, textures := initFrameBuffer(geometryTextureFn)
 	ctx.GeometryFBO = geometryFBO
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
-	p.shader = sm.GetShaderProgram("gpass")
 	return nil
 }
 

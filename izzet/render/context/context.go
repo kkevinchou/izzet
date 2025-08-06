@@ -40,6 +40,10 @@ type RenderPassContext struct {
 	GPositionTexture uint32
 	GNormalTexture   uint32
 	GColorTexture    uint32
+
+	// SSAO
+	SSAOFBO     uint32
+	SSAOTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

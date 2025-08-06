@@ -6,7 +6,6 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 /*
@@ -26,11 +25,8 @@ type TextureFn func() (int, int, []uint32)
 
 // RenderPass is a single step in the frame‐render pipeline.
 type RenderPass interface {
-	// Name helps with logging or debugging
-	Name() string
-
 	// Init is called once at startup (or when switching pipelines)
-	Init(app renderiface.App, width, height int, shaders *shaders.ShaderManager, ctx *context.RenderPassContext) error
+	Init(width, height int, ctx *context.RenderPassContext) error
 
 	// Resize is called whenever the viewport changes size
 	Resize(width, height int, ctx *context.RenderPassContext)
@@ -68,6 +64,30 @@ func initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 
 	return fbo, textures
 }
+
+func initFrameBufferNoDepth(tf TextureFn) (uint32, []uint32) {
+	var fbo uint32
+	gl.GenFramebuffers(1, &fbo)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+	_, _, textures := tf()
+	var drawBuffers []uint32
+
+	textureCount := len(textures)
+	for i := 0; i < textureCount; i++ {
+		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
+		drawBuffers = append(drawBuffers, attachment)
+	}
+
+	gl.DrawBuffers(int32(textureCount), &drawBuffers[0])
+
+	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
+		panic(errors.New("failed to initalize frame buffer"))
+	}
+
+	return fbo, textures
+}
+
 func textureFn(width int, height int, internalFormat []int32, format []uint32, xtype []uint32) func() (int, int, []uint32) {
 	return func() (int, int, []uint32) {
 		count := len(internalFormat)
@@ -102,4 +122,10 @@ func iztDrawElements(app renderiface.App, count int32) {
 	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
 	app.RuntimeConfig().DrawCount += 1
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
+}
+
+func iztDrawArrays(app renderiface.App, first, count int32) {
+	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
+	app.RuntimeConfig().DrawCount += 1
+	gl.DrawArrays(gl.TRIANGLES, first, count)
 }

@@ -81,9 +81,6 @@ type RenderSystem struct {
 	colorPickingTexture    uint32
 	colorPickingAttachment uint32
 
-	ssaoBlurFBO     uint32
-	ssaoBlurTexture uint32
-
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
 	downSampleTextures []uint32
@@ -189,6 +186,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.renderPassContext = &context.RenderPassContext{}
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
 
 	for _, pass := range r.renderPasses {
 		pass.Init(width, height, r.renderPassContext)
@@ -306,19 +304,6 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 		r.cameraDepthTexture = r.createDepthTexture(width, height)
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
 	}
-
-	// SSAO FBO
-
-	// SSAO BLUR FBO
-	ssaoBlurTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
-	var ssaoBlurTextures []uint32
-	if init {
-		r.ssaoBlurFBO, ssaoBlurTextures = r.initFrameBufferNoDepth(ssaoBlurTextureFn)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
-		_, _, ssaoBlurTextures = ssaoBlurTextureFn()
-	}
-	r.ssaoBlurTexture = ssaoBlurTextures[0]
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
@@ -475,16 +460,11 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
-	// GBUFFER RENDER
+	// RENDER PASSES
 
 	for _, pass := range r.renderPasses {
 		pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
 	}
-
-	// SSAO RENDER
-
-	// BLUR
-	r.blur(renderContext)
 
 	// MAIN RENDER
 
@@ -562,7 +542,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.GNormalTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
-		r.app.RuntimeConfig().DebugTexture = r.ssaoBlurTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.SSAOBlurTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	}
 
@@ -575,23 +555,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
-}
-
-func (r *RenderSystem) blur(renderContext context.RenderContext) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.ssaoBlurFBO)
-
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.ClearColor(0, 0, 0, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOTexture)
-
-	shader := r.shaderManager.GetShaderProgram("blur")
-	shader.Use()
-
-	gl.BindVertexArray(r.ndcQuadVAO)
-	r.iztDrawArrays(0, 6)
 }
 
 func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {
@@ -1145,7 +1108,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	setupLightingUniforms(shader, lightContext.Lights)
 
 	gl.ActiveTexture(gl.TEXTURE28)
-	gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
+	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOBlurTexture)
 
 	gl.ActiveTexture(gl.TEXTURE29)
 	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
@@ -1229,7 +1192,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		setupLightingUniforms(shader, lightContext.Lights)
 
 		gl.ActiveTexture(gl.TEXTURE28)
-		gl.BindTexture(gl.TEXTURE_2D, r.ssaoBlurTexture)
+		gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOBlurTexture)
 
 		gl.ActiveTexture(gl.TEXTURE29)
 		gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)

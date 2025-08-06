@@ -30,17 +30,16 @@ func NewGPass(app renderiface.App, sm *shaders.ShaderManager) *GBufferPass {
 	return &GBufferPass{app: app, shader: sm.GetShaderProgram("gpass")}
 }
 
-func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) error {
+func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) {
 	// create FBO + 3 render targets
 	geometryTextureFn := textureFn(width, height,
 		[]int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat},
 		[]uint32{gPassFormat, gPassFormat, gPassFormat},
 		[]uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT},
 	)
-	geometryFBO, textures := initFrameBuffer(geometryTextureFn)
-	ctx.GeometryFBO = geometryFBO
+	fbo, textures := initFrameBuffer(geometryTextureFn)
+	ctx.GeometryFBO = fbo
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
-	return nil
 }
 
 func (p *GBufferPass) Resize(width, height int, ctx *context.RenderPassContext) {

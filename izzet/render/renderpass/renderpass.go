@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
@@ -26,7 +27,7 @@ type TextureFn func() (int, int, []uint32)
 // RenderPass is a single step in the frame‐render pipeline.
 type RenderPass interface {
 	// Init is called once at startup (or when switching pipelines)
-	Init(width, height int, ctx *context.RenderPassContext) error
+	Init(width, height int, ctx *context.RenderPassContext)
 
 	// Resize is called whenever the viewport changes size
 	Resize(width, height int, ctx *context.RenderPassContext)
@@ -128,4 +129,31 @@ func iztDrawArrays(app renderiface.App, first, count int32) {
 	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
 	app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
+}
+
+func createNDCQuadVAO() uint32 {
+	vertices := []float32{
+		-1, -1, 0.0, 0.0,
+		1, -1, 1.0, 0.0,
+		1, 1, 1.0, 1.0,
+		1, 1, 1.0, 1.0,
+		-1, 1, 0.0, 1.0,
+		-1, -1, 0.0, 0.0,
+	}
+
+	var vbo, vao uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+	gl.EnableVertexAttribArray(1)
+
+	return vao
 }

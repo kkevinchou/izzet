@@ -8,7 +8,6 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -19,7 +18,7 @@ const maxHemisphereSamples int = 64
 const maxSSAONoise int = 16
 
 type SSAORenderPass struct {
-	App    renderiface.App
+	app    renderiface.App
 	shader *shaders.ShaderProgram
 
 	ssaoNoiseTexture uint32
@@ -27,35 +26,16 @@ type SSAORenderPass struct {
 }
 
 func NewSSAOPass(app renderiface.App, sm *shaders.ShaderManager) *SSAORenderPass {
-	return &SSAORenderPass{App: app, shader: sm.GetShaderProgram("ssao")}
+	return &SSAORenderPass{app: app, shader: sm.GetShaderProgram("ssao")}
 }
 
-func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext) error {
+func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext) {
 	ssaoTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
-	ssaoFBO, textures := initFrameBufferNoDepth(ssaoTextureFn)
-	ctx.SSAOFBO = ssaoFBO
+	fbo, textures := initFrameBufferNoDepth(ssaoTextureFn)
+	ctx.SSAOFBO = fbo
 	ctx.SSAOTexture = textures[0]
 	p.ssaoSamples = randomHemisphereVectors()
 	p.setupSSAOTextures()
-	return nil
-}
-
-func (p *SSAORenderPass) setupSSAOTextures() {
-	// no frame buffer needed since we're just directly writing to the texture and not rendering
-	gl.Viewport(0, 0, 1024, 1024)
-
-	var noiseTexture uint32
-	gl.GenTextures(1, &noiseTexture)
-	gl.BindTexture(gl.TEXTURE_2D, noiseTexture)
-
-	noiseFloats := ssaoNoise()
-	gl.TexImage2D(gl.TEXTURE_2D, 0, rendersettings.InternalTextureColorFormat16RGBA, 4, 4, 0, rendersettings.RenderFormatRGB, gl.FLOAT, gl.Ptr(noiseFloats))
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-
-	p.ssaoNoiseTexture = noiseTexture
 }
 
 func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
@@ -69,7 +49,7 @@ func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContex
 // TODO - in general could make some better help methods to set uniforms
 // TODO - do the entity query ourselves? take in a world?
 func (p *SSAORenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext) {
-	mr := p.App.MetricsRegistry()
+	mr := p.app.MetricsRegistry()
 	start := time.Now()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.SSAOFBO)
@@ -96,13 +76,31 @@ func (p *SSAORenderPass) Render(ctx context.RenderContext, rctx *context.RenderP
 	}
 
 	p.shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	p.shader.SetUniformFloat("radius", p.App.RuntimeConfig().SSAORadius)
-	p.shader.SetUniformFloat("bias", p.App.RuntimeConfig().SSAOBias)
+	p.shader.SetUniformFloat("radius", p.app.RuntimeConfig().SSAORadius)
+	p.shader.SetUniformFloat("bias", p.app.RuntimeConfig().SSAOBias)
 
-	gl.BindVertexArray(ndcQuadVAO())
-	iztDrawArrays(p.App, 0, 6)
+	gl.BindVertexArray(createNDCQuadVAO())
+	iztDrawArrays(p.app, 0, 6)
 
 	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
+}
+
+func (p *SSAORenderPass) setupSSAOTextures() {
+	// no frame buffer needed since we're just directly writing to the texture and not rendering
+	gl.Viewport(0, 0, 1024, 1024)
+
+	var noiseTexture uint32
+	gl.GenTextures(1, &noiseTexture)
+	gl.BindTexture(gl.TEXTURE_2D, noiseTexture)
+
+	noiseFloats := ssaoNoise()
+	gl.TexImage2D(gl.TEXTURE_2D, 0, rendersettings.InternalTextureColorFormat16RGBA, 4, 4, 0, rendersettings.RenderFormatRGB, gl.FLOAT, gl.Ptr(noiseFloats))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+
+	p.ssaoNoiseTexture = noiseTexture
 }
 
 func ssaoNoise() []mgl32.Vec3 {
@@ -136,33 +134,6 @@ func randomHemisphereVectors() [maxHemisphereSamples]mgl32.Vec3 {
 	}
 
 	return result
-}
-
-func ndcQuadVAO() uint32 {
-	vertices := []float32{
-		-1, -1, 0.0, 0.0,
-		1, -1, 1.0, 0.0,
-		1, 1, 1.0, 1.0,
-		1, 1, 1.0, 1.0,
-		-1, 1, 0.0, 1.0,
-		-1, -1, 0.0, 0.0,
-	}
-
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
-	gl.EnableVertexAttribArray(1)
-
-	return vao
 }
 
 func lerp(a, b, f float32) float32 {

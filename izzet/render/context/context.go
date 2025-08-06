@@ -44,6 +44,10 @@ type RenderPassContext struct {
 	// SSAO
 	SSAOFBO     uint32
 	SSAOTexture uint32
+
+	// SAO Blur
+	SSAOBlurFBO     uint32
+	SSAOBlurTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

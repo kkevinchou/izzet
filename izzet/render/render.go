@@ -353,7 +353,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_volumetrics", float64(time.Since(start).Milliseconds()))
 
 	var position mgl64.Vec3
-	var rotation mgl64.Quat = mgl64.QuatIdent()
+	var rotation mgl64.Quat
 
 	if r.app.AppMode() == types.AppModeEditor {
 		position = r.app.GetEditorCameraPosition()

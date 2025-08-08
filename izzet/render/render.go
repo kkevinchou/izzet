@@ -338,6 +338,9 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 
 func (r *RenderSystem) Render(delta time.Duration) {
 	mr := r.app.MetricsRegistry()
+	initOpenGLRenderSettings()
+	r.app.RuntimeConfig().TriangleDrawCount = 0
+	r.app.RuntimeConfig().DrawCount = 0
 
 	start := time.Now()
 	cloudTexture := r.activeCloudTexture()
@@ -352,9 +355,11 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
 	mr.Inc("render_volumetrics", float64(time.Since(start).Milliseconds()))
 
+	r.CreateMaterialTextures()
+
+	// get the position and rotation of either the player camera or editor camera
 	var position mgl64.Vec3
 	var rotation mgl64.Quat
-
 	if r.app.AppMode() == types.AppModeEditor {
 		position = r.app.GetEditorCameraPosition()
 		rotation = r.app.GetEditorCameraRotation()
@@ -369,14 +374,13 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
 	mr.Inc("render_query_renderable", float64(time.Since(start).Milliseconds()))
+
 	start = time.Now()
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
 	r.renderPassContext.RenderableEntities = renderableEntities
 	r.renderPassContext.ShadowCastingEntities = shadowEntities
-
-	r.CreateMaterialTextures()
 
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
@@ -455,11 +459,8 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	mr := r.app.MetricsRegistry()
 
 	start := time.Now()
-	initOpenGLRenderSettings()
 	width, height := r.GameWindowSize()
 	renderContext := context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
-	r.app.RuntimeConfig().TriangleDrawCount = 0
-	r.app.RuntimeConfig().DrawCount = 0
 
 	// configure camera viewer context
 
@@ -574,8 +575,18 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 		renderContext.AspectRatio(),
 		float64(r.app.RuntimeConfig().ShadowSpatialPartitionNearPlane),
 	)
-	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
-	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.ShadowCasting)
+
+	sp := r.app.World().SpatialPartition()
+	bb := collider.BoundingBoxFromVertices(frustumPoints)
+
+	var result []*entities.Entity
+	for _, spatialEntity := range sp.QueryEntities(bb) {
+		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
+		if e.MeshComponent != nil && e.MeshComponent.ShadowCasting {
+			result = append(result, e)
+		}
+	}
+	return result
 }
 
 func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {
@@ -589,30 +600,19 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 		renderContext.AspectRatio(),
 		0,
 	)
-	frustumBoundingBox := collider.BoundingBoxFromVertices(frustumPoints)
-	return r.fetchEntitiesByBoundingBox(cameraPosition, rotation, renderContext, frustumBoundingBox, entities.Renderable)
-}
 
-func (r *RenderSystem) fetchEntitiesByBoundingBox(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext, boundingBox collider.BoundingBox, filter entities.FilterFunction) []*entities.Entity {
-	var renderEntities []*entities.Entity
-	if r.app.RuntimeConfig().EnableSpatialPartition {
-		spatialPartition := r.app.World().SpatialPartition()
-		frustumEntities := spatialPartition.QueryEntities(boundingBox)
-		for _, entity := range frustumEntities {
-			e := r.app.World().GetEntityByID(entity.GetID())
-			if !filter(e) {
-				continue
-			}
-			renderEntities = append(renderEntities, e)
+	sp := r.app.World().SpatialPartition()
+	bb := collider.BoundingBoxFromVertices(frustumPoints)
+
+	var result []*entities.Entity
+	for _, spatialEntity := range sp.QueryEntities(bb) {
+		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
+		if e.MeshComponent != nil {
+			result = append(result, e)
 		}
-	} else {
-		renderEntities = r.app.World().Entities()
 	}
-
-	return renderEntities
+	return result
 }
-
-var spanLines [][2]mgl64.Vec3
 
 func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext) {
 	shaderManager := r.shaderManager
@@ -661,7 +661,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		}
 	}
 
-	if r.app.RuntimeConfig().EnableSpatialPartition && r.app.RuntimeConfig().RenderSpatialPartition {
+	if r.app.RuntimeConfig().RenderSpatialPartition {
 		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.app.World().SpatialPartition(), 0.1)
 	}
 
@@ -724,7 +724,7 @@ func (r *RenderSystem) drawToCameraDepthMap(viewerContext context.ViewerContext,
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.Renderable)
+	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
 }
 
 func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
@@ -738,10 +738,10 @@ func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext,
 		return
 	}
 
-	r.renderGeometryWithoutColor(viewerContext, renderableEntities, entities.EmptyFilter)
+	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
 }
 
-func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerContext, renderableEntities []*entities.Entity, filter entities.FilterFunction) {
+func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
 	shader := r.shaderManager.GetShaderProgram("modelgeo")
 	shader.Use()
 
@@ -749,7 +749,7 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerCo
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	for _, entity := range renderableEntities {
-		if !filter(entity) {
+		if entity.MeshComponent == nil {
 			continue
 		}
 

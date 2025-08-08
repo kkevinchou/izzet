@@ -337,7 +337,6 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *RenderSystem) Render(delta time.Duration) {
-
 	mr := r.app.MetricsRegistry()
 
 	start := time.Now()
@@ -352,18 +351,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 	r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
 	mr.Inc("render_volumetrics", float64(time.Since(start).Milliseconds()))
-	// if r.app.Minimized() || !r.app.WindowFocused() {
-	// 	return
-	// }
-
-	start = time.Now()
-	initOpenGLRenderSettings()
-	width, height := r.GameWindowSize()
-	renderContext := context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
-	r.app.RuntimeConfig().TriangleDrawCount = 0
-	r.app.RuntimeConfig().DrawCount = 0
-
-	// configure camera viewer context
 
 	var position mgl64.Vec3
 	var rotation mgl64.Quat = mgl64.QuatIdent()
@@ -377,70 +364,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		rotation = camera.Rotation()
 	}
 
-	viewerViewMatrix := rotation.Mat4()
-	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
-
-	cameraViewerContext := context.ViewerContext{
-		Position: position,
-		Rotation: rotation,
-
-		InverseViewMatrix:                   viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		InverseViewMatrixWithoutTranslation: viewerViewMatrix.Inv(),
-		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
-	}
-
-	lightFrustumPoints := calculateFrustumPoints(
-		position,
-		rotation,
-		float64(r.app.RuntimeConfig().Near),
-		float64(r.app.RuntimeConfig().ShadowFarDistance),
-		renderContext.FovX(),
-		renderContext.FovY(),
-		renderContext.AspectRatio(),
-		0,
-	)
-
-	// find the directional light if there is one
-	lights := r.app.World().Lights()
-	var directionalLights []*entities.Entity
-	var pointLights []*entities.Entity
-
-	for _, light := range lights {
-		if light.LightInfo.Type == entities.LightTypeDirection {
-			directionalLights = append(directionalLights, light)
-		} else if light.LightInfo.Type == entities.LightTypePoint {
-			pointLights = append(pointLights, light)
-		}
-	}
-
-	var directionalLightX, directionalLightY, directionalLightZ float64 = 0, -1, 0
-	if len(directionalLights) > 0 {
-		directionalLightX = float64(directionalLights[0].LightInfo.Direction3F[0])
-		directionalLightY = float64(directionalLights[0].LightInfo.Direction3F[1])
-		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
-	}
-
-	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
-	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
-
-	lightViewerContext := context.ViewerContext{
-		Position:          lightPosition,
-		Rotation:          lightRotation,
-		InverseViewMatrix: lightViewMatrix,
-		ProjectionMatrix:  lightProjectionMatrix,
-	}
-
-	lightContext := context.LightContext{
-		// this should be the inverse of the transforms applied to the viewer context
-		// if the viewer moves along -y, the universe moves along +y
-		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
-		Lights:           r.app.World().Lights(),
-		PointLights:      pointLights,
-	}
-
-	r.cameraViewerContext = cameraViewerContext
-	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
+	renderContext, cameraViewerContext, lightViewerContext, lightContext := r.createRenderingContexts(position, rotation)
 
 	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
@@ -525,6 +449,86 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
+}
+
+func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.ViewerContext, context.LightContext) {
+	mr := r.app.MetricsRegistry()
+
+	start := time.Now()
+	initOpenGLRenderSettings()
+	width, height := r.GameWindowSize()
+	renderContext := context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
+	r.app.RuntimeConfig().TriangleDrawCount = 0
+	r.app.RuntimeConfig().DrawCount = 0
+
+	// configure camera viewer context
+
+	viewerViewMatrix := rotation.Mat4()
+	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+
+	cameraViewerContext := context.ViewerContext{
+		Position: position,
+		Rotation: rotation,
+
+		InverseViewMatrix:                   viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
+		InverseViewMatrixWithoutTranslation: viewerViewMatrix.Inv(),
+		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
+	}
+
+	lightFrustumPoints := calculateFrustumPoints(
+		position,
+		rotation,
+		float64(r.app.RuntimeConfig().Near),
+		float64(r.app.RuntimeConfig().ShadowFarDistance),
+		renderContext.FovX(),
+		renderContext.FovY(),
+		renderContext.AspectRatio(),
+		0,
+	)
+
+	// find the directional light if there is one
+	lights := r.app.World().Lights()
+	var directionalLights []*entities.Entity
+	var pointLights []*entities.Entity
+
+	for _, light := range lights {
+		if light.LightInfo.Type == entities.LightTypeDirection {
+			directionalLights = append(directionalLights, light)
+		} else if light.LightInfo.Type == entities.LightTypePoint {
+			pointLights = append(pointLights, light)
+		}
+	}
+
+	var directionalLightX, directionalLightY, directionalLightZ float64 = 0, -1, 0
+	if len(directionalLights) > 0 {
+		directionalLightX = float64(directionalLights[0].LightInfo.Direction3F[0])
+		directionalLightY = float64(directionalLights[0].LightInfo.Direction3F[1])
+		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
+	}
+
+	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
+	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
+	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
+
+	lightViewerContext := context.ViewerContext{
+		Position:          lightPosition,
+		Rotation:          lightRotation,
+		InverseViewMatrix: lightViewMatrix,
+		ProjectionMatrix:  lightProjectionMatrix,
+	}
+
+	lightContext := context.LightContext{
+		// this should be the inverse of the transforms applied to the viewer context
+		// if the viewer moves along -y, the universe moves along +y
+		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
+		Lights:           r.app.World().Lights(),
+		PointLights:      pointLights,
+	}
+
+	r.cameraViewerContext = cameraViewerContext
+	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
+
+	return renderContext, cameraViewerContext, lightViewerContext, lightContext
 }
 
 func (r *RenderSystem) setDebugTexture() {

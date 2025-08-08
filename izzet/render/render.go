@@ -483,9 +483,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.renderGizmos(cameraViewerContext, renderContext)
 	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
-	// draw hud
-	// r.hud()
-
 	// store color picking entity
 	start = time.Now()
 	if r.app.AppMode() == types.AppModeEditor {
@@ -517,6 +514,20 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	)
 	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
 
+	r.setDebugTexture()
+
+	// render to back buffer
+	start = time.Now()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
+	start = time.Now()
+	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
+	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
+}
+
+func (r *RenderSystem) setDebugTexture() {
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
@@ -530,6 +541,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+		cloudTexture := r.activeCloudTexture()
 		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
@@ -545,16 +557,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.SSAOBlurTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	}
-
-	// render to back buffer
-	start = time.Now()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
-	start = time.Now()
-	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
-	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
 func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {

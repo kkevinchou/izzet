@@ -31,7 +31,6 @@ type RuntimeConfig struct {
 	DebugTexture       uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 	DebugAspectRatio   float64 // the aspect ratio of the debug texture
 
-	EnableSpatialPartition bool
 	RenderSpatialPartition bool
 
 	// RenderTime       float64
@@ -179,7 +178,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		BloomUpsamplingScale:            1.0,
 		Color:                           [3]float32{1, 1, 1},
 		RenderSpatialPartition:          false,
-		EnableSpatialPartition:          true,
 
 		Near: 0.1,
 		Far:  500,

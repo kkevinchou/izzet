@@ -5,6 +5,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -97,7 +98,7 @@ func getInternedQuadVAOPosition() uint32 {
 	return internedQuadVAOPosition
 }
 
-func (r *RenderSystem) drawTexturedQuad(viewerContext *ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
+func (r *RenderSystem) drawTexturedQuad(viewerContext *context.ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
 	vao := getInternedQuadVAOPositionUV()
 
 	gl.BindVertexArray(vao)

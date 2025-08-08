@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/internal/noise"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -63,7 +64,7 @@ func (r *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (u
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	texture := createTexture(textureWidth, textureHeight, internalTextureColorFormatRGB, renderFormatRGB, gl.FLOAT, gl.NEAREST)
+	texture := createTexture(textureWidth, textureHeight, rendersettings.InternalTextureColorFormatRGB, rendersettings.RenderFormatRGB, gl.FLOAT, gl.NEAREST)
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
 	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0}

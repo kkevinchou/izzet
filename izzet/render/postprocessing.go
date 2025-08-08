@@ -1,8 +1,11 @@
 package render
 
-import "github.com/go-gl/gl/v4.1-core/gl"
+import (
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/render/context"
+)
 
-func (r *RenderSystem) postProcess(renderContext RenderContext, texture0 uint32) uint32 {
+func (r *RenderSystem) postProcess(renderContext context.RenderContext, texture0 uint32) uint32 {
 	runtimeConfig := r.app.RuntimeConfig()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)

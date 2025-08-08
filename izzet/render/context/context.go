@@ -1,4 +1,4 @@
-package render
+package context
 
 import (
 	"math"
@@ -28,6 +28,26 @@ type RenderContext struct {
 	aspectRatio float64
 	fovX        float64
 	fovY        float64
+}
+
+type RenderPassContext struct {
+	// entities
+	ShadowCastingEntities []*entities.Entity
+	RenderableEntities    []*entities.Entity
+
+	// Gpass
+	GeometryFBO      uint32
+	GPositionTexture uint32
+	GNormalTexture   uint32
+	GColorTexture    uint32
+
+	// SSAO
+	SSAOFBO     uint32
+	SSAOTexture uint32
+
+	// SAO Blur
+	SSAOBlurFBO     uint32
+	SSAOBlurTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

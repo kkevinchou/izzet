@@ -19,6 +19,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/render/context"
+	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -624,7 +626,7 @@ func (r *RenderSystem) drawBillboardTexture(
 }
 
 // drawHUDTextureToQuad does a shitty perspective based rendering of a flat texture
-func (r *RenderSystem) drawHUDTextureToQuad(viewerContext ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
+func (r *RenderSystem) drawHUDTextureToQuad(viewerContext context.ViewerContext, shader *shaders.ShaderProgram, texture uint32, hudScale float32) {
 	// texture coords top left = 0,0 | bottom right = 1,1
 	var vertices []float32 = []float32{
 		// front
@@ -663,7 +665,7 @@ func (r *RenderSystem) drawHUDTextureToQuad(viewerContext ViewerContext, shader 
 }
 
 func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
-	circleTextureFn := textureFn(width, height, []int32{internalTextureColorFormatRGBA}, []uint32{renderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE})
+	circleTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE})
 	fbo, textures := r.initFrameBuffer(circleTextureFn)
 	return fbo, textures[0]
 }
@@ -765,7 +767,7 @@ func (r *RenderSystem) createDepthTexture(width, height int) uint32 {
 	return texture
 }
 
-func (r *RenderSystem) drawSkybox(renderContext RenderContext, viewerContext ViewerContext) {
+func (r *RenderSystem) drawSkybox(renderContext context.RenderContext, viewerContext context.ViewerContext) {
 	if skyboxVAO == nil {
 		var vbo, vao uint32
 		apputils.GenBuffers(1, &vbo)
@@ -802,7 +804,7 @@ func (r *RenderSystem) drawSkybox(renderContext RenderContext, viewerContext Vie
 	gl.DepthFunc(gl.LESS)
 }
 
-func (r *RenderSystem) CameraViewerContext() ViewerContext {
+func (r *RenderSystem) CameraViewerContext() context.ViewerContext {
 	return r.cameraViewerContext
 }
 
@@ -851,7 +853,7 @@ func (r *RenderSystem) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	return &id
 }
 
-func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
+func (r *RenderSystem) drawSpatialPartition(viewerContext context.ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
 	var allLines [][2]mgl64.Vec3
 
 	if len(spatialPartitionLineCache) == 0 {
@@ -908,7 +910,7 @@ func (r *RenderSystem) drawSpatialPartition(viewerContext ViewerContext, color m
 	r.drawLineGroup("spatial_partition", shader, allLines, thickness, color)
 }
 
-func (r *RenderSystem) drawAABB(viewerContext ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
+func (r *RenderSystem) drawAABB(viewerContext context.ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
 	var allLines [][2]mgl64.Vec3
 
 	d := aabb.MaxVertex.Sub(aabb.MinVertex)

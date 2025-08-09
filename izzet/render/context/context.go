@@ -56,6 +56,10 @@ type RenderPassContext struct {
 	// Camera Depth
 	CameraDepthFBO     uint32
 	CameraDepthTexture uint32
+
+	// Point Light
+	PointLightFBO     uint32
+	PointLightTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

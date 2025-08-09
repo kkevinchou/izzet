@@ -17,8 +17,6 @@ func NewCameraDepthPass(app renderiface.App, sm *shaders.ShaderManager) *CameraD
 }
 
 func (p *CameraDepthRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
-	// CameraDepthTextureFn := textureFn(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
-	// fbo, textures := initFrameBufferNoDepth(ssaoBlurTextureFn)
 	texture := createDepthTexture(width, height)
 	fbo := initDepthMapFrameBuffer(texture)
 	ctx.CameraDepthFBO = fbo
@@ -32,20 +30,7 @@ func (p *CameraDepthRenderPass) Resize(width, height int, ctx *context.RenderPas
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, ctx.CameraDepthTexture, 0)
 }
 
-func (p *CameraDepthRenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext) {
-	// gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.SSAOBlurFBO)
-
-	// gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
-	// gl.ClearColor(0, 0, 0, 1)
-	// gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	// p.shader.Use()
-
-	// gl.ActiveTexture(gl.TEXTURE0)
-	// gl.BindTexture(gl.TEXTURE_2D, ctx.SSAOTexture)
-
-	// gl.BindVertexArray(createNDCQuadVAO())
-	// iztDrawArrays(p.app, 0, 6)
+func (p *CameraDepthRenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
 	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.CameraDepthFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)

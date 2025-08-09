@@ -48,7 +48,7 @@ func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContex
 
 // TODO - in general could make some better help methods to set uniforms
 // TODO - do the entity query ourselves? take in a world?
-func (p *SSAORenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext) {
+func (p *SSAORenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
 	mr := p.app.MetricsRegistry()
 	start := time.Now()
 

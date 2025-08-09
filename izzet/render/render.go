@@ -10,7 +10,6 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	lib "github.com/kkevinchou/izzet/internal"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/renderers"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
@@ -28,7 +27,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
@@ -57,10 +55,8 @@ type RenderSystem struct {
 	// world         GameWorld
 	shaderManager *shaders.ShaderManager
 
-	shadowMap           *ShadowMap
-	imguiRenderer       *renderers.OpenGL3
-	depthCubeMapTexture uint32
-	depthCubeMapFBO     uint32
+	shadowMap     *ShadowMap
+	imguiRenderer *renderers.OpenGL3
 
 	redCircleFB         uint32
 	redCircleTexture    uint32
@@ -141,7 +137,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 		panic(fmt.Sprintf("failed to create shadow map %s", err))
 	}
 	r.shadowMap = shadowMap
-	r.depthCubeMapFBO, r.depthCubeMapTexture = lib.InitDepthCubeMap()
 	r.ndcQuadVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
@@ -182,6 +177,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.renderPassContext = &context.RenderPassContext{}
 	r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewPointLightPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
@@ -303,24 +299,6 @@ func (r *RenderSystem) ReinitializeFrameBuffers() {
 	}
 }
 
-func (r *RenderSystem) initDepthMapFBO(width, height int) (uint32, uint32) {
-	var depthMapFBO uint32
-	gl.GenFramebuffers(1, &depthMapFBO)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
-
-	texture := r.createDepthTexture(width, height)
-
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0)
-	gl.DrawBuffer(gl.NONE)
-	gl.ReadBuffer(gl.NONE)
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic("failed to initialize shadow map frame buffer - in the past this was due to an overly large shadow map dimension configuration")
-	}
-
-	return depthMapFBO, texture
-}
-
 func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
@@ -373,13 +351,12 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
-	r.drawToCubeDepthMap(lightContext, shadowEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// RENDER PASSES
 
 	for _, pass := range r.renderPasses {
-		pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext)
 	}
 
 	// MAIN RENDER
@@ -770,72 +747,6 @@ func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerCo
 	}
 }
 
-func (r *RenderSystem) drawToCubeDepthMap(lightContext context.LightContext, renderableEntities []*entities.Entity) {
-	// we only support cube depth maps for one point light atm
-	var pointLight *entities.Entity
-	if len(lightContext.PointLights) == 0 {
-		return
-	}
-	pointLight = lightContext.PointLights[0]
-
-	gl.Viewport(0, 0, int32(settings.DepthCubeMapWidth), int32(settings.DepthCubeMapHeight))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.depthCubeMapFBO)
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
-
-	position := pointLight.Position()
-	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, float64(lightContext.PointLights[0].LightInfo.Range))
-
-	shader := r.shaderManager.GetShaderProgram("point_shadow")
-	shader.Use()
-	for i, transform := range shadowTransforms {
-		shader.SetUniformMat4(fmt.Sprintf("shadowMatrices[%d]", i), utils.Mat4F64ToF32(transform))
-	}
-	if len(lightContext.PointLights) > 0 {
-		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-	}
-	shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
-
-	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil {
-			continue
-		}
-
-		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
-			continue
-		}
-
-		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
-			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
-			// if animationTransforms is nil, the shader will execute reading into invalid memory
-			// so, we need to explicitly guard for this
-			if animationTransforms == nil {
-				panic("animationTransforms not found")
-			}
-			for i := 0; i < len(animationTransforms); i++ {
-				shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-			}
-		} else {
-			shader.SetUniformInt("isAnimated", 0)
-		}
-
-		modelMatrix := entities.WorldTransform(entity)
-		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-
-		primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-		for _, p := range primitives {
-			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
-
-			gl.BindVertexArray(p.GeometryVAO)
-			r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
-		}
-	}
-	if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 {
-		r.drawBatches(shader)
-		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
-	}
-}
-
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
 func (r *RenderSystem) drawToMainColorBuffer(viewerContext context.ViewerContext,
 	lightContext context.LightContext,
@@ -1111,7 +1022,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
 
 	gl.ActiveTexture(gl.TEXTURE30)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
 
 	gl.ActiveTexture(gl.TEXTURE31)
 	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
@@ -1195,7 +1106,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
 
 		gl.ActiveTexture(gl.TEXTURE30)
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
+		gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
 
 		gl.ActiveTexture(gl.TEXTURE31)
 		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())

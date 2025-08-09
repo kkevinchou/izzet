@@ -30,7 +30,7 @@ func (p *SSAOBlurRenderPass) Resize(width, height int, ctx *context.RenderPassCo
 	ctx.SSAOBlurTexture = textures[0]
 }
 
-func (p *SSAOBlurRenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext) {
+func (p *SSAOBlurRenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.SSAOBlurFBO)
 
 	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))

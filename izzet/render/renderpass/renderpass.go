@@ -26,7 +26,7 @@ type RenderPass interface {
 
 	// Render executes the pass. It may read from
 	// previous-output textures and write into its own FBO.
-	Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext)
+	Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, lightContext context.LightContext)
 }
 
 func initFrameBuffer(tf TextureFn) (uint32, []uint32) {

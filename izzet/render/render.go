@@ -27,6 +27,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
@@ -55,7 +56,7 @@ type RenderSystem struct {
 	// world         GameWorld
 	shaderManager *shaders.ShaderManager
 
-	shadowMap     *ShadowMap
+	// shadowMap     *ShadowMap
 	imguiRenderer *renderers.OpenGL3
 
 	redCircleFB         uint32
@@ -110,6 +111,8 @@ type RenderSystem struct {
 
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
+
+	shadowMapRenderDistance float64
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -125,18 +128,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 	r.imguiRenderer = imguiRenderer
 
-	// note(kevin) using exactly the max texture size sometimes causes initialization to fail.
-	// so, I cap it at a fraction of the max
-	var maxTextureSize int32
-	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
-	// settings.RuntimeMaxTextureSize = int(float32(maxTextureSize) * .90)
-	// shadowMap, err := NewShadowMap(settings.RuntimeMaxTextureSize, settings.RuntimeMaxTextureSize, float64(panels.DBG.Far))
-	dimension := 14400
-	shadowMap, err := NewShadowMap(dimension, dimension, float64(r.app.RuntimeConfig().Far))
-	if err != nil {
-		panic(fmt.Sprintf("failed to create shadow map %s", err))
-	}
-	r.shadowMap = shadowMap
 	r.ndcQuadVAO = r.init2f2fVAO()
 	r.cubeVAOs = map[string]uint32{}
 	r.batchCubeVAOs = map[string]uint32{}
@@ -176,7 +167,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	r.renderPassContext = &context.RenderPassContext{}
-	r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
+	// r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewShadowMapPass(14400, app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewPointLightPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
@@ -350,13 +342,13 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.renderPassContext.ShadowCastingEntities = shadowEntities
 
 	start = time.Now()
-	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
+	// r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// RENDER PASSES
 
 	for _, pass := range r.renderPasses {
-		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext)
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext, lightViewerContext)
 	}
 
 	// MAIN RENDER
@@ -505,7 +497,7 @@ func (r *RenderSystem) setDebugTexture() {
 		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
-		r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.ShadowMapTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.CameraDepthTexture
@@ -641,7 +633,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		setupLightingUniforms(shader, lightContext.Lights)
 		shader.SetUniformInt("width", int32(renderContext.Width()))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformFloat("shadowDistance", r.ShadowFarDistance())
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
@@ -684,18 +676,22 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 	}
 }
 
-func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
-	r.shadowMap.Prepare()
-	defer gl.CullFace(gl.BACK)
+// func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
+// 	r.shadowMap.Prepare()
+// 	defer gl.CullFace(gl.BACK)
 
-	if !r.app.RuntimeConfig().EnableShadowMapping {
-		// set the depth to be max value to prevent shadow mapping
-		gl.ClearDepth(1)
-		gl.Clear(gl.DEPTH_BUFFER_BIT)
-		return
-	}
+// 	if !r.app.RuntimeConfig().EnableShadowMapping {
+// 		// set the depth to be max value to prevent shadow mapping
+// 		gl.ClearDepth(1)
+// 		gl.Clear(gl.DEPTH_BUFFER_BIT)
+// 		return
+// 	}
 
-	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
+// 	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
+// }
+
+func (r *RenderSystem) ShadowFarDistance() float32 {
+	return r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
 }
 
 func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
@@ -992,7 +988,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+	shader.SetUniformFloat("shadowDistance", r.ShadowFarDistance())
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
@@ -1025,7 +1021,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
 
 	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
 
 	var entityCount int
 	for _, entity := range renderableEntities {
@@ -1076,7 +1072,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", float32(r.shadowMap.ShadowDistance()))
+		shader.SetUniformFloat("shadowDistance", r.ShadowFarDistance())
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
@@ -1109,7 +1105,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 		gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
 
 		gl.ActiveTexture(gl.TEXTURE31)
-		gl.BindTexture(gl.TEXTURE_2D, r.shadowMap.DepthTexture())
+		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
 
 		r.drawBatches(shader)
 		r.app.MetricsRegistry().Inc("draw_entity_count", 1)

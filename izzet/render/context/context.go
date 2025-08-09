@@ -60,6 +60,10 @@ type RenderPassContext struct {
 	// Point Light
 	PointLightFBO     uint32
 	PointLightTexture uint32
+
+	// Shadow Map
+	ShadowMapFBO     uint32
+	ShadowMapTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

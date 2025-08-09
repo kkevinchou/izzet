@@ -73,7 +73,13 @@ func (p *PointLightRenderPass) Init(_, _ int, ctx *context.RenderPassContext) {
 func (p *PointLightRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 }
 
-func (p *PointLightRenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
+func (p *PointLightRenderPass) Render(
+	ctx context.RenderContext,
+	rctx *context.RenderPassContext,
+	viewerContext context.ViewerContext,
+	lightContext context.LightContext,
+	lightViewerContext context.ViewerContext,
+) {
 	// we only support cube depth maps for one point light atm
 	var pointLight *entities.Entity
 	if len(lightContext.PointLights) == 0 {

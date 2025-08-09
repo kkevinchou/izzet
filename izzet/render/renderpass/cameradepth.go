@@ -30,7 +30,13 @@ func (p *CameraDepthRenderPass) Resize(width, height int, ctx *context.RenderPas
 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, ctx.CameraDepthTexture, 0)
 }
 
-func (p *CameraDepthRenderPass) Render(ctx context.RenderContext, rctx *context.RenderPassContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
+func (p *CameraDepthRenderPass) Render(
+	ctx context.RenderContext,
+	rctx *context.RenderPassContext,
+	viewerContext context.ViewerContext,
+	lightContext context.LightContext,
+	lightViewerContext context.ViewerContext,
+) {
 	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.CameraDepthFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)

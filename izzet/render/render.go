@@ -62,8 +62,8 @@ type RenderSystem struct {
 	depthCubeMapTexture uint32
 	depthCubeMapFBO     uint32
 
-	cameraDepthMapFBO  uint32
-	cameraDepthTexture uint32
+	// cameraDepthMapFBO  uint32
+	// cameraDepthTexture uint32
 
 	redCircleFB         uint32
 	redCircleTexture    uint32
@@ -184,6 +184,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	r.renderPassContext = &context.RenderPassContext{}
+	r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
@@ -297,13 +298,13 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	r.postProcessingTexture = postProcessingTextures[0]
 
 	// depth map FBO
-	if init {
-		r.cameraDepthMapFBO, r.cameraDepthTexture = r.initDepthMapFBO(width, height)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-		r.cameraDepthTexture = r.createDepthTexture(width, height)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
-	}
+	// if init {
+	// 	r.cameraDepthMapFBO, r.cameraDepthTexture = r.initDepthMapFBO(width, height)
+	// } else {
+	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+	// 	r.cameraDepthTexture = r.createDepthTexture(width, height)
+	// 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
+	// }
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
@@ -385,7 +386,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
-	r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
+	// r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// RENDER PASSES
@@ -398,7 +399,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	start = time.Now()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, renderableEntities)
+	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, *r.renderPassContext, renderableEntities)
 	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
@@ -543,7 +544,7 @@ func (r *RenderSystem) setDebugTexture() {
 		r.app.RuntimeConfig().DebugTexture = r.shadowMap.depthTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
-		r.app.RuntimeConfig().DebugTexture = r.cameraDepthTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.CameraDepthTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
 		cloudTexture := r.activeCloudTexture()
@@ -719,13 +720,13 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 	}
 }
 
-func (r *RenderSystem) drawToCameraDepthMap(viewerContext context.ViewerContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
+// func (r *RenderSystem) drawToCameraDepthMap(viewerContext context.ViewerContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
+// 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
+// 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
-}
+// 	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
+// }
 
 func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
 	r.shadowMap.Prepare()
@@ -857,14 +858,19 @@ func (r *RenderSystem) drawToCubeDepthMap(lightContext context.LightContext, ren
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer
-func (r *RenderSystem) drawToMainColorBuffer(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) drawToMainColorBuffer(viewerContext context.ViewerContext,
+	lightContext context.LightContext,
+	renderContext context.RenderContext,
+	renderPassContext context.RenderPassContext,
+	renderableEntities []*entities.Entity,
+) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	r.drawSkybox(renderContext, viewerContext)
 
 	shader := r.shaderManager.GetShaderProgram("modelpbr")
-	r.renderModels(shader, viewerContext, lightContext, renderContext, renderableEntities)
+	r.renderModels(shader, viewerContext, lightContext, renderContext, renderPassContext, renderableEntities)
 
 	if r.app.RuntimeConfig().ShowColliders {
 		shader := r.shaderManager.GetShaderProgram("flat")
@@ -1069,7 +1075,13 @@ func (r *RenderSystem) drawToMainColorBuffer(viewerContext context.ViewerContext
 	}
 }
 
-func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
+func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
+	viewerContext context.ViewerContext,
+	lightContext context.LightContext,
+	renderContext context.RenderContext,
+	renderPassContext context.RenderPassContext,
+	renderableEntities []*entities.Entity,
+) {
 	shader.Use()
 
 	if r.app.RuntimeConfig().FogEnabled {
@@ -1117,7 +1129,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOBlurTexture)
 
 	gl.ActiveTexture(gl.TEXTURE29)
-	gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
 
 	gl.ActiveTexture(gl.TEXTURE30)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)
@@ -1201,7 +1213,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram, viewerContext
 		gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOBlurTexture)
 
 		gl.ActiveTexture(gl.TEXTURE29)
-		gl.BindTexture(gl.TEXTURE_2D, r.cameraDepthTexture)
+		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
 
 		gl.ActiveTexture(gl.TEXTURE30)
 		gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.depthCubeMapTexture)

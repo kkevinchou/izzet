@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 )
 
@@ -28,8 +29,11 @@ type RenderContext struct {
 	aspectRatio float64
 	fovX        float64
 	fovY        float64
+
+	BatchRenders []assets.Batch
 }
 
+// intermediate rendering properties
 type RenderPassContext struct {
 	// entities
 	ShadowCastingEntities []*entities.Entity
@@ -48,6 +52,10 @@ type RenderPassContext struct {
 	// SAO Blur
 	SSAOBlurFBO     uint32
 	SSAOBlurTexture uint32
+
+	// Camera Depth
+	CameraDepthFBO     uint32
+	CameraDepthTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

@@ -62,9 +62,6 @@ type RenderSystem struct {
 	depthCubeMapTexture uint32
 	depthCubeMapFBO     uint32
 
-	// cameraDepthMapFBO  uint32
-	// cameraDepthTexture uint32
-
 	redCircleFB         uint32
 	redCircleTexture    uint32
 	greenCircleFB       uint32
@@ -296,15 +293,6 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 		_, _, postProcessingTextures = postProcessingTextureFn()
 	}
 	r.postProcessingTexture = postProcessingTextures[0]
-
-	// depth map FBO
-	// if init {
-	// 	r.cameraDepthMapFBO, r.cameraDepthTexture = r.initDepthMapFBO(width, height)
-	// } else {
-	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-	// 	r.cameraDepthTexture = r.createDepthTexture(width, height)
-	// 	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, r.cameraDepthTexture, 0)
-	// }
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
@@ -386,7 +374,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	r.drawToCubeDepthMap(lightContext, shadowEntities)
-	// r.drawToCameraDepthMap(cameraViewerContext, renderContext, renderableEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// RENDER PASSES
@@ -719,14 +706,6 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		nm.Invalidated = false
 	}
 }
-
-// func (r *RenderSystem) drawToCameraDepthMap(viewerContext context.ViewerContext, renderContext context.RenderContext, renderableEntities []*entities.Entity) {
-// 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.cameraDepthMapFBO)
-// 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-
-// 	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
-// }
 
 func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
 	r.shadowMap.Prepare()

@@ -167,7 +167,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	cloudTexture1.VAO, cloudTexture1.WorleyTexture, cloudTexture1.FBO, cloudTexture1.RenderTexture = r.setupVolumetrics(r.shaderManager)
 
 	r.renderPassContext = &context.RenderPassContext{}
-	// r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewShadowMapPass(14400, app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewPointLightPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))

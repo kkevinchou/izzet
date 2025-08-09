@@ -10,8 +10,13 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
+)
+
+const (
+	PointLightCubeMapWidth  float32 = 4096
+	PointLightCubeMapHeight float32 = 4096
+	PointLightCubeMapNear   float64 = 1
 )
 
 type PointLightRenderPass struct {
@@ -32,7 +37,7 @@ func (p *PointLightRenderPass) Init(_, _ int, ctx *context.RenderPassContext) {
 	gl.GenTextures(1, &texture)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, texture)
 
-	width, height := settings.DepthCubeMapWidth, settings.DepthCubeMapHeight
+	width, height := PointLightCubeMapWidth, PointLightCubeMapHeight
 	for i := 0; i < 6; i++ {
 		gl.TexImage2D(
 			gl.TEXTURE_CUBE_MAP_POSITIVE_X+uint32(i),
@@ -76,12 +81,12 @@ func (p *PointLightRenderPass) Render(ctx context.RenderContext, rctx *context.R
 	}
 	pointLight = lightContext.PointLights[0]
 
-	gl.Viewport(0, 0, int32(settings.DepthCubeMapWidth), int32(settings.DepthCubeMapHeight))
+	gl.Viewport(0, 0, int32(PointLightCubeMapWidth), int32(PointLightCubeMapHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.PointLightFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	position := pointLight.Position()
-	shadowTransforms := computeCubeMapTransforms(position, settings.DepthCubeMapNear, float64(lightContext.PointLights[0].LightInfo.Range))
+	shadowTransforms := computeCubeMapTransforms(position, PointLightCubeMapNear, float64(lightContext.PointLights[0].LightInfo.Range))
 
 	p.shader.Use()
 	for i, transform := range shadowTransforms {
@@ -134,7 +139,12 @@ func (p *PointLightRenderPass) Render(ctx context.RenderContext, rctx *context.R
 }
 
 func computeCubeMapTransforms(position mgl64.Vec3, near, far float64) []mgl64.Mat4 {
-	projectionMatrix := mgl64.Perspective(mgl64.DegToRad(90), float64(settings.DepthCubeMapWidth)/float64(settings.DepthCubeMapHeight), near, far)
+	projectionMatrix := mgl64.Perspective(
+		mgl64.DegToRad(90),
+		float64(PointLightCubeMapWidth)/float64(PointLightCubeMapHeight),
+		near,
+		far,
+	)
 
 	cubeMapTransforms := []mgl64.Mat4{
 		projectionMatrix.Mul4( // right

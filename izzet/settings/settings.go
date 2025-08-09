@@ -50,10 +50,6 @@ const (
 	// this number should like up with MAX_LIGHTS in the fragment shader
 	MaxLightCount int = 10
 
-	DepthCubeMapWidth  float32 = 4096
-	DepthCubeMapHeight float32 = 4096
-	DepthCubeMapNear   float64 = 1
-
 	// shadow map properties
 	ShadowmapZOffset float64 = 0 // Z offset relative to the light's view. if this is too small, objects behind a camera may fail to cast shadows
 	// ShadowMapDistanceFactor float64 = .4 // proportion of view fustrum to include in shadow cuboid

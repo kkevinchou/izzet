@@ -39,9 +39,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
-	if g.RuntimeConfig().EnableSpatialPartition {
-		g.handleSpatialPartition()
-	}
+	g.handleSpatialPartition()
 
 	if g.AppMode() == types.AppModePlay {
 		for _, s := range g.playModeSystems {

@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/kitolib/shaders"
 )
@@ -60,7 +61,7 @@ var (
 	debugVertexCount int32
 )
 
-func (r *RenderSystem) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, nm *navmesh.NavigationMesh) {
+func (r *RenderSystem) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		start := time.Now()
 		navmeshVAOCache, navmeshVertexCount = r.createDetailedMeshVAO(nm, colorStyleBlue)
@@ -206,7 +207,7 @@ func (r *RenderSystem) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32
 	return vao, int32(len(positions))
 }
 
-func (r *RenderSystem) drawContour(shaderManager *shaders.ShaderManager, viewerContext ViewerContext, vao uint32, count int32) {
+func (r *RenderSystem) drawContour(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, vao uint32, count int32) {
 	shader := shaderManager.GetShaderProgram("line")
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))

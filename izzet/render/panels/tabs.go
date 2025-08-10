@@ -27,10 +27,6 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext) {
 			stats(app, renderContext)
 			imgui.EndTabItem()
 		}
-		// if imgui.BeginTabItem("HUD") {
-		// 	hud(app, renderContext)
-		// 	imgui.EndTabItem()
-		// }
 		if app.RuntimeConfig().WindowEnablePostProcessing {
 			if imgui.BeginTabItem("Rendering") {
 				rendering(app)

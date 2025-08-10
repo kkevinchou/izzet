@@ -51,12 +51,22 @@ const (
 	uiWidthRatio float32 = 0.2
 )
 
+var (
+	InActiveColorBg      imgui.Vec4 = imgui.Vec4{X: .1, Y: .1, Z: 0.1, W: 1}
+	ActiveColorBg        imgui.Vec4 = imgui.Vec4{X: .3, Y: .3, Z: 0.3, W: 1}
+	HoverColorBg         imgui.Vec4 = imgui.Vec4{X: .25, Y: .25, Z: 0.25, W: 1}
+	InActiveColorControl imgui.Vec4 = imgui.Vec4{X: .4, Y: .4, Z: 0.4, W: 1}
+	HoverColorControl    imgui.Vec4 = imgui.Vec4{X: .45, Y: .45, Z: 0.45, W: 1}
+	ActiveColorControl   imgui.Vec4 = imgui.Vec4{X: .5, Y: .5, Z: 0.5, W: 1}
+	HeaderColor          imgui.Vec4 = imgui.Vec4{X: 0.3, Y: 0.3, Z: 0.3, W: 1}
+	HoveredHeaderColor   imgui.Vec4 = imgui.Vec4{X: 0.4, Y: 0.4, Z: 0.4, W: 1}
+	TitleColor           imgui.Vec4 = imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 1}
+)
+
 type RenderSystem struct {
-	app renderiface.App
-	// world         GameWorld
+	app           renderiface.App
 	shaderManager *shaders.ShaderManager
 
-	// shadowMap     *ShadowMap
 	imguiRenderer *renderers.OpenGL3
 
 	redCircleFB         uint32
@@ -111,8 +121,6 @@ type RenderSystem struct {
 
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
-
-	shadowMapRenderDistance float64
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -633,7 +641,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		setupLightingUniforms(shader, lightContext.Lights)
 		shader.SetUniformInt("width", int32(renderContext.Width()))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", r.ShadowFarDistance())
+		shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
@@ -673,73 +681,6 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		}
 
 		nm.Invalidated = false
-	}
-}
-
-// func (r *RenderSystem) drawToShadowDepthMap(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
-// 	r.shadowMap.Prepare()
-// 	defer gl.CullFace(gl.BACK)
-
-// 	if !r.app.RuntimeConfig().EnableShadowMapping {
-// 		// set the depth to be max value to prevent shadow mapping
-// 		gl.ClearDepth(1)
-// 		gl.Clear(gl.DEPTH_BUFFER_BIT)
-// 		return
-// 	}
-
-// 	r.renderGeometryWithoutColor(viewerContext, renderableEntities)
-// }
-
-func (r *RenderSystem) ShadowFarDistance() float32 {
-	return r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
-}
-
-func (r *RenderSystem) renderGeometryWithoutColor(viewerContext context.ViewerContext, renderableEntities []*entities.Entity) {
-	shader := r.shaderManager.GetShaderProgram("modelgeo")
-	shader.Use()
-
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-	for _, entity := range renderableEntities {
-		if entity.MeshComponent == nil {
-			continue
-		}
-
-		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
-			continue
-		}
-
-		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
-			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
-			// if animationTransforms is nil, the shader will execute reading into invalid memory
-			// so, we need to explicitly guard for this
-			if animationTransforms == nil {
-				panic("animationTransforms not found")
-			}
-			for i := 0; i < len(animationTransforms); i++ {
-				shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-			}
-		} else {
-			shader.SetUniformInt("isAnimated", 0)
-		}
-
-		modelMatrix := entities.WorldTransform(entity)
-		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
-
-		primitives := r.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-		for _, p := range primitives {
-			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
-
-			gl.BindVertexArray(p.GeometryVAO)
-			r.iztDrawElements(int32(len(p.Primitive.VertexIndices)))
-		}
-	}
-
-	if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 {
-		r.drawBatches(shader)
-		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
@@ -988,7 +929,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", r.ShadowFarDistance())
+	shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
@@ -1072,7 +1013,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", r.ShadowFarDistance())
+		shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
@@ -1277,14 +1218,6 @@ func initOpenGLRenderSettings() {
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
-var (
-	InActiveColorBg      imgui.Vec4 = imgui.Vec4{X: .1, Y: .1, Z: 0.1, W: 1}
-	ActiveColorBg        imgui.Vec4 = imgui.Vec4{X: .3, Y: .3, Z: 0.3, W: 1}
-	HoverColorBg         imgui.Vec4 = imgui.Vec4{X: .25, Y: .25, Z: 0.25, W: 1}
-	InActiveColorControl imgui.Vec4 = imgui.Vec4{X: .4, Y: .4, Z: 0.4, W: 1}
-	HoverColorControl    imgui.Vec4 = imgui.Vec4{X: .45, Y: .45, Z: 0.45, W: 1}
-	ActiveColorControl   imgui.Vec4 = imgui.Vec4{X: .5, Y: .5, Z: 0.5, W: 1}
-	HeaderColor          imgui.Vec4 = imgui.Vec4{X: 0.3, Y: 0.3, Z: 0.3, W: 1}
-	HoveredHeaderColor   imgui.Vec4 = imgui.Vec4{X: 0.4, Y: 0.4, Z: 0.4, W: 1}
-	TitleColor           imgui.Vec4 = imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 1}
-)
+func (r *RenderSystem) shadowFarDistance() float32 {
+	return r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
+}

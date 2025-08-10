@@ -31,14 +31,14 @@ type RenderContext struct {
 	fovY        float64
 
 	BatchRenders []assets.Batch
+
+	// entities
+	ShadowCastingEntities []*entities.Entity
+	RenderableEntities    []*entities.Entity
 }
 
 // intermediate rendering properties
 type RenderPassContext struct {
-	// entities
-	ShadowCastingEntities []*entities.Entity
-	RenderableEntities    []*entities.Entity
-
 	// Gpass
 	GeometryFBO      uint32
 	GPositionTexture uint32

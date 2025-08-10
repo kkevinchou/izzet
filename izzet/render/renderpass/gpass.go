@@ -77,7 +77,7 @@ func (p *GBufferPass) Render(
 	p.shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	p.shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for _, entity := range rctx.RenderableEntities {
+	for _, entity := range ctx.RenderableEntities {
 		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
 			continue
 		}

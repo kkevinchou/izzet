@@ -103,7 +103,7 @@ func (p *PointLightRenderPass) Render(
 	}
 	p.shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
-	for _, entity := range rctx.RenderableEntities {
+	for _, entity := range ctx.RenderableEntities {
 		if entity == nil || entity.MeshComponent == nil {
 			continue
 		}

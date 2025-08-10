@@ -327,8 +327,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
-	r.renderPassContext.RenderableEntities = renderableEntities
-	r.renderPassContext.ShadowCastingEntities = shadowEntities
+	renderContext.RenderableEntities = renderableEntities
+	renderContext.ShadowCastingEntities = shadowEntities
 
 	start = time.Now()
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))

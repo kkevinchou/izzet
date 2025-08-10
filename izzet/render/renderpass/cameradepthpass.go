@@ -42,5 +42,5 @@ func (p *CameraDepthRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
-	renderGeometryWithoutColor(p.app, p.shader, rctx.RenderableEntities, viewerContext, ctx)
+	renderGeometryWithoutColor(p.app, p.shader, ctx.RenderableEntities, viewerContext, ctx)
 }

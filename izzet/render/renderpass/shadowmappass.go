@@ -71,5 +71,5 @@ func (p *ShadowMapRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
-	renderGeometryWithoutColor(lightViewerContext, p.shader, p.app, ctx, rctx.ShadowCastingEntities)
+	renderGeometryWithoutColor(p.app, p.shader, rctx.ShadowCastingEntities, lightViewerContext, ctx)
 }

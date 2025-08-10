@@ -188,16 +188,16 @@ func createNDCQuadVAO() uint32 {
 }
 
 func renderGeometryWithoutColor(
-	viewerContext context.ViewerContext,
-	shader *shaders.ShaderProgram,
 	app renderiface.App,
+	shader *shaders.ShaderProgram,
+	ents []*entities.Entity,
+	viewerContext context.ViewerContext,
 	renderContext context.RenderContext,
-	renderableEntities []*entities.Entity,
 ) {
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for _, entity := range renderableEntities {
+	for _, entity := range ents {
 		if entity.MeshComponent == nil {
 			continue
 		}

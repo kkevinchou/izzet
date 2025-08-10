@@ -31,26 +31,28 @@ func NewGPass(app renderiface.App, sm *shaders.ShaderManager) *GBufferPass {
 }
 
 func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) {
-	// create FBO + 3 render targets
-	geometryTextureFn := textureFn(width, height,
+	fbo, textures := initFrameBuffer(
+		width,
+		height,
 		[]int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat},
 		[]uint32{gPassFormat, gPassFormat, gPassFormat},
 		[]uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT},
+		true,
 	)
-	fbo, textures := initFrameBuffer(geometryTextureFn)
 	ctx.GeometryFBO = fbo
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
 }
 
 func (p *GBufferPass) Resize(width, height int, ctx *context.RenderPassContext) {
-	// re-alloc textures on size change
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.GeometryFBO)
 
-	_, _, textures := textureFn(width, height,
+	textures := createAndBindTextures(
+		width,
+		height,
 		[]int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat},
 		[]uint32{gPassFormat, gPassFormat, gPassFormat},
 		[]uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT},
-	)()
+	)
 
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
 }

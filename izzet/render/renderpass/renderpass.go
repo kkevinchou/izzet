@@ -14,8 +14,6 @@ import (
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
-type TextureFn func() (int, int, []uint32)
-
 // RenderPass is a single step in the frame‐render pipeline.
 type RenderPass interface {
 	// Init is called once at startup (or when switching pipelines)
@@ -35,14 +33,14 @@ type RenderPass interface {
 	)
 }
 
-func initFrameBuffer(tf TextureFn) (uint32, []uint32) {
+func initFrameBuffer(width int, height int, internalFormat []int32, format []uint32, xtype []uint32, includeDepth bool) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	width, height, textures := tf()
 	var drawBuffers []uint32
 
+	textures := createAndBindTextures(width, height, internalFormat, format, xtype)
 	textureCount := len(textures)
 	for i := 0; i < textureCount; i++ {
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
@@ -51,11 +49,13 @@ func initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 
 	gl.DrawBuffers(int32(textureCount), &drawBuffers[0])
 
-	var rbo uint32
-	gl.GenRenderbuffers(1, &rbo)
-	gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
-	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
+	if includeDepth {
+		var rbo uint32
+		gl.GenRenderbuffers(1, &rbo)
+		gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
+		gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
+		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
+	}
 
 	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
 		panic(errors.New("failed to initalize frame buffer"))
@@ -64,12 +64,13 @@ func initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 	return fbo, textures
 }
 
-func initDepthMapFrameBuffer(texture uint32) uint32 {
+func initDepthOnlyFrameBuffer(width, height int) (uint32, uint32) {
 	var depthMapFBO uint32
 	gl.GenFramebuffers(1, &depthMapFBO)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, depthMapFBO)
 
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0)
+	texture := createDepthTexture(width, height)
+
 	gl.DrawBuffer(gl.NONE)
 	gl.ReadBuffer(gl.NONE)
 
@@ -77,7 +78,7 @@ func initDepthMapFrameBuffer(texture uint32) uint32 {
 		panic("failed to initialize shadow map frame buffer - in the past this was due to an overly large shadow map dimension configuration")
 	}
 
-	return depthMapFBO
+	return depthMapFBO, texture
 }
 
 func createDepthTexture(width, height int) uint32 {
@@ -92,45 +93,22 @@ func createDepthTexture(width, height int) uint32 {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
+	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0)
+
 	return texture
 }
 
-func initFrameBufferNoDepth(tf TextureFn) (uint32, []uint32) {
-	var fbo uint32
-	gl.GenFramebuffers(1, &fbo)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-
-	_, _, textures := tf()
-	var drawBuffers []uint32
-
-	textureCount := len(textures)
-	for i := 0; i < textureCount; i++ {
+func createAndBindTextures(width int, height int, internalFormat []int32, format []uint32, xtype []uint32) []uint32 {
+	count := len(internalFormat)
+	var textures []uint32
+	for i := 0; i < count; i++ {
+		texture := createTexture(width, height, internalFormat[i], format[i], xtype[i], gl.LINEAR)
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-		drawBuffers = append(drawBuffers, attachment)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+
+		textures = append(textures, texture)
 	}
-
-	gl.DrawBuffers(int32(textureCount), &drawBuffers[0])
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return fbo, textures
-}
-
-func textureFn(width int, height int, internalFormat []int32, format []uint32, xtype []uint32) func() (int, int, []uint32) {
-	return func() (int, int, []uint32) {
-		count := len(internalFormat)
-		var textures []uint32
-		for i := 0; i < count; i++ {
-			texture := createTexture(width, height, internalFormat[i], format[i], xtype[i], gl.LINEAR)
-			attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
-
-			textures = append(textures, texture)
-		}
-		return width, height, textures
-	}
+	return textures
 }
 
 func createTexture(width, height int, internalFormat int32, format uint32, xtype uint32, filtering int32) uint32 {

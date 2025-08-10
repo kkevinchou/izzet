@@ -17,8 +17,7 @@ func NewCameraDepthPass(app renderiface.App, sm *shaders.ShaderManager) *CameraD
 }
 
 func (p *CameraDepthRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
-	texture := createDepthTexture(width, height)
-	fbo := initDepthMapFrameBuffer(texture)
+	fbo, texture := initDepthOnlyFrameBuffer(width, height)
 	ctx.CameraDepthFBO = fbo
 	ctx.CameraDepthTexture = texture
 }
@@ -27,7 +26,6 @@ func (p *CameraDepthRenderPass) Resize(width, height int, ctx *context.RenderPas
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.CameraDepthFBO)
 	texture := createDepthTexture(width, height)
 	ctx.CameraDepthTexture = texture
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, ctx.CameraDepthTexture, 0)
 }
 
 func (p *CameraDepthRenderPass) Render(

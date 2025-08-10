@@ -22,7 +22,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -277,38 +276,6 @@ func (r *RenderSystem) drawBatches(
 		gl.BindVertexArray(batch.VAO)
 		r.iztDrawElements(batch.VertexCount)
 	}
-}
-
-func (r *RenderSystem) drawSpherePBR(shader *shaders.ShaderProgram, materialHandle types.MaterialHandle, vao uint32, vertexCount int32) {
-	shader.SetUniformInt("isAnimated", 0)
-	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
-
-	primitiveMaterial := r.app.AssetManager().GetMaterial(materialHandle).Material
-
-	material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
-	shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
-
-	shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-	shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
-	shader.SetUniformFloat("roughness", material.RoughnessFactor)
-	shader.SetUniformFloat("metallic", material.MetalicFactor)
-
-	if material.BaseColorTextureName != "" {
-		shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
-		shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-
-		textureName := material.BaseColorTextureName
-		gl.ActiveTexture(gl.TEXTURE0)
-		var textureID uint32
-		texture := r.app.AssetManager().GetTexture(textureName)
-		textureID = texture.ID
-		gl.BindTexture(gl.TEXTURE_2D, textureID)
-	} else {
-		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-	}
-
-	gl.BindVertexArray(vao)
-	r.iztDrawElements(vertexCount)
 }
 
 func (r *RenderSystem) drawModel(
@@ -746,21 +713,6 @@ func createTexture(width, height int, internalFormat int32, format uint32, xtype
 		int32(width), int32(height), 0, format, xtype, nil)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filtering)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filtering)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-	return texture
-}
-
-func (r *RenderSystem) createDepthTexture(width, height int) uint32 {
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT,
-		int32(width), int32(height), 0, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 

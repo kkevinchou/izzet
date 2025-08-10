@@ -233,25 +233,6 @@ func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
 	r.iztDrawArrays(0, 6)
 }
 
-func (r *RenderSystem) CreateMaterialTextures() {
-	for _, material := range r.app.AssetManager().GetMaterials() {
-		if _, ok := r.materialTextureMap[material.Handle]; ok {
-			continue
-		}
-		r.CreateMaterialTexture(material.Handle)
-	}
-
-	// queued texture creations (e.g. from a material being updated)
-	for _, materialHandle := range r.materialTextureQueue {
-		r.CreateMaterialTexture(materialHandle)
-	}
-	r.materialTextureQueue = []types.MaterialHandle{}
-}
-
-func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {
-	r.materialTextureQueue = append(r.materialTextureQueue, handle)
-}
-
 // this might be the most garbage code i've ever written
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	// main render FBO
@@ -322,7 +303,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
 	mr.Inc("render_volumetrics", float64(time.Since(start).Milliseconds()))
 
-	r.CreateMaterialTextures()
+	r.createMaterialTextures()
 
 	// get the position and rotation of either the player camera or editor camera
 	var position mgl64.Vec3
@@ -350,7 +331,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.renderPassContext.ShadowCastingEntities = shadowEntities
 
 	start = time.Now()
-	// r.drawToShadowDepthMap(lightViewerContext, shadowEntities)
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// RENDER PASSES
@@ -1220,4 +1200,23 @@ func initOpenGLRenderSettings() {
 
 func (r *RenderSystem) shadowFarDistance() float32 {
 	return r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
+}
+
+func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {
+	r.materialTextureQueue = append(r.materialTextureQueue, handle)
+}
+
+func (r *RenderSystem) createMaterialTextures() {
+	for _, material := range r.app.AssetManager().GetMaterials() {
+		if _, ok := r.materialTextureMap[material.Handle]; ok {
+			continue
+		}
+		r.CreateMaterialTexture(material.Handle)
+	}
+
+	// queued texture creations (e.g. from a material being updated)
+	for _, materialHandle := range r.materialTextureQueue {
+		r.CreateMaterialTexture(materialHandle)
+	}
+	r.materialTextureQueue = []types.MaterialHandle{}
 }

@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/render/context"
@@ -85,7 +82,9 @@ func (p *MainRenderPass) Render(
 	rutils.TimeFunc("render_skybox", func() { p.drawSkybox(ctx, viewerContext) })
 
 	// models
-	rutils.TimeFunc("render_main", func() { p.renderModels(viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities) })
+	rutils.TimeFunc("render_main", func() {
+		drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities)
+	})
 
 	// colliders
 	if p.app.RuntimeConfig().ShowColliders {
@@ -309,259 +308,6 @@ func (p *MainRenderPass) drawNonEntity(
 
 				rutils.DrawLineGroup(fmt.Sprintf("web_%d", len(lines)), shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
 			}
-		}
-	}
-}
-
-func (p *MainRenderPass) renderModels(
-	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
-	renderContext context.RenderContext,
-	renderPassContext *context.RenderPassContext,
-	renderableEntities []*entities.Entity,
-) {
-	shader := p.sm.GetShaderProgram("modelpbr")
-	shader.Use()
-
-	if p.app.RuntimeConfig().FogEnabled {
-		shader.SetUniformInt("fog", 1)
-	} else {
-		shader.SetUniformInt("fog", 0)
-	}
-
-	var fog int32 = 0
-	if p.app.RuntimeConfig().FogDensity != 0 {
-		fog = 1
-	}
-	shader.SetUniformInt("fog", fog)
-	shader.SetUniformInt("fogDensity", p.app.RuntimeConfig().FogDensity)
-
-	shader.SetUniformInt("width", int32(renderContext.Width()))
-	shader.SetUniformInt("height", int32(renderContext.Height()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	shader.SetUniformFloat("ambientFactor", p.app.RuntimeConfig().AmbientFactor)
-	shader.SetUniformInt("shadowMap", 31)
-	shader.SetUniformInt("depthCubeMap", 30)
-	shader.SetUniformInt("cameraDepthMap", 29)
-	shader.SetUniformInt("ambientOcclusion", 28)
-	if p.app.RuntimeConfig().EnableSSAO {
-		shader.SetUniformInt("enableAmbientOcclusion", 1)
-	} else {
-		shader.SetUniformInt("enableAmbientOcclusion", 0)
-	}
-
-	shader.SetUniformFloat("near", p.app.RuntimeConfig().Near)
-	shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
-	shader.SetUniformFloat("bias", p.app.RuntimeConfig().PointLightBias)
-	if len(lightContext.PointLights) > 0 {
-		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-	}
-	shader.SetUniformInt("hasColorOverride", 0)
-
-	setupLightingUniforms(shader, lightContext.Lights)
-
-	gl.ActiveTexture(gl.TEXTURE28)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.SSAOBlurTexture)
-
-	gl.ActiveTexture(gl.TEXTURE29)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
-
-	gl.ActiveTexture(gl.TEXTURE30)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
-
-	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
-
-	var entityCount int
-	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
-			continue
-		}
-
-		if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.Static {
-			continue
-		}
-
-		if entity.MeshComponent.InvisibleToPlayerOwner && p.app.GetPlayerEntity().GetID() == entity.GetID() {
-			continue
-		}
-
-		entityCount++
-
-		shader.SetUniformUInt("entityID", uint32(entity.ID))
-
-		p.drawModel(
-			shader,
-			entity,
-		)
-	}
-
-	p.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
-
-	if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
-		shader.SetUniformInt("hasColorOverride", 0)
-		shader = p.sm.GetShaderProgram("batch")
-		shader.Use()
-
-		if p.app.RuntimeConfig().FogEnabled {
-			shader.SetUniformInt("fog", 1)
-		} else {
-			shader.SetUniformInt("fog", 0)
-		}
-
-		var fog int32 = 0
-		if p.app.RuntimeConfig().FogDensity != 0 {
-			fog = 1
-		}
-		shader.SetUniformInt("fog", fog)
-		shader.SetUniformInt("fogDensity", p.app.RuntimeConfig().FogDensity)
-
-		shader.SetUniformInt("width", int32(renderContext.Width()))
-		shader.SetUniformInt("height", int32(renderContext.Height()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		shader.SetUniformFloat("ambientFactor", p.app.RuntimeConfig().AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformInt("cameraDepthMap", 29)
-		shader.SetUniformInt("ambientOcclusion", 28)
-		if p.app.RuntimeConfig().EnableSSAO {
-			shader.SetUniformInt("enableAmbientOcclusion", 1)
-		} else {
-			shader.SetUniformInt("enableAmbientOcclusion", 0)
-		}
-
-		shader.SetUniformFloat("near", p.app.RuntimeConfig().Near)
-		shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("bias", p.app.RuntimeConfig().PointLightBias)
-		if len(lightContext.PointLights) > 0 {
-			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-		}
-		shader.SetUniformInt("hasColorOverride", 0)
-
-		setupLightingUniforms(shader, lightContext.Lights)
-
-		gl.ActiveTexture(gl.TEXTURE28)
-		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.SSAOBlurTexture)
-
-		gl.ActiveTexture(gl.TEXTURE29)
-		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
-
-		gl.ActiveTexture(gl.TEXTURE30)
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
-
-		gl.ActiveTexture(gl.TEXTURE31)
-		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
-
-		drawBatches(p.app, renderContext, shader)
-		p.app.MetricsRegistry().Inc("draw_entity_count", 1)
-	}
-}
-
-func (p *MainRenderPass) drawModel(
-	shader *shaders.ShaderProgram,
-	entity *entities.Entity,
-) {
-	var animationPlayer *animation.AnimationPlayer
-	if entity.Animation != nil {
-		animationPlayer = entity.Animation.AnimationPlayer
-	}
-
-	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
-		shader.SetUniformInt("isAnimated", 1)
-		animationTransforms := animationPlayer.AnimationTransforms()
-
-		// if animationTransforms is nil, the shader will execute reading into invalid memory
-		// so, we need to explicitly guard for this
-		if animationTransforms == nil {
-			panic("animationTransforms not found")
-		}
-		for i := 0; i < len(animationTransforms); i++ {
-			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
-		}
-	} else {
-		shader.SetUniformInt("isAnimated", 0)
-	}
-
-	// THE HOTTEST CODE PATH IN THE ENGINE
-	primitives := p.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-	if entity.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
-		shader.SetUniformInt("repeatTexture", 1)
-	} else {
-		shader.SetUniformInt("repeatTexture", 0)
-	}
-	for _, prim := range primitives {
-		materialHandle := prim.MaterialHandle
-		if entity.Material != nil {
-			materialHandle = entity.Material.MaterialHandle
-		}
-		primitiveMaterial := p.app.AssetManager().GetMaterial(materialHandle).Material
-		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
-
-		if material.BaseColorTextureName != "" {
-			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
-			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
-
-			textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
-			gl.ActiveTexture(gl.TEXTURE0)
-			var textureID uint32
-			texture := p.app.AssetManager().GetTexture(textureName)
-			textureID = texture.ID
-			gl.BindTexture(gl.TEXTURE_2D, textureID)
-		} else {
-			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
-		}
-
-		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
-		shader.SetUniformFloat("roughness", material.RoughnessFactor)
-		shader.SetUniformFloat("metallic", material.MetalicFactor)
-		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(entity.Position()))
-		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(entity.Scale()))
-
-		modelMatrix := entities.WorldTransform(entity)
-		var modelMat mgl32.Mat4
-
-		// apply smooth blending between mispredicted position and actual real position
-		if entity.RenderBlend != nil && entity.RenderBlend.Active {
-			deltaMs := time.Since(entity.RenderBlend.StartTime).Milliseconds()
-			t := apputils.RenderBlendMath(deltaMs)
-
-			blendedPosition := entity.Position().Sub(entity.RenderBlend.BlendStartPosition).Mul(t).Add(entity.RenderBlend.BlendStartPosition)
-
-			translationMatrix := mgl64.Translate3D(blendedPosition[0], blendedPosition[1], blendedPosition[2])
-			rotationMatrix := entity.GetLocalRotation().Mat4()
-			scale := entity.Scale()
-			scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
-			modelMatrix = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
-
-			if deltaMs >= int64(settings.RenderBlendDurationMilliseconds) {
-				entity.RenderBlend.Active = false
-			}
-		}
-
-		modelMat = utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
-
-		shader.SetUniformMat4("model", modelMat)
-
-		gl.BindVertexArray(prim.VAO)
-		if modelMat.Det() < 0 {
-			// from the gltf spec:
-			// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),
-			// the determinant of the node’s global transform defines the winding order of that primitive. If the determinant
-			// is a positive value, the winding order triangle faces is counterclockwise; in the opposite case, the winding
-			// order is clockwise.
-			gl.FrontFace(gl.CW)
-		}
-		rutils.IztDrawElements(int32(len(prim.Primitive.VertexIndices)))
-		if modelMat.Det() < 0 {
-			gl.FrontFace(gl.CCW)
 		}
 	}
 }

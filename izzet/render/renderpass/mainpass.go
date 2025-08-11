@@ -15,6 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -31,6 +32,16 @@ var (
 type MainRenderPass struct {
 	app renderiface.App
 	sm  *shaders.ShaderManager
+
+	// circle textures
+	redCircleFB         uint32
+	redCircleTexture    uint32
+	greenCircleFB       uint32
+	greenCircleTexture  uint32
+	blueCircleFB        uint32
+	blueCircleTexture   uint32
+	yellowCircleFB      uint32
+	yellowCircleTexture uint32
 }
 
 func NewMainPass(app renderiface.App, sm *shaders.ShaderManager) *MainRenderPass {
@@ -42,6 +53,14 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 	ctx.MainFBO = fbo
 	ctx.MainTexture = textures[0]
 	ctx.MainColorPickingTexture = textures[1]
+
+	// init textures
+	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
+	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
+	p.greenCircleFB, p.greenCircleTexture = createCircleTexture(1024, 1024)
+	p.blueCircleFB, p.blueCircleTexture = createCircleTexture(1024, 1024)
+	p.yellowCircleFB, p.yellowCircleTexture = createCircleTexture(1024, 1024)
+	p.initializeCircleTextures()
 }
 
 func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
@@ -62,6 +81,8 @@ func (p *MainRenderPass) Render(
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+	mr := p.app.MetricsRegistry()
+
 	// skybox
 	p.drawSkybox(ctx, viewerContext)
 
@@ -79,6 +100,12 @@ func (p *MainRenderPass) Render(
 
 	// annotations
 	p.drawAnnotations(viewerContext, lightContext, ctx)
+
+	// gizmos
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	start := time.Now()
+	p.renderGizmos(viewerContext, ctx)
+	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 }
 
 func (p *MainRenderPass) drawColliders(
@@ -812,4 +839,83 @@ func (p *MainRenderPass) drawSpatialPartition(viewerContext context.ViewerContex
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	rutils.DrawLineGroup("spatial_partition", shader, allLines, thickness, color)
+}
+
+func (p *MainRenderPass) renderGizmos(viewerContext context.ViewerContext, renderContext context.RenderContext) {
+	if p.app.SelectedEntity() == nil {
+		return
+	}
+
+	entity := p.app.World().GetEntityByID(p.app.SelectedEntity().ID)
+	position := entity.Position()
+
+	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+		p.drawTranslationGizmo(&viewerContext, p.sm.GetShaderProgram("flat"), position)
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+		p.drawCircleGizmo(&viewerContext, position, renderContext)
+	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+		p.drawScaleGizmo(&viewerContext, p.sm.GetShaderProgram("flat"), position)
+	}
+}
+
+func createCircleTexture(width, height int) (uint32, uint32) {
+	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE}, true)
+	return fbo, textures[0]
+}
+
+// setup reusale circle textures
+func (p *MainRenderPass) initializeCircleTextures() {
+	gl.Viewport(0, 0, 1024, 1024)
+	shader := p.sm.GetShaderProgram("unit_circle")
+	shader.Use()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, p.redCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{1, 0, 0, 1})
+	drawCircle()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, p.greenCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{0, 1, 0, 1})
+	drawCircle()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, p.blueCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{0, 0, 1, 1})
+	drawCircle()
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, p.yellowCircleFB)
+	gl.ClearColor(0, 0.5, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	shader.SetUniformVec4("color", mgl32.Vec4{1, 1, 0, 1})
+	drawCircle()
+}
+
+func drawCircle() {
+	var vertices []float32 = []float32{
+		-1, -1, 0,
+		1, -1, 0,
+		1, 1, 0,
+		1, 1, 0,
+		-1, 1, 0,
+		-1, -1, 0,
+	}
+
+	var vbo, vao uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	gl.BindVertexArray(vao)
+
+	rutils.IztDrawArrays(0, 6)
 }

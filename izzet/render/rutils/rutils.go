@@ -26,11 +26,13 @@ var singleSidedQuadVAO uint32
 var pickingBuffer []byte
 var runtimeConfig *runtimeconfig.RuntimeConfig
 var internedQuadVAOPositionUV uint32
+var cubeVAOs map[string]uint32
 
 func init() {
 	lineCache = map[string][]mgl64.Vec3{}
 	cubeCache = map[string][]mgl64.Vec3{}
 	triangleVAOCache = map[string]TriangleVAO{}
+	cubeVAOs = map[string]uint32{}
 }
 
 // global setter for convenience
@@ -328,6 +330,49 @@ func getInternedQuadVAOPositionUV() uint32 {
 	return internedQuadVAOPositionUV
 }
 
+var internedQuadVAOPosition uint32
+
+func GetInternedQuadVAOPosition() uint32 {
+	if internedQuadVAOPosition == 0 {
+		var internedQuadVBO uint32
+		var internedQuadVertices = []float32{
+			-1, -1, 0,
+			1, -1, 0,
+			1, 1, 0,
+			1, 1, 0,
+			-1, 1, 0,
+			-1, -1, 0,
+		}
+
+		var backVertices []float32 = []float32{
+			1, 1, 0,
+			1, -1, 0,
+			-1, -1, 0,
+			-1, -1, 0,
+			-1, 1, 0,
+			1, 1, 0,
+		}
+
+		// always add the double sided vertices
+		// when a draw request comes in, if doubleSided is false we only draw the first half of the vertices
+		// this is wasteful for scenarios where we don't need all vertices
+		internedQuadVertices = append(internedQuadVertices, backVertices...)
+
+		// var vbo, dtqVao uint32
+		apputils.GenBuffers(1, &internedQuadVBO)
+		gl.GenVertexArrays(1, &internedQuadVAOPosition)
+
+		gl.BindVertexArray(internedQuadVAOPosition)
+		gl.BindBuffer(gl.ARRAY_BUFFER, internedQuadVBO)
+		gl.BufferData(gl.ARRAY_BUFFER, len(internedQuadVertices)*4, gl.Ptr(internedQuadVertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+		gl.EnableVertexAttribArray(0)
+	}
+
+	return internedQuadVAOPosition
+}
+
 func DrawBillboardTexture(
 	texture uint32,
 	length float32,
@@ -411,4 +456,109 @@ func DrawAABB(shader *shaders.ShaderProgram, viewerContext context.ViewerContext
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	DrawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), shader, allLines, thickness, color)
+}
+
+func GetCubeVAO(length float32, includeNormals bool) uint32 {
+	hash := fmt.Sprintf("%.2f_%t", length, includeNormals)
+	if _, ok := cubeVAOs[hash]; !ok {
+		vao := initCubeVAO(length, includeNormals)
+		cubeVAOs[hash] = vao
+	}
+	return cubeVAOs[hash]
+}
+
+func initCubeVAO(length float32, includeNormals bool) uint32 {
+	ht := length / 2
+
+	allVertexAttribs := []float32{
+		// front
+		-ht, -ht, ht, 0, 0, -1,
+		ht, -ht, ht, 0, 0, -1,
+		ht, ht, ht, 0, 0, -1,
+
+		ht, ht, ht, 0, 0, -1,
+		-ht, ht, ht, 0, 0, -1,
+		-ht, -ht, ht, 0, 0, -1,
+
+		// back
+		ht, ht, -ht, 0, 0, 1,
+		ht, -ht, -ht, 0, 0, 1,
+		-ht, -ht, -ht, 0, 0, 1,
+
+		-ht, -ht, -ht, 0, 0, 1,
+		-ht, ht, -ht, 0, 0, 1,
+		ht, ht, -ht, 0, 0, 1,
+
+		// right
+		ht, -ht, ht, 1, 0, 0,
+		ht, -ht, -ht, 1, 0, 0,
+		ht, ht, -ht, 1, 0, 0,
+
+		ht, ht, -ht, 1, 0, 0,
+		ht, ht, ht, 1, 0, 0,
+		ht, -ht, ht, 1, 0, 0,
+
+		// left
+		-ht, ht, -ht, -1, 0, 0,
+		-ht, -ht, -ht, -1, 0, 0,
+		-ht, -ht, ht, -1, 0, 0,
+
+		-ht, -ht, ht, -1, 0, 0,
+		-ht, ht, ht, -1, 0, 0,
+		-ht, ht, -ht, -1, 0, 0,
+
+		// top
+		ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, ht, 0, 1, 0,
+
+		-ht, ht, ht, 0, 1, 0,
+		ht, ht, -ht, 0, 1, 0,
+		-ht, ht, -ht, 0, 1, 0,
+
+		// bottom
+		-ht, -ht, ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, ht, 0, -1, 0,
+
+		-ht, -ht, -ht, 0, -1, 0,
+		ht, -ht, -ht, 0, -1, 0,
+		-ht, -ht, ht, 0, -1, 0,
+	}
+
+	var vertices []float32
+
+	totalVertexAttributesSize := 6
+	actualVertexAttributesSize := totalVertexAttributesSize
+	if !includeNormals {
+		actualVertexAttributesSize -= 3
+	}
+
+	for i := 0; i < len(allVertexAttribs); i += totalVertexAttributesSize {
+		for j := range actualVertexAttributesSize {
+			vertices = append(vertices, allVertexAttribs[i+j])
+		}
+	}
+
+	var vbo, vao uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	ptrOffset := 0
+	floatSize := 4
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), nil)
+	gl.EnableVertexAttribArray(0)
+
+	if includeNormals {
+		ptrOffset += 3
+		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(actualVertexAttributesSize*floatSize), gl.PtrOffset(ptrOffset*floatSize))
+		gl.EnableVertexAttribArray(1)
+	}
+
+	return vao
 }

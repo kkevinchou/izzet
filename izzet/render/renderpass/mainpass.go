@@ -113,13 +113,21 @@ func (p *MainRenderPass) Render(
 	rutils.TimeFunc("render_gizmos", func() { p.renderGizmos(viewerContext, ctx) })
 
 	if p.app.RuntimeConfig().EnableAntialiasing {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.MainMultisampleFBO)
-
+		// blit rendered image
 		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, rctx.MainMultisampleFBO)
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, rctx.MainFBO)
 
 		gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
+
+		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+
+		// blit color picking
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, rctx.MainMultisampleFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, rctx.MainFBO)
+
+		gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
+		gl.DrawBuffer(gl.COLOR_ATTACHMENT1)
 
 		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
 	}

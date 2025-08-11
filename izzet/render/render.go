@@ -285,6 +285,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
 	renderContext.ShadowDistance = r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
+	renderContext.BatchRenders = r.batchRenders
 
 	start = time.Now()
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))

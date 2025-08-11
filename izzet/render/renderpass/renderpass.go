@@ -152,17 +152,9 @@ func createAndBindTexturesMultisample(width int, height int, format []uint32) []
 	count := len(format)
 	var textures []uint32
 	for i := 0; i < count; i++ {
+		texture := createTextureMultisample(width, height, format[i], gl.LINEAR)
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-		var texture uint32
-		if i == 0 {
-			// only multi sample the color texture
-			texture = createTextureMultisample(width, height, format[i], gl.LINEAR)
-			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D_MULTISAMPLE, texture, 0)
-		} else {
-			// assuming this is the color picking texture
-			texture = createTexture(width, height, gl.R32UI, gl.RED_INTEGER, gl.UNSIGNED_BYTE, gl.LINEAR)
-			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
-		}
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D_MULTISAMPLE, texture, 0)
 
 		textures = append(textures, texture)
 	}

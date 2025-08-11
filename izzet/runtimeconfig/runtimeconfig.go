@@ -138,6 +138,8 @@ type RuntimeConfig struct {
 	TestMetallic  float32
 	TestRoughness float32
 	TestAO        float32
+
+	EnableAntialiasing bool
 }
 
 type CloudTextureChannel struct {
@@ -306,5 +308,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		TestMetallic:               0,
 		TestRoughness:              1,
 		TestAO:                     1,
+		EnableAntialiasing:         false,
 	}
 }

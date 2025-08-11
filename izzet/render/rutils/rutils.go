@@ -2,6 +2,7 @@ package rutils
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -9,6 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -602,4 +604,11 @@ func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()
+}
+
+func TimeFunc(name string, f func()) {
+	mr := globals.GetClientMetricsRegistry()
+	start := time.Now()
+	f()
+	mr.Inc(name, float64(time.Since(start).Milliseconds()))
 }

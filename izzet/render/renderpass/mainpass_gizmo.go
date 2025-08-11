@@ -191,10 +191,3 @@ func (p *MainRenderPass) drawCircleGizmo(viewerContext *context.ViewerContext, p
 		rutils.DrawTexturedQuad(viewerContext, p.sm, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
 	}
 }
-
-func worldToNDCPosition(viewerContext context.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
-	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
-	behind := screenPos.Z() < 0
-	screenPos = screenPos.Mul(1 / screenPos.W())
-	return screenPos.Vec2(), behind
-}

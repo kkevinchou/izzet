@@ -81,14 +81,11 @@ func (p *MainRenderPass) Render(
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	mr := p.app.MetricsRegistry()
-
 	// skybox
-	p.drawSkybox(ctx, viewerContext)
+	rutils.TimeFunc("render_skybox", func() { p.drawSkybox(ctx, viewerContext) })
 
 	// models
-	shader := p.sm.GetShaderProgram("modelpbr")
-	p.renderModels(shader, viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities)
+	rutils.TimeFunc("render_main", func() { p.renderModels(viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities) })
 
 	// colliders
 	if p.app.RuntimeConfig().ShowColliders {
@@ -99,13 +96,11 @@ func (p *MainRenderPass) Render(
 	p.drawNonEntity(viewerContext, ctx)
 
 	// annotations
-	p.drawAnnotations(viewerContext, lightContext, ctx)
+	rutils.TimeFunc("render_annotations", func() { p.drawAnnotations(viewerContext, lightContext, ctx) })
 
 	// gizmos
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	start := time.Now()
-	p.renderGizmos(viewerContext, ctx)
-	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
+	rutils.TimeFunc("render_gizmos", func() { p.renderGizmos(viewerContext, ctx) })
 }
 
 func (p *MainRenderPass) drawColliders(
@@ -318,13 +313,14 @@ func (p *MainRenderPass) drawNonEntity(
 	}
 }
 
-func (p *MainRenderPass) renderModels(shader *shaders.ShaderProgram,
+func (p *MainRenderPass) renderModels(
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	renderableEntities []*entities.Entity,
 ) {
+	shader := p.sm.GetShaderProgram("modelpbr")
 	shader.Use()
 
 	if p.app.RuntimeConfig().FogEnabled {

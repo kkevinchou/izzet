@@ -40,7 +40,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.InitColumns()
 
 		// Frame Profiling
-		panelutils.SetupRow("Render Main Color Buffer", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_main_color_buffer")))) }, true)
+		panelutils.SetupRow("Render Main Color Buffer", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_main")))) }, true)
 		panelutils.SetupRow("Render Geometry Pass", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_gpass")))) }, true)
 		panelutils.SetupRow("Render SSAO", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_ssao")))) }, true)
 		panelutils.SetupRow("Render Depthmaps", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.GetOneSecondAverage(("render_depthmaps")))) }, true)

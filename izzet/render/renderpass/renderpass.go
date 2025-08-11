@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
@@ -218,4 +219,10 @@ func drawBatches(
 		gl.BindVertexArray(batch.VAO)
 		rutils.IztDrawElements(batch.VertexCount)
 	}
+}
+func worldToNDCPosition(viewerContext context.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
+	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
+	behind := screenPos.Z() < 0
+	screenPos = screenPos.Mul(1 / screenPos.W())
+	return screenPos.Vec2(), behind
 }

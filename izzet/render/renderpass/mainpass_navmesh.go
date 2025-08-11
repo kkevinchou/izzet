@@ -1,4 +1,4 @@
-package render
+package renderpass
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -61,16 +62,16 @@ var (
 	debugVertexCount int32
 )
 
-func (r *RenderSystem) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, nm *navmesh.NavigationMesh) {
+func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		start := time.Now()
-		navmeshVAOCache, navmeshVertexCount = r.createDetailedMeshVAO(nm, colorStyleBlue)
+		navmeshVAOCache, navmeshVertexCount = p.createDetailedMeshVAO(nm, colorStyleBlue)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount = r.createPolygonOutlineVAO(nm, colorStyleBlack)
+		polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleBlack)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		chfVAOCache, chfVertexCount = r.createCompactHeightFieldVAO(nm.CompactHeightField)
+		chfVAOCache, chfVertexCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
 		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
 		start = time.Now()
 		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
@@ -88,15 +89,15 @@ func (r *RenderSystem) drawNavmesh(shaderManager *shaders.ShaderManager, viewerC
 		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
 		fmt.Printf("%.1f seconds to create premerge triangle vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount = r.createPolygonOutlineVAO(nm, colorStyleRegionID)
+		polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleRegionID)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		// debugVAOCache, debugVertexCount = r.createDebugVAO(nm)
 		start = time.Now()
-		detailedMeshVAOCache, detailedMeshVertexCount = r.createDetailedMeshVAO(nm, colorStyleRegionID)
-		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
-		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
-		detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = r.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0.1, 0.1, 0.1})
-		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = r.createDetailedMeshLinesVAO(nm)
+		detailedMeshVAOCache, detailedMeshVertexCount = p.createDetailedMeshVAO(nm, colorStyleRegionID)
+		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = p.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
+		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = p.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
+		detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = p.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0.1, 0.1, 0.1})
+		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = p.createDetailedMeshLinesVAO(nm)
 		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
 		start = time.Now()
 
@@ -107,78 +108,78 @@ func (r *RenderSystem) drawNavmesh(shaderManager *shaders.ShaderManager, viewerC
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionNavMesh {
 		if navmeshVertexCount > 0 {
 			gl.BindVertexArray(navmeshVAOCache)
-			r.iztDrawElements(navmeshVertexCount * 3)
-			r.drawContour(shaderManager, viewerContext, polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount)
+			rutils.IztDrawElements(navmeshVertexCount * 3)
+			p.drawContour(shaderManager, viewerContext, polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount)
 		}
 		if pathVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
+			p.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
 		if chfVertexCount > 0 {
 			gl.BindVertexArray(chfVAOCache)
-			r.iztDrawElements(chfVertexCount * 36)
+			rutils.IztDrawElements(chfVertexCount * 36)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDistanceField {
 		if distanceFieldVertexCount > 0 {
 			gl.BindVertexArray(distanceFieldVAOCache)
-			r.iztDrawElements(distanceFieldVertexCount * 36)
+			rutils.IztDrawElements(distanceFieldVertexCount * 36)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionVoxel {
 		if voxelVAOCacheVertexCount > 0 {
 			gl.BindVertexArray(voxelVAOCache)
-			r.iztDrawElements(voxelVAOCacheVertexCount * 36)
+			rutils.IztDrawElements(voxelVAOCacheVertexCount * 36)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionRawContour {
 		if rawContourVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
+			p.drawContour(shaderManager, viewerContext, rawContourVAOCache, rawContourVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionSimplifiedContour {
 		if simplifiedContourVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
+			p.drawContour(shaderManager, viewerContext, simplifiedContourVAOCache, simplifiedContourVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPremergeTriangles {
 		if premergeTrianglesVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, premergeTrianglesVAOCache, premergeTrianglesVertexCount)
+			p.drawContour(shaderManager, viewerContext, premergeTrianglesVAOCache, premergeTrianglesVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPolygons {
 		if polygonColoredOutlineVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount)
+			p.drawContour(shaderManager, viewerContext, polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount)
 		}
 		if pathVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
+			p.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
 		if detailedMeshLinesVertexCount > 0 {
 			gl.BindVertexArray(detailedMeshVAOCache)
-			r.iztDrawElements(detailedMeshVertexCount * 3)
-			r.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
+			rutils.IztDrawElements(detailedMeshVertexCount * 3)
+			p.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMeshAndSamples {
 		if detailedMeshLinesVertexCount > 0 {
 			gl.BindVertexArray(detailedMeshVAOCache)
-			r.iztDrawElements(detailedMeshVertexCount * 3)
+			rutils.IztDrawElements(detailedMeshVertexCount * 3)
 			gl.BindVertexArray(detailedMeshOutlineSamplesVAOCache)
-			r.iztDrawElements(detailedMeshOutlineSamplesVertexCount * 36)
+			rutils.IztDrawElements(detailedMeshOutlineSamplesVertexCount * 36)
 			gl.BindVertexArray(detailedMeshInteriorSamplesVAOCache)
-			r.iztDrawElements(detailedMeshInteriorSamplesVertexCount * 36)
+			rutils.IztDrawElements(detailedMeshInteriorSamplesVertexCount * 36)
 			gl.BindVertexArray(detailedMeshAllSamplesVAOCache)
-			r.iztDrawElements(detailedMeshAllSamplesVertexCount * 36)
-			r.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
+			rutils.IztDrawElements(detailedMeshAllSamplesVertexCount * 36)
+			p.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
 		}
 		if pathVertexCount > 0 {
-			r.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
+			p.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDebug {
 		if debugVertexCount > 0 {
 			gl.BindVertexArray(debugVAOCache)
-			r.iztDrawElements(debugVertexCount * 36)
+			rutils.IztDrawElements(debugVertexCount * 36)
 		}
 	} else {
 		panic("WAT")
 	}
 }
 
-func (r *RenderSystem) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func (p *MainRenderPass) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 
@@ -207,14 +208,14 @@ func (r *RenderSystem) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32
 	return vao, int32(len(positions))
 }
 
-func (r *RenderSystem) drawContour(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, vao uint32, count int32) {
+func (p *MainRenderPass) drawContour(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, vao uint32, count int32) {
 	shader := shaderManager.GetShaderProgram("line")
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	gl.BindVertexArray(vao)
-	r.iztDrawLines(count)
+	rutils.IztDrawLines(count)
 }
 
 func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
@@ -252,10 +253,10 @@ var colorStyleRegionID colorStyle = 0
 var colorStyleBlue colorStyle = 1
 var colorStyleBlack colorStyle = 2
 
-func (r *RenderSystem) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
+func (p *MainRenderPass) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
 	minVertex := nm.Volume.MinVertex
 
-	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+	debugMap := p.app.RuntimeConfig().DebugBlob1IntMap
 
 	var vertexAttributes []float32
 	for id, poly := range nm.Mesh.Polygons {
@@ -295,7 +296,7 @@ func (r *RenderSystem) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cstyl
 	return createLineVAO(vertexAttributes)
 }
 
-func (r *RenderSystem) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
+func (p *MainRenderPass) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
 	if nm.DetailedMesh == nil || len(nm.DetailedMesh.PolyTriangles) == 0 {
 		return 0, 0
 	}
@@ -303,7 +304,7 @@ func (r *RenderSystem) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle 
 	var triangles [][3]mgl32.Vec3
 	var colors []float32
 
-	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+	debugMap := p.app.RuntimeConfig().DebugBlob1IntMap
 	for j := range len(nm.DetailedMesh.PolyTriangles) {
 		if !debugMap[j] && len(debugMap) > 0 {
 			continue
@@ -341,12 +342,12 @@ func (r *RenderSystem) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle 
 	return vao, int32(len(triangles))
 }
 
-func (r *RenderSystem) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
+func (p *MainRenderPass) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 	if len(nm.DetailedMesh.PolyTriangles) == 0 {
 		return 0, 0
 	}
 
-	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+	debugMap := p.app.RuntimeConfig().DebugBlob1IntMap
 	var vertexAttributes []float32
 
 	for j := range len(nm.DetailedMesh.PolyTriangles) {
@@ -386,13 +387,13 @@ func (r *RenderSystem) createDetailedMeshLinesVAO(nm *navmesh.NavigationMesh) (u
 	return createLineVAO(vertexAttributes)
 }
 
-func (r *RenderSystem) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
+func (p *MainRenderPass) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh, samples [][]float32, color []float32) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 
 	chf := nm.CompactHeightField
 
-	debugMap := r.app.RuntimeConfig().DebugBlob1IntMap
+	debugMap := p.app.RuntimeConfig().DebugBlob1IntMap
 	for j := range len(samples) {
 		if !debugMap[j] && len(debugMap) > 0 {
 			continue
@@ -564,12 +565,12 @@ func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	return vao, int32(len(positions))
 }
 
-func (r *RenderSystem) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
+func (p *MainRenderPass) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
 	var positions []mgl32.Vec3
 	var colors []float32
 	var lengths []float32
 
-	debugSlice := r.app.RuntimeConfig().DebugBlob1IntSlice
+	debugSlice := p.app.RuntimeConfig().DebugBlob1IntSlice
 
 	for x := range chf.Width() {
 		for z := range chf.Height() {

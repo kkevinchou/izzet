@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -82,8 +83,8 @@ func (p *SSAORenderPass) Render(
 	p.shader.SetUniformFloat("radius", p.app.RuntimeConfig().SSAORadius)
 	p.shader.SetUniformFloat("bias", p.app.RuntimeConfig().SSAOBias)
 
-	gl.BindVertexArray(createNDCQuadVAO())
-	iztDrawArrays(p.app, 0, 6)
+	gl.BindVertexArray(rutils.GetNDCQuadVAO())
+	rutils.IztDrawArrays(0, 6)
 
 	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
 }

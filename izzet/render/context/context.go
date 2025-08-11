@@ -35,6 +35,8 @@ type RenderContext struct {
 	// entities
 	ShadowCastingEntities []*entities.Entity
 	RenderableEntities    []*entities.Entity
+
+	ShadowDistance float32
 }
 
 // intermediate rendering properties
@@ -64,6 +66,11 @@ type RenderPassContext struct {
 	// Shadow Map
 	ShadowMapFBO     uint32
 	ShadowMapTexture uint32
+
+	// Main
+	MainFBO                 uint32
+	MainTexture             uint32
+	MainColorPickingTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

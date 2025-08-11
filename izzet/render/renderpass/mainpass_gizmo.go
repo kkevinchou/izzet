@@ -1,4 +1,4 @@
-package render
+package renderpass
 
 import (
 	"fmt"
@@ -8,14 +8,14 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/render/context"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
-func (r *RenderSystem) drawTranslationGizmo(viewerContext *context.ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func (p *MainRenderPass) drawTranslationGizmo(viewerContext *context.ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	colors := map[int]mgl64.Vec3{
 		gizmo.GizmoXAxisPickingID: mgl64.Vec3{1, 0, 0},
 		gizmo.GizmoYAxisPickingID: mgl64.Vec3{0, 0, 1},
@@ -27,7 +27,7 @@ func (r *RenderSystem) drawTranslationGizmo(viewerContext *context.ViewerContext
 	if behind {
 		return
 	}
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+	nearPlanePosition := rutils.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
@@ -47,7 +47,7 @@ func (r *RenderSystem) drawTranslationGizmo(viewerContext *context.ViewerContext
 		}
 
 		// TODO: refactor to do a single draw call
-		r.drawLineGroup(fmt.Sprintf("translation_gizmo_%d", entityID), shader, lines, settings.GizmoAxisThickness, color)
+		rutils.DrawLineGroup(fmt.Sprintf("translation_gizmo_%d", entityID), shader, lines, settings.GizmoAxisThickness, color)
 	}
 
 	planeColor := mgl32.Vec3{189.0 / 255, 24.0 / 255, 0.0 / 255}
@@ -68,9 +68,9 @@ func (r *RenderSystem) drawTranslationGizmo(viewerContext *context.ViewerContext
 	shader.SetUniformMat4("model", quadModelMatrix)
 	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXZAxisPickingID))
 	shader.SetUniformVec3("color", color)
-	quadVAO := getInternedQuadVAOPosition()
+	quadVAO := rutils.GetInternedQuadVAOPosition()
 	gl.BindVertexArray(quadVAO)
-	r.iztDrawArrays(0, 12)
+	rutils.IztDrawArrays(0, 12)
 
 	// handle XY
 	color = planeColor
@@ -85,7 +85,7 @@ func (r *RenderSystem) drawTranslationGizmo(viewerContext *context.ViewerContext
 	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoXYAxisPickingID))
 	shader.SetUniformVec3("color", color)
 	gl.BindVertexArray(quadVAO)
-	r.iztDrawArrays(0, 12)
+	rutils.IztDrawArrays(0, 12)
 
 	// handle YZ
 	color = planeColor
@@ -101,16 +101,16 @@ func (r *RenderSystem) drawTranslationGizmo(viewerContext *context.ViewerContext
 	shader.SetUniformUInt("entityID", uint32(gizmo.GizmoYZAxisPickingID))
 	shader.SetUniformVec3("color", color)
 	gl.BindVertexArray(quadVAO)
-	r.iztDrawArrays(0, 12)
+	rutils.IztDrawArrays(0, 12)
 }
 
-func (r *RenderSystem) drawScaleGizmo(viewerContext *context.ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
+func (p *MainRenderPass) drawScaleGizmo(viewerContext *context.ViewerContext, shader *shaders.ShaderProgram, position mgl64.Vec3) {
 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
 	}
 
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+	nearPlanePosition := rutils.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
@@ -125,7 +125,7 @@ func (r *RenderSystem) drawScaleGizmo(viewerContext *context.ViewerContext, shad
 	}
 	hoverColor := mgl64.Vec3{1, 1, 0}
 
-	cubeVAO := r.getCubeVAO(0.25, false)
+	cubeVAO := rutils.GetCubeVAO(0.25, false)
 
 	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID, gizmo.GizmoAllAxisPickingID}
 	for _, entityID := range axisEntityIDs {
@@ -141,7 +141,7 @@ func (r *RenderSystem) drawScaleGizmo(viewerContext *context.ViewerContext, shad
 
 		if entityID != gizmo.GizmoAllAxisPickingID {
 			// TODO: refactor to do a single draw call
-			r.drawLineGroup(fmt.Sprintf("scale_gizmo_%d", entityID), shader, lines, settings.GizmoAxisThickness, color)
+			rutils.DrawLineGroup(fmt.Sprintf("scale_gizmo_%d", entityID), shader, lines, settings.GizmoAxisThickness, color)
 		}
 
 		cubePosition := renderPosition.Add(axis.Direction)
@@ -149,16 +149,16 @@ func (r *RenderSystem) drawScaleGizmo(viewerContext *context.ViewerContext, shad
 		shader.SetUniformMat4("model", mgl32.Translate3D(float32(cubePosition.X()), float32(cubePosition.Y()), float32(cubePosition.Z())))
 		shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
 		shader.SetUniformFloat("intensity", 1)
-		r.iztDrawArrays(0, 36)
+		rutils.IztDrawArrays(0, 36)
 	}
 }
 
-func (r *RenderSystem) drawCircleGizmo(viewerContext *context.ViewerContext, position mgl64.Vec3, renderContext context.RenderContext) {
+func (p *MainRenderPass) drawCircleGizmo(viewerContext *context.ViewerContext, position mgl64.Vec3, renderContext context.RenderContext) {
 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
 	if behind {
 		return
 	}
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+	nearPlanePosition := rutils.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
@@ -175,61 +175,19 @@ func (r *RenderSystem) drawCircleGizmo(viewerContext *context.ViewerContext, pos
 		gizmo.GizmoZDistancePickingID,
 	}
 
-	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
+	textures := []uint32{p.redCircleTexture, p.greenCircleTexture, p.blueCircleTexture}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+	// gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	for i := 0; i < 3; i++ {
 		modelMatrix := t.Mul4(rotations[i])
 		texture := textures[i]
 		pickingID := pickingIDs[i]
 
 		if pickingID == gizmo.RotationGizmo.HoveredEntityID {
-			texture = r.yellowCircleTexture
+			texture = p.yellowCircleTexture
 		}
 
-		r.drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
+		rutils.DrawTexturedQuad(viewerContext, p.sm, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
 	}
-}
-
-func (r *RenderSystem) drawCircle() {
-	var vertices []float32 = []float32{
-		-1, -1, 0,
-		1, -1, 0,
-		1, 1, 0,
-		1, 1, 0,
-		-1, 1, 0,
-		-1, -1, 0,
-	}
-
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.BindVertexArray(vao)
-
-	r.iztDrawArrays(0, 6)
-}
-
-// computes the near plane position for a given x y coordinate
-func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
-	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
-	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
-
-	return nearPlanePos.Vec3()
-}
-
-func worldToNDCPosition(viewerContext context.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
-	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
-	behind := screenPos.Z() < 0
-	screenPos = screenPos.Mul(1 / screenPos.W())
-	return screenPos.Vec2(), behind
 }

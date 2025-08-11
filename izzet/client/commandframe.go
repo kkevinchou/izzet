@@ -20,6 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -163,7 +164,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 				menuBarSize := float64(render.CalculateMenuBarHeight())
 				yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
 
-				nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+				nearPlanePosition := rutils.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
 				point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
 
 				if success {
@@ -188,7 +189,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			menuBarSize := float64(render.CalculateMenuBarHeight())
 			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
 
-			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			nearPlanePosition := rutils.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
 			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
 
 			if success && g.navMesh != nil {
@@ -218,7 +219,7 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 			menuBarSize := float64(render.CalculateMenuBarHeight())
 			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
 
-			nearPlanePosition := render.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
+			nearPlanePosition := rutils.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
 			camera := g.GetPlayerCamera()
 			position := camera.Position()
 			point, success := g.intersectRayWithEntities(position, nearPlanePosition.Sub(position).Normalize())

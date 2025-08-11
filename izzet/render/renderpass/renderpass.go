@@ -3,14 +3,20 @@ package renderpass
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -126,45 +132,6 @@ func createTexture(width, height int, internalFormat int32, format uint32, xtype
 	return texture
 }
 
-func iztDrawElements(app renderiface.App, count int32) {
-	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
-	app.RuntimeConfig().DrawCount += 1
-	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
-}
-
-func iztDrawArrays(app renderiface.App, first, count int32) {
-	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
-	app.RuntimeConfig().DrawCount += 1
-	gl.DrawArrays(gl.TRIANGLES, first, count)
-}
-
-func createNDCQuadVAO() uint32 {
-	vertices := []float32{
-		-1, -1, 0.0, 0.0,
-		1, -1, 1.0, 0.0,
-		1, 1, 1.0, 1.0,
-		1, 1, 1.0, 1.0,
-		-1, 1, 0.0, 1.0,
-		-1, -1, 0.0, 0.0,
-	}
-
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
-	gl.EnableVertexAttribArray(1)
-
-	return vao
-}
-
 func renderGeometryWithoutColor(
 	app renderiface.App,
 	shader *shaders.ShaderProgram,
@@ -207,7 +174,7 @@ func renderGeometryWithoutColor(
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 
 			gl.BindVertexArray(p.GeometryVAO)
-			iztDrawElements(app, int32(len(p.Primitive.VertexIndices)))
+			rutils.IztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
 	}
 
@@ -255,6 +222,204 @@ func drawBatches(
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
 		gl.BindVertexArray(batch.VAO)
-		iztDrawElements(app, batch.VertexCount)
+		rutils.IztDrawElements(batch.VertexCount)
+	}
+}
+func worldToNDCPosition(viewerContext context.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
+	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
+	behind := screenPos.Z() < 0
+	screenPos = screenPos.Mul(1 / screenPos.W())
+	return screenPos.Vec2(), behind
+}
+
+func drawModels(
+	app renderiface.App,
+	renderShader *shaders.ShaderProgram,
+	batchShader *shaders.ShaderProgram,
+	viewerContext context.ViewerContext,
+	lightContext context.LightContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
+	ents []*entities.Entity,
+) {
+	gl.ActiveTexture(gl.TEXTURE28)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.SSAOBlurTexture)
+
+	gl.ActiveTexture(gl.TEXTURE29)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
+
+	gl.ActiveTexture(gl.TEXTURE30)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
+
+	gl.ActiveTexture(gl.TEXTURE31)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
+
+	renderShader.Use()
+	preModelRenderShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)
+
+	var drawCount int
+	for _, entity := range ents {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.Static {
+			continue
+		}
+		renderShader.SetUniformUInt("entityID", uint32(entity.ID))
+		drawModel(
+			app,
+			renderShader,
+			entity,
+		)
+		drawCount++
+	}
+	app.MetricsRegistry().Inc("draw_entity_count", float64(drawCount))
+
+	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
+		batchShader.Use()
+		preModelRenderShaderSetup(app, batchShader, renderContext, viewerContext, lightContext)
+		drawBatches(app, renderContext, batchShader)
+		app.MetricsRegistry().Inc("draw_entity_count", 1)
+	}
+}
+
+func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, renderContext context.RenderContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
+	if app.RuntimeConfig().FogEnabled {
+		shader.SetUniformInt("fog", 1)
+	} else {
+		shader.SetUniformInt("fog", 0)
+	}
+
+	var fog int32 = 0
+	if app.RuntimeConfig().FogDensity != 0 {
+		fog = 1
+	}
+	shader.SetUniformInt("fog", fog)
+	shader.SetUniformInt("fogDensity", app.RuntimeConfig().FogDensity)
+
+	shader.SetUniformInt("width", int32(renderContext.Width()))
+	shader.SetUniformInt("height", int32(renderContext.Height()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
+	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	shader.SetUniformFloat("ambientFactor", app.RuntimeConfig().AmbientFactor)
+	shader.SetUniformInt("shadowMap", 31)
+	shader.SetUniformInt("depthCubeMap", 30)
+	shader.SetUniformInt("cameraDepthMap", 29)
+	shader.SetUniformInt("ambientOcclusion", 28)
+	if app.RuntimeConfig().EnableSSAO {
+		shader.SetUniformInt("enableAmbientOcclusion", 1)
+	} else {
+		shader.SetUniformInt("enableAmbientOcclusion", 0)
+	}
+
+	shader.SetUniformFloat("near", app.RuntimeConfig().Near)
+	shader.SetUniformFloat("far", app.RuntimeConfig().Far)
+	shader.SetUniformFloat("bias", app.RuntimeConfig().PointLightBias)
+	if len(lightContext.PointLights) > 0 {
+		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+	}
+
+	setupLightingUniforms(shader, lightContext.Lights)
+}
+
+func drawModel(
+	app renderiface.App,
+	shader *shaders.ShaderProgram,
+	entity *entities.Entity,
+) {
+	var animationPlayer *animation.AnimationPlayer
+	if entity.Animation != nil {
+		animationPlayer = entity.Animation.AnimationPlayer
+	}
+
+	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
+		shader.SetUniformInt("isAnimated", 1)
+		animationTransforms := animationPlayer.AnimationTransforms()
+
+		// if animationTransforms is nil, the shader will execute reading into invalid memory
+		// so, we need to explicitly guard for this
+		if animationTransforms == nil {
+			panic("animationTransforms not found")
+		}
+		for i := 0; i < len(animationTransforms); i++ {
+			shader.SetUniformMat4(fmt.Sprintf("jointTransforms[%d]", i), animationTransforms[i])
+		}
+	} else {
+		shader.SetUniformInt("isAnimated", 0)
+	}
+
+	// THE HOTTEST CODE PATH IN THE ENGINE
+	primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
+	if entity.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
+		shader.SetUniformInt("repeatTexture", 1)
+	} else {
+		shader.SetUniformInt("repeatTexture", 0)
+	}
+	for _, prim := range primitives {
+		materialHandle := prim.MaterialHandle
+		if entity.Material != nil {
+			materialHandle = entity.Material.MaterialHandle
+		}
+		primitiveMaterial := app.AssetManager().GetMaterial(materialHandle).Material
+		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
+
+		if material.BaseColorTextureName != "" {
+			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
+			shader.SetUniformInt("hasPBRBaseColorTexture", 1)
+
+			textureName := primitiveMaterial.PBRMaterial.PBRMetallicRoughness.BaseColorTextureName
+			gl.ActiveTexture(gl.TEXTURE0)
+			var textureID uint32
+			texture := app.AssetManager().GetTexture(textureName)
+			textureID = texture.ID
+			gl.BindTexture(gl.TEXTURE_2D, textureID)
+		} else {
+			shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		}
+
+		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
+		shader.SetUniformFloat("roughness", material.RoughnessFactor)
+		shader.SetUniformFloat("metallic", material.MetalicFactor)
+		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(entity.Position()))
+		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(entity.Scale()))
+
+		modelMatrix := entities.WorldTransform(entity)
+		var modelMat mgl32.Mat4
+
+		// apply smooth blending between mispredicted position and actual real position
+		if entity.RenderBlend != nil && entity.RenderBlend.Active {
+			deltaMs := time.Since(entity.RenderBlend.StartTime).Milliseconds()
+			t := apputils.RenderBlendMath(deltaMs)
+
+			blendedPosition := entity.Position().Sub(entity.RenderBlend.BlendStartPosition).Mul(t).Add(entity.RenderBlend.BlendStartPosition)
+
+			translationMatrix := mgl64.Translate3D(blendedPosition[0], blendedPosition[1], blendedPosition[2])
+			rotationMatrix := entity.GetLocalRotation().Mat4()
+			scale := entity.Scale()
+			scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
+			modelMatrix = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
+
+			if deltaMs >= int64(settings.RenderBlendDurationMilliseconds) {
+				entity.RenderBlend.Active = false
+			}
+		}
+
+		modelMat = utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+
+		shader.SetUniformMat4("model", modelMat)
+
+		gl.BindVertexArray(prim.VAO)
+		if modelMat.Det() < 0 {
+			// from the gltf spec:
+			// When a mesh primitive uses any triangle-based topology (i.e., triangles, triangle strip, or triangle fan),
+			// the determinant of the node’s global transform defines the winding order of that primitive. If the determinant
+			// is a positive value, the winding order triangle faces is counterclockwise; in the opposite case, the winding
+			// order is clockwise.
+			gl.FrontFace(gl.CW)
+		}
+		rutils.IztDrawElements(int32(len(prim.Primitive.VertexIndices)))
+		if modelMat.Det() < 0 {
+			gl.FrontFace(gl.CCW)
+		}
 	}
 }

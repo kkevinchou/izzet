@@ -1,9 +1,6 @@
 package render
 
 import (
-	"fmt"
-	"math"
-	"strings"
 	"time"
 
 	"github.com/AllenDang/cimgui-go/imgui"
@@ -17,7 +14,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
@@ -25,6 +21,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/renderpass"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -69,21 +66,7 @@ type RenderSystem struct {
 
 	imguiRenderer *renderers.OpenGL3
 
-	redCircleFB         uint32
-	redCircleTexture    uint32
-	greenCircleFB       uint32
-	greenCircleTexture  uint32
-	blueCircleFB        uint32
-	blueCircleTexture   uint32
-	yellowCircleFB      uint32
-	yellowCircleTexture uint32
-
 	cameraViewerContext context.ViewerContext
-
-	mainRenderFBO          uint32
-	mainColorTexture       uint32
-	colorPickingTexture    uint32
-	colorPickingAttachment uint32
 
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
@@ -104,10 +87,6 @@ type RenderSystem struct {
 	bloomTextureWidths  []int
 	bloomTextureHeights []int
 
-	cubeVAOs      map[string]uint32
-	batchCubeVAOs map[string]uint32
-	triangleVAOs  map[string]uint32
-
 	gameWindowHovered bool
 
 	hoveredEntityID *int
@@ -127,6 +106,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r := &RenderSystem{app: app}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
+	rutils.SetRuntimeConfig(app.RuntimeConfig())
 
 	imguiIO := imgui.CurrentIO()
 	imguiIO.SetConfigDebugIsDebuggerPresent(true)
@@ -137,21 +117,9 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.imguiRenderer = imguiRenderer
 
 	r.ndcQuadVAO = r.init2f2fVAO()
-	r.cubeVAOs = map[string]uint32{}
-	r.batchCubeVAOs = map[string]uint32{}
-	r.triangleVAOs = map[string]uint32{}
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
 	r.initorReinitTextures(width, height, true)
-
-	// circles for the rotation gizmo
-
-	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
-	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
-	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
-	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
-	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
-	r.initializeCircleTextures()
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -181,6 +149,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewMainPass(app, r.shaderManager))
 
 	for _, pass := range r.renderPasses {
 		pass.Init(width, height, r.renderPassContext)
@@ -235,20 +204,6 @@ func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
 
 // this might be the most garbage code i've ever written
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
-	// main render FBO
-
-	mainRenderTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
-	var mainRenderTextures []uint32
-	if init {
-		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
-		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-		_, _, mainRenderTextures = mainRenderTextureFn()
-	}
-	r.mainColorTexture = mainRenderTextures[0]
-	r.colorPickingTexture = mainRenderTextures[1]
-
 	// composite FBO
 	compositeTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	var compositeTextures []uint32
@@ -329,37 +284,21 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
+	renderContext.ShadowDistance = r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
+	renderContext.BatchRenders = r.batchRenders
 
 	start = time.Now()
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
 
 	// RENDER PASSES
-
 	for _, pass := range r.renderPasses {
 		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext, lightViewerContext)
 	}
 
-	// MAIN RENDER
-
-	start = time.Now()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, *r.renderPassContext, renderableEntities)
-	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
-
-	start = time.Now()
-	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
-	mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
-
-	// clear depth for gizmo rendering
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	start = time.Now()
-	r.renderGizmos(cameraViewerContext, renderContext)
-	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
-
 	// store color picking entity
 	start = time.Now()
 	if r.app.AppMode() == types.AppModeEditor {
-		r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
+		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
 	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
@@ -367,18 +306,18 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	if r.app.RuntimeConfig().Bloom {
 		start = time.Now()
-		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
+		r.downSample(r.renderPassContext.MainTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSampleAndBlend(r.bloomTextureWidths, r.bloomTextureHeights)
-		hdrColorTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
+		hdrColorTexture = r.composite(renderContext, r.renderPassContext.MainTexture, upsampleTexture)
 		mr.Inc("render_bloom", float64(time.Since(start).Milliseconds()))
 
 		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
 		} else if menus.SelectedDebugComboOption == menus.ComboOptionPreBloomHDR {
-			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
+			r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainTexture
 		}
 	} else {
-		hdrColorTexture = r.mainColorTexture
+		hdrColorTexture = r.renderPassContext.MainTexture
 	}
 
 	start = time.Now()
@@ -482,7 +421,7 @@ func (r *RenderSystem) setDebugTexture() {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
-		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainColorPickingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.ShadowMapTexture
@@ -557,480 +496,6 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 		}
 	}
 	return result
-}
-
-func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext) {
-	shaderManager := r.shaderManager
-
-	if r.app.RuntimeConfig().ShowSelectionBoundingBox {
-		entity := r.app.SelectedEntity()
-		if entity != nil {
-			// draw bounding box
-			if entity.HasBoundingBox() {
-				r.drawAABB(
-					viewerContext,
-					mgl64.Vec3{.2, 0, .7},
-					entity.BoundingBox(),
-					0.1,
-				)
-			}
-		}
-	}
-
-	if r.app.AppMode() == types.AppModeEditor {
-		for _, entity := range r.app.World().Entities() {
-			lightInfo := entity.LightInfo
-			if lightInfo != nil {
-				if lightInfo.Type == 0 {
-
-					direction3F := lightInfo.Direction3F
-					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(5)
-					// directional light arrow
-					lines := [][2]mgl64.Vec3{
-						[2]mgl64.Vec3{
-							entity.Position(),
-							entity.Position().Add(dir),
-						},
-					}
-
-					shader := shaderManager.GetShaderProgram("flat")
-					color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-					shader.Use()
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-					r.drawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), shader, lines, 0.05, color)
-				}
-			}
-		}
-	}
-
-	if r.app.RuntimeConfig().RenderSpatialPartition {
-		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.app.World().SpatialPartition(), 0.1)
-	}
-
-	nm := r.app.NavMesh()
-	if nm != nil {
-		shader := shaderManager.GetShaderProgram("navmesh")
-		shader.Use()
-		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-		setupLightingUniforms(shader, lightContext.Lights)
-		shader.SetUniformInt("width", int32(renderContext.Width()))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformInt("cameraDepthMap", 29)
-		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		if len(lightContext.PointLights) > 0 {
-			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-		}
-		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
-
-		shader.SetUniformFloat("roughness", .8)
-		shader.SetUniformFloat("metallic", 0)
-
-		r.drawNavmesh(shaderManager, viewerContext, nm)
-
-		// draw bounding box
-		volume := nm.Volume
-		r.drawAABB(
-			viewerContext,
-			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-			volume,
-			0.5,
-		)
-
-		if len(nm.DebugLines) > 0 {
-			shader := shaderManager.GetShaderProgram("flat")
-			// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-			color := mgl64.Vec3{1, 0, 0}
-			shader.Use()
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), shader, nm.DebugLines, 0.05, color)
-		}
-
-		nm.Invalidated = false
-	}
-}
-
-// drawToMainColorBuffer renders a scene from the perspective of a viewer
-func (r *RenderSystem) drawToMainColorBuffer(viewerContext context.ViewerContext,
-	lightContext context.LightContext,
-	renderContext context.RenderContext,
-	renderPassContext context.RenderPassContext,
-	renderableEntities []*entities.Entity,
-) {
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	r.drawSkybox(renderContext, viewerContext)
-
-	shader := r.shaderManager.GetShaderProgram("modelpbr")
-	r.renderModels(shader, viewerContext, lightContext, renderContext, renderPassContext, renderableEntities)
-
-	if r.app.RuntimeConfig().ShowColliders {
-		shader := r.shaderManager.GetShaderProgram("flat")
-		shader.Use()
-
-		for _, entity := range renderableEntities {
-			if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
-				continue
-			}
-
-			if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
-				continue
-			}
-
-			modelMatrix := entities.WorldTransform(entity)
-
-			if entity.Collider.SimplifiedTriMeshCollider != nil {
-				var lines [][2]mgl64.Vec3
-				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[0],
-						triangles.Points[1],
-					})
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[1],
-						triangles.Points[2],
-					})
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[2],
-						triangles.Points[0],
-					})
-				}
-
-				if len(lines) > 0 {
-					scale := entity.Scale()
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					r.drawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, mgl64.Vec3{1, 0, 0})
-				}
-
-				var pointLines [][2]mgl64.Vec3
-				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
-					// 0 length lines
-					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
-				}
-				if len(pointLines) > 0 {
-					r.drawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
-				}
-			}
-
-			if entity.Collider.CapsuleCollider != nil {
-				capsuleCollider := entity.Collider.CapsuleCollider
-
-				top := capsuleCollider.Top
-				bottom := capsuleCollider.Bottom
-				radius := capsuleCollider.Radius
-
-				var numCircleSegments int = 8
-				var lines [][2]mgl64.Vec3
-
-				// -x +x vertical lines
-				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
-				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
-
-				// -z +z vertical lines
-				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
-				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
-
-				radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
-
-				// top and bottom xz plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					z1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-					z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-
-					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
-					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
-				}
-
-				radiansPerSegment = math.Pi / float64(numCircleSegments)
-
-				// top and bottom xy plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
-					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
-				}
-
-				// top and bottom yz plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					z1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
-					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
-				}
-
-				shader := r.shaderManager.GetShaderProgram("flat")
-				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
-				shader.Use()
-				position := entity.Position()
-				scale := entity.Scale()
-				modelMat := mgl64.Translate3D(position.X(), position.Y(), position.Z()).Mul4(mgl64.Scale3D(scale.X(), scale.Y(), scale.Z()))
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMat))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-				r.drawLineGroup(fmt.Sprintf("%d_capsule_collider", entity.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
-			}
-		}
-	}
-
-	// render non-models
-	for _, entity := range r.app.World().Entities() {
-		if entity.MeshComponent == nil {
-			modelMatrix := entities.WorldTransform(entity)
-
-			if len(entity.ShapeData) > 0 {
-				shader := r.shaderManager.GetShaderProgram("flat")
-				shader.Use()
-
-				shader.SetUniformUInt("entityID", uint32(entity.ID))
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			}
-
-			if entity.ImageInfo != nil {
-				textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
-				texture := r.app.AssetManager().GetTexture(textureName)
-				if texture != nil {
-					if entity.Billboard && r.app.AppMode() == types.AppModeEditor {
-						shader := r.shaderManager.GetShaderProgram("world_space_quad")
-						shader.Use()
-
-						position := entity.Position()
-						modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
-						scale := entity.ImageInfo.Scale
-						modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
-
-						shader.SetUniformUInt("entityID", uint32(entity.ID))
-						shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(r.app.GetEditorCameraRotation().Mat4())))
-						shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-						shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-						r.drawBillboardTexture(texture.ID, 1)
-					}
-				} else {
-					fmt.Println("couldn't find texture", "light")
-				}
-			}
-			particles := entity.Particles
-			if particles != nil {
-				texture := r.app.AssetManager().GetTexture("light").ID
-				for _, particle := range particles.GetActiveParticles() {
-					particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-					r.drawTexturedQuad(&viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
-				}
-			}
-		} else if entity.CharacterControllerComponent != nil {
-			v := mgl64.Vec3{}
-			if entity.CharacterControllerComponent.WebVector != v {
-				// r.drawAABB(
-				// 	viewerContext,
-				// 	shaderManager.GetShaderProgram("flat"),
-				// 	mgl64.Vec3{.2, 0, .7},
-				// 	entity.BoundingBox(),
-				// 	0.5,
-				// )
-
-				forwardVector := viewerContext.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
-				upVector := viewerContext.Rotation.Rotate(mgl64.Vec3{0, 1, 0})
-				// there's probably away to get the right vector directly rather than going crossing the up vector :D
-				rightVector := forwardVector.Cross(upVector)
-
-				start := entity.Position().Add(rightVector.Mul(1)).Add(mgl64.Vec3{0, 2, 0})
-				lines := [][2]mgl64.Vec3{
-					{start, entity.Position().Add(entity.CharacterControllerComponent.WebVector)},
-				}
-
-				shader := r.shaderManager.GetShaderProgram("flat")
-				shader.Use()
-				shader.SetUniformMat4("model", mgl32.Translate3D(float32(entity.Position().X()), float32(entity.Position().Y()), float32(entity.Position().Z())))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-				r.drawLineGroup(fmt.Sprintf("web_%d", len(lines)), shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
-			}
-		}
-	}
-}
-
-func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
-	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
-	renderContext context.RenderContext,
-	renderPassContext context.RenderPassContext,
-	renderableEntities []*entities.Entity,
-) {
-	shader.Use()
-
-	if r.app.RuntimeConfig().FogEnabled {
-		shader.SetUniformInt("fog", 1)
-	} else {
-		shader.SetUniformInt("fog", 0)
-	}
-
-	var fog int32 = 0
-	if r.app.RuntimeConfig().FogDensity != 0 {
-		fog = 1
-	}
-	shader.SetUniformInt("fog", fog)
-	shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
-
-	shader.SetUniformInt("width", int32(renderContext.Width()))
-	shader.SetUniformInt("height", int32(renderContext.Height()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-	shader.SetUniformInt("shadowMap", 31)
-	shader.SetUniformInt("depthCubeMap", 30)
-	shader.SetUniformInt("cameraDepthMap", 29)
-	shader.SetUniformInt("ambientOcclusion", 28)
-	if r.app.RuntimeConfig().EnableSSAO {
-		shader.SetUniformInt("enableAmbientOcclusion", 1)
-	} else {
-		shader.SetUniformInt("enableAmbientOcclusion", 0)
-	}
-
-	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-	shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-	if len(lightContext.PointLights) > 0 {
-		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-	}
-	shader.SetUniformInt("hasColorOverride", 0)
-
-	setupLightingUniforms(shader, lightContext.Lights)
-
-	gl.ActiveTexture(gl.TEXTURE28)
-	gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOBlurTexture)
-
-	gl.ActiveTexture(gl.TEXTURE29)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
-
-	gl.ActiveTexture(gl.TEXTURE30)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
-
-	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
-
-	var entityCount int
-	for _, entity := range renderableEntities {
-		if entity == nil || entity.MeshComponent == nil || !entity.MeshComponent.Visible {
-			continue
-		}
-
-		if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 && entity.Static {
-			continue
-		}
-
-		if entity.MeshComponent.InvisibleToPlayerOwner && r.app.GetPlayerEntity().GetID() == entity.GetID() {
-			continue
-		}
-
-		entityCount++
-
-		shader.SetUniformUInt("entityID", uint32(entity.ID))
-
-		r.drawModel(
-			shader,
-			entity,
-		)
-	}
-
-	r.app.MetricsRegistry().Inc("draw_entity_count", float64(entityCount))
-
-	if r.app.RuntimeConfig().BatchRenderingEnabled && len(r.batchRenders) > 0 {
-		shader.SetUniformInt("hasColorOverride", 0)
-		shader = r.shaderManager.GetShaderProgram("batch")
-		shader.Use()
-
-		if r.app.RuntimeConfig().FogEnabled {
-			shader.SetUniformInt("fog", 1)
-		} else {
-			shader.SetUniformInt("fog", 0)
-		}
-
-		var fog int32 = 0
-		if r.app.RuntimeConfig().FogDensity != 0 {
-			fog = 1
-		}
-		shader.SetUniformInt("fog", fog)
-		shader.SetUniformInt("fogDensity", r.app.RuntimeConfig().FogDensity)
-
-		shader.SetUniformInt("width", int32(renderContext.Width()))
-		shader.SetUniformInt("height", int32(renderContext.Height()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformInt("cameraDepthMap", 29)
-		shader.SetUniformInt("ambientOcclusion", 28)
-		if r.app.RuntimeConfig().EnableSSAO {
-			shader.SetUniformInt("enableAmbientOcclusion", 1)
-		} else {
-			shader.SetUniformInt("enableAmbientOcclusion", 0)
-		}
-
-		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		if len(lightContext.PointLights) > 0 {
-			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-		}
-		shader.SetUniformInt("hasColorOverride", 0)
-
-		setupLightingUniforms(shader, lightContext.Lights)
-
-		gl.ActiveTexture(gl.TEXTURE28)
-		gl.BindTexture(gl.TEXTURE_2D, r.renderPassContext.SSAOBlurTexture)
-
-		gl.ActiveTexture(gl.TEXTURE29)
-		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.CameraDepthTexture)
-
-		gl.ActiveTexture(gl.TEXTURE30)
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
-
-		gl.ActiveTexture(gl.TEXTURE31)
-		gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
-
-		r.drawBatches(shader)
-		r.app.MetricsRegistry().Inc("draw_entity_count", 1)
-	}
 }
 
 func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
@@ -1158,23 +623,6 @@ func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWind
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
 }
 
-func (r *RenderSystem) renderGizmos(viewerContext context.ViewerContext, renderContext context.RenderContext) {
-	if r.app.SelectedEntity() == nil {
-		return
-	}
-
-	entity := r.app.World().GetEntityByID(r.app.SelectedEntity().ID)
-	position := entity.Position()
-
-	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		r.drawCircleGizmo(&viewerContext, position, renderContext)
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		r.drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
-	}
-}
-
 func (r *RenderSystem) GameWindowHovered() bool {
 	return r.gameWindowHovered
 }
@@ -1196,10 +644,6 @@ func initOpenGLRenderSettings() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
-}
-
-func (r *RenderSystem) shadowFarDistance() float32 {
-	return r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
 }
 
 func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {

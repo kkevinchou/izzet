@@ -685,8 +685,10 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 		if entity != nil {
 			// draw bounding box
 			if entity.HasBoundingBox() {
+				shader := p.sm.GetShaderProgram("flat")
+				shader.Use()
 				rutils.DrawAABB(
-					p.sm.GetShaderProgram("flat"),
+					shader,
 					viewerContext,
 					mgl64.Vec3{.2, 0, .7},
 					entity.BoundingBox(),

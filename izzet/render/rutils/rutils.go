@@ -27,6 +27,7 @@ var pickingBuffer []byte
 var runtimeConfig *runtimeconfig.RuntimeConfig
 var internedQuadVAOPositionUV uint32
 var cubeVAOs map[string]uint32
+var ndcQuadVAO uint32
 
 func init() {
 	lineCache = map[string][]mgl64.Vec3{}
@@ -561,4 +562,35 @@ func initCubeVAO(length float32, includeNormals bool) uint32 {
 	}
 
 	return vao
+}
+
+func GetNDCQuadVAO() uint32 {
+	if ndcQuadVAO == 0 {
+		vertices := []float32{
+			-1, -1, 0.0, 0.0,
+			1, -1, 1.0, 0.0,
+			1, 1, 1.0, 1.0,
+			1, 1, 1.0, 1.0,
+			-1, 1, 0.0, 1.0,
+			-1, -1, 0.0, 0.0,
+		}
+
+		var vbo, vao uint32
+		apputils.GenBuffers(1, &vbo)
+		gl.GenVertexArrays(1, &vao)
+
+		gl.BindVertexArray(vao)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 4*4, nil)
+		gl.EnableVertexAttribArray(0)
+
+		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 4*4, gl.PtrOffset(2*4))
+		gl.EnableVertexAttribArray(1)
+
+		ndcQuadVAO = vao
+	}
+
+	return ndcQuadVAO
 }

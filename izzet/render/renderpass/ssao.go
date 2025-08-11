@@ -83,7 +83,7 @@ func (p *SSAORenderPass) Render(
 	p.shader.SetUniformFloat("radius", p.app.RuntimeConfig().SSAORadius)
 	p.shader.SetUniformFloat("bias", p.app.RuntimeConfig().SSAOBias)
 
-	gl.BindVertexArray(createNDCQuadVAO())
+	gl.BindVertexArray(rutils.GetNDCQuadVAO())
 	rutils.IztDrawArrays(0, 6)
 
 	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))

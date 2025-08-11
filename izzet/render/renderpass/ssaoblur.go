@@ -47,6 +47,6 @@ func (p *SSAOBlurRenderPass) Render(
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, rctx.SSAOTexture)
 
-	gl.BindVertexArray(createNDCQuadVAO())
+	gl.BindVertexArray(rutils.GetNDCQuadVAO())
 	rutils.IztDrawArrays(0, 6)
 }

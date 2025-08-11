@@ -27,7 +27,7 @@ func (p *MainRenderPass) drawTranslationGizmo(viewerContext *context.ViewerConte
 	if behind {
 		return
 	}
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
+	nearPlanePosition := rutils.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
@@ -110,7 +110,7 @@ func (p *MainRenderPass) drawScaleGizmo(viewerContext *context.ViewerContext, sh
 		return
 	}
 
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
+	nearPlanePosition := rutils.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
@@ -158,7 +158,7 @@ func (p *MainRenderPass) drawCircleGizmo(viewerContext *context.ViewerContext, p
 	if behind {
 		return
 	}
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
+	nearPlanePosition := rutils.NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(p.app.RuntimeConfig().Near)})
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
@@ -190,15 +190,6 @@ func (p *MainRenderPass) drawCircleGizmo(viewerContext *context.ViewerContext, p
 
 		rutils.DrawTexturedQuad(viewerContext, p.sm, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
 	}
-}
-
-// computes the near plane position for a given x y coordinate
-func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
-	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
-	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
-
-	return nearPlanePos.Vec3()
 }
 
 func worldToNDCPosition(viewerContext context.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {

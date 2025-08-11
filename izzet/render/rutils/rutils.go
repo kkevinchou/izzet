@@ -594,3 +594,12 @@ func GetNDCQuadVAO() uint32 {
 
 	return ndcQuadVAO
 }
+
+// computes the near plane position for a given x y coordinate
+func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
+	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
+	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
+	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
+
+	return nearPlanePos.Vec3()
+}

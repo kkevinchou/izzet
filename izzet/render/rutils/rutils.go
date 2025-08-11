@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
@@ -26,6 +27,12 @@ var pickingBuffer []byte
 var runtimeConfig *runtimeconfig.RuntimeConfig
 var internedQuadVAOPositionUV uint32
 
+func init() {
+	lineCache = map[string][]mgl64.Vec3{}
+	cubeCache = map[string][]mgl64.Vec3{}
+	triangleVAOCache = map[string]TriangleVAO{}
+}
+
 // global setter for convenience
 func SetRuntimeConfig(c *runtimeconfig.RuntimeConfig) {
 	runtimeConfig = c
@@ -41,6 +48,11 @@ func IztDrawArrays(first, count int32) {
 	runtimeConfig.TriangleDrawCount += int(count / 3)
 	runtimeConfig.DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
+}
+
+func IztDrawLines(count int32) {
+	runtimeConfig.DrawCount += 1
+	gl.DrawArrays(gl.LINES, 0, count)
 }
 
 func DrawLineGroup(name string, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
@@ -352,4 +364,51 @@ func DrawBillboardTexture(
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
 	IztDrawArrays(0, 6)
+}
+
+func DrawAABB(shader *shaders.ShaderProgram, viewerContext context.ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {
+	var allLines [][2]mgl64.Vec3
+
+	d := aabb.MaxVertex.Sub(aabb.MinVertex)
+	xd := d.X()
+	yd := d.Y()
+	zd := d.Z()
+
+	baseHorizontalLines := [][2]mgl64.Vec3{}
+	baseHorizontalLines = append(baseHorizontalLines,
+		[2]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, zd}), aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd})},
+		[2]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{0, 0, zd}), aabb.MinVertex},
+	)
+
+	for i := 0; i < 2; i++ {
+		for _, b := range baseHorizontalLines {
+			allLines = append(allLines,
+				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i) * yd, 0}), b[1].Add(mgl64.Vec3{0, float64(i) * yd, 0})},
+			)
+		}
+	}
+
+	baseVerticalLines := [][]mgl64.Vec3{}
+	for i := 0; i < 2; i++ {
+		baseVerticalLines = append(baseVerticalLines,
+			[]mgl64.Vec3{aabb.MinVertex, aabb.MinVertex.Add(mgl64.Vec3{0, yd, 0})},
+			[]mgl64.Vec3{aabb.MinVertex.Add(mgl64.Vec3{xd, 0, 0}), aabb.MinVertex.Add(mgl64.Vec3{xd, yd, 0})},
+		)
+	}
+
+	for i := 0; i < 2; i++ {
+		for _, b := range baseVerticalLines {
+			allLines = append(allLines,
+				[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i) * zd}), b[1].Add(mgl64.Vec3{0, 0, float64(i) * zd})},
+			)
+		}
+	}
+
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+	DrawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), shader, allLines, thickness, color)
 }

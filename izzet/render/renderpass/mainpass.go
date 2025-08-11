@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/animation"
+	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
@@ -21,6 +22,10 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
+)
+
+var (
+	spatialPartitionLineCache [][2]mgl64.Vec3
 )
 
 type MainRenderPass struct {
@@ -57,153 +62,155 @@ func (p *MainRenderPass) Render(
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	p.drawToMainColorBuffer(
-		viewerContext,
-		lightContext,
-		ctx,
-		rctx,
-		ctx.RenderableEntities,
-	)
-}
+	// skybox
+	p.drawSkybox(ctx, viewerContext)
 
-func (p *MainRenderPass) drawToMainColorBuffer(
-	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
-	renderContext context.RenderContext,
-	renderPassContext *context.RenderPassContext,
-	renderableEntities []*entities.Entity,
-) {
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	p.drawSkybox(renderContext, viewerContext)
-
+	// models
 	shader := p.sm.GetShaderProgram("modelpbr")
-	p.renderModels(shader, viewerContext, lightContext, renderContext, renderPassContext, renderableEntities)
+	p.renderModels(shader, viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities)
 
+	// colliders
 	if p.app.RuntimeConfig().ShowColliders {
-		shader := p.sm.GetShaderProgram("flat")
-		shader.Use()
-
-		for _, entity := range renderableEntities {
-			if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
-				continue
-			}
-
-			if entity.MeshComponent.InvisibleToPlayerOwner && p.app.GetPlayerEntity().GetID() == entity.GetID() {
-				continue
-			}
-
-			modelMatrix := entities.WorldTransform(entity)
-
-			if entity.Collider.SimplifiedTriMeshCollider != nil {
-				var lines [][2]mgl64.Vec3
-				for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[0],
-						triangles.Points[1],
-					})
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[1],
-						triangles.Points[2],
-					})
-					lines = append(lines, [2]mgl64.Vec3{
-						triangles.Points[2],
-						triangles.Points[0],
-					})
-				}
-
-				if len(lines) > 0 {
-					scale := entity.Scale()
-					shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-					rutils.DrawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, mgl64.Vec3{1, 0, 0})
-				}
-
-				var pointLines [][2]mgl64.Vec3
-				for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
-					// 0 length lines
-					pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
-				}
-				if len(pointLines) > 0 {
-					rutils.DrawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
-				}
-			}
-
-			if entity.Collider.CapsuleCollider != nil {
-				capsuleCollider := entity.Collider.CapsuleCollider
-
-				top := capsuleCollider.Top
-				bottom := capsuleCollider.Bottom
-				radius := capsuleCollider.Radius
-
-				var numCircleSegments int = 8
-				var lines [][2]mgl64.Vec3
-
-				// -x +x vertical lines
-				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
-				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
-
-				// -z +z vertical lines
-				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
-				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
-
-				radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
-
-				// top and bottom xz plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					z1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-					z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
-
-					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
-					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
-				}
-
-				radiansPerSegment = math.Pi / float64(numCircleSegments)
-
-				// top and bottom xy plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					x1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
-					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
-				}
-
-				// top and bottom yz plane rings
-				for i := 0; i < numCircleSegments; i++ {
-					z1 := math.Cos(float64(i)*radiansPerSegment) * radius
-					y1 := math.Sin(float64(i)*radiansPerSegment) * radius
-
-					z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
-					y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
-
-					lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
-					lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
-				}
-
-				shader := p.sm.GetShaderProgram("flat")
-				color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
-				shader.Use()
-				position := entity.Position()
-				scale := entity.Scale()
-				modelMat := mgl64.Translate3D(position.X(), position.Y(), position.Z()).Mul4(mgl64.Scale3D(scale.X(), scale.Y(), scale.Z()))
-				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMat))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-				rutils.DrawLineGroup(fmt.Sprintf("%d_capsule_collider", entity.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
-			}
-		}
+		p.drawColliders(viewerContext, ctx.RenderableEntities)
 	}
 
+	// non entities
+	p.drawNonEntity(viewerContext, ctx)
+
+	// annotations
+	p.drawAnnotations(viewerContext, lightContext, ctx)
+}
+
+func (p *MainRenderPass) drawColliders(
+	viewerContext context.ViewerContext,
+	ents []*entities.Entity,
+) {
+	shader := p.sm.GetShaderProgram("flat")
+	shader.Use()
+
+	for _, entity := range ents {
+		if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
+			continue
+		}
+
+		if entity.MeshComponent.InvisibleToPlayerOwner && p.app.GetPlayerEntity().GetID() == entity.GetID() {
+			continue
+		}
+
+		modelMatrix := entities.WorldTransform(entity)
+
+		if entity.Collider.SimplifiedTriMeshCollider != nil {
+			var lines [][2]mgl64.Vec3
+			for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
+				lines = append(lines, [2]mgl64.Vec3{
+					triangles.Points[0],
+					triangles.Points[1],
+				})
+				lines = append(lines, [2]mgl64.Vec3{
+					triangles.Points[1],
+					triangles.Points[2],
+				})
+				lines = append(lines, [2]mgl64.Vec3{
+					triangles.Points[2],
+					triangles.Points[0],
+				})
+			}
+
+			if len(lines) > 0 {
+				scale := entity.Scale()
+				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+				rutils.DrawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, mgl64.Vec3{1, 0, 0})
+			}
+
+			var pointLines [][2]mgl64.Vec3
+			for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
+				// 0 length lines
+				pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
+			}
+			if len(pointLines) > 0 {
+				rutils.DrawLineGroup(fmt.Sprintf("pogchamp_points_%d", len(pointLines)), shader, pointLines, 0.05, mgl64.Vec3{0, 0, 1})
+			}
+		}
+
+		if entity.Collider.CapsuleCollider != nil {
+			capsuleCollider := entity.Collider.CapsuleCollider
+
+			top := capsuleCollider.Top
+			bottom := capsuleCollider.Bottom
+			radius := capsuleCollider.Radius
+
+			var numCircleSegments int = 8
+			var lines [][2]mgl64.Vec3
+
+			// -x +x vertical lines
+			lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{-radius, 0, 0}), bottom.Add(mgl64.Vec3{-radius, 0, 0})})
+			lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{radius, 0, 0}), top.Add(mgl64.Vec3{radius, 0, 0})})
+
+			// -z +z vertical lines
+			lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, 0, -radius}), bottom.Add(mgl64.Vec3{0, 0, -radius})})
+			lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, 0, radius}), top.Add(mgl64.Vec3{0, 0, radius})})
+
+			radiansPerSegment := 2 * math.Pi / float64(numCircleSegments)
+
+			// top and bottom xz plane rings
+			for i := 0; i < numCircleSegments; i++ {
+				x1 := math.Cos(float64(i)*radiansPerSegment) * radius
+				z1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+				x2 := math.Cos(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
+				z2 := math.Sin(float64((i+1)%numCircleSegments)*radiansPerSegment) * radius
+
+				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, 0, -z1}), top.Add(mgl64.Vec3{x2, 0, -z2})})
+				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, 0, -z1}), bottom.Add(mgl64.Vec3{x2, 0, -z2})})
+			}
+
+			radiansPerSegment = math.Pi / float64(numCircleSegments)
+
+			// top and bottom xy plane rings
+			for i := 0; i < numCircleSegments; i++ {
+				x1 := math.Cos(float64(i)*radiansPerSegment) * radius
+				y1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+				x2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
+				y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
+
+				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{x1, y1, 0}), top.Add(mgl64.Vec3{x2, y2, 0})})
+				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{x1, -y1, 0}), bottom.Add(mgl64.Vec3{x2, -y2, 0})})
+			}
+
+			// top and bottom yz plane rings
+			for i := 0; i < numCircleSegments; i++ {
+				z1 := math.Cos(float64(i)*radiansPerSegment) * radius
+				y1 := math.Sin(float64(i)*radiansPerSegment) * radius
+
+				z2 := math.Cos(float64(float64(i+1)*radiansPerSegment)) * radius
+				y2 := math.Sin(float64(float64(i+1)*radiansPerSegment)) * radius
+
+				lines = append(lines, [2]mgl64.Vec3{top.Add(mgl64.Vec3{0, y1, z1}), top.Add(mgl64.Vec3{0, y2, z2})})
+				lines = append(lines, [2]mgl64.Vec3{bottom.Add(mgl64.Vec3{0, -y1, z1}), bottom.Add(mgl64.Vec3{0, -y2, z2})})
+			}
+
+			shader := p.sm.GetShaderProgram("flat")
+			color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
+			shader.Use()
+			position := entity.Position()
+			scale := entity.Scale()
+			modelMat := mgl64.Translate3D(position.X(), position.Y(), position.Z()).Mul4(mgl64.Scale3D(scale.X(), scale.Y(), scale.Z()))
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMat))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+			rutils.DrawLineGroup(fmt.Sprintf("%d_capsule_collider", entity.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
+		}
+	}
+}
+
+func (p *MainRenderPass) drawNonEntity(
+	viewerContext context.ViewerContext,
+	renderContext context.RenderContext,
+) {
 	// render non-models
 	for _, entity := range p.app.World().Entities() {
 		if entity.MeshComponent == nil {
@@ -643,4 +650,166 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.Position()))
 		shader.SetUniformFloat(fmt.Sprintf("lights[%d].range", i), lightInfo.Range)
 	}
+}
+
+func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext) {
+	if p.app.RuntimeConfig().ShowSelectionBoundingBox {
+		entity := p.app.SelectedEntity()
+		if entity != nil {
+			// draw bounding box
+			if entity.HasBoundingBox() {
+				rutils.DrawAABB(
+					p.sm.GetShaderProgram("flat"),
+					viewerContext,
+					mgl64.Vec3{.2, 0, .7},
+					entity.BoundingBox(),
+					0.1,
+				)
+			}
+		}
+	}
+
+	if p.app.AppMode() == types.AppModeEditor {
+		for _, entity := range p.app.World().Entities() {
+			lightInfo := entity.LightInfo
+			if lightInfo != nil {
+				if lightInfo.Type == 0 {
+
+					direction3F := lightInfo.Direction3F
+					dir := mgl64.Vec3{float64(direction3F[0]), float64(direction3F[1]), float64(direction3F[2])}.Mul(5)
+					// directional light arrow
+					lines := [][2]mgl64.Vec3{
+						[2]mgl64.Vec3{
+							entity.Position(),
+							entity.Position().Add(dir),
+						},
+					}
+
+					shader := p.sm.GetShaderProgram("flat")
+					color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+					shader.Use()
+					shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+					rutils.DrawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), shader, lines, 0.05, color)
+				}
+			}
+		}
+	}
+
+	if p.app.RuntimeConfig().RenderSpatialPartition {
+		p.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, p.app.World().SpatialPartition(), 0.1)
+	}
+
+	nm := p.app.NavMesh()
+	if nm != nil {
+		shader := p.sm.GetShaderProgram("navmesh")
+		shader.Use()
+		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+		setupLightingUniforms(shader, lightContext.Lights)
+		shader.SetUniformInt("width", int32(renderContext.Width()))
+		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
+		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+		shader.SetUniformFloat("ambientFactor", p.app.RuntimeConfig().AmbientFactor)
+		shader.SetUniformInt("shadowMap", 31)
+		shader.SetUniformInt("depthCubeMap", 30)
+		shader.SetUniformInt("cameraDepthMap", 29)
+		shader.SetUniformFloat("near", p.app.RuntimeConfig().Near)
+		shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
+		shader.SetUniformFloat("bias", p.app.RuntimeConfig().PointLightBias)
+		if len(lightContext.PointLights) > 0 {
+			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+		}
+		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
+
+		shader.SetUniformFloat("roughness", .8)
+		shader.SetUniformFloat("metallic", 0)
+
+		p.drawNavmesh(p.sm, viewerContext, nm)
+
+		// draw bounding box
+		volume := nm.Volume
+		rutils.DrawAABB(
+			p.sm.GetShaderProgram("flat"),
+			viewerContext,
+			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+			volume,
+			0.5,
+		)
+
+		if len(nm.DebugLines) > 0 {
+			shader := p.sm.GetShaderProgram("flat")
+			// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+			color := mgl64.Vec3{1, 0, 0}
+			shader.Use()
+			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+			rutils.DrawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), shader, nm.DebugLines, 0.05, color)
+		}
+
+		nm.Invalidated = false
+	}
+}
+
+func (p *MainRenderPass) drawSpatialPartition(viewerContext context.ViewerContext, color mgl64.Vec3, spatialPartition *spatialpartition.SpatialPartition, thickness float64) {
+	var allLines [][2]mgl64.Vec3
+
+	if len(spatialPartitionLineCache) == 0 {
+		d := spatialPartition.PartitionDimension * spatialPartition.PartitionCount
+		var baseHorizontalLines [][]mgl64.Vec3
+
+		// lines along z axis
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			baseHorizontalLines = append(baseHorizontalLines,
+				[]mgl64.Vec3{{float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(-d / 2)}, {float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(d / 2)}},
+			)
+		}
+
+		// // lines along x axis
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			baseHorizontalLines = append(baseHorizontalLines,
+				[]mgl64.Vec3{{float64(-d / 2), float64(-d / 2), float64(-d/2 + i*spatialPartition.PartitionDimension)}, {float64(d / 2), float64(-d / 2), float64(-d/2 + i*spatialPartition.PartitionDimension)}},
+			)
+		}
+
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			for _, b := range baseHorizontalLines {
+				allLines = append(allLines,
+					[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0}), b[1].Add(mgl64.Vec3{0, float64(i * spatialPartition.PartitionDimension), 0})},
+				)
+			}
+		}
+
+		var baseVerticalLines [][]mgl64.Vec3
+
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			baseVerticalLines = append(baseVerticalLines,
+				[]mgl64.Vec3{{float64(-d/2 + i*spatialPartition.PartitionDimension), float64(-d / 2), float64(-d / 2)}, {float64(-d/2 + i*spatialPartition.PartitionDimension), float64(d / 2), float64(-d / 2)}},
+			)
+		}
+
+		for i := 0; i < spatialPartition.PartitionCount+1; i++ {
+			for _, b := range baseVerticalLines {
+				allLines = append(allLines,
+					[2]mgl64.Vec3{b[0].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)}), b[1].Add(mgl64.Vec3{0, 0, float64(i * spatialPartition.PartitionDimension)})},
+				)
+			}
+		}
+		spatialPartitionLineCache = allLines
+	}
+	allLines = spatialPartitionLineCache
+
+	shader := p.sm.GetShaderProgram("flat")
+	shader.Use()
+	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+
+	rutils.DrawLineGroup("spatial_partition", shader, allLines, thickness, color)
 }

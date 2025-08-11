@@ -612,58 +612,58 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		r.drawSpatialPartition(viewerContext, mgl64.Vec3{0, 1, 0}, r.app.World().SpatialPartition(), 0.1)
 	}
 
-	nm := r.app.NavMesh()
-	if nm != nil {
-		shader := shaderManager.GetShaderProgram("navmesh")
-		shader.Use()
-		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	// nm := r.app.NavMesh()
+	// if nm != nil {
+	// 	shader := shaderManager.GetShaderProgram("navmesh")
+	// 	shader.Use()
+	// 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	// 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	// 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-		setupLightingUniforms(shader, lightContext.Lights)
-		shader.SetUniformInt("width", int32(renderContext.Width()))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
-		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformInt("cameraDepthMap", 29)
-		shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
-		shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
-		if len(lightContext.PointLights) > 0 {
-			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-		}
-		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
+	// 	setupLightingUniforms(shader, lightContext.Lights)
+	// 	shader.SetUniformInt("width", int32(renderContext.Width()))
+	// 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
+	// 	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
+	// 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	// 	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
+	// 	shader.SetUniformInt("shadowMap", 31)
+	// 	shader.SetUniformInt("depthCubeMap", 30)
+	// 	shader.SetUniformInt("cameraDepthMap", 29)
+	// 	shader.SetUniformFloat("near", r.app.RuntimeConfig().Near)
+	// 	shader.SetUniformFloat("far", r.app.RuntimeConfig().Far)
+	// 	shader.SetUniformFloat("bias", r.app.RuntimeConfig().PointLightBias)
+	// 	if len(lightContext.PointLights) > 0 {
+	// 		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+	// 	}
+	// 	shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
 
-		shader.SetUniformFloat("roughness", .8)
-		shader.SetUniformFloat("metallic", 0)
+	// 	shader.SetUniformFloat("roughness", .8)
+	// 	shader.SetUniformFloat("metallic", 0)
 
-		r.drawNavmesh(shaderManager, viewerContext, nm)
+	// 	r.drawNavmesh(shaderManager, viewerContext, nm)
 
-		// draw bounding box
-		volume := nm.Volume
-		r.drawAABB(
-			viewerContext,
-			mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
-			volume,
-			0.5,
-		)
+	// 	// draw bounding box
+	// 	volume := nm.Volume
+	// 	r.drawAABB(
+	// 		viewerContext,
+	// 		mgl64.Vec3{155.0 / 99, 180.0 / 255, 45.0 / 255},
+	// 		volume,
+	// 		0.5,
+	// 	)
 
-		if len(nm.DebugLines) > 0 {
-			shader := shaderManager.GetShaderProgram("flat")
-			// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
-			color := mgl64.Vec3{1, 0, 0}
-			shader.Use()
-			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-			r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), shader, nm.DebugLines, 0.05, color)
-		}
+	// 	if len(nm.DebugLines) > 0 {
+	// 		shader := shaderManager.GetShaderProgram("flat")
+	// 		// color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
+	// 		color := mgl64.Vec3{1, 0, 0}
+	// 		shader.Use()
+	// 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
+	// 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	// 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	// 		r.drawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), shader, nm.DebugLines, 0.05, color)
+	// 	}
 
-		nm.Invalidated = false
-	}
+	// 	nm.Invalidated = false
+	// }
 }
 
 // drawToMainColorBuffer renders a scene from the perspective of a viewer

@@ -25,6 +25,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/renderpass"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -80,10 +81,9 @@ type RenderSystem struct {
 
 	cameraViewerContext context.ViewerContext
 
-	mainRenderFBO          uint32
-	mainColorTexture       uint32
-	colorPickingTexture    uint32
-	colorPickingAttachment uint32
+	mainRenderFBO       uint32
+	mainColorTexture    uint32
+	colorPickingTexture uint32
 
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
@@ -127,6 +127,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r := &RenderSystem{app: app}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
+	rutils.SetRuntimeConfig(app.RuntimeConfig())
 
 	imguiIO := imgui.CurrentIO()
 	imguiIO.SetConfigDebugIsDebuggerPresent(true)
@@ -181,6 +182,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewMainPass(app, r.shaderManager))
 
 	for _, pass := range r.renderPasses {
 		pass.Init(width, height, r.renderPassContext)
@@ -241,7 +243,6 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	var mainRenderTextures []uint32
 	if init {
 		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
-		r.colorPickingAttachment = gl.COLOR_ATTACHMENT1
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 		_, _, mainRenderTextures = mainRenderTextureFn()
@@ -329,6 +330,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
+	renderContext.ShadowDistance = r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
 
 	start = time.Now()
 	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
@@ -375,7 +377,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
 		} else if menus.SelectedDebugComboOption == menus.ComboOptionPreBloomHDR {
-			r.app.RuntimeConfig().DebugTexture = r.mainColorTexture
+			r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainTexture
 		}
 	} else {
 		hdrColorTexture = r.mainColorTexture
@@ -621,7 +623,7 @@ func (r *RenderSystem) drawAnnotations(viewerContext context.ViewerContext, ligh
 		setupLightingUniforms(shader, lightContext.Lights)
 		shader.SetUniformInt("width", int32(renderContext.Width()))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
+		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
@@ -909,7 +911,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
+	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 	shader.SetUniformInt("shadowMap", 31)
@@ -993,7 +995,7 @@ func (r *RenderSystem) renderModels(shader *shaders.ShaderProgram,
 		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", r.shadowFarDistance())
+		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
 		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", r.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
@@ -1196,10 +1198,6 @@ func initOpenGLRenderSettings() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
-}
-
-func (r *RenderSystem) shadowFarDistance() float32 {
-	return r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
 }
 
 func (r *RenderSystem) QueueCreateMaterialTexture(handle types.MaterialHandle) {

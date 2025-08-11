@@ -776,7 +776,7 @@ func (r *RenderSystem) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
 	}
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	gl.ReadBuffer(r.colorPickingAttachment)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
 
 	_, windowHeight := r.app.WindowSize()

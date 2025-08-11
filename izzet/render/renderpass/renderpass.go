@@ -11,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -126,18 +127,6 @@ func createTexture(width, height int, internalFormat int32, format uint32, xtype
 	return texture
 }
 
-func iztDrawElements(app renderiface.App, count int32) {
-	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
-	app.RuntimeConfig().DrawCount += 1
-	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
-}
-
-func iztDrawArrays(app renderiface.App, first, count int32) {
-	app.RuntimeConfig().TriangleDrawCount += int(count / 3)
-	app.RuntimeConfig().DrawCount += 1
-	gl.DrawArrays(gl.TRIANGLES, first, count)
-}
-
 func createNDCQuadVAO() uint32 {
 	vertices := []float32{
 		-1, -1, 0.0, 0.0,
@@ -207,7 +196,7 @@ func renderGeometryWithoutColor(
 			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 
 			gl.BindVertexArray(p.GeometryVAO)
-			iztDrawElements(app, int32(len(p.Primitive.VertexIndices)))
+			rutils.IztDrawElements(int32(len(p.Primitive.VertexIndices)))
 		}
 	}
 
@@ -255,6 +244,6 @@ func drawBatches(
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
 
 		gl.BindVertexArray(batch.VAO)
-		iztDrawElements(app, batch.VertexCount)
+		rutils.IztDrawElements(batch.VertexCount)
 	}
 }

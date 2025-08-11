@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 )
@@ -135,7 +136,7 @@ func (p *GBufferPass) Render(
 
 			p.shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 			gl.BindVertexArray(prim.VAO)
-			iztDrawElements(p.app, int32(len(prim.Primitive.VertexIndices)))
+			rutils.IztDrawElements(int32(len(prim.Primitive.VertexIndices)))
 		}
 	}
 

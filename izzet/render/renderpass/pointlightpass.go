@@ -10,6 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -135,7 +136,7 @@ func (p *PointLightRenderPass) Render(
 			p.shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
 
 			gl.BindVertexArray(primitive.GeometryVAO)
-			iztDrawElements(p.app, int32(len(primitive.Primitive.VertexIndices)))
+			rutils.IztDrawElements(int32(len(primitive.Primitive.VertexIndices)))
 		}
 	}
 	if p.app.RuntimeConfig().BatchRenderingEnabled && len(ctx.BatchRenders) > 0 {

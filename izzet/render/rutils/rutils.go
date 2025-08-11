@@ -1,0 +1,355 @@
+package rutils
+
+import (
+	"fmt"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/render/context"
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
+	"github.com/kkevinchou/kitolib/shaders"
+)
+
+type TriangleVAO struct {
+	VAO    uint32
+	length int
+}
+
+var lineCache map[string][]mgl64.Vec3
+var cubeCache map[string][]mgl64.Vec3
+var triangleVAOCache map[string]TriangleVAO
+var singleSidedQuadVAO uint32
+var pickingBuffer []byte
+var runtimeConfig *runtimeconfig.RuntimeConfig
+var internedQuadVAOPositionUV uint32
+
+// global setter for convenience
+func SetRuntimeConfig(c *runtimeconfig.RuntimeConfig) {
+	runtimeConfig = c
+}
+
+func IztDrawElements(count int32) {
+	runtimeConfig.TriangleDrawCount += int(count / 3)
+	runtimeConfig.DrawCount += 1
+	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
+}
+
+func IztDrawArrays(first, count int32) {
+	runtimeConfig.TriangleDrawCount += int(count / 3)
+	runtimeConfig.DrawCount += 1
+	gl.DrawArrays(gl.TRIANGLES, first, count)
+}
+
+func DrawLineGroup(name string, shader *shaders.ShaderProgram, lines [][2]mgl64.Vec3, thickness float64, color mgl64.Vec3) {
+	var vao uint32
+	var length int
+
+	if _, ok := triangleVAOCache[name]; !ok {
+		var points []mgl64.Vec3
+		for _, line := range lines {
+			start := line[0]
+			end := line[1]
+			length := end.Sub(start).Len()
+
+			if length == 0 {
+				cp := cubePoints(thickness)
+				for _, p := range cp {
+					points = append(points, p.Add(start))
+				}
+			} else {
+				dir := end.Sub(start).Normalize()
+				q := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
+
+				for _, dp := range linePoints(thickness, length) {
+					newEnd := q.Rotate(dp).Add(start)
+					points = append(points, newEnd)
+				}
+			}
+		}
+		vao, length = generateTrisVAO(points)
+		item := TriangleVAO{VAO: vao, length: length}
+		triangleVAOCache[name] = item
+	}
+
+	item := triangleVAOCache[name]
+	vao = item.VAO
+	length = item.length
+
+	shader.SetUniformVec3("color", utils.Vec3F64ToF32(color))
+	shader.SetUniformFloat("intensity", 1.0)
+	gl.BindVertexArray(vao)
+	IztDrawArrays(0, int32(length))
+}
+
+func cubePoints(thickness float64) []mgl64.Vec3 {
+	cacheKey := genCacheKey(thickness, 0)
+	if _, ok := cubeCache[cacheKey]; ok {
+		return cubeCache[cacheKey]
+	}
+
+	var ht float64 = thickness / 2
+	points := []mgl64.Vec3{
+		// front
+		{-ht, -ht, ht},
+		{ht, -ht, ht},
+		{ht, ht, ht},
+
+		{ht, ht, ht},
+		{-ht, ht, ht},
+		{-ht, -ht, ht},
+
+		// back
+		{ht, ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, -ht},
+
+		{-ht, -ht, -ht},
+		{-ht, ht, -ht},
+		{ht, ht, -ht},
+
+		// right
+		{ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, ht, -ht},
+
+		{ht, ht, -ht},
+		{ht, ht, ht},
+		{ht, -ht, ht},
+
+		// left
+		{-ht, ht, -ht},
+		{-ht, -ht, -ht},
+		{-ht, -ht, ht},
+
+		{-ht, -ht, ht},
+		{-ht, ht, ht},
+		{-ht, ht, -ht},
+
+		// top
+		{ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, ht},
+
+		{-ht, ht, ht},
+		{ht, ht, -ht},
+		{-ht, ht, -ht},
+
+		// bottom
+		{-ht, -ht, ht},
+		{ht, -ht, -ht},
+		{ht, -ht, ht},
+
+		{-ht, -ht, -ht},
+		{ht, -ht, -ht},
+		{-ht, -ht, ht},
+	}
+
+	cubeCache[cacheKey] = points
+	return points
+}
+
+func linePoints(thickness float64, length float64) []mgl64.Vec3 {
+	cacheKey := genCacheKey(thickness, length)
+	if _, ok := lineCache[cacheKey]; ok {
+		return lineCache[cacheKey]
+	}
+
+	var ht float64 = thickness / 2
+	linePoints := []mgl64.Vec3{
+		// front
+		{-ht, -ht, 0},
+		{ht, -ht, 0},
+		{ht, ht, 0},
+
+		{ht, ht, 0},
+		{-ht, ht, 0},
+		{-ht, -ht, 0},
+
+		// back
+		{ht, ht, -length},
+		{ht, -ht, -length},
+		{-ht, -ht, -length},
+
+		{-ht, -ht, -length},
+		{-ht, ht, -length},
+		{ht, ht, -length},
+
+		// right
+		{ht, -ht, 0},
+		{ht, -ht, -length},
+		{ht, ht, -length},
+
+		{ht, ht, -length},
+		{ht, ht, 0},
+		{ht, -ht, 0},
+
+		// left
+		{-ht, ht, -length},
+		{-ht, -ht, -length},
+		{-ht, -ht, 0},
+
+		{-ht, -ht, 0},
+		{-ht, ht, 0},
+		{-ht, ht, -length},
+
+		// top
+		{ht, ht, 0},
+		{ht, ht, -length},
+		{-ht, ht, 0},
+
+		{-ht, ht, 0},
+		{ht, ht, -length},
+		{-ht, ht, -length},
+
+		// bottom
+		{-ht, -ht, 0},
+		{ht, -ht, -length},
+		{ht, -ht, 0},
+
+		{-ht, -ht, -length},
+		{ht, -ht, -length},
+		{-ht, -ht, 0},
+	}
+
+	lineCache[cacheKey] = linePoints
+	return linePoints
+}
+
+func genCacheKey(thickness, length float64) string {
+	return fmt.Sprintf("%.3f_%.3f", thickness, length)
+}
+
+func generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
+	var vertices []float32
+	for _, point := range points {
+		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
+	}
+
+	var vbo, vao uint32
+	apputils.GenBuffers(1, &vbo)
+	gl.GenVertexArrays(1, &vao)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	return vao, len(vertices)
+}
+
+func DrawTexturedQuad(viewerContext *context.ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
+	vao := getInternedQuadVAOPositionUV()
+
+	gl.BindVertexArray(vao)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	if modelMatrix != nil {
+		shader := shaderManager.GetShaderProgram("world_space_quad")
+		shader.Use()
+		if pickingID != nil {
+			shader.SetUniformUInt("entityID", uint32(*pickingID))
+		}
+		shader.SetUniformMat4("model", *modelMatrix)
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	} else {
+		shader := shaderManager.GetShaderProgram("screen_space_quad")
+		shader.Use()
+	}
+
+	// honestly we should clean up this quad drawing logic
+	numVertices := 6
+	if doubleSided {
+		numVertices *= 2
+	}
+
+	IztDrawArrays(0, int32(numVertices))
+}
+
+func getInternedQuadVAOPositionUV() uint32 {
+	if internedQuadVAOPositionUV == 0 {
+		var internedQuadVBO uint32
+		var internedQuadVertices = []float32{
+			-1, -1, 0, 0.0, 0.0,
+			1, -1, 0, 1.0, 0.0,
+			1, 1, 0, 1.0, 1.0,
+			1, 1, 0, 1.0, 1.0,
+			-1, 1, 0, 0.0, 1.0,
+			-1, -1, 0, 0.0, 0.0,
+		}
+
+		var backVertices []float32 = []float32{
+			1, 1, 0, 1.0, 1.0,
+			1, -1, 0, 1.0, 0.0,
+			-1, -1, 0, 0.0, 0.0,
+			-1, -1, 0, 0.0, 0.0,
+			-1, 1, 0, 0.0, 1.0,
+			1, 1, 0, 1.0, 1.0,
+		}
+
+		// always add the double sided vertices
+		// when a draw request comes in, if doubleSided is false we only draw the first half of the vertices
+		// this is wasteful for scenarios where we don't need all vertices
+		internedQuadVertices = append(internedQuadVertices, backVertices...)
+
+		// var vbo, dtqVao uint32
+		apputils.GenBuffers(1, &internedQuadVBO)
+		gl.GenVertexArrays(1, &internedQuadVAOPositionUV)
+
+		gl.BindVertexArray(internedQuadVAOPositionUV)
+		gl.BindBuffer(gl.ARRAY_BUFFER, internedQuadVBO)
+		gl.BufferData(gl.ARRAY_BUFFER, len(internedQuadVertices)*4, gl.Ptr(internedQuadVertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+		gl.EnableVertexAttribArray(0)
+
+		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+		gl.EnableVertexAttribArray(1)
+	}
+
+	return internedQuadVAOPositionUV
+}
+
+func DrawBillboardTexture(
+	texture uint32,
+	length float32,
+) {
+	if singleSidedQuadVAO == 0 {
+		vertices := []float32{
+			-1 * length, -1 * length, 0, 0.0, 0.0,
+			1 * length, -1 * length, 0, 1.0, 0.0,
+			1 * length, 1 * length, 0, 1.0, 1.0,
+			1 * length, 1 * length, 0, 1.0, 1.0,
+			-1 * length, 1 * length, 0, 0.0, 1.0,
+			-1 * length, -1 * length, 0, 0.0, 0.0,
+		}
+
+		var vbo, vao uint32
+		apputils.GenBuffers(1, &vbo)
+		gl.GenVertexArrays(1, &vao)
+
+		gl.BindVertexArray(vao)
+		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+
+		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+		gl.EnableVertexAttribArray(0)
+
+		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+		gl.EnableVertexAttribArray(1)
+
+		singleSidedQuadVAO = vao
+	}
+
+	gl.BindVertexArray(singleSidedQuadVAO)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	IztDrawArrays(0, 6)
+}

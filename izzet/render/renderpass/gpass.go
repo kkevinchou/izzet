@@ -15,13 +15,12 @@ const (
 )
 
 type GBufferPass struct {
-	app    renderiface.App
-	shader *shaders.ShaderProgram
-	sm     *shaders.ShaderManager
+	app renderiface.App
+	sm  *shaders.ShaderManager
 }
 
 func NewGPass(app renderiface.App, sm *shaders.ShaderManager) *GBufferPass {
-	return &GBufferPass{app: app, shader: sm.GetShaderProgram("gpass"), sm: sm}
+	return &GBufferPass{app: app, sm: sm}
 }
 
 func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) {

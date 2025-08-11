@@ -770,14 +770,14 @@ func (r *RenderSystem) CameraViewerContext() context.ViewerContext {
 // a package variable outside of the getEntityByPixelPosition method. in addition, i've
 // done better vao caching for our gizmos which previously were recreated whenever the
 // camera moves
-func (r *RenderSystem) getEntityByPixelPosition(pixelPosition mgl64.Vec2) *int {
+func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.Vec2) *int {
 	if r.app.Minimized() || !r.app.WindowFocused() {
 		return nil
 	}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+	defer gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
@@ -1060,37 +1060,37 @@ func (r *RenderSystem) iztDrawElements(count int32) {
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }
 
-// setup reusale circle textures
-func (r *RenderSystem) initializeCircleTextures() {
-	gl.Viewport(0, 0, 1024, 1024)
-	shaderManager := r.shaderManager
-	shader := shaderManager.GetShaderProgram("unit_circle")
-	shader.Use()
+// // setup reusale circle textures
+// func (r *RenderSystem) initializeCircleTextures() {
+// 	gl.Viewport(0, 0, 1024, 1024)
+// 	shaderManager := r.shaderManager
+// 	shader := shaderManager.GetShaderProgram("unit_circle")
+// 	shader.Use()
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.redCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	shader.SetUniformVec4("color", mgl32.Vec4{1, 0, 0, 1})
-	r.drawCircle()
+// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.redCircleFB)
+// 	gl.ClearColor(0, 0.5, 0, 0)
+// 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+// 	shader.SetUniformVec4("color", mgl32.Vec4{1, 0, 0, 1})
+// 	r.drawCircle()
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.greenCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	shader.SetUniformVec4("color", mgl32.Vec4{0, 1, 0, 1})
-	r.drawCircle()
+// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.greenCircleFB)
+// 	gl.ClearColor(0, 0.5, 0, 0)
+// 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+// 	shader.SetUniformVec4("color", mgl32.Vec4{0, 1, 0, 1})
+// 	r.drawCircle()
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blueCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	shader.SetUniformVec4("color", mgl32.Vec4{0, 0, 1, 1})
-	r.drawCircle()
+// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.blueCircleFB)
+// 	gl.ClearColor(0, 0.5, 0, 0)
+// 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+// 	shader.SetUniformVec4("color", mgl32.Vec4{0, 0, 1, 1})
+// 	r.drawCircle()
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
-	gl.ClearColor(0, 0.5, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	shader.SetUniformVec4("color", mgl32.Vec4{1, 1, 0, 1})
-	r.drawCircle()
-}
+// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.yellowCircleFB)
+// 	gl.ClearColor(0, 0.5, 0, 0)
+// 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+// 	shader.SetUniformVec4("color", mgl32.Vec4{1, 1, 0, 1})
+// 	r.drawCircle()
+// }
 
 func CalculateMenuBarHeight() float32 {
 	style := imgui.CurrentStyle()

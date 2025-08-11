@@ -17,7 +17,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
@@ -70,20 +69,20 @@ type RenderSystem struct {
 
 	imguiRenderer *renderers.OpenGL3
 
-	redCircleFB         uint32
-	redCircleTexture    uint32
-	greenCircleFB       uint32
-	greenCircleTexture  uint32
-	blueCircleFB        uint32
-	blueCircleTexture   uint32
-	yellowCircleFB      uint32
-	yellowCircleTexture uint32
+	// redCircleFB         uint32
+	// redCircleTexture    uint32
+	// greenCircleFB       uint32
+	// greenCircleTexture  uint32
+	// blueCircleFB        uint32
+	// blueCircleTexture   uint32
+	// yellowCircleFB      uint32
+	// yellowCircleTexture uint32
 
 	cameraViewerContext context.ViewerContext
 
-	mainRenderFBO       uint32
-	mainColorTexture    uint32
-	colorPickingTexture uint32
+	// mainRenderFBO       uint32
+	// mainColorTexture    uint32
+	// colorPickingTexture uint32
 
 	downSampleFBO      uint32
 	ndcQuadVAO         uint32
@@ -147,12 +146,12 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	// circles for the rotation gizmo
 
-	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
-	r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
-	r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
-	r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
-	r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
-	r.initializeCircleTextures()
+	// r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
+	// r.redCircleFB, r.redCircleTexture = r.createCircleTexture(1024, 1024)
+	// r.greenCircleFB, r.greenCircleTexture = r.createCircleTexture(1024, 1024)
+	// r.blueCircleFB, r.blueCircleTexture = r.createCircleTexture(1024, 1024)
+	// r.yellowCircleFB, r.yellowCircleTexture = r.createCircleTexture(1024, 1024)
+	// r.initializeCircleTextures()
 
 	// bloom setup
 	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
@@ -239,16 +238,16 @@ func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	// main render FBO
 
-	mainRenderTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
-	var mainRenderTextures []uint32
-	if init {
-		r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-		_, _, mainRenderTextures = mainRenderTextureFn()
-	}
-	r.mainColorTexture = mainRenderTextures[0]
-	r.colorPickingTexture = mainRenderTextures[1]
+	// mainRenderTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
+	// var mainRenderTextures []uint32
+	// if init {
+	// 	r.mainRenderFBO, mainRenderTextures = r.initFrameBuffer(mainRenderTextureFn)
+	// } else {
+	// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+	// 	_, _, mainRenderTextures = mainRenderTextureFn()
+	// }
+	// r.mainColorTexture = mainRenderTextures[0]
+	// r.colorPickingTexture = mainRenderTextures[1]
 
 	// composite FBO
 	compositeTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
@@ -343,25 +342,25 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// MAIN RENDER
 
-	start = time.Now()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, *r.renderPassContext, renderableEntities)
-	mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
+	// start = time.Now()
+	// gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+	// r.drawToMainColorBuffer(cameraViewerContext, lightContext, renderContext, *r.renderPassContext, renderableEntities)
+	// mr.Inc("render_main_color_buffer", float64(time.Since(start).Milliseconds()))
 
-	start = time.Now()
-	r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
-	mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
+	// start = time.Now()
+	// r.drawAnnotations(cameraViewerContext, lightContext, renderContext)
+	// mr.Inc("render_annotations", float64(time.Since(start).Milliseconds()))
 
-	// clear depth for gizmo rendering
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	start = time.Now()
-	r.renderGizmos(cameraViewerContext, renderContext)
-	mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
+	// // clear depth for gizmo rendering
+	// gl.Clear(gl.DEPTH_BUFFER_BIT)
+	// start = time.Now()
+	// r.renderGizmos(cameraViewerContext, renderContext)
+	// mr.Inc("render_gizmos", float64(time.Since(start).Milliseconds()))
 
 	// store color picking entity
 	start = time.Now()
 	if r.app.AppMode() == types.AppModeEditor {
-		r.hoveredEntityID = r.getEntityByPixelPosition(r.app.GetFrameInput().MouseInput.Position)
+		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
 	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
@@ -369,9 +368,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	if r.app.RuntimeConfig().Bloom {
 		start = time.Now()
-		r.downSample(r.mainColorTexture, r.bloomTextureWidths, r.bloomTextureHeights)
+		r.downSample(r.renderPassContext.MainTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSampleAndBlend(r.bloomTextureWidths, r.bloomTextureHeights)
-		hdrColorTexture = r.composite(renderContext, r.mainColorTexture, upsampleTexture)
+		hdrColorTexture = r.composite(renderContext, r.renderPassContext.MainTexture, upsampleTexture)
 		mr.Inc("render_bloom", float64(time.Since(start).Milliseconds()))
 
 		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
@@ -380,7 +379,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 			r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainTexture
 		}
 	} else {
-		hdrColorTexture = r.mainColorTexture
+		hdrColorTexture = r.renderPassContext.MainTexture
 	}
 
 	start = time.Now()
@@ -484,7 +483,7 @@ func (r *RenderSystem) setDebugTexture() {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
-		r.app.RuntimeConfig().DebugTexture = r.colorPickingTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainColorPickingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.ShadowMapTexture
@@ -1160,22 +1159,22 @@ func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWind
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
 }
 
-func (r *RenderSystem) renderGizmos(viewerContext context.ViewerContext, renderContext context.RenderContext) {
-	if r.app.SelectedEntity() == nil {
-		return
-	}
+// func (r *RenderSystem) renderGizmos(viewerContext context.ViewerContext, renderContext context.RenderContext) {
+// 	if r.app.SelectedEntity() == nil {
+// 		return
+// 	}
 
-	entity := r.app.World().GetEntityByID(r.app.SelectedEntity().ID)
-	position := entity.Position()
+// 	entity := r.app.World().GetEntityByID(r.app.SelectedEntity().ID)
+// 	position := entity.Position()
 
-	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-		r.drawCircleGizmo(&viewerContext, position, renderContext)
-	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-		r.drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
-	}
-}
+// 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
+// 		r.drawTranslationGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
+// 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
+// 		r.drawCircleGizmo(&viewerContext, position, renderContext)
+// 	} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
+// 		r.drawScaleGizmo(&viewerContext, r.shaderManager.GetShaderProgram("flat"), position)
+// 	}
+// }
 
 func (r *RenderSystem) GameWindowHovered() bool {
 	return r.gameWindowHovered

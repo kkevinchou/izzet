@@ -153,44 +153,44 @@ func (r *RenderSystem) drawScaleGizmo(viewerContext *context.ViewerContext, shad
 	}
 }
 
-func (r *RenderSystem) drawCircleGizmo(viewerContext *context.ViewerContext, position mgl64.Vec3, renderContext context.RenderContext) {
-	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
-	if behind {
-		return
-	}
-	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
-	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
+// func (r *RenderSystem) drawCircleGizmo(viewerContext *context.ViewerContext, position mgl64.Vec3, renderContext context.RenderContext) {
+// 	screenPosition, behind := worldToNDCPosition(*viewerContext, position)
+// 	if behind {
+// 		return
+// 	}
+// 	nearPlanePosition := NDCToWorldPosition(*viewerContext, mgl64.Vec3{screenPosition.X(), screenPosition.Y(), -float64(r.app.RuntimeConfig().Near)})
+// 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
-	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
+// 	t := mgl32.Translate3D(float32(renderPosition[0]), float32(renderPosition[1]), float32(renderPosition[2]))
 
-	rotations := []mgl32.Mat4{
-		mgl32.Ident4(),
-		mgl32.HomogRotate3DY(90 * math.Pi / 180),
-		mgl32.HomogRotate3DX(-90 * math.Pi / 180),
-	}
+// 	rotations := []mgl32.Mat4{
+// 		mgl32.Ident4(),
+// 		mgl32.HomogRotate3DY(90 * math.Pi / 180),
+// 		mgl32.HomogRotate3DX(-90 * math.Pi / 180),
+// 	}
 
-	pickingIDs := []int{
-		gizmo.GizmoXDistancePickingID,
-		gizmo.GizmoYDistancePickingID,
-		gizmo.GizmoZDistancePickingID,
-	}
+// 	pickingIDs := []int{
+// 		gizmo.GizmoXDistancePickingID,
+// 		gizmo.GizmoYDistancePickingID,
+// 		gizmo.GizmoZDistancePickingID,
+// 	}
 
-	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
+// 	textures := []uint32{r.redCircleTexture, r.greenCircleTexture, r.blueCircleTexture}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
-	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
-	for i := 0; i < 3; i++ {
-		modelMatrix := t.Mul4(rotations[i])
-		texture := textures[i]
-		pickingID := pickingIDs[i]
+// 	gl.BindFramebuffer(gl.FRAMEBUFFER, r.mainRenderFBO)
+// 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+// 	for i := 0; i < 3; i++ {
+// 		modelMatrix := t.Mul4(rotations[i])
+// 		texture := textures[i]
+// 		pickingID := pickingIDs[i]
 
-		if pickingID == gizmo.RotationGizmo.HoveredEntityID {
-			texture = r.yellowCircleTexture
-		}
+// 		if pickingID == gizmo.RotationGizmo.HoveredEntityID {
+// 			texture = r.yellowCircleTexture
+// 		}
 
-		r.drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
-	}
-}
+// 		r.drawTexturedQuad(viewerContext, r.shaderManager, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
+// 	}
+// }
 
 func (r *RenderSystem) drawCircle() {
 	var vertices []float32 = []float32{

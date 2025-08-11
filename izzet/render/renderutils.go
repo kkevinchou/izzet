@@ -3,7 +3,6 @@ package render
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"math"
 
 	"github.com/AllenDang/cimgui-go/imgui"
@@ -11,13 +10,10 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 var pickingBuffer []byte
@@ -35,30 +31,6 @@ type RenderData struct {
 }
 
 type TextureFn func() (int, int, []uint32)
-
-func genCacheKey(thickness, length float64) string {
-	return fmt.Sprintf("%.3f_%.3f", thickness, length)
-}
-
-func (r *RenderSystem) generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
-	var vertices []float32
-	for _, point := range points {
-		vertices = append(vertices, float32(point.X()), float32(point.Y()), float32(point.Z()))
-	}
-
-	var vbo, vao uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.GenVertexArrays(1, &vao)
-
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
-	gl.EnableVertexAttribArray(0)
-
-	return vao, len(vertices)
-}
 
 func RGBtoHSV(rgb mgl32.Vec3) mgl32.Vec3 {
 	// Normalize RGB values to be between 0 and 1
@@ -145,27 +117,6 @@ func HSVtoRGB(hsv mgl32.Vec3) mgl32.Vec3 {
 
 	// Create and return RGB Vec3
 	return mgl32.Vec3{r, g, b}
-}
-
-// i considered using uniform blocks but the memory layout management seems like a huge pain
-// https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
-func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Entity) {
-	if len(lights) > settings.MaxLightCount {
-		panic(fmt.Sprintf("light count of %d exceeds max %d", len(lights), settings.MaxLightCount))
-	}
-
-	shader.SetUniformInt("lightCount", int32(len(lights)))
-	for i, light := range lights {
-		lightInfo := light.LightInfo
-
-		diffuse := lightInfo.IntensifiedDiffuse()
-
-		shader.SetUniformInt(fmt.Sprintf("lights[%d].type", i), int32(lightInfo.Type))
-		shader.SetUniformVec3(fmt.Sprintf("lights[%d].dir", i), lightInfo.Direction3F)
-		shader.SetUniformVec3(fmt.Sprintf("lights[%d].diffuse", i), diffuse)
-		shader.SetUniformVec3(fmt.Sprintf("lights[%d].position", i), utils.Vec3F64ToF32(light.Position()))
-		shader.SetUniformFloat(fmt.Sprintf("lights[%d].range", i), lightInfo.Range)
-	}
 }
 
 func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {

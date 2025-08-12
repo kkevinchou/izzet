@@ -39,14 +39,14 @@ type RenderPass interface {
 	)
 }
 
-func initFrameBuffer(width int, height int, internalFormat []int32, format []uint32, xtype []uint32, includeDepth bool) (uint32, []uint32) {
+func initFrameBuffer(width int, height int, internalFormat []int32, format []uint32, xtype []uint32, includeDepth bool, singleSample bool) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
 	var drawBuffers []uint32
 
-	textures := createAndBindTextures(width, height, internalFormat, format, xtype)
+	textures := createAndBindTextures(width, height, internalFormat, format, xtype, singleSample)
 	textureCount := len(textures)
 	for i := 0; i < textureCount; i++ {
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
@@ -59,38 +59,11 @@ func initFrameBuffer(width int, height int, internalFormat []int32, format []uin
 		var rbo uint32
 		gl.GenRenderbuffers(1, &rbo)
 		gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-		gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
-		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
-	}
-
-	if gl.CheckFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE {
-		panic(errors.New("failed to initalize frame buffer"))
-	}
-
-	return fbo, textures
-}
-
-func initFrameBufferMultisample(width int, height int, format []uint32, includeDepth bool) (uint32, []uint32) {
-	var fbo uint32
-	gl.GenFramebuffers(1, &fbo)
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
-
-	var drawBuffers []uint32
-
-	textures := createAndBindTexturesMultisample(width, height, format)
-	textureCount := len(textures)
-	for i := 0; i < textureCount; i++ {
-		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-		drawBuffers = append(drawBuffers, attachment)
-	}
-
-	gl.DrawBuffers(int32(textureCount), &drawBuffers[0])
-
-	if includeDepth {
-		var rbo uint32
-		gl.GenRenderbuffers(1, &rbo)
-		gl.BindRenderbuffer(gl.RENDERBUFFER, rbo)
-		gl.RenderbufferStorageMultisample(gl.RENDERBUFFER, 4, gl.DEPTH_COMPONENT, int32(width), int32(height))
+		if singleSample {
+			gl.RenderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT, int32(width), int32(height))
+		} else {
+			gl.RenderbufferStorageMultisample(gl.RENDERBUFFER, 4, gl.DEPTH_COMPONENT, int32(width), int32(height))
+		}
 		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rbo)
 	}
 
@@ -135,39 +108,37 @@ func createDepthTexture(width, height int) uint32 {
 	return texture
 }
 
-func createAndBindTextures(width int, height int, internalFormat []int32, format []uint32, xtype []uint32) []uint32 {
+func createAndBindTextures(width int, height int, internalFormat []int32, format []uint32, xtype []uint32, singleSample bool) []uint32 {
 	count := len(internalFormat)
 	var textures []uint32
 	for i := 0; i < count; i++ {
-		texture := createTexture(width, height, internalFormat[i], format[i], xtype[i], gl.LINEAR)
+		texture := createTexture(width, height, internalFormat[i], format[i], xtype[i], gl.LINEAR, singleSample)
 		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+		if singleSample {
+			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D, texture, 0)
+		} else {
+			gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D_MULTISAMPLE, texture, 0)
+		}
 
 		textures = append(textures, texture)
 	}
 	return textures
 }
 
-func createAndBindTexturesMultisample(width int, height int, format []uint32) []uint32 {
-	count := len(format)
-	var textures []uint32
-	for i := 0; i < count; i++ {
-		texture := createTextureMultisample(width, height, format[i], gl.LINEAR)
-		attachment := gl.COLOR_ATTACHMENT0 + uint32(i)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, attachment, gl.TEXTURE_2D_MULTISAMPLE, texture, 0)
-
-		textures = append(textures, texture)
-	}
-	return textures
-}
-
-func createTexture(width, height int, internalFormat int32, format uint32, xtype uint32, filtering int32) uint32 {
+func createTexture(width, height int, internalFormat int32, format uint32, xtype uint32, filtering int32, singleSample bool) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat,
-		int32(width), int32(height), 0, format, xtype, nil)
+	if singleSample {
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat,
+			int32(width), int32(height), 0, format, xtype, nil)
+	} else {
+		gl.BindTexture(gl.TEXTURE_2D_MULTISAMPLE, texture)
+		gl.TexImage2DMultisample(gl.TEXTURE_2D_MULTISAMPLE, 4, format,
+			int32(width), int32(height), true)
+	}
+
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filtering)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filtering)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)

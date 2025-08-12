@@ -18,14 +18,14 @@ func NewSSAOBlurPass(app renderiface.App, sm *shaders.ShaderManager) *SSAOBlurRe
 }
 
 func (p *SSAOBlurRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
-	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, false)
+	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, false, true)
 	ctx.SSAOBlurFBO = fbo
 	ctx.SSAOBlurTexture = textures[0]
 }
 
 func (p *SSAOBlurRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.SSAOBlurFBO)
-	textures := createAndBindTextures(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
+	textures := createAndBindTextures(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true)
 	ctx.SSAOBlurTexture = textures[0]
 }
 

@@ -31,7 +31,7 @@ func NewSSAOPass(app renderiface.App, sm *shaders.ShaderManager) *SSAORenderPass
 }
 
 func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext) {
-	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true)
+	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true, true)
 	ctx.SSAOFBO = fbo
 	ctx.SSAOTexture = textures[0]
 	p.ssaoSamples = randomHemisphereVectors()
@@ -40,7 +40,7 @@ func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext)
 
 func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.SSAOFBO)
-	textures := createAndBindTextures(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT})
+	textures := createAndBindTextures(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true)
 	ctx.SSAOTexture = textures[0]
 }
 

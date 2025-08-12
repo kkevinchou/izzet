@@ -46,12 +46,28 @@ func NewMainPass(app renderiface.App, sm *shaders.ShaderManager) *MainRenderPass
 }
 
 func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
-	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE}, true)
+	fbo, textures := initFrameBuffer(
+		width,
+		height,
+		[]int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		[]uint32{gl.FLOAT, gl.UNSIGNED_BYTE},
+		true,
+		true,
+	)
 	ctx.MainFBO = fbo
 	ctx.MainTexture = textures[0]
 	ctx.MainColorPickingTexture = textures[1]
 
-	msFBO, msTextures := initFrameBufferMultisample(width, height, []uint32{rendersettings.MultiSampleFormat, gl.R32UI}, true)
+	msFBO, msTextures := initFrameBuffer(
+		width,
+		height,
+		[]int32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		true,
+		false,
+	)
 	ctx.MainMultisampleFBO = msFBO
 	ctx.MainMultisampleTexture = msTextures[0]
 
@@ -66,11 +82,25 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 
 func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainFBO)
-	textures := createAndBindTextures(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
+	textures := createAndBindTextures(
+		width,
+		height,
+		[]int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		[]uint32{gl.FLOAT, gl.UNSIGNED_BYTE},
+		true,
+	)
 	ctx.MainTexture = textures[0]
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainMultisampleFBO)
-	msTextures := createAndBindTexturesMultisample(width, height, []uint32{rendersettings.MultiSampleFormat, gl.R32UI})
+	msTextures := createAndBindTextures(
+		width,
+		height,
+		[]int32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		false,
+	)
 	ctx.MainMultisampleTexture = msTextures[0]
 }
 
@@ -638,7 +668,7 @@ func (p *MainRenderPass) renderGizmos(viewerContext context.ViewerContext, rende
 }
 
 func createCircleTexture(width, height int) (uint32, uint32) {
-	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE}, true)
+	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE}, true, true)
 	return fbo, textures[0]
 }
 

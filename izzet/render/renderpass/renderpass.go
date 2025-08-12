@@ -147,21 +147,6 @@ func createTexture(width, height int, internalFormat int32, format uint32, xtype
 	return texture
 }
 
-func createTextureMultisample(width, height int, format uint32, filtering int32) uint32 {
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D_MULTISAMPLE, texture)
-
-	gl.TexImage2DMultisample(gl.TEXTURE_2D_MULTISAMPLE, 4, format,
-		int32(width), int32(height), true)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filtering)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filtering)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-	return texture
-}
-
 func renderGeometryWithoutColor(
 	app renderiface.App,
 	shader *shaders.ShaderProgram,

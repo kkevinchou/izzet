@@ -162,7 +162,7 @@ func renderGeometryWithoutColor(
 			continue
 		}
 
-		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.Static {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entities.BatchRenderable(entity) {
 			continue
 		}
 
@@ -274,7 +274,7 @@ func drawModels(
 
 	var drawCount int
 	for _, entity := range ents {
-		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.Static {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entities.BatchRenderable(entity) {
 			continue
 		}
 		renderShader.SetUniformUInt("entityID", uint32(entity.ID))

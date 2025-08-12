@@ -29,16 +29,16 @@ func (p *CameraDepthRenderPass) Resize(width, height int, ctx *context.RenderPas
 }
 
 func (p *CameraDepthRenderPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.CameraDepthFBO)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.CameraDepthFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
-	renderGeometryWithoutColor(p.app, p.shader, ctx.RenderableEntities, viewerContext, ctx)
+	renderGeometryWithoutColor(p.app, p.shader, renderContext.RenderableEntities, viewerContext, renderContext)
 }

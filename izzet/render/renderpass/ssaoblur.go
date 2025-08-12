@@ -30,22 +30,22 @@ func (p *SSAOBlurRenderPass) Resize(width, height int, ctx *context.RenderPassCo
 }
 
 func (p *SSAOBlurRenderPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.SSAOBlurFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOBlurFBO)
 
-	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, rctx.SSAOTexture)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.SSAOTexture)
 
 	gl.BindVertexArray(rutils.GetNDCQuadVAO())
 	rutils.IztDrawArrays(0, 6)

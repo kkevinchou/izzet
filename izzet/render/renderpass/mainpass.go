@@ -105,65 +105,65 @@ func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContex
 }
 
 func (p *MainRenderPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
 	if p.app.RuntimeConfig().EnableAntialiasing {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.MainMultisampleFBO)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.MainMultisampleFBO)
 	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.MainFBO)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.MainFBO)
 	}
 
-	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// skybox
-	rutils.TimeFunc("render_skybox", func() { p.drawSkybox(ctx, viewerContext) })
+	rutils.TimeFunc("render_skybox", func() { p.drawSkybox(renderContext, viewerContext) })
 
 	// models
 	rutils.TimeFunc("render_main", func() {
-		drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities)
+		drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
 	})
 
 	// colliders
 	if p.app.RuntimeConfig().ShowColliders {
-		p.drawColliders(viewerContext, ctx.RenderableEntities)
+		p.drawColliders(viewerContext, renderContext.RenderableEntities)
 	}
 
 	// non entities
-	p.drawNonEntity(viewerContext, ctx)
+	p.drawNonEntity(viewerContext, renderContext)
 
 	// annotations
-	rutils.TimeFunc("render_annotations", func() { p.drawAnnotations(viewerContext, lightContext, ctx) })
+	rutils.TimeFunc("render_annotations", func() { p.drawAnnotations(viewerContext, lightContext, renderContext) })
 
 	// gizmos
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	rutils.TimeFunc("render_gizmos", func() { p.renderGizmos(viewerContext, ctx) })
+	rutils.TimeFunc("render_gizmos", func() { p.renderGizmos(viewerContext, renderContext) })
 
 	if p.app.RuntimeConfig().EnableAntialiasing {
 		// blit rendered image
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, rctx.MainMultisampleFBO)
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, rctx.MainFBO)
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, renderPassContext.MainMultisampleFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, renderPassContext.MainFBO)
 
 		gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 
-		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
 
 		// blit color picking
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, rctx.MainMultisampleFBO)
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, rctx.MainFBO)
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, renderPassContext.MainMultisampleFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, renderPassContext.MainFBO)
 
 		gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT1)
 		defer gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 		defer gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 
-		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
 	}
 }
 

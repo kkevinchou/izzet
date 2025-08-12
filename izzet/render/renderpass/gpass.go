@@ -52,8 +52,8 @@ func (p *GBufferPass) Resize(width, height int, ctx *context.RenderPassContext) 
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
 }
 func (p *GBufferPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
@@ -62,11 +62,11 @@ func (p *GBufferPass) Render(
 	start := time.Now()
 
 	// bind, clear, draw
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.GeometryFBO)
-	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.GeometryFBO)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	drawModels(p.app, p.sm.GetShaderProgram("gpass"), p.sm.GetShaderProgram("gpass"), viewerContext, lightContext, ctx, rctx, ctx.RenderableEntities)
+	drawModels(p.app, p.sm.GetShaderProgram("gpass"), p.sm.GetShaderProgram("gpass"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
 
 	mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
 }

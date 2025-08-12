@@ -47,8 +47,8 @@ func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContex
 // TODO - in general could make some better help methods to set uniforms
 // TODO - do the entity query ourselves? take in a world?
 func (p *SSAORenderPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
@@ -56,19 +56,19 @@ func (p *SSAORenderPass) Render(
 	mr := p.app.MetricsRegistry()
 	start := time.Now()
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.SSAOFBO)
-	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOFBO)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, rctx.GPositionTexture)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.GPositionTexture)
 	p.shader.SetUniformInt("gPosition", 0)
 
 	gl.ActiveTexture(gl.TEXTURE1)
-	gl.BindTexture(gl.TEXTURE_2D, rctx.GNormalTexture)
+	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.GNormalTexture)
 	p.shader.SetUniformInt("gNormal", 1)
 
 	gl.ActiveTexture(gl.TEXTURE2)

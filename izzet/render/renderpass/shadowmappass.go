@@ -27,13 +27,13 @@ func (p *ShadowMapRenderPass) Resize(width, height int, ctx *context.RenderPassC
 }
 
 func (p *ShadowMapRenderPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.ShadowMapFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.ShadowMapFBO)
 	gl.Viewport(0, 0, int32(p.dimension), int32(p.dimension))
 
 	if !p.app.RuntimeConfig().EnableShadowMapping {
@@ -48,5 +48,5 @@ func (p *ShadowMapRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
-	renderGeometryWithoutColor(p.app, p.shader, ctx.ShadowCastingEntities, lightViewerContext, ctx)
+	renderGeometryWithoutColor(p.app, p.shader, renderContext.ShadowCastingEntities, lightViewerContext, renderContext)
 }

@@ -75,8 +75,8 @@ func (p *PointLightRenderPass) Resize(width, height int, ctx *context.RenderPass
 }
 
 func (p *PointLightRenderPass) Render(
-	ctx context.RenderContext,
-	rctx *context.RenderPassContext,
+	renderContext context.RenderContext,
+	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
@@ -89,7 +89,7 @@ func (p *PointLightRenderPass) Render(
 	pointLight = lightContext.PointLights[0]
 
 	gl.Viewport(0, 0, int32(PointLightCubeMapWidth), int32(PointLightCubeMapHeight))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.PointLightFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.PointLightFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	position := pointLight.Position()
@@ -104,12 +104,12 @@ func (p *PointLightRenderPass) Render(
 	}
 	p.shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
-	for _, entity := range ctx.RenderableEntities {
+	for _, entity := range renderContext.RenderableEntities {
 		if entity == nil || entity.MeshComponent == nil {
 			continue
 		}
 
-		if p.app.RuntimeConfig().BatchRenderingEnabled && len(ctx.BatchRenders) > 0 && entity.Static {
+		if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entities.BatchRenderable(entity) {
 			continue
 		}
 
@@ -139,8 +139,8 @@ func (p *PointLightRenderPass) Render(
 			rutils.IztDrawElements(int32(len(primitive.Primitive.VertexIndices)))
 		}
 	}
-	if p.app.RuntimeConfig().BatchRenderingEnabled && len(ctx.BatchRenders) > 0 {
-		drawBatches(p.app, ctx, p.shader)
+	if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
+		drawBatches(p.app, renderContext, p.shader)
 		p.app.MetricsRegistry().Inc("draw_entity_count", 1)
 	}
 }

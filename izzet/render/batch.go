@@ -13,7 +13,7 @@ func (r *RenderSystem) SetupBatchedStaticRendering() {
 	var modelMatrices []mgl32.Mat4
 	var ids []uint32
 	for _, entity := range r.app.World().Entities() {
-		if entity.MeshComponent == nil || !entity.Static {
+		if !entities.BatchRenderable(entity) {
 			continue
 		}
 

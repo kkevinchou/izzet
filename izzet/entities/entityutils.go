@@ -73,3 +73,9 @@ func VerticesFromNode(node *modelspec.Node, document *modelspec.Document, out *[
 		VerticesFromNode(childNode, document, out)
 	}
 }
+
+func BatchRenderable(entity *Entity) bool {
+	// batch renders don't currently support entities that have a material component assigned
+	// right now the vaos that we generate for batch rendering can only load textures
+	return entity.MeshComponent != nil && entity.Static && entity.Material == nil
+}

@@ -308,6 +308,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		TestMetallic:               0,
 		TestRoughness:              1,
 		TestAO:                     1,
-		EnableAntialiasing:         false,
+		EnableAntialiasing:         true,
 	}
 }

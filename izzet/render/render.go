@@ -239,18 +239,11 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
 
-var lastAA bool
-
 func (r *RenderSystem) Render(delta time.Duration) {
 	mr := r.app.MetricsRegistry()
 	initOpenGLRenderSettings()
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
-
-	if lastAA != r.app.RuntimeConfig().EnableAntialiasing {
-		lastAA = r.app.RuntimeConfig().EnableAntialiasing
-		r.ReinitializeFrameBuffers()
-	}
 
 	start := time.Now()
 	cloudTexture := r.activeCloudTexture()

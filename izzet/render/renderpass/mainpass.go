@@ -51,6 +51,10 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 	ctx.MainTexture = textures[0]
 	ctx.MainColorPickingTexture = textures[1]
 
+	msFBO, msTextures := initFrameBufferMultisample(width, height, []uint32{rendersettings.MultiSampleFormat, gl.R32UI}, true)
+	ctx.MainMultisampleFBO = msFBO
+	ctx.MainMultisampleTexture = msTextures[0]
+
 	// init textures
 	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
 	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
@@ -61,15 +65,13 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 }
 
 func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
-	if p.app.RuntimeConfig().EnableAntialiasing {
-		fbo, textures := initFrameBufferMultisample(width, height, []uint32{rendersettings.MultiSampleFormat, gl.R32UI}, true)
-		ctx.MainMultisampleFBO = fbo
-		ctx.MainMultisampleTexture = textures[0]
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainFBO)
-		textures := createAndBindTextures(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
-		ctx.MainTexture = textures[0]
-	}
+	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainFBO)
+	textures := createAndBindTextures(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
+	ctx.MainTexture = textures[0]
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainMultisampleFBO)
+	msTextures := createAndBindTexturesMultisample(width, height, []uint32{rendersettings.MultiSampleFormat, gl.R32UI})
+	ctx.MainMultisampleTexture = msTextures[0]
 }
 
 func (p *MainRenderPass) Render(
@@ -128,11 +130,10 @@ func (p *MainRenderPass) Render(
 
 		gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT1)
+		defer gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+		defer gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 
 		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
-
-		gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
-		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 	}
 }
 

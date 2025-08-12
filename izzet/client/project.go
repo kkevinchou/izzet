@@ -168,6 +168,7 @@ func (g *Client) LoadProject(name string) bool {
 	g.project = &project
 	g.ResetApp()
 	g.initializeAssetManagerWithProject(name)
+	g.RuntimeConfig().BatchRenderingEnabled = false
 
 	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
 }

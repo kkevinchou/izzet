@@ -86,7 +86,6 @@ func (g *Client) loadWorld(filepath string) bool {
 
 	g.SelectEntity(nil)
 	g.world = world
-	g.SetupBatchedStaticRendering()
 	return true
 }
 

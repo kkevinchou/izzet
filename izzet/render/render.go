@@ -299,7 +299,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 
 	// store color picking entity
-	if time.Since(r.colorPickingTimer).Milliseconds() > 100 {
+	if time.Since(r.colorPickingTimer).Milliseconds() > 25 {
 		start = time.Now()
 		if r.app.AppMode() == types.AppModeEditor {
 			r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)

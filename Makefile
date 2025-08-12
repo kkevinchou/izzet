@@ -37,7 +37,7 @@ test:
 
 .PHONY: build
 build:
-	go build -o izzet.exe 
+	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go build -o izzet.exe 
 
 .PHONY: client
 client:

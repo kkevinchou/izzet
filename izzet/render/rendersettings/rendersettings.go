@@ -17,5 +17,7 @@ const (
 	InternalTextureColorFormatRGBA   int32  = gl.RGBA32F
 	InternalTextureColorFormat16RGBA int32  = gl.RGBA16F
 
+	MultiSampleFormat = gl.RGB32F
+
 	// uiWidthRatio float32 = 0.2
 )

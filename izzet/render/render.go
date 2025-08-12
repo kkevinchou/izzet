@@ -445,6 +445,9 @@ func (r *RenderSystem) setDebugTexture() {
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.SSAOBlurTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionDebug {
+		// r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MultiSampleDebugTexture
+		// r.app.RuntimeConfig().DebugAspectRatio = 0
 	}
 }
 

@@ -22,6 +22,9 @@ func rendering(app renderiface.App) {
 		panelutils.SetupRow("Batch Render", func() {
 			imgui.Checkbox("", &runtimeConfig.BatchRenderingEnabled)
 		}, true)
+		panelutils.SetupRow("Antialiasing", func() {
+			imgui.Checkbox("", &runtimeConfig.EnableAntialiasing)
+		}, true)
 		imgui.EndTable()
 	}
 

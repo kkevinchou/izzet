@@ -71,6 +71,9 @@ type RenderPassContext struct {
 	MainFBO                 uint32
 	MainTexture             uint32
 	MainColorPickingTexture uint32
+
+	MainMultisampleFBO     uint32
+	MainMultisampleTexture uint32
 }
 
 func NewRenderContext(width, height int, fovX float64) RenderContext {

@@ -25,6 +25,7 @@ func create(app renderiface.App) {
 		}
 		if imgui.MenuItemBool("Bake Static Geometry") {
 			app.SetupBatchedStaticRendering()
+			app.RuntimeConfig().BatchRenderingEnabled = true
 		}
 		imgui.EndMenu()
 	}

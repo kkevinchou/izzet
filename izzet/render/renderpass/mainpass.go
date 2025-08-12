@@ -46,10 +46,30 @@ func NewMainPass(app renderiface.App, sm *shaders.ShaderManager) *MainRenderPass
 }
 
 func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
-	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE}, true)
+	fbo, textures := initFrameBuffer(
+		width,
+		height,
+		[]int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		[]uint32{gl.FLOAT, gl.UNSIGNED_BYTE},
+		true,
+		true,
+	)
 	ctx.MainFBO = fbo
 	ctx.MainTexture = textures[0]
 	ctx.MainColorPickingTexture = textures[1]
+
+	msFBO, msTextures := initFrameBuffer(
+		width,
+		height,
+		[]int32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		true,
+		false,
+	)
+	ctx.MainMultisampleFBO = msFBO
+	ctx.MainMultisampleTexture = msTextures[0]
 
 	// init textures
 	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
@@ -62,8 +82,26 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 
 func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainFBO)
-	textures := createAndBindTextures(width, height, []int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI}, []uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER}, []uint32{gl.FLOAT, gl.UNSIGNED_BYTE})
+	textures := createAndBindTextures(
+		width,
+		height,
+		[]int32{rendersettings.InternalTextureColorFormatRGB, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		[]uint32{gl.FLOAT, gl.UNSIGNED_BYTE},
+		true,
+	)
 	ctx.MainTexture = textures[0]
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainMultisampleFBO)
+	msTextures := createAndBindTextures(
+		width,
+		height,
+		[]int32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.MultiSampleFormat, gl.R32UI},
+		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
+		false,
+	)
+	ctx.MainMultisampleTexture = msTextures[0]
 }
 
 func (p *MainRenderPass) Render(
@@ -73,7 +111,12 @@ func (p *MainRenderPass) Render(
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.MainFBO)
+	if p.app.RuntimeConfig().EnableAntialiasing {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.MainMultisampleFBO)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, rctx.MainFBO)
+	}
+
 	gl.Viewport(0, 0, int32(ctx.Width()), int32(ctx.Height()))
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -100,6 +143,28 @@ func (p *MainRenderPass) Render(
 	// gizmos
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	rutils.TimeFunc("render_gizmos", func() { p.renderGizmos(viewerContext, ctx) })
+
+	if p.app.RuntimeConfig().EnableAntialiasing {
+		// blit rendered image
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, rctx.MainMultisampleFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, rctx.MainFBO)
+
+		gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
+
+		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+
+		// blit color picking
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, rctx.MainMultisampleFBO)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, rctx.MainFBO)
+
+		gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
+		gl.DrawBuffer(gl.COLOR_ATTACHMENT1)
+		defer gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+		defer gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
+
+		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+	}
 }
 
 func (p *MainRenderPass) drawColliders(
@@ -603,7 +668,7 @@ func (p *MainRenderPass) renderGizmos(viewerContext context.ViewerContext, rende
 }
 
 func createCircleTexture(width, height int) (uint32, uint32) {
-	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE}, true)
+	fbo, textures := initFrameBuffer(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE}, true, true)
 	return fbo, textures[0]
 }
 

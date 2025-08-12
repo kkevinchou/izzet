@@ -31,6 +31,7 @@ func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) {
 		[]uint32{gPassFormat, gPassFormat, gPassFormat},
 		[]uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT},
 		true,
+		true,
 	)
 	ctx.GeometryFBO = fbo
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
@@ -45,6 +46,7 @@ func (p *GBufferPass) Resize(width, height int, ctx *context.RenderPassContext) 
 		[]int32{gPassInternalFormat, gPassInternalFormat, gPassInternalFormat},
 		[]uint32{gPassFormat, gPassFormat, gPassFormat},
 		[]uint32{gl.FLOAT, gl.FLOAT, gl.FLOAT},
+		true,
 	)
 
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]

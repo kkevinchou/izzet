@@ -130,6 +130,9 @@ func (p *MainRenderPass) Render(
 		gl.DrawBuffer(gl.COLOR_ATTACHMENT1)
 
 		gl.BlitFramebuffer(0, 0, int32(ctx.Width()), int32(ctx.Height()), 0, 0, int32(ctx.Width()), int32(ctx.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
+
+		gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
+		gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 	}
 }
 

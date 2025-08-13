@@ -67,7 +67,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 		Data: []serverstats.Stat{
 			{
 				Name:  "CFPS",
-				Value: fmt.Sprintf("%.0f", globals.ServerRegistry().AverageValueOver("command_frames", 1)),
+				Value: fmt.Sprintf("%.0f", globals.ServerRegistry().AvgOver("command_frames", 1)),
 			},
 		},
 	}
@@ -77,7 +77,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 			stats.Data,
 			serverstats.Stat{
 				Name:  fmt.Sprintf("%s Time", systemName),
-				Value: fmt.Sprintf("%.2f", globals.ServerRegistry().PerSecondRateOver(fmt.Sprintf("%s_runtime", systemName), 1)),
+				Value: fmt.Sprintf("%.2f", globals.ServerRegistry().RatePerSec(fmt.Sprintf("%s_runtime", systemName), 1)),
 			},
 		)
 	}

@@ -1,23 +1,23 @@
 package globals
 
 import (
-	"github.com/kkevinchou/izzet/internal/metrics2"
+	"github.com/kkevinchou/izzet/internal/metrics"
 )
 
 var (
-	clientRegistry *metrics2.Registry
-	serverRegistry *metrics2.Registry
+	clientRegistry *metrics.Registry
+	serverRegistry *metrics.Registry
 )
 
 func init() {
-	clientRegistry = metrics2.NewRegistry(nil)
-	serverRegistry = metrics2.NewRegistry(nil)
+	clientRegistry = metrics.NewRegistry(nil)
+	serverRegistry = metrics.NewRegistry(nil)
 }
 
-func ClientRegistry() *metrics2.Registry {
+func ClientRegistry() *metrics.Registry {
 	return clientRegistry
 }
 
-func ServerRegistry() *metrics2.Registry {
+func ServerRegistry() *metrics.Registry {
 	return serverRegistry
 }

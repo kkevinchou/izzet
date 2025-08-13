@@ -10,7 +10,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type System interface {
@@ -33,7 +32,6 @@ type App interface {
 	GetPlayer(playerID int) *network.Player
 	GetPlayerEntity() *entities.Entity
 	GetPlayerCamera() *entities.Entity
-	MetricsRegistry() *metrics.MetricsRegistry
 	CollisionObserver() *collisionobserver.CollisionObserver
 	World() *world.GameWorld
 	AppMode() types.AppMode

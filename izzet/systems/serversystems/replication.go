@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -66,7 +67,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 		Data: []serverstats.Stat{
 			{
 				Name:  "CFPS",
-				Value: fmt.Sprintf("%.0f", s.app.MetricsRegistry().GetOneSecondSum("command_frames")),
+				Value: fmt.Sprintf("%.0f", globals.ServerRegistry().AvgOver("command_frames", 1)),
 			},
 		},
 	}
@@ -76,7 +77,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 			stats.Data,
 			serverstats.Stat{
 				Name:  fmt.Sprintf("%s Time", systemName),
-				Value: fmt.Sprintf("%.2f", s.app.MetricsRegistry().GetOneSecondAverage(fmt.Sprintf("%s_runtime", systemName))),
+				Value: fmt.Sprintf("%.2f", globals.ServerRegistry().RatePerSec(fmt.Sprintf("%s_runtime", systemName), 1)),
 			},
 		)
 	}

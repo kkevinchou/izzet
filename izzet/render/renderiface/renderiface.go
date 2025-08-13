@@ -13,7 +13,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type App interface {
@@ -37,7 +36,6 @@ type App interface {
 	Connect() error
 	ConnectAndInitialize() error
 	IsConnected() bool
-	MetricsRegistry() *metrics.MetricsRegistry
 	GetPlayerCamera() *entities.Entity
 
 	StartAsyncServer()

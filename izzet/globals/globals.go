@@ -1,15 +1,23 @@
 package globals
 
-import "github.com/kkevinchou/kitolib/metrics"
-
-var (
-	clientMetricsRegistry *metrics.MetricsRegistry
+import (
+	"github.com/kkevinchou/izzet/internal/metrics"
 )
 
-func SetClientMetricsRegistry(metricsRegistry *metrics.MetricsRegistry) {
-	clientMetricsRegistry = metricsRegistry
+var (
+	clientRegistry *metrics.Registry
+	serverRegistry *metrics.Registry
+)
+
+func init() {
+	clientRegistry = metrics.NewRegistry(nil)
+	serverRegistry = metrics.NewRegistry(nil)
 }
 
-func GetClientMetricsRegistry() *metrics.MetricsRegistry {
-	return clientMetricsRegistry
+func ClientRegistry() *metrics.Registry {
+	return clientRegistry
+}
+
+func ServerRegistry() *metrics.Registry {
+	return serverRegistry
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type App interface {
@@ -24,7 +23,6 @@ type App interface {
 	GetPlayerEntity() *entities.Entity
 	GetPlayerCamera() *entities.Entity
 	GetCommandFrameHistory() *CommandFrameHistory
-	MetricsRegistry() *metrics.MetricsRegistry
 	Client() network.IzzetClient
 	StateBuffer() *StateBuffer
 	GetFrameInput() input.Input

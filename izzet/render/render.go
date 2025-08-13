@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
@@ -100,8 +101,6 @@ type RenderSystem struct {
 
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
-
-	colorPickingTimer time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -117,8 +116,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 		panic(err)
 	}
 	r.imguiRenderer = imguiRenderer
-
-	r.colorPickingTimer = time.Now()
 	r.ndcQuadVAO = r.init2f2fVAO()
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
@@ -243,7 +240,7 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *RenderSystem) Render(delta time.Duration) {
-	mr := r.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 	initOpenGLRenderSettings()
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
@@ -299,14 +296,11 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 
 	// store color picking entity
-	if time.Since(r.colorPickingTimer).Milliseconds() > 25 {
-		start = time.Now()
-		if r.app.AppMode() == types.AppModeEditor {
-			r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
-		}
-		mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
-		r.colorPickingTimer = time.Now()
+	start = time.Now()
+	if r.app.AppMode() == types.AppModeEditor {
+		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
+	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
 	var hdrColorTexture uint32
 
@@ -346,7 +340,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 }
 
 func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.ViewerContext, context.LightContext) {
-	mr := r.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 
 	start := time.Now()
 	width, height := r.GameWindowSize()

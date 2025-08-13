@@ -20,12 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
-
-func (g *Server) MetricsRegistry() *metrics.MetricsRegistry {
-	return g.metricsRegistry
-}
 
 func (g *Server) GetPlayers() map[int]*network.Player {
 	return g.players

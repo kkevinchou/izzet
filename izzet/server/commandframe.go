@@ -6,6 +6,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/globals"
 )
 
 func (g *Server) runCommandFrame(delta time.Duration) {
@@ -16,7 +17,7 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 		start := time.Now()
 		s.Update(delta, g.world)
 		metricName := fmt.Sprintf("%s_runtime", s.Name())
-		g.metricsRegistry.Inc(metricName, float64(time.Since(start).Milliseconds()))
+		globals.ServerRegistry().Inc(metricName, float64(time.Since(start).Milliseconds()))
 	}
 }
 

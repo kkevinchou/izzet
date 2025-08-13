@@ -228,10 +228,9 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
-	defer gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
 	_, windowHeight := r.app.WindowSize()
-	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	gl.PixelStorei(gl.PACK_ALIGNMENT, 1)
 
 	if len(pickingBuffer) == 0 {
 		pickingBuffer = make([]byte, 4)
@@ -245,7 +244,7 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner
 	var weirdOffset float32 = -1 // Weirdge
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RGB_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
 
 	uintID := binary.LittleEndian.Uint32(pickingBuffer)
 	if uintID == settings.EmptyColorPickingID {

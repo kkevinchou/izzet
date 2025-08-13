@@ -101,8 +101,6 @@ type RenderSystem struct {
 
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
-
-	colorPickingTimer time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -118,8 +116,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 		panic(err)
 	}
 	r.imguiRenderer = imguiRenderer
-
-	r.colorPickingTimer = time.Now()
 	r.ndcQuadVAO = r.init2f2fVAO()
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
@@ -300,14 +296,11 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 
 	// store color picking entity
-	if time.Since(r.colorPickingTimer).Milliseconds() > 25 {
-		start = time.Now()
-		if r.app.AppMode() == types.AppModeEditor {
-			r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
-		}
-		mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
-		r.colorPickingTimer = time.Now()
+	start = time.Now()
+	if r.app.AppMode() == types.AppModeEditor {
+		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
+	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
 
 	var hdrColorTexture uint32
 

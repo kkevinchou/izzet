@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -13,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -111,6 +113,9 @@ func (p *MainRenderPass) Render(
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
+	start := time.Now()
+	defer func() { globals.ClientRegistry().Inc("render_main_pass", float64(time.Since(start).Milliseconds())) }()
+
 	if p.app.RuntimeConfig().EnableAntialiasing {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.MainMultisampleFBO)
 	} else {
@@ -122,12 +127,12 @@ func (p *MainRenderPass) Render(
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// skybox
-	rutils.TimeFunc("render_skybox", func() { p.drawSkybox(renderContext, viewerContext) })
+	p.drawSkybox(renderContext, viewerContext)
 
 	// models
-	rutils.TimeFunc("render_main", func() {
-		drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
-	})
+	// rutils.TimeFunc("render_main", func() {
+	drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
+	// })
 
 	// colliders
 	if p.app.RuntimeConfig().ShowColliders {
@@ -138,11 +143,11 @@ func (p *MainRenderPass) Render(
 	p.drawNonEntity(viewerContext, renderContext)
 
 	// annotations
-	rutils.TimeFunc("render_annotations", func() { p.drawAnnotations(viewerContext, lightContext, renderContext) })
+	p.drawAnnotations(viewerContext, lightContext, renderContext)
 
 	// gizmos
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	rutils.TimeFunc("render_gizmos", func() { p.renderGizmos(viewerContext, renderContext) })
+	p.renderGizmos(viewerContext, renderContext)
 
 	if p.app.RuntimeConfig().EnableAntialiasing {
 		// blit rendered image

@@ -1,27 +1,42 @@
 package metrics
 
 import (
+	"sort"
+	"strings"
 	"time"
 )
 
 type Registry struct {
-	clock    func() time.Time
-	counters map[string]*WindowCounter
+	clock      func() time.Time
+	counters   map[string]*WindowCounter
+	windowSize int
 }
 
-func NewRegistry(clock func() time.Time) *Registry {
+func NewRegistry(windowSize int, clock func() time.Time) *Registry {
 	if clock == nil {
 		clock = time.Now
 	}
 	return &Registry{
-		clock:    clock,
-		counters: make(map[string]*WindowCounter),
+		clock:      time.Now,
+		windowSize: windowSize,
+		counters:   make(map[string]*WindowCounter),
 	}
+}
+
+func (r *Registry) MetricsByPrefix(prefix string) []string {
+	var result []string
+	for m := range r.counters {
+		if strings.HasPrefix(m, prefix) {
+			result = append(result, m)
+		}
+	}
+	sort.Strings(result)
+	return result
 }
 
 func (r *Registry) Inc(name string, v float64) {
 	if _, ok := r.counters[name]; !ok {
-		r.counters[name] = NewWindowCounter(name, 5, r.clock)
+		r.counters[name] = NewWindowCounter(name, r.windowSize, r.clock)
 	}
 
 	r.counters[name].Inc(v)
@@ -125,8 +140,10 @@ func (w *WindowCounter) SumOver(n int) float64 {
 	idx := (w.cursor + w.window - 1) % w.window
 	base := w.buckets[idx].sec
 
+	// handles cases where we may not record a metric over the last second
+	// with some wiggle room. this allows us to return 0
 	now := w.clock().Unix()
-	if now-base > 1 {
+	if now-base > 2 {
 		return 0
 	}
 
@@ -155,8 +172,10 @@ func (w *WindowCounter) AvgOver(n int) float64 {
 	idx := (w.cursor + w.window - 1) % w.window
 	base := w.buckets[idx].sec
 
+	// handles cases where we may not record a metric over the last second
+	// with some wiggle room. this allows us to return 0
 	now := w.clock().Unix()
-	if now-base > 1 {
+	if now-base > 2 {
 		return 0
 	}
 
@@ -179,5 +198,7 @@ func (w *WindowCounter) RatePerSec(n int) float64 {
 	if n <= 0 {
 		return 0
 	}
-	return w.SumOver(n) / float64(n)
+	sum := w.SumOver(n)
+	result := sum / float64(n)
+	return result
 }

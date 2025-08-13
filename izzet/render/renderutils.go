@@ -228,6 +228,7 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
+	defer gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 
 	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.PACK_ALIGNMENT, 1)

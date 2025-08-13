@@ -10,8 +10,8 @@ var (
 )
 
 func init() {
-	clientRegistry = metrics.NewRegistry(nil)
-	serverRegistry = metrics.NewRegistry(nil)
+	clientRegistry = metrics.NewRegistry(10, nil)
+	serverRegistry = metrics.NewRegistry(10, nil)
 }
 
 func ClientRegistry() *metrics.Registry {

@@ -2,6 +2,8 @@ package panels
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -10,8 +12,14 @@ import (
 )
 
 const (
-	metricRange = 2
+	metricRange          = 2
+	renderingMetricRange = 5
 )
+
+type metricPair struct {
+	name  string
+	value float64
+}
 
 func stats(app renderiface.App, renderContext RenderContext) {
 	runtimeConfig := app.RuntimeConfig()
@@ -44,41 +52,31 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
-		// Frame Profiling
-		panelutils.SetupRow("Render Main Color Buffer", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_main", metricRange))) }, true)
-		panelutils.SetupRow("Render Geometry Pass", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_gpass", metricRange))) }, true)
-		panelutils.SetupRow("Render SSAO", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_ssao", metricRange))) }, true)
-		panelutils.SetupRow("Render Depthmaps", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_depthmaps", metricRange))) }, true)
-		panelutils.SetupRow("Render Query Shadowcasting", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_query_shadowcasting", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Query Renderable", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_query_renderable", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Swap", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_swap", metricRange))) }, true)
-		panelutils.SetupRow("Render Annotations", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_annotations", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Context Setup", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_context_setup", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Skybox", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_skybox", metricRange))) }, true)
-		panelutils.SetupRow("Render Volumetrics", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_volumetrics", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Gizmos", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_gizmos", metricRange))) }, true)
-		panelutils.SetupRow("Render Colorpicking", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_colorpicking", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Bloom Pass", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_bloom", metricRange))) }, true)
-		panelutils.SetupRow("Render Buffer Setup", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_buffer_setup", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Post Process", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_post_process", metricRange)))
-		}, true)
-		panelutils.SetupRow("Render Imgui", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_imgui", metricRange))) }, true)
-		panelutils.SetupRow("Render Sleep", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_sleep", metricRange))) }, true)
+		metrics := mr.MetricsByPrefix("render")
+		var pairs []metricPair
+		for _, metric := range metrics {
+			if metric == "render_time" {
+				continue
+			}
+			pairs = append(
+				pairs,
+				metricPair{
+					name:  strings.Title(strings.ReplaceAll(strings.TrimPrefix(metric, "render_"), "_", " ")),
+					value: mr.AvgOver(metric, renderingMetricRange),
+				},
+			)
+		}
+
+		sort.Slice(pairs, func(i, j int) bool {
+			if pairs[i].value == pairs[j].value {
+				return pairs[i].name < pairs[j].name // ascending name on tie
+			}
+			return pairs[i].value > pairs[j].value // descending value
+		})
+
+		for _, pair := range pairs {
+			panelutils.SetupRow(pair.name, func() { imgui.LabelText("", fmt.Sprintf("%.1f", pair.value)) }, true)
+		}
 
 		imgui.EndTable()
 	}

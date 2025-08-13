@@ -287,9 +287,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	renderContext.ShadowDistance = r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
 	renderContext.BatchRenders = r.batchRenders
 
-	start = time.Now()
-	mr.Inc("render_depthmaps", float64(time.Since(start).Milliseconds()))
-
 	// RENDER PASSES
 	for _, pass := range r.renderPasses {
 		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext, lightViewerContext)
@@ -300,7 +297,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	if r.app.AppMode() == types.AppModeEditor {
 		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
-	mr.Inc("render_colorpicking", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_colorpicking_pick", float64(time.Since(start).Milliseconds()))
 
 	var hdrColorTexture uint32
 
@@ -309,7 +306,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.downSample(r.renderPassContext.MainTexture, r.bloomTextureWidths, r.bloomTextureHeights)
 		upsampleTexture := r.upSampleAndBlend(r.bloomTextureWidths, r.bloomTextureHeights)
 		hdrColorTexture = r.composite(renderContext, r.renderPassContext.MainTexture, upsampleTexture)
-		mr.Inc("render_bloom", float64(time.Since(start).Milliseconds()))
+		mr.Inc("render_bloom_pass", float64(time.Since(start).Milliseconds()))
 
 		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture

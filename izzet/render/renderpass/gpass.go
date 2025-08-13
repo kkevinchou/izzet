@@ -59,8 +59,8 @@ func (p *GBufferPass) Render(
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	mr := globals.ClientRegistry()
 	start := time.Now()
+	defer func() { globals.ClientRegistry().Inc("render_gpass", float64(time.Since(start).Milliseconds())) }()
 
 	// bind, clear, draw
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.GeometryFBO)
@@ -69,5 +69,4 @@ func (p *GBufferPass) Render(
 
 	drawModels(p.app, p.sm.GetShaderProgram("gpass"), p.sm.GetShaderProgram("gpass"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
 
-	mr.Inc("render_gpass", float64(time.Since(start).Milliseconds()))
 }

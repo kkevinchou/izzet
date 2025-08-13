@@ -54,8 +54,8 @@ func (p *SSAORenderPass) Render(
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	mr := globals.ClientRegistry()
 	start := time.Now()
+	defer func() { globals.ClientRegistry().Inc("render_ssao_pass", float64(time.Since(start).Milliseconds())) }()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
@@ -86,8 +86,6 @@ func (p *SSAORenderPass) Render(
 
 	gl.BindVertexArray(rutils.GetNDCQuadVAO())
 	rutils.IztDrawArrays(0, 6)
-
-	mr.Inc("render_ssao", float64(time.Since(start).Milliseconds()))
 }
 
 func (p *SSAORenderPass) setupSSAOTextures() {

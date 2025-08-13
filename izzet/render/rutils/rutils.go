@@ -607,7 +607,7 @@ func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.
 }
 
 func TimeFunc(name string, f func()) {
-	mr := globals.GetClientMetricsRegistry()
+	mr := globals.ClientRegistry()
 	start := time.Now()
 	f()
 	mr.Inc(name, float64(time.Since(start).Milliseconds()))

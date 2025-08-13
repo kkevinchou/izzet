@@ -7,6 +7,7 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/systems"
@@ -25,7 +26,7 @@ func (s *ReceiverSystem) Name() string {
 }
 
 func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
-	mr := s.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 
 	for {
 		select {
@@ -132,7 +133,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					fmt.Println(fmt.Errorf("failed to deserialize ping message %w", err))
 					continue
 				}
-				s.app.MetricsRegistry().Inc("ping", float64(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
+				globals.ClientRegistry().Inc("ping", float64(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
 			}
 		default:
 			return

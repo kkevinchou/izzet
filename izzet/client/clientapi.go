@@ -24,7 +24,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -35,7 +34,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 func (g *Client) AssetManager() *assets.AssetManager {
@@ -104,11 +102,8 @@ func (g *Client) Undo() {
 	g.editHistory.Undo()
 }
 
-func (g *Client) MetricsRegistry() *metrics.MetricsRegistry {
-	return g.metricsRegistry
-}
-
 func (g *Client) StartLiveWorld() {
+	g.IsClient()
 	if g.AppMode() != types.AppModeEditor {
 		return
 	}
@@ -377,7 +372,6 @@ func (g *Client) initialize() {
 	}
 
 	g.editHistory = edithistory.New()
-	globals.SetClientMetricsRegistry(g.metricsRegistry)
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
 }

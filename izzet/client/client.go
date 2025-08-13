@@ -26,7 +26,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -47,8 +46,6 @@ type Client struct {
 
 	relativeMouseOrigin [2]int32
 	relativeMouseActive bool
-
-	metricsRegistry *metrics.MetricsRegistry
 
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
@@ -110,9 +107,6 @@ func New(shaderDirectory string, config settings.Config) *Client {
 
 	w, h := window.GetSize()
 
-	metricsRegistry := metrics.New()
-	globals.SetClientMetricsRegistry(metricsRegistry)
-
 	assetManager := assets.NewAssetManager(true)
 
 	g := &Client{
@@ -124,7 +118,6 @@ func New(shaderDirectory string, config settings.Config) *Client {
 		height:          h,
 		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
-		metricsRegistry: metricsRegistry,
 	}
 	g.ResetApp()
 	g.initSettings()
@@ -174,8 +167,8 @@ func (g *Client) Start() {
 
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
-			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
-			g.MetricsRegistry().Inc("command_frames", 1)
+			globals.ClientRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			globals.ClientRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 			commandFrameCountBeforeRender += 1
 
@@ -210,21 +203,21 @@ func (g *Client) Start() {
 		if sleepTime >= 1 {
 			sleepStart := time.Now()
 			time.Sleep(time.Duration(int64(sleepTime) * 1000000))
-			g.MetricsRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
+			globals.ClientRegistry().Inc("render_sleep", float64(time.Since(sleepStart).Milliseconds()))
 		}
 	}
 }
 
 func (g *Client) render(delta time.Duration) {
-	g.MetricsRegistry().Inc("fps", 1)
+	globals.ClientRegistry().Inc("fps", 1)
 
 	start := time.Now()
 	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 	g.renderSystem.Render(delta)
-	g.MetricsRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
+	globals.ClientRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
 	start = time.Now()
 	g.window.Swap()
-	g.MetricsRegistry().Inc("render_swap", float64(time.Since(start).Milliseconds()))
+	globals.ClientRegistry().Inc("render_swap", float64(time.Since(start).Milliseconds()))
 
 }
 

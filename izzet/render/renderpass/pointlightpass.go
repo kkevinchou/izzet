@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
@@ -141,7 +142,7 @@ func (p *PointLightRenderPass) Render(
 	}
 	if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		drawBatches(p.app, renderContext, p.shader)
-		p.app.MetricsRegistry().Inc("draw_entity_count", 1)
+		globals.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 

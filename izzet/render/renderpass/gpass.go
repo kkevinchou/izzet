@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -58,7 +59,7 @@ func (p *GBufferPass) Render(
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	mr := p.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 	start := time.Now()
 
 	// bind, clear, draw

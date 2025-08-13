@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -53,7 +54,7 @@ func (p *SSAORenderPass) Render(
 	lightContext context.LightContext,
 	lightViewerContext context.ViewerContext,
 ) {
-	mr := p.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 	start := time.Now()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOFBO)

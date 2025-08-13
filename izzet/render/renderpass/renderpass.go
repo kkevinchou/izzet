@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
@@ -195,7 +196,7 @@ func renderGeometryWithoutColor(
 
 	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		drawBatches(app, renderContext, shader)
-		app.MetricsRegistry().Inc("draw_entity_count", 1)
+		globals.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
@@ -285,13 +286,13 @@ func drawModels(
 		)
 		drawCount++
 	}
-	app.MetricsRegistry().Inc("draw_entity_count", float64(drawCount))
+	globals.ClientRegistry().Inc("draw_entity_count", float64(drawCount))
 
 	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		batchShader.Use()
 		preModelRenderShaderSetup(app, batchShader, renderContext, viewerContext, lightContext)
 		drawBatches(app, renderContext, batchShader)
-		app.MetricsRegistry().Inc("draw_entity_count", 1)
+		globals.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 

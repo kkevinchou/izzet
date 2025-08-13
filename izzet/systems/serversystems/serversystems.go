@@ -10,7 +10,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type App interface {
@@ -24,7 +23,6 @@ type App interface {
 	SetPlayerInput(playerID int, input input.Input)
 	DeregisterPlayer(playerID int)
 	SerializeWorld() []byte
-	MetricsRegistry() *metrics.MetricsRegistry
 	EventsManager() *events.EventManager
 	SystemNames() []string
 	World() *world.GameWorld

@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
@@ -243,7 +244,7 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *RenderSystem) Render(delta time.Duration) {
-	mr := r.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 	initOpenGLRenderSettings()
 	r.app.RuntimeConfig().TriangleDrawCount = 0
 	r.app.RuntimeConfig().DrawCount = 0
@@ -346,7 +347,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 }
 
 func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.ViewerContext, context.LightContext) {
-	mr := r.app.MetricsRegistry()
+	mr := globals.ClientRegistry()
 
 	start := time.Now()
 	width, height := r.GameWindowSize()

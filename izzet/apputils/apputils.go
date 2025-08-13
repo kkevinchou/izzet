@@ -20,7 +20,7 @@ func NameFromAssetFilePath(assetFilePath string) string {
 }
 
 func GenBuffers(n int32, buffer *uint32) {
-	mr := globals.GetClientMetricsRegistry()
+	mr := globals.ClientRegistry()
 	mr.Inc("gen_buffers", 1)
 	gl.GenBuffers(n, buffer)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -21,7 +22,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/kkevinchou/kitolib/metrics"
 )
 
 type Server struct {
@@ -30,8 +30,6 @@ type Server struct {
 	assetManager *assets.AssetManager
 
 	entities map[int]*entities.Entity
-
-	metricsRegistry *metrics.MetricsRegistry
 
 	world *world.GameWorld
 
@@ -88,7 +86,6 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 
 	g.entities = map[int]*entities.Entity{}
 	// g.setupAssets(data)
-	g.metricsRegistry = metrics.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 
 	g.newConnections = make(chan NewConnection, 100)
@@ -136,8 +133,8 @@ func (g *Server) Start(started chan bool, done chan bool) {
 			start := time.Now()
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
-			g.MetricsRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
-			g.MetricsRegistry().Inc("command_frames", 1)
+			globals.ServerRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			globals.ServerRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 
 			accumulator -= float64(settings.MSPerCommandFrame)

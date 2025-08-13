@@ -52,7 +52,7 @@ func stats(app renderiface.App, renderContext RenderContext) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
-		metrics := mr.MetricsByPrefix("render")
+		metrics := mr.MetricsByPrefix("render_")
 		var pairs []metricPair
 		for _, metric := range metrics {
 			if metric == "render_time" {

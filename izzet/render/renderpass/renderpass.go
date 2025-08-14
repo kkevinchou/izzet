@@ -330,7 +330,9 @@ func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgra
 
 	shader.SetUniformFloat("near", app.RuntimeConfig().Near)
 	shader.SetUniformFloat("far", app.RuntimeConfig().Far)
-	shader.SetUniformFloat("bias", app.RuntimeConfig().PointLightBias)
+	shader.SetUniformFloat("pointLightBias", app.RuntimeConfig().PointLightBias)
+	shader.SetUniformFloat("shadowMapMinBias", app.RuntimeConfig().ShadowMapMinBias/100000)
+	shader.SetUniformFloat("shadowMapAngleBiasRate", app.RuntimeConfig().ShadowMapAngleBiasRate/100000)
 	if len(lightContext.PointLights) > 0 {
 		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
 	}

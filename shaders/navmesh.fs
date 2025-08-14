@@ -48,7 +48,10 @@ uniform float ambientFactor;
 
 // pbr materials
 uniform int hasPBRBaseColorTexture;
-uniform float bias;
+
+uniform float pointLightBias;
+uniform float shadowMapMinBias;
+uniform float shadowMapAngleBiasRate;
 
 uniform uint entityID;
 
@@ -86,7 +89,7 @@ float PointLightShadowCalculation(vec3 fragPos, vec3 lightPos)
     float currentDepth = length(fragToLight);
     // test for shadows
     // float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
-    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;        
+    float shadow = currentDepth - pointLightBias > closestDepth ? 1.0 : 0.0;
     // display closestDepth as debug (to visualize depth cubemap)
     // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);    
         
@@ -112,7 +115,7 @@ float DirectionalLightShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec
     // float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
 
     // bias term needs to be tweaked depending on geometry
-    float bias = max(0.00025 * (1.0 - dot(normal, lightDir)), 0.00005);
+    float bias = max(shadowMapAngleBiasRate * (1.0 - dot(normal, lightDir)), shadowMapMinBias);
     // bias = 0;
     
     float shadow = 0.0;

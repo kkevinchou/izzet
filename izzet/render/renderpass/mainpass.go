@@ -562,7 +562,9 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 		shader.SetUniformInt("cameraDepthMap", 29)
 		shader.SetUniformFloat("near", p.app.RuntimeConfig().Near)
 		shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("bias", p.app.RuntimeConfig().PointLightBias)
+		shader.SetUniformFloat("pointLightBias", p.app.RuntimeConfig().PointLightBias)
+		shader.SetUniformFloat("shadowMapMinBias", p.app.RuntimeConfig().ShadowMapMinBias/100000)
+		shader.SetUniformFloat("shadowMapAngleBiasRate", p.app.RuntimeConfig().ShadowMapAngleBiasRate/100000)
 		if len(lightContext.PointLights) > 0 {
 			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
 		}

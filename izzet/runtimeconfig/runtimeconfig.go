@@ -13,6 +13,8 @@ type RuntimeConfig struct {
 	Roughness                       float32
 	Metallic                        float32
 	PointLightBias                  float32
+	ShadowMapMinBias                float32
+	ShadowMapAngleBiasRate          float32
 	EnableShadowMapping             bool
 	ShadowFarDistance               float32
 	ShadowSpatialPartitionNearPlane float32
@@ -167,6 +169,8 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		Roughness:                       0.55,
 		Metallic:                        0,
 		PointLightBias:                  0.5,
+		ShadowMapMinBias:                0,
+		ShadowMapAngleBiasRate:          0,
 		EnableShadowMapping:             true,
 		ShadowFarDistance:               50,
 		ShadowSpatialPartitionNearPlane: 1000,

@@ -77,7 +77,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld)
 			stats.Data,
 			serverstats.Stat{
 				Name:  fmt.Sprintf("%s Time", systemName),
-				Value: fmt.Sprintf("%.2f", globals.ServerRegistry().RatePerSec(fmt.Sprintf("%s_runtime", systemName), 1)),
+				Value: fmt.Sprintf("%.2f", globals.ServerRegistry().AvgOver(fmt.Sprintf("%s_runtime", systemName), 1)),
 			},
 		)
 	}

@@ -168,7 +168,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		DirectionalLightDir:             [3]float32{-1, -1, -1},
 		Roughness:                       0.55,
 		Metallic:                        0,
-		PointLightBias:                  0.5,
+		PointLightBias:                  0.05,
 		ShadowMapMinBias:                0,
 		ShadowMapAngleBiasRate:          0,
 		EnableShadowMapping:             true,

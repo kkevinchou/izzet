@@ -46,7 +46,6 @@ type RuntimeConfig struct {
 	FogStart   int32
 	FogEnd     int32
 	FogDensity int32
-	FogEnabled bool
 
 	TriangleDrawCount int
 	DrawCount         int
@@ -192,7 +191,6 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		FogStart:   200,
 		FogEnd:     1000,
 		FogDensity: 1,
-		FogEnabled: true,
 
 		TriangleDrawCount: 0,
 		DrawCount:         0,

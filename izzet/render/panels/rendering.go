@@ -46,7 +46,7 @@ func rendering(app renderiface.App) {
 		panelutils.SetupRow("Shadow Map Angle Bias Rate", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapAngleBiasRate, 0, 100) }, true)
 		panelutils.SetupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &runtimeConfig.EnableShadowMapping) }, true)
 		panelutils.SetupRow("Shadow Far Distance", func() { imgui.SliderFloat("", &runtimeConfig.ShadowFarDistance, 0, 1000) }, true)
-		panelutils.SetupRow("Fog Density", func() { imgui.SliderInt("", &runtimeConfig.FogDensity, 0, 100) }, true)
+		panelutils.SetupRow("Fog Density", func() { imgui.SliderInt("", &runtimeConfig.FogDensity, 0, 500) }, true)
 		panelutils.SetupRow("Enable Bloom", func() { imgui.Checkbox("", &runtimeConfig.Bloom) }, true)
 		panelutils.SetupRow("Bloom Intensity", func() { imgui.SliderFloat("", &runtimeConfig.BloomIntensity, 0, 1) }, true)
 		panelutils.SetupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &runtimeConfig.BloomThresholdPasses, 0, 3) }, true)

@@ -297,17 +297,6 @@ func drawModels(
 }
 
 func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, renderContext context.RenderContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
-	if app.RuntimeConfig().FogEnabled {
-		shader.SetUniformInt("fog", 1)
-	} else {
-		shader.SetUniformInt("fog", 0)
-	}
-
-	var fog int32 = 0
-	if app.RuntimeConfig().FogDensity != 0 {
-		fog = 1
-	}
-	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", app.RuntimeConfig().FogDensity)
 
 	shader.SetUniformInt("width", int32(renderContext.Width()))

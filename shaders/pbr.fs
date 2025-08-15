@@ -84,7 +84,6 @@ const float C = 2.43;
 const float D = 0.59;
 const float E = 0.14;
 
-uniform int fog;
 uniform int fogDensity;
 
 uniform int width;
@@ -368,7 +367,7 @@ void main()
 	
     FragColor = vec4(color, 1.0);
 
-    if (fog == 1) {
+    if (fogDensity > 0) {
         vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
         float depth = texture(cameraDepthMap, textureCoords).r;
         float dist = depthValueToLinearDistance(depth);

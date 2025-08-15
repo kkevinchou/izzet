@@ -403,13 +403,8 @@ func (p *MainRenderPass) drawSkybox(renderContext context.RenderContext, viewerC
 
 	shader := p.sm.GetShaderProgram("skybox")
 	shader.Use()
-	var fog int32 = 0
-	if p.app.RuntimeConfig().FogDensity != 0 {
-		fog = 1
-	}
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrixWithoutTranslation))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-	shader.SetUniformInt("fog", fog)
 	shader.SetUniformInt("fogDensity", p.app.RuntimeConfig().FogDensity)
 	shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
 	shader.SetUniformVec3("skyboxTopColor", p.app.RuntimeConfig().SkyboxTopColor)

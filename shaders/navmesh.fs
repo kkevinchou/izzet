@@ -69,7 +69,6 @@ in VS_OUT {
     mat4 View;
 } fs_in;
 
-uniform int fog;
 uniform int fogDensity;
 
 uniform int width;
@@ -309,7 +308,7 @@ void main()
 
     FragColor = vec4(color, 0.9);
 
-    if (fog == 1) {
+    if (fogDensity > 0) {
         vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
         float depth = texture(cameraDepthMap, textureCoords).r;
         float dist = depthValueToLinearDistance(depth);

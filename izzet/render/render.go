@@ -1,6 +1,7 @@
 package render
 
 import (
+	"os"
 	"time"
 
 	"github.com/AllenDang/cimgui-go/imgui"
@@ -59,6 +60,9 @@ var (
 	HeaderColor          imgui.Vec4 = imgui.Vec4{X: 0.3, Y: 0.3, Z: 0.3, W: 1}
 	HoveredHeaderColor   imgui.Vec4 = imgui.Vec4{X: 0.4, Y: 0.4, Z: 0.4, W: 1}
 	TitleColor           imgui.Vec4 = imgui.Vec4{X: 0.5, Y: 0.5, Z: 0.5, W: 1}
+
+	ResizeHoverColor  imgui.Vec4 = imgui.Vec4{X: 0.4, Y: 0.4, Z: 0.4, W: 1}
+	ResizeActiveColor imgui.Vec4 = imgui.Vec4{X: 0.6, Y: 0.6, Z: 0.6, W: 1}
 )
 
 type RenderSystem struct {
@@ -109,9 +113,11 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	compileShaders(r.shaderManager)
 	rutils.SetRuntimeConfig(app.RuntimeConfig())
 
-	imguiIO := imgui.CurrentIO()
-	imguiIO.SetConfigDebugIsDebuggerPresent(true)
-	imguiRenderer, err := renderers.NewOpenGL3(imguiIO)
+	io := imgui.CurrentIO()
+	io.SetConfigFlags(io.ConfigFlags() | imgui.ConfigFlagsDockingEnable)
+	io.SetConfigDebugIsDebuggerPresent(true)
+
+	imguiRenderer, err := renderers.NewOpenGL3(io)
 	if err != nil {
 		panic(err)
 	}
@@ -331,6 +337,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
+
 	start = time.Now()
 	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
@@ -498,11 +505,176 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 	return result
 }
 
-func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
+func shouldSeedDefaultLayout(io imgui.IO, dockspaceID imgui.ID) bool {
+	// Simple heuristic: if ini file exists and contains [Docking][Data], skip seeding.
+	// (You can get the filename via io.IniFilename(), then read it with os.ReadFile)
+	// For brevity, return true only when no ini file.
+	fname := io.IniFilename()
+	if fname == "" {
+		return true
+	}
+	if _, err := os.Stat(fname); err != nil { // file missing
+		return true
+	}
+	return false
+}
+
+var viewportInitialized bool
+var forceViewportInitialize bool
+
+func (r *RenderSystem) renderViewPort() {
+	viewport := imgui.MainViewport()
+	imgui.SetNextWindowPos(viewport.Pos())
+	imgui.SetNextWindowSize(viewport.Size())
+	imgui.SetNextWindowViewport(viewport.ID())
+
+	flags := imgui.WindowFlagsNoDocking |
+		imgui.WindowFlagsNoTitleBar |
+		imgui.WindowFlagsNoCollapse |
+		imgui.WindowFlagsNoResize |
+		imgui.WindowFlagsNoMove |
+		imgui.WindowFlagsNoBringToFrontOnFocus |
+		imgui.WindowFlagsNoNavFocus |
+		imgui.WindowFlagsMenuBar
+
+	var colorStyles []func() = []func(){
+		func() { imgui.PushStyleColorVec4(imgui.ColTitleBg, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTitleBgActive, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTitleBgCollapsed, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTabSelected, ActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTabDimmed, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTabDimmedSelected, ActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTabDimmedSelectedOverline, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColTabSelectedOverline, InActiveColorBg) },
+
+		// func() { imgui.PushStyleColorVec4(imgui.ColSeparator, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1}) },
+		// func() { imgui.PushStyleColorVec4(imgui.ColSeparatorActive, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1}) },
+		// func() { imgui.PushStyleColorVec4(imgui.ColSeparatorHovered, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1}) },
+
+		// func() { imgui.PushStyleColorVec4(imgui.ColResizeGrip, InActiveColorBg ) },
+		func() { imgui.PushStyleColorVec4(imgui.ColResizeGripActive, ResizeActiveColor) },
+		func() { imgui.PushStyleColorVec4(imgui.ColResizeGripHovered, ResizeHoverColor) },
+	}
+	for _, f := range colorStyles {
+		f()
+	}
+
+	imgui.BeginV("##MainDockHost", nil, flags)
+
+	dockspaceID := imgui.IDStr("MainDockSpace")
+	imgui.DockSpace(dockspaceID)
+
+	if (shouldSeedDefaultLayout(*imgui.CurrentIO(), dockspaceID) && !viewportInitialized) || forceViewportInitialize {
+		viewportInitialized = true
+		if forceViewportInitialize {
+			// imgui.InternalDockBuilderRemoveNode(dockspaceID)
+			forceViewportInitialize = false
+		}
+
+		var rightID, mainAfterRight imgui.ID
+		var bottomID, centerID imgui.ID
+
+		// Split into LEFT (22%) and remaining MAIN
+		imgui.InternalDockBuilderSplitNode(
+			dockspaceID,
+			imgui.DirRight,
+			0.22,
+			&rightID,
+			&mainAfterRight,
+		)
+
+		// Split MAIN into BOTTOM (28%) and CENTER (remaining)
+		imgui.InternalDockBuilderSplitNode(
+			mainAfterRight,
+			imgui.DirDown,
+			0.28,
+			&bottomID,
+			&centerID,
+		)
+
+		// Dock windows by title into the target nodes
+		imgui.InternalDockBuilderDockWindow("Scene", centerID)
+		imgui.InternalDockBuilderDockWindow("Inspector", rightID)
+		imgui.InternalDockBuilderDockWindow("Hierarchy", rightID)
+		imgui.InternalDockBuilderDockWindow("Console", bottomID)
+		imgui.InternalDockBuilderDockWindow("Profiler", bottomID)
+
+		// Finalize the builder—must be called after all splits/docks
+		imgui.InternalDockBuilderFinish(dockspaceID)
+	}
+
+	// (Optional) menu bar on the host
+	if imgui.BeginMenuBar() {
+		if imgui.BeginMenu("File") {
+			if imgui.MenuItemBool("New Scene") {
+				// ...
+			}
+			imgui.EndMenu()
+		}
+		if imgui.BeginMenu("View") {
+			if imgui.MenuItemBool("Reset Layout") {
+				forceViewportInitialize = true
+			}
+			imgui.EndMenu()
+		}
+		imgui.EndMenuBar()
+	}
+
+	imgui.End() // host window
+
+	// 4) Draw your tool windows as usual (they will dock by matching the title).
+
+	r.drawScene()
+	drawInspector()
+	drawHierarchy()
+	drawConsole()
+	drawProfiler()
+
+	imgui.PopStyleColorV(int32(len(colorStyles)))
+}
+
+func (r *RenderSystem) drawScene() {
+	imgui.Begin("Scene")
+	texture := imgui.TextureID(r.postProcessingTexture)
+	// width, height := r.GameWindowSize()
+	// size := imgui.Vec2{X: float32(width), Y: float32(height)}
+	size := imgui.ContentRegionAvail()
+	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+	// imgui.Image(texture, size)
+	// Put your viewport image / render target here (ImGui::Image)
+	// and handle gizmos, controls, etc.
+	imgui.End()
+}
+
+func drawInspector() {
+	imgui.Begin("Inspector")
+	imgui.Text("Selected entity details…")
+	imgui.End()
+}
+
+func drawHierarchy() {
+	imgui.Begin("Hierarchy")
+	imgui.Text("Entities / nodes…")
+	imgui.End()
+}
+
+func drawConsole() {
+	imgui.Begin("Console")
+	imgui.Text("Logs…")
+	imgui.End()
+}
+
+func drawProfiler() {
+	imgui.Begin("Profiler")
+	imgui.Text("Timings, graphs…")
+	imgui.End()
+}
+
+func (r *RenderSystem) renderUI(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
 	runtimeConfig := r.app.RuntimeConfig()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	r.app.Platform().NewFrame()
-	imgui.NewFrame()
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	r.gameWindowHovered = false
@@ -618,6 +790,14 @@ func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWind
 	}
 	imgui.End()
 	imgui.PopStyleVarV(1)
+}
+
+func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
+	r.app.Platform().NewFrame()
+	imgui.NewFrame()
+
+	r.renderViewPort()
+	// r.renderUI(renderContext, gameWindowTexture)
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())

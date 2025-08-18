@@ -332,14 +332,12 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.setDebugTexture()
 
 	// render to back buffer
-	start = time.Now()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	mr.Inc("render_buffer_setup", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
-	r.renderImgui(renderContext, imgui.TextureID(r.postProcessingTexture))
+	r.renderHelper(renderContext, imgui.TextureID(r.postProcessingTexture))
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
@@ -522,7 +520,7 @@ func shouldSeedDefaultLayout(io imgui.IO, dockspaceID imgui.ID) bool {
 var viewportInitialized bool
 var forceViewportInitialize bool
 
-func (r *RenderSystem) renderViewPort() {
+func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	viewport := imgui.MainViewport()
 	imgui.SetNextWindowPos(viewport.Pos())
 	imgui.SetNextWindowSize(viewport.Size())
@@ -534,13 +532,17 @@ func (r *RenderSystem) renderViewPort() {
 		imgui.WindowFlagsNoResize |
 		imgui.WindowFlagsNoMove |
 		imgui.WindowFlagsNoBringToFrontOnFocus |
-		imgui.WindowFlagsNoNavFocus |
-		imgui.WindowFlagsMenuBar
+		imgui.WindowFlagsNoNavFocus
+
+	if r.app.RuntimeConfig().UIEnabled {
+		flags |= imgui.WindowFlagsMenuBar
+	}
 
 	var colorStyles []func() = []func(){
 		func() { imgui.PushStyleColorVec4(imgui.ColTitleBg, InActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColTitleBgActive, InActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColTitleBgCollapsed, InActiveColorBg) },
+
 		func() { imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColTabSelected, ActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor) },
@@ -549,11 +551,6 @@ func (r *RenderSystem) renderViewPort() {
 		func() { imgui.PushStyleColorVec4(imgui.ColTabDimmedSelectedOverline, InActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColTabSelectedOverline, InActiveColorBg) },
 
-		// func() { imgui.PushStyleColorVec4(imgui.ColSeparator, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1}) },
-		// func() { imgui.PushStyleColorVec4(imgui.ColSeparatorActive, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1}) },
-		// func() { imgui.PushStyleColorVec4(imgui.ColSeparatorHovered, imgui.Vec4{X: 1, Y: 0, Z: 0, W: 1}) },
-
-		// func() { imgui.PushStyleColorVec4(imgui.ColResizeGrip, InActiveColorBg ) },
 		func() { imgui.PushStyleColorVec4(imgui.ColResizeGripActive, ResizeActiveColor) },
 		func() { imgui.PushStyleColorVec4(imgui.ColResizeGripHovered, ResizeHoverColor) },
 	}
@@ -576,7 +573,6 @@ func (r *RenderSystem) renderViewPort() {
 		var rightID, mainAfterRight imgui.ID
 		var bottomID, centerID imgui.ID
 
-		// Split into LEFT (22%) and remaining MAIN
 		imgui.InternalDockBuilderSplitNode(
 			dockspaceID,
 			imgui.DirRight,
@@ -585,7 +581,6 @@ func (r *RenderSystem) renderViewPort() {
 			&mainAfterRight,
 		)
 
-		// Split MAIN into BOTTOM (28%) and CENTER (remaining)
 		imgui.InternalDockBuilderSplitNode(
 			mainAfterRight,
 			imgui.DirDown,
@@ -594,32 +589,26 @@ func (r *RenderSystem) renderViewPort() {
 			&centerID,
 		)
 
-		// Dock windows by title into the target nodes
 		imgui.InternalDockBuilderDockWindow("Scene", centerID)
 		imgui.InternalDockBuilderDockWindow("Inspector", rightID)
 		imgui.InternalDockBuilderDockWindow("Hierarchy", rightID)
 		imgui.InternalDockBuilderDockWindow("Console", bottomID)
 		imgui.InternalDockBuilderDockWindow("Profiler", bottomID)
 
-		// Finalize the builder—must be called after all splits/docks
+		sceneNode := imgui.InternalDockBuilderGetNode(centerID)
+		sceneNode.InternalSetLocalFlags(imgui.DockNodeFlags(imgui.DockNodeFlagsNoTabBar))
+
 		imgui.InternalDockBuilderFinish(dockspaceID)
 	}
 
-	// (Optional) menu bar on the host
-	if imgui.BeginMenuBar() {
-		if imgui.BeginMenu("File") {
-			if imgui.MenuItemBool("New Scene") {
-				// ...
-			}
-			imgui.EndMenu()
-		}
-		if imgui.BeginMenu("View") {
-			if imgui.MenuItemBool("Reset Layout") {
-				forceViewportInitialize = true
-			}
-			imgui.EndMenu()
-		}
-		imgui.EndMenuBar()
+	// window := imgui.InternalFindWindowByName("Scene")
+	// dockID := window.DockId()
+	// sceneNode := imgui.InternalDockBuilderGetNode(dockID)
+	// sceneNode.InternalSetLocalFlags(imgui.DockNodeFlags(imgui.DockNodeFlagsNoTabBar))
+
+	if r.app.RuntimeConfig().UIEnabled {
+		menus.SetupMenuBar(r.app, renderContext)
+		windows.RenderWindows(r.app)
 	}
 
 	imgui.End() // host window
@@ -627,24 +616,26 @@ func (r *RenderSystem) renderViewPort() {
 	// 4) Draw your tool windows as usual (they will dock by matching the title).
 
 	r.drawScene()
-	drawInspector()
-	drawHierarchy()
-	drawConsole()
-	drawProfiler()
+
+	if r.app.RuntimeConfig().UIEnabled {
+		drawInspector()
+		drawHierarchy()
+		drawConsole()
+		drawProfiler()
+	}
 
 	imgui.PopStyleColorV(int32(len(colorStyles)))
 }
 
 func (r *RenderSystem) drawScene() {
+	r.gameWindowHovered = false
 	imgui.Begin("Scene")
+	if imgui.IsWindowHovered() {
+		r.gameWindowHovered = true
+	}
 	texture := imgui.TextureID(r.postProcessingTexture)
-	// width, height := r.GameWindowSize()
-	// size := imgui.Vec2{X: float32(width), Y: float32(height)}
 	size := imgui.ContentRegionAvail()
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-	// imgui.Image(texture, size)
-	// Put your viewport image / render target here (ImGui::Image)
-	// and handle gizmos, controls, etc.
 	imgui.End()
 }
 
@@ -792,11 +783,11 @@ func (r *RenderSystem) renderUI(renderContext context.RenderContext, gameWindowT
 	imgui.PopStyleVarV(1)
 }
 
-func (r *RenderSystem) renderImgui(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
+func (r *RenderSystem) renderHelper(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
 	r.app.Platform().NewFrame()
 	imgui.NewFrame()
 
-	r.renderViewPort()
+	r.renderViewPort(renderContext)
 	// r.renderUI(renderContext, gameWindowTexture)
 
 	imgui.Render()

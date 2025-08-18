@@ -601,19 +601,10 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.InternalDockBuilderFinish(dockspaceID)
 	}
 
-	// window := imgui.InternalFindWindowByName("Scene")
-	// dockID := window.DockId()
-	// sceneNode := imgui.InternalDockBuilderGetNode(dockID)
-	// sceneNode.InternalSetLocalFlags(imgui.DockNodeFlags(imgui.DockNodeFlagsNoTabBar))
-
-	if r.app.RuntimeConfig().UIEnabled {
-		menus.SetupMenuBar(r.app, renderContext)
-		windows.RenderWindows(r.app)
-	}
+	menus.SetupMenuBar(r.app, renderContext)
+	windows.RenderWindows(r.app)
 
 	imgui.End() // host window
-
-	// 4) Draw your tool windows as usual (they will dock by matching the title).
 
 	r.drawScene()
 

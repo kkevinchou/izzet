@@ -12,24 +12,24 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext) {
 	imgui.BeginChildStrV("Right Window", imgui.Vec2{}, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus)
 	if imgui.BeginTabBar("Main") {
 		if imgui.BeginTabItem("Details") {
-			entityProps(app.SelectedEntity(), app)
+			EntityProps(app.SelectedEntity(), app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Scene Graph") {
-			sceneGraph(app)
+			SceneGraph(app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("World") {
-			worldProps(app)
+			WorldProps(app)
 			imgui.EndTabItem()
 		}
 		if imgui.BeginTabItem("Stats") {
-			stats(app, renderContext)
+			Stats(app, renderContext)
 			imgui.EndTabItem()
 		}
 		if app.RuntimeConfig().WindowEnablePostProcessing {
 			if imgui.BeginTabItem("Rendering") {
-				rendering(app)
+				Rendering(app)
 				imgui.EndTabItem()
 			}
 		}

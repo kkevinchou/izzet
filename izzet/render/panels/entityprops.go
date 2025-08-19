@@ -37,7 +37,7 @@ var (
 	selectedMaterialName   string
 )
 
-func entityProps(entity *entities.Entity, app renderiface.App) {
+func EntityProps(entity *entities.Entity, app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
 		entityIDStr := ""
 		entityNameStr := ""

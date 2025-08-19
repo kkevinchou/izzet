@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/renderers"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -518,7 +517,12 @@ func shouldSeedDefaultLayout(io imgui.IO, dockspaceID imgui.ID) bool {
 }
 
 var viewportInitialized bool
-var forceViewportInitialize bool
+
+var firstLoad bool
+
+func init() {
+	firstLoad = true
+}
 
 func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	viewport := imgui.MainViewport()
@@ -551,8 +555,28 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		func() { imgui.PushStyleColorVec4(imgui.ColTabDimmedSelectedOverline, InActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColTabSelectedOverline, InActiveColorBg) },
 
+		// resizing grips
 		func() { imgui.PushStyleColorVec4(imgui.ColResizeGripActive, ResizeActiveColor) },
 		func() { imgui.PushStyleColorVec4(imgui.ColResizeGripHovered, ResizeHoverColor) },
+
+		// misc ui elements
+		func() { imgui.PushStyleColorVec4(imgui.ColSliderGrab, InActiveColorControl) },
+		func() { imgui.PushStyleColorVec4(imgui.ColSliderGrabActive, ActiveColorControl) },
+		func() { imgui.PushStyleColorVec4(imgui.ColButton, InActiveColorControl) },
+		func() { imgui.PushStyleColorVec4(imgui.ColButtonActive, ActiveColorControl) },
+		func() { imgui.PushStyleColorVec4(imgui.ColButtonHovered, HoverColorControl) },
+		func() { imgui.PushStyleColorVec4(imgui.ColCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) },
+
+		// collapsable headers
+		func() { imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) },
+		func() { imgui.PushStyleColorVec4(imgui.ColHeader, HeaderColor) },
+		func() { imgui.PushStyleColorVec4(imgui.ColHeaderActive, HeaderColor) },
+		func() { imgui.PushStyleColorVec4(imgui.ColHeaderHovered, HoveredHeaderColor) },
+
+		// sliders
+		func() { imgui.PushStyleColorVec4(imgui.ColFrameBg, InActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColFrameBgActive, ActiveColorBg) },
+		func() { imgui.PushStyleColorVec4(imgui.ColFrameBgHovered, HoverColorBg) },
 	}
 	for _, f := range colorStyles {
 		f()
@@ -563,15 +587,12 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	dockspaceID := imgui.IDStr("MainDockSpace")
 	imgui.DockSpace(dockspaceID)
 
-	if (shouldSeedDefaultLayout(*imgui.CurrentIO(), dockspaceID) && !viewportInitialized) || forceViewportInitialize {
+	if !viewportInitialized && shouldSeedDefaultLayout(*imgui.CurrentIO(), dockspaceID) {
 		viewportInitialized = true
-		if forceViewportInitialize {
-			// imgui.InternalDockBuilderRemoveNode(dockspaceID)
-			forceViewportInitialize = false
-		}
 
 		var rightID, mainAfterRight imgui.ID
 		var bottomID, centerID imgui.ID
+		var rightBottomID, rightTopID imgui.ID
 
 		imgui.InternalDockBuilderSplitNode(
 			dockspaceID,
@@ -579,6 +600,14 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 			0.22,
 			&rightID,
 			&mainAfterRight,
+		)
+
+		imgui.InternalDockBuilderSplitNode(
+			rightID,
+			imgui.DirUp,
+			0.5,
+			&rightTopID,
+			&rightBottomID,
 		)
 
 		imgui.InternalDockBuilderSplitNode(
@@ -590,10 +619,11 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		)
 
 		imgui.InternalDockBuilderDockWindow("Scene", centerID)
-		imgui.InternalDockBuilderDockWindow("Inspector", rightID)
-		imgui.InternalDockBuilderDockWindow("Hierarchy", rightID)
-		imgui.InternalDockBuilderDockWindow("Console", bottomID)
-		imgui.InternalDockBuilderDockWindow("Profiler", bottomID)
+		imgui.InternalDockBuilderDockWindow("Hierarchy", rightTopID)
+		imgui.InternalDockBuilderDockWindow("WorldProps", rightTopID)
+		imgui.InternalDockBuilderDockWindow("Rendering", rightTopID)
+		imgui.InternalDockBuilderDockWindow("Stats", rightTopID)
+		imgui.InternalDockBuilderDockWindow("Inspector", rightBottomID)
 
 		sceneNode := imgui.InternalDockBuilderGetNode(centerID)
 		sceneNode.InternalSetLocalFlags(imgui.DockNodeFlags(imgui.DockNodeFlagsNoTabBar))
@@ -609,13 +639,58 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	r.drawScene()
 
 	if r.app.RuntimeConfig().UIEnabled {
-		drawInspector()
-		drawHierarchy()
-		drawConsole()
-		drawProfiler()
+		r.drawInspector()
+		r.drawRightTop(renderContext)
+		drawer.BuildFooter(
+			r.app,
+			renderContext,
+			r.materialTextureMap,
+		)
+
+		if r.app.RuntimeConfig().ShowTextureViewer {
+			imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
+			if imgui.BeginV("Texture Viewer", &r.app.RuntimeConfig().ShowTextureViewer, imgui.WindowFlagsNone) {
+				if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
+					for _, option := range menus.DebugComboOptions {
+						if imgui.SelectableBool(string(option)) {
+							menus.SelectedDebugComboOption = option
+						}
+					}
+					imgui.EndCombo()
+				}
+
+				regionSize := imgui.ContentRegionAvail()
+				imageWidth := regionSize.X
+
+				texture := imgui.TextureID(r.app.RuntimeConfig().DebugTexture)
+				aspectRatio := float32(renderContext.AspectRatio())
+				if r.app.RuntimeConfig().DebugAspectRatio != 0 {
+					aspectRatio = float32(r.app.RuntimeConfig().DebugAspectRatio)
+				}
+				size := imgui.Vec2{X: imageWidth, Y: imageWidth / aspectRatio}
+				if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
+					size.Y = imageWidth
+				}
+				// invert the Y axis since opengl vs texture coordinate systems differ
+				// https://learnopengl.com/Getting-started/Textures
+				imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+			}
+			imgui.End()
+		}
+	}
+
+	if firstLoad {
+		firstLoad = false
+		imgui.SetWindowFocusStr("Hierarchy")
 	}
 
 	imgui.PopStyleColorV(int32(len(colorStyles)))
+
+	if r.app.RuntimeConfig().UIEnabled {
+		if r.app.RuntimeConfig().ShowImguiDemo {
+			imgui.ShowDemoWindow()
+		}
+	}
 }
 
 func (r *RenderSystem) drawScene() {
@@ -630,148 +705,25 @@ func (r *RenderSystem) drawScene() {
 	imgui.End()
 }
 
-func drawInspector() {
+func (r *RenderSystem) drawInspector() {
 	imgui.Begin("Inspector")
-	imgui.Text("Selected entity details…")
+	panels.EntityProps(r.app.SelectedEntity(), r.app)
 	imgui.End()
 }
 
-func drawHierarchy() {
+func (r *RenderSystem) drawRightTop(renderContext context.RenderContext) {
 	imgui.Begin("Hierarchy")
-	imgui.Text("Entities / nodes…")
+	panels.SceneGraph(r.app)
 	imgui.End()
-}
-
-func drawConsole() {
-	imgui.Begin("Console")
-	imgui.Text("Logs…")
+	imgui.Begin("WorldProps")
+	panels.WorldProps(r.app)
 	imgui.End()
-}
-
-func drawProfiler() {
-	imgui.Begin("Profiler")
-	imgui.Text("Timings, graphs…")
+	imgui.Begin("Stats")
+	panels.Stats(r.app, renderContext)
 	imgui.End()
-}
-
-func (r *RenderSystem) renderUI(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
-	runtimeConfig := r.app.RuntimeConfig()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	windowWidth, windowHeight := r.app.WindowSize()
-
-	r.gameWindowHovered = false
-	menus.SetupMenuBar(r.app, renderContext)
-	windows.RenderWindows(r.app)
-	menuBarHeight := CalculateMenuBarHeight()
-	footerHeight := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
-	width := float32(windowWidth) + 2 // weirdly the width is always some pixels off (padding/margins maybe?)
-	height := float32(windowHeight) - menuBarHeight - footerHeight
-
-	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: width, Y: height}, imgui.CondNone)
-	imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: menuBarHeight})
-	if imgui.BeginV("Final Render", nil, imgui.WindowFlagsNoTitleBar|imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize|imgui.WindowFlagsNoBringToFrontOnFocus) {
-		width, height := r.GameWindowSize()
-
-		size := imgui.Vec2{X: float32(width), Y: float32(height)}
-		if imgui.BeginChildStrV("Game Window", size, imgui.ChildFlagsNone, imgui.WindowFlagsNoBringToFrontOnFocus) {
-			imgui.ImageV(gameWindowTexture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-		}
-		if imgui.BeginDragDropTarget() {
-			if payload := imgui.AcceptDragDropPayload("content_browser_item"); payload != nil && payload.CData != nil {
-				entityName := *(*string)(payload.CData.Data)
-				documentAsset := r.app.AssetManager().GetDocumentAsset(entityName)
-				entity := r.app.CreateEntitiesFromDocumentAsset(documentAsset)
-				r.app.SelectEntity(entity)
-			}
-			imgui.EndDragDropTarget()
-		}
-
-		if imgui.IsWindowHovered() {
-			r.gameWindowHovered = true
-		}
-
-		imgui.EndChild()
-
-		imgui.SameLine()
-
-		if r.app.RuntimeConfig().UIEnabled {
-			imgui.PushStyleVarFloat(imgui.StyleVarWindowRounding, 0)
-			imgui.PushStyleVarFloat(imgui.StyleVarWindowBorderSize, 0)
-			imgui.PushStyleVarFloat(imgui.StyleVarChildRounding, 0)
-			imgui.PushStyleVarFloat(imgui.StyleVarChildBorderSize, 0)
-			imgui.PushStyleVarFloat(imgui.StyleVarFrameRounding, 0)
-			imgui.PushStyleVarFloat(imgui.StyleVarFrameBorderSize, 0)
-			imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-			imgui.PushStyleColorVec4(imgui.ColHeader, HeaderColor)
-			imgui.PushStyleColorVec4(imgui.ColHeaderActive, HeaderColor)
-			imgui.PushStyleColorVec4(imgui.ColHeaderHovered, HoveredHeaderColor)
-			imgui.PushStyleColorVec4(imgui.ColTitleBg, TitleColor)
-			imgui.PushStyleColorVec4(imgui.ColTitleBgActive, TitleColor)
-			imgui.PushStyleColorVec4(imgui.ColSliderGrab, InActiveColorControl)
-			imgui.PushStyleColorVec4(imgui.ColSliderGrabActive, ActiveColorControl)
-			imgui.PushStyleColorVec4(imgui.ColFrameBg, InActiveColorBg)
-			imgui.PushStyleColorVec4(imgui.ColFrameBgActive, ActiveColorBg)
-			imgui.PushStyleColorVec4(imgui.ColFrameBgHovered, HoverColorBg)
-			imgui.PushStyleColorVec4(imgui.ColCheckMark, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
-			imgui.PushStyleColorVec4(imgui.ColButton, InActiveColorControl)
-			imgui.PushStyleColorVec4(imgui.ColButtonActive, ActiveColorControl)
-			imgui.PushStyleColorVec4(imgui.ColButtonHovered, HoverColorControl)
-			imgui.PushStyleColorVec4(imgui.ColTab, InActiveColorBg)
-			imgui.PushStyleColorVec4(imgui.ColTabHovered, HoveredHeaderColor)
-
-			panels.BuildTabsSet(
-				r.app,
-				renderContext,
-			)
-
-			drawer.BuildFooter(
-				r.app,
-				renderContext,
-				r.materialTextureMap,
-			)
-
-			imgui.PopStyleColorV(17)
-			imgui.PopStyleVarV(6)
-
-			if runtimeConfig.ShowImguiDemo {
-				imgui.ShowDemoWindow()
-			}
-
-			if runtimeConfig.ShowTextureViewer {
-				imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
-				if imgui.BeginV("Texture Viewer", &runtimeConfig.ShowTextureViewer, imgui.WindowFlagsNone) {
-					if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
-						for _, option := range menus.DebugComboOptions {
-							if imgui.SelectableBool(string(option)) {
-								menus.SelectedDebugComboOption = option
-							}
-						}
-						imgui.EndCombo()
-					}
-
-					regionSize := imgui.ContentRegionAvail()
-					imageWidth := regionSize.X
-
-					texture := imgui.TextureID(runtimeConfig.DebugTexture)
-					aspectRatio := float32(renderContext.AspectRatio())
-					if runtimeConfig.DebugAspectRatio != 0 {
-						aspectRatio = float32(runtimeConfig.DebugAspectRatio)
-					}
-					size := imgui.Vec2{X: imageWidth, Y: imageWidth / aspectRatio}
-					if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
-						size.Y = imageWidth
-					}
-					// invert the Y axis since opengl vs texture coordinate systems differ
-					// https://learnopengl.com/Getting-started/Textures
-					imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
-				}
-				imgui.End()
-			}
-		}
-	}
+	imgui.Begin("Rendering")
+	panels.Rendering(r.app)
 	imgui.End()
-	imgui.PopStyleVarV(1)
 }
 
 func (r *RenderSystem) renderHelper(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
@@ -779,7 +731,6 @@ func (r *RenderSystem) renderHelper(renderContext context.RenderContext, gameWin
 	imgui.NewFrame()
 
 	r.renderViewPort(renderContext)
-	// r.renderUI(renderContext, gameWindowTexture)
 
 	imgui.Render()
 	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())

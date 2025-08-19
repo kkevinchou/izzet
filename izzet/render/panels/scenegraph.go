@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
-func sceneGraph(app renderiface.App) {
+func SceneGraph(app renderiface.App) {
 	world := app.World()
 	entityPopup := false
 	imgui.BeginChildStrV("sceneGraphNodes", imgui.Vec2{X: -1, Y: -1}, imgui.ChildFlagsBorders, imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize)

@@ -7,12 +7,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-const (
-	maxContentBrowserHeight float32 = 300
-)
-
-var documentTexture *imgui.TextureID
-
 type ShelfType string
 
 const ShelfNone ShelfType = "NONE"

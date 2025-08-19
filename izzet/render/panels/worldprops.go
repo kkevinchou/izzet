@@ -50,7 +50,7 @@ var RecreateCloudTexture bool
 var SelectedCloudTextureIndex int = 0
 var SelectedCloudTextureChannelIndex int = 0
 
-func worldProps(app renderiface.App) {
+func WorldProps(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {

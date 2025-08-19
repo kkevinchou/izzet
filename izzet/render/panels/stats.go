@@ -21,7 +21,7 @@ type metricPair struct {
 	value float64
 }
 
-func stats(app renderiface.App, renderContext RenderContext) {
+func Stats(app renderiface.App, renderContext RenderContext) {
 	runtimeConfig := app.RuntimeConfig()
 	mr := globals.ClientRegistry()
 

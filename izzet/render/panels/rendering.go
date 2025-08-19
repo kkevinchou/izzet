@@ -6,7 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
-func rendering(app renderiface.App) {
+func Rendering(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {

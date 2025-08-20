@@ -636,7 +636,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 	imgui.End() // host window
 
-	r.drawScene()
+	r.drawScene(renderContext)
 
 	if r.app.RuntimeConfig().UIEnabled {
 		r.drawInspector()
@@ -693,14 +693,15 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	}
 }
 
-func (r *RenderSystem) drawScene() {
+func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	r.gameWindowHovered = false
-	imgui.Begin("Scene")
+	imgui.BeginV("Scene", nil, imgui.WindowFlagsNoScrollbar)
 	if imgui.IsWindowHovered() {
 		r.gameWindowHovered = true
 	}
 	texture := imgui.TextureID(r.postProcessingTexture)
-	size := imgui.ContentRegionAvail()
+	// size := imgui.ContentRegionAvail()
+	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 	imgui.End()
 }

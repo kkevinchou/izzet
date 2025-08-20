@@ -20,7 +20,7 @@ profilecpu:
 
 .PHONY: profileheap
 profileheap:
-	curl http://localhost:6868/debug/pprof/heap?seconds=10 -o heap
+	curl http://localhost:6868/debug/pprof/heap?seconds=60 -o heap
 	go tool pprof -http=localhost:6767 heap
 
 .PHONY: heapsnapshot

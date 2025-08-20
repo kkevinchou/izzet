@@ -29,6 +29,7 @@ func (p *SSAOBlurRenderPass) Init(width, height int, ctx *context.RenderPassCont
 func (p *SSAOBlurRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.SSAOBlurFBO)
 	textures := createAndBindTextures(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true)
+	gl.DeleteTextures(1, &ctx.SSAOBlurTexture)
 	ctx.SSAOBlurTexture = textures[0]
 }
 

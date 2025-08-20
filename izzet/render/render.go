@@ -107,6 +107,7 @@ type RenderSystem struct {
 
 	sceneSize       [2]int
 	resizeNextFrame bool
+	lastResize      time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -127,6 +128,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.ndcQuadVAO = r.init2f2fVAO()
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
+	r.lastResize = time.Now()
 	r.initorReinitTextures(width, height, true)
 
 	// bloom setup
@@ -221,6 +223,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 		_, _, compositeTextures = compositeTextureFn()
 	}
+	gl.DeleteTextures(1, &r.compositeTexture)
 	r.compositeTexture = compositeTextures[0]
 
 	// post processing FBO
@@ -232,6 +235,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
 		_, _, postProcessingTextures = postProcessingTextureFn()
 	}
+	gl.DeleteTextures(1, &r.postProcessingTexture)
 	r.postProcessingTexture = postProcessingTextures[0]
 }
 
@@ -712,9 +716,11 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 
 	sceneSize := imgui.ContentRegionAvail()
 	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	// if nextSceneSize != r.sceneSize && time.Since(r.lastResize).Milliseconds() > 25 {
 	if nextSceneSize != r.sceneSize {
 		r.sceneSize = nextSceneSize
 		r.resizeNextFrame = true
+		r.lastResize = time.Now()
 	}
 
 	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}

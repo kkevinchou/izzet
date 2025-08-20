@@ -92,6 +92,7 @@ func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContex
 		[]uint32{gl.FLOAT, gl.UNSIGNED_BYTE},
 		true,
 	)
+	gl.DeleteTextures(1, &ctx.MainTexture)
 	ctx.MainTexture = textures[0]
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.MainMultisampleFBO)
@@ -103,6 +104,7 @@ func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContex
 		[]uint32{rendersettings.RenderFormatRGB, gl.RED_INTEGER},
 		false,
 	)
+	gl.DeleteTextures(1, &ctx.MainMultisampleTexture)
 	ctx.MainMultisampleTexture = msTextures[0]
 }
 

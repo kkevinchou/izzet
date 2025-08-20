@@ -307,6 +307,10 @@ func (r *RenderSystem) GameWindowSize() (int, int) {
 		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
 	}
 
+	if r.sceneSize[0] != 0 {
+		width = r.sceneSize[0]
+	}
+
 	return width, height
 }
 

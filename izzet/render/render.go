@@ -237,7 +237,6 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
 	width, height := r.GameWindowSize()
-	// width, height := r.sceneSize[0], r.sceneSize[1]
 	r.initorReinitTextures(width, height, false)
 	for _, pass := range r.renderPasses {
 		pass.Resize(width, height, r.renderPassContext)
@@ -353,12 +352,8 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 
 	start := time.Now()
 	var renderContext context.RenderContext
-	// if r.sceneSize.X() == 0 && r.sceneSize.Y() == 0 {
 	width, height := r.GameWindowSize()
 	renderContext = context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
-	// } else {
-	// 	renderContext = context.NewRenderContext(int(r.sceneSize.X()), int(r.sceneSize.Y()), float64(r.app.RuntimeConfig().FovX))
-	// }
 
 	// configure camera viewer context
 
@@ -715,12 +710,12 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	}
 	texture := imgui.TextureID(r.postProcessingTexture)
 
-	// sceneSize := imgui.ContentRegionAvail()
-	// nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
-	// if nextSceneSize != r.sceneSize {
-	// 	r.sceneSize = nextSceneSize
-	// 	r.resizeNextFrame = true
-	// }
+	sceneSize := imgui.ContentRegionAvail()
+	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	if nextSceneSize != r.sceneSize {
+		r.sceneSize = nextSceneSize
+		r.resizeNextFrame = true
+	}
 
 	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})

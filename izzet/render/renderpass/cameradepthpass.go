@@ -28,6 +28,7 @@ func (p *CameraDepthRenderPass) Init(width, height int, ctx *context.RenderPassC
 func (p *CameraDepthRenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.CameraDepthFBO)
 	texture := createDepthTexture(width, height)
+	gl.DeleteTextures(1, &ctx.CameraDepthTexture)
 	ctx.CameraDepthTexture = texture
 }
 

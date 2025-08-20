@@ -50,6 +50,9 @@ func (p *GBufferPass) Resize(width, height int, ctx *context.RenderPassContext) 
 		true,
 	)
 
+	gl.DeleteTextures(1, &ctx.GPositionTexture)
+	gl.DeleteTextures(1, &ctx.GNormalTexture)
+	gl.DeleteTextures(1, &ctx.GColorTexture)
 	ctx.GPositionTexture, ctx.GNormalTexture, ctx.GColorTexture = textures[0], textures[1], textures[2]
 }
 func (p *GBufferPass) Render(

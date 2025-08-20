@@ -16,13 +16,14 @@ const ShelfMaterials ShelfType = "MATERIALS"
 var last = ShelfContent
 var expanded bool
 
-func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, materialTextureMap map[types.MaterialHandle]uint32) {
+func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[types.MaterialHandle]uint32) {
 	_, windowHeight := app.WindowSize()
 
 	imgui.SetNextWindowBgAlpha(1)
-	r := imgui.ContentRegionAvail()
 	imgui.SetNextWindowPosV(imgui.Vec2{X: 0, Y: float32(windowHeight) - settings.FooterSize}, imgui.CondNone, imgui.Vec2{})
-	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: settings.FooterSize})
+	// r := imgui.ContentRegionAvail()
+	// imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: settings.FooterSize})
+	imgui.SetNextWindowSize(imgui.Vec2{X: float32(width), Y: settings.FooterSize})
 
 	var open bool = true
 	var footerFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse

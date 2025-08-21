@@ -70,10 +70,6 @@ const (
 	ProjectsDirectory                string  = ".project/"
 	NewProjectName                   string  = "my_new_project"
 
-	FooterSize  float32 = 31
-	ShelfHeight float32 = 210
-	ShelfWidth  float32 = 800
-
 	CharacterSpeed           float64 = 10
 	CharacterFlySpeed        float64 = 30
 	CharacterJumpVelocity    float64 = 25
@@ -89,10 +85,13 @@ const (
 	// Gizmos
 	ScaleSensitivity        float64 = 0.8
 	ScaleAllAxisSensitivity float64 = 0.035
+
+	DrawerbarSize float32 = 35
 )
 
 var (
 	FontSize                  float32    = 20
 	EditorCameraStartPosition mgl64.Vec3 = mgl64.Vec3{0, 5, 5}
 	SoloClient                bool
+	WindowPadding             [2]float32 = [2]float32{1, 1}
 )

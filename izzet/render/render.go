@@ -105,9 +105,10 @@ type RenderSystem struct {
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
 
-	sceneSize       [2]int
-	resizeNextFrame bool
-	lastResize      time.Time
+	lastFrameSceneSize    [2]int
+	currentFrameSceneSize [2]int
+	resizeNextFrame       bool
+	lastResize            time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -256,6 +257,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.ReinitializeFrameBuffers()
 		r.resizeNextFrame = false
 	}
+	r.currentFrameSceneSize = r.lastFrameSceneSize
+
 	mr := globals.ClientRegistry()
 	initOpenGLRenderSettings()
 	r.app.RuntimeConfig().TriangleDrawCount = 0
@@ -590,7 +593,15 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		func() { imgui.PushStyleColorVec4(imgui.ColFrameBgActive, ActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColFrameBgHovered, HoverColorBg) },
 	}
+	var styles []func() = []func(){
+		func() {
+			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: settings.WindowPadding[0], Y: settings.WindowPadding[1]})
+		},
+	}
 	for _, f := range colorStyles {
+		f()
+	}
+	for _, f := range styles {
 		f()
 	}
 
@@ -653,10 +664,10 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	if r.app.RuntimeConfig().UIEnabled {
 		r.drawInspector()
 		r.drawRightTop(renderContext)
-		drawer.BuildFooter(
+		drawer.BuildDrawerbar(
 			r.app,
 			renderContext,
-			r.sceneSize[0],
+			r.currentFrameSceneSize[0],
 			r.materialTextureMap,
 		)
 
@@ -697,6 +708,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.SetWindowFocusStr("Hierarchy")
 	}
 
+	imgui.PopStyleVarV(int32(len(styles)))
 	imgui.PopStyleColorV(int32(len(colorStyles)))
 
 	if r.app.RuntimeConfig().UIEnabled {
@@ -708,7 +720,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	r.gameWindowHovered = false
-	imgui.BeginV("Scene", nil, imgui.WindowFlagsNoScrollbar)
+	imgui.BeginV("Scene", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 	if imgui.IsWindowHovered() {
 		r.gameWindowHovered = true
 	}
@@ -717,8 +729,8 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	sceneSize := imgui.ContentRegionAvail()
 	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
 	// if nextSceneSize != r.sceneSize && time.Since(r.lastResize).Milliseconds() > 25 {
-	if nextSceneSize != r.sceneSize {
-		r.sceneSize = nextSceneSize
+	if nextSceneSize != r.lastFrameSceneSize {
+		r.lastFrameSceneSize = nextSceneSize
 		r.resizeNextFrame = true
 		r.lastResize = time.Now()
 	}

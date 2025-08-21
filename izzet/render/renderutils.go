@@ -237,15 +237,15 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 		pickingBuffer = make([]byte, 4)
 	}
 
-	var footerSize int32 = 0
+	var drawerbarSize int32 = 0
 	if r.app.RuntimeConfig().UIEnabled {
-		footerSize = int32(apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled))
+		drawerbarSize = int32(apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled))
 	}
 
-	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the footer size if it's present
+	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the drawerbar size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner
 	var weirdOffset float32 = -1 // Weirdge
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-footerSize+int32(weirdOffset), 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
+	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-drawerbarSize+int32(weirdOffset), 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
 
 	uintID := binary.LittleEndian.Uint32(pickingBuffer)
 	if uintID == settings.EmptyColorPickingID {
@@ -296,15 +296,19 @@ func CalculateMenuBarHeight() float32 {
 
 func (r *RenderSystem) GameWindowSize() (int, int) {
 	menuBarSize := CalculateMenuBarHeight()
-	footerSize := apputils.CalculateFooterSize(r.app.RuntimeConfig().UIEnabled)
+	drawerbarSize := apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled)
 
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	width := windowWidth
-	height := windowHeight - int(menuBarSize) - int(footerSize)
+	height := windowHeight - int(menuBarSize) - int(drawerbarSize)
 
 	if r.app.RuntimeConfig().UIEnabled {
 		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
+	}
+
+	if r.lastFrameSceneSize[0] != 0 {
+		width = r.lastFrameSceneSize[0]
 	}
 
 	return width, height

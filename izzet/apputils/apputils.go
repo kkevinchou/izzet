@@ -39,11 +39,11 @@ func Vec4ApproxEqualThreshold(v1 mgl64.Vec4, v2 mgl64.Vec4, threshold float64) b
 	})
 }
 
-func CalculateFooterSize(uiEnabled bool) float32 {
+func GetDrawerbarSize(uiEnabled bool) float32 {
 	if !uiEnabled {
 		return 0
 	}
-	return 31
+	return settings.DrawerbarSize
 }
 
 func PathToProjectFile(projectName string) string {

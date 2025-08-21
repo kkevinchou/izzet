@@ -2,76 +2,103 @@ package drawer
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-type ShelfType string
+type DrawerTab string
 
-const ShelfNone ShelfType = "NONE"
-const ShelfContent ShelfType = "CONTENT"
-const ShelfMaterials ShelfType = "MATERIALS"
+const DrawerTabNone DrawerTab = "NONE"
+const DrawerTabContent DrawerTab = "CONTENT"
+const DrawerTabMaterials DrawerTab = "MATERIALS"
 
-var last = ShelfContent
-var expanded bool
+const (
+	drawerTabHeight float32 = 210
+	drawerTabWidth  float32 = 800
+)
 
-func BuildFooter(app renderiface.App, renderContext renderiface.RenderContext, materialTextureMap map[types.MaterialHandle]uint32) {
+var (
+	buttonColorInactive imgui.Vec4 = imgui.Vec4{X: .1, Y: .1, Z: 0.1, W: 1}
+	buttonColorActive   imgui.Vec4 = imgui.Vec4{X: .3, Y: .3, Z: 0.3, W: 1}
+
+	last     = DrawerTabNone
+	expanded bool
+)
+
+func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[types.MaterialHandle]uint32) {
 	_, windowHeight := app.WindowSize()
+	drawerbarSize := apputils.GetDrawerbarSize(app.RuntimeConfig().UIEnabled)
+
+	var drawerbarX float32 = settings.WindowPadding[0] * 2
+	var drawerbarY float32 = float32(windowHeight) - drawerbarSize + settings.WindowPadding[1]
 
 	imgui.SetNextWindowBgAlpha(1)
-	r := imgui.ContentRegionAvail()
-	imgui.SetNextWindowPosV(imgui.Vec2{X: 0, Y: float32(windowHeight) - settings.FooterSize}, imgui.CondNone, imgui.Vec2{})
-	imgui.SetNextWindowSize(imgui.Vec2{X: r.X, Y: settings.FooterSize})
+	imgui.SetNextWindowPosV(imgui.Vec2{X: drawerbarX, Y: drawerbarY}, imgui.CondNone, imgui.Vec2{})
+	imgui.SetNextWindowSize(imgui.Vec2{X: float32(width), Y: 0})
 
 	var open bool = true
-	var footerFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
-	footerFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
+	var drawerbarFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
+	drawerbarFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
 
-	imgui.BeginV("Footer", &open, footerFlags)
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
-	if imgui.BeginTabBarV("Footer Tab Bar", imgui.TabBarFlagsFittingPolicyScroll) {
-		if imgui.BeginTabItem("Content Browser") {
-			if last != ShelfContent {
-				expanded = true
-			} else if imgui.IsItemClicked() {
-				expanded = !expanded
-			}
-			last = ShelfContent
-			imgui.EndTabItem()
-		}
-		if imgui.BeginTabItem("Materials") {
-			if last != ShelfMaterials {
-				expanded = true
-			} else if imgui.IsItemClicked() {
-				expanded = !expanded
-			}
-			last = ShelfMaterials
-			imgui.EndTabItem()
-		}
+	imgui.BeginV("Drawerbar", &open, drawerbarFlags)
 
-		imgui.EndTabBar()
+	if last == DrawerTabContent {
+		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorActive)
+	} else {
+		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorInactive)
 	}
+	if imgui.Button("Content Browser") {
+		if last != DrawerTabContent {
+			expanded = true
+			last = DrawerTabContent
+		} else {
+			expanded = false
+			last = DrawerTabNone
+		}
+	}
+	imgui.PopStyleColor()
+
+	imgui.SameLine()
+
+	if last == DrawerTabMaterials {
+		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorActive)
+	} else {
+		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorInactive)
+	}
+	if imgui.Button("Materials") {
+		if last != DrawerTabMaterials {
+			expanded = true
+			last = DrawerTabMaterials
+		} else {
+			expanded = false
+			last = DrawerTabNone
+		}
+	}
+	imgui.PopStyleColor()
 
 	if expanded {
-		_, height := app.WindowSize()
-		var shelfFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
-		shelfFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsMenuBar
+		var drawerTabFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
+		drawerTabFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
 
-		imgui.SetNextWindowPos(imgui.Vec2{X: 0, Y: float32(height) - settings.FooterSize - settings.ShelfHeight - 2})
-		imgui.SetNextWindowSize(imgui.Vec2{X: settings.ShelfWidth, Y: settings.ShelfHeight})
-		imgui.BeginV("Shelf", &open, shelfFlags)
-		if imgui.BeginMenuBar() {
-			imgui.EndMenuBar()
-		}
+		imgui.SetNextWindowPos(imgui.Vec2{X: drawerbarX, Y: drawerbarY - drawerTabHeight})
+		imgui.SetNextWindowSize(imgui.Vec2{X: drawerTabWidth, Y: drawerTabHeight})
+		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 10, Y: 10})
+		imgui.BeginV("DrawerTab", &open, drawerTabFlags)
+		imgui.Separator()
 
-		if last == ShelfContent {
+		if last == DrawerTabContent {
 			contentBrowser(app)
-		} else if last == ShelfMaterials {
+		} else if last == DrawerTabMaterials {
 			materialssUI(app, materialTextureMap)
 		}
 		imgui.End()
+		imgui.PopStyleVar()
 	}
 
 	imgui.End()
+	imgui.PopStyleVar()
 }

@@ -104,6 +104,11 @@ type RenderSystem struct {
 
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
+
+	lastFrameSceneSize    [2]int
+	currentFrameSceneSize [2]int
+	resizeNextFrame       bool
+	lastResize            time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -124,6 +129,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.ndcQuadVAO = r.init2f2fVAO()
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
+	r.lastResize = time.Now()
 	r.initorReinitTextures(width, height, true)
 
 	// bloom setup
@@ -218,6 +224,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
 		_, _, compositeTextures = compositeTextureFn()
 	}
+	gl.DeleteTextures(1, &r.compositeTexture)
 	r.compositeTexture = compositeTextures[0]
 
 	// post processing FBO
@@ -229,6 +236,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
 		_, _, postProcessingTextures = postProcessingTextureFn()
 	}
+	gl.DeleteTextures(1, &r.postProcessingTexture)
 	r.postProcessingTexture = postProcessingTextures[0]
 }
 
@@ -245,6 +253,12 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *RenderSystem) Render(delta time.Duration) {
+	if r.resizeNextFrame {
+		r.ReinitializeFrameBuffers()
+		r.resizeNextFrame = false
+	}
+	r.currentFrameSceneSize = r.lastFrameSceneSize
+
 	mr := globals.ClientRegistry()
 	initOpenGLRenderSettings()
 	r.app.RuntimeConfig().TriangleDrawCount = 0
@@ -344,8 +358,9 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	mr := globals.ClientRegistry()
 
 	start := time.Now()
+	var renderContext context.RenderContext
 	width, height := r.GameWindowSize()
-	renderContext := context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
+	renderContext = context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
 
 	// configure camera viewer context
 
@@ -578,7 +593,15 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		func() { imgui.PushStyleColorVec4(imgui.ColFrameBgActive, ActiveColorBg) },
 		func() { imgui.PushStyleColorVec4(imgui.ColFrameBgHovered, HoverColorBg) },
 	}
+	var styles []func() = []func(){
+		func() {
+			imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: settings.WindowPadding[0], Y: settings.WindowPadding[1]})
+		},
+	}
 	for _, f := range colorStyles {
+		f()
+	}
+	for _, f := range styles {
 		f()
 	}
 
@@ -636,14 +659,15 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 	imgui.End() // host window
 
-	r.drawScene()
+	r.drawScene(renderContext)
 
 	if r.app.RuntimeConfig().UIEnabled {
 		r.drawInspector()
 		r.drawRightTop(renderContext)
-		drawer.BuildFooter(
+		drawer.BuildDrawerbar(
 			r.app,
 			renderContext,
+			r.currentFrameSceneSize[0],
 			r.materialTextureMap,
 		)
 
@@ -684,6 +708,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.SetWindowFocusStr("Hierarchy")
 	}
 
+	imgui.PopStyleVarV(int32(len(styles)))
 	imgui.PopStyleColorV(int32(len(colorStyles)))
 
 	if r.app.RuntimeConfig().UIEnabled {
@@ -693,14 +718,24 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	}
 }
 
-func (r *RenderSystem) drawScene() {
+func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	r.gameWindowHovered = false
-	imgui.Begin("Scene")
+	imgui.BeginV("Scene", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 	if imgui.IsWindowHovered() {
 		r.gameWindowHovered = true
 	}
 	texture := imgui.TextureID(r.postProcessingTexture)
-	size := imgui.ContentRegionAvail()
+
+	sceneSize := imgui.ContentRegionAvail()
+	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	// if nextSceneSize != r.sceneSize && time.Since(r.lastResize).Milliseconds() > 25 {
+	if nextSceneSize != r.lastFrameSceneSize {
+		r.lastFrameSceneSize = nextSceneSize
+		r.resizeNextFrame = true
+		r.lastResize = time.Now()
+	}
+
+	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 	imgui.End()
 }

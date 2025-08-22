@@ -237,10 +237,7 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 		pickingBuffer = make([]byte, 4)
 	}
 
-	var drawerbarSize int32 = 0
-	if r.app.RuntimeConfig().UIEnabled {
-		drawerbarSize = int32(apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled))
-	}
+	drawerbarSize := int32(apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled))
 
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the drawerbar size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner
@@ -295,13 +292,12 @@ func CalculateMenuBarHeight() float32 {
 }
 
 func (r *RenderSystem) GameWindowSize() (int, int) {
-	menuBarSize := CalculateMenuBarHeight()
 	drawerbarSize := apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled)
 
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	width := windowWidth
-	height := windowHeight - int(menuBarSize) - int(drawerbarSize)
+	height := windowHeight - int(drawerbarSize)
 
 	if r.app.RuntimeConfig().UIEnabled {
 		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))

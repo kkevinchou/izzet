@@ -32,19 +32,20 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 	drawerbarSize := apputils.GetDrawerbarSize(app.RuntimeConfig().UIEnabled)
 
 	var drawerbarX float32 = settings.WindowPadding[0] * 2
-	var drawerbarY float32 = float32(windowHeight) - drawerbarSize + settings.WindowPadding[1]
+	var drawerbarY float32 = float32(windowHeight) - drawerbarSize - settings.WindowPadding[1]*2
 
 	imgui.SetNextWindowBgAlpha(1)
-	imgui.SetNextWindowPosV(imgui.Vec2{X: drawerbarX, Y: drawerbarY}, imgui.CondNone, imgui.Vec2{})
-	imgui.SetNextWindowSize(imgui.Vec2{X: float32(width), Y: 0})
+	// imgui.SetNextWindowPosV(imgui.Vec2{X: drawerbarX, Y: drawerbarY}, imgui.CondNone, imgui.Vec2{})
+	// imgui.SetNextWindowSize(imgui.Vec2{X: float32(width), Y: 0})
 
 	var open bool = true
-	var drawerbarFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
-	drawerbarFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
+	// var drawerbarFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
+	// drawerbarFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 
-	imgui.BeginV("Drawerbar", &open, drawerbarFlags)
+	// imgui.BeginV("Drawerbar", &open, drawerbarFlags)
+	imgui.Begin("Drawerbar")
 
 	if last == DrawerTabContent {
 		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorActive)
@@ -87,6 +88,7 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 		imgui.SetNextWindowPos(imgui.Vec2{X: drawerbarX, Y: drawerbarY - drawerTabHeight})
 		imgui.SetNextWindowSize(imgui.Vec2{X: drawerTabWidth, Y: drawerTabHeight})
 		imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 10, Y: 10})
+		imgui.BeginV("DrawerTab", &open, drawerTabFlags)
 		imgui.BeginV("DrawerTab", &open, drawerTabFlags)
 		imgui.Separator()
 

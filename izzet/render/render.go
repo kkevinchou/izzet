@@ -241,7 +241,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
-	width, height := r.GameWindowSize()
+	width, height := r.SceneSize()
 	r.initorReinitTextures(width, height, false)
 	for _, pass := range r.renderPasses {
 		pass.Resize(width, height, r.renderPassContext)
@@ -358,7 +358,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 
 	start := time.Now()
 	var renderContext context.RenderContext
-	width, height := r.GameWindowSize()
+	width, height := r.SceneSize()
 	renderContext = context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
 
 	// configure camera viewer context

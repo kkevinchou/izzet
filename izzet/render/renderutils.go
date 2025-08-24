@@ -293,7 +293,7 @@ func CalculateMenuBarHeight() float32 {
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
-func (r *RenderSystem) GameWindowSize() (int, int) {
+func (r *RenderSystem) SceneSize() (int, int) {
 	return r.sceneSize[0], r.sceneSize[1]
 }
 

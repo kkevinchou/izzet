@@ -10,7 +10,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -239,7 +238,7 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 
 	var drawerbarSize int32 = 0
 	if r.app.RuntimeConfig().UIEnabled {
-		drawerbarSize = int32(apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled))
+		drawerbarSize = int32(settings.DrawerbarSize)
 	}
 
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the drawerbar size if it's present
@@ -295,13 +294,17 @@ func CalculateMenuBarHeight() float32 {
 }
 
 func (r *RenderSystem) GameWindowSize() (int, int) {
-	menuBarSize := CalculateMenuBarHeight()
-	drawerbarSize := apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled)
+	menuBarSize := int(CalculateMenuBarHeight())
+	var drawerbarSize int
+
+	if r.app.RuntimeConfig().UIEnabled {
+		drawerbarSize = int(settings.DrawerbarSize)
+	}
 
 	windowWidth, windowHeight := r.app.WindowSize()
 
 	width := windowWidth
-	height := windowHeight - int(menuBarSize) - int(drawerbarSize)
+	height := windowHeight - menuBarSize - drawerbarSize
 
 	if r.app.RuntimeConfig().UIEnabled {
 		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))

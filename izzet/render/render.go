@@ -728,7 +728,6 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 
 	sceneSize := imgui.ContentRegionAvail()
 	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
-	// if nextSceneSize != r.sceneSize && time.Since(r.lastResize).Milliseconds() > 25 {
 	if nextSceneSize != r.lastFrameSceneSize {
 		r.lastFrameSceneSize = nextSceneSize
 		r.resizeNextFrame = true
@@ -736,6 +735,7 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	}
 
 	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
+	// size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 	imgui.End()
 }

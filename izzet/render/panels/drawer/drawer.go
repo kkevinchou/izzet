@@ -2,7 +2,6 @@ package drawer
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -29,7 +28,11 @@ var (
 
 func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[types.MaterialHandle]uint32) {
 	_, windowHeight := app.WindowSize()
-	drawerbarSize := apputils.GetDrawerbarSize(app.RuntimeConfig().UIEnabled)
+
+	var drawerbarSize float32
+	if app.RuntimeConfig().UIEnabled {
+		drawerbarSize = settings.DrawerbarSize
+	}
 
 	var drawerbarX float32 = settings.WindowPadding[0] * 2
 	var drawerbarY float32 = float32(windowHeight) - drawerbarSize + settings.WindowPadding[1]

@@ -637,8 +637,8 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 			&centerID,
 		)
 
-		imgui.InternalDockBuilderDockWindow("Scene", centerID)
-		imgui.InternalDockBuilderDockWindow("Hierarchy", rightTopID)
+		imgui.InternalDockBuilderDockWindow("SceneView", centerID)
+		imgui.InternalDockBuilderDockWindow("Scene", rightTopID)
 		imgui.InternalDockBuilderDockWindow("WorldProps", rightTopID)
 		imgui.InternalDockBuilderDockWindow("Rendering", rightTopID)
 		imgui.InternalDockBuilderDockWindow("Stats", rightTopID)
@@ -701,7 +701,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 	if firstLoad {
 		firstLoad = false
-		imgui.SetWindowFocusStr("Hierarchy")
+		imgui.SetWindowFocusStr("Scene")
 	}
 
 	imgui.PopStyleVarV(int32(len(styles)))
@@ -716,7 +716,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	r.gameWindowHovered = false
-	imgui.BeginV("Scene", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
+	imgui.BeginV("SceneView", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 	if imgui.IsWindowHovered() {
 		r.gameWindowHovered = true
 	}
@@ -753,7 +753,7 @@ func (r *RenderSystem) drawInspector() {
 }
 
 func (r *RenderSystem) drawRightTop(renderContext context.RenderContext) {
-	imgui.Begin("Hierarchy")
+	imgui.Begin("Scene")
 	panels.SceneGraph(r.app)
 	imgui.End()
 	imgui.Begin("WorldProps")

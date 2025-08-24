@@ -12,15 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 )
 
-// const (
-// 	width       float32 = 100
-// 	maxPerRow   int     = 7
-// 	cellWidth   float32 = 100
-// 	cellHeight  float32 = 100
-// 	itemsPerRow int32   = 7
-// 	iconPadding float32 = 10
-// )
-
 func contentBrowser(app renderiface.App) {
 	style := imgui.CurrentStyle()
 	imgui.PushStyleVarVec2(

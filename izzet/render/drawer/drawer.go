@@ -2,7 +2,6 @@ package drawer
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -28,19 +27,23 @@ var (
 )
 
 func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[types.MaterialHandle]uint32) {
-	_, windowHeight := app.WindowSize()
-	drawerbarSize := apputils.GetDrawerbarSize(app.RuntimeConfig().UIEnabled)
+	var drawerbarSize float32
+	if app.RuntimeConfig().UIEnabled {
+		drawerbarSize = settings.DrawerbarSize
+	}
 
-	var drawerbarX float32 = settings.WindowPadding[0] * 2
-	var drawerbarY float32 = float32(windowHeight) - drawerbarSize + settings.WindowPadding[1]
+	var drawerbarX float32 = settings.WindowPadding[0]
+	var drawerbarY float32 = imgui.MainViewport().Pos().Y + imgui.MainViewport().Size().Y - drawerbarSize
 
 	imgui.SetNextWindowBgAlpha(1)
-	imgui.SetNextWindowPosV(imgui.Vec2{X: drawerbarX, Y: drawerbarY}, imgui.CondNone, imgui.Vec2{})
+	imgui.SetNextWindowPosV(imgui.Vec2{X: drawerbarX, Y: drawerbarY}, imgui.CondAlways, imgui.Vec2{X: 0, Y: 0})
 	imgui.SetNextWindowSize(imgui.Vec2{X: float32(width), Y: 0})
 
 	var open bool = true
-	var drawerbarFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
-	drawerbarFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing | imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
+	var drawerbarFlags imgui.WindowFlags = imgui.WindowFlagsNoResize |
+		imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse |
+		imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing |
+		imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
 

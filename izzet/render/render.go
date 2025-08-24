@@ -16,9 +16,9 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
+	"github.com/kkevinchou/izzet/izzet/render/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
-	"github.com/kkevinchou/izzet/izzet/render/panels/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/renderpass"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -105,10 +105,9 @@ type RenderSystem struct {
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
 
-	lastFrameSceneSize    [2]int
-	currentFrameSceneSize [2]int
-	resizeNextFrame       bool
-	lastResize            time.Time
+	sceneSize       [2]int
+	resizeNextFrame bool
+	lastResize      time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -116,6 +115,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 	rutils.SetRuntimeConfig(app.RuntimeConfig())
+	r.sceneSize = [2]int{1, 1}
 
 	io := imgui.CurrentIO()
 	io.SetConfigFlags(io.ConfigFlags() | imgui.ConfigFlagsDockingEnable)
@@ -241,7 +241,7 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
-	width, height := r.GameWindowSize()
+	width, height := r.SceneSize()
 	r.initorReinitTextures(width, height, false)
 	for _, pass := range r.renderPasses {
 		pass.Resize(width, height, r.renderPassContext)
@@ -257,7 +257,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.ReinitializeFrameBuffers()
 		r.resizeNextFrame = false
 	}
-	r.currentFrameSceneSize = r.lastFrameSceneSize
 
 	mr := globals.ClientRegistry()
 	initOpenGLRenderSettings()
@@ -359,7 +358,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 
 	start := time.Now()
 	var renderContext context.RenderContext
-	width, height := r.GameWindowSize()
+	width, height := r.SceneSize()
 	renderContext = context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
 
 	// configure camera viewer context
@@ -551,11 +550,8 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.WindowFlagsNoResize |
 		imgui.WindowFlagsNoMove |
 		imgui.WindowFlagsNoBringToFrontOnFocus |
-		imgui.WindowFlagsNoNavFocus
-
-	if r.app.RuntimeConfig().UIEnabled {
-		flags |= imgui.WindowFlagsMenuBar
-	}
+		imgui.WindowFlagsNoNavFocus |
+		imgui.WindowFlagsMenuBar
 
 	var colorStyles []func() = []func(){
 		func() { imgui.PushStyleColorVec4(imgui.ColTitleBg, InActiveColorBg) },
@@ -641,8 +637,8 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 			&centerID,
 		)
 
-		imgui.InternalDockBuilderDockWindow("Scene", centerID)
-		imgui.InternalDockBuilderDockWindow("Hierarchy", rightTopID)
+		imgui.InternalDockBuilderDockWindow("SceneView", centerID)
+		imgui.InternalDockBuilderDockWindow("Scene", rightTopID)
 		imgui.InternalDockBuilderDockWindow("WorldProps", rightTopID)
 		imgui.InternalDockBuilderDockWindow("Rendering", rightTopID)
 		imgui.InternalDockBuilderDockWindow("Stats", rightTopID)
@@ -667,7 +663,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		drawer.BuildDrawerbar(
 			r.app,
 			renderContext,
-			r.currentFrameSceneSize[0],
+			r.sceneSize[0],
 			r.materialTextureMap,
 		)
 
@@ -705,7 +701,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 	if firstLoad {
 		firstLoad = false
-		imgui.SetWindowFocusStr("Hierarchy")
+		imgui.SetWindowFocusStr("Scene")
 	}
 
 	imgui.PopStyleVarV(int32(len(styles)))
@@ -720,23 +716,33 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	r.gameWindowHovered = false
-	imgui.BeginV("Scene", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
+	imgui.BeginV("SceneView", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 	if imgui.IsWindowHovered() {
 		r.gameWindowHovered = true
 	}
 	texture := imgui.TextureID(r.postProcessingTexture)
 
 	sceneSize := imgui.ContentRegionAvail()
-	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
-	// if nextSceneSize != r.sceneSize && time.Since(r.lastResize).Milliseconds() > 25 {
-	if nextSceneSize != r.lastFrameSceneSize {
-		r.lastFrameSceneSize = nextSceneSize
+	newSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	if (sceneSize != imgui.Vec2{}) && (newSceneSize != r.sceneSize) {
+		r.sceneSize = newSceneSize
 		r.resizeNextFrame = true
 		r.lastResize = time.Now()
 	}
 
-	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
-	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+	var drawerbarSize float32
+	if r.app.RuntimeConfig().UIEnabled {
+		drawerbarSize = settings.DrawerbarSize
+	}
+
+	imgui.ImageV(
+		texture,
+		imgui.Vec2{X: float32(r.sceneSize[0]), Y: float32(r.sceneSize[1]) - drawerbarSize},
+		imgui.Vec2{X: 0, Y: 1},
+		imgui.Vec2{X: 1, Y: 0},
+		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},
+		imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0},
+	)
 	imgui.End()
 }
 
@@ -747,7 +753,7 @@ func (r *RenderSystem) drawInspector() {
 }
 
 func (r *RenderSystem) drawRightTop(renderContext context.RenderContext) {
-	imgui.Begin("Hierarchy")
+	imgui.Begin("Scene")
 	panels.SceneGraph(r.app)
 	imgui.End()
 	imgui.Begin("WorldProps")

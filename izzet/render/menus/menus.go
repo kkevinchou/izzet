@@ -13,6 +13,7 @@ var worldName string = ""
 var selectedWorldName string = ""
 
 func SetupMenuBar(app renderiface.App, renderContext RenderContext) {
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 10, Y: 10})
 	imgui.BeginMainMenuBar()
 
 	file(app)
@@ -23,6 +24,7 @@ func SetupMenuBar(app renderiface.App, renderContext RenderContext) {
 	other(app)
 
 	imgui.EndMainMenuBar()
+	imgui.PopStyleVar()
 }
 
 type RenderContext interface {

@@ -156,7 +156,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 		if event.Event == input.KeyboardEventUp {
 			if g.navMesh != nil {
 				mousePosition := frameInput.MouseInput.Position
-				width, height := g.renderSystem.GameWindowSize()
+				width, height := g.renderSystem.SceneSize()
 				ctx := g.renderSystem.CameraViewerContext()
 
 				xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
@@ -181,7 +181,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 	if event, ok := keyboardInput[input.KeyboardKeyM]; ok {
 		if event.Event == input.KeyboardEventUp {
 			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderSystem.GameWindowSize()
+			width, height := g.renderSystem.SceneSize()
 			ctx := g.renderSystem.CameraViewerContext()
 
 			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
@@ -211,7 +211,7 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
 		if event.Event == input.KeyboardEventUp {
 			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderSystem.GameWindowSize()
+			width, height := g.renderSystem.SceneSize()
 			ctx := g.renderSystem.CameraViewerContext()
 
 			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
@@ -582,7 +582,7 @@ func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e
 	mouseInput := frameInput.MouseInput
 	colorPickingID := g.renderSystem.HoveredEntityID()
 
-	gameWindowWidth, gameWindowHeight := g.renderSystem.GameWindowSize()
+	gameWindowWidth, gameWindowHeight := g.renderSystem.SceneSize()
 	nearPlanePos := g.mousePosToNearPlane(mouseInput.Position, gameWindowWidth, gameWindowHeight)
 
 	cameraViewDir := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})

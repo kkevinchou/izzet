@@ -93,5 +93,5 @@ var (
 	FontSize                  float32    = 20
 	EditorCameraStartPosition mgl64.Vec3 = mgl64.Vec3{0, 5, 5}
 	SoloClient                bool
-	WindowPadding             [2]float32 = [2]float32{1, 1}
+	WindowPadding             [2]float32 = [2]float32{0, 0}
 )

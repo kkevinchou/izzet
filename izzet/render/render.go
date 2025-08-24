@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/renderers"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -542,8 +541,12 @@ func init() {
 
 func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	viewport := imgui.MainViewport()
-	imgui.SetNextWindowPos(viewport.Pos())
-	imgui.SetNextWindowSize(viewport.Size())
+	var menuBarSize float32 = 0
+	if r.app.RuntimeConfig().UIEnabled {
+		menuBarSize = CalculateMenuBarHeight()
+	}
+	imgui.SetNextWindowPos(viewport.Pos().Add(imgui.Vec2{X: 0, Y: menuBarSize}))
+	imgui.SetNextWindowSize(viewport.Size().Add(imgui.Vec2{X: 0, Y: -menuBarSize}))
 	imgui.SetNextWindowViewport(viewport.ID())
 
 	flags := imgui.WindowFlagsNoDocking |
@@ -633,7 +636,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.InternalDockBuilderSplitNode(
 			mainAfterRight,
 			imgui.DirDown,
-			0.10,
+			0.05,
 			&bottomID,
 			&centerID,
 		)
@@ -649,8 +652,18 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		sceneNode := imgui.InternalDockBuilderGetNode(centerID)
 		sceneNode.InternalSetLocalFlags(imgui.DockNodeFlags(imgui.DockNodeFlagsNoTabBar))
 
+		drawerNode := imgui.InternalDockBuilderGetNode(bottomID)
+		drawerNode.InternalSetLocalFlags(imgui.DockNodeFlags(imgui.DockNodeFlagsNoTabBar) | imgui.DockNodeFlagsNoUndocking)
+
 		imgui.InternalDockBuilderFinish(dockspaceID)
 	}
+
+	// window := imgui.InternalFindWindowByName("Drawer")
+	// if window.CData != nil {
+	// 	drawerNode := window.DockNode()
+	// 	// imgui.InternalDockBuilderRemoveNode(drawerNode.ID())
+	// 	drawerNode.SetSize(imgui.Vec2{X: drawerNode.Size().X, Y: 100})
+	// }
 
 	menus.SetupMenuBar(r.app, renderContext)
 	windows.RenderWindows(r.app)
@@ -721,16 +734,22 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 
 	sceneSize := imgui.ContentRegionAvail()
 	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	// nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y) - 35}
 	// if nextSceneSize != r.sceneSize && time.Since(r.lastResize).Milliseconds() > 25 {
 	if nextSceneSize != r.lastFrameSceneSize {
 		r.lastFrameSceneSize = nextSceneSize
 		r.resizeNextFrame = true
 		r.lastResize = time.Now()
 	}
-	drawerBarSize := apputils.GetDrawerbarSize(r.app.RuntimeConfig().UIEnabled)
-	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height()) - drawerBarSize}
+	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 	imgui.End()
+	// drawer.BuildDrawerbar(
+	// 	r.app,
+	// 	renderContext,
+	// 	r.currentFrameSceneSize[0],
+	// 	r.materialTextureMap,
+	// )
 }
 
 func (r *RenderSystem) drawDrawer(renderContext context.RenderContext) {

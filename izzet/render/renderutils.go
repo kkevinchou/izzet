@@ -305,6 +305,7 @@ func (r *RenderSystem) GameWindowSize() (int, int) {
 
 	if r.lastFrameSceneSize[0] != 0 {
 		width = r.lastFrameSceneSize[0]
+		height = r.lastFrameSceneSize[1]
 	}
 
 	return width, height

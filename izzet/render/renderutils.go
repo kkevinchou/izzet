@@ -294,7 +294,7 @@ func CalculateMenuBarHeight() float32 {
 }
 
 func (r *RenderSystem) GameWindowSize() (int, int) {
-	return r.lastFrameSceneSize[0], r.lastFrameSceneSize[1]
+	return r.sceneSize[0], r.sceneSize[1]
 }
 
 // returns the orthographic projection matrix for the directional light as well as the "position" of the light

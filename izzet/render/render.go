@@ -105,10 +105,9 @@ type RenderSystem struct {
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
 
-	lastFrameSceneSize    [2]int
-	currentFrameSceneSize [2]int
-	resizeNextFrame       bool
-	lastResize            time.Time
+	sceneSize       [2]int
+	resizeNextFrame bool
+	lastResize      time.Time
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -116,7 +115,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 	rutils.SetRuntimeConfig(app.RuntimeConfig())
-	r.lastFrameSceneSize = [2]int{1, 1}
+	r.sceneSize = [2]int{1, 1}
 
 	io := imgui.CurrentIO()
 	io.SetConfigFlags(io.ConfigFlags() | imgui.ConfigFlagsDockingEnable)
@@ -258,7 +257,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.ReinitializeFrameBuffers()
 		r.resizeNextFrame = false
 	}
-	r.currentFrameSceneSize = r.lastFrameSceneSize
 
 	mr := globals.ClientRegistry()
 	initOpenGLRenderSettings()
@@ -665,7 +663,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		drawer.BuildDrawerbar(
 			r.app,
 			renderContext,
-			r.currentFrameSceneSize[0],
+			r.sceneSize[0],
 			r.materialTextureMap,
 		)
 
@@ -725,9 +723,9 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	texture := imgui.TextureID(r.postProcessingTexture)
 
 	sceneSize := imgui.ContentRegionAvail()
-	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
-	if (sceneSize != imgui.Vec2{}) && (nextSceneSize != r.lastFrameSceneSize) {
-		r.lastFrameSceneSize = nextSceneSize
+	newSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	if (sceneSize != imgui.Vec2{}) && (newSceneSize != r.sceneSize) {
+		r.sceneSize = newSceneSize
 		r.resizeNextFrame = true
 		r.lastResize = time.Now()
 	}
@@ -737,8 +735,14 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 		drawerbarSize = settings.DrawerbarSize
 	}
 
-	size := imgui.Vec2{X: sceneSize.X, Y: sceneSize.Y - drawerbarSize}
-	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
+	imgui.ImageV(
+		texture,
+		imgui.Vec2{X: float32(r.sceneSize[0]), Y: float32(r.sceneSize[1]) - drawerbarSize},
+		imgui.Vec2{X: 0, Y: 1},
+		imgui.Vec2{X: 1, Y: 0},
+		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},
+		imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0},
+	)
 	imgui.End()
 }
 

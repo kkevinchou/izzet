@@ -34,7 +34,7 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 		drawerbarSize = settings.DrawerbarSize
 	}
 
-	var drawerbarX float32 = settings.WindowPadding[0] * 2
+	var drawerbarX float32 = settings.WindowPadding[0]
 	var drawerbarY float32 = float32(windowHeight) - drawerbarSize + settings.WindowPadding[1]
 
 	imgui.SetNextWindowBgAlpha(1)

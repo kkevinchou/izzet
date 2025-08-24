@@ -294,27 +294,7 @@ func CalculateMenuBarHeight() float32 {
 }
 
 func (r *RenderSystem) GameWindowSize() (int, int) {
-	menuBarSize := int(CalculateMenuBarHeight())
-	var drawerbarSize int
-
-	if r.app.RuntimeConfig().UIEnabled {
-		drawerbarSize = int(settings.DrawerbarSize)
-	}
-
-	windowWidth, windowHeight := r.app.WindowSize()
-
-	width := windowWidth
-	height := windowHeight - menuBarSize - drawerbarSize
-
-	if r.app.RuntimeConfig().UIEnabled {
-		width = int(math.Ceil(float64(1-uiWidthRatio) * float64(windowWidth)))
-	}
-
-	if r.lastFrameSceneSize[0] != 0 {
-		width = r.lastFrameSceneSize[0]
-	}
-
-	return width, height
+	return r.lastFrameSceneSize[0], r.lastFrameSceneSize[1]
 }
 
 // returns the orthographic projection matrix for the directional light as well as the "position" of the light

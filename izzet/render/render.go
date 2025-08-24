@@ -116,6 +116,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 	rutils.SetRuntimeConfig(app.RuntimeConfig())
+	r.lastFrameSceneSize = [2]int{1, 1}
 
 	io := imgui.CurrentIO()
 	io.SetConfigFlags(io.ConfigFlags() | imgui.ConfigFlagsDockingEnable)
@@ -551,11 +552,8 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.WindowFlagsNoResize |
 		imgui.WindowFlagsNoMove |
 		imgui.WindowFlagsNoBringToFrontOnFocus |
-		imgui.WindowFlagsNoNavFocus
-
-	if r.app.RuntimeConfig().UIEnabled {
-		flags |= imgui.WindowFlagsMenuBar
-	}
+		imgui.WindowFlagsNoNavFocus |
+		imgui.WindowFlagsMenuBar
 
 	var colorStyles []func() = []func(){
 		func() { imgui.PushStyleColorVec4(imgui.ColTitleBg, InActiveColorBg) },
@@ -728,14 +726,18 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 
 	sceneSize := imgui.ContentRegionAvail()
 	nextSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
-	if nextSceneSize != r.lastFrameSceneSize {
+	if (sceneSize != imgui.Vec2{}) && (nextSceneSize != r.lastFrameSceneSize) {
 		r.lastFrameSceneSize = nextSceneSize
 		r.resizeNextFrame = true
 		r.lastResize = time.Now()
 	}
 
-	size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
-	// size := imgui.Vec2{X: float32(renderContext.Width()), Y: float32(renderContext.Height())}
+	var drawerbarSize float32
+	if r.app.RuntimeConfig().UIEnabled {
+		drawerbarSize = settings.DrawerbarSize
+	}
+
+	size := imgui.Vec2{X: sceneSize.X, Y: sceneSize.Y - drawerbarSize}
 	imgui.ImageV(texture, size, imgui.Vec2{X: 0, Y: 1}, imgui.Vec2{X: 1, Y: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0})
 	imgui.End()
 }

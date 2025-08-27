@@ -312,7 +312,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// store color picking entity
 	start = time.Now()
-	if r.app.AppMode() == types.AppModeEditor {
+	// for performance reasons, only perform color picking when an entity
+	// has been selected
+	if r.app.AppMode() == types.AppModeEditor && r.app.SelectedEntity() != nil {
 		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
 	mr.Inc("render_colorpicking_pick", float64(time.Since(start).Milliseconds()))
@@ -784,6 +786,11 @@ func (r *RenderSystem) GameWindowHovered() bool {
 }
 
 func (r *RenderSystem) HoveredEntityID() *int {
+	return r.hoveredEntityID
+}
+
+func (r *RenderSystem) TryHoverEntity() *int {
+	r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	return r.hoveredEntityID
 }
 

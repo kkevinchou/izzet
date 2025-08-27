@@ -561,7 +561,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 
 	if !gizmoHovered && g.renderSystem.GameWindowHovered() && mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown {
-		entityID := g.renderSystem.HoveredEntityID()
+		entityID := g.renderSystem.TryHoverEntity()
 		if entityID == nil || g.world.GetEntityByID(*entityID) == nil {
 			g.SelectEntity(nil)
 			gizmo.CurrentGizmoMode = gizmo.GizmoModeNone

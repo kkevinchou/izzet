@@ -241,10 +241,12 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 		drawerbarSize = int32(settings.DrawerbarSize)
 	}
 
+	var mouseX, mouseY int32 = int32(imgui.MousePos().X), int32(imgui.MousePos().Y)
+
 	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the drawerbar size if it's present
 	// SDL, on the other hand, has the mouse origin in the top left corner
 	var weirdOffset float32 = -1 // Weirdge
-	gl.ReadPixels(int32(pixelPosition[0]), int32(windowHeight)-int32(pixelPosition[1])-drawerbarSize+int32(weirdOffset), 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
+	gl.ReadPixels(mouseX, int32(windowHeight)-mouseY-drawerbarSize+int32(weirdOffset), 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
 
 	uintID := binary.LittleEndian.Uint32(pickingBuffer)
 	if uintID == settings.EmptyColorPickingID {

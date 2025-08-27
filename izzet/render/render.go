@@ -722,7 +722,14 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	}
 	texture := imgui.TextureID(r.postProcessingTexture)
 
+	var drawerbarSize float32
+	if r.app.RuntimeConfig().UIEnabled {
+		drawerbarSize = settings.DrawerbarSize
+	}
+
 	sceneSize := imgui.ContentRegionAvail()
+	sceneSize = sceneSize.Add(imgui.Vec2{X: 0, Y: -drawerbarSize})
+
 	newSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
 	if (sceneSize != imgui.Vec2{}) && (newSceneSize != r.sceneSize) {
 		r.sceneSize = newSceneSize
@@ -730,14 +737,9 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 		r.lastResize = time.Now()
 	}
 
-	var drawerbarSize float32
-	if r.app.RuntimeConfig().UIEnabled {
-		drawerbarSize = settings.DrawerbarSize
-	}
-
 	imgui.ImageV(
 		texture,
-		imgui.Vec2{X: float32(r.sceneSize[0]), Y: float32(r.sceneSize[1]) - drawerbarSize},
+		imgui.Vec2{X: float32(r.sceneSize[0]), Y: float32(r.sceneSize[1])},
 		imgui.Vec2{X: 0, Y: 1},
 		imgui.Vec2{X: 1, Y: 0},
 		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},

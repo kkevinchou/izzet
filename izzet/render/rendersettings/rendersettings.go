@@ -11,11 +11,16 @@ const (
 	// materialTextureHeight int32 = 512
 	// this internal type should support floats in order for us to store HDR values for bloom
 	// could change this to gl.RGB16F or gl.RGB32F for less color banding if we want
-	RenderFormatRGB                  uint32 = gl.RGB
-	RenderFormatRGBA                 uint32 = gl.RGBA
-	InternalTextureColorFormatRGB    int32  = gl.RGB32F
-	InternalTextureColorFormatRGBA   int32  = gl.RGBA32F
-	InternalTextureColorFormat16RGBA int32  = gl.RGBA16F
+	RenderFormatRGB               uint32 = gl.RGB
+	RenderFormatRGBA              uint32 = gl.RGBA
+	InternalTextureColorFormatRGB int32  = gl.RGB32F
+
+	// intermediate render targets should have a linear internal format
+	InternalTextureColorFormatRGBA int32 = gl.RGBA32F
+
+	// uploaded textures should have SRGB internal formats
+	InternalTextureColorFormatSRGBA  int32 = gl.SRGB8_ALPHA8
+	InternalTextureColorFormat16RGBA int32 = gl.RGBA16F
 
 	MultiSampleFormat = gl.RGB32F
 

@@ -100,6 +100,7 @@ void main()
     //     gamma correction in the fragment shader
     //         I've experimented with enabling/disabling. it seems like if i gamma correct
     //         I want to disable the OpenGL setting, and if I don't, I want to enable it instead.
+
     color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, 1.0);

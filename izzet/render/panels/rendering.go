@@ -40,7 +40,8 @@ func Rendering(app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Lighting", imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("Lighting Table", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
-		panelutils.SetupRow("Ambient Factor", func() { imgui.SliderFloat("", &runtimeConfig.AmbientFactor, 0, 1) }, true)
+		panelutils.SetupRow("Ambient Factor", func() { imgui.SliderFloat("", &runtimeConfig.AmbientFactor, 0, 100) }, true)
+		panelutils.SetupRow("Specular Factor", func() { imgui.SliderFloat("", &runtimeConfig.SpecularFactor, 0, 1) }, true)
 		panelutils.SetupRow("Point Light Bias", func() { imgui.SliderFloat("", &runtimeConfig.PointLightBias, 0, 0.3) }, true)
 		panelutils.SetupRow("Shadow Map Min Bias", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapMinBias, 0, 100) }, true)
 		panelutils.SetupRow("Shadow Map Angle Bias Rate", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapAngleBiasRate, 0, 100) }, true)

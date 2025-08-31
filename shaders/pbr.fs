@@ -53,6 +53,7 @@ uniform samplerCube depthCubeMap;
 uniform float far_plane;
 
 uniform float ambientFactor;
+uniform float specularFactor;
 
 // pbr materials
 uniform int hasPBRBaseColorTexture;
@@ -62,8 +63,6 @@ uniform float shadowMapMinBias;
 uniform float shadowMapAngleBiasRate;
 
 uniform uint entityID;
-
-uniform int hasColorOverride;
 
 const float PI = 3.14159265359;
 
@@ -193,8 +192,20 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
 }  
 
 vec3 calculateLightOut(vec3 normal, vec3 fragToCam, vec3 fragToLight, float lightDistance, vec3 lightColor, vec3 in_albedo, int do_attenuation) {
-    vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, in_albedo, metallic);
+    // vec3 F0 = vec3(0.04);
+    // F0 = mix(F0, in_albedo, metallic);
+
+    float ior = 1.5;
+    vec3 specularColorFactor = vec3(1.0);
+
+    // Base dielectric F0 from IOR:
+    float f0_dielectric_scalar = pow((ior - 1.0) / (ior + 1.0), 2.0); // ~0.04 when ior=1.5
+
+    // KHR_materials_specular scales & tints the dielectric F0:
+    vec3 F0_dielectric = f0_dielectric_scalar * specularFactor * specularColorFactor;
+
+    // Final F0 mixes between dielectric and conductor (metal) paths:
+    vec3 F0 = mix(F0_dielectric, in_albedo, metallic);
 
     vec3 H = normalize(fragToCam + fragToLight);
 
@@ -254,6 +265,7 @@ float exponentialSquaredFog(float dist, float density) {
 void main()
 {		
     vec3 normal = normalize(fs_in.Normal);
+    float alpha = 1.0;
 	           
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -300,18 +312,8 @@ void main()
             texture_value = texture(modelTexture, uv);
         }
 
-        // for some reason this harms render performance, possibly due to preventing early z testing?
-        if (texture_value.w < 0.1) {
-            discard;
-            return;
-        }
-        // in_albedo = in_albedo * texture_value.xyz;
-        // in_albedo = vec3(0, 0, 1);
         in_albedo = in_albedo * texture_value.xyz;
-    }
-
-    if (hasColorOverride == 1) {
-        in_albedo = fs_in.ColorOverride;
+        alpha = texture_value.a;
     }
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
@@ -366,6 +368,7 @@ void main()
     vec3 color = ambient + Lo;
 	
     FragColor = vec4(color, 1.0);
+    // FragColor = vec4(color, alpha);
 
     if (fogDensity > 0) {
         vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
@@ -375,6 +378,10 @@ void main()
         float fogFactor = exponentialSquaredFog(dist, float(fogDensity) / 50000);
         fogFactor = clamp(fogFactor, 0.0, 1.0);
 
+        // alpha blending doesn't work quite right with orgrimmar.
+        // using the actual alpha seems to mess up loading the level, so we hard code it to 1.
+
+        // FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), alpha);
         FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);
     }
 

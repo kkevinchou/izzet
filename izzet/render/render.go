@@ -806,6 +806,8 @@ func initOpenGLRenderSettings() {
 	gl.Enable(gl.MULTISAMPLE)
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	// disable FRAMEBUFFER_SRGB to inform opengl that we gamma correct manually in the final render pass
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 

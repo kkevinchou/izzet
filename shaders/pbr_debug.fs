@@ -164,16 +164,8 @@ void main()
 	
     color = color / (color + vec3(1.0));
 
-    // unclear if we actually need to do gamma correction. seems like GLTF expects us to internally
-    // store textures in SRGB format which we then need to gamma correct herea.
-    // PARAMETERS:
-    //     gl.Enable(gl.FRAMEBUFFER_SRGB)
-    //         OpenGL setting for how the fragment shader outputs colors
-    //     lightColor
-    //         The color of the light. i've tested with (1, 1, 1) to (20, 20, 20)
-    //     gamma correction in the fragment shader
-    //         I've experimented with enabling/disabling. it seems like if i gamma correct
-    //         I want to disable the OpenGL setting, and if I don't, I want to enable it instead.
+    // if we enable srgb gl.Enable(gl.FRAMEBUFFER_SRGB), opengl will gamma correct for us before we render to our frame buffer
+    // if we disable it, then we need to do the gamma correction ourselves
     color = pow(color, vec3(1.0/2.2));
    
     FragColor = vec4(color, 1.0);

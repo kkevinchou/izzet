@@ -21,6 +21,7 @@ type RuntimeConfig struct {
 	BloomIntensity                  float32
 	Exposure                        float32
 	AmbientFactor                   float32
+	SpecularFactor                  float32
 	Bloom                           bool
 	BloomThresholdPasses            int32
 	BloomThreshold                  float32
@@ -177,6 +178,7 @@ func DefaultRuntimeConfig() RuntimeConfig {
 		BloomIntensity:                  0.04,
 		Exposure:                        1.0,
 		AmbientFactor:                   0.1,
+		SpecularFactor:                  1.0,
 		Bloom:                           true,
 		BloomThresholdPasses:            1,
 		BloomThreshold:                  0.8,

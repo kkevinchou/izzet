@@ -2,7 +2,6 @@ package opengl
 
 import (
 	"image"
-	"image/draw"
 	"log"
 	"os"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 )
 
 type TextureInfo struct {
@@ -20,37 +20,54 @@ type TextureInfo struct {
 }
 
 func ReadTextureInfo(file string) TextureInfo {
-	imgFile, err := os.Open(file)
-	defer func() {
-		e := imgFile.Close()
-		if e != nil {
-			log.Fatalf("texture %q failed to close: %v\n", file, err)
-		}
-	}()
-
+	f, err := os.Open(file)
 	if err != nil {
 		log.Fatalf("texture %q not found on disk: %v\n", file, err)
 	}
+	defer func() {
+		if e := f.Close(); e != nil {
+			log.Printf("warning: texture %q failed to close: %v\n", file, e)
+		}
+	}()
 
-	img, _, err := image.Decode(imgFile)
+	// Decode (this returns an image.Image; we’ll keep it straight alpha)
+	src, _, err := image.Decode(f)
 	if err != nil {
-		panic(err)
+		log.Fatalf("decode failed for %q: %v", file, err)
 	}
 
-	// is vertically flipped if directly read into opengl texture
-	nrgba := imaging.FlipV(img)
+	// Flip vertically. imaging functions return *image.NRGBA (straight alpha).
+	flipped := imaging.FlipV(src) // *image.NRGBA
 
-	rgba := image.NewRGBA(img.Bounds())
-	if rgba.Stride != rgba.Rect.Size().X*4 {
-		panic("unsupported stride")
+	// Ensure tight stride (w*4). If not, repack row-by-row.
+	b := flipped.Bounds()
+	w, h := b.Dx(), b.Dy()
+	wantStride := w * 4
+
+	var pix []byte
+	if flipped.Stride == wantStride {
+		// Already tightly packed; we can use the backing slice directly.
+		// NOTE: The Pix slice may be larger than w*h*4; slice it to exactly that size.
+		pix = flipped.Pix[:wantStride*h]
+	} else {
+		// Repack into tightly-packed NRGBA buffer
+		pix = make([]byte, wantStride*h)
+		for y := 0; y < h; y++ {
+			srcOff := flipped.PixOffset(b.Min.X, b.Min.Y+y)
+			dstOff := y * wantStride
+			copy(pix[dstOff:dstOff+wantStride], flipped.Pix[srcOff:srcOff+flipped.Stride])
+		}
 	}
 
-	draw.Draw(rgba, rgba.Bounds(), nrgba, image.Point{0, 0}, draw.Src)
-
-	size := rgba.Rect.Size()
-	return TextureInfo{Width: int32(size.X), Height: int32(size.Y), Data: rgba.Pix}
+	return TextureInfo{
+		Width:  int32(w),
+		Height: int32(h),
+		Data:   pix, // straight alpha bytes (NRGBA)
+	}
 }
 
+// TODO : RGB values don't look right based on what renderdoc sees. much darker in renderdoc
+// than what it should be based on color picking from gimp. top right corner
 func CreateOpenGLTexture(textureInfo TextureInfo) uint32 {
 	var texture uint32
 	gl.GenTextures(1, &texture)
@@ -59,7 +76,7 @@ func CreateOpenGLTexture(textureInfo TextureInfo) uint32 {
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
-		gl.SRGB8_ALPHA8,
+		rendersettings.InternalTextureColorFormatSRGBA,
 		textureInfo.Width,
 		textureInfo.Height,
 		0,

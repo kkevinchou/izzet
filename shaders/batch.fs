@@ -59,8 +59,6 @@ uniform float shadowMapAngleBiasRate;
 
 uniform uint entityID;
 
-uniform int hasColorOverride;
-
 const float PI = 3.14159265359;
 
 const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
@@ -265,10 +263,6 @@ void main()
         // in_albedo = in_albedo * texture_value.xyz;
         // in_albedo = vec3(0, 0, 1);
         in_albedo = in_albedo * texture_value.xyz;
-    }
-
-    if (hasColorOverride == 1) {
-        in_albedo = fs_in.ColorOverride;
     }
 
     // failsafe for when we pass in too many lights, i hope you like hot pink

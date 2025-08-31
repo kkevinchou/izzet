@@ -307,6 +307,7 @@ func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgra
 	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
 	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformFloat("ambientFactor", app.RuntimeConfig().AmbientFactor)
+	shader.SetUniformFloat("specularFactor", app.RuntimeConfig().SpecularFactor)
 	shader.SetUniformInt("shadowMap", 31)
 	shader.SetUniformInt("depthCubeMap", 30)
 	shader.SetUniformInt("cameraDepthMap", 29)

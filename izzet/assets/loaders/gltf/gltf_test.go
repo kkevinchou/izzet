@@ -14,6 +14,7 @@ var testFile3 string = "../../../_assets/gltf/mountain.gltf"
 var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
 var testFile5 string = "../../../_assets/gltf/demo_scene_samurai.gltf"
 var sponza string = "../../../_assets/gltf/Sponza.gltf"
+var orgrimmar string = "../../../../_assets/gltf/orgrimmar.gltf"
 
 // bug hint: when a joint is defined but has no poses our
 // animation loading code freaks out. i removed the joint animatiosn from the legs
@@ -21,6 +22,14 @@ var sponza string = "../../../_assets/gltf/Sponza.gltf"
 // this means the original animation looked wonky probably because there was no pose info
 // for the joint which our animation loading code did not understand. likely need to see
 // how we handled poses where a joint does not have any poses
+
+func TestOrgrimmar(t *testing.T) {
+	d, err := gltf.ParseGLTF("", orgrimmar, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
+	_ = d
+	if err != nil {
+		t.Error(err)
+	}
+}
 
 func TestBasic(t *testing.T) {
 	d, err := gltf.ParseGLTF("", testFile, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})

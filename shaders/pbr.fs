@@ -378,8 +378,8 @@ void main()
         float fogFactor = exponentialSquaredFog(dist, float(fogDensity) / 50000);
         fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-        // alpha blending doesn't work quite right with orgrimmar.
-        // using the actual alpha seems to mess up loading the level, so we hard code it to 1.
+        // for some reason blender as well as the 3d previers in vscode
+        // are by default not reading the alpha values from the textures
 
         // FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), alpha);
         FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);

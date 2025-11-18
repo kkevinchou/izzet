@@ -4,9 +4,9 @@ COMPONENTS_PROTO_DIR = "izzet/components/proto"
 PLAYERCOMMAND_PROTO_DIR = "izzet/playercommand/proto"
 PROTOC_PATH = ~/protoc-21.7-win64/bin/protoc.exe
 
-.PHONY: run
-run:
-	go run main.go
+.PHONY: client
+client:
+	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT
 
 # profile fetched from http://localhost:6868/debug/pprof/profile
 .PHONY: pprof
@@ -38,10 +38,6 @@ test:
 .PHONY: build
 build:
 	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go build -o izzet.exe 
-
-.PHONY: client
-client:
-	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT
 
 .PHONY: server
 server:

@@ -620,10 +620,6 @@ func parseMaterialSpecs(document *gltf.Document, textures []string, logger *slog
 func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]string, config *ParseConfig) ([]*modelspec.PrimitiveSpecification, error) {
 	var primitiveSpecs []*modelspec.PrimitiveSpecification
 
-	if len(mesh.Primitives) > 1 {
-		iztlog.Logger.Info(mesh.Name)
-	}
-
 	for _, primitive := range mesh.Primitives {
 		if primitive.Mode != gltf.PrimitiveTriangles {
 			panic(fmt.Sprintf("received primitive mode %v but can only support triangles", primitive.Mode))

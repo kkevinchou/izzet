@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"runtime"
 	"strings"
@@ -11,10 +12,9 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/client"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/kitolib/log"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -64,7 +64,12 @@ func main() {
 		}()
 	}
 
-	assetslog.SetLogger(log.EmptyLogger)
+	f, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	iztlog.SetLogger(slog.New(slog.NewJSONHandler(f, nil)))
 
 	mode := "CLIENT"
 

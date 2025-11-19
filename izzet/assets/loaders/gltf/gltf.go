@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/qmuntal/gltf"
 	"github.com/qmuntal/gltf/modeler"
 )
@@ -102,7 +102,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 
 	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures)
 	if err != nil {
-		assetslog.Logger.Println(err)
+		iztlog.Logger.Error(err.Error())
 		return nil, err
 	}
 	document.Materials = materialSpecs
@@ -110,7 +110,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 	for i, mesh := range gltfDocument.Meshes {
 		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, materialIndexMapping, config)
 		if err != nil {
-			assetslog.Logger.Println(err)
+			iztlog.Logger.Error(err.Error())
 			return nil, err
 		}
 
@@ -580,7 +580,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 	var primitiveSpecs []*modelspec.PrimitiveSpecification
 
 	if len(mesh.Primitives) > 1 {
-		assetslog.Logger.Println(mesh.Name)
+		iztlog.Logger.Info(mesh.Name)
 	}
 
 	for _, primitive := range mesh.Primitives {
@@ -614,7 +614,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 				}
 
 				if len(positions) != len(primitiveSpec.UniqueVertices) {
-					assetslog.Logger.Println("dafuq")
+					iztlog.Logger.Info("dafuq")
 				}
 
 				for i, position := range positions {
@@ -669,7 +669,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 					primitiveSpec.UniqueVertices[i].JointWeights = jointWeights
 				}
 			} else {
-				assetslog.Logger.Printf("[%s] unhandled attribute %s\n", mesh.Name, attribute)
+				iztlog.Logger.Info("[%s] unhandled attribute %s\n", mesh.Name, attribute)
 			}
 		}
 

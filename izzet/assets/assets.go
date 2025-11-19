@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/assets/assetslog"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
@@ -58,7 +58,7 @@ func NewAssetManager(processVisualAssets bool) *AssetManager {
 		start := time.Now()
 		loadedTextures = loaders.LoadTextures(settings.BuiltinAssetsDir)
 		loadedFonts = loaders.LoadFonts(settings.BuiltinAssetsDir)
-		assetslog.Logger.Println("loaded fonts and textures in", time.Since(start).Seconds(), "seconds")
+		iztlog.Logger.Info(fmt.Sprintf("loaded fonts and textures in %f seconds", time.Since(start).Seconds()))
 	}
 
 	assetManager := AssetManager{

@@ -36,16 +36,42 @@ type ParseConfig struct {
 	TextureCoordStyle TextureCoordStyle
 }
 
+func GetPeripheralFiles(documentPath string) ([]string, error) {
+	var peripheralFiles []string
+
+	gltfDocument, err := gltf.Open(documentPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// set Peripheral files as they're used and copied over for importing
+	for _, buffer := range gltfDocument.Buffers {
+		if buffer.URI != "" {
+			peripheralFiles = append(peripheralFiles, buffer.URI)
+		}
+	}
+
+	for _, image := range gltfDocument.Images {
+		if image.URI != "" {
+			peripheralFiles = append(peripheralFiles, image.URI)
+		}
+	}
+
+	return peripheralFiles, nil
+}
+
 func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspec.Document, error) {
 	logger := iztlog.Logger.With("document path", documentPath)
 	var document modelspec.Document
 
 	document.Name = name
 
-	// if strings.Contains(name, "dude") {
-	// 	documentPath = "C:\\Users\\Kevin\\goprojects\\izzet\\.project\\scene\\content\\dude.gltf"
-	// }
 	gltfDocument, err := gltf.Open(documentPath)
+	if err != nil {
+		return nil, err
+	}
+
+	document.PeripheralFiles, err = GetPeripheralFiles(documentPath)
 	if err != nil {
 		return nil, err
 	}

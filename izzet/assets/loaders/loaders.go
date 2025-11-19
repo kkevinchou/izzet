@@ -126,6 +126,10 @@ func LoadDocuments(directory string) map[string]*modelspec.Document {
 	return scenes
 }
 
+func GetPeripheralFiles(filepath string) ([]string, error) {
+	return gltf.GetPeripheralFiles(filepath)
+}
+
 func LoadDocument(name string, filepath string) *modelspec.Document {
 	document, err := gltf.ParseGLTF(name, filepath, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	if err != nil {

@@ -402,14 +402,13 @@ func (g *Client) ImportAsset(config assets.AssetConfig) {
 }
 
 func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {
-	// copy asset to project
-	sourceRootDir := filepath.Dir(config.FilePath)
-
-	// kinda wasteful since we're going to technically load the document twice
-	document := loaders.LoadDocument("CopyDocumentToProjectFolder_Dummy", config.FilePath)
+	peripheralFiles, err := loaders.GetPeripheralFiles(config.FilePath)
+	if err != nil {
+		panic(err)
+	}
 
 	sourceFilePaths := []string{config.FilePath}
-	for _, peripheralFilePath := range document.PeripheralFiles {
+	for _, peripheralFilePath := range peripheralFiles {
 		sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(config.FilePath), peripheralFilePath))
 	}
 
@@ -417,7 +416,8 @@ func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.A
 	newConfig := config
 	newConfig.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
 
-	err := copySourceFiles(sourceFilePaths, sourceRootDir, contentDir)
+	sourceRootDir := filepath.Dir(config.FilePath)
+	err = copySourceFiles(sourceFilePaths, sourceRootDir, contentDir)
 	if err != nil {
 		panic(err)
 	}

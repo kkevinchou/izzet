@@ -584,7 +584,6 @@ func parseMaterialSpecs(document *gltf.Document, textures []string, logger *slog
 			logger.Warn("unsupported alpha mode alpha mask")
 		case gltf.AlphaBlend:
 			alphaMode = modelspec.AlphaModeBlend
-			logger.Warn("unsupported alpha mode alpha blend")
 		}
 
 		pbrMaterial := modelspec.PBRMaterial{

@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/animation"
+	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
@@ -206,6 +207,7 @@ func drawBatches(
 	shader *shaders.ShaderProgram,
 ) {
 	shader.SetUniformInt("isAnimated", 0)
+	shader.SetUniformInt("alphaMode", int32(modelspec.AlphaModeOpaque))
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
 	for _, batch := range renderContext.BatchRenders {
@@ -370,6 +372,7 @@ func drawModel(
 		}
 		primitiveMaterial := app.AssetManager().GetMaterial(materialHandle).Material
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
+		alphaMode := primitiveMaterial.PBRMaterial.AlphaMode
 
 		if material.BaseColorTextureName != "" {
 			shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
@@ -390,6 +393,7 @@ func drawModel(
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
 		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(entity.Position()))
 		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(entity.Scale()))
+		shader.SetUniformInt("alphaMode", int32(alphaMode))
 
 		modelMatrix := entities.WorldTransform(entity)
 		var modelMat mgl32.Mat4

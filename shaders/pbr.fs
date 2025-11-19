@@ -11,6 +11,7 @@ uniform vec3  translation;
 uniform vec3  scale;
 
 uniform int repeatTexture;
+uniform int alphaMode;
 
 // lights
 const int MAX_LIGHTS = 10;
@@ -265,7 +266,7 @@ float exponentialSquaredFog(float dist, float density) {
 void main()
 {		
     vec3 normal = normalize(fs_in.Normal);
-    float alpha = 1.0;
+    float textureAlpha = 1.0;
 	           
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -313,7 +314,7 @@ void main()
         }
 
         in_albedo = in_albedo * texture_value.xyz;
-        alpha = texture_value.a;
+        textureAlpha = texture_value.a;
     }
 
     // failsafe for when we pass in too many lights, i hope you like hot pink
@@ -367,8 +368,10 @@ void main()
 
     vec3 color = ambient + Lo;
 	
-    FragColor = vec4(color, 1.0);
-    // FragColor = vec4(color, alpha);
+
+    // only use the alpha if the alpha mode is set to blend (2) otherwise it is opaque (i.e. dont do alpha blending and set alpha to 1)
+    float alpha = alphaMode == 2 ? textureAlpha : 1.0;
+    FragColor = vec4(color, alpha);
 
     if (fogDensity > 0) {
         vec2 textureCoords = gl_FragCoord.xy / vec2(width, height);
@@ -377,12 +380,7 @@ void main()
 
         float fogFactor = exponentialSquaredFog(dist, float(fogDensity) / 50000);
         fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-        // for some reason blender as well as the 3d previers in vscode
-        // are by default not reading the alpha values from the textures
-
-        // FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), alpha);
-        FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), 1.0);
+        FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), alpha);
     }
 
     PickingColor = entityID;

@@ -405,8 +405,8 @@ func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.A
 	// copy asset to project
 	sourceRootDir := filepath.Dir(config.FilePath)
 
-	// kinda wasteful since we're going to technicall load the document twice
-	document := loaders.LoadDocument("asdf", config.FilePath)
+	// kinda wasteful since we're going to technically load the document twice
+	document := loaders.LoadDocument("CopyDocumentToProjectFolder_Dummy", config.FilePath)
 
 	sourceFilePaths := []string{config.FilePath}
 	for _, peripheralFilePath := range document.PeripheralFiles {

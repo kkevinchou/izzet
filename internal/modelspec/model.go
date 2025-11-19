@@ -13,8 +13,17 @@ type PBRMetallicRoughness struct {
 	BaseColorTextureCoordsIndex int
 }
 
+type AlphaMode int
+
+const (
+	AlphaModeOpaque AlphaMode = 0
+	AlphaModeMask   AlphaMode = 1
+	AlphaModeBlend  AlphaMode = 2
+)
+
 type PBRMaterial struct {
 	PBRMetallicRoughness PBRMetallicRoughness
+	AlphaMode            AlphaMode
 }
 
 type Vertex struct {

@@ -2,6 +2,7 @@ package gltf
 
 import (
 	"fmt"
+	"log/slog"
 	"path"
 	"sort"
 	"strings"
@@ -36,6 +37,7 @@ type ParseConfig struct {
 }
 
 func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspec.Document, error) {
+	logger := iztlog.Logger.With("document path", documentPath)
 	var document modelspec.Document
 
 	document.Name = name
@@ -100,7 +102,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		document.Textures = append(document.Textures, name)
 	}
 
-	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures)
+	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures, logger)
 	if err != nil {
 		iztlog.Logger.Error(err.Error())
 		return nil, err
@@ -542,19 +544,32 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 // parseMaterialSpecs creates MaterialSpecifications from the gltf materials list
 // we also return an id mapping from the gltf id to the internal material id
 // (this might be overkill since their ids are probably also zero index and incrementing)
-func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.MaterialSpecification, map[int]string, error) {
+func parseMaterialSpecs(document *gltf.Document, textures []string, logger *slog.Logger) ([]modelspec.MaterialSpecification, map[int]string, error) {
 	var materials []modelspec.MaterialSpecification
 	idMapping := map[int]string{}
 
 	for gltfIdx, gltfMaterial := range document.Materials {
 		pbr := *gltfMaterial.PBRMetallicRoughness
+
+		alphaMode := modelspec.AlphaModeOpaque
+		switch gltfMaterial.AlphaMode {
+		case gltf.AlphaMask:
+			alphaMode = modelspec.AlphaModeMask
+			logger.Warn("unsupported alpha mode alpha mask")
+		case gltf.AlphaBlend:
+			alphaMode = modelspec.AlphaModeBlend
+			logger.Warn("unsupported alpha mode alpha blend")
+		}
+
 		pbrMaterial := modelspec.PBRMaterial{
 			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 				BaseColorFactor: mgl32.Vec4{pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]},
 				MetalicFactor:   *pbr.MetallicFactor,
 				RoughnessFactor: *pbr.RoughnessFactor,
 			},
+			AlphaMode: alphaMode,
 		}
+
 		if pbr.BaseColorTexture != nil {
 			var intIndex int = int(pbr.BaseColorTexture.Index)
 			pbrMaterial.PBRMetallicRoughness.BaseColorTextureIndex = intIndex

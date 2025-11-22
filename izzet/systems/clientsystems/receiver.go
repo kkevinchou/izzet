@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -118,15 +117,12 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 					continue
 				}
 
-				var entity entities.Entity
-				err = json.Unmarshal(createEntityMessage.EntityBytes, &entity)
+				e, err := serialization.DeserializeEntity(createEntityMessage.EntityBytes, s.app.AssetManager())
 				if err != nil {
 					fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 					continue
 				}
-
-				serialization.InitDeserializedEntity(&entity, s.app.AssetManager())
-				world.AddEntity(&entity)
+				world.AddEntity(e)
 			} else if message.MessageType == network.MsgTypePing {
 				pingMessage, err := network.ExtractMessage[network.PingMessage](message)
 				if err != nil {

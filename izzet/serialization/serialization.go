@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -65,7 +66,7 @@ func Write(world GameWorld, writer io.Writer) error {
 	return nil
 }
 
-func ReadFromFile(filepath string) (*world.GameWorld, error) {
+func ReadFromFile(filepath string, am *assets.AssetManager) (*world.GameWorld, error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -73,7 +74,7 @@ func ReadFromFile(filepath string) (*world.GameWorld, error) {
 
 	defer f.Close()
 
-	gameWorld, err := Read(f)
+	gameWorld, err := Read(f, am)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func ReadFromFile(filepath string) (*world.GameWorld, error) {
 	return gameWorld, err
 }
 
-func Read(reader io.Reader) (*world.GameWorld, error) {
+func Read(reader io.Reader, am *assets.AssetManager) (*world.GameWorld, error) {
 	var worldIR WorldIR
 	decoder := json.NewDecoder(reader)
 	err := decoder.Decode(&worldIR)
@@ -101,6 +102,10 @@ func Read(reader io.Reader) (*world.GameWorld, error) {
 		child := entityMap[relation.Child]
 		parent.Children[relation.Child] = child
 		child.Parent = parent
+	}
+
+	for _, e := range entityMap {
+		initDeserializedEntity(e, am)
 	}
 
 	return world.NewWithEntities(entityMap), nil

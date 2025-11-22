@@ -1,7 +1,6 @@
 package serversystems
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entities"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -114,7 +114,7 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 		OwnerID: playerID,
 	}
 
-	entityBytes, err := json.Marshal(entity)
+	entityBytes, err := serialization.SerializeEntity(entity)
 	if err != nil {
 		return network.CreateEntityMessage{}, err
 	}
@@ -135,11 +135,11 @@ func createCamera(playerID int, targetEntityID int) *entities.Entity {
 func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity, worldBytes []byte, projectName string) (network.AckPlayerJoinMessage, error) {
 	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID, ProjectName: projectName}
 
-	entityBytes, err := json.Marshal(entity)
+	entityBytes, err := serialization.SerializeEntity(entity)
 	if err != nil {
 		return network.AckPlayerJoinMessage{}, err
 	}
-	cameraBytes, err := json.Marshal(camera)
+	cameraBytes, err := serialization.SerializeEntity(camera)
 	if err != nil {
 		return network.AckPlayerJoinMessage{}, err
 	}

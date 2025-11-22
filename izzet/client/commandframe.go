@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -124,7 +123,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			if cEvent.Event == input.KeyboardEventUp {
 				if entity := g.SelectedEntity(); entity != nil {
 					var err error
-					copiedEntity, err = json.Marshal(entity)
+					copiedEntity, err = serialization.SerializeEntity(entity)
 					if err != nil {
 						panic(err)
 					}
@@ -137,15 +136,12 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
 		if vEvent, ok := keyboardInput[input.KeyboardKeyV]; ok {
 			if vEvent.Event == input.KeyboardEventUp {
-				var newEntity entities.Entity
-				err := json.Unmarshal(copiedEntity, &newEntity)
+				e, err := serialization.DeserializeEntity(copiedEntity, g.AssetManager())
 				if err == nil {
 					id := entities.GetNextIDAndAdvance()
-					newEntity.ID = id
-					serialization.InitDeserializedEntity(&newEntity, g.AssetManager())
-
-					g.world.AddEntity(&newEntity)
-					g.SelectEntity(&newEntity)
+					e.ID = id
+					g.world.AddEntity(e)
+					g.SelectEntity(e)
 				}
 			}
 		}

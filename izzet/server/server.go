@@ -56,11 +56,10 @@ type Server struct {
 
 func NewWithFile(filepath string, projectName string) *Server {
 	s := NewWithWorld(nil, projectName)
-	world, err := serialization.ReadFromFile(filepath)
+	world, err := serialization.ReadFromFile(filepath, s.assetManager)
 	if err != nil {
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), s.assetManager)
 	s.world = world
 	return s
 }

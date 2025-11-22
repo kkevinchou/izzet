@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -64,12 +63,11 @@ func (g *Client) loadWorld(filepath string) bool {
 		return false
 	}
 
-	world, err := serialization.ReadFromFile(filepath)
+	world, err := serialization.ReadFromFile(filepath, g.assetManager)
 	if err != nil {
 		fmt.Println("failed to load world", filepath, err)
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()
@@ -116,11 +114,10 @@ func (g *Client) StartLiveWorld() {
 		panic(err)
 	}
 
-	liveWorld, err := serialization.Read(&buffer)
+	liveWorld, err := serialization.Read(&buffer, g.assetManager)
 	if err != nil {
 		panic(err)
 	}
-	serialization.InitDeserializedEntities(liveWorld.Entities(), g.assetManager)
 
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
@@ -188,32 +185,28 @@ func (g *Client) Connect() error {
 	g.networkMessages = make(chan network.MessageTransport, 100)
 
 	// initialize the player's camera and playerEntity
-	var playerEntity entities.Entity
-	err = json.Unmarshal(message.EntityBytes, &playerEntity)
+
+	playerEntity, err := serialization.DeserializeEntity(message.EntityBytes, g.AssetManager())
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&playerEntity, g.AssetManager())
-	g.world.AddEntity(&playerEntity)
+	g.world.AddEntity(playerEntity)
 
-	var camera entities.Entity
-	err = json.Unmarshal(message.CameraBytes, &camera)
+	camera, err := serialization.DeserializeEntity(message.CameraBytes, g.AssetManager())
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
 	}
-	serialization.InitDeserializedEntity(&camera, g.AssetManager())
-	g.world.AddEntity(&camera)
+	g.world.AddEntity(camera)
 
-	g.SetPlayerCamera(&camera)
-	g.SetPlayerEntity(&playerEntity)
+	g.SetPlayerCamera(camera)
+	g.SetPlayerEntity(playerEntity)
 
 	fmt.Println("CLIENT player id", playerEntity.GetID(), "camera id", camera.GetID())
 
-	world, err := serialization.Read(bytes.NewReader(message.Snapshot))
+	world, err := serialization.Read(bytes.NewReader(message.Snapshot), g.assetManager)
 	if err != nil {
 		return err
 	}
-	serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 	for _, entity := range world.Entities() {
 		if entity.GetID() == camera.GetID() || entity.GetID() == playerEntity.GetID() {
@@ -312,11 +305,10 @@ func (g *Client) StartAsyncServer() {
 			panic(err)
 		}
 
-		world, err := serialization.Read(&worldBytes)
+		world, err := serialization.Read(&worldBytes, g.assetManager)
 		if err != nil {
 			panic(err)
 		}
-		serialization.InitDeserializedEntities(world.Entities(), g.assetManager)
 
 		serverApp := server.NewWithWorld(world, g.project.Name)
 		serverApp.CopyLoadedAnimations(

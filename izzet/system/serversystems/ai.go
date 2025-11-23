@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 const (
@@ -28,7 +28,7 @@ func (s *AISystem) Name() string {
 	return "AISystem"
 }
 
-func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range world.Entities() {
 		aiComponent := e.AIComponent
 		if aiComponent == nil {
@@ -165,7 +165,7 @@ func (s *AISystem) Update(delta time.Duration, world systems.GameWorld) {
 	}
 }
 
-func getTarget(world systems.GameWorld) *entity.Entity {
+func getTarget(world system.GameWorld) *entity.Entity {
 	var target *entity.Entity
 	for _, camera := range world.Entities() {
 		if camera.PlayerInput == nil {

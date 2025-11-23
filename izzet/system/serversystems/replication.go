@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type ReplicationSystem struct {
@@ -30,7 +30,7 @@ func (s *ReplicationSystem) Name() string {
 	return "ReplicationSystem"
 }
 
-func (s *ReplicationSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) {
 	s.accumulator += int(delta.Milliseconds())
 	if s.accumulator < settings.MSPerGameStateUpdate {
 		return

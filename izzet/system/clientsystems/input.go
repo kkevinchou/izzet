@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/input"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type InputSystem struct {
@@ -27,7 +27,7 @@ func (s *InputSystem) Name() string {
 
 var predictionDebugLoggingStart time.Time
 
-func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	frameInput := s.app.GetFrameInputPtr()
 
 	// if settings.SoloClient {
@@ -67,7 +67,7 @@ func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
 	}
 }
 
-func (s *InputSystem) computePlayerCameraRotation(world systems.GameWorld, frameInput input.Input) mgl64.Quat {
+func (s *InputSystem) computePlayerCameraRotation(world system.GameWorld, frameInput input.Input) mgl64.Quat {
 	camera := s.app.GetPlayerCamera()
 	newRotation := computeCameraRotation(frameInput, camera)
 	camera.SetLocalRotation(newRotation)

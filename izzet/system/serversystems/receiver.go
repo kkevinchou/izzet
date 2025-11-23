@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
@@ -28,7 +28,7 @@ func (s *ReceiverSystem) Name() string {
 	return "ReceiverSystem"
 }
 
-func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, player := range s.app.GetPlayers() {
 		noMessage := false
 		for !noMessage {

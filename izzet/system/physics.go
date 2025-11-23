@@ -1,10 +1,10 @@
-package systems
+package system
 
 import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
+	"github.com/kkevinchou/izzet/izzet/system/shared"
 )
 
 type PhysicsSystem struct {

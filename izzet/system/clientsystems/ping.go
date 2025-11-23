@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type PingSystem struct {
@@ -20,7 +20,7 @@ func (s *PingSystem) Name() string {
 	return "PingSystem"
 }
 
-func (s *PingSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *PingSystem) Update(delta time.Duration, world system.GameWorld) {
 	s.accumulator += delta.Milliseconds()
 	if s.accumulator <= 2000 {
 		return

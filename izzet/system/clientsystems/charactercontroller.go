@@ -3,8 +3,8 @@ package clientsystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
+	"github.com/kkevinchou/izzet/izzet/system"
+	"github.com/kkevinchou/izzet/izzet/system/shared"
 )
 
 type CharacterControllerSystem struct {
@@ -19,7 +19,7 @@ func (s *CharacterControllerSystem) Name() string {
 	return "CharacterControllerSystem"
 }
 
-func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *CharacterControllerSystem) Update(delta time.Duration, world system.GameWorld) {
 	camera := s.app.GetPlayerCamera()
 
 	if camera == nil || camera.CameraComponent.Target == nil {

@@ -119,12 +119,11 @@ func New(shaderDirectory string, config settings.Config) *Client {
 		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
 	}
-	g.ResetApp()
-	g.initSettings()
+
+	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
 	g.NewProject(settings.NewProjectName)
-
 	g.setupSystems()
 
 	return g
@@ -227,13 +226,10 @@ func initSeed() {
 }
 
 func (g *Client) setupSystems() {
-	// input system depends on the camera system to update the camera rotation
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewKinematicSystem(g))
-	// g.playModeSystems = append(g.playModeSystems, system.NewPhysicsSystem(g))
-	// g.playModeSystems = append(g.playModeSystems, system.NewCollisionSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewCameraTargetSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewAnimationSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewCleanupSystem(g))
@@ -275,11 +271,6 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()
-}
-
-func (g *Client) initSettings() {
-	config := runtimeconfig.DefaultRuntimeConfig()
-	g.runtimeConfig = &config
 }
 
 type Window interface {

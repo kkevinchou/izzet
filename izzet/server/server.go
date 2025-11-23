@@ -65,6 +65,8 @@ func NewWithFile(filepath string, projectName string) *Server {
 }
 
 func NewWithWorld(world *world.GameWorld, projectName string) *Server {
+	start := time.Now()
+
 	initSeed()
 	g := &Server{
 		players:      map[int]*network.Player{},
@@ -73,12 +75,9 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 		eventManager: events.NewEventManager(),
 		projectName:  projectName,
 	}
-	g.initSettings()
 
+	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.assetManager = assets.NewAssetManager(false)
-
-	start := time.Now()
-
 	g.world = world
 
 	fmt.Println(time.Since(start), "spatial partition done")
@@ -93,9 +92,7 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	g.systems = append(g.systems, serversystems.NewInputSystem(g))
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, serversystems.NewAISystemSystem(g))
-	// g.systems = append(g.systems, system.NewPhysicsSystem(g))
 	g.systems = append(g.systems, system.NewKinematicSystem(g))
-	// g.systems = append(g.systems, system.NewCollisionSystem(g))
 	g.systems = append(g.systems, system.NewCameraTargetSystem(g))
 	g.systems = append(g.systems, serversystems.NewRulesSystem(g))
 	g.systems = append(g.systems, system.NewAnimationSystem(g))
@@ -203,9 +200,4 @@ func (s *Server) listen() (net.Listener, error) {
 	}()
 
 	return listener, nil
-}
-
-func (g *Server) initSettings() {
-	config := runtimeconfig.DefaultRuntimeConfig()
-	g.runtimeConfig = &config
 }

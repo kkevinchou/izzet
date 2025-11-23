@@ -21,7 +21,6 @@ type App interface {
 	GetEditorCameraRotation() mgl64.Quat
 	CommandFrame() int
 
-	StartLiveWorld()
 	StopLiveWorld()
 	AppMode() types.AppMode
 

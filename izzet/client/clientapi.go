@@ -101,7 +101,6 @@ func (g *Client) Undo() {
 }
 
 func (g *Client) StartLiveWorld() {
-	g.IsClient()
 	if g.AppMode() != types.AppModeEditor {
 		return
 	}

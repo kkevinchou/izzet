@@ -41,7 +41,7 @@ build:
 
 .PHONY: server
 server:
-	go run main.go SERVER
+	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go SERVER
 
 .PHONY: headless
 headless:

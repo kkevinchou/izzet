@@ -22,8 +22,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/system"
+	"github.com/kkevinchou/izzet/izzet/system/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/veandco/go-sdl2/sdl"
@@ -50,8 +50,8 @@ type Client struct {
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
 
-	playModeSystems   []systems.System
-	editorModeSystems []systems.System
+	playModeSystems   []system.System
+	editorModeSystems []system.System
 	appMode           types.AppMode
 	collisionObserver *collisionobserver.CollisionObserver
 	stateBuffer       *clientsystems.StateBuffer
@@ -231,16 +231,16 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
-	g.playModeSystems = append(g.playModeSystems, systems.NewKinematicSystem(g))
-	// g.playModeSystems = append(g.playModeSystems, systems.NewPhysicsSystem(g))
-	// g.playModeSystems = append(g.playModeSystems, systems.NewCollisionSystem(g))
-	g.playModeSystems = append(g.playModeSystems, systems.NewCameraTargetSystem(g))
-	g.playModeSystems = append(g.playModeSystems, systems.NewAnimationSystem(g))
-	g.playModeSystems = append(g.playModeSystems, systems.NewCleanupSystem(g))
+	g.playModeSystems = append(g.playModeSystems, system.NewKinematicSystem(g))
+	// g.playModeSystems = append(g.playModeSystems, system.NewPhysicsSystem(g))
+	// g.playModeSystems = append(g.playModeSystems, system.NewCollisionSystem(g))
+	g.playModeSystems = append(g.playModeSystems, system.NewCameraTargetSystem(g))
+	g.playModeSystems = append(g.playModeSystems, system.NewAnimationSystem(g))
+	g.playModeSystems = append(g.playModeSystems, system.NewCleanupSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
 
-	g.editorModeSystems = append(g.editorModeSystems, systems.NewAnimationSystem(g))
+	g.editorModeSystems = append(g.editorModeSystems, system.NewAnimationSystem(g))
 }
 
 func (g *Client) setupEntities() {

@@ -18,8 +18,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/serversystems"
+	"github.com/kkevinchou/izzet/izzet/system"
+	"github.com/kkevinchou/izzet/izzet/system/serversystems"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -33,7 +33,7 @@ type Server struct {
 
 	world *world.GameWorld
 
-	systems           []systems.System
+	systems           []system.System
 	appMode           types.AppMode
 	collisionObserver *collisionobserver.CollisionObserver
 
@@ -93,13 +93,13 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	g.systems = append(g.systems, serversystems.NewInputSystem(g))
 	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
 	g.systems = append(g.systems, serversystems.NewAISystemSystem(g))
-	// g.systems = append(g.systems, systems.NewPhysicsSystem(g))
-	g.systems = append(g.systems, systems.NewKinematicSystem(g))
-	// g.systems = append(g.systems, systems.NewCollisionSystem(g))
-	g.systems = append(g.systems, systems.NewCameraTargetSystem(g))
+	// g.systems = append(g.systems, system.NewPhysicsSystem(g))
+	g.systems = append(g.systems, system.NewKinematicSystem(g))
+	// g.systems = append(g.systems, system.NewCollisionSystem(g))
+	g.systems = append(g.systems, system.NewCameraTargetSystem(g))
 	g.systems = append(g.systems, serversystems.NewRulesSystem(g))
-	g.systems = append(g.systems, systems.NewAnimationSystem(g))
-	g.systems = append(g.systems, systems.NewCleanupSystem(g))
+	g.systems = append(g.systems, system.NewAnimationSystem(g))
+	g.systems = append(g.systems, system.NewCleanupSystem(g))
 	g.systems = append(g.systems, serversystems.NewEventsSystem(g))
 	g.systems = append(g.systems, serversystems.NewReplicationSystem(g))
 

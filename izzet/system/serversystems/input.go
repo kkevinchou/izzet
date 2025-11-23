@@ -3,7 +3,7 @@ package serversystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type InputSystem struct {
@@ -20,7 +20,7 @@ func (s *InputSystem) Name() string {
 
 var predictionDebugLoggingStart time.Time
 
-func (s *InputSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	inputBuffer := s.app.InputBuffer()
 	for _, player := range s.app.GetPlayers() {
 		bufferedInput := inputBuffer.PullInput(player.ID)

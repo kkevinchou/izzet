@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type ReceiverSystem struct {
@@ -24,7 +24,7 @@ func (s *ReceiverSystem) Name() string {
 	return "ReceiverSystem"
 }
 
-func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 	mr := globals.ClientRegistry()
 
 	for {

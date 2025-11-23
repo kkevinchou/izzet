@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/events"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type RulesSystem struct {
 	app   App
-	world systems.GameWorld
+	world system.GameWorld
 }
 
 func NewRulesSystem(app App) *RulesSystem {
@@ -22,7 +22,7 @@ func (s *RulesSystem) Name() string {
 	return "RulesSystem"
 }
 
-func (s *RulesSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *RulesSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range world.Entities() {
 		if !e.Deadge {
 			continue

@@ -30,7 +30,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/system/clientsystems"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type PostFrameSystem struct {
@@ -19,7 +19,7 @@ func (s *PostFrameSystem) Name() string {
 	return "PostFrameSystem"
 }
 
-func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *PostFrameSystem) Update(delta time.Duration, world system.GameWorld) {
 	sb := s.app.StateBuffer()
 	if bi, ok := sb.Pull(s.app.CommandFrame()); ok {
 		for _, bs := range bi.EntityStates {

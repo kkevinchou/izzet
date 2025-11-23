@@ -3,8 +3,8 @@ package serversystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/systems"
-	"github.com/kkevinchou/izzet/izzet/systems/shared"
+	"github.com/kkevinchou/izzet/izzet/system"
+	"github.com/kkevinchou/izzet/izzet/system/shared"
 )
 
 type CharacterControllerSystem struct {
@@ -21,7 +21,7 @@ func (s *CharacterControllerSystem) Name() string {
 
 var moveCount int
 
-func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *CharacterControllerSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, entity := range world.Entities() {
 		if entity.PlayerInput == nil {
 			continue

@@ -13,7 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/systems"
+	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
@@ -38,7 +38,7 @@ func (s *EventsSystem) Name() string {
 	return "EventsSystem"
 }
 
-func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
+func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
@@ -97,7 +97,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	}
 }
 
-func (s *EventsSystem) spawnEntity(world systems.GameWorld, entity *entity.Entity) {
+func (s *EventsSystem) spawnEntity(world system.GameWorld, entity *entity.Entity) {
 	world.AddEntity(entity)
 	entityMessage, err := createEntityMessage(0, entity)
 	if err != nil {

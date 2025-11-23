@@ -3,7 +3,7 @@ package clientsystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/systems"
 )
 
@@ -27,12 +27,12 @@ func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 				continue
 			}
 
-			entity := world.GetEntityByID(bs.EntityID)
-			if entity == nil {
+			e := world.GetEntityByID(bs.EntityID)
+			if e == nil {
 				continue
 			}
 
-			if entity.ID == s.app.GetPlayerCamera().ID {
+			if e.ID == s.app.GetPlayerCamera().ID {
 				continue
 
 			}
@@ -40,13 +40,13 @@ func (s *PostFrameSystem) Update(delta time.Duration, world systems.GameWorld) {
 			if bs.Deadge {
 				world.DeleteEntity(bs.EntityID)
 			} else {
-				entities.SetLocalPosition(entity, bs.Position)
-				entity.SetLocalRotation(bs.Rotation)
+				entity.SetLocalPosition(e, bs.Position)
+				e.SetLocalRotation(bs.Rotation)
 			}
 		}
 	}
 
 	history := s.app.GetCommandFrameHistory()
-	// fmt.Printf("CLIENT ACTUAL - [%d] - %v\n", s.app.CommandFrame(), entities.GetLocalPosition(s.app.GetPlayerEntity()))
+	// fmt.Printf("CLIENT ACTUAL - [%d] - %v\n", s.app.CommandFrame(), entity.GetLocalPosition(s.app.GetPlayerEntity()))
 	history.AddCommandFrame(s.app.CommandFrame(), s.app.GetFrameInput(), s.app.GetPlayerEntity())
 }

@@ -26,11 +26,11 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world systems.Ga
 		return
 	}
 
-	entity := world.GetEntityByID(*camera.CameraComponent.Target)
-	if entity == nil || entity.CharacterControllerComponent == nil {
+	e := world.GetEntityByID(*camera.CameraComponent.Target)
+	if e == nil || e.CharacterControllerComponent == nil {
 		return
 	}
 
 	frameInput := s.app.GetFrameInput()
-	shared.UpdateCharacterController(delta, frameInput, entity)
+	shared.UpdateCharacterController(delta, frameInput, e)
 }

@@ -1,4 +1,4 @@
-package entities
+package entity
 
 import (
 	"github.com/kkevinchou/izzet/internal/animation"

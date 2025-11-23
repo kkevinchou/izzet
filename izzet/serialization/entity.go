@@ -6,15 +6,15 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
-func SerializeEntity(entity *entities.Entity) ([]byte, error) {
-	return json.Marshal(entity)
+func SerializeEntity(e *entity.Entity) ([]byte, error) {
+	return json.Marshal(e)
 }
 
-func DeserializeEntity(bytes []byte, assetManager *assets.AssetManager) (*entities.Entity, error) {
-	var e entities.Entity
+func DeserializeEntity(bytes []byte, assetManager *assets.AssetManager) (*entity.Entity, error) {
+	var e entity.Entity
 	err := json.Unmarshal(bytes, &e)
 	if err != nil {
 		return nil, err
@@ -24,35 +24,35 @@ func DeserializeEntity(bytes []byte, assetManager *assets.AssetManager) (*entiti
 	return &e, err
 }
 
-func initDeserializedEntity(entity *entities.Entity, assetManager *assets.AssetManager) {
+func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager) {
 	// set dirty flags
-	entity.DirtyTransformFlag = true
+	e.DirtyTransformFlag = true
 
 	// rebuild animation player
-	if entity.Animation != nil {
-		handle := entity.Animation.AnimationHandle
-		entity.Animation = entities.NewAnimationComponent(handle, assetManager)
+	if e.Animation != nil {
+		handle := e.Animation.AnimationHandle
+		e.Animation = entity.NewAnimationComponent(handle, assetManager)
 	}
 
-	if entity.MeshComponent != nil && entity.Collider != nil {
+	if e.MeshComponent != nil && e.Collider != nil {
 		// kinda hacky, but right now we only support one collider type per entity.
 		// only if all other colliders aren't present do we construct a tri mesh collider (bounding box being the exception)
-		if entity.Collider.CapsuleCollider == nil {
+		if e.Collider.CapsuleCollider == nil {
 			// rebuild trimesh collider
-			meshHandle := entity.MeshComponent.MeshHandle
+			meshHandle := e.MeshComponent.MeshHandle
 			primitives := assetManager.GetPrimitives(meshHandle)
 			if len(primitives) > 0 {
 				primitives := assetManager.GetPrimitives(meshHandle)
-				t := collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
+				t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
 				bb := collider.BoundingBoxFromVertices(assets.UniqueVerticesFromPrimitives(primitives))
 				var simplifiedTriMesh *collider.TriMesh
-				if entity.SimplifiedTriMeshIterations > 0 {
-					simplifiedTriMesh = geometry.SimplifyMesh(entities.AssetPrimitiveToSpecPrimitive(primitives)[0], entity.SimplifiedTriMeshIterations)
+				if e.SimplifiedTriMeshIterations > 0 {
+					simplifiedTriMesh = geometry.SimplifyMesh(entity.AssetPrimitiveToSpecPrimitive(primitives)[0], e.SimplifiedTriMeshIterations)
 				}
-				entity.Collider = entities.CreateTriMeshColliderComponent(entity.Collider.ColliderGroup, 0, *t, simplifiedTriMesh, bb)
+				e.Collider = entity.CreateTriMeshColliderComponent(e.Collider.ColliderGroup, 0, *t, simplifiedTriMesh, bb)
 			}
 		} else {
-			entity.Collider = entities.CreateCapsuleColliderComponent(entity.Collider.ColliderGroup, entity.Collider.CollisionMask, *entity.Collider.CapsuleCollider)
+			e.Collider = entity.CreateCapsuleColliderComponent(e.Collider.ColliderGroup, e.Collider.CollisionMask, *e.Collider.CapsuleCollider)
 		}
 	}
 }

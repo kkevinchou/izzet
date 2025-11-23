@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
@@ -33,7 +33,7 @@ func NewCommandFrameHistory() *CommandFrameHistory {
 	return &CommandFrameHistory{CommandFrameCursor: 0}
 }
 
-func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.Input, player *entities.Entity) {
+func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.Input, player *entity.Entity) {
 	if h.CommandFrameCount == settings.MaxCommandFrameBufferSize {
 		panic("command frame buffer size exceeded")
 	}

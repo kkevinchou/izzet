@@ -3,14 +3,14 @@ package clientsystems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/systems"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
-func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
+func replay(app App, e *entity.Entity, gamestateUpdateMessage network.GameStateUpdateMessage, cfHistory *CommandFrameHistory, world systems.GameWorld) error {
 	commandFrames, err := cfHistory.GetAllFramesStartingFrom(gamestateUpdateMessage.LastInputCommandFrame)
 	if err != nil {
 		return err
@@ -22,14 +22,14 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 
 	for _, transform := range gamestateUpdateMessage.EntityStates {
 		// special case for the player for now
-		if transform.EntityID != entity.GetID() {
+		if transform.EntityID != e.GetID() {
 			continue
 		}
 
-		entities.SetLocalPosition(entity, transform.Position)
-		entity.SetLocalRotation(transform.Rotation)
-		entity.Kinematic.Velocity = transform.Velocity
-		entity.Kinematic.GravityEnabled = transform.GravityEnabled
+		entity.SetLocalPosition(e, transform.Position)
+		e.SetLocalRotation(transform.Rotation)
+		e.Kinematic.Velocity = transform.Velocity
+		e.Kinematic.GravityEnabled = transform.GravityEnabled
 
 		// if app.PredictionDebugLogging() {
 		// 	fmt.Printf("\t - Intialized Entity [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), gamestateUpdateMessage.LastInputCommandFrame, apputils.FormatVec(transform.Position))
@@ -37,7 +37,7 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 	}
 
 	cfHistory.Reset()
-	cfHistory.AddCommandFrame(gamestateUpdateMessage.LastInputCommandFrame, commandFrames[0].FrameInput, entity)
+	cfHistory.AddCommandFrame(gamestateUpdateMessage.LastInputCommandFrame, commandFrames[0].FrameInput, e)
 
 	if len(commandFrames) == 1 {
 		return nil
@@ -51,14 +51,14 @@ func replay(app App, entity *entities.Entity, gamestateUpdateMessage network.Gam
 		// reset entity positions, (if they exist on the client)
 		// rerun spatial partioning over these entities ?
 
-		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, entity)
-		shared.KinematicStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity, app.World(), app)
-		// shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, entity)
+		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, e)
+		shared.KinematicStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, e, app.World(), app)
+		// shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, e)
 		// shared.ResolveCollisions(app, observer)
 		// if app.PredictionDebugLogging() {
-		// 	fmt.Printf("\t - Replayed Frame [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), commandFrame.FrameNumber, apputils.FormatVec(entity.Position()))
+		// 	fmt.Printf("\t - Replayed Frame [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), commandFrame.FrameNumber, apputils.FormatVec(e.Position()))
 		// }
-		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, entity)
+		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, e)
 	}
 	return nil
 }

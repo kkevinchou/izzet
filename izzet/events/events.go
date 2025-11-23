@@ -3,7 +3,7 @@ package events
 import (
 	"net"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type PlayerJoinEvent struct {
@@ -16,7 +16,7 @@ type PlayerDisconnectEvent struct {
 }
 
 type EntitySpawnEvent struct {
-	Entity *entities.Entity
+	Entity *entity.Entity
 }
 
 type DestroyEntityEvent struct {

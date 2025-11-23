@@ -5,7 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -18,11 +18,11 @@ type System interface {
 }
 
 type GameWorld interface {
-	Entities() []*entities.Entity
-	GetEntityByID(int) *entities.Entity
+	Entities() []*entity.Entity
+	GetEntityByID(int) *entity.Entity
 	DeleteEntity(int)
 	SpatialPartition() *spatialpartition.SpatialPartition
-	AddEntity(*entities.Entity)
+	AddEntity(*entity.Entity)
 }
 
 type App interface {
@@ -30,8 +30,8 @@ type App interface {
 	IsServer() bool
 	CommandFrame() int
 	GetPlayer(playerID int) *network.Player
-	GetPlayerEntity() *entities.Entity
-	GetPlayerCamera() *entities.Entity
+	GetPlayerEntity() *entity.Entity
+	GetPlayerCamera() *entity.Entity
 	CollisionObserver() *collisionobserver.CollisionObserver
 	World() *world.GameWorld
 	AppMode() types.AppMode

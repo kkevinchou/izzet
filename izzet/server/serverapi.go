@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -99,11 +99,11 @@ func (g *Server) IsClient() bool {
 	return false
 }
 
-func (g *Server) GetPlayerEntity() *entities.Entity {
+func (g *Server) GetPlayerEntity() *entity.Entity {
 	panic("wat")
 }
 
-func (g *Server) GetPlayerCamera() *entities.Entity {
+func (g *Server) GetPlayerCamera() *entity.Entity {
 	panic("wat")
 }
 

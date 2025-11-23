@@ -10,7 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -29,7 +29,7 @@ type Server struct {
 
 	assetManager *assets.AssetManager
 
-	entities map[int]*entities.Entity
+	entities map[int]*entity.Entity
 
 	world *world.GameWorld
 
@@ -83,7 +83,7 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 
 	fmt.Println(time.Since(start), "spatial partition done")
 
-	g.entities = map[int]*entities.Entity{}
+	g.entities = map[int]*entity.Entity{}
 	// g.setupAssets(data)
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 

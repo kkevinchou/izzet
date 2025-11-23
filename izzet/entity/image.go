@@ -1,4 +1,4 @@
-package entities
+package entity
 
 type ImageInfo struct {
 	ImageName string

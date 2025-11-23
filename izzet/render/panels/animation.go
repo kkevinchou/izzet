@@ -7,7 +7,7 @@ import (
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
@@ -23,7 +23,7 @@ var JointHover *int
 
 var JointsToRender []int
 
-func animationUI(app renderiface.App, entity *entities.Entity) {
+func animationUI(app renderiface.App, entity *entity.Entity) {
 	// imgui.SetNextWindowPosV(imgui.Vec2{X: 400, Y: 400}, imgui.ConditionFirstUseEver, imgui.Vec2{})
 	// imgui.SetNextWindowSizeV(imgui.Vec2{X: 100, Y: 100}, imgui.ConditionFirstUseEver)
 
@@ -74,7 +74,7 @@ func animationUI(app renderiface.App, entity *entities.Entity) {
 	// imgui.End()
 }
 
-func drawJointTree(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
+func drawJointTree(app renderiface.App, parent *entity.Entity, joint *modelspec.JointSpec) {
 	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
 
 	if len(joint.Children) == 0 {
@@ -98,14 +98,14 @@ func drawJointTree(app renderiface.App, parent *entities.Entity, joint *modelspe
 	}
 }
 
-func setupMenu(app renderiface.App, parent *entities.Entity, joint *modelspec.JointSpec) {
+func setupMenu(app renderiface.App, parent *entity.Entity, joint *modelspec.JointSpec) {
 	imgui.PushStyleColorVec4(imgui.ColButton, imgui.Vec4{X: 66. / 255, Y: 17. / 255, Z: 212. / 255, W: 1})
 	imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1})
 	if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Create Socket") {
-			// socket := entities.CreateSocket()
+			// socket := entity.CreateSocket()
 			// app.AddEntity(socket)
-			// entities.BuildRelation(SelectedEntity(), socket)
+			// entity.BuildRelation(SelectedEntity(), socket)
 			// socket.ParentJoint = joint
 			imgui.CloseCurrentPopup()
 		}
@@ -120,10 +120,10 @@ func setupMenu(app renderiface.App, parent *entities.Entity, joint *modelspec.Jo
 			// 		if imgui.MenuItemBoolV(entity.NameID(), "", isParented, true) {
 			// 			// toggle parented status
 			// 			if isParented {
-			// 				entities.RemoveParent(entity)
+			// 				entity.RemoveParent(entity)
 			// 				entity.ParentJoint = nil
 			// 			} else {
-			// 				entities.BuildRelation(parent, entity)
+			// 				entity.BuildRelation(parent, entity)
 			// 				entity.ParentJoint = joint
 			// 			}
 			// 		}

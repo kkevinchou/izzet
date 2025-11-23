@@ -2,15 +2,15 @@ package panels
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
 type CreateEntityComboOption string
 
 const (
-	CreateEntityComboOptionVelociraptor    CreateEntityComboOption = CreateEntityComboOption(entities.EntityTypeVelociraptor)
-	CreateEntityComboOptionParasaurolophus CreateEntityComboOption = CreateEntityComboOption(entities.EntityTypeParasaurolophus)
+	CreateEntityComboOptionVelociraptor    CreateEntityComboOption = CreateEntityComboOption(entity.EntityTypeVelociraptor)
+	CreateEntityComboOptionParasaurolophus CreateEntityComboOption = CreateEntityComboOption(entity.EntityTypeParasaurolophus)
 )
 
 var SelectedCreateEntityComboOption CreateEntityComboOption = CreateEntityComboOptionVelociraptor

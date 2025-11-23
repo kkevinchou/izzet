@@ -8,11 +8,11 @@ import (
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entities.Entity {
+func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entity.Entity {
 	if !documentAsset.Config.SingleEntity {
 		spawnedEntities := g.createEntitiesFromDocument(documentAsset)
 		for _, entity := range spawnedEntities {
@@ -31,22 +31,22 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 	scene := document.Scenes[0]
 	node := scene.Nodes[0]
 
-	entity := g.createEntity(documentAsset, namespace, handle, node)
-	g.world.AddEntity(entity)
+	e := g.createEntity(documentAsset, namespace, handle, node)
+	g.world.AddEntity(e)
 
 	if len(document.Animations) > 0 {
-		entity.Animation = entities.NewAnimationComponent(document.Name, g.assetManager)
+		e.Animation = entity.NewAnimationComponent(document.Name, g.assetManager)
 	}
 
-	return entity
+	return e
 }
 
-func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle types.MeshHandle, node *modelspec.Node) *entities.Entity {
+func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle types.MeshHandle, node *modelspec.Node) *entity.Entity {
 	document := documentAsset.Document
 	config := documentAsset.Config
-	entity := entities.CreateEmptyEntity(name)
+	e := entity.CreateEmptyEntity(name)
 
-	entity.MeshComponent = &entities.MeshComponent{
+	e.MeshComponent = &entity.MeshComponent{
 		MeshHandle:    meshHandle,
 		Transform:     mgl64.Ident4(),
 		Visible:       true,
@@ -54,30 +54,30 @@ func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, m
 	}
 
 	var vertices []modelspec.Vertex
-	entities.VerticesFromNode(node, document, &vertices)
-	entities.SetLocalPosition(entity, utils.Vec3F32ToF64(node.Translation))
-	entity.SetLocalRotation(utils.QuatF32ToF64(node.Rotation))
-	entities.SetScale(entity, utils.Vec3F32ToF64(node.Scale))
+	entity.VerticesFromNode(node, document, &vertices)
+	entity.SetLocalPosition(e, utils.Vec3F32ToF64(node.Translation))
+	e.SetLocalRotation(utils.QuatF32ToF64(node.Rotation))
+	entity.SetScale(e, utils.Vec3F32ToF64(node.Scale))
 
-	entity.Static = config.Static
+	e.Static = config.Static
 	if config.Physics {
-		entity.Physics = &entities.PhysicsComponent{}
+		e.Physics = &entity.PhysicsComponent{}
 	}
 
 	if types.ColliderType(config.ColliderType) == types.ColliderTypeMesh {
 		primitives := g.assetManager.GetPrimitives(meshHandle)
-		t := collider.CreateTriMeshFromPrimitives(entities.AssetPrimitiveToSpecPrimitive(primitives))
+		t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
 		bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		entity.Collider = entities.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, nil, bb)
+		e.Collider = entity.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, nil, bb)
 	}
-	return entity
+	return e
 }
 
-func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) []*entities.Entity {
+func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) []*entity.Entity {
 	document := documentAsset.Document
 
-	var spawnedEntities []*entities.Entity
-	parent := entities.CreateEmptyEntity(fmt.Sprintf("%s-parent", document.Name))
+	var spawnedEntities []*entity.Entity
+	parent := entity.CreateEmptyEntity(fmt.Sprintf("%s-parent", document.Name))
 	spawnedEntities = append(spawnedEntities, parent)
 
 	for _, scene := range document.Scenes {
@@ -86,7 +86,7 @@ func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) 
 		}
 	}
 
-	var rootEntities []*entities.Entity
+	var rootEntities []*entity.Entity
 	for _, e := range spawnedEntities {
 		if e.Parent == nil {
 			rootEntities = append(rootEntities, e)
@@ -106,26 +106,26 @@ func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) 
 	return spawnedEntities
 }
 
-func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node *modelspec.Node, namespace string) []*entities.Entity {
-	var entity *entities.Entity
+func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node *modelspec.Node, namespace string) []*entity.Entity {
+	var e *entity.Entity
 
 	if node.MeshID != nil {
 		meshHandle := assets.NewMeshHandle(namespace, fmt.Sprintf("%d", *node.MeshID))
-		entity = g.createEntity(documentAsset, node.Name, meshHandle, node)
+		e = g.createEntity(documentAsset, node.Name, meshHandle, node)
 	}
 
-	allEntities := []*entities.Entity{}
-	if entity != nil {
-		allEntities = append(allEntities, entity)
+	allEntities := []*entity.Entity{}
+	if e != nil {
+		allEntities = append(allEntities, e)
 	}
 
 	for _, childNode := range node.Children {
 		cs := g.createEntitiesFromNode(documentAsset, childNode, namespace)
 		// the first element of parseEntities is the root child node
-		if entity != nil {
+		if e != nil {
 			if cs[0] != nil {
-				cs[0].Parent = entity
-				entity.Children[cs[0].ID] = cs[0]
+				cs[0].Parent = e
+				e.Children[cs[0].ID] = cs[0]
 			}
 		}
 		allEntities = append(allEntities, cs...)

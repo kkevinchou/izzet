@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
@@ -180,25 +180,25 @@ func (p *MainRenderPass) Render(
 
 func (p *MainRenderPass) drawColliders(
 	viewerContext context.ViewerContext,
-	ents []*entities.Entity,
+	ents []*entity.Entity,
 ) {
 	shader := p.sm.GetShaderProgram("flat")
 	shader.Use()
 
-	for _, entity := range ents {
-		if entity == nil || entity.MeshComponent == nil || entity.Collider == nil {
+	for _, e := range ents {
+		if e == nil || e.MeshComponent == nil || e.Collider == nil {
 			continue
 		}
 
-		if entity.MeshComponent.InvisibleToPlayerOwner && p.app.GetPlayerEntity().GetID() == entity.GetID() {
+		if e.MeshComponent.InvisibleToPlayerOwner && p.app.GetPlayerEntity().GetID() == e.GetID() {
 			continue
 		}
 
-		modelMatrix := entities.WorldTransform(entity)
+		modelMatrix := entity.WorldTransform(e)
 
-		if entity.Collider.SimplifiedTriMeshCollider != nil {
+		if e.Collider.SimplifiedTriMeshCollider != nil {
 			var lines [][2]mgl64.Vec3
-			for _, triangles := range entity.Collider.SimplifiedTriMeshCollider.Triangles {
+			for _, triangles := range e.Collider.SimplifiedTriMeshCollider.Triangles {
 				lines = append(lines, [2]mgl64.Vec3{
 					triangles.Points[0],
 					triangles.Points[1],
@@ -214,7 +214,7 @@ func (p *MainRenderPass) drawColliders(
 			}
 
 			if len(lines) > 0 {
-				scale := entity.Scale()
+				scale := e.Scale()
 				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -222,7 +222,7 @@ func (p *MainRenderPass) drawColliders(
 			}
 
 			var pointLines [][2]mgl64.Vec3
-			for _, p := range entity.Collider.SimplifiedTriMeshCollider.DebugPoints {
+			for _, p := range e.Collider.SimplifiedTriMeshCollider.DebugPoints {
 				// 0 length lines
 				pointLines = append(pointLines, [2]mgl64.Vec3{p, p.Add(mgl64.Vec3{0.1, 0.1, 0.1})})
 			}
@@ -231,8 +231,8 @@ func (p *MainRenderPass) drawColliders(
 			}
 		}
 
-		if entity.Collider.CapsuleCollider != nil {
-			capsuleCollider := entity.Collider.CapsuleCollider
+		if e.Collider.CapsuleCollider != nil {
+			capsuleCollider := e.Collider.CapsuleCollider
 
 			top := capsuleCollider.Top
 			bottom := capsuleCollider.Bottom
@@ -292,14 +292,14 @@ func (p *MainRenderPass) drawColliders(
 			shader := p.sm.GetShaderProgram("flat")
 			color := mgl64.Vec3{255.0 / 255, 147.0 / 255, 12.0 / 255}
 			shader.Use()
-			position := entity.Position()
-			scale := entity.Scale()
+			position := e.Position()
+			scale := e.Scale()
 			modelMat := mgl64.Translate3D(position.X(), position.Y(), position.Z()).Mul4(mgl64.Scale3D(scale.X(), scale.Y(), scale.Z()))
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMat))
 			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-			rutils.DrawLineGroup(fmt.Sprintf("%d_capsule_collider", entity.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
+			rutils.DrawLineGroup(fmt.Sprintf("%d_capsule_collider", e.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
 		}
 	}
 }
@@ -309,34 +309,34 @@ func (p *MainRenderPass) drawNonEntity(
 	renderContext context.RenderContext,
 ) {
 	// render non-models
-	for _, entity := range p.app.World().Entities() {
-		if entity.MeshComponent == nil {
-			modelMatrix := entities.WorldTransform(entity)
+	for _, e := range p.app.World().Entities() {
+		if e.MeshComponent == nil {
+			modelMatrix := entity.WorldTransform(e)
 
-			if len(entity.ShapeData) > 0 {
+			if len(e.ShapeData) > 0 {
 				shader := p.sm.GetShaderProgram("flat")
 				shader.Use()
 
-				shader.SetUniformUInt("entityID", uint32(entity.ID))
+				shader.SetUniformUInt("entityID", uint32(e.ID))
 				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			}
 
-			if entity.ImageInfo != nil {
-				textureName := strings.Split(entity.ImageInfo.ImageName, ".")[0]
+			if e.ImageInfo != nil {
+				textureName := strings.Split(e.ImageInfo.ImageName, ".")[0]
 				texture := p.app.AssetManager().GetTexture(textureName)
 				if texture != nil {
-					if entity.Billboard && p.app.AppMode() == types.AppModeEditor {
+					if e.Billboard && p.app.AppMode() == types.AppModeEditor {
 						shader := p.sm.GetShaderProgram("world_space_quad")
 						shader.Use()
 
-						position := entity.Position()
+						position := e.Position()
 						modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
-						scale := entity.ImageInfo.Scale
+						scale := e.ImageInfo.Scale
 						modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
 
-						shader.SetUniformUInt("entityID", uint32(entity.ID))
+						shader.SetUniformUInt("entityID", uint32(e.ID))
 						shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(p.app.GetEditorCameraRotation().Mat4())))
 						shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 						shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
@@ -347,7 +347,7 @@ func (p *MainRenderPass) drawNonEntity(
 					fmt.Println("couldn't find texture", "light")
 				}
 			}
-			particles := entity.Particles
+			particles := e.Particles
 			if particles != nil {
 				texture := p.app.AssetManager().GetTexture("light").ID
 				for _, particle := range particles.GetActiveParticles() {
@@ -355,14 +355,14 @@ func (p *MainRenderPass) drawNonEntity(
 					rutils.DrawTexturedQuad(&viewerContext, p.sm, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
 				}
 			}
-		} else if entity.CharacterControllerComponent != nil {
+		} else if e.CharacterControllerComponent != nil {
 			v := mgl64.Vec3{}
-			if entity.CharacterControllerComponent.WebVector != v {
+			if e.CharacterControllerComponent.WebVector != v {
 				// r.drawAABB(
 				// 	viewerContext,
 				// 	shaderManager.GetShaderProgram("flat"),
 				// 	mgl64.Vec3{.2, 0, .7},
-				// 	entity.BoundingBox(),
+				// 	e.BoundingBox(),
 				// 	0.5,
 				// )
 
@@ -371,14 +371,14 @@ func (p *MainRenderPass) drawNonEntity(
 				// there's probably away to get the right vector directly rather than going crossing the up vector :D
 				rightVector := forwardVector.Cross(upVector)
 
-				start := entity.Position().Add(rightVector.Mul(1)).Add(mgl64.Vec3{0, 2, 0})
+				start := e.Position().Add(rightVector.Mul(1)).Add(mgl64.Vec3{0, 2, 0})
 				lines := [][2]mgl64.Vec3{
-					{start, entity.Position().Add(entity.CharacterControllerComponent.WebVector)},
+					{start, e.Position().Add(e.CharacterControllerComponent.WebVector)},
 				}
 
 				shader := p.sm.GetShaderProgram("flat")
 				shader.Use()
-				shader.SetUniformMat4("model", mgl32.Translate3D(float32(entity.Position().X()), float32(entity.Position().Y()), float32(entity.Position().Z())))
+				shader.SetUniformMat4("model", mgl32.Translate3D(float32(e.Position().X()), float32(e.Position().Y()), float32(e.Position().Z())))
 				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
@@ -473,7 +473,7 @@ var skyboxVertices = []float32{
 
 // i considered using uniform blocks but the memory layout management seems like a huge pain
 // https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
-func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Entity) {
+func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entity.Entity) {
 	if len(lights) > settings.MaxLightCount {
 		panic(fmt.Sprintf("light count of %d exceeds max %d", len(lights), settings.MaxLightCount))
 	}
@@ -494,17 +494,17 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entities.Ent
 
 func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext) {
 	if p.app.RuntimeConfig().ShowSelectionBoundingBox {
-		entity := p.app.SelectedEntity()
-		if entity != nil {
+		e := p.app.SelectedEntity()
+		if e != nil {
 			// draw bounding box
-			if entity.HasBoundingBox() {
+			if e.HasBoundingBox() {
 				shader := p.sm.GetShaderProgram("flat")
 				shader.Use()
 				rutils.DrawAABB(
 					shader,
 					viewerContext,
 					mgl64.Vec3{.2, 0, .7},
-					entity.BoundingBox(),
+					e.BoundingBox(),
 					0.1,
 				)
 			}
@@ -663,8 +663,8 @@ func (p *MainRenderPass) renderGizmos(viewerContext context.ViewerContext, rende
 		return
 	}
 
-	entity := p.app.World().GetEntityByID(p.app.SelectedEntity().ID)
-	position := entity.Position()
+	e := p.app.World().GetEntityByID(p.app.SelectedEntity().ID)
+	position := e.Position()
 
 	if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
 		p.drawTranslationGizmo(&viewerContext, p.sm.GetShaderProgram("flat"), position)

@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -89,7 +89,7 @@ func (p *PointLightRenderPass) Render(
 	}()
 
 	// we only support cube depth maps for one point light atm
-	var pointLight *entities.Entity
+	var pointLight *entity.Entity
 	if len(lightContext.PointLights) == 0 {
 		return
 	}
@@ -111,18 +111,18 @@ func (p *PointLightRenderPass) Render(
 	}
 	p.shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
-	for _, entity := range renderContext.RenderableEntities {
-		if entity == nil || entity.MeshComponent == nil {
+	for _, e := range renderContext.RenderableEntities {
+		if e == nil || e.MeshComponent == nil {
 			continue
 		}
 
-		if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entities.BatchRenderable(entity) {
+		if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(e) {
 			continue
 		}
 
-		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
+		if e.Animation != nil && e.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			p.shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
+			animationTransforms := e.Animation.AnimationPlayer.AnimationTransforms()
 			// if animationTransforms is nil, the shader will execute reading into invalid memory
 			// so, we need to explicitly guard for this
 			if animationTransforms == nil {
@@ -135,12 +135,12 @@ func (p *PointLightRenderPass) Render(
 			p.shader.SetUniformInt("isAnimated", 0)
 		}
 
-		modelMatrix := entities.WorldTransform(entity)
+		modelMatrix := entity.WorldTransform(e)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		primitives := p.app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
+		primitives := p.app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
 		for _, primitive := range primitives {
-			p.shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
+			p.shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(e.MeshComponent.Transform)))
 
 			gl.BindVertexArray(primitive.GeometryVAO)
 			rutils.IztDrawElements(int32(len(primitive.Primitive.VertexIndices)))

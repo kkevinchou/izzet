@@ -5,7 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/input"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -20,8 +20,8 @@ type App interface {
 	IsClient() bool
 	IsServer() bool
 	GetPlayerConnection() net.Conn
-	GetPlayerEntity() *entities.Entity
-	GetPlayerCamera() *entities.Entity
+	GetPlayerEntity() *entity.Entity
+	GetPlayerCamera() *entity.Entity
 	GetCommandFrameHistory() *CommandFrameHistory
 	Client() network.IzzetClient
 	StateBuffer() *StateBuffer

@@ -14,7 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -121,9 +121,9 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 	if _, ok := keyboardInput[input.KeyboardKeyLCtrl]; ok {
 		if cEvent, ok := keyboardInput[input.KeyboardKeyC]; ok {
 			if cEvent.Event == input.KeyboardEventUp {
-				if entity := g.SelectedEntity(); entity != nil {
+				if e := g.SelectedEntity(); e != nil {
 					var err error
-					copiedEntity, err = serialization.SerializeEntity(entity)
+					copiedEntity, err = serialization.SerializeEntity(e)
 					if err != nil {
 						panic(err)
 					}
@@ -138,7 +138,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			if vEvent.Event == input.KeyboardEventUp {
 				e, err := serialization.DeserializeEntity(copiedEntity, g.AssetManager())
 				if err == nil {
-					id := entities.GetNextIDAndAdvance()
+					id := entity.GetNextIDAndAdvance()
 					e.ID = id
 					g.world.AddEntity(e)
 					g.SelectEntity(e)
@@ -302,14 +302,14 @@ func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3,
 	minDistSq := math.MaxFloat64
 
 	// TODO: this should ray cast against navmesh polys, not entity geometry
-	for _, entity := range g.world.Entities() {
-		if entity.Collider == nil || entity.Collider.TriMeshCollider == nil {
+	for _, e := range g.world.Entities() {
+		if e.Collider == nil || e.Collider.TriMeshCollider == nil {
 			continue
 		}
 
 		ray := collider.Ray{Origin: position, Direction: dir}
-		transformMatrix := entities.WorldTransform(entity)
-		collider := entity.Collider.TriMeshCollider.Transform(transformMatrix)
+		transformMatrix := entity.WorldTransform(e)
+		collider := e.Collider.TriMeshCollider.Transform(transformMatrix)
 
 		point, success := checks.IntersectRayTriMesh(ray, collider)
 		if !success {
@@ -447,40 +447,40 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 
 	var gizmoHovered bool = false
-	entity := g.SelectedEntity()
+	e := g.SelectedEntity()
 
-	if entity != nil {
+	if e != nil {
 		if gizmo.CurrentGizmoMode == gizmo.GizmoModeTranslation {
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, entity, g.runtimeConfig.SnapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.TranslationGizmo, e, g.runtimeConfig.SnapSize)
 			if delta != nil {
-				if entity.Parent != nil {
-					// the computed position is in world space but entity.LocalPosition is in local space
+				if e.Parent != nil {
+					// the computed position is in world space but e.LocalPosition is in local space
 					// to compute the new local space position we need to do conversions
 
 					// compute the full transformation matrix, excluding local transformations
 					// i.e. local transformations should not affect how the gizmo affects the entity
-					transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+					transformMatrix := entity.ComputeParentAndJointTransformMatrix(e)
 
 					// take the new world position and convert it to local space
-					worldPosition := entity.Position().Add(*delta)
+					worldPosition := e.Position().Add(*delta)
 					newPositionInLocalSpace := transformMatrix.Inv().Mul4x1(worldPosition.Vec4(1)).Vec3()
 
-					entities.SetLocalPosition(entity, newPositionInLocalSpace)
+					entity.SetLocalPosition(e, newPositionInLocalSpace)
 				} else {
-					entities.SetLocalPosition(entity, entity.LocalPosition.Add(*delta))
+					entity.SetLocalPosition(e, e.LocalPosition.Add(*delta))
 				}
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
-					edithistory.NewPositionEdit(gizmo.TranslationGizmo.ActivationPosition, entity.GetLocalPosition(), entity),
+					edithistory.NewPositionEdit(gizmo.TranslationGizmo.ActivationPosition, e.GetLocalPosition(), e),
 				)
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
-				gizmo.TranslationGizmo.ActivationPosition = entity.GetLocalPosition()
-				gizmo.TranslationGizmo.LastSnapVector = entity.GetLocalPosition()
+				gizmo.TranslationGizmo.ActivationPosition = e.GetLocalPosition()
+				gizmo.TranslationGizmo.LastSnapVector = e.GetLocalPosition()
 			}
 			gizmoHovered = gizmo.TranslationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeRotation {
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, entity, g.runtimeConfig.SnapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.RotationGizmo, e, g.runtimeConfig.SnapSize)
 			if delta != nil {
 				var magnitude float64 = 0
 
@@ -516,41 +516,41 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 					panic("wat")
 				}
 
-				if entity.Parent != nil {
-					transformMatrix := entities.ComputeParentAndJointTransformMatrix(entity)
+				if e.Parent != nil {
+					transformMatrix := entity.ComputeParentAndJointTransformMatrix(e)
 					worldToLocalMatrix := transformMatrix.Inv()
 					_, r, _ := utils.DecomposeF64(worldToLocalMatrix)
 					computedRotation := r.Mul(newRotationAdjustment)
-					entity.SetLocalRotation(computedRotation.Mul(entity.GetLocalRotation()))
+					e.SetLocalRotation(computedRotation.Mul(e.GetLocalRotation()))
 				} else {
-					entity.SetLocalRotation(newRotationAdjustment.Mul(entity.GetLocalRotation()))
+					e.SetLocalRotation(newRotationAdjustment.Mul(e.GetLocalRotation()))
 				}
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
-					edithistory.NewRotationEdit(gizmo.TranslationGizmo.ActivationRotation, entity.GetLocalRotation(), entity),
+					edithistory.NewRotationEdit(gizmo.TranslationGizmo.ActivationRotation, e.GetLocalRotation(), e),
 				)
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
-				gizmo.RotationGizmo.ActivationRotation = entity.GetLocalRotation()
+				gizmo.RotationGizmo.ActivationRotation = e.GetLocalRotation()
 				// gizmo.TranslationGizmo.LastSnapVector = mgl64.Vec3{}
 			}
 			gizmoHovered = gizmo.RotationGizmo.HoveredEntityID != -1
 		} else if gizmo.CurrentGizmoMode == gizmo.GizmoModeScale {
-			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, entity, g.runtimeConfig.SnapSize)
+			delta, gizmoEvent := g.updateGizmo(frameInput, gizmo.ScaleGizmo, e, g.runtimeConfig.SnapSize)
 			if delta != nil {
 				magnitude := settings.ScaleSensitivity
 				if gizmo.ScaleGizmo.HoveredEntityID == gizmo.GizmoAllAxisPickingID {
 					magnitude = settings.ScaleAllAxisSensitivity
 				}
-				scale := entity.Scale()
-				entities.SetScale(entity, scale.Add(delta.Mul(magnitude)))
+				scale := e.Scale()
+				entity.SetScale(e, scale.Add(delta.Mul(magnitude)))
 			} else if gizmoEvent == gizmo.GizmoEventCompleted {
 				g.AppendEdit(
-					edithistory.NewScaleEdit(gizmo.ScaleGizmo.ActivationScale, entity.Scale(), entity),
+					edithistory.NewScaleEdit(gizmo.ScaleGizmo.ActivationScale, e.Scale(), e),
 				)
 			}
 			if gizmoEvent == gizmo.GizmoEventActivated {
-				gizmo.ScaleGizmo.ActivationScale = entity.Scale()
+				gizmo.ScaleGizmo.ActivationScale = e.Scale()
 			}
 			gizmoHovered = gizmo.ScaleGizmo.HoveredEntityID != -1
 		}
@@ -574,7 +574,7 @@ func (g *Client) handleGizmos(frameInput input.Input) {
 	}
 }
 
-func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, entity *entities.Entity, snapSize float64) (*mgl64.Vec3, gizmo.GizmoEvent) {
+func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e *entity.Entity, snapSize float64) (*mgl64.Vec3, gizmo.GizmoEvent) {
 	mouseInput := frameInput.MouseInput
 	colorPickingID := g.renderSystem.HoveredEntityID()
 
@@ -582,6 +582,6 @@ func (g *Client) updateGizmo(frameInput input.Input, targetGizmo *gizmo.Gizmo, e
 	nearPlanePos := g.mousePosToNearPlane(mouseInput.Position, gameWindowWidth, gameWindowHeight)
 
 	cameraViewDir := g.camera.Rotation.Rotate(mgl64.Vec3{0, 0, -1})
-	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, cameraViewDir, entity.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
+	delta, gizmoEvent := gizmo.CalculateGizmoDelta(targetGizmo, frameInput, cameraViewDir, e.Position(), g.camera.Position, nearPlanePos, colorPickingID, snapSize)
 	return delta, gizmoEvent
 }

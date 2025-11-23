@@ -3,23 +3,23 @@ package shared
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
-func PhysicsStepSingle(delta time.Duration, entity *entities.Entity) {
-	PhysicsStep(delta, []*entities.Entity{entity})
+func PhysicsStepSingle(delta time.Duration, e *entity.Entity) {
+	PhysicsStep(delta, []*entity.Entity{e})
 }
 
-func PhysicsStep(delta time.Duration, worldEntities []*entities.Entity) {
-	for _, entity := range worldEntities {
-		physicsComponent := entity.Physics
-		if entity.Static || physicsComponent == nil {
+func PhysicsStep(delta time.Duration, worldEntities []*entity.Entity) {
+	for _, e := range worldEntities {
+		physicsComponent := e.Physics
+		if e.Static || physicsComponent == nil {
 			continue
 		}
 
-		newPosition := entity.GetLocalPosition()
+		newPosition := e.GetLocalPosition()
 		newPosition = newPosition.Add(physicsComponent.Velocity.Mul(delta.Seconds()))
 
-		entities.SetLocalPosition(entity, newPosition)
+		entity.SetLocalPosition(e, newPosition)
 	}
 }

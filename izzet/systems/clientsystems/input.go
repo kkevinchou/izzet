@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/systems"
 )
@@ -74,7 +74,7 @@ func (s *InputSystem) computePlayerCameraRotation(world systems.GameWorld, frame
 	return newRotation
 }
 
-func computeCameraRotation(frameInput input.Input, camera *entities.Entity) mgl64.Quat {
+func computeCameraRotation(frameInput input.Input, camera *entity.Entity) mgl64.Quat {
 	// camera rotations
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput

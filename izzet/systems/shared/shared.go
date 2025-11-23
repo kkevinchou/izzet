@@ -2,11 +2,11 @@ package shared
 
 import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type GameWorld interface {
-	GetEntityByID(int) *entities.Entity
-	Entities() []*entities.Entity
+	GetEntityByID(int) *entity.Entity
+	Entities() []*entity.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 }

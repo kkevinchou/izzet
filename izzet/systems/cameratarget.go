@@ -8,7 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
@@ -34,7 +34,7 @@ func (s *CameraTargetSystem) Update(delta time.Duration, world GameWorld) {
 	}
 }
 
-func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera *entities.Entity) {
+func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera *entity.Entity) {
 	if camera.CameraComponent.Target == nil {
 		return
 	}
@@ -78,21 +78,21 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 	minDistSq := math.MaxFloat64
 
 	for _, e := range ents {
-		entity := s.app.World().GetEntityByID(e.GetID())
-		if entity.Collider == nil || entity.Collider.TriMeshCollider == nil {
+		ent := s.app.World().GetEntityByID(e.GetID())
+		if ent.Collider == nil || ent.Collider.TriMeshCollider == nil {
 			continue
 		}
-		if entity.ID == *targetID {
+		if ent.ID == *targetID {
 			continue
 		}
 
 		ray := collider.Ray{Origin: targetPosition, Direction: dir}
 
-		if _, _, success := checks.IntersectLineAABB(entityCameraLine, entity.BoundingBox()); !success {
+		if _, _, success := checks.IntersectLineAABB(entityCameraLine, ent.BoundingBox()); !success {
 			continue
 		}
 
-		point, success := checks.IntersectRayTriMesh(ray, entity.TriMeshCollider())
+		point, success := checks.IntersectRayTriMesh(ray, ent.TriMeshCollider())
 		if !success {
 			continue
 		}
@@ -106,8 +106,8 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 	}
 
 	if hit {
-		entities.SetLocalPosition(camera, hitPoint)
+		entity.SetLocalPosition(camera, hitPoint)
 	} else {
-		entities.SetLocalPosition(camera, cameraPosition)
+		entity.SetLocalPosition(camera, cameraPosition)
 	}
 }

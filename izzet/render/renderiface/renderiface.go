@@ -8,7 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -36,7 +36,7 @@ type App interface {
 	Connect() error
 	ConnectAndInitialize() error
 	IsConnected() bool
-	GetPlayerCamera() *entities.Entity
+	GetPlayerCamera() *entity.Entity
 
 	StartAsyncServer()
 	DisconnectAsyncServer()
@@ -47,15 +47,15 @@ type App interface {
 	SaveProject() error
 	SaveProjectAs(name string) error
 
-	GetPlayerEntity() *entities.Entity
+	GetPlayerEntity() *entity.Entity
 	ConfigureUI(enabled bool)
 	WindowSize() (int, int)
 	Minimized() bool
 	WindowFocused() bool
 	ImportAsset(config assets.AssetConfig)
-	SelectEntity(entity *entities.Entity)
-	SelectedEntity() *entities.Entity
-	CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entities.Entity
+	SelectEntity(entity *entity.Entity)
+	SelectedEntity() *entity.Entity
+	CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entity.Entity
 	BuildNavMesh(App, int, int, int, int, float64, float64)
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld
@@ -75,8 +75,8 @@ type RenderContext interface {
 }
 
 type GameWorld interface {
-	Entities() []*entities.Entity
-	AddEntity(entity *entities.Entity)
-	GetEntityByID(id int) *entities.Entity
+	Entities() []*entity.Entity
+	AddEntity(entity *entity.Entity)
+	GetEntityByID(id int) *entity.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 }

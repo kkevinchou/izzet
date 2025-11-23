@@ -1,7 +1,7 @@
 package collisionobserver
 
 import (
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 // OnSpatialQuery(entityID int, count int)
@@ -30,13 +30,13 @@ func NewCollisionObserver() *CollisionObserver {
 		BoundingBoxCheck:       map[int]int{},
 	}
 }
-func (o *CollisionObserver) OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity) {
+func (o *CollisionObserver) OnBoundingBoxCheck(e1 *entity.Entity, e2 *entity.Entity) {
 	o.BoundingBoxCheck[e1.GetID()] += 1
 }
 func (o *CollisionObserver) OnSpatialQuery(entityID int, count int) {
 	o.SpatialQuery[entityID] += count
 }
-func (o *CollisionObserver) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
+func (o *CollisionObserver) OnCollisionCheck(e1 *entity.Entity, e2 *entity.Entity) {
 	o.CollisionCheck[e1.GetID()] += 1
 	if isCapsuleCapsuleCollision(e1, e2) {
 		o.CollisionCheckCapsule[e1.GetID()] += 1
@@ -77,18 +77,18 @@ var NullCollisionExplorer nullCollisionObserverType
 type nullCollisionObserverType struct {
 }
 
-func (o nullCollisionObserverType) OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity) {
+func (o nullCollisionObserverType) OnBoundingBoxCheck(e1 *entity.Entity, e2 *entity.Entity) {
 }
 func (o nullCollisionObserverType) OnSpatialQuery(entityID int, count int) {
 }
-func (o nullCollisionObserverType) OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity) {
+func (o nullCollisionObserverType) OnCollisionCheck(e1 *entity.Entity, e2 *entity.Entity) {
 }
 func (o nullCollisionObserverType) OnCollisionResolution(entityID int) {
 }
 func (o nullCollisionObserverType) Clear() {
 }
 
-func isCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity, *entities.Entity) {
+func isCapsuleTriMeshCollision(e1, e2 *entity.Entity) (bool, *entity.Entity, *entity.Entity) {
 	if e1.Collider.CapsuleCollider != nil {
 		if e2.Collider.TriMeshCollider != nil {
 			return true, e1, e2
@@ -104,7 +104,7 @@ func isCapsuleTriMeshCollision(e1, e2 *entities.Entity) (bool, *entities.Entity,
 	return false, nil, nil
 }
 
-func isCapsuleCapsuleCollision(e1, e2 *entities.Entity) bool {
+func isCapsuleCapsuleCollision(e1, e2 *entity.Entity) bool {
 	if e1.Collider.CapsuleCollider != nil {
 		if e2.Collider.CapsuleCollider != nil {
 			return true

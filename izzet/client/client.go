@@ -15,7 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
@@ -59,8 +59,8 @@ type Client struct {
 	runtimeConfig *runtimeconfig.RuntimeConfig
 
 	playerID        int
-	playerEntity    *entities.Entity
-	playerCamera    *entities.Entity
+	playerEntity    *entity.Entity
+	playerCamera    *entity.Entity
 	connection      net.Conn
 	networkMessages chan network.MessageTransport
 	commandFrame    int
@@ -74,7 +74,7 @@ type Client struct {
 	frameInput  input.Input
 	serverStats serverstats.ServerStats
 
-	selectedEntity *entities.Entity
+	selectedEntity *entity.Entity
 
 	project *Project
 
@@ -244,24 +244,24 @@ func (g *Client) setupSystems() {
 }
 
 func (g *Client) setupEntities() {
-	pointLight := entities.CreatePointLight()
-	pointLight.AIComponent = &entities.AIComponent{
-		PatrolConfig: &entities.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
+	pointLight := entity.CreatePointLight()
+	pointLight.AIComponent = &entity.AIComponent{
+		PatrolConfig: &entity.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
 		Speed:        100,
 	}
 	pointLight.LightInfo.PreScaledIntensity = 0.05
 	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
-	entities.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
+	entity.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(pointLight)
 
-	cube := entities.CreateCube(g.assetManager, 50)
-	entities.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
+	cube := entity.CreateCube(g.assetManager, 50)
+	entity.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
 	g.world.AddEntity(cube)
 
-	directionalLight := entities.CreateDirectionalLight()
+	directionalLight := entity.CreateDirectionalLight()
 	directionalLight.Name = "directional_light"
 	directionalLight.LightInfo.PreScaledIntensity = 0.1
-	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
+	entity.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
 	g.world.AddEntity(directionalLight)
 }
 

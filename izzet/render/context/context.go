@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type ViewerContext struct {
@@ -19,8 +19,8 @@ type ViewerContext struct {
 
 type LightContext struct {
 	LightSpaceMatrix mgl64.Mat4
-	Lights           []*entities.Entity
-	PointLights      []*entities.Entity
+	Lights           []*entity.Entity
+	PointLights      []*entity.Entity
 }
 
 type RenderContext struct {
@@ -33,8 +33,8 @@ type RenderContext struct {
 	BatchRenders []assets.Batch
 
 	// entities
-	ShadowCastingEntities []*entities.Entity
-	RenderableEntities    []*entities.Entity
+	ShadowCastingEntities []*entity.Entity
+	RenderableEntities    []*entity.Entity
 
 	ShadowDistance float32
 }

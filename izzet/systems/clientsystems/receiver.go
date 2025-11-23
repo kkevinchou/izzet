@@ -52,18 +52,18 @@ func (s *ReceiverSystem) Update(delta time.Duration, world systems.GameWorld) {
 				var serverTransform network.EntityState
 
 				for _, transform := range gamestateUpdateMessage.EntityStates {
-					entity := world.GetEntityByID(transform.EntityID)
-					if entity == nil {
+					e := world.GetEntityByID(transform.EntityID)
+					if e == nil {
 						continue
 					}
 
-					if entity.GetID() == playerEntityID {
+					if e.GetID() == playerEntityID {
 						serverTransform = transform
 						continue
 					}
 
-					if entity.Animation != nil {
-						animationPlayer := entity.Animation.AnimationPlayer
+					if e.Animation != nil {
+						animationPlayer := e.Animation.AnimationPlayer
 						animationPlayer.PlayAnimation(transform.Animation)
 					}
 				}

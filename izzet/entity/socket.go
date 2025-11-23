@@ -1,4 +1,4 @@
-package entities
+package entity
 
 func CreateSocket() *Entity {
 	entity := InstantiateBaseEntity("socket", entityIDGen)

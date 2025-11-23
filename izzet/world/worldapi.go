@@ -4,14 +4,14 @@ import (
 	"sort"
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
-func (g *GameWorld) AddEntity(entity *entities.Entity) {
-	if _, ok := g.entities[entity.GetID()]; ok {
+func (g *GameWorld) AddEntity(e *entity.Entity) {
+	if _, ok := g.entities[e.GetID()]; ok {
 		return
 	}
-	g.entities[entity.ID] = entity
+	g.entities[e.ID] = e
 }
 
 func (g *GameWorld) DestroyEntity(entityID int) {
@@ -22,26 +22,26 @@ func (g *GameWorld) DestroyEntity(entityID int) {
 }
 
 func (g *GameWorld) DeleteEntity(entityID int) {
-	entity := g.GetEntityByID(entityID)
-	if entity == nil {
+	e := g.GetEntityByID(entityID)
+	if e == nil {
 		return
 	}
 
-	for _, child := range entity.Children {
-		entities.RemoveParent(child)
+	for _, child := range e.Children {
+		entity.RemoveParent(child)
 		g.DeleteEntity(child.GetID())
 	}
 
-	entities.RemoveParent(entity)
-	g.spatialPartition.DeleteEntity(entity.ID)
-	delete(g.entities, entity.ID)
+	entity.RemoveParent(e)
+	g.spatialPartition.DeleteEntity(e.ID)
+	delete(g.entities, e.ID)
 }
 
-func (g *GameWorld) GetEntityByID(id int) *entities.Entity {
+func (g *GameWorld) GetEntityByID(id int) *entity.Entity {
 	return g.entities[id]
 }
 
-func (g *GameWorld) Entities() []*entities.Entity {
+func (g *GameWorld) Entities() []*entity.Entity {
 	if g.sortFrame != g.CommandFrame() {
 		g.sortFrame = g.CommandFrame()
 
@@ -52,7 +52,7 @@ func (g *GameWorld) Entities() []*entities.Entity {
 
 		sort.Ints(ids)
 
-		entities := []*entities.Entity{}
+		entities := []*entity.Entity{}
 		for _, id := range ids {
 			entities = append(entities, g.entities[id])
 		}
@@ -70,9 +70,9 @@ func (g *GameWorld) IncrementCommandFrameCount() {
 	g.commandFrameCount++
 }
 
-func (g *GameWorld) Lights() []*entities.Entity {
+func (g *GameWorld) Lights() []*entity.Entity {
 	allEntities := g.Entities()
-	result := []*entities.Entity{}
+	result := []*entity.Entity{}
 	for _, e := range allEntities {
 		if e.LightInfo != nil {
 			result = append(result, e)

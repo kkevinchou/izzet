@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
 type GameWorld interface {
-	Entities() []*entities.Entity
+	Entities() []*entity.Entity
 }
 
 type Relation struct {
@@ -20,7 +20,7 @@ type Relation struct {
 }
 
 type WorldIR struct {
-	Entities  []*entities.Entity
+	Entities  []*entity.Entity
 	Relations []Relation
 }
 
@@ -47,9 +47,9 @@ func Write(world GameWorld, writer io.Writer) error {
 		Entities: entities,
 	}
 
-	for _, entity := range entities {
-		if entity.Parent != nil {
-			worldIR.Relations = append(worldIR.Relations, Relation{Parent: entity.Parent.ID, Child: entity.ID})
+	for _, e := range entities {
+		if e.Parent != nil {
+			worldIR.Relations = append(worldIR.Relations, Relation{Parent: e.Parent.ID, Child: e.ID})
 		}
 	}
 
@@ -90,10 +90,10 @@ func Read(reader io.Reader, am *assets.AssetManager) (*world.GameWorld, error) {
 		return nil, err
 	}
 
-	entityMap := map[int]*entities.Entity{}
-	for _, entity := range worldIR.Entities {
-		entity.Children = make(map[int]*entities.Entity)
-		entityMap[entity.ID] = entity
+	entityMap := map[int]*entity.Entity{}
+	for _, e := range worldIR.Entities {
+		e.Children = make(map[int]*entity.Entity)
+		entityMap[e.ID] = e
 	}
 
 	// rebuild relations

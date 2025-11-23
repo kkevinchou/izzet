@@ -2,24 +2,24 @@ package world
 
 import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type GameWorld struct {
-	entities map[int]*entities.Entity
+	entities map[int]*entity.Entity
 
 	commandFrameCount int
 	spatialPartition  *spatialpartition.SpatialPartition
 
 	sortFrame      int
-	sortedEntities []*entities.Entity
+	sortedEntities []*entity.Entity
 }
 
 func New() *GameWorld {
-	return NewWithEntities(map[int]*entities.Entity{})
+	return NewWithEntities(map[int]*entity.Entity{})
 }
 
-func NewWithEntities(entities map[int]*entities.Entity) *GameWorld {
+func NewWithEntities(entities map[int]*entity.Entity) *GameWorld {
 	g := &GameWorld{
 		sortFrame:        -1,
 		entities:         entities,

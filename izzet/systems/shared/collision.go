@@ -7,7 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision"
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -17,13 +17,13 @@ type App interface {
 	IsClient() bool
 	IsServer() bool
 	World() *world.GameWorld
-	GetPlayerEntity() *entities.Entity
+	GetPlayerEntity() *entity.Entity
 }
 
 type ICollisionObserver interface {
-	OnBoundingBoxCheck(e1 *entities.Entity, e2 *entities.Entity)
+	OnBoundingBoxCheck(e1 *entity.Entity, e2 *entity.Entity)
 	OnSpatialQuery(entityID int, count int)
-	OnCollisionCheck(e1 *entities.Entity, e2 *entities.Entity)
+	OnCollisionCheck(e1 *entity.Entity, e2 *entity.Entity)
 	OnCollisionResolution(entityID int)
 	Clear()
 }
@@ -198,15 +198,15 @@ func setupTransformedBoundingBox(context *collisionContext, packedIndex int) {
 
 func setupTransformedCollider(context *collisionContext, packedIndex int) {
 	if !context.packedCollisionData[packedIndex].colliderInitialized {
-		entity := context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID)
-		cc := entity.Collider
+		e := context.world.GetEntityByID(context.packedCollisionData[packedIndex].entityID)
+		cc := e.Collider
 		if cc.CapsuleCollider != nil {
-			transformMatrix := entities.WorldTransform(entity)
+			transformMatrix := entity.WorldTransform(e)
 			capsule := cc.CapsuleCollider.Transform(transformMatrix)
 			context.packedCollisionData[packedIndex].capsuleCollider = capsule
 			context.packedCollisionData[packedIndex].hasCapsuleCollider = true
 		} else if cc.TriMeshCollider != nil {
-			transformMatrix := entities.WorldTransform(entity)
+			transformMatrix := entity.WorldTransform(e)
 			var triMesh collider.TriMesh
 			if cc.SimplifiedTriMeshCollider != nil {
 				triMesh = cc.SimplifiedTriMeshCollider.Transform(transformMatrix)
@@ -327,11 +327,11 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 		// allocate the whole separating distance to the player. the player is denoted with "shouldResolve"
 		// maybe there's a cleaner way to do this?
 		if collisionDataA.shouldResolve {
-			entity := getEntity(context, contact.PackedIndexA)
-			entities.SetLocalPosition(entity, entity.GetLocalPosition().Add(separatingVector))
+			e := getEntity(context, contact.PackedIndexA)
+			entity.SetLocalPosition(e, e.GetLocalPosition().Add(separatingVector))
 		} else if collisionDataB.shouldResolve {
-			entity := getEntity(context, contact.PackedIndexB)
-			entities.SetLocalPosition(entity, entity.GetLocalPosition().Sub(separatingVector))
+			e := getEntity(context, contact.PackedIndexB)
+			entity.SetLocalPosition(e, e.GetLocalPosition().Sub(separatingVector))
 		}
 	} else {
 		// allocate half the separating distance between the two entities
@@ -357,7 +357,7 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 			} else if bOnly {
 				factor = 0
 			}
-			entities.SetLocalPosition(entityA, entityA.GetLocalPosition().Add(separatingVector.Mul(factor)))
+			entity.SetLocalPosition(entityA, entityA.GetLocalPosition().Add(separatingVector.Mul(factor)))
 		}
 
 		if !entityB.Static {
@@ -370,7 +370,7 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 			} else if aOnly {
 				factor = 0
 			}
-			entities.SetLocalPosition(entityB, entityB.GetLocalPosition().Sub(separatingVector.Mul(factor)))
+			entity.SetLocalPosition(entityB, entityB.GetLocalPosition().Sub(separatingVector.Mul(factor)))
 		}
 	}
 }
@@ -401,6 +401,6 @@ func postProcessing(context *collisionContext) {
 	// }
 }
 
-func getEntity(context *collisionContext, index int) *entities.Entity {
+func getEntity(context *collisionContext, index int) *entity.Entity {
 	return context.world.GetEntityByID(context.packedCollisionData[index].entityID)
 }

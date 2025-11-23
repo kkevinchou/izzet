@@ -3,7 +3,7 @@ package panels
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 const (
@@ -20,8 +20,8 @@ type RenderContext interface {
 }
 
 type GameWorld interface {
-	Entities() []*entities.Entity
-	AddEntity(entity *entities.Entity)
-	GetEntityByID(id int) *entities.Entity
+	Entities() []*entity.Entity
+	AddEntity(entity *entity.Entity)
+	GetEntityByID(id int) *entity.Entity
 	SpatialPartition() *spatialpartition.SpatialPartition
 }

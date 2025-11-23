@@ -3,7 +3,7 @@ package systems
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/systems/shared"
 )
 
@@ -20,9 +20,9 @@ func (s *PhysicsSystem) Name() string {
 }
 
 func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
-	var worldEntities []*entities.Entity
+	var worldEntities []*entity.Entity
 	if s.app.IsClient() {
-		worldEntities = []*entities.Entity{s.app.GetPlayerEntity()}
+		worldEntities = []*entity.Entity{s.app.GetPlayerEntity()}
 	} else {
 		worldEntities = world.Entities()
 	}

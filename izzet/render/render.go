@@ -13,7 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/drawer"
@@ -31,10 +31,10 @@ import (
 )
 
 type GameWorld interface {
-	Entities() []*entities.Entity
-	Lights() []*entities.Entity
-	GetEntityByID(id int) *entities.Entity
-	AddEntity(entity *entities.Entity)
+	Entities() []*entity.Entity
+	Lights() []*entity.Entity
+	GetEntityByID(id int) *entity.Entity
+	AddEntity(entity *entity.Entity)
 	SpatialPartition() *spatialpartition.SpatialPartition
 }
 
@@ -390,13 +390,13 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 
 	// find the directional light if there is one
 	lights := r.app.World().Lights()
-	var directionalLights []*entities.Entity
-	var pointLights []*entities.Entity
+	var directionalLights []*entity.Entity
+	var pointLights []*entity.Entity
 
 	for _, light := range lights {
-		if light.LightInfo.Type == entities.LightTypeDirection {
+		if light.LightInfo.Type == entity.LightTypeDirection {
 			directionalLights = append(directionalLights, light)
-		} else if light.LightInfo.Type == entities.LightTypePoint {
+		} else if light.LightInfo.Type == entity.LightTypePoint {
 			pointLights = append(pointLights, light)
 		}
 	}
@@ -468,7 +468,7 @@ func (r *RenderSystem) setDebugTexture() {
 	}
 }
 
-func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {
+func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entity.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
@@ -483,7 +483,7 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 	sp := r.app.World().SpatialPartition()
 	bb := collider.BoundingBoxFromVertices(frustumPoints)
 
-	var result []*entities.Entity
+	var result []*entity.Entity
 	for _, spatialEntity := range sp.QueryEntities(bb) {
 		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
 		if e.MeshComponent != nil && e.MeshComponent.ShadowCasting {
@@ -493,7 +493,7 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 	return result
 }
 
-func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entities.Entity {
+func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entity.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
@@ -508,7 +508,7 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 	sp := r.app.World().SpatialPartition()
 	bb := collider.BoundingBoxFromVertices(frustumPoints)
 
-	var result []*entities.Entity
+	var result []*entity.Entity
 	for _, spatialEntity := range sp.QueryEntities(bb) {
 		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
 		if e.MeshComponent != nil {

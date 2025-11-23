@@ -5,7 +5,7 @@ import (
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
@@ -24,41 +24,41 @@ func SceneGraph(app renderiface.App) {
 	if !entityPopup {
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			if imgui.Button("Add Cube") {
-				entity := entities.CreateCube(app.AssetManager(), 1)
-				entity.Material = &entities.MaterialComponent{
+				e := entity.CreateCube(app.AssetManager(), 1)
+				e.Material = &entity.MaterialComponent{
 					MaterialHandle: assets.DefaultMaterialHandle,
 				}
-				entity.Static = true
+				e.Static = true
 
-				world.AddEntity(entity)
-				app.SelectEntity(entity)
+				world.AddEntity(e)
+				app.SelectEntity(e)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Point Light") {
-				light := entities.CreatePointLight()
+				light := entity.CreatePointLight()
 				world.AddEntity(light)
 				app.SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Directional Light") {
-				light := entities.CreateDirectionalLight()
+				light := entity.CreateDirectionalLight()
 				world.AddEntity(light)
 				app.SelectEntity(light)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Empty Entity") {
-				entity := entities.CreateEmptyEntity("empty-entity")
-				world.AddEntity(entity)
-				app.SelectEntity(entity)
+				e := entity.CreateEmptyEntity("empty-entity")
+				world.AddEntity(e)
+				app.SelectEntity(e)
 				imgui.CloseCurrentPopup()
 			}
 			if imgui.Button("Add Camera") {
-				entity := entities.CreateEmptyEntity("camera")
-				entity.CameraComponent = &entities.CameraComponent{}
-				entity.ImageInfo = entities.NewImageInfo("camera.png", 15)
-				entity.Billboard = true
-				world.AddEntity(entity)
-				app.SelectEntity(entity)
+				e := entity.CreateEmptyEntity("camera")
+				e.CameraComponent = &entity.CameraComponent{}
+				e.ImageInfo = entity.NewImageInfo("camera.png", 15)
+				e.Billboard = true
+				world.AddEntity(e)
+				app.SelectEntity(e)
 				imgui.CloseCurrentPopup()
 			}
 			imgui.EndPopup()
@@ -66,27 +66,27 @@ func SceneGraph(app renderiface.App) {
 	}
 }
 
-func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App) bool {
+func drawSceneGraphEntity(e *entity.Entity, app renderiface.App) bool {
 	popup := false
 	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
-	if len(entity.Children) == 0 {
+	if len(e.Children) == 0 {
 		nodeFlags |= imgui.TreeNodeFlagsLeaf
 	}
-	if app.SelectedEntity() != nil && entity.ID == app.SelectedEntity().ID {
+	if app.SelectedEntity() != nil && e.ID == app.SelectedEntity().ID {
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}
 
-	if imgui.TreeNodeExStrV(entity.NameID(), nodeFlags) {
+	if imgui.TreeNodeExStrV(e.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
-			app.SelectEntity(entity)
+			app.SelectEntity(e)
 		}
 
-		imgui.PushIDStr(entity.NameID())
+		imgui.PushIDStr(e.NameID())
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			popup = true
-			if entity.Parent != nil {
+			if e.Parent != nil {
 				if imgui.Button("Remove Parent") {
-					entities.RemoveParent(entity)
+					entity.RemoveParent(e)
 					imgui.CloseCurrentPopup()
 				}
 			}
@@ -96,7 +96,7 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App) bool {
 
 		// if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
 		// 	fmt.Println("BEGIN DRAG DROP")
-		// 	str := fmt.Sprintf("%d", entity.ID)
+		// 	str := fmt.Sprintf("%d", e.ID)
 		// 	imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
 		// 	imgui.EndDragDropSource()
 		// }
@@ -108,15 +108,15 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App) bool {
 		// 			panic(err)
 		// 		}
 		// 		child := world.GetEntityByID(childID)
-		// 		parent := world.GetEntityByID(entity.ID)
-		// 		entities.BuildRelation(parent, child)
+		// 		parent := world.GetEntityByID(e.ID)
+		// 		entity.BuildRelation(parent, child)
 		// 	}
 		// 	imgui.EndDragDropTarget()
 		// }
 
-		childIDs := sortedIDs(entity.Children)
+		childIDs := sortedIDs(e.Children)
 		for _, id := range childIDs {
-			child := entity.Children[id]
+			child := e.Children[id]
 			childPopup := drawEntity(child, app)
 			popup = popup || childPopup
 		}
@@ -126,7 +126,7 @@ func drawSceneGraphEntity(entity *entities.Entity, app renderiface.App) bool {
 	return popup
 }
 
-func sortedIDs(m map[int]*entities.Entity) []int {
+func sortedIDs(m map[int]*entity.Entity) []int {
 	var ids []int
 	for id, _ := range m {
 		ids = append(ids, id)
@@ -136,27 +136,27 @@ func sortedIDs(m map[int]*entities.Entity) []int {
 	return ids
 }
 
-func drawEntity(entity *entities.Entity, app renderiface.App) bool {
+func drawEntity(e *entity.Entity, app renderiface.App) bool {
 	popup := false
 	var nodeFlags imgui.TreeNodeFlags = imgui.TreeNodeFlagsNone
-	if len(entity.Children) == 0 {
+	if len(e.Children) == 0 {
 		nodeFlags |= imgui.TreeNodeFlagsLeaf
 	}
-	if app.SelectedEntity() != nil && entity.ID == app.SelectedEntity().ID {
+	if app.SelectedEntity() != nil && e.ID == app.SelectedEntity().ID {
 		nodeFlags |= imgui.TreeNodeFlagsSelected
 	}
 
-	if imgui.TreeNodeExStrV(entity.NameID(), nodeFlags) {
+	if imgui.TreeNodeExStrV(e.NameID(), nodeFlags) {
 		if imgui.IsItemClicked() || imgui.IsItemToggledOpen() {
-			app.SelectEntity(entity)
+			app.SelectEntity(e)
 		}
 
-		imgui.PushIDStr(entity.NameID())
+		imgui.PushIDStr(e.NameID())
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			popup = true
-			if entity.Parent != nil {
+			if e.Parent != nil {
 				if imgui.Button("Remove Parent") {
-					entities.RemoveParent(entity)
+					entity.RemoveParent(e)
 					imgui.CloseCurrentPopup()
 				}
 			}
@@ -165,7 +165,7 @@ func drawEntity(entity *entities.Entity, app renderiface.App) bool {
 		imgui.PopID()
 
 		// if imgui.BeginDragDropSource(imgui.DragDropFlagsNone) {
-		// 	str := fmt.Sprintf("%d", entity.ID)
+		// 	str := fmt.Sprintf("%d", e.ID)
 		// 	imgui.SetDragDropPayload("childid", []byte(str), imgui.ConditionNone)
 		// 	imgui.EndDragDropSource()
 		// }
@@ -176,15 +176,15 @@ func drawEntity(entity *entities.Entity, app renderiface.App) bool {
 		// 			panic(err)
 		// 		}
 		// 		child := world.GetEntityByID(childID)
-		// 		parent := world.GetEntityByID(entity.ID)
-		// 		entities.BuildRelation(parent, child)
+		// 		parent := world.GetEntityByID(e.ID)
+		// 		entity.BuildRelation(parent, child)
 		// 	}
 		// 	imgui.EndDragDropTarget()
 		// }
 
-		childIDs := sortedIDs(entity.Children)
+		childIDs := sortedIDs(e.Children)
 		for _, id := range childIDs {
-			child := entity.Children[id]
+			child := e.Children[id]
 			childPopup := drawEntity(child, app)
 			popup = popup || childPopup
 		}

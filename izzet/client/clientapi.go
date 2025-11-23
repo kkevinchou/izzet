@@ -22,7 +22,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -78,7 +78,7 @@ func (g *Client) loadWorld(filepath string) bool {
 			maxID = e.ID
 		}
 	}
-	entities.SetNextID(maxID + 1)
+	entity.SetNextID(maxID + 1)
 
 	g.SelectEntity(nil)
 	g.world = world
@@ -257,16 +257,16 @@ func (g *Client) IsConnected() bool {
 func (g *Client) GetPlayerConnection() net.Conn {
 	return g.connection
 }
-func (g *Client) SetPlayerEntity(entity *entities.Entity) {
+func (g *Client) SetPlayerEntity(entity *entity.Entity) {
 	g.playerEntity = entity
 }
-func (g *Client) SetPlayerCamera(entity *entities.Entity) {
+func (g *Client) SetPlayerCamera(entity *entity.Entity) {
 	g.playerCamera = entity
 }
-func (g *Client) GetPlayerEntity() *entities.Entity {
+func (g *Client) GetPlayerEntity() *entity.Entity {
 	return g.playerEntity
 }
-func (g *Client) GetPlayerCamera() *entities.Entity {
+func (g *Client) GetPlayerCamera() *entity.Entity {
 	return g.playerCamera
 }
 
@@ -491,11 +491,11 @@ func (g *Client) WindowFocused() bool {
 	return g.window.WindowFocused()
 }
 
-func (g *Client) SelectEntity(entity *entities.Entity) {
+func (g *Client) SelectEntity(entity *entity.Entity) {
 	g.selectedEntity = entity
 }
 
-func (g *Client) SelectedEntity() *entities.Entity {
+func (g *Client) SelectedEntity() *entity.Entity {
 	return g.selectedEntity
 }
 
@@ -524,15 +524,15 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	var debugLines [][2]mgl64.Vec3
 
 	world := app.World()
-	for _, entity := range world.Entities() {
-		if entity.MeshComponent == nil {
+	for _, e := range world.Entities() {
+		if e.MeshComponent == nil {
 			continue
 		}
-		if !entity.HasBoundingBox() {
+		if !e.HasBoundingBox() {
 			continue
 		}
 
-		ebb := entity.BoundingBox()
+		ebb := e.BoundingBox()
 
 		if ebb.MaxVertex.X() < nmbb.MinVertex.X() || ebb.MinVertex.X() > nmbb.MaxVertex.X() {
 			continue
@@ -544,8 +544,8 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 			continue
 		}
 
-		primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-		transform := utils.Mat4F64ToF32(entities.WorldTransform(entity))
+		primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
+		transform := utils.Mat4F64ToF32(entity.WorldTransform(e))
 		up := mgl64.Vec3{0, 1, 0}
 
 		for _, p := range primitives {
@@ -642,18 +642,18 @@ func (g *Client) NewProject(name string) {
 
 	// set up the default scene
 
-	cube := entities.CreateCube(g.AssetManager(), 1)
-	cube.Material = &entities.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
-	entities.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
-	entities.SetScale(cube, mgl64.Vec3{7, 2, 7})
+	cube := entity.CreateCube(g.AssetManager(), 1)
+	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
+	entity.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
+	entity.SetScale(cube, mgl64.Vec3{7, 2, 7})
 	g.World().AddEntity(cube)
 
-	directionalLight := entities.CreateDirectionalLight()
+	directionalLight := entity.CreateDirectionalLight()
 	directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
 	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, 1}
 	directionalLight.Name = "directional_light"
 	directionalLight.LightInfo.PreScaledIntensity = 4
-	entities.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
+	entity.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
 	g.World().AddEntity(directionalLight)
 
 	g.SaveProjectAs(name)

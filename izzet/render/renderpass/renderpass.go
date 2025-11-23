@@ -13,7 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -152,25 +152,25 @@ func createTexture(width, height int, internalFormat int32, format uint32, xtype
 func renderGeometryWithoutColor(
 	app renderiface.App,
 	shader *shaders.ShaderProgram,
-	ents []*entities.Entity,
+	ents []*entity.Entity,
 	viewerContext context.ViewerContext,
 	renderContext context.RenderContext,
 ) {
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
-	for _, entity := range ents {
-		if entity.MeshComponent == nil {
+	for _, e := range ents {
+		if e.MeshComponent == nil {
 			continue
 		}
 
-		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entities.BatchRenderable(entity) {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(e) {
 			continue
 		}
 
-		if entity.Animation != nil && entity.Animation.AnimationPlayer.CurrentAnimation() != "" {
+		if e.Animation != nil && e.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := entity.Animation.AnimationPlayer.AnimationTransforms()
+			animationTransforms := e.Animation.AnimationPlayer.AnimationTransforms()
 			// if animationTransforms is nil, the shader will execute reading into invalid memory
 			// so, we need to explicitly guard for this
 			if animationTransforms == nil {
@@ -183,12 +183,12 @@ func renderGeometryWithoutColor(
 			shader.SetUniformInt("isAnimated", 0)
 		}
 
-		modelMatrix := entities.WorldTransform(entity)
+		modelMatrix := entity.WorldTransform(e)
 		m32ModelMatrix := utils.Mat4F64ToF32(modelMatrix)
 
-		primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
+		primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
 		for _, p := range primitives {
-			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform)))
+			shader.SetUniformMat4("model", m32ModelMatrix.Mul4(utils.Mat4F64ToF32(e.MeshComponent.Transform)))
 
 			gl.BindVertexArray(p.GeometryVAO)
 			rutils.IztDrawElements(int32(len(p.Primitive.VertexIndices)))
@@ -258,7 +258,7 @@ func drawModels(
 	lightContext context.LightContext,
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
-	ents []*entities.Entity,
+	ents []*entity.Entity,
 ) {
 	gl.ActiveTexture(gl.TEXTURE28)
 	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.SSAOBlurTexture)
@@ -276,15 +276,15 @@ func drawModels(
 	preModelRenderShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)
 
 	var drawCount int
-	for _, entity := range ents {
-		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entities.BatchRenderable(entity) {
+	for _, e := range ents {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(e) {
 			continue
 		}
-		renderShader.SetUniformUInt("entityID", uint32(entity.ID))
+		renderShader.SetUniformUInt("entityID", uint32(e.ID))
 		drawModel(
 			app,
 			renderShader,
-			entity,
+			e,
 		)
 		drawCount++
 	}
@@ -335,11 +335,11 @@ func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgra
 func drawModel(
 	app renderiface.App,
 	shader *shaders.ShaderProgram,
-	entity *entities.Entity,
+	e *entity.Entity,
 ) {
 	var animationPlayer *animation.AnimationPlayer
-	if entity.Animation != nil {
-		animationPlayer = entity.Animation.AnimationPlayer
+	if e.Animation != nil {
+		animationPlayer = e.Animation.AnimationPlayer
 	}
 
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {
@@ -359,16 +359,16 @@ func drawModel(
 	}
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
-	primitives := app.AssetManager().GetPrimitives(entity.MeshComponent.MeshHandle)
-	if entity.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
+	primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
+	if e.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
 		shader.SetUniformInt("repeatTexture", 1)
 	} else {
 		shader.SetUniformInt("repeatTexture", 0)
 	}
 	for _, prim := range primitives {
 		materialHandle := prim.MaterialHandle
-		if entity.Material != nil {
-			materialHandle = entity.Material.MaterialHandle
+		if e.Material != nil {
+			materialHandle = e.Material.MaterialHandle
 		}
 		primitiveMaterial := app.AssetManager().GetMaterial(materialHandle).Material
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
@@ -391,32 +391,32 @@ func drawModel(
 		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
 		shader.SetUniformFloat("roughness", material.RoughnessFactor)
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
-		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(entity.Position()))
-		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(entity.Scale()))
+		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(e.Position()))
+		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(e.Scale()))
 		shader.SetUniformInt("alphaMode", int32(alphaMode))
 
-		modelMatrix := entities.WorldTransform(entity)
+		modelMatrix := entity.WorldTransform(e)
 		var modelMat mgl32.Mat4
 
 		// apply smooth blending between mispredicted position and actual real position
-		if entity.RenderBlend != nil && entity.RenderBlend.Active {
-			deltaMs := time.Since(entity.RenderBlend.StartTime).Milliseconds()
+		if e.RenderBlend != nil && e.RenderBlend.Active {
+			deltaMs := time.Since(e.RenderBlend.StartTime).Milliseconds()
 			t := apputils.RenderBlendMath(deltaMs)
 
-			blendedPosition := entity.Position().Sub(entity.RenderBlend.BlendStartPosition).Mul(t).Add(entity.RenderBlend.BlendStartPosition)
+			blendedPosition := e.Position().Sub(e.RenderBlend.BlendStartPosition).Mul(t).Add(e.RenderBlend.BlendStartPosition)
 
 			translationMatrix := mgl64.Translate3D(blendedPosition[0], blendedPosition[1], blendedPosition[2])
-			rotationMatrix := entity.GetLocalRotation().Mat4()
-			scale := entity.Scale()
+			rotationMatrix := e.GetLocalRotation().Mat4()
+			scale := e.Scale()
 			scaleMatrix := mgl64.Scale3D(scale.X(), scale.Y(), scale.Z())
 			modelMatrix = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
 
 			if deltaMs >= int64(settings.RenderBlendDurationMilliseconds) {
-				entity.RenderBlend.Active = false
+				e.RenderBlend.Active = false
 			}
 		}
 
-		modelMat = utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(entity.MeshComponent.Transform))
+		modelMat = utils.Mat4F64ToF32(modelMatrix).Mul4(utils.Mat4F64ToF32(e.MeshComponent.Transform))
 
 		shader.SetUniformMat4("model", modelMat)
 

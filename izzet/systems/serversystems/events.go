@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/entities"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -44,36 +44,36 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 
 		var radius float64 = 40
 		var length float64 = 80
-		entity := entities.CreateEmptyEntity("player")
-		entity.Kinematic = &entities.KinematicComponent{GravityEnabled: true}
+		playerEntity := entity.CreateEmptyEntity("player")
+		playerEntity.Kinematic = &entity.KinematicComponent{GravityEnabled: true}
 		capsule := collider.Capsule{
 			Radius: radius,
 			Top:    mgl64.Vec3{0, radius + length, 0},
 			Bottom: mgl64.Vec3{0, radius, 0},
 		}
-		entity.Collider = entities.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
-		entity.CharacterControllerComponent = &entities.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
+		playerEntity.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
+		playerEntity.CharacterControllerComponent = &entity.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
 		handle := assets.NewSingleEntityMeshHandle("alpha3")
 
-		entity.MeshComponent = &entities.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-		entity.Animation = entities.NewAnimationComponent("alpha3", s.app.AssetManager())
-		entity.RenderBlend = &entities.RenderBlend{}
-		entities.SetScale(entity, mgl64.Vec3{0.01, 0.01, 0.01})
+		playerEntity.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
+		playerEntity.Animation = entity.NewAnimationComponent("alpha3", s.app.AssetManager())
+		playerEntity.RenderBlend = &entity.RenderBlend{}
+		entity.SetScale(playerEntity, mgl64.Vec3{0.01, 0.01, 0.01})
 
 		world := s.app.World()
-		for _, e := range world.Entities() {
-			if e.SpawnPointComponent != nil {
-				entities.SetLocalPosition(entity, e.Position())
+		for _, spawnPoint := range world.Entities() {
+			if spawnPoint.SpawnPointComponent != nil {
+				entity.SetLocalPosition(playerEntity, spawnPoint.Position())
 				break
 			}
 		}
 
-		camera := createCamera(e.PlayerID, entity.GetID())
+		camera := createCamera(e.PlayerID, playerEntity.GetID())
 		world.AddEntity(camera)
-		world.AddEntity(entity)
+		world.AddEntity(playerEntity)
 
 		worldBytes := s.app.SerializeWorld()
-		message, err := createAckPlayerJoinMessage(e.PlayerID, camera, entity, worldBytes, s.app.ProjectName())
+		message, err := createAckPlayerJoinMessage(e.PlayerID, camera, playerEntity, worldBytes, s.app.ProjectName())
 		if err != nil {
 			panic(err)
 		}
@@ -83,8 +83,8 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 		}
 
 		s.spawnEntity(world, camera)
-		s.spawnEntity(world, entity)
-		fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), entity.GetID())
+		s.spawnEntity(world, playerEntity)
+		fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), playerEntity.GetID())
 	}
 
 	for _, e := range s.playerDisconnectConsumer.ReadNewEvents() {
@@ -97,7 +97,7 @@ func (s *EventsSystem) Update(delta time.Duration, world systems.GameWorld) {
 	}
 }
 
-func (s *EventsSystem) spawnEntity(world systems.GameWorld, entity *entities.Entity) {
+func (s *EventsSystem) spawnEntity(world systems.GameWorld, entity *entity.Entity) {
 	world.AddEntity(entity)
 	entityMessage, err := createEntityMessage(0, entity)
 	if err != nil {
@@ -109,7 +109,7 @@ func (s *EventsSystem) spawnEntity(world systems.GameWorld, entity *entities.Ent
 	fmt.Printf("spawned entity with ID %d\n", entity.GetID())
 }
 
-func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateEntityMessage, error) {
+func createEntityMessage(playerID int, entity *entity.Entity) (network.CreateEntityMessage, error) {
 	createEntityMessage := network.CreateEntityMessage{
 		OwnerID: playerID,
 	}
@@ -123,16 +123,16 @@ func createEntityMessage(playerID int, entity *entities.Entity) (network.CreateE
 	return createEntityMessage, nil
 }
 
-func createCamera(playerID int, targetEntityID int) *entities.Entity {
-	entity := entities.CreateEmptyEntity("camera")
-	entity.CameraComponent = &entities.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
-	entity.ImageInfo = entities.NewImageInfo("camera.png", 1)
-	entity.Billboard = true
-	entity.PlayerInput = &entities.PlayerInputComponent{PlayerID: playerID}
-	return entity
+func createCamera(playerID int, targetEntityID int) *entity.Entity {
+	e := entity.CreateEmptyEntity("camera")
+	e.CameraComponent = &entity.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
+	e.ImageInfo = entity.NewImageInfo("camera.png", 1)
+	e.Billboard = true
+	e.PlayerInput = &entity.PlayerInputComponent{PlayerID: playerID}
+	return e
 }
 
-func createAckPlayerJoinMessage(playerID int, camera *entities.Entity, entity *entities.Entity, worldBytes []byte, projectName string) (network.AckPlayerJoinMessage, error) {
+func createAckPlayerJoinMessage(playerID int, camera *entity.Entity, entity *entity.Entity, worldBytes []byte, projectName string) (network.AckPlayerJoinMessage, error) {
 	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID, ProjectName: projectName}
 
 	entityBytes, err := serialization.SerializeEntity(entity)

@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -158,6 +159,11 @@ func (g *Client) NewProject(name string) {
 	g.SelectEntity(nil)
 
 	// set up the default scene
+
+	g.camera = &editorcamera.Camera{
+		Position: settings.EditorCameraStartPosition,
+		Rotation: mgl64.QuatIdent(),
+	}
 
 	cube := entity.CreateCube(g.AssetManager(), 1)
 	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}

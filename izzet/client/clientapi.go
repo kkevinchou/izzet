@@ -22,7 +22,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
-	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -141,31 +140,12 @@ func (g *Client) Connect() error {
 	if g.IsConnected() {
 		return nil
 	}
-	iztlog.Logger.Info("connecting to " + g.serverAddress)
 
+	iztlog.Logger.Info("connecting to " + g.serverAddress)
 	conn, err := net.Dial("tcp", g.serverAddress)
 	if err != nil {
 		return err
 	}
-	g.ConfigureUI(false)
-
-	// start the live world
-	// backup the active world
-	g.editorWorld = g.world
-	var buffer bytes.Buffer
-	err = serialization.Write(g.world, &buffer)
-	if err != nil {
-		panic(err)
-	}
-	liveWorld, err := serialization.Read(&buffer, g.assetManager)
-	if err != nil {
-		panic(err)
-	}
-	g.SelectEntity(nil)
-	g.world = liveWorld
-
-	g.appMode = types.AppModePlay
-
 	g.client = network.NewClient(conn)
 	messageTransport, err := g.client.Recv()
 	if err != nil {
@@ -176,8 +156,11 @@ func (g *Client) Connect() error {
 	if err != nil {
 		return err
 	}
-
 	iztlog.Logger.Info("connected to server", "project name", message.ProjectName)
+
+	g.ConfigureUI(false)
+	g.SelectEntity(nil)
+	g.appMode = types.AppModePlay
 
 	g.playerID = message.PlayerID
 	g.connection = conn
@@ -194,18 +177,6 @@ func (g *Client) Connect() error {
 
 	iztlog.Logger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
 
-	world, err := serialization.Read(bytes.NewReader(message.SerializedWorld), g.assetManager)
-	if err != nil {
-		return err
-	}
-
-	for _, entity := range world.Entities() {
-		if entity.GetID() == camera.GetID() || entity.GetID() == playerEntity.GetID() {
-			continue
-		}
-		g.world.AddEntity(entity)
-	}
-
 	// TODO a done channel to close out the goroutine
 	go func() {
 		defer conn.Close()
@@ -217,8 +188,7 @@ func (g *Client) Connect() error {
 					continue
 				}
 
-				fmt.Println("error reading incoming message:", err.Error())
-				fmt.Println("closing connection")
+				iztlog.Logger.Error("error reading incoming message, closing connection", "error", err.Error())
 				return
 			}
 
@@ -226,7 +196,6 @@ func (g *Client) Connect() error {
 		}
 	}()
 	g.clientConnected = true
-	fmt.Println("finished connect")
 	return nil
 }
 
@@ -348,12 +317,6 @@ func (g *Client) StateBuffer() *clientsystems.StateBuffer {
 func (g *Client) initialize() {
 	g.stateBuffer = clientsystems.NewStateBuffer()
 	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
-
-	g.camera = &editorcamera.Camera{
-		Position: settings.EditorCameraStartPosition,
-		Rotation: mgl64.QuatIdent(),
-	}
-
 	g.editHistory = edithistory.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
@@ -619,7 +582,7 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 
 func (g *Client) ResetApp() {
 	g.world = world.New()
-	g.editorWorld = world.New()
+	g.editorWorld = g.world
 	g.initialize()
 }
 

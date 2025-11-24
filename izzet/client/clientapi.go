@@ -74,18 +74,20 @@ func (g *Client) initializeAppAndWorld(filepath string) bool {
 }
 
 func (g *Client) initializeAppAndWorldFromReader(reader io.Reader) bool {
-	world, err := serialization.Read(reader, g.assetManager)
+	g.editorWorld = g.world
+
+	var err error
+	g.world, err = serialization.Read(reader, g.assetManager)
 	if err != nil {
 		iztlog.Logger.Error("failed to load world", "error", err)
 		panic(err)
 	}
-	g.world = world
 
 	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()
 
 	var maxID int
-	for _, e := range world.Entities() {
+	for _, e := range g.world.Entities() {
 		if e.ID > maxID {
 			maxID = e.ID
 		}
@@ -582,7 +584,6 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 
 func (g *Client) ResetApp() {
 	g.world = world.New()
-	g.editorWorld = g.world
 	g.initialize()
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/platforms"
@@ -58,16 +60,27 @@ func (g *Client) saveWorld(worldFilePath string) {
 	}
 }
 
-func (g *Client) loadWorld(filepath string) bool {
+func (g *Client) initializeAppAndWorld(filepath string) bool {
 	if filepath == "" {
 		return false
 	}
 
-	world, err := serialization.ReadFromFile(filepath, g.assetManager)
+	f, err := os.Open(filepath)
 	if err != nil {
-		fmt.Println("failed to load world", filepath, err)
 		panic(err)
 	}
+	defer f.Close()
+
+	return g.initializeAppAndWorldFromReader(f)
+}
+
+func (g *Client) initializeAppAndWorldFromReader(reader io.Reader) bool {
+	world, err := serialization.Read(reader, g.assetManager)
+	if err != nil {
+		iztlog.Logger.Error("failed to load world", "error", err)
+		panic(err)
+	}
+	g.world = world
 
 	g.editHistory.Clear()
 	g.world.SpatialPartition().Clear()
@@ -79,9 +92,7 @@ func (g *Client) loadWorld(filepath string) bool {
 		}
 	}
 	entity.SetNextID(maxID + 1)
-
 	g.SelectEntity(nil)
-	g.world = world
 	return true
 }
 
@@ -98,29 +109,6 @@ func (g *Client) Redo() {
 // game world
 func (g *Client) Undo() {
 	g.editHistory.Undo()
-}
-
-func (g *Client) StartLiveWorld() {
-	if g.AppMode() != types.AppModeEditor {
-		return
-	}
-	g.appMode = types.AppModePlay
-	g.editorWorld = g.world
-
-	var buffer bytes.Buffer
-	err := serialization.Write(g.world, &buffer)
-	if err != nil {
-		panic(err)
-	}
-
-	liveWorld, err := serialization.Read(&buffer, g.assetManager)
-	if err != nil {
-		panic(err)
-	}
-
-	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
-	g.SelectEntity(nil)
-	g.world = liveWorld
 }
 
 func (g *Client) StopLiveWorld() {
@@ -153,17 +141,30 @@ func (g *Client) Connect() error {
 	if g.IsConnected() {
 		return nil
 	}
-
-	fmt.Println("connecting to " + g.serverAddress)
+	iztlog.Logger.Info("connecting to " + g.serverAddress)
 
 	conn, err := net.Dial("tcp", g.serverAddress)
 	if err != nil {
 		return err
 	}
-
 	g.ConfigureUI(false)
 
-	g.StartLiveWorld()
+	// start the live world
+	// backup the active world
+	g.editorWorld = g.world
+	var buffer bytes.Buffer
+	err = serialization.Write(g.world, &buffer)
+	if err != nil {
+		panic(err)
+	}
+	liveWorld, err := serialization.Read(&buffer, g.assetManager)
+	if err != nil {
+		panic(err)
+	}
+	g.SelectEntity(nil)
+	g.world = liveWorld
+
+	g.appMode = types.AppModePlay
 
 	g.client = network.NewClient(conn)
 	messageTransport, err := g.client.Recv()
@@ -176,33 +177,24 @@ func (g *Client) Connect() error {
 		return err
 	}
 
-	fmt.Println("connected to server hosting project", message.ProjectName)
+	iztlog.Logger.Info("connected to server", "project name", message.ProjectName)
 
-	g.initializeAssetManagerWithProject(message.ProjectName)
 	g.playerID = message.PlayerID
 	g.connection = conn
 	g.networkMessages = make(chan network.MessageTransport, 100)
 
-	// initialize the player's camera and playerEntity
+	g.initializeAssetManagerWithProject(message.ProjectName)
+	g.initializeAppAndWorldFromReader(bytes.NewReader(message.SerializedWorld))
 
-	playerEntity, err := serialization.DeserializeEntity(message.EntityBytes, g.AssetManager())
-	if err != nil {
-		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
-	}
-	g.world.AddEntity(playerEntity)
-
-	camera, err := serialization.DeserializeEntity(message.CameraBytes, g.AssetManager())
-	if err != nil {
-		fmt.Println(fmt.Errorf("failed to deserialize entity %w", err))
-	}
-	g.world.AddEntity(camera)
+	camera := g.world.GetEntityByID(message.CameraEntityID)
+	playerEntity := g.world.GetEntityByID(message.PlayerEntityID)
 
 	g.SetPlayerCamera(camera)
 	g.SetPlayerEntity(playerEntity)
 
-	fmt.Println("CLIENT player id", playerEntity.GetID(), "camera id", camera.GetID())
+	iztlog.Logger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
 
-	world, err := serialization.Read(bytes.NewReader(message.Snapshot), g.assetManager)
+	world, err := serialization.Read(bytes.NewReader(message.SerializedWorld), g.assetManager)
 	if err != nil {
 		return err
 	}
@@ -629,33 +621,6 @@ func (g *Client) ResetApp() {
 	g.world = world.New()
 	g.editorWorld = world.New()
 	g.initialize()
-}
-
-func (g *Client) NewProject(name string) {
-	g.project = &Project{Name: name}
-	g.InitializeProjectFolders(name)
-	g.ResetApp()
-	g.assetManager = assets.NewAssetManager(true)
-	g.LoadDefaultAssets()
-	g.SelectEntity(nil)
-
-	// set up the default scene
-
-	cube := entity.CreateCube(g.AssetManager(), 1)
-	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
-	entity.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
-	entity.SetScale(cube, mgl64.Vec3{7, 2, 7})
-	g.World().AddEntity(cube)
-
-	directionalLight := entity.CreateDirectionalLight()
-	directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
-	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, 1}
-	directionalLight.Name = "directional_light"
-	directionalLight.LightInfo.PreScaledIntensity = 4
-	entity.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
-	g.World().AddEntity(directionalLight)
-
-	g.SaveProjectAs(name)
 }
 
 func (g *Client) QueueCreateMaterialTexture(handle types.MaterialHandle) {

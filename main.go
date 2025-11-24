@@ -71,6 +71,10 @@ func main() {
 	defer f.Close()
 	iztlog.SetLogger(slog.New(slog.NewJSONHandler(f, nil)))
 
+	iztlog.Logger.Info("====================================================================================")
+	iztlog.Logger.Info("IZZET SESSION START")
+	iztlog.Logger.Info("====================================================================================")
+
 	mode := "CLIENT"
 
 	if len(os.Args) > 1 {

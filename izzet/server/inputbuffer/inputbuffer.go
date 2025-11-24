@@ -1,8 +1,6 @@
 package inputbuffer
 
 import (
-	"fmt"
-
 	"github.com/kkevinchou/izzet/internal/input"
 )
 
@@ -47,7 +45,7 @@ func (b *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput 
 func (b *InputBuffer) PullInput(playerID int) BufferedInput {
 	buffer := b.playerBuffers[playerID]
 	if buffer.count == 0 {
-		fmt.Println("no input found for player", playerID)
+		// fmt.Println("no input found for player", playerID)
 		return BufferedInput{}
 	}
 

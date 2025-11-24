@@ -8,8 +8,10 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
@@ -147,6 +149,33 @@ func (g *Client) SaveProjectAs(name string) error {
 	return nil
 }
 
+func (g *Client) NewProject(name string) {
+	g.project = &Project{Name: name}
+	g.InitializeProjectFolders(name)
+	g.ResetApp()
+	g.assetManager = assets.NewAssetManager(true)
+	g.LoadDefaultAssets()
+	g.SelectEntity(nil)
+
+	// set up the default scene
+
+	cube := entity.CreateCube(g.AssetManager(), 1)
+	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
+	entity.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
+	entity.SetScale(cube, mgl64.Vec3{7, 2, 7})
+	g.World().AddEntity(cube)
+
+	directionalLight := entity.CreateDirectionalLight()
+	directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
+	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, 1}
+	directionalLight.Name = "directional_light"
+	directionalLight.LightInfo.PreScaledIntensity = 4
+	entity.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
+	g.World().AddEntity(directionalLight)
+
+	g.SaveProjectAs(name)
+}
+
 func (g *Client) LoadProject(name string) bool {
 	if name == "" {
 		return false
@@ -167,10 +196,12 @@ func (g *Client) LoadProject(name string) bool {
 
 	g.project = &project
 	g.ResetApp()
-	g.initializeAssetManagerWithProject(name)
 	g.RuntimeConfig().BatchRenderingEnabled = false
 
-	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
+	g.initializeAssetManagerWithProject(name)
+	success := g.initializeAppAndWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
+
+	return success
 }
 
 func (g *Client) initializeAssetManagerWithProject(name string) {

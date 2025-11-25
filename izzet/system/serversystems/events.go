@@ -1,12 +1,13 @@
 package serversystems
 
 import (
-	"fmt"
+	"bytes"
 	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
@@ -15,6 +16,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/types"
+	"github.com/kkevinchou/izzet/izzet/world"
 )
 
 type EventsSystem struct {
@@ -69,11 +71,14 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 		}
 
 		camera := createCamera(e.PlayerID, playerEntity.GetID())
-		world.AddEntity(camera)
-		world.AddEntity(playerEntity)
 
-		worldBytes := s.app.SerializeWorld()
-		message, err := createAckPlayerJoinMessage(e.PlayerID, camera, playerEntity, worldBytes, s.app.ProjectName())
+		// technically spawnEntity will also attempt to add the entity to the game world
+		// but we want to pre-emptively add the entities before serializing the player ack
+		// message
+		world.AddEntity(playerEntity)
+		world.AddEntity(camera)
+
+		message, err := createAckPlayerJoinMessage(e.PlayerID, camera.ID, playerEntity.ID, s.app.World(), s.app.ProjectName())
 		if err != nil {
 			panic(err)
 		}
@@ -82,23 +87,22 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 			panic(err)
 		}
 
-		s.spawnEntity(world, camera)
-		s.spawnEntity(world, playerEntity)
-		fmt.Printf("player %d joined, camera %d, entityID %d\n", e.PlayerID, camera.GetID(), playerEntity.GetID())
+		s.notifyEntityCreation(camera)
+		s.notifyEntityCreation(playerEntity)
+		iztlog.Logger.Info("player joined", "player id", e.PlayerID, "camera id", camera.GetID(), "player entity id", playerEntity.GetID())
 	}
 
 	for _, e := range s.playerDisconnectConsumer.ReadNewEvents() {
-		fmt.Printf("player %d disconnected\n", e.PlayerID)
+		iztlog.Logger.Info("player disconnected", "player id", e.PlayerID)
 		s.app.DeregisterPlayer(e.PlayerID)
 	}
 
 	for _, e := range s.entitySpawnConsumer.ReadNewEvents() {
-		s.spawnEntity(world, e.Entity)
+		s.notifyEntityCreation(e.Entity)
 	}
 }
 
-func (s *EventsSystem) spawnEntity(world system.GameWorld, entity *entity.Entity) {
-	world.AddEntity(entity)
+func (s *EventsSystem) notifyEntityCreation(entity *entity.Entity) {
 	entityMessage, err := createEntityMessage(0, entity)
 	if err != nil {
 		panic(err)
@@ -106,7 +110,7 @@ func (s *EventsSystem) spawnEntity(world system.GameWorld, entity *entity.Entity
 	for _, player := range s.app.GetPlayers() {
 		player.Client.Send(entityMessage, s.app.CommandFrame())
 	}
-	fmt.Printf("spawned entity with ID %d\n", entity.GetID())
+	iztlog.Logger.Info("spawned entity", "entity id", entity.GetID())
 }
 
 func createEntityMessage(playerID int, entity *entity.Entity) (network.CreateEntityMessage, error) {
@@ -132,21 +136,15 @@ func createCamera(playerID int, targetEntityID int) *entity.Entity {
 	return e
 }
 
-func createAckPlayerJoinMessage(playerID int, camera *entity.Entity, entity *entity.Entity, worldBytes []byte, projectName string) (network.AckPlayerJoinMessage, error) {
+func createAckPlayerJoinMessage(playerID int, cameraEntityID int, playerEntityID int, world *world.GameWorld, projectName string) (network.AckPlayerJoinMessage, error) {
 	ackPlayerJoinMessage := network.AckPlayerJoinMessage{PlayerID: playerID, ProjectName: projectName}
 
-	entityBytes, err := serialization.SerializeEntity(entity)
-	if err != nil {
-		return network.AckPlayerJoinMessage{}, err
-	}
-	cameraBytes, err := serialization.SerializeEntity(camera)
-	if err != nil {
-		return network.AckPlayerJoinMessage{}, err
-	}
+	var worldBytesBuffer bytes.Buffer
+	serialization.Write(world, &worldBytesBuffer)
 
-	ackPlayerJoinMessage.EntityBytes = entityBytes
-	ackPlayerJoinMessage.CameraBytes = cameraBytes
-	ackPlayerJoinMessage.Snapshot = worldBytes
+	ackPlayerJoinMessage.PlayerEntityID = playerEntityID
+	ackPlayerJoinMessage.CameraEntityID = cameraEntityID
+	ackPlayerJoinMessage.SerializedWorld = worldBytesBuffer.Bytes()
 
 	return ackPlayerJoinMessage, nil
 }

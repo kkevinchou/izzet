@@ -1,11 +1,11 @@
 package network
 
 type AckPlayerJoinMessage struct {
-	PlayerID    int
-	EntityBytes []byte
-	CameraBytes []byte
-	Snapshot    []byte
-	ProjectName string
+	ProjectName     string
+	PlayerID        int
+	PlayerEntityID  int
+	CameraEntityID  int
+	SerializedWorld []byte
 }
 
 func (m AckPlayerJoinMessage) Type() MessageType {

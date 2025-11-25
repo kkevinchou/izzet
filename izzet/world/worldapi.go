@@ -62,6 +62,14 @@ func (g *GameWorld) Entities() []*entity.Entity {
 	return g.sortedEntities
 }
 
+func (g *GameWorld) EntitiesUncached() []*entity.Entity {
+	var ents []*entity.Entity
+	for _, e := range g.entities {
+		ents = append(ents, e)
+	}
+	return ents
+}
+
 func (g *GameWorld) CommandFrame() int {
 	return g.commandFrameCount
 }

@@ -30,29 +30,6 @@ var predictionDebugLoggingStart time.Time
 func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	frameInput := s.app.GetFrameInputPtr()
 
-	// if settings.SoloClient {
-	// 	if time.Since(predictionDebugLoggingStart).Seconds() > 2 {
-	// 		s.app.SetPredictionDebugLogging(false)
-	// 	}
-
-	// 	if _, ok := frameInput.KeyboardInput[input.KeyboardKeyA]; ok {
-	// 		if !s.app.PredictionDebugLogging() {
-	// 			fmt.Println("---------------------")
-	// 			fmt.Println("---------------------")
-	// 			fmt.Println("---------------------")
-	// 			predictionDebugLoggingStart = time.Now()
-	// 			// s.app.SetPredictionDebugLogging(true)
-	// 		}
-	// 	}
-	// 	if s.app.PredictionDebugLogging() {
-	// 		var hasInput bool
-	// 		if _, ok := frameInput.KeyboardInput[input.KeyboardKeyA]; ok {
-	// 			hasInput = true
-	// 		}
-	// 		fmt.Printf("[%d] - Frame Start [Input: %t]\n", s.app.CommandFrame(), hasInput)
-	// 	}
-	// }
-
 	cameraRotation := s.computePlayerCameraRotation(world, *frameInput)
 	frameInput.CameraRotation = cameraRotation
 

@@ -33,7 +33,6 @@ type App interface {
 	CollisionObserver() *collisionobserver.CollisionObserver
 	RuntimeConfig() *runtimeconfig.RuntimeConfig
 	Connect() error
-	ConnectAndInitialize() error
 	IsConnected() bool
 	GetPlayerCamera() *entity.Entity
 
@@ -62,7 +61,6 @@ type App interface {
 	GetFrameInput() input.Input
 	FindPath(start, goal mgl64.Vec3)
 	SetupBatchedStaticRendering()
-	ResetApp()
 
 	QueueCreateMaterialTexture(handle types.MaterialHandle)
 }

@@ -8,9 +8,13 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/world"
 )
 
 // Project contains engine data that's meant to be persisted and can be reloaded
@@ -147,30 +151,69 @@ func (g *Client) SaveProjectAs(name string) error {
 	return nil
 }
 
+func (g *Client) NewProject(name string) {
+	g.InitializeProjectFolders(name)
+	g.project = &Project{Name: name}
+	g.assetManager = assets.NewAssetManager(true)
+	g.world = world.New()
+
+	g.initializeAppSystems()
+	g.LoadDefaultAssets()
+	g.SelectEntity(nil)
+
+	// set up the default scene
+
+	g.camera = &editorcamera.Camera{
+		Position: settings.EditorCameraStartPosition,
+		Rotation: mgl64.QuatIdent(),
+	}
+
+	cube := entity.CreateCube(g.AssetManager(), 1)
+	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
+	entity.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
+	entity.SetScale(cube, mgl64.Vec3{7, 2, 7})
+	g.World().AddEntity(cube)
+
+	directionalLight := entity.CreateDirectionalLight()
+	directionalLight.LightInfo.Diffuse3F = [3]float32{1, 1, 1}
+	directionalLight.LightInfo.Direction3F = [3]float32{-0.5, -1, 1}
+	directionalLight.Name = "directional_light"
+	directionalLight.LightInfo.PreScaledIntensity = 4
+	entity.SetLocalPosition(directionalLight, mgl64.Vec3{0, 20, 0})
+	g.World().AddEntity(directionalLight)
+
+	g.SaveProjectAs(name)
+}
+
 func (g *Client) LoadProject(name string) bool {
 	if name == "" {
 		return false
 	}
 
-	f, err := os.Open(apputils.PathToProjectFile(name))
+	projFile, err := os.Open(apputils.PathToProjectFile(name))
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer projFile.Close()
 
 	var project Project
-	decoder := json.NewDecoder(f)
+	decoder := json.NewDecoder(projFile)
 	err = decoder.Decode(&project)
 	if err != nil {
 		panic(err)
 	}
-
 	g.project = &project
-	g.ResetApp()
-	g.initializeAssetManagerWithProject(name)
-	g.RuntimeConfig().BatchRenderingEnabled = false
 
-	return g.loadWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
+	worldFile, err := os.Open(path.Join(settings.ProjectsDirectory, name, "world.json"))
+	if err != nil {
+		panic(err)
+	}
+	defer worldFile.Close()
+
+	g.world = world.New()
+	g.initializeAppAndWorld(worldFile, name)
+
+	return true
 }
 
 func (g *Client) initializeAssetManagerWithProject(name string) {

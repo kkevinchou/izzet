@@ -83,7 +83,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 	keyboardInput := frameInput.KeyboardInput
 
 	if _, ok := keyboardInput[input.KeyboardKeyF5]; ok {
-		err := g.ConnectAndInitialize()
+		err := g.Connect()
 		if err != nil {
 			fmt.Println(err)
 		}

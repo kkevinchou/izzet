@@ -22,7 +22,6 @@ type App interface {
 	GetPlayerInput(playerID int) input.Input
 	SetPlayerInput(playerID int, input input.Input)
 	DeregisterPlayer(playerID int)
-	SerializeWorld() []byte
 	EventsManager() *events.EventManager
 	SystemNames() []string
 	World() *world.GameWorld

@@ -71,6 +71,10 @@ func main() {
 	defer f.Close()
 	iztlog.SetLogger(slog.New(slog.NewJSONHandler(f, nil)))
 
+	iztlog.Logger.Info("====================================================================================")
+	iztlog.Logger.Info("IZZET SESSION START")
+	iztlog.Logger.Info("====================================================================================")
+
 	mode := "CLIENT"
 
 	if len(os.Args) > 1 {
@@ -88,9 +92,6 @@ func main() {
 		clientApp.Start()
 	} else if mode == "HEADLESS" {
 	} else if mode == "CLIENT" {
-		settings.SoloClient = true
-		config.Fullscreen = false
-		config.Profile = false
 		clientApp := client.New("shaders", config)
 		clientApp.Connect()
 		clientApp.Start()

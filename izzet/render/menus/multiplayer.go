@@ -18,7 +18,7 @@ func multiplayer(app renderiface.App) {
 			// i might revisit this in the future so that importing always immediately saves
 			// the asset to disk
 			app.SaveProject()
-			err := app.ConnectAndInitialize()
+			err := app.Connect()
 			if err != nil {
 				fmt.Println(err)
 			}

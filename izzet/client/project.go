@@ -157,7 +157,7 @@ func (g *Client) NewProject(name string) {
 	g.assetManager = assets.NewAssetManager(true)
 	g.world = world.New()
 
-	g.initialize()
+	g.initializeAppSystems()
 	g.LoadDefaultAssets()
 	g.SelectEntity(nil)
 
@@ -205,11 +205,11 @@ func (g *Client) LoadProject(name string) bool {
 
 	g.project = &project
 	g.world = world.New()
-	g.initialize()
+	g.initializeAppSystems()
 	g.RuntimeConfig().BatchRenderingEnabled = false
 
 	g.initializeAssetManagerWithProject(name)
-	success := g.initializeAppAndWorld(path.Join(settings.ProjectsDirectory, name, "world.json"))
+	success := g.initializeAppAndWorldFromFile(path.Join(settings.ProjectsDirectory, name, "world.json"))
 
 	return success
 }

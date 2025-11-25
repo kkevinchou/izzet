@@ -59,7 +59,7 @@ func (g *Client) saveWorld(worldFilePath string) {
 	}
 }
 
-func (g *Client) initializeAppAndWorld(filepath string) bool {
+func (g *Client) initializeAppAndWorldFromFile(filepath string) bool {
 	if filepath == "" {
 		return false
 	}
@@ -159,7 +159,7 @@ func (g *Client) Connect() error {
 	g.ConfigureUI(false)
 	g.SelectEntity(nil)
 	g.appMode = types.AppModePlay
-	g.initialize()
+	g.initializeAppSystems()
 
 	g.playerID = message.PlayerID
 	g.connection = conn
@@ -313,7 +313,7 @@ func (g *Client) StateBuffer() *clientsystems.StateBuffer {
 	return g.stateBuffer
 }
 
-func (g *Client) initialize() {
+func (g *Client) initializeAppSystems() {
 	g.stateBuffer = clientsystems.NewStateBuffer()
 	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
 	g.editHistory = edithistory.New()

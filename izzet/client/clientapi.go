@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -59,21 +58,11 @@ func (g *Client) saveWorld(worldFilePath string) {
 	}
 }
 
-func (g *Client) initializeAppAndWorldFromFile(filepath string) bool {
-	if filepath == "" {
-		return false
-	}
+func (g *Client) initializeAppAndWorld(reader io.Reader, projectName string) {
+	g.initializeAssetManagerWithProject(projectName)
+	g.initializeAppSystems()
 
-	f, err := os.Open(filepath)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	return g.initializeAppAndWorldFromReader(f)
-}
-
-func (g *Client) initializeAppAndWorldFromReader(reader io.Reader) bool {
+	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.editorWorld = g.world
 
 	var err error
@@ -94,7 +83,6 @@ func (g *Client) initializeAppAndWorldFromReader(reader io.Reader) bool {
 	}
 	entity.SetNextID(maxID + 1)
 	g.SelectEntity(nil)
-	return true
 }
 
 // game world
@@ -159,14 +147,12 @@ func (g *Client) Connect() error {
 	g.ConfigureUI(false)
 	g.SelectEntity(nil)
 	g.appMode = types.AppModePlay
-	g.initializeAppSystems()
 
 	g.playerID = message.PlayerID
 	g.connection = conn
 	g.networkMessages = make(chan network.MessageTransport, 100)
 
-	g.initializeAssetManagerWithProject(message.ProjectName)
-	g.initializeAppAndWorldFromReader(bytes.NewReader(message.SerializedWorld))
+	g.initializeAppAndWorld(bytes.NewReader(message.SerializedWorld), message.ProjectName)
 
 	camera := g.world.GetEntityByID(message.CameraEntityID)
 	playerEntity := g.world.GetEntityByID(message.PlayerEntityID)

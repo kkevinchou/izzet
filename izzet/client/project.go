@@ -190,28 +190,30 @@ func (g *Client) LoadProject(name string) bool {
 		return false
 	}
 
-	f, err := os.Open(apputils.PathToProjectFile(name))
+	projFile, err := os.Open(apputils.PathToProjectFile(name))
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer projFile.Close()
 
 	var project Project
-	decoder := json.NewDecoder(f)
+	decoder := json.NewDecoder(projFile)
 	err = decoder.Decode(&project)
 	if err != nil {
 		panic(err)
 	}
-
 	g.project = &project
+
+	worldFile, err := os.Open(path.Join(settings.ProjectsDirectory, name, "world.json"))
+	if err != nil {
+		panic(err)
+	}
+	defer worldFile.Close()
+
 	g.world = world.New()
-	g.initializeAppSystems()
-	g.RuntimeConfig().BatchRenderingEnabled = false
+	g.initializeAppAndWorld(worldFile, name)
 
-	g.initializeAssetManagerWithProject(name)
-	success := g.initializeAppAndWorldFromFile(path.Join(settings.ProjectsDirectory, name, "world.json"))
-
-	return success
+	return true
 }
 
 func (g *Client) initializeAssetManagerWithProject(name string) {

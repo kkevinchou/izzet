@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/world"
 )
 
 // Project contains engine data that's meant to be persisted and can be reloaded
@@ -151,10 +152,12 @@ func (g *Client) SaveProjectAs(name string) error {
 }
 
 func (g *Client) NewProject(name string) {
-	g.project = &Project{Name: name}
 	g.InitializeProjectFolders(name)
-	g.ResetApp()
+	g.project = &Project{Name: name}
 	g.assetManager = assets.NewAssetManager(true)
+	g.world = world.New()
+
+	g.initialize()
 	g.LoadDefaultAssets()
 	g.SelectEntity(nil)
 
@@ -201,7 +204,8 @@ func (g *Client) LoadProject(name string) bool {
 	}
 
 	g.project = &project
-	g.ResetApp()
+	g.world = world.New()
+	g.initialize()
 	g.RuntimeConfig().BatchRenderingEnabled = false
 
 	g.initializeAssetManagerWithProject(name)

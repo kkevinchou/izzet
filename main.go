@@ -92,9 +92,6 @@ func main() {
 		clientApp.Start()
 	} else if mode == "HEADLESS" {
 	} else if mode == "CLIENT" {
-		settings.SoloClient = true
-		config.Fullscreen = false
-		config.Profile = false
 		clientApp := client.New("shaders", config)
 		clientApp.Connect()
 		clientApp.Start()

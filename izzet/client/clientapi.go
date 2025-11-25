@@ -133,10 +133,6 @@ func (g *Client) CollisionObserver() *collisionobserver.CollisionObserver {
 func (g *Client) RuntimeConfig() *runtimeconfig.RuntimeConfig {
 	return g.runtimeConfig
 }
-func (g *Client) ConnectAndInitialize() error {
-	g.initialize()
-	return g.Connect()
-}
 
 func (g *Client) Connect() error {
 	if g.IsConnected() {
@@ -163,6 +159,7 @@ func (g *Client) Connect() error {
 	g.ConfigureUI(false)
 	g.SelectEntity(nil)
 	g.appMode = types.AppModePlay
+	g.initialize()
 
 	g.playerID = message.PlayerID
 	g.connection = conn
@@ -580,11 +577,6 @@ func (g *Client) PredictionDebugLogging() bool {
 
 func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
-}
-
-func (g *Client) ResetApp() {
-	g.world = world.New()
-	g.initialize()
 }
 
 func (g *Client) QueueCreateMaterialTexture(handle types.MaterialHandle) {

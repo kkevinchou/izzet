@@ -92,12 +92,10 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 				break
 			}
 
-			slopeRadians := math.Acos(minContact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}))
-			// if slopeRadians <= maxSlopeRadians && e1.TotalKinematicVelocity().Y() <= 0 {
-			if slopeRadians <= maxSlopeRadians {
-				grounded = true
-				if e1.Position().Y() > 1 {
-					fmt.Println("HI")
+			if e1.GravityEnabled() {
+				slopeRadians := math.Acos(minContact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}))
+				if slopeRadians <= maxSlopeRadians {
+					grounded = true
 				}
 			}
 
@@ -157,26 +155,19 @@ func moveDirAlongSlope(world GameWorld, e1 *entity.Entity, movementDir mgl64.Vec
 	}
 
 	slopeRadians := math.Acos(normal.Dot(mgl64.Vec3{0, 1, 0}))
-	// fmt.Println(slopeRadians * 180 / math.Pi)
 	if slopeRadians > maxSlopeRadians {
 		return movementDir
 	}
 
-	movementDir[1] = 0
 	if movementDir.LenSqr() == 0 {
 		return movementDir
 	}
 
 	movementDir = movementDir.Normalize()
-	dotted := normal.Mul(movementDir.Dot(normal))
-	vecOnSurface := movementDir.Sub(dotted).Normalize()
+	y := -(movementDir.X()*normal.X() + movementDir.Z()*normal.Z()) / normal.Y()
+	movementDir[1] = y
 
-	// // only handle walking down a slope
-	// if vecOnSurface.Y() >= 0 {
-	// 	return movementDir
-	// }
-
-	return vecOnSurface
+	return movementDir.Normalize()
 }
 
 func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact {

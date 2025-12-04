@@ -10,24 +10,44 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func KinematicStepSingle(delta time.Duration, entity types.KinematicEntity, world GameWorld, app App) {
-	KinematicStep(delta, []types.KinematicEntity{entity}, world, app)
+const maxRunCount int = 100
+const maxSlopeAngle float64 = 45
+const maxSlopeRadians float64 = maxSlopeAngle * math.Pi / 180
+
+func KinematicStepSingle(delta time.Duration, e *entity.Entity, world GameWorld, app App) {
+	KinematicStep(delta, []*entity.Entity{e}, world, app)
 }
 
-func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world GameWorld, app App) {
+func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, app App) {
 	for _, e1 := range ents {
 		if e1.IsStatic() || !e1.IsKinematic() {
 			continue
 		}
 
+		if e1.Kinematic.Jump {
+			e1.Kinematic.Grounded = false
+			jumpVelocity := mgl64.Vec3{0, settings.CharacterJumpSpeed, 0}
+			e1.Kinematic.AccumulatedVelocity = e1.Kinematic.AccumulatedVelocity.Add(jumpVelocity)
+		}
+
+		movementDir := e1.Kinematic.MoveIntent
+
 		if e1.GravityEnabled() {
 			velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
 			e1.AccumulateKinematicVelocity(velocityFromGravity)
+
+			// disable Y movements when gravity is enabled
+			movementDir = removeYMovement(movementDir)
+			movementDir = moveDirAlongSlope(world, e1, movementDir)
 		}
+
+		e1.Kinematic.Velocity = movementDir.Mul(e1.Kinematic.Speed)
+		e1.AddPosition(e1.TotalKinematicVelocity().Mul(delta.Seconds()))
 
 		v := e1.TotalKinematicVelocity()
 		vWithoutY := mgl64.Vec3{v.X(), 0, v.Z()}
@@ -36,12 +56,9 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 			rotateEntityToFaceMovement(e1, vWithoutY)
 		}
 
-		e1.AddPosition(e1.TotalKinematicVelocity().Mul(delta.Seconds()))
-
-		maxRunCount := 100
 		var runCount int = 0
-		var grounded bool
 
+		var grounded bool
 		for runCount = range maxRunCount {
 			candidates := world.SpatialPartition().QueryEntities(e1.BoundingBox())
 
@@ -75,8 +92,13 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 				break
 			}
 
-			if minContact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
+			slopeRadians := math.Acos(minContact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}))
+			// if slopeRadians <= maxSlopeRadians && e1.TotalKinematicVelocity().Y() <= 0 {
+			if slopeRadians <= maxSlopeRadians {
 				grounded = true
+				if e1.Position().Y() > 1 {
+					fmt.Println("HI")
+				}
 			}
 
 			e1.AddPosition(minContact.SeparatingVector)
@@ -91,6 +113,70 @@ func KinematicStep[T types.KinematicEntity](delta time.Duration, ents []T, world
 			fmt.Printf("HIT KINEMATIC MAX RUNCOUNT OF %d\n", maxRunCount)
 		}
 	}
+}
+
+func rayCastToGround(world GameWorld, e1 types.KinematicEntity) (mgl64.Vec3, float64, bool) {
+	capsule := e1.CapsuleCollider()
+	rayOrigin := capsule.Bottom.Add(mgl64.Vec3{0, -capsule.Radius, 0})
+	ray := collider.Ray{Origin: rayOrigin, Direction: mgl64.Vec3{0, -1, 0}}
+
+	var actualHit bool
+	var actualHitNormal mgl64.Vec3
+	var minHitDistance = math.MaxFloat32
+
+	candidates := world.SpatialPartition().QueryEntities(e1.BoundingBox())
+	for _, candidate := range candidates {
+		if candidate.GetID() == e1.GetID() {
+			continue
+		}
+
+		e2 := world.GetEntityByID(candidate.GetID())
+		if !e2.HasTriMeshCollider() {
+			continue
+		}
+
+		hitPoint, hitNormal, hit := checks.IntersectRayTriMesh(ray, e2.TriMeshCollider())
+		hitDistance := hitPoint.Sub(rayOrigin).Len()
+		if hit && hitDistance < minHitDistance {
+			actualHitNormal = hitNormal
+			minHitDistance = hitDistance
+			actualHit = true
+		}
+	}
+
+	return actualHitNormal, minHitDistance, actualHit
+}
+
+// moveDirAlongSlope augments the movement vector to point in the direction of any
+// slopes it may be walking along
+func moveDirAlongSlope(world GameWorld, e1 *entity.Entity, movementDir mgl64.Vec3) mgl64.Vec3 {
+	normal, _, hit := rayCastToGround(world, e1)
+
+	if !hit {
+		return movementDir
+	}
+
+	slopeRadians := math.Acos(normal.Dot(mgl64.Vec3{0, 1, 0}))
+	// fmt.Println(slopeRadians * 180 / math.Pi)
+	if slopeRadians > maxSlopeRadians {
+		return movementDir
+	}
+
+	movementDir[1] = 0
+	if movementDir.LenSqr() == 0 {
+		return movementDir
+	}
+
+	movementDir = movementDir.Normalize()
+	dotted := normal.Mul(movementDir.Dot(normal))
+	vecOnSurface := movementDir.Sub(dotted).Normalize()
+
+	// // only handle walking down a slope
+	// if vecOnSurface.Y() >= 0 {
+	// 	return movementDir
+	// }
+
+	return vecOnSurface
 }
 
 func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact {
@@ -124,11 +210,7 @@ func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact 
 		}
 
 		for _, contact := range contacts {
-			c := collision.Contact{
-				Type:               contact.Type,
-				SeparatingVector:   contact.SeparatingVector,
-				SeparatingDistance: contact.SeparatingDistance,
-			}
+			c := contact
 			if e2.HasCapsuleCollider() {
 				c.SeparatingVector = c.SeparatingVector.Mul(-1)
 			}
@@ -144,11 +226,7 @@ func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact 
 			return nil
 		}
 
-		result = append(result, collision.Contact{
-			Type:               contact.Type,
-			SeparatingVector:   contact.SeparatingVector,
-			SeparatingDistance: contact.SeparatingDistance,
-		})
+		result = append(result, contact)
 	}
 
 	// filter out contacts that have tiny separating distances

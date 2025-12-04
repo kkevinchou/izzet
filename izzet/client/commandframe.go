@@ -311,7 +311,7 @@ func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3,
 		transformMatrix := entity.WorldTransform(e)
 		collider := e.Collider.TriMeshCollider.Transform(transformMatrix)
 
-		point, success := checks.IntersectRayTriMesh(ray, collider)
+		point, _, success := checks.IntersectRayTriMesh(ray, collider)
 		if !success {
 			continue
 		}

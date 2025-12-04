@@ -9,6 +9,11 @@ type KinematicComponent struct {
 	AccumulatedVelocity mgl64.Vec3
 	Grounded            bool
 	GravityEnabled      bool
+	Speed               float64
+
+	// maybe wrap this in a struct
+	MoveIntent mgl64.Vec3
+	Jump       bool
 }
 
 func (e *Entity) IsKinematic() bool {
@@ -46,4 +51,8 @@ func (e *Entity) ClearVerticalKinematicVelocity() {
 
 func (e *Entity) SetGrounded(v bool) {
 	e.Kinematic.Grounded = v
+}
+
+func (e *Entity) GetMovementVector() mgl64.Vec3 {
+	return e.Kinematic.Velocity
 }

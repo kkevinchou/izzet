@@ -57,7 +57,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				animationKey := entity.AnimationKeyRun
 				if e.AIComponent.State == entity.AIStateAttack {
 					animationKey = entity.AnimationKeyAttack
-				} else if !apputils.IsZeroVec(e.Kinematic.Velocity) {
+				} else if !apputils.IsZeroVec(e.TotalKinematicVelocity()) {
 					animationKey = entity.AnimationKeyRun
 				} else {
 					animationKey = entity.AnimationKeyIdle

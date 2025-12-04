@@ -35,36 +35,37 @@ func IntersectRayPlane(ray collider.Ray, plane collider.Plane) (mgl64.Vec3, bool
 	return intersectionPoint, true
 }
 
-func IntersectRayTriangle(ray collider.Ray, triangle collider.Triangle) (mgl64.Vec3, bool) {
+func IntersectRayTriangle(ray collider.Ray, triangle collider.Triangle) (mgl64.Vec3, mgl64.Vec3, bool) {
 	nDotDir := triangle.Normal.Dot(ray.Direction)
 	if math.Abs(nDotDir) <= 0.001 {
 		// ray direction is perpendicular to normal
-		return mgl64.Vec3{}, false
+		return mgl64.Vec3{}, mgl64.Vec3{}, false
 	}
 
 	d := triangle.Points[0].Dot(triangle.Normal)
 	t := (d - triangle.Normal.Dot(ray.Origin)) / nDotDir
 	if t < 0 {
 		// don't count plane from behind
-		return mgl64.Vec3{}, false
+		return mgl64.Vec3{}, mgl64.Vec3{}, false
 	}
 
 	point := ray.Origin.Add(ray.Direction.Mul(t))
 
 	if PointInTriangle(point, triangle) {
-		return point, true
+		return point, triangle.Normal, true
 	}
 
-	return mgl64.Vec3{}, false
+	return mgl64.Vec3{}, mgl64.Vec3{}, false
 }
 
-func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3, bool) {
+func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3, mgl64.Vec3, bool) {
 	var minDist float64
 	var minPoint mgl64.Vec3
+	var minNormal mgl64.Vec3
 	var rayHasHit bool
 
 	for _, t := range triMesh.Triangles {
-		point, hit := IntersectRayTriangle(ray, t)
+		point, normal, hit := IntersectRayTriangle(ray, t)
 		if !hit {
 			continue
 		}
@@ -72,11 +73,13 @@ func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3
 		if !rayHasHit {
 			minDist = ray.Origin.Sub(point).Len()
 			minPoint = point
+			minNormal = normal
 		} else {
 			dst := ray.Origin.Sub(point).Len()
 			if dst < minDist {
 				minDist = dst
 				minPoint = point
+				minNormal = normal
 			}
 		}
 
@@ -84,10 +87,10 @@ func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3
 	}
 
 	if rayHasHit {
-		return minPoint, true
+		return minPoint, minNormal, true
 	}
 
-	return mgl64.Vec3{}, false
+	return mgl64.Vec3{}, mgl64.Vec3{}, false
 }
 
 func IntersectLineAABB(line collider.Line, bb collider.BoundingBox) (mgl64.Vec3, mgl64.Vec3, bool) {

@@ -92,7 +92,7 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 			continue
 		}
 
-		point, success := checks.IntersectRayTriMesh(ray, ent.TriMeshCollider())
+		point, _, success := checks.IntersectRayTriMesh(ray, ent.TriMeshCollider())
 		if !success {
 			continue
 		}

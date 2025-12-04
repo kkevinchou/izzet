@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
@@ -107,7 +108,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 
 	handle := assets.NewSingleEntityMeshHandle(modelName)
 	e := entity.CreateEmptyEntity(modelName)
-	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true}
+	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
 
 	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
 	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
@@ -125,7 +126,6 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	entity.SetScale(e, mgl64.Vec3{0.5, 0.5, 0.5})
 
 	e.AIComponent = &entity.AIComponent{
-		Speed: 7,
 		// AttackConfig:   &entity.AttackConfig{},
 	}
 

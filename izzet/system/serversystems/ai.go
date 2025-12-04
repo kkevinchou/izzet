@@ -50,7 +50,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
 			dir := target.Sub(position).Normalize()
-			e.Kinematic.Velocity = dir.Mul(aiComponent.Speed)
+			e.Kinematic.Velocity = dir.Mul(e.Kinematic.Speed)
 		}
 
 		if aiComponent.RotationConfig != nil {
@@ -67,7 +67,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
-					e.Kinematic.Velocity = dir.Mul(aiComponent.Speed)
+					e.Kinematic.Velocity = dir.Mul(e.Kinematic.Speed)
 
 					if dir != apputils.ZeroVec {
 						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
@@ -115,7 +115,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						e.Kinematic.Velocity = dir.Mul(aiComponent.Speed)
+						e.Kinematic.Velocity = dir.Mul(e.Kinematic.Speed)
 
 						if dir != apputils.ZeroVec {
 							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)

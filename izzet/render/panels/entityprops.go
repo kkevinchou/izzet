@@ -336,13 +336,13 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		}
 	}
 	if e.Kinematic != nil {
-		kinematicComponent := e.Kinematic
-		velocity := &kinematicComponent.Velocity
+		// kinematicComponent := e.Kinematic
+		velocity := e.TotalKinematicVelocity()
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Kinematic Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			panelutils.InitColumns()
 
-			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
+			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.Z())
 
 			panelutils.SetupRow("Velocity X", func() {
 				imgui.PushIDStr("velocity x")

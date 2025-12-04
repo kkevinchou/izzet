@@ -241,10 +241,6 @@ func (g *Client) setupSystems() {
 
 func (g *Client) setupEntities() {
 	pointLight := entity.CreatePointLight()
-	pointLight.AIComponent = &entity.AIComponent{
-		PatrolConfig: &entity.PatrolConfig{Points: []mgl64.Vec3{{0, 100, 0}, {0, 300, 0}}},
-		Speed:        100,
-	}
 	pointLight.LightInfo.PreScaledIntensity = 0.05
 	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
 	entity.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})

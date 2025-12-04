@@ -32,6 +32,7 @@ type KinematicEntity interface {
 	SetPosition(v mgl64.Vec3)
 	BoundingBox() collider.BoundingBox
 	SetLocalRotation(q mgl64.Quat)
+	GetMovementVector() mgl64.Vec3
 
 	HasCapsuleCollider() bool
 	HasTriMeshCollider() bool

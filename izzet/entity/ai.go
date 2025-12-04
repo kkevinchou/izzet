@@ -7,7 +7,6 @@ type AIComponent struct {
 	RotationConfig *RotationConfig
 	TargetConfig   *TargetConfig
 	PathfindConfig *PathfindConfig
-	Speed          float64
 
 	AttackConfig *AttackConfig
 	State        AIState

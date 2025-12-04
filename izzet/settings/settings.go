@@ -72,7 +72,7 @@ const (
 
 	CharacterSpeed           float64 = 10
 	CharacterFlySpeed        float64 = 30
-	CharacterJumpVelocity    float64 = 25
+	CharacterJumpSpeed       float64 = 25
 	CharacterWebSpeed        float64 = 110
 	CharacterWebLaunchSpeed  float64 = 80
 	CameraSpeed              float64 = 20

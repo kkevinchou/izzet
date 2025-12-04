@@ -47,14 +47,14 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 		var radius float64 = 40
 		var length float64 = 80
 		playerEntity := entity.CreateEmptyEntity("player")
-		playerEntity.Kinematic = &entity.KinematicComponent{GravityEnabled: true}
+		playerEntity.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
 		capsule := collider.Capsule{
 			Radius: radius,
 			Top:    mgl64.Vec3{0, radius + length, 0},
 			Bottom: mgl64.Vec3{0, radius, 0},
 		}
 		playerEntity.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
-		playerEntity.CharacterControllerComponent = &entity.CharacterControllerComponent{Speed: settings.CharacterSpeed, FlySpeed: settings.CharacterFlySpeed}
+		playerEntity.CharacterControllerComponent = &entity.CharacterControllerComponent{}
 		handle := assets.NewSingleEntityMeshHandle("alpha3")
 
 		playerEntity.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}

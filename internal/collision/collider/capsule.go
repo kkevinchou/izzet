@@ -7,6 +7,9 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 )
 
+// A capsule is defined by a line segment with a radius around all points
+// along the line segment.
+// Top and Bottom represents the top and bottom points of the line segment
 type Capsule struct {
 	Radius float64
 	Top    mgl64.Vec3

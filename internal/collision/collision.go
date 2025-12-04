@@ -22,6 +22,7 @@ type Contact struct {
 	PackedIndexA int
 	PackedIndexB int
 	Type         ContactType
+	Normal       mgl64.Vec3
 
 	SeparatingVector   mgl64.Vec3
 	SeparatingDistance float64
@@ -98,6 +99,7 @@ func CheckCollisionCapsuleCapsule(capsule1 collider.Capsule, capsule2 collider.C
 		separatingVec := capsule2To1Dir.Mul(separatingDistance)
 		return Contact{
 			// Point:              capsule2To1Dir.Mul(closestPointsDistance),
+			// Normal:             separatingVec,
 			SeparatingVector:   separatingVec,
 			SeparatingDistance: separatingDistance,
 			Type:               ContactTypeCapsuleCapsule,

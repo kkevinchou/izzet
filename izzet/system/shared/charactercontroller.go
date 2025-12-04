@@ -14,46 +14,37 @@ func UpdateCharacterController(delta time.Duration, frameInput input.Input, e *e
 	if e.Kinematic == nil {
 		return
 	}
-	c := e.CharacterControllerComponent
-	c.ControlVector = apputils.GetControlVector(frameInput.KeyboardInput)
-
-	movementDir := calculateMovementDir(frameInput.CameraRotation, c.ControlVector)
-	updateKinematicComponent(frameInput, e, movementDir)
+	e.CharacterControllerComponent.ControlVector = apputils.GetControlVector(frameInput.KeyboardInput)
+	updateKinematicComponent(frameInput, e)
 }
 
-func updateKinematicComponent(frameInput input.Input, e *entity.Entity, movementDir mgl64.Vec3) {
+func updateKinematicComponent(frameInput input.Input, e *entity.Entity) {
 	keyboardInput := frameInput.KeyboardInput
+	movementDir := calculateMovementDir(frameInput.CameraRotation, e.CharacterControllerComponent.ControlVector)
 
+	e.Kinematic.MoveIntent = movementDir
 	e.Kinematic.Velocity = mgl64.Vec3{}
+	e.Kinematic.Jump = false
 
 	if event, ok := keyboardInput[input.KeyboardKeyG]; ok {
 		if event.Event == input.KeyboardEventUp {
 			e.Kinematic.GravityEnabled = !e.Kinematic.GravityEnabled
 			e.Kinematic.Velocity = mgl64.Vec3{}
 			e.Kinematic.AccumulatedVelocity = mgl64.Vec3{}
+			if e.Kinematic.GravityEnabled {
+				e.Kinematic.Speed = settings.CharacterSpeed
+			} else {
+				e.Kinematic.Speed = settings.CharacterFlySpeed
+			}
 		}
 	}
 
 	if e.Kinematic.GravityEnabled {
 		if e.Kinematic.Grounded {
 			if e.CharacterControllerComponent.ControlVector.Y() > 0 {
-				e.Kinematic.Grounded = false
-				v := mgl64.Vec3{0, settings.CharacterJumpVelocity, 0}
-				e.Kinematic.AccumulatedVelocity = e.Kinematic.AccumulatedVelocity.Add(v)
+				e.Kinematic.Jump = true
 			}
 		}
-		e.Kinematic.Velocity = e.Kinematic.Velocity.Add(removeYMovement(movementDir).Mul(e.CharacterControllerComponent.Speed))
-
-		// cameraRotation := frameInput.CameraRotation
-		// viewVector := cameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
-		// if event, ok := keyboardInput[input.KeyboardKeyF]; ok {
-		// 	if event.Event == input.KeyboardEventUp {
-		// 		e.Kinematic.Velocity = e.Kinematic.Velocity.Add(viewVector.Mul(settings.CharacterWebLaunchSpeed))
-		// 	}
-		// }
-	} else {
-		c := e.CharacterControllerComponent
-		e.Kinematic.Velocity = e.Kinematic.Velocity.Add(movementDir.Mul(c.FlySpeed))
 	}
 }
 

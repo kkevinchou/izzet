@@ -475,7 +475,7 @@ var skyboxVertices = []float32{
 // https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
 func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entity.Entity) {
 	if len(lights) > settings.MaxLightCount {
-		panic(fmt.Sprintf("light count of %d exceeds max %d", len(lights), settings.MaxLightCount))
+		lights = lights[:10]
 	}
 
 	shader.SetUniformInt("lightCount", int32(len(lights)))

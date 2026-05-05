@@ -18,6 +18,7 @@ import (
 const maxRunCount int = 100
 const maxSlopeAngle float64 = 45
 const maxSlopeRadians float64 = maxSlopeAngle * math.Pi / 180
+const groundedStickDistance float64 = 0.05
 
 func KinematicStepSingle(delta time.Duration, e *entity.Entity, world GameWorld, app App) {
 	KinematicStep(delta, []*entity.Entity{e}, world, app)
@@ -38,12 +39,20 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 		movementDir := e1.Kinematic.MoveIntent
 
 		if e1.GravityEnabled() {
-			velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
-			e1.AccumulateKinematicVelocity(velocityFromGravity)
-
 			// disable Y movements when gravity is enabled
 			movementDir = removeYMovement(movementDir)
 			movementDir = moveDirAlongSlope(world, e1, movementDir)
+
+			if shouldApplyGravity(world, e1, movementDir) {
+				velocityFromGravity := mgl64.Vec3{0, -settings.AccelerationDueToGravity * float64(delta.Milliseconds()) / 1000}
+				e1.AccumulateKinematicVelocity(velocityFromGravity)
+			} else {
+				// Keep the character pinned in place on walkable slopes while idle.
+				// Preserve upward velocity so jump impulses are not canceled.
+				if e1.Kinematic.AccumulatedVelocity.Y() < 0 {
+					e1.ClearVerticalKinematicVelocity()
+				}
+			}
 		}
 
 		e1.Kinematic.Velocity = movementDir.Mul(e1.Kinematic.Speed)
@@ -93,13 +102,19 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 			}
 
 			if e1.GravityEnabled() {
-				slopeRadians := math.Acos(minContact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}))
+				slopeRadians := slopeAngleFromNormal(minContact.SeparatingVector)
 				if slopeRadians <= maxSlopeRadians {
 					grounded = true
 				}
 			}
 
 			e1.AddPosition(minContact.SeparatingVector)
+		}
+
+		// Maintain grounding when standing still in resting contact (no overlap).
+		if e1.GravityEnabled() && !grounded {
+			_, _, supported := walkableGroundSupport(world, e1, groundedStickDistance)
+			grounded = supported
 		}
 
 		e1.SetGrounded(grounded)
@@ -115,14 +130,18 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 
 func rayCastToGround(world GameWorld, e1 types.KinematicEntity) (mgl64.Vec3, float64, bool) {
 	capsule := e1.CapsuleCollider()
-	rayOrigin := capsule.Bottom.Add(mgl64.Vec3{0, -capsule.Radius, 0})
+	rayOrigin := capsule.Bottom
 	ray := collider.Ray{Origin: rayOrigin, Direction: mgl64.Vec3{0, -1, 0}}
 
 	var actualHit bool
 	var actualHitNormal mgl64.Vec3
 	var minHitDistance = math.MaxFloat32
 
-	candidates := world.SpatialPartition().QueryEntities(e1.BoundingBox())
+	maxWalkableGroundDistance := capsule.Radius/math.Cos(maxSlopeRadians) + groundedStickDistance
+	queryBounds := e1.BoundingBox()
+	queryBounds.MinVertex = queryBounds.MinVertex.Sub(mgl64.Vec3{capsule.Radius, maxWalkableGroundDistance, capsule.Radius})
+	queryBounds.MaxVertex = queryBounds.MaxVertex.Add(mgl64.Vec3{capsule.Radius, 0, capsule.Radius})
+	candidates := world.SpatialPartition().QueryEntities(queryBounds)
 	for _, candidate := range candidates {
 		if candidate.GetID() == e1.GetID() {
 			continue
@@ -145,6 +164,59 @@ func rayCastToGround(world GameWorld, e1 types.KinematicEntity) (mgl64.Vec3, flo
 	return actualHitNormal, minHitDistance, actualHit
 }
 
+func shouldApplyGravity(world GameWorld, e1 *entity.Entity, movementDir mgl64.Vec3) bool {
+	// in theory we could use the previous frame's grounded state to determine whether
+	// we apply gravity, but it would be operating on a 1 frame delay. instead we check for
+	// a walkable ground support
+
+	// Preserve jump arcs by continuing gravity while moving upward.
+	if e1.Kinematic.AccumulatedVelocity.Y() > 0 {
+		return true
+	}
+
+	_, _, supported := walkableGroundSupport(world, e1, groundedStickDistance)
+	return !supported
+}
+
+func walkableGroundSupport(world GameWorld, e1 types.KinematicEntity, maxDistance float64) (mgl64.Vec3, float64, bool) {
+	normal, hitDistance, hit := rayCastToGround(world, e1)
+	if !hit {
+		return mgl64.Vec3{}, 0, false
+	}
+
+	if normal.LenSqr() == 0 {
+		return mgl64.Vec3{}, 0, false
+	}
+
+	normalizedNormal := normal.Normalize()
+	if slopeAngleFromNormal(normalizedNormal) > maxSlopeRadians {
+		return normal, hitDistance, false
+	}
+
+	if normalizedNormal.Y() <= 0 {
+		return normal, hitDistance, false
+	}
+
+	// When a sphere rests on a slope, the vertical center-to-ground distance grows as 1/normal.y.
+	r := e1.CapsuleCollider().Radius
+	restingDistance := r / normalizedNormal.Y()
+	if hitDistance > restingDistance+maxDistance {
+		return normal, hitDistance, false
+	}
+
+	return normal, hitDistance, true
+}
+
+func slopeAngleFromNormal(normal mgl64.Vec3) float64 {
+	if normal.LenSqr() == 0 {
+		return math.Pi
+	}
+
+	dot := normal.Normalize().Dot(mgl64.Vec3{0, 1, 0})
+	dot = mgl64.Clamp(dot, -1, 1)
+	return math.Acos(dot)
+}
+
 // moveDirAlongSlope augments the movement vector to point in the direction of any
 // slopes it may be walking along
 func moveDirAlongSlope(world GameWorld, e1 *entity.Entity, movementDir mgl64.Vec3) mgl64.Vec3 {
@@ -154,7 +226,7 @@ func moveDirAlongSlope(world GameWorld, e1 *entity.Entity, movementDir mgl64.Vec
 		return movementDir
 	}
 
-	slopeRadians := math.Acos(normal.Dot(mgl64.Vec3{0, 1, 0}))
+	slopeRadians := slopeAngleFromNormal(normal)
 	if slopeRadians > maxSlopeRadians {
 		return movementDir
 	}

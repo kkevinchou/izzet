@@ -17,6 +17,7 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
 	}
 
+	a.clearDocumentPrimitives(config)
 	d.Document = document
 	a.documentAssets[d.Config.Name] = d
 
@@ -60,6 +61,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
 	}
 
+	a.clearDocumentPrimitives(config)
 	a.documentAssets[config.Name] = DocumentAsset{
 		Config:        config,
 		Document:      document,
@@ -104,6 +106,16 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	}
 
 	return document
+}
+
+func (a *AssetManager) clearDocumentPrimitives(config AssetConfig) {
+	delete(a.Primitives, NewSingleEntityMeshHandle(config.Name))
+
+	if existingAsset, ok := a.documentAssets[config.Name]; ok && existingAsset.Document != nil {
+		for _, mesh := range existingAsset.Document.Meshes {
+			delete(a.Primitives, NewMeshHandle(config.Name, fmt.Sprintf("%d", mesh.ID)))
+		}
+	}
 }
 
 func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification) string {

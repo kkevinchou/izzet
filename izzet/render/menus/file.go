@@ -175,9 +175,6 @@ func importAssetModal(app renderiface.App) {
 		panelutils.SetupRow("Physics", func() {
 			imgui.Checkbox("##", &wipImportAssetConfig.Physics)
 		}, true)
-		panelutils.SetupRow("Single Entity", func() {
-			imgui.Checkbox("##", &wipImportAssetConfig.SingleEntity)
-		}, true)
 
 		imgui.EndTable()
 

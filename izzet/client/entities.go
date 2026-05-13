@@ -12,8 +12,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset) *entity.Entity {
-	if !documentAsset.Config.SingleEntity {
+func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset, merged bool) *entity.Entity {
+	if !merged {
 		spawnedEntities := g.createEntitiesFromDocument(documentAsset)
 		for _, entity := range spawnedEntities {
 			g.world.AddEntity(entity)
@@ -38,38 +38,6 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 		e.Animation = entity.NewAnimationComponent(document.Name, g.assetManager)
 	}
 
-	return e
-}
-
-func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle types.MeshHandle, node *modelspec.Node) *entity.Entity {
-	document := documentAsset.Document
-	config := documentAsset.Config
-	e := entity.CreateEmptyEntity(name)
-
-	e.MeshComponent = &entity.MeshComponent{
-		MeshHandle:    meshHandle,
-		Transform:     mgl64.Ident4(),
-		Visible:       true,
-		ShadowCasting: true,
-	}
-
-	var vertices []modelspec.Vertex
-	entity.VerticesFromNode(node, document, &vertices)
-	entity.SetLocalPosition(e, utils.Vec3F32ToF64(node.Translation))
-	e.SetLocalRotation(utils.QuatF32ToF64(node.Rotation))
-	entity.SetScale(e, utils.Vec3F32ToF64(node.Scale))
-
-	e.Static = config.Static
-	if config.Physics {
-		e.Physics = &entity.PhysicsComponent{}
-	}
-
-	if types.ColliderType(config.ColliderType) == types.ColliderTypeMesh {
-		primitives := g.assetManager.GetPrimitives(meshHandle)
-		t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
-		bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		e.Collider = entity.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, nil, bb)
-	}
 	return e
 }
 
@@ -132,4 +100,36 @@ func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node
 	}
 
 	return allEntities
+}
+
+func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle types.MeshHandle, node *modelspec.Node) *entity.Entity {
+	document := documentAsset.Document
+	config := documentAsset.Config
+	e := entity.CreateEmptyEntity(name)
+
+	e.MeshComponent = &entity.MeshComponent{
+		MeshHandle:    meshHandle,
+		Transform:     mgl64.Ident4(),
+		Visible:       true,
+		ShadowCasting: true,
+	}
+
+	var vertices []modelspec.Vertex
+	entity.VerticesFromNode(node, document, &vertices)
+	entity.SetLocalPosition(e, utils.Vec3F32ToF64(node.Translation))
+	e.SetLocalRotation(utils.QuatF32ToF64(node.Rotation))
+	entity.SetScale(e, utils.Vec3F32ToF64(node.Scale))
+
+	e.Static = config.Static
+	if config.Physics {
+		e.Physics = &entity.PhysicsComponent{}
+	}
+
+	if types.ColliderType(config.ColliderType) == types.ColliderTypeMesh {
+		primitives := g.assetManager.GetPrimitives(meshHandle)
+		t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
+		bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+		e.Collider = entity.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, nil, bb)
+	}
+	return e
 }

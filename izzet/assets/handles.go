@@ -48,7 +48,7 @@ type Primitive struct {
 //
 // - the instantiated entities should have meshes/materials that point to loaded meshes/materials
 func NewSingleEntityMeshHandle(namespace string) types.MeshHandle {
-	return NewMeshHandle(namespace, "0")
+	return NewMeshHandle(namespace, "__merged__")
 }
 
 func NewMeshHandle(namespace string, id string) types.MeshHandle {

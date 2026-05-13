@@ -51,8 +51,12 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 	)
 
 	if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
-		if imgui.Button("Instantiate") {
-			app.CreateEntitiesFromDocumentAsset(documentAsset)
+		if imgui.Button("Instantiate Entities") {
+			app.CreateEntitiesFromDocumentAsset(documentAsset, false)
+			imgui.CloseCurrentPopup()
+		}
+		if imgui.Button("Instantiate As Merged Entity") {
+			app.CreateEntitiesFromDocumentAsset(documentAsset, true)
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()

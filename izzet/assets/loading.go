@@ -33,18 +33,7 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.
 		}
 	}
 
-	if config.SingleEntity {
-		// look up the material -> handle setup on the load call
-		// materials have been saved to the assets json and should be initialized
-		// in initializeAssetManagerWithProject()
-		// 1. LoadAndRegisterDocument
-		// 2. CreateMaterialWithHandle for each material
-		//
-		// document should contain a mapping from the gltf material -> a material handle
-		a.registerDocumentMeshWithSingleHandle(document, d.MatIDToHandle)
-	} else {
-		a.registerDocumentMeshes(document, d.MatIDToHandle)
-	}
+	a.registerDocumentMeshes(document, d.MatIDToHandle)
 
 	if len(document.Animations) > 0 {
 		a.Animations[config.Name] = document.Animations
@@ -86,18 +75,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		}
 	}
 
-	if config.SingleEntity {
-		// look up the material -> handle setup on the load call
-		// materials have been saved to the assets json and should be initialized
-		// in initializeAssetManagerWithProject()
-		// 1. LoadAndRegisterDocument
-		// 2. CreateMaterialWithHandle for each material
-		//
-		// document should contain a mapping from the gltf material -> a material handle
-		a.registerDocumentMeshWithSingleHandle(document, a.documentAssets[config.Name].MatIDToHandle)
-	} else {
-		a.registerDocumentMeshes(document, a.documentAssets[config.Name].MatIDToHandle)
-	}
+	a.registerDocumentMeshes(document, a.documentAssets[config.Name].MatIDToHandle)
 
 	if len(document.Animations) > 0 {
 		a.Animations[config.Name] = document.Animations
@@ -123,14 +101,14 @@ func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification)
 	return fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID)
 }
 
-func (m *AssetManager) registerDocumentMeshWithSingleHandle(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
+func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
+	// registration of all primitives under one handle to support merged entity instantiation
 	handle := NewSingleEntityMeshHandle(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 	}
-}
 
-func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
+	// per entity primitive registration
 	for _, mesh := range document.Meshes {
 		handle := NewMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)

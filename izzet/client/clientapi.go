@@ -399,7 +399,6 @@ func (g *Client) LoadDefaultAssets() {
 			FilePath:      metaData.Path,
 			ColliderType:  string(types.ColliderTypeMesh),
 			ColliderGroup: string(types.ColliderGroupPlayer),
-			SingleEntity:  true,
 		}
 		g.ImportAsset(config)
 	}

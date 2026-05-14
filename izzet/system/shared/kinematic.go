@@ -150,9 +150,10 @@ func rayCastToGround(world GameWorld, e1 types.KinematicEntity) RayCastResult {
 
 	maxWalkableGroundDistance := capsule.Radius/math.Cos(maxSlopeRadians) + groundedStickDistance
 	queryBounds := e1.BoundingBox()
-	queryBounds.MinVertex = queryBounds.MinVertex.Sub(mgl64.Vec3{capsule.Radius, maxWalkableGroundDistance, capsule.Radius})
-	queryBounds.MaxVertex = queryBounds.MaxVertex.Add(mgl64.Vec3{capsule.Radius, 0, capsule.Radius})
+	queryBounds.MinVertex = queryBounds.MinVertex.Sub(mgl64.Vec3{0, maxWalkableGroundDistance, 0})
 	candidates := world.SpatialPartition().QueryEntities(queryBounds)
+
+	e1BoundingBox := e1.BoundingBox()
 	for _, candidate := range candidates {
 		if candidate.GetID() == e1.GetID() {
 			continue
@@ -160,6 +161,10 @@ func rayCastToGround(world GameWorld, e1 types.KinematicEntity) RayCastResult {
 
 		e2 := world.GetEntityByID(candidate.GetID())
 		if !e2.HasTriMeshCollider() {
+			continue
+		}
+
+		if !checks.BoundingBoxOverlaps(e1BoundingBox, e2.BoundingBox()) {
 			continue
 		}
 

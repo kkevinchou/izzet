@@ -78,6 +78,9 @@ func SetDirty(entity *Entity) {
 		if entity.Collider.proxyTriMeshCollider != nil {
 			entity.Collider.proxyTriMeshCollider.Dirty = true
 		}
+		if entity.Collider.proxySimplifiedTriMeshCollider != nil {
+			entity.Collider.proxySimplifiedTriMeshCollider.Dirty = true
+		}
 		if entity.Collider.proxyBoundingBoxCollider != nil {
 			entity.Collider.proxyBoundingBoxCollider.Dirty = true
 		}

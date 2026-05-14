@@ -44,6 +44,8 @@ type SpatialPartition struct {
 
 	entityPartitionCache [settings.MaxEntityCount]CachedPartition
 	entityPositionCache  [settings.MaxEntityCount]CachedPosition
+	entityQueryMarker    [settings.MaxEntityCount]int
+	queryGeneration      int
 
 	// pool partition keys to avoid reallocating new arrays and resizing slices
 	pooledPartitionKeys []PartitionKey
@@ -69,6 +71,8 @@ func (s *SpatialPartition) initialize() {
 	s.pooledPartitionKeys = make([]PartitionKey, s.PartitionCount*s.PartitionCount*s.PartitionCount)
 	s.entityPartitionCache = [settings.MaxEntityCount]CachedPartition{}
 	s.entityPositionCache = [settings.MaxEntityCount]CachedPosition{}
+	s.entityQueryMarker = [settings.MaxEntityCount]int{}
+	s.queryGeneration = 0
 }
 
 func (s *SpatialPartition) Clear() {
@@ -79,13 +83,13 @@ func (s *SpatialPartition) EntitiesByLineSegment(line collider.Line) []Entity {
 	partitions := s.PartitionsByLineSegment(line)
 	candidates := []Entity{}
 
-	var seenEntities [settings.MaxEntityCount]bool
+	queryGeneration := s.nextQueryGeneration()
 
 	for _, partitionKey := range partitions {
 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 		for _, e := range partition.entities {
-			if !seenEntities[e.GetID()] {
-				seenEntities[e.GetID()] = true
+			if s.entityQueryMarker[e.GetID()] != queryGeneration {
+				s.entityQueryMarker[e.GetID()] = queryGeneration
 				candidates = append(candidates, e)
 			}
 		}
@@ -183,19 +187,24 @@ func (s *SpatialPartition) QueryEntities(boundingBox collider.BoundingBox) []Ent
 	partitions := s.IntersectingPartitions(boundingBox)
 	candidates := []Entity{}
 
-	var seenEntities [settings.MaxEntityCount]bool
+	queryGeneration := s.nextQueryGeneration()
 
 	for _, partitionKey := range partitions {
 		partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
 		for _, e := range partition.entities {
-			if !seenEntities[e.GetID()] {
-				seenEntities[e.GetID()] = true
+			if s.entityQueryMarker[e.GetID()] != queryGeneration {
+				s.entityQueryMarker[e.GetID()] = queryGeneration
 				candidates = append(candidates, e)
 			}
 		}
 	}
 
 	return candidates
+}
+
+func (s *SpatialPartition) nextQueryGeneration() int {
+	s.queryGeneration++
+	return s.queryGeneration
 }
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {

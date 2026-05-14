@@ -206,12 +206,11 @@ func setupTransformedCollider(context *collisionContext, packedIndex int) {
 			context.packedCollisionData[packedIndex].capsuleCollider = capsule
 			context.packedCollisionData[packedIndex].hasCapsuleCollider = true
 		} else if cc.TriMeshCollider != nil {
-			transformMatrix := entity.WorldTransform(e)
 			var triMesh collider.TriMesh
-			if cc.SimplifiedTriMeshCollider != nil {
-				triMesh = cc.SimplifiedTriMeshCollider.Transform(transformMatrix)
+			if e.HasSimplifiedTriMeshCollider() {
+				triMesh = e.SimplifiedTriMeshCollider()
 			} else {
-				triMesh = cc.TriMeshCollider.Transform(transformMatrix)
+				triMesh = e.TriMeshCollider()
 			}
 			context.packedCollisionData[packedIndex].triMeshCollider = triMesh
 			context.packedCollisionData[packedIndex].hasTriMeshCollider = true

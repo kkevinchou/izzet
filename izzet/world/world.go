@@ -11,7 +11,6 @@ type GameWorld struct {
 	commandFrameCount int
 	spatialPartition  *spatialpartition.SpatialPartition
 
-	sortFrame      int
 	sortedEntities []*entity.Entity
 }
 
@@ -21,7 +20,6 @@ func New() *GameWorld {
 
 func NewWithEntities(entities map[int]*entity.Entity) *GameWorld {
 	g := &GameWorld{
-		sortFrame:        -1,
 		entities:         map[int]*entity.Entity{},
 		spatialPartition: spatialpartition.NewSpatialPartition(50, 10),
 	}

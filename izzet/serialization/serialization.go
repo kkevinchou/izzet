@@ -12,7 +12,6 @@ import (
 
 type GameWorld interface {
 	Entities() []*entity.Entity
-	EntitiesUncached() []*entity.Entity
 }
 
 type Relation struct {
@@ -42,8 +41,7 @@ func WriteToFile(world GameWorld, filepath string) error {
 }
 
 func Write(world GameWorld, writer io.Writer) error {
-	// perform an uncached read otherwise we may lose entities when deserializing
-	entities := world.EntitiesUncached()
+	entities := world.Entities()
 
 	worldIR := WorldIR{
 		Entities: entities,

@@ -1,7 +1,7 @@
 package world
 
 import (
-	"sort"
+	"slices"
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/entity"
@@ -12,6 +12,19 @@ func (g *GameWorld) AddEntity(e *entity.Entity) {
 		return
 	}
 	g.entities[e.ID] = e
+	g.addEntityToSortedList(e)
+}
+
+// we maintain a sorted entity list to provide deterministic entity iteration
+// this prevents weird non deterministic bugs which can occur, especially in
+// a multiplayer game with state synchronization
+func (g *GameWorld) addEntityToSortedList(e *entity.Entity) {
+	i, found := slices.BinarySearchFunc(g.sortedEntities, e, func(a, b *entity.Entity) int {
+		return a.ID - b.ID
+	})
+	if !found {
+		g.sortedEntities = slices.Insert(g.sortedEntities, i, e)
+	}
 }
 
 func (g *GameWorld) DeleteEntity(entityID int) {
@@ -28,6 +41,17 @@ func (g *GameWorld) DeleteEntity(entityID int) {
 	entity.RemoveParent(e)
 	g.spatialPartition.DeleteEntity(e.ID)
 	delete(g.entities, e.ID)
+
+	g.removeEntityFromSortedList(e.ID)
+}
+
+func (g *GameWorld) removeEntityFromSortedList(entityID int) {
+	i, found := slices.BinarySearchFunc(g.sortedEntities, entityID, func(e *entity.Entity, id int) int {
+		return e.ID - id
+	})
+	if found {
+		g.sortedEntities = slices.Delete(g.sortedEntities, i, i+1)
+	}
 }
 
 func (g *GameWorld) GetEntityByID(id int) *entity.Entity {
@@ -35,32 +59,7 @@ func (g *GameWorld) GetEntityByID(id int) *entity.Entity {
 }
 
 func (g *GameWorld) Entities() []*entity.Entity {
-	if g.sortFrame != g.CommandFrame() {
-		g.sortFrame = g.CommandFrame()
-
-		var ids []int
-		for id := range g.entities {
-			ids = append(ids, id)
-		}
-
-		sort.Ints(ids)
-
-		entities := []*entity.Entity{}
-		for _, id := range ids {
-			entities = append(entities, g.entities[id])
-		}
-		g.sortedEntities = entities
-	}
-
 	return g.sortedEntities
-}
-
-func (g *GameWorld) EntitiesUncached() []*entity.Entity {
-	var ents []*entity.Entity
-	for _, e := range g.entities {
-		ents = append(ents, e)
-	}
-	return ents
 }
 
 func (g *GameWorld) CommandFrame() int {

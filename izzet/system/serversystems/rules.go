@@ -8,8 +8,7 @@ import (
 )
 
 type RulesSystem struct {
-	app   App
-	world system.GameWorld
+	app App
 }
 
 func NewRulesSystem(app App) *RulesSystem {
@@ -27,7 +26,7 @@ func (s *RulesSystem) Update(delta time.Duration, world system.GameWorld) {
 		if !e.Deadge {
 			continue
 		}
-		s.world.DeleteEntity(e.GetID())
+		world.DeleteEntity(e.GetID())
 		s.app.EventsManager().DestroyEntityTopic.Write(events.DestroyEntityEvent{EntityID: e.ID})
 	}
 }

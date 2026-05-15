@@ -16,14 +16,17 @@ type GameWorld struct {
 }
 
 func New() *GameWorld {
-	return NewWithEntities(map[int]*entity.Entity{})
+	return NewWithEntities(nil)
 }
 
 func NewWithEntities(entities map[int]*entity.Entity) *GameWorld {
 	g := &GameWorld{
 		sortFrame:        -1,
-		entities:         entities,
+		entities:         map[int]*entity.Entity{},
 		spatialPartition: spatialpartition.NewSpatialPartition(50, 10),
+	}
+	for _, e := range entities {
+		g.AddEntity(e)
 	}
 	return g
 }

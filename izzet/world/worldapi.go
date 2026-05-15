@@ -14,13 +14,6 @@ func (g *GameWorld) AddEntity(e *entity.Entity) {
 	g.entities[e.ID] = e
 }
 
-func (g *GameWorld) DestroyEntity(entityID int) {
-	if _, ok := g.entities[entityID]; !ok {
-		return
-	}
-	delete(g.entities, entityID)
-}
-
 func (g *GameWorld) DeleteEntity(entityID int) {
 	e := g.GetEntityByID(entityID)
 	if e == nil {

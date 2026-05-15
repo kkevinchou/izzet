@@ -209,19 +209,21 @@ func (s *SpatialPartition) nextQueryGeneration() int {
 
 func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 	for _, entity := range entityList {
-		if s.entityPositionCache[entity.GetID()].Valid {
-			if s.entityPositionCache[entity.GetID()].Position == entity.Position() {
+		id := entity.GetID()
+		if s.entityPositionCache[id].Valid {
+			if s.entityPositionCache[id].Position == entity.Position() {
 				continue
 			}
 		}
-		s.entityPositionCache[entity.GetID()].Position = entity.Position()
-		s.entityPositionCache[entity.GetID()].Valid = true
+		s.entityPositionCache[id].Position = entity.Position()
+		s.entityPositionCache[id].Valid = true
 
 		// remove from old partitions
-		oldPartitions := s.entityPartitionCache[entity.GetID()].Partitions
+		oldPartitions := s.entityPartitionCache[id].Partitions
 		for partitionKey := range oldPartitions {
 			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
-			delete(partition.entities, entity.GetID())
+			delete(partition.entities, id)
+			delete(oldPartitions, partition.Key)
 		}
 
 		// add to new partitions
@@ -229,12 +231,12 @@ func (s *SpatialPartition) IndexEntities(entityList []Entity) {
 		newPartitions := s.IntersectingPartitions(boundingBox)
 		for _, partitionKey := range newPartitions {
 			partition := &s.Partitions[partitionKey[0]][partitionKey[1]][partitionKey[2]]
-			partition.entities[entity.GetID()] = entity
-			if !s.entityPartitionCache[entity.GetID()].Valid {
-				s.entityPartitionCache[entity.GetID()].Partitions = map[PartitionKey]any{}
-				s.entityPartitionCache[entity.GetID()].Valid = true
+			partition.entities[id] = entity
+			if !s.entityPartitionCache[id].Valid {
+				s.entityPartitionCache[id].Partitions = map[PartitionKey]any{}
+				s.entityPartitionCache[id].Valid = true
 			}
-			s.entityPartitionCache[entity.GetID()].Partitions[partition.Key] = partitionKey
+			s.entityPartitionCache[id].Partitions[partition.Key] = partitionKey
 		}
 	}
 }

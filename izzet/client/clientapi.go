@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"path/filepath"
 	"strings"
@@ -566,4 +567,8 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 
 func (g *Client) QueueCreateMaterialTexture(handle types.MaterialHandle) {
 	g.renderSystem.QueueCreateMaterialTexture(handle)
+}
+
+func (g *Client) Logger() *slog.Logger {
+	return iztlog.ClientLogger
 }

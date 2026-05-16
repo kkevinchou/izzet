@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"strings"
 
 	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/izzet/assets"
@@ -172,4 +174,8 @@ func (g *Server) PredictionDebugLogging() bool {
 }
 func (g *Server) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
+}
+
+func (g *Server) Logger() *slog.Logger {
+	return iztlog.ServerLogger
 }

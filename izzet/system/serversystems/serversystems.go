@@ -1,6 +1,7 @@
 package serversystems
 
 import (
+	"log/slog"
 	"net"
 
 	"github.com/kkevinchou/izzet/internal/input"
@@ -13,6 +14,7 @@ import (
 )
 
 type App interface {
+	Logger() *slog.Logger
 	AssetManager() *assets.AssetManager
 	GetPlayers() map[int]*network.Player
 	RegisterPlayer(playerID int, connection net.Conn) *network.Player

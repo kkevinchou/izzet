@@ -153,7 +153,6 @@ func rayCastToGround(world GameWorld, e1 types.KinematicEntity) RayCastResult {
 	queryBounds.MinVertex = queryBounds.MinVertex.Sub(mgl64.Vec3{0, maxWalkableGroundDistance, 0})
 	candidates := world.SpatialPartition().QueryEntities(queryBounds)
 
-	e1BoundingBox := e1.BoundingBox()
 	for _, candidate := range candidates {
 		if candidate.GetID() == e1.GetID() {
 			continue
@@ -164,7 +163,7 @@ func rayCastToGround(world GameWorld, e1 types.KinematicEntity) RayCastResult {
 			continue
 		}
 
-		if !checks.BoundingBoxOverlaps(e1BoundingBox, e2.BoundingBox()) {
+		if !checks.BoundingBoxOverlaps(queryBounds, e2.BoundingBox()) {
 			continue
 		}
 

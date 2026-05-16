@@ -107,7 +107,9 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 
 					player.RenderBlend.StartTime = time.Now()
 					player.RenderBlend.BlendStartPosition = player.Position()
-					replay(s.app, player, gamestateUpdateMessage, cfHistory, world)
+					if err := replay(s.app, player, gamestateUpdateMessage, cfHistory, world); err != nil {
+						panic(err)
+					}
 				}
 			} else if message.MessageType == network.MsgTypeCreateEntity {
 				var createEntityMessage network.CreateEntityMessage

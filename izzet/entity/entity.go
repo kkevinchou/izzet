@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -65,27 +64,4 @@ func (e *Entity) Dirty() bool {
 
 func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
-}
-
-func (e *Entity) UnmarshalJSON(data []byte) error {
-	type entityJSON Entity
-	aux := struct {
-		*entityJSON
-		LegacyBillboard *bool           `json:"Billboard"`
-		LegacyImageInfo *ImageComponent `json:"ImageInfo"`
-	}{
-		entityJSON: (*entityJSON)(e),
-	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if e.ImageComponent == nil && aux.LegacyImageInfo != nil {
-		e.ImageComponent = aux.LegacyImageInfo
-	}
-	if aux.LegacyBillboard != nil && e.ImageComponent != nil {
-		e.ImageComponent.Billboard = *aux.LegacyBillboard
-	}
-	return nil
 }

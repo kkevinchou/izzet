@@ -26,9 +26,6 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("navmesh", "navmesh", "navmesh", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("model_debug", "model_debug", "pbr_debug", ""); err != nil {
-		panic(err)
-	}
 	if err := shaderManager.CompileShaderProgram("depthDebug", "basictexture", "depthvalue", ""); err != nil {
 		panic(err)
 	}

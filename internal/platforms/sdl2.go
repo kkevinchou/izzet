@@ -106,6 +106,9 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		platform.imguiIO.AddInputCharactersUTF8(string(inputEvent.Text[:]))
 	case sdl.KEYDOWN:
 		keyEvent := event.(*sdl.KeyboardEvent)
+		if keyEvent.Repeat != 0 {
+			return
+		}
 		platform.addKeyEvent(keyEvent, true)
 		inputCollector.AddKeyEvent(sdl.GetScancodeName(keyEvent.Keysym.Scancode), true)
 	case sdl.KEYUP:

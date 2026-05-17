@@ -30,7 +30,7 @@ type MouseInput struct {
 }
 
 type KeyboardKey string
-type KeyboardEvent int
+type KeyboardEvent string
 
 const (
 	KeyboardKeyA KeyboardKey = "A"
@@ -86,9 +86,9 @@ const (
 	KeyboardKeyF9   KeyboardKey = "F9"
 	KeyboardKeyF10  KeyboardKey = "F10"
 
-	KeyboardEventUp = iota
-	KeyboardEventDown
-	KeyboardEventNone
+	KeyboardEventUp   KeyboardEvent = "UP"
+	KeyboardEventDown KeyboardEvent = "DOWN"
+	KeyboardEventNone KeyboardEvent = "NONE"
 )
 
 type KeyState struct {
@@ -182,7 +182,7 @@ func (i *InputCollector) AddKeyEvent(key string, down bool) {
 	}
 	i.KeyboardInput[iKey] = KeyState{
 		Key:   iKey,
-		Event: KeyboardEvent(event),
+		Event: event,
 	}
 }
 

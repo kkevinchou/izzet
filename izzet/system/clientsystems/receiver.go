@@ -94,6 +94,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 					player := s.app.GetPlayerEntity()
 					player.RenderBlend.Active = false
 				} else {
+					mr.Inc("prediction_miss", 1)
 					player := s.app.GetPlayerEntity()
 
 					// if s.app.PredictionDebugLogging() {

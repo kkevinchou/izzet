@@ -56,6 +56,9 @@ func (p *SSAORenderPass) Render(
 	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
+	if !p.app.RuntimeConfig().EnableSSAO {
+		return
+	}
 	defer func() { globals.ClientRegistry().Inc("render_ssao_pass", float64(time.Since(start).Milliseconds())) }()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOFBO)

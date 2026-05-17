@@ -139,11 +139,6 @@ func (g *Server) Start(started chan bool, done chan bool) {
 				g.Logger().Info("ran into max command frames per loop")
 				accumulator = 0
 			}
-
-			sleepTime := float64(settings.MSPerCommandFrame) - accumulator - 1
-			if sleepTime >= 1 {
-				time.Sleep(time.Duration(int64(sleepTime) * 1000000))
-			}
 		}
 
 		select {

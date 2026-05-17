@@ -41,6 +41,9 @@ func (p *SSAOBlurRenderPass) Render(
 	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
+	if !p.app.RuntimeConfig().EnableSSAO {
+		return
+	}
 	defer func() {
 		globals.ClientRegistry().Inc("render_ssao_blur_pass", float64(time.Since(start).Milliseconds()))
 	}()

@@ -63,6 +63,9 @@ func (p *GBufferPass) Render(
 	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
+	if !p.app.RuntimeConfig().EnableSSAO {
+		return
+	}
 	defer func() { globals.ClientRegistry().Inc("render_gpass", float64(time.Since(start).Milliseconds())) }()
 
 	// bind, clear, draw

@@ -1,10 +1,11 @@
 package entity
 
-type ImageInfo struct {
+type ImageComponent struct {
 	ImageName string
 	Scale     float64
+	Billboard bool
 }
 
-func NewImageInfo(name string, scale float64) *ImageInfo {
-	return &ImageInfo{ImageName: name, Scale: scale}
+func NewImageComponent(name string, scale float64, billboard bool) *ImageComponent {
+	return &ImageComponent{ImageName: name, Scale: scale, Billboard: billboard}
 }

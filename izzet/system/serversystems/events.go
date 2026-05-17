@@ -130,8 +130,7 @@ func createEntityMessage(playerID int, entity *entity.Entity) (network.CreateEnt
 func createCamera(playerID int, targetEntityID int) *entity.Entity {
 	e := entity.CreateEmptyEntity("camera")
 	e.CameraComponent = &entity.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
-	e.ImageInfo = entity.NewImageInfo("camera.png", 1)
-	e.Billboard = true
+	e.ImageComponent = entity.NewImageComponent("camera.png", 1, true)
 	e.PlayerInput = &entity.PlayerInputComponent{PlayerID: playerID}
 	return e
 }

@@ -323,28 +323,24 @@ func (p *MainRenderPass) drawNonEntity(
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			}
 
-			if e.ImageInfo != nil {
-				textureName := strings.Split(e.ImageInfo.ImageName, ".")[0]
-				texture := p.app.AssetManager().GetTexture(textureName)
-				if texture != nil {
-					if e.Billboard && p.app.AppMode() == types.AppModeEditor {
-						shader := p.sm.GetShaderProgram("world_space_quad")
-						shader.Use()
+			if e.ImageComponent != nil {
+				textureName := strings.Split(e.ImageComponent.ImageName, ".")[0]
+				texture := p.app.AssetManager().GetTextureWithFallback(textureName)
+				if p.app.AppMode() == types.AppModeEditor {
+					shader := p.sm.GetShaderProgram("world_space_quad")
+					shader.Use()
 
-						position := e.Position()
-						modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
-						scale := e.ImageInfo.Scale
-						modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
+					position := e.Position()
+					modelMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
+					scale := e.ImageComponent.Scale
+					modelMatrix = modelMatrix.Mul4(mgl64.Scale3D(scale, scale, scale))
 
-						shader.SetUniformUInt("entityID", uint32(e.ID))
-						shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix.Mul4(p.app.GetEditorCameraRotation().Mat4())))
-						shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-						shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-						rutils.DrawBillboardTexture(texture.ID, 1)
+					if e.ImageComponent.Billboard {
+						modelMatrix = modelMatrix.Mul4(p.app.GetEditorCameraRotation().Mat4())
 					}
-				} else {
-					fmt.Println("couldn't find texture", "light")
+
+					modelMatrixM32 := utils.Mat4F64ToF32(modelMatrix)
+					rutils.DrawTexturedQuad(&viewerContext, p.sm, texture.ID, &modelMatrixM32, true, &e.ID)
 				}
 			}
 			particles := e.Particles
@@ -352,7 +348,7 @@ func (p *MainRenderPass) drawNonEntity(
 				texture := p.app.AssetManager().GetTexture("light").ID
 				for _, particle := range particles.GetActiveParticles() {
 					particleModelMatrix := mgl32.Translate3D(float32(particle.Position.X()), float32(particle.Position.Y()), float32(particle.Position.Z()))
-					rutils.DrawTexturedQuad(&viewerContext, p.sm, texture, float32(renderContext.AspectRatio()), &particleModelMatrix, true, nil)
+					rutils.DrawTexturedQuad(&viewerContext, p.sm, texture, &particleModelMatrix, true, nil)
 				}
 			}
 		} else if e.CharacterControllerComponent != nil {

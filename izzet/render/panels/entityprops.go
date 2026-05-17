@@ -22,6 +22,7 @@ type ComponentComboOption string
 var MaterialComboOption ComponentComboOption = "Material Component"
 var PhysicsComboOption ComponentComboOption = "Physics Component"
 var LightComboOption ComponentComboOption = "Light Component"
+var ImageComboOption ComponentComboOption = "Image Component"
 var SpawnPointComboOption ComponentComboOption = "Spawn Point Component"
 var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
@@ -29,6 +30,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 	MaterialComboOption,
 	PhysicsComboOption,
 	LightComboOption,
+	ImageComboOption,
 	SpawnPointComboOption,
 }
 
@@ -221,6 +223,36 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			imgui.PushIDStr("remove light")
 			if imgui.Button("Remove") {
 				e.LightInfo = nil
+			}
+			imgui.PopID()
+		}
+	}
+
+	if e.ImageComponent != nil {
+		imageComponent := e.ImageComponent
+		if imgui.CollapsingHeaderTreeNodeFlagsV("Image Properties", imgui.TreeNodeFlagsNone) {
+			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
+			panelutils.InitColumns()
+
+			panelutils.SetupRow("Image Name", func() {
+				imgui.InputTextWithHint("", "default.png", &imageComponent.ImageName, imgui.InputTextFlagsNone, nil)
+			}, true)
+
+			panelutils.SetupRow("Scale", func() {
+				scale := float32(imageComponent.Scale)
+				if imgui.InputFloatV("", &scale, 0.1, 1, "%.2f", imgui.InputTextFlagsNone) {
+					imageComponent.Scale = float64(scale)
+				}
+			}, true)
+
+			panelutils.SetupRow("Billboard", func() {
+				imgui.Checkbox("", &imageComponent.Billboard)
+			}, true)
+
+			imgui.EndTable()
+			imgui.PushIDStr("remove image")
+			if imgui.Button("Remove") {
+				e.ImageComponent = nil
 			}
 			imgui.PopID()
 		}
@@ -450,6 +482,8 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				selectedEntity.Physics = &entity.PhysicsComponent{}
 			} else if SelectedComponentComboOption == SpawnPointComboOption {
 				selectedEntity.SpawnPointComponent = &entity.SpawnPoint{}
+			} else if SelectedComponentComboOption == ImageComboOption {
+				selectedEntity.ImageComponent = entity.NewImageComponent("default.png", 1, true)
 			}
 		}
 	}

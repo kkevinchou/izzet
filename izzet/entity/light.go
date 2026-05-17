@@ -41,9 +41,8 @@ func CreateDirectionalLight() *Entity {
 	}
 
 	entity := InstantiateBaseEntity("directional-light", entityIDGen)
-	entity.ImageInfo = NewImageInfo("lamp.png", 1)
+	entity.ImageComponent = NewImageComponent("lamp.png", 1, true)
 	entity.LightInfo = lightInfo
-	entity.Billboard = true
 	entityIDGen += 1
 	return entity
 }
@@ -57,9 +56,8 @@ func CreatePointLight() *Entity {
 	}
 
 	entity := InstantiateBaseEntity("point-light", entityIDGen)
-	entity.ImageInfo = NewImageInfo("lamp.png", 1)
+	entity.ImageComponent = NewImageComponent("lamp.png", 1, true)
 	entity.LightInfo = lightInfo
-	entity.Billboard = true
 	entityIDGen += 1
 	return entity
 }

@@ -21,6 +21,7 @@ import (
 var materialIDGen int = 0
 var runtimeMeshIDGen int = 0
 var izzetMaterialPrefix = "izzet/"
+var fallbackTexture string = "default"
 
 type DocumentAsset struct {
 	MatIDToHandle map[string]types.MaterialHandle
@@ -90,6 +91,13 @@ func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
 func (a *AssetManager) GetTexture(name string) *textures.Texture {
 	if _, ok := a.textures[name]; !ok {
 		panic(fmt.Sprintf("could not find texture %s", name))
+	}
+	return a.textures[name]
+}
+
+func (a *AssetManager) GetTextureWithFallback(name string) *textures.Texture {
+	if _, ok := a.textures[name]; !ok {
+		return a.GetTexture(fallbackTexture)
 	}
 	return a.textures[name]
 }

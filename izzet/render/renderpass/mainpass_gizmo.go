@@ -188,6 +188,6 @@ func (p *MainRenderPass) drawCircleGizmo(viewerContext *context.ViewerContext, p
 			texture = p.yellowCircleTexture
 		}
 
-		rutils.DrawTexturedQuad(viewerContext, p.sm, texture, float32(renderContext.AspectRatio()), &modelMatrix, true, &pickingID)
+		rutils.DrawTexturedQuad(viewerContext, p.sm, texture, &modelMatrix, true, &pickingID)
 	}
 }

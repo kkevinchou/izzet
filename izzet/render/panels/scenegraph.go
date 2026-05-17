@@ -55,8 +55,7 @@ func SceneGraph(app renderiface.App) {
 			if imgui.Button("Add Camera") {
 				e := entity.CreateEmptyEntity("camera")
 				e.CameraComponent = &entity.CameraComponent{}
-				e.ImageInfo = entity.NewImageInfo("camera.png", 15)
-				e.Billboard = true
+				e.ImageComponent = entity.NewImageComponent("camera.png", 15, true)
 				world.AddEntity(e)
 				app.SelectEntity(e)
 				imgui.CloseCurrentPopup()

@@ -24,8 +24,6 @@ type TriangleVAO struct {
 var lineCache map[string][]mgl64.Vec3
 var cubeCache map[string][]mgl64.Vec3
 var triangleVAOCache map[string]TriangleVAO
-var singleSidedQuadVAO uint32
-var pickingBuffer []byte
 var runtimeConfig *runtimeconfig.RuntimeConfig
 var internedQuadVAOPositionUV uint32
 var cubeVAOs map[string]uint32
@@ -259,7 +257,7 @@ func generateTrisVAO(points []mgl64.Vec3) (uint32, int) {
 	return vao, len(vertices)
 }
 
-func DrawTexturedQuad(viewerContext *context.ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, aspectRatio float32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
+func DrawTexturedQuad(viewerContext *context.ViewerContext, shaderManager *shaders.ShaderManager, texture uint32, modelMatrix *mgl32.Mat4, doubleSided bool, pickingID *int) {
 	vao := getInternedQuadVAOPositionUV()
 
 	gl.BindVertexArray(vao)
@@ -280,7 +278,6 @@ func DrawTexturedQuad(viewerContext *context.ViewerContext, shaderManager *shade
 		shader.Use()
 	}
 
-	// honestly we should clean up this quad drawing logic
 	numVertices := 6
 	if doubleSided {
 		numVertices *= 2
@@ -374,44 +371,6 @@ func GetInternedQuadVAOPosition() uint32 {
 	}
 
 	return internedQuadVAOPosition
-}
-
-func DrawBillboardTexture(
-	texture uint32,
-	length float32,
-) {
-	if singleSidedQuadVAO == 0 {
-		vertices := []float32{
-			-1 * length, -1 * length, 0, 0.0, 0.0,
-			1 * length, -1 * length, 0, 1.0, 0.0,
-			1 * length, 1 * length, 0, 1.0, 1.0,
-			1 * length, 1 * length, 0, 1.0, 1.0,
-			-1 * length, 1 * length, 0, 0.0, 1.0,
-			-1 * length, -1 * length, 0, 0.0, 0.0,
-		}
-
-		var vbo, vao uint32
-		apputils.GenBuffers(1, &vbo)
-		gl.GenVertexArrays(1, &vao)
-
-		gl.BindVertexArray(vao)
-		gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-		gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
-		gl.EnableVertexAttribArray(0)
-
-		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
-		gl.EnableVertexAttribArray(1)
-
-		singleSidedQuadVAO = vao
-	}
-
-	gl.BindVertexArray(singleSidedQuadVAO)
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	IztDrawArrays(0, 6)
 }
 
 func DrawAABB(shader *shaders.ShaderProgram, viewerContext context.ViewerContext, color mgl64.Vec3, aabb collider.BoundingBox, thickness float64) {

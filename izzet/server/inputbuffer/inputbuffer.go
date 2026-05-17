@@ -19,10 +19,10 @@ type InputBuffer struct {
 }
 
 type PlayerBuffer struct {
-	count             int
-	inputs            []BufferedInput
-	cursor            int
-	lastPulledInputCF int
+	count  int
+	inputs []BufferedInput
+	cursor int
+	// lastPulledInputCF int
 }
 
 type App interface {
@@ -45,11 +45,11 @@ func (b *InputBuffer) DeregisterPlayer(playerID int) {
 func (b *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input, stale bool) {
 	buffer := b.playerBuffers[playerID]
 
-	b.app.Logger().Info("push input", "cf", localCommandFrame, "gcf", b.app.CommandFrame(), "stale", stale)
-	if buffer.count > 0 && buffer.inputs[(buffer.count-1)%maxBufferedInput].LocalCommandFrame >= localCommandFrame {
-		b.app.Logger().Info("drop late input", "cf", localCommandFrame, "gcf", b.app.CommandFrame())
-		return
-	}
+	// b.app.Logger().Info("push input", "cf", localCommandFrame, "gcf", b.app.CommandFrame(), "stale", stale)
+	// if buffer.count > 0 && buffer.inputs[(buffer.count-1)%maxBufferedInput].LocalCommandFrame >= localCommandFrame {
+	// 	b.app.Logger().Info("drop late input", "cf", localCommandFrame, "gcf", b.app.CommandFrame())
+	// 	return
+	// }
 
 	buffer.inputs[buffer.count%maxBufferedInput] = BufferedInput{LocalCommandFrame: localCommandFrame, Input: frameInput}
 	buffer.count++
@@ -65,21 +65,21 @@ func (b *InputBuffer) PullInput(playerID int, globalCommandFrame int) BufferedIn
 		return BufferedInput{}
 	}
 
-	stale := false
+	// stale := false
 	if buffer.cursor >= buffer.count && buffer.count != 0 {
-		// buffer.cursor = buffer.count - 1
-		prevInput := buffer.inputs[(buffer.cursor-1)%maxBufferedInput]
-		b.PushInput(prevInput.LocalCommandFrame+1, playerID, prevInput.Input, true)
-		stale = true
+		buffer.cursor = buffer.count - 1
+		// prevInput := buffer.inputs[(buffer.cursor-1)%maxBufferedInput]
+		// b.PushInput(prevInput.LocalCommandFrame+1, playerID, prevInput.Input, true)
+		// stale = true
 	}
 
 	bufferedInput := buffer.inputs[buffer.cursor%maxBufferedInput]
 	buffer.cursor++
 
-	if stale {
-		b.app.Logger().Info("read stale output", "cf", bufferedInput.LocalCommandFrame, "gcf", globalCommandFrame)
-	}
+	// if stale {
+	// 	b.app.Logger().Info("read stale output", "cf", bufferedInput.LocalCommandFrame, "gcf", globalCommandFrame)
+	// }
 
-	buffer.lastPulledInputCF = bufferedInput.LocalCommandFrame
+	// buffer.lastPulledInputCF = bufferedInput.LocalCommandFrame
 	return bufferedInput
 }

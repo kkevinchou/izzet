@@ -76,20 +76,15 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				sb := s.app.StateBuffer()
 				sb.Push(gamestateUpdateMessage, s.app.CommandFrame())
 
-				s.app.Logger().Info("drift", "cf", s.app.CommandFrame(), "server view of cf", gamestateUpdateMessage.LastInputCommandFrame, "delta", gamestateUpdateMessage.LastInputCommandFrame-s.app.CommandFrame())
-
 				// prediction validation
 				cfHistory := s.app.GetCommandFrameHistory()
 				cf, err := cfHistory.GetFrame(gamestateUpdateMessage.LastInputCommandFrame)
 				if err != nil {
-					return
-					// panic(err)
+					panic(err)
 				}
 				state := cf.PostCFState
 				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
-					// if s.app.PredictionDebugLogging() {
-					// 	fmt.Printf("\t - Predictiton Hit [Frame: %d]\n",
 					// 		gamestateUpdateMessage.LastInputCommandFrame,
 					// 	)
 					// }

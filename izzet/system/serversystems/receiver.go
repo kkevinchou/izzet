@@ -41,7 +41,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 						fmt.Println(fmt.Errorf("failed to deserialize message %w", err))
 						continue
 					}
-					s.app.InputBuffer().PushInput(message.CommandFrame, player.ID, inputMessage.Input, false)
+					s.app.InputBuffer().PushInput(message.CommandFrame, player.ID, inputMessage.Input)
 				} else if message.MessageType == network.MsgTypePing {
 					pingMessage, err := network.ExtractMessage[network.PingMessage](message)
 					if err != nil {

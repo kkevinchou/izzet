@@ -166,8 +166,7 @@ func (g *Client) Start() {
 			g.frameInput = inputCollector.GetInput()
 
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
-			commandFrameNanos := time.Since(start).Nanoseconds()
-			globals.ClientRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			globals.ClientRegistry().Inc("command_frame_nanoseconds", float64(time.Since(start).Nanoseconds()))
 			globals.ClientRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 			commandFrameCountBeforeRender += 1
@@ -218,11 +217,10 @@ func (g *Client) render(delta time.Duration) {
 	start := time.Now()
 	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 	g.renderSystem.Render(delta)
-	globals.ClientRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
-	start = time.Now()
+	swapStart := time.Now()
 	g.window.Swap()
-	globals.ClientRegistry().Inc("render_swap", float64(time.Since(start).Milliseconds()))
-
+	globals.ClientRegistry().Inc("render_swap", float64(time.Since(swapStart).Milliseconds()))
+	globals.ClientRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
 }
 
 func initSeed() {

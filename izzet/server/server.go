@@ -70,12 +70,12 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	initSeed()
 	g := &Server{
 		players:      map[int]*network.Player{},
-		inputBuffer:  inputbuffer.New(),
 		playerInput:  map[int]input.Input{},
 		eventManager: events.NewEventManager(),
 		projectName:  projectName,
 	}
 
+	g.inputBuffer = inputbuffer.New(g)
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.assetManager = assets.NewAssetManager(false)
 	g.world = world
@@ -136,6 +136,7 @@ func (g *Server) Start(started chan bool, done chan bool) {
 			accumulator -= float64(settings.MSPerCommandFrame)
 			currentLoopCommandFrames++
 			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
+				g.Logger().Info("ran into max command frames per loop")
 				accumulator = 0
 			}
 

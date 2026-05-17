@@ -85,8 +85,6 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				state := cf.PostCFState
 				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
-					// if s.app.PredictionDebugLogging() {
-					// 	fmt.Printf("\t - Predictiton Hit [Frame: %d]\n",
 					// 		gamestateUpdateMessage.LastInputCommandFrame,
 					// 	)
 					// }
@@ -96,6 +94,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				} else {
 					mr.Inc("prediction_miss", 1)
 					player := s.app.GetPlayerEntity()
+					s.app.Logger().Info("prediction miss", "cf", gamestateUpdateMessage.LastInputCommandFrame)
 
 					// if s.app.PredictionDebugLogging() {
 					// 	fmt.Printf("\t - Predictiton Miss [Frame: %d] [Client: %s] [Server: %s]\n",

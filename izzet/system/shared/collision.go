@@ -2,6 +2,7 @@ package shared
 
 import (
 	"fmt"
+	"log/slog"
 	"sort"
 
 	"github.com/kkevinchou/izzet/internal/collision"
@@ -16,6 +17,7 @@ type App interface {
 	CommandFrame() int
 	IsClient() bool
 	IsServer() bool
+	Logger() *slog.Logger
 	World() *world.GameWorld
 	GetPlayerEntity() *entity.Entity
 }

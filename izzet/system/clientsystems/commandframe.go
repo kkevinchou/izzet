@@ -60,7 +60,7 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 func (h *CommandFrameHistory) GetFrame(frameNumber int) (CommandFrame, error) {
 	index, err := h.GetBufferIndexByFrameNumber(frameNumber)
 	if err != nil {
-		return CommandFrame{}, nil
+		return CommandFrame{}, err
 	}
 
 	return h.CommandFrames[index], nil

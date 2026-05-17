@@ -18,8 +18,6 @@ func (s *InputSystem) Name() string {
 	return "InputSystem"
 }
 
-var predictionDebugLoggingStart time.Time
-
 func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	inputBuffer := s.app.InputBuffer()
 	for _, player := range s.app.GetPlayers() {

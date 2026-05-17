@@ -1,6 +1,7 @@
 package system
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
@@ -28,6 +29,7 @@ type GameWorld interface {
 type App interface {
 	IsClient() bool
 	IsServer() bool
+	Logger() *slog.Logger
 	CommandFrame() int
 	GetPlayer(playerID int) *network.Player
 	GetPlayerEntity() *entity.Entity

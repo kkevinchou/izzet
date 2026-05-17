@@ -64,16 +64,47 @@ func main() {
 		}()
 	}
 
-	f, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logHandlerOptions := &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if attr.Key == slog.TimeKey && attr.Value.Kind() == slog.KindTime {
+				attr.Value = slog.StringValue(attr.Value.Time().Local().Format("15:04:05.000"))
+			}
+			return attr
+		},
+	}
+
+	f, err := os.OpenFile("app.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
-	iztlog.SetLogger(slog.New(slog.NewJSONHandler(f, nil)))
+	iztlog.SetLogger(slog.New(slog.NewJSONHandler(f, logHandlerOptions)))
+
+	f, err = os.OpenFile("_logs_client.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(f, logHandlerOptions)))
+
+	f, err = os.OpenFile("_logs_server.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	iztlog.SetServerLogger(slog.New(slog.NewJSONHandler(f, logHandlerOptions)))
 
 	iztlog.Logger.Info("====================================================================================")
 	iztlog.Logger.Info("IZZET SESSION START")
 	iztlog.Logger.Info("====================================================================================")
+
+	iztlog.ClientLogger.Info("====================================================================================")
+	iztlog.ClientLogger.Info("IZZET CLIENT SESSION START")
+	iztlog.ClientLogger.Info("====================================================================================")
+
+	iztlog.ServerLogger.Info("====================================================================================")
+	iztlog.ServerLogger.Info("IZZET SERVER SESSION START")
+	iztlog.ServerLogger.Info("====================================================================================")
 
 	mode := "CLIENT"
 

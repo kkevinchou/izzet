@@ -1,6 +1,7 @@
 package clientsystems
 
 import (
+	"log/slog"
 	"net"
 
 	"github.com/kkevinchou/izzet/internal/input"
@@ -19,6 +20,7 @@ type App interface {
 	IsConnected() bool
 	IsClient() bool
 	IsServer() bool
+	Logger() *slog.Logger
 	GetPlayerConnection() net.Conn
 	GetPlayerEntity() *entity.Entity
 	GetPlayerCamera() *entity.Entity

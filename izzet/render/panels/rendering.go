@@ -25,6 +25,15 @@ func Rendering(app renderiface.App) {
 		panelutils.SetupRow("Antialiasing", func() {
 			imgui.Checkbox("", &runtimeConfig.EnableAntialiasing)
 		}, true)
+		panelutils.SetupRow("SSAO", func() {
+			imgui.Checkbox("", &runtimeConfig.EnableSSAO)
+		}, true)
+		panelutils.SetupRow("Bloom", func() {
+			imgui.Checkbox("", &runtimeConfig.Bloom)
+		}, true)
+		panelutils.SetupRow("Shadow Mapping", func() {
+			imgui.Checkbox("", &runtimeConfig.EnableShadowMapping)
+		}, true)
 		imgui.EndTable()
 	}
 
@@ -33,7 +42,6 @@ func Rendering(app renderiface.App) {
 		panelutils.InitColumns()
 		panelutils.SetupRow("Radius", func() { imgui.SliderFloat("", &runtimeConfig.SSAORadius, 0, 10) }, true)
 		panelutils.SetupRow("Bias", func() { imgui.SliderFloat("", &runtimeConfig.SSAOBias, 0, 1) }, true)
-		panelutils.SetupRow("Enable SSAO", func() { imgui.Checkbox("", &runtimeConfig.EnableSSAO) }, true)
 		imgui.EndTable()
 	}
 
@@ -45,10 +53,8 @@ func Rendering(app renderiface.App) {
 		panelutils.SetupRow("Point Light Bias", func() { imgui.SliderFloat("", &runtimeConfig.PointLightBias, 0, 0.3) }, true)
 		panelutils.SetupRow("Shadow Map Min Bias", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapMinBias, 0, 100) }, true)
 		panelutils.SetupRow("Shadow Map Angle Bias Rate", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapAngleBiasRate, 0, 100) }, true)
-		panelutils.SetupRow("Enable Shadow Mapping", func() { imgui.Checkbox("", &runtimeConfig.EnableShadowMapping) }, true)
 		panelutils.SetupRow("Shadow Far Distance", func() { imgui.SliderFloat("", &runtimeConfig.ShadowFarDistance, 0, 1000) }, true)
 		panelutils.SetupRow("Fog Density", func() { imgui.SliderInt("", &runtimeConfig.FogDensity, 0, 500) }, true)
-		panelutils.SetupRow("Enable Bloom", func() { imgui.Checkbox("", &runtimeConfig.Bloom) }, true)
 		panelutils.SetupRow("Bloom Intensity", func() { imgui.SliderFloat("", &runtimeConfig.BloomIntensity, 0, 1) }, true)
 		panelutils.SetupRow("Bloom Threshold Passes", func() { imgui.SliderInt("", &runtimeConfig.BloomThresholdPasses, 0, 3) }, true)
 		panelutils.SetupRow("Bloom Threshold", func() { imgui.SliderFloat("", &runtimeConfig.BloomThreshold, 0, 3) }, true)

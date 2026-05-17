@@ -96,6 +96,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 
 	for _, player := range players {
 		gamestateUpdateMessage.LastInputCommandFrame = player.LastInputLocalCommandFrame
+		s.app.Logger().Info("replication", "cf", gamestateUpdateMessage.LastInputCommandFrame, "gcf", s.app.CommandFrame())
 		player.Client.Send(gamestateUpdateMessage, s.app.CommandFrame())
 	}
 }

@@ -21,7 +21,7 @@ func (s *InputSystem) Name() string {
 func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	inputBuffer := s.app.InputBuffer()
 	for _, player := range s.app.GetPlayers() {
-		bufferedInput := inputBuffer.PullInput(player.ID)
+		bufferedInput := inputBuffer.PullInput(player.ID, s.app.CommandFrame())
 		s.app.SetPlayerInput(player.ID, bufferedInput.Input)
 		player := s.app.GetPlayer(player.ID)
 		player.LastInputLocalCommandFrame = bufferedInput.LocalCommandFrame

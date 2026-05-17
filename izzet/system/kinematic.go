@@ -29,9 +29,6 @@ func (s *KinematicSystem) Update(delta time.Duration, world GameWorld) {
 
 	shared.KinematicStep(delta, ents, world, s.app)
 
-	cf := s.app.CommandFrame()
-	entity := world.GetEntityByID(4586)
-
 	// if s.app.IsClient() && entity != nil {
 	// 	fmt.Println()
 	// }
@@ -43,17 +40,20 @@ func (s *KinematicSystem) Update(delta time.Duration, world GameWorld) {
 	// 	}
 	// }
 
-	if entity != nil {
-		logger := s.app.Logger()
-		if s.app.IsClient() {
-			logger.Info("-", "cf", cf, "id", entity.GetID(), "position", entity.LocalPosition)
-		} else {
-			player := s.app.GetPlayer(100000)
-			var localCF int
-			if player != nil {
-				localCF = player.LastInputLocalCommandFrame
-			}
-			logger.Info("-", "cf", localCF, "gcf", cf, "id", entity.GetID(), "position", entity.LocalPosition)
-		}
-	}
+	// cf := s.app.CommandFrame()
+	// entity := world.GetEntityByID(4586)
+
+	// if entity != nil {
+	// 	logger := s.app.Logger()
+	// 	if s.app.IsClient() {
+	// 		logger.Info("-", "cf", cf, "id", entity.GetID(), "position", apputils.PPrintVec(entity.LocalPosition))
+	// 	} else {
+	// 		player := s.app.GetPlayer(100000)
+	// 		var localCF int
+	// 		if player != nil {
+	// 			localCF = player.LastInputLocalCommandFrame
+	// 		}
+	// 		logger.Info("-", "cf", localCF, "gcf", cf, "id", entity.GetID(), "position", apputils.PPrintVec(entity.LocalPosition))
+	// 	}
+	// }
 }

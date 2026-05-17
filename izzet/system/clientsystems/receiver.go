@@ -76,11 +76,14 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				sb := s.app.StateBuffer()
 				sb.Push(gamestateUpdateMessage, s.app.CommandFrame())
 
+				s.app.Logger().Info("drift", "cf", s.app.CommandFrame(), "server view of cf", gamestateUpdateMessage.LastInputCommandFrame, "delta", gamestateUpdateMessage.LastInputCommandFrame-s.app.CommandFrame())
+
 				// prediction validation
 				cfHistory := s.app.GetCommandFrameHistory()
 				cf, err := cfHistory.GetFrame(gamestateUpdateMessage.LastInputCommandFrame)
 				if err != nil {
-					panic(err)
+					return
+					// panic(err)
 				}
 				state := cf.PostCFState
 				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
@@ -96,6 +99,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				} else {
 					mr.Inc("prediction_miss", 1)
 					player := s.app.GetPlayerEntity()
+					s.app.Logger().Info("prediction miss", "cf", gamestateUpdateMessage.LastInputCommandFrame)
 
 					// if s.app.PredictionDebugLogging() {
 					// 	fmt.Printf("\t - Predictiton Miss [Frame: %d] [Client: %s] [Server: %s]\n",

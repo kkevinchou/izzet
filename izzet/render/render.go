@@ -119,7 +119,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r := &RenderSystem{app: app}
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
-	rutils.SetRuntimeConfig(app.RuntimeConfig())
+	rutils.SetRuntimeConfigProvider(app.RuntimeConfig)
 	r.sceneSize = [2]int{1, 1}
 
 	r.assertShaderConfigurations()

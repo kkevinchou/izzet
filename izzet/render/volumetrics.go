@@ -135,7 +135,7 @@ func (r *RenderSystem) renderVolumetrics(vao, texture, fbo uint32, shaderManager
 	gl.BindTexture(gl.TEXTURE_2D, assetManager.GetTexture("color_grid").ID)
 
 	gl.BindVertexArray(vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	r.iztDrawArrays(0, 6)
 }
 
 func createWorlyNoiseTexture(octaves []WorleyOctave, workGroupWidth, workGroupHeight, workGroupDepth int32) uint32 {

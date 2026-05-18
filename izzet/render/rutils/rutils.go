@@ -24,7 +24,7 @@ type TriangleVAO struct {
 var lineCache map[string][]mgl64.Vec3
 var cubeCache map[string][]mgl64.Vec3
 var triangleVAOCache map[string]TriangleVAO
-var runtimeConfig *runtimeconfig.RuntimeConfig
+var runtimeConfigProvider func() *runtimeconfig.RuntimeConfig
 var internedQuadVAOPositionUV uint32
 var cubeVAOs map[string]uint32
 var ndcQuadVAO uint32
@@ -36,24 +36,31 @@ func init() {
 	cubeVAOs = map[string]uint32{}
 }
 
-// global setter for convenience
-func SetRuntimeConfig(c *runtimeconfig.RuntimeConfig) {
-	runtimeConfig = c
+func SetRuntimeConfigProvider(provider func() *runtimeconfig.RuntimeConfig) {
+	runtimeConfigProvider = provider
+}
+
+func currentRuntimeConfig() *runtimeconfig.RuntimeConfig {
+	runtimeConfig := runtimeConfigProvider()
+	return runtimeConfig
 }
 
 func IztDrawElements(count int32) {
+	runtimeConfig := currentRuntimeConfig()
 	runtimeConfig.TriangleDrawCount += int(count / 3)
 	runtimeConfig.DrawCount += 1
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }
 
 func IztDrawArrays(first, count int32) {
+	runtimeConfig := currentRuntimeConfig()
 	runtimeConfig.TriangleDrawCount += int(count / 3)
 	runtimeConfig.DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
 }
 
 func IztDrawLines(count int32) {
+	runtimeConfig := currentRuntimeConfig()
 	runtimeConfig.DrawCount += 1
 	gl.DrawArrays(gl.LINES, 0, count)
 }

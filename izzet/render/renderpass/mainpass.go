@@ -550,7 +550,7 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 		setupLightingUniforms(shader, lightContext.Lights)
 		shader.SetUniformInt("width", int32(renderContext.Width()))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
+		shader.SetUniformFloat("shadowDistance", float32(renderContext.ShadowDistance))
 		shader.SetUniformFloat("ambientFactor", p.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
 		shader.SetUniformInt("depthCubeMap", 30)

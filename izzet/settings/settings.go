@@ -23,7 +23,7 @@ func NewConfig() Config {
 }
 
 const (
-	NumShadowMapCascades       = 1
+	NumShadowMapCascades       = 4
 	LoggingLevel               = 1
 	Seed                 int64 = 1234567
 

@@ -28,11 +28,12 @@ type RuntimeConfig struct {
 	BloomUpsamplingScale            float32
 	Color                           [3]float32
 
-	ShowImguiDemo      bool
-	ShowTextureViewer  bool
-	ShowMaterialEditor bool
-	DebugTexture       uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
-	DebugAspectRatio   float64 // the aspect ratio of the debug texture
+	ShowImguiDemo          bool
+	ShowTextureViewer      bool
+	ShowMaterialEditor     bool
+	DebugTexture           uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	DebugAspectRatio       float64 // the aspect ratio of the debug texture
+	TextureArrayDebugLayer int32
 
 	RenderSpatialPartition bool
 

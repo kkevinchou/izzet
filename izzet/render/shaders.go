@@ -29,6 +29,9 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("depthDebug", "basictexture", "depthvalue", ""); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("textureArrayDebug", "fullscreen_quad", "shadow_depth_array", ""); err != nil {
+		panic(err)
+	}
 	if err := shaderManager.CompileShaderProgram("flat", "flat", "flat", ""); err != nil {
 		panic(err)
 	}
@@ -73,7 +76,7 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	}
 
 	// post processing
-	if err := shaderManager.CompileShaderProgram("post_processing", "post_processing", "post_processing", ""); err != nil {
+	if err := shaderManager.CompileShaderProgram("post_processing", "fullscreen_quad", "post_processing", ""); err != nil {
 		panic(err)
 	}
 

@@ -311,7 +311,7 @@ func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgra
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
+	shader.SetUniformFloat("shadowDistance", float32(renderContext.ShadowDistance))
 
 	// setup shadow cascade params
 	shader.SetUniformInt("cascadeCount", int32(len(renderContext.ShadowMapCascades)))

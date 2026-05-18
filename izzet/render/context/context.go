@@ -42,7 +42,7 @@ type RenderContext struct {
 	RenderableEntities    []*entity.Entity
 	ShadowMapCascades     []ShadowMapCascade
 
-	ShadowDistance float32
+	ShadowDistance float64
 }
 
 // intermediate rendering properties

@@ -61,6 +61,5 @@ void main() {
         vs_out.TexCoord = aTexCoord1;
     }
 
-    vs_out.ColorOverride = errorColor;
     gl_Position = (projection * (view * (model * totalPos)));
 }

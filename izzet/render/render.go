@@ -185,9 +185,9 @@ func (r *RenderSystem) assertShaderConfigurations() {
 		&invocations,
 	)
 
-	if int32(settings.NumShadowMapCascades) > invocations {
+	if int32(settings.NumShadowMapCascades) != invocations {
 		panic(fmt.Sprintf(
-			"cascade count %d exceeds geometry shader invocations %d",
+			"cascade count %d does not match geometry shader invocations %d",
 			settings.NumShadowMapCascades,
 			invocations,
 		))

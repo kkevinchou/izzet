@@ -38,8 +38,11 @@ uniform sampler2D modelTexture;
 uniform sampler2D ambientOcclusion;
 
 // shadows
-uniform sampler2D shadowMap;
+uniform sampler2DArray shadowMap;
 uniform float shadowDistance;
+uniform float cascadePlaneDistances[16];
+uniform int cascadeCount;
+uniform mat4 lightSpaceMatrixArray[16];
 
 // depth map
 uniform sampler2D cameraDepthMap;
@@ -66,7 +69,6 @@ const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
 in VS_OUT {
     vec3 FragPos;
     vec3 Normal;
-    vec4 FragPosLightSpace;
     mat4 View;
     vec2 TexCoord;
     vec3 ColorOverride;
@@ -114,35 +116,49 @@ float PointLightShadowCalculation(vec3 fragPos, vec3 lightPos)
     return shadow;
 }
 
-float DirectionalLightShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
+float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
 {
-    if (length(vec3(fs_in.View * vec4(fs_in.FragPos, 1))) > shadowDistance) {
-        return 0;
+    float viewDepth = abs((fs_in.View * vec4(fs_in.FragPos, 1.0)).z);
+
+    if (viewDepth > shadowDistance) {
+        return 0.0;
     }
 
+    int cascadeLayer = cascadeCount - 1;
+
+    for (int i = 0; i < cascadeCount; ++i) {
+        if (viewDepth <= cascadePlaneDistances[i]) {
+            cascadeLayer = i;
+            break;
+        }
+    }
+
+    vec4 fragPosLightSpace = lightSpaceMatrixArray[cascadeLayer] * vec4(fs_in.FragPos, 1.0);
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
 
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 ||
+        projCoords.y < 0.0 || projCoords.y > 1.0 ||
+        projCoords.z < 0.0 || projCoords.z > 1.0) {
+        return 0.0;
+    }
+
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    // float closestDepth = texture(shadowMap, projCoords.xy).r; // QUESTION: why is it .r? is it because it's a grayscale texture?
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
-    // check whether current frag pos is in shadow
-    // float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
 
     // bias term needs to be tweaked depending on geometry
     float bias = max(shadowMapAngleBiasRate * (1.0 - dot(normal, lightDir)), shadowMapMinBias);
-    // bias = 0;
     
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0).xy);
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, float(cascadeLayer))).r; 
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
         }    
     }
@@ -284,7 +300,7 @@ void main()
         if (light.type == 0) {
             // directional light case
             fragToLight = -normalize(light.dir);
-            shadow = DirectionalLightShadowCalculation(fs_in.FragPosLightSpace, normal, fragToLight);
+            shadow = DirectionalLightShadowCalculation(normal, fragToLight);
             do_attenuation = 0;
         } else if (light.type == 1) {
             if (distance > light.range) {

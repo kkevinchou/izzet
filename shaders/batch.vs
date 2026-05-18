@@ -13,7 +13,6 @@ layout (location = 6) in uint entityID;
 out VS_OUT {
     vec3 FragPos;
     vec3 Normal;
-    vec4 FragPosLightSpace;
     mat4 View;
     vec2 TexCoord;
     vec3 ColorOverride;
@@ -25,7 +24,6 @@ uniform mat4 modelRotationMatrix;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 jointTransforms[MAX_JOINTS];
-uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
 
@@ -67,7 +65,6 @@ void main() {
     }
 
     vs_out.ColorOverride = errorColor;
-    vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
     vs_out.EntityID = entityID;
     gl_Position = (projection * (view * (model * totalPos)));
 }

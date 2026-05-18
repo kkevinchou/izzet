@@ -117,7 +117,6 @@ func (p *MainRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
-	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
 	defer func() { globals.ClientRegistry().Inc("render_main_pass", float64(time.Since(start).Milliseconds())) }()
@@ -552,7 +551,6 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 		shader.SetUniformInt("width", int32(renderContext.Width()))
 		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 		shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
-		shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 		shader.SetUniformFloat("ambientFactor", p.app.RuntimeConfig().AmbientFactor)
 		shader.SetUniformInt("shadowMap", 31)
 		shader.SetUniformInt("depthCubeMap", 30)

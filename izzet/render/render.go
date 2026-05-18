@@ -290,7 +290,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		rotation = camera.Rotation()
 	}
 
-	renderContext, cameraViewerContext, lightViewerContext, lightContext := r.createRenderingContexts(position, rotation)
+	renderContext, cameraViewerContext, lightContext := r.createRenderingContexts(position, rotation)
 
 	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
@@ -307,7 +307,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// RENDER PASSES
 	for _, pass := range r.renderPasses {
-		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext, lightViewerContext)
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext)
 	}
 
 	// store color picking entity
@@ -355,7 +355,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
-func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.ViewerContext, context.LightContext) {
+func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.LightContext) {
 	mr := globals.ClientRegistry()
 
 	start := time.Now()
@@ -377,17 +377,6 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
 	}
 
-	// CSM - calculate N sets of frustum points, we need to advance the position
-	lightFrustumPoints := calculateFrustumPoints(
-		position,
-		rotation,
-		float64(r.app.RuntimeConfig().Near),
-		float64(r.app.RuntimeConfig().ShadowFarDistance),
-		renderContext.FovX(),
-		renderContext.FovY(),
-		0,
-	)
-
 	// find the directional light if there is one
 	lights := r.app.World().Lights()
 	var directionalLights []*entity.Entity
@@ -408,17 +397,36 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
 	}
 
-	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	// CSM: compute N different light positions and light projection matrices
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
-	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
+	cascades := [][2]float32{
+		{r.app.RuntimeConfig().Near, r.app.RuntimeConfig().ShadowFarDistance},
+	}
 
-	// CSM: we have multiple light viewer contexts, one for each cascade
-	lightViewerContext := context.ViewerContext{
-		Position:          lightPosition,
-		Rotation:          lightRotation,
-		InverseViewMatrix: lightViewMatrix,
-		ProjectionMatrix:  lightProjectionMatrix,
+	for _, cascade := range cascades {
+		// CSM - calculate N sets of frustum points, we need to advance the position
+		lightFrustumPoints := calculateFrustumPoints(
+			position,
+			rotation,
+			float64(cascade[0]),
+			float64(cascade[1]),
+			renderContext.FovX(),
+			renderContext.FovY(),
+			0,
+		)
+
+		lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
+		// CSM: compute N different light positions and light projection matrices
+		lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
+		lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
+
+		// CSM: we have multiple light viewer contexts, one for each cascade
+		lightViewerContext := context.ViewerContext{
+			Position:          lightPosition,
+			Rotation:          lightRotation,
+			InverseViewMatrix: lightViewMatrix,
+			ProjectionMatrix:  lightProjectionMatrix,
+		}
+
+		renderContext.ShadowMapCascades = append(renderContext.ShadowMapCascades, context.ShadowMapCascade{ViewerContext: lightViewerContext})
 	}
 
 	// CSM: this should remain the same, this is used to the distance of the fragment from the light source
@@ -426,15 +434,14 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	lightContext := context.LightContext{
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
-		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
-		Lights:           r.app.World().Lights(),
-		PointLights:      pointLights,
+		Lights:      r.app.World().Lights(),
+		PointLights: pointLights,
 	}
 
 	r.cameraViewerContext = cameraViewerContext
 	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
-	return renderContext, cameraViewerContext, lightViewerContext, lightContext
+	return renderContext, cameraViewerContext, lightContext
 }
 
 func (r *RenderSystem) setDebugTexture() {

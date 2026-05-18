@@ -23,7 +23,6 @@ uniform mat4 modelRotationMatrix;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 jointTransforms[MAX_JOINTS];
-uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
 

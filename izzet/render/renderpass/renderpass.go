@@ -37,7 +37,6 @@ type RenderPass interface {
 		renderPassContext *context.RenderPassContext,
 		viewerContext context.ViewerContext,
 		lightContext context.LightContext,
-		lightViewerContext context.ViewerContext,
 	)
 }
 
@@ -313,7 +312,6 @@ func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgra
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
 	shader.SetUniformFloat("ambientFactor", app.RuntimeConfig().AmbientFactor)
 	shader.SetUniformFloat("specularFactor", app.RuntimeConfig().SpecularFactor)
 	shader.SetUniformInt("shadowMap", 31)

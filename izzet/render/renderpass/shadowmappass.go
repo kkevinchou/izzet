@@ -34,7 +34,6 @@ func (p *ShadowMapRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
-	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
 	defer func() { globals.ClientRegistry().Inc("render_shadow_pass", float64(time.Since(start).Milliseconds())) }()
@@ -54,5 +53,5 @@ func (p *ShadowMapRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	p.shader.Use()
-	renderGeometryWithoutColor(p.app, p.shader, renderContext.ShadowCastingEntities, lightViewerContext, renderContext)
+	renderGeometryWithoutColor(p.app, p.shader, renderContext.ShadowCastingEntities, renderContext.ShadowMapCascades[0].ViewerContext, renderContext)
 }

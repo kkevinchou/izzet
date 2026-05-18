@@ -81,7 +81,6 @@ func (p *PointLightRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
-	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
 	defer func() {

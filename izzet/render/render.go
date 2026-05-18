@@ -377,6 +377,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
 	}
 
+	// CSM - calculate N sets of frustum points, we need to advance the position
 	lightFrustumPoints := calculateFrustumPoints(
 		position,
 		rotation,
@@ -384,7 +385,6 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		float64(r.app.RuntimeConfig().ShadowFarDistance),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		renderContext.AspectRatio(),
 		0,
 	)
 
@@ -409,9 +409,11 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	}
 
 	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
+	// CSM: compute N different light positions and light projection matrices
 	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
 	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
 
+	// CSM: we have multiple light viewer contexts, one for each cascade
 	lightViewerContext := context.ViewerContext{
 		Position:          lightPosition,
 		Rotation:          lightRotation,
@@ -419,6 +421,8 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		ProjectionMatrix:  lightProjectionMatrix,
 	}
 
+	// CSM: this should remain the same, this is used to the distance of the fragment from the light source
+	// what changes is which depth texture we use to look up the fragment
 	lightContext := context.LightContext{
 		// this should be the inverse of the transforms applied to the viewer context
 		// if the viewer moves along -y, the universe moves along +y
@@ -476,7 +480,6 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		renderContext.AspectRatio(),
 		float64(r.app.RuntimeConfig().ShadowSpatialPartitionNearPlane),
 	)
 
@@ -501,7 +504,6 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		renderContext.AspectRatio(),
 		0,
 	)
 

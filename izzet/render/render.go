@@ -1,6 +1,7 @@
 package render
 
 import (
+	"math"
 	"os"
 	"time"
 
@@ -86,6 +87,9 @@ type RenderSystem struct {
 	postProcessingFBO     uint32
 	postProcessingTexture uint32
 
+	textureArrayDebugFBO     uint32
+	textureArrayDebugTexture uint32
+
 	blendFBO uint32
 
 	bloomTextureWidths  []int
@@ -155,7 +159,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.renderPassContext = &context.RenderPassContext{}
 	r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
-	r.renderPasses = append(r.renderPasses, renderpass.NewShadowMapPass(14400, app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewShadowMapPass(4096, app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewPointLightPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
@@ -238,6 +242,18 @@ func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	}
 	gl.DeleteTextures(1, &r.postProcessingTexture)
 	r.postProcessingTexture = postProcessingTextures[0]
+
+	// texture array debug resolve FBO
+	textureArrayDebugTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
+	var textureArrayDebugTextures []uint32
+	if init {
+		r.textureArrayDebugFBO, textureArrayDebugTextures = r.initFrameBufferNoDepth(textureArrayDebugTextureFn)
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, r.textureArrayDebugFBO)
+		_, _, textureArrayDebugTextures = textureArrayDebugTextureFn()
+	}
+	gl.DeleteTextures(1, &r.textureArrayDebugTexture)
+	r.textureArrayDebugTexture = textureArrayDebugTextures[0]
 }
 
 func (r *RenderSystem) ReinitializeFrameBuffers() {
@@ -290,7 +306,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		rotation = camera.Rotation()
 	}
 
-	renderContext, cameraViewerContext, lightViewerContext, lightContext := r.createRenderingContexts(position, rotation)
+	renderContext, cameraViewerContext, lightContext := r.createRenderingContexts(position, rotation)
 
 	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
@@ -302,12 +318,12 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
-	renderContext.ShadowDistance = r.app.RuntimeConfig().Far * float32(settings.ShadowMapDistanceFactor)
+	renderContext.ShadowDistance = renderContext.ShadowMapCascades[len(renderContext.ShadowMapCascades)-1].Distance
 	renderContext.BatchRenders = r.batchRenders
 
 	// RENDER PASSES
 	for _, pass := range r.renderPasses {
-		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext, lightViewerContext)
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext)
 	}
 
 	// store color picking entity
@@ -343,7 +359,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	)
 	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
 
-	r.setDebugTexture()
+	r.setDebugTexture(renderContext)
 
 	// render to back buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
@@ -355,7 +371,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
-func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.ViewerContext, context.LightContext) {
+func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.LightContext) {
 	mr := globals.ClientRegistry()
 
 	start := time.Now()
@@ -377,17 +393,6 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
 	}
 
-	lightFrustumPoints := calculateFrustumPoints(
-		position,
-		rotation,
-		float64(r.app.RuntimeConfig().Near),
-		float64(r.app.RuntimeConfig().ShadowFarDistance),
-		renderContext.FovX(),
-		renderContext.FovY(),
-		renderContext.AspectRatio(),
-		0,
-	)
-
 	// find the directional light if there is one
 	lights := r.app.World().Lights()
 	var directionalLights []*entity.Entity
@@ -408,32 +413,103 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
 	}
 
-	lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-	lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
-	lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
+	near := float64(r.app.RuntimeConfig().ShadowNearDistance)
+	far := float64(r.app.RuntimeConfig().ShadowFarDistance)
 
-	lightViewerContext := context.ViewerContext{
-		Position:          lightPosition,
-		Rotation:          lightRotation,
-		InverseViewMatrix: lightViewMatrix,
-		ProjectionMatrix:  lightProjectionMatrix,
+	cascades := computeCascadeSplits(near, far, settings.NumShadowMapCascades, float64(r.app.RuntimeConfig().ShadowCascadeBlendFactor))
+
+	for _, cascade := range cascades {
+		// CSM - calculate N sets of frustum points, we need to advance the position
+		lightFrustumPoints := calculateFrustumPoints(
+			position,
+			rotation,
+			cascade[0],
+			cascade[1],
+			renderContext.FovX(),
+			renderContext.FovY(),
+		)
+
+		lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
+		lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
+		lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
+
+		lightViewerContext := context.ViewerContext{
+			Position:             lightPosition,
+			Rotation:             lightRotation,
+			InverseViewMatrix:    lightViewMatrix,
+			ProjectionMatrix:     lightProjectionMatrix,
+			ViewProjectionMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
+		}
+
+		renderContext.ShadowMapCascades = append(
+			renderContext.ShadowMapCascades,
+			context.ShadowMapCascade{
+				ViewerContext: lightViewerContext,
+				Distance:      cascade[1],
+			},
+		)
 	}
 
 	lightContext := context.LightContext{
-		// this should be the inverse of the transforms applied to the viewer context
-		// if the viewer moves along -y, the universe moves along +y
-		LightSpaceMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
-		Lights:           r.app.World().Lights(),
-		PointLights:      pointLights,
+		Lights:      r.app.World().Lights(),
+		PointLights: pointLights,
 	}
 
 	r.cameraViewerContext = cameraViewerContext
 	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
-	return renderContext, cameraViewerContext, lightViewerContext, lightContext
+	return renderContext, cameraViewerContext, lightContext
 }
 
-func (r *RenderSystem) setDebugTexture() {
+func computeCascadeSplits(near, far float64, count int, lambda float64) [][2]float64 {
+	var cascades [][2]float64
+	prev := near
+
+	for i := 1; i <= count; i++ {
+		p := float64(i) / float64(count)
+
+		uniform := near + (far-near)*p
+		logarithmic := near * math.Pow(far/near, p)
+
+		split := uniform*(1-lambda) + logarithmic*lambda
+
+		cascades = append(cascades, [2]float64{prev, split})
+		prev = split
+	}
+
+	return cascades
+}
+
+func (r *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.RenderContext, texture uint32, layerCount int32) uint32 {
+	runtimeConfig := r.app.RuntimeConfig()
+	maxLayer := layerCount - 1
+	if runtimeConfig.TextureArrayDebugLayer < 0 {
+		runtimeConfig.TextureArrayDebugLayer = 0
+	}
+	if runtimeConfig.TextureArrayDebugLayer > maxLayer {
+		runtimeConfig.TextureArrayDebugLayer = maxLayer
+	}
+
+	gl.BindFramebuffer(gl.FRAMEBUFFER, r.textureArrayDebugFBO)
+	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+
+	shader := r.shaderManager.GetShaderProgram("textureArrayDebug")
+	shader.Use()
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D_ARRAY, texture)
+
+	shader.SetUniformInt("depthMap", 0)
+	shader.SetUniformInt("layer", runtimeConfig.TextureArrayDebugLayer)
+
+	gl.BindVertexArray(r.ndcQuadVAO)
+	r.iztDrawArrays(0, 6)
+
+	return r.textureArrayDebugTexture
+}
+
+func (r *RenderSystem) setDebugTexture(renderContext context.RenderContext) {
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
 		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
@@ -441,7 +517,7 @@ func (r *RenderSystem) setDebugTexture() {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainColorPickingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.ShadowMapTexture
+		r.app.RuntimeConfig().DebugTexture = r.resolveTextureArrayDebugTexture(renderContext, r.renderPassContext.ShadowMapTexture, int32(settings.NumShadowMapCascades))
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.CameraDepthTexture
@@ -476,8 +552,6 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		renderContext.AspectRatio(),
-		float64(r.app.RuntimeConfig().ShadowSpatialPartitionNearPlane),
 	)
 
 	sp := r.app.World().SpatialPartition()
@@ -501,8 +575,6 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		renderContext.AspectRatio(),
-		0,
 	)
 
 	sp := r.app.World().SpatialPartition()
@@ -672,6 +744,7 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		if r.app.RuntimeConfig().ShowTextureViewer {
 			imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
 			if imgui.BeginV("Texture Viewer", &r.app.RuntimeConfig().ShowTextureViewer, imgui.WindowFlagsNone) {
+				imgui.SetNextItemWidth(200)
 				if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
 					for _, option := range menus.DebugComboOptions {
 						if imgui.SelectableBool(string(option)) {
@@ -679,6 +752,13 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 						}
 					}
 					imgui.EndCombo()
+				}
+
+				if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
+					imgui.SameLine()
+					maxLayer := int32(settings.NumShadowMapCascades - 1)
+					imgui.SetNextItemWidth(200)
+					imgui.SliderInt("Layer", &r.app.RuntimeConfig().TextureArrayDebugLayer, 0, maxLayer)
 				}
 
 				regionSize := imgui.ContentRegionAvail()

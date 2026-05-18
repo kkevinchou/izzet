@@ -37,7 +37,6 @@ type RenderPass interface {
 		renderPassContext *context.RenderPassContext,
 		viewerContext context.ViewerContext,
 		lightContext context.LightContext,
-		lightViewerContext context.ViewerContext,
 	)
 }
 
@@ -276,7 +275,7 @@ func drawModels(
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
 
 	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
+	gl.BindTexture(gl.TEXTURE_2D_ARRAY, renderPassContext.ShadowMapTexture)
 
 	renderShader.Use()
 	preModelRenderShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)
@@ -312,8 +311,15 @@ func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgra
 	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-	shader.SetUniformFloat("shadowDistance", renderContext.ShadowDistance)
-	shader.SetUniformMat4("lightSpaceMatrix", utils.Mat4F64ToF32(lightContext.LightSpaceMatrix))
+	shader.SetUniformFloat("shadowDistance", float32(renderContext.ShadowDistance))
+
+	// setup shadow cascade params
+	shader.SetUniformInt("cascadeCount", int32(len(renderContext.ShadowMapCascades)))
+	for i, cascade := range renderContext.ShadowMapCascades {
+		shader.SetUniformFloat(fmt.Sprintf("cascadePlaneDistances[%d]", i), float32(cascade.Distance))
+		shader.SetUniformMat4(fmt.Sprintf("lightSpaceMatrixArray[%d]", i), utils.Mat4F64ToF32(cascade.ViewerContext.ViewProjectionMatrix))
+	}
+
 	shader.SetUniformFloat("ambientFactor", app.RuntimeConfig().AmbientFactor)
 	shader.SetUniformFloat("specularFactor", app.RuntimeConfig().SpecularFactor)
 	shader.SetUniformInt("shadowMap", 31)

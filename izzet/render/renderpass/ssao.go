@@ -53,7 +53,6 @@ func (p *SSAORenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 	lightContext context.LightContext,
-	lightViewerContext context.ViewerContext,
 ) {
 	start := time.Now()
 	if !p.app.RuntimeConfig().EnableSSAO {

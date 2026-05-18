@@ -17,6 +17,8 @@ type RuntimeConfig struct {
 	ShadowMapAngleBiasRate          float32
 	EnableShadowMapping             bool
 	ShadowFarDistance               float32
+	ShadowNearDistance              float32
+	ShadowCascadeBlendFactor        float32
 	ShadowSpatialPartitionNearPlane float32
 	BloomIntensity                  float32
 	Exposure                        float32
@@ -28,11 +30,12 @@ type RuntimeConfig struct {
 	BloomUpsamplingScale            float32
 	Color                           [3]float32
 
-	ShowImguiDemo      bool
-	ShowTextureViewer  bool
-	ShowMaterialEditor bool
-	DebugTexture       uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
-	DebugAspectRatio   float64 // the aspect ratio of the debug texture
+	ShowImguiDemo          bool
+	ShowTextureViewer      bool
+	ShowMaterialEditor     bool
+	DebugTexture           uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
+	DebugAspectRatio       float64 // the aspect ratio of the debug texture
+	TextureArrayDebugLayer int32
 
 	RenderSpatialPartition bool
 
@@ -165,26 +168,27 @@ type CloudTexture struct {
 
 func DefaultRuntimeConfig() *RuntimeConfig {
 	return &RuntimeConfig{
-		DirectionalLightDir:             [3]float32{-1, -1, -1},
-		Roughness:                       0.55,
-		Metallic:                        0,
-		PointLightBias:                  0.05,
-		ShadowMapMinBias:                0,
-		ShadowMapAngleBiasRate:          0,
-		EnableShadowMapping:             true,
-		ShadowFarDistance:               50,
-		ShadowSpatialPartitionNearPlane: 1000,
-		ShadowmapZOffset:                1000,
-		BloomIntensity:                  0.04,
-		Exposure:                        1.0,
-		AmbientFactor:                   0.1,
-		SpecularFactor:                  1.0,
-		Bloom:                           true,
-		BloomThresholdPasses:            1,
-		BloomThreshold:                  0.8,
-		BloomUpsamplingScale:            1.0,
-		Color:                           [3]float32{1, 1, 1},
-		RenderSpatialPartition:          false,
+		DirectionalLightDir:      [3]float32{-1, -1, -1},
+		Roughness:                0.55,
+		Metallic:                 0,
+		PointLightBias:           0.05,
+		ShadowMapMinBias:         0,
+		ShadowMapAngleBiasRate:   0,
+		EnableShadowMapping:      true,
+		ShadowFarDistance:        600,
+		ShadowNearDistance:       0.01,
+		ShadowCascadeBlendFactor: 0.95,
+		ShadowmapZOffset:         250,
+		BloomIntensity:           0.04,
+		Exposure:                 1.0,
+		AmbientFactor:            0.1,
+		SpecularFactor:           1.0,
+		Bloom:                    true,
+		BloomThresholdPasses:     1,
+		BloomThreshold:           0.8,
+		BloomUpsamplingScale:     1.0,
+		Color:                    [3]float32{1, 1, 1},
+		RenderSpatialPartition:   false,
 
 		Near: 0.1,
 		Far:  500,

@@ -257,7 +257,7 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 	return &id
 }
 
-func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far, fovX, fovY, nearPlaneOffset float64) []mgl64.Vec3 {
+func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far, fovX, fovY float64) []mgl64.Vec3 {
 	viewerViewMatrix := rotation.Mat4()
 
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
@@ -270,12 +270,11 @@ func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far,
 
 	corners := []float64{-1, 1}
 	nearFar := []float64{near, far}
-	offsets := []float64{nearPlaneOffset, 0}
 
-	for k, distance := range nearFar {
+	for _, distance := range nearFar {
 		for _, i := range corners {
 			for _, j := range corners {
-				vert := viewMatrix.Mul4x1(mgl64.Vec3{i * halfX * distance, j * halfY * distance, -distance + offsets[k]}.Vec4(1)).Vec3()
+				vert := viewMatrix.Mul4x1(mgl64.Vec3{i * halfX * distance, j * halfY * distance, -distance}.Vec4(1)).Vec3()
 				verts = append(verts, vert)
 			}
 		}

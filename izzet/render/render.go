@@ -1,6 +1,7 @@
 package render
 
 import (
+	"math"
 	"os"
 	"time"
 
@@ -158,7 +159,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 
 	r.renderPassContext = &context.RenderPassContext{}
 	r.renderPasses = append(r.renderPasses, renderpass.NewCameraDepthPass(app, r.shaderManager))
-	r.renderPasses = append(r.renderPasses, renderpass.NewShadowMapPass(14400, app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewShadowMapPass(4096, app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewPointLightPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewGPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
@@ -412,24 +413,10 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
 	}
 
-	var cascades [][2]float64
+	near := float64(r.app.RuntimeConfig().ShadowNearDistance)
+	far := float64(r.app.RuntimeConfig().ShadowFarDistance)
 
-	near := r.app.RuntimeConfig().Near
-	far := r.app.RuntimeConfig().ShadowFarDistance
-	cascadeLength := (far - near) / settings.NumShadowMapCascades
-
-	for i := range settings.NumShadowMapCascades {
-		cascadeNear := near + float32(i)*cascadeLength
-		cascadeFar := near + float32(i+1)*cascadeLength
-
-		cascades = append(
-			cascades,
-			[2]float64{
-				float64(cascadeNear),
-				float64(cascadeFar),
-			},
-		)
-	}
+	cascades := computeCascadeSplits(near, far, settings.NumShadowMapCascades, float64(r.app.RuntimeConfig().ShadowCascadeBlendFactor))
 
 	for _, cascade := range cascades {
 		// CSM - calculate N sets of frustum points, we need to advance the position
@@ -440,7 +427,6 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 			cascade[1],
 			renderContext.FovX(),
 			renderContext.FovY(),
-			0,
 		)
 
 		lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
@@ -473,6 +459,25 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
 	return renderContext, cameraViewerContext, lightContext
+}
+
+func computeCascadeSplits(near, far float64, count int, lambda float64) [][2]float64 {
+	var cascades [][2]float64
+	prev := near
+
+	for i := 1; i <= count; i++ {
+		p := float64(i) / float64(count)
+
+		uniform := near + (far-near)*p
+		logarithmic := near * math.Pow(far/near, p)
+
+		split := uniform*(1-lambda) + logarithmic*lambda
+
+		cascades = append(cascades, [2]float64{prev, split})
+		prev = split
+	}
+
+	return cascades
 }
 
 func (r *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.RenderContext, texture uint32, layerCount int32) uint32 {
@@ -547,7 +552,6 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		float64(r.app.RuntimeConfig().ShadowSpatialPartitionNearPlane),
 	)
 
 	sp := r.app.World().SpatialPartition()
@@ -571,7 +575,6 @@ func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotati
 		float64(r.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
-		0,
 	)
 
 	sp := r.app.World().SpatialPartition()

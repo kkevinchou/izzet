@@ -129,6 +129,7 @@ float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
     }
 
     int cascadeLayer = cascadeCount-1;
+
     for (int i = 0; i < cascadeCount; ++i) {
         if (viewDepth <= cascadePlaneDistances[i]) {
             cascadeLayer = i;
@@ -149,18 +150,15 @@ float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
     }
 
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    // float closestDepth = texture(shadowMap, projCoords.xy).r; // QUESTION: why is it .r? is it because it's a grayscale texture?
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
-    // check whether current frag pos is in shadow
-    // float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
 
     // bias term needs to be tweaked depending on geometry
     float bias = max(shadowMapAngleBiasRate * (1.0 - dot(normal, lightDir)), shadowMapMinBias);
-    // bias = 0;
 
     float shadow = 0.0;
     vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0).xy);
+
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
@@ -169,6 +167,7 @@ float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
         }    
     }
+
     shadow /= 9.0;
 
     return shadow;

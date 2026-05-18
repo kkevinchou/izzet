@@ -50,6 +50,9 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("modelgeo", "modelgeo", "modelgeo", ""); err != nil {
 		panic(err)
 	}
+	if err := shaderManager.CompileShaderProgram("cascaded_shadow_map", "cascaded_shadow_map", "cascaded_shadow_map", "cascaded_shadow_map"); err != nil {
+		panic(err)
+	}
 
 	// Quad rendering
 

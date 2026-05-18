@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"time"
@@ -121,6 +122,8 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	rutils.SetRuntimeConfig(app.RuntimeConfig())
 	r.sceneSize = [2]int{1, 1}
 
+	r.assertShaderConfigurations()
+
 	io := imgui.CurrentIO()
 	io.SetConfigFlags(io.ConfigFlags() | imgui.ConfigFlagsDockingEnable)
 	io.SetConfigDebugIsDebuggerPresent(true)
@@ -171,6 +174,24 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 
 	return r
+}
+
+func (r *RenderSystem) assertShaderConfigurations() {
+
+	var invocations int32
+	gl.GetProgramiv(
+		r.shaderManager.GetShaderProgram("cascaded_shadow_map").ID,
+		gl.GEOMETRY_SHADER_INVOCATIONS,
+		&invocations,
+	)
+
+	if int32(settings.NumShadowMapCascades) > invocations {
+		panic(fmt.Sprintf(
+			"cascade count %d exceeds geometry shader invocations %d",
+			settings.NumShadowMapCascades,
+			invocations,
+		))
+	}
 }
 
 func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {

@@ -1,9 +1,11 @@
 package renderpass
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -18,7 +20,7 @@ type ShadowMapRenderPass struct {
 }
 
 func NewShadowMapPass(dimension int, app renderiface.App, sm *shaders.ShaderManager) *ShadowMapRenderPass {
-	return &ShadowMapRenderPass{dimension: dimension, app: app, shader: sm.GetShaderProgram("modelgeo")}
+	return &ShadowMapRenderPass{dimension: dimension, app: app, shader: sm.GetShaderProgram("cascaded_shadow_map")}
 }
 
 func (p *ShadowMapRenderPass) Init(_, _ int, ctx *context.RenderPassContext) {
@@ -34,7 +36,7 @@ func initShadowMapFrameBuffer(width, height int) (uint32, uint32) {
 
 	texture := createShadowMapDepthTexture(width, height)
 
-	gl.FramebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, texture, 0, int32(0))
+	gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, texture, 0)
 
 	gl.DrawBuffer(gl.NONE)
 	gl.ReadBuffer(gl.NONE)
@@ -83,14 +85,9 @@ func (p *ShadowMapRenderPass) Render(
 	gl.Viewport(0, 0, int32(p.dimension), int32(p.dimension))
 
 	if !p.app.RuntimeConfig().EnableShadowMapping {
-		for i := range renderContext.ShadowMapCascades {
-			gl.FramebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, renderPassContext.ShadowMapTexture, 0, int32(i))
-
-			// set the depth to be max value to prevent shadow mapping
-			gl.ClearDepth(1)
-			gl.Clear(gl.DEPTH_BUFFER_BIT)
-		}
-
+		gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, renderPassContext.ShadowMapTexture, 0)
+		gl.ClearDepth(1)
+		gl.Clear(gl.DEPTH_BUFFER_BIT)
 		return
 	}
 
@@ -98,10 +95,14 @@ func (p *ShadowMapRenderPass) Render(
 	defer gl.CullFace(gl.BACK)
 
 	p.shader.Use()
-	for i := range renderContext.ShadowMapCascades {
-		gl.FramebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, renderPassContext.ShadowMapTexture, 0, int32(i))
-		gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-		renderGeometryWithoutColor(p.app, p.shader, renderContext.ShadowCastingEntities, renderContext.ShadowMapCascades[i].ViewerContext, renderContext)
+	gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, renderPassContext.ShadowMapTexture, 0)
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+
+	p.shader.SetUniformInt("cascadeCount", int32(len(renderContext.ShadowMapCascades)))
+	for i, cascade := range renderContext.ShadowMapCascades {
+		p.shader.SetUniformMat4(fmt.Sprintf("lightSpaceMatrixArray[%d]", i), utils.Mat4F64ToF32(cascade.ViewerContext.ViewProjectionMatrix))
 	}
+
+	renderGeometryWithoutColor(p.app, p.shader, renderContext.ShadowCastingEntities, viewerContext, renderContext)
 }

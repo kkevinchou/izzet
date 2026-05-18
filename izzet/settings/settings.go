@@ -23,8 +23,9 @@ func NewConfig() Config {
 }
 
 const (
-	LoggingLevel       = 1
-	Seed         int64 = 1234567
+	NumShadowMapCascades       = 1
+	LoggingLevel               = 1
+	Seed                 int64 = 1234567
 
 	MaxEntityCount int = 100000
 

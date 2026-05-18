@@ -275,7 +275,7 @@ func drawModels(
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, renderPassContext.PointLightTexture)
 
 	gl.ActiveTexture(gl.TEXTURE31)
-	gl.BindTexture(gl.TEXTURE_2D, renderPassContext.ShadowMapTexture)
+	gl.BindTexture(gl.TEXTURE_2D_ARRAY, renderPassContext.ShadowMapTexture)
 
 	renderShader.Use()
 	preModelRenderShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)

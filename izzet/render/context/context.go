@@ -15,6 +15,7 @@ type ViewerContext struct {
 	InverseViewMatrix                   mgl64.Mat4
 	InverseViewMatrixWithoutTranslation mgl64.Mat4
 	ProjectionMatrix                    mgl64.Mat4
+	ViewProjectionMatrix                mgl64.Mat4
 }
 
 type LightContext struct {
@@ -24,6 +25,7 @@ type LightContext struct {
 
 type ShadowMapCascade struct {
 	ViewerContext ViewerContext
+	Distance      float64
 }
 
 type RenderContext struct {

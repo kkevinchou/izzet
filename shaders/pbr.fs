@@ -77,7 +77,6 @@ in VS_OUT {
     vec3 Normal;
     mat4 View;
     vec2 TexCoord;
-    vec3 ColorOverride;
 } fs_in;
 
 const float A = 2.51;
@@ -126,7 +125,7 @@ float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
     float viewDepth = abs((fs_in.View * vec4(fs_in.FragPos, 1.0)).z);
 
     if (viewDepth > shadowDistance) {
-        return 0;
+        return 0.0;
     }
 
     int cascadeLayer = cascadeCount-1;

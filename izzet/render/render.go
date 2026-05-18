@@ -397,8 +397,16 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
 	}
 
-	cascades := [][2]float32{
-		{r.app.RuntimeConfig().Near, r.app.RuntimeConfig().ShadowFarDistance},
+	var cascades [][2]float64
+
+	for range settings.NumShadowMapCascades {
+		cascades = append(
+			cascades,
+			[2]float64{
+				float64(r.app.RuntimeConfig().Near),
+				float64(r.app.RuntimeConfig().ShadowFarDistance),
+			},
+		)
 	}
 
 	for _, cascade := range cascades {
@@ -414,26 +422,27 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		)
 
 		lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-		// CSM: compute N different light positions and light projection matrices
 		lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
 		lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
 
-		// CSM: we have multiple light viewer contexts, one for each cascade
 		lightViewerContext := context.ViewerContext{
-			Position:          lightPosition,
-			Rotation:          lightRotation,
-			InverseViewMatrix: lightViewMatrix,
-			ProjectionMatrix:  lightProjectionMatrix,
+			Position:             lightPosition,
+			Rotation:             lightRotation,
+			InverseViewMatrix:    lightViewMatrix,
+			ProjectionMatrix:     lightProjectionMatrix,
+			ViewProjectionMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
 		}
 
-		renderContext.ShadowMapCascades = append(renderContext.ShadowMapCascades, context.ShadowMapCascade{ViewerContext: lightViewerContext})
+		renderContext.ShadowMapCascades = append(
+			renderContext.ShadowMapCascades,
+			context.ShadowMapCascade{
+				ViewerContext: lightViewerContext,
+				Distance:      cascade[1],
+			},
+		)
 	}
 
-	// CSM: this should remain the same, this is used to the distance of the fragment from the light source
-	// what changes is which depth texture we use to look up the fragment
 	lightContext := context.LightContext{
-		// this should be the inverse of the transforms applied to the viewer context
-		// if the viewer moves along -y, the universe moves along +y
 		Lights:      r.app.World().Lights(),
 		PointLights: pointLights,
 	}

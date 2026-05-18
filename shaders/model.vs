@@ -12,10 +12,8 @@ layout (location = 5) in vec3 jointWeights;
 out VS_OUT {
     vec3 FragPos;
     vec3 Normal;
-    vec4 FragPosLightSpace;
     mat4 View;
     vec2 TexCoord;
-    vec3 ColorOverride;
 } vs_out;
 
 uniform mat4 model;

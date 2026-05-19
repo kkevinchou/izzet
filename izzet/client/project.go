@@ -171,7 +171,7 @@ func (g *Client) NewProject(name string) {
 	cube := entity.CreateCube(g.AssetManager(), 1)
 	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}
 	entity.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
-	entity.SetScale(cube, mgl64.Vec3{7, 2, 7})
+	entity.SetScale(cube, mgl64.Vec3{75, 2, 75})
 	g.World().AddEntity(cube)
 
 	directionalLight := entity.CreateDirectionalLight()

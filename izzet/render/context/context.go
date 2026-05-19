@@ -35,11 +35,14 @@ type RenderContext struct {
 	// entities
 	ShadowCastingEntities []*entity.Entity
 	RenderableEntities    []*entity.Entity
-	Lights                []*entity.Entity
-	PointLights           []*entity.Entity
-	ShadowMapCascades     []ShadowMapCascade
 
-	ShadowDistance float64
+	// lights
+	Lights      []*entity.Entity
+	PointLights []*entity.Entity
+
+	// shadows
+	ShadowMapCascades []ShadowMapCascade
+	ShadowDistance    float64
 }
 
 // intermediate rendering properties

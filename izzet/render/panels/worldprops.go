@@ -219,16 +219,6 @@ func WorldProps(app renderiface.App) {
 		if imgui.Button("Find Path") {
 			app.FindPath(app.RuntimeConfig().NavigationMeshStartPoint, app.RuntimeConfig().NavigationMeshGoalPoint)
 		}
-
-		imgui.LabelText("##", "Draw")
-		if imgui.BeginCombo("##", string(SelectedNavmeshRenderComboOption)) {
-			for _, option := range navmeshRenderComboOptions {
-				if imgui.SelectableBool(string(option)) {
-					SelectedNavmeshRenderComboOption = option
-				}
-			}
-			imgui.EndCombo()
-		}
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsDefaultOpen) {

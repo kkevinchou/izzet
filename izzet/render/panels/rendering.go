@@ -34,6 +34,16 @@ func Rendering(app renderiface.App) {
 		panelutils.SetupRow("Shadow Mapping", func() {
 			imgui.Checkbox("", &runtimeConfig.EnableShadowMapping)
 		}, true)
+		panelutils.SetupRow("Draw Nav Mesh", func() {
+			if imgui.BeginCombo("##", string(SelectedNavmeshRenderComboOption)) {
+				for _, option := range navmeshRenderComboOptions {
+					if imgui.SelectableBool(string(option)) {
+						SelectedNavmeshRenderComboOption = option
+					}
+				}
+				imgui.EndCombo()
+			}
+		}, true)
 		imgui.EndTable()
 	}
 

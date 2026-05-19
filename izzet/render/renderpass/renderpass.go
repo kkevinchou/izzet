@@ -168,7 +168,7 @@ func renderGeometryWithoutColor(
 	viewerContext context.ViewerContext,
 	renderContext context.RenderContext,
 ) {
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	for _, e := range ents {
@@ -258,7 +258,7 @@ func drawBatches(
 	}
 }
 func worldToNDCPosition(viewerContext context.ViewerContext, worldPosition mgl64.Vec3) (mgl64.Vec2, bool) {
-	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.InverseViewMatrix).Mul4x1(worldPosition.Vec4(1))
+	screenPos := viewerContext.ProjectionMatrix.Mul4(viewerContext.ViewMatrix).Mul4x1(worldPosition.Vec4(1))
 	behind := screenPos.Z() < 0
 	screenPos = screenPos.Mul(1 / screenPos.W())
 	return screenPos.Vec2(), behind
@@ -318,7 +318,7 @@ func commonPBRShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, re
 
 	shader.SetUniformInt("width", int32(renderContext.Width()))
 	shader.SetUniformInt("height", int32(renderContext.Height()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
 	shader.SetUniformFloat("shadowDistance", float32(renderContext.ShadowDistance))

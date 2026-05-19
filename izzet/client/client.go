@@ -264,7 +264,7 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 
 	// -1 for the near plane
 	ndcP := mgl64.Vec4{((x / float64(width)) - 0.5) * 2, ((y / float64(height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := g.renderSystem.CameraViewerContext().InverseViewMatrix.Inv().Mul4(g.renderSystem.CameraViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
+	nearPlanePos := g.renderSystem.CameraViewerContext().ViewMatrix.Inv().Mul4(g.renderSystem.CameraViewerContext().ProjectionMatrix.Inv()).Mul4x1(ndcP)
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()

@@ -12,10 +12,10 @@ type ViewerContext struct {
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
 
-	InverseViewMatrix                   mgl64.Mat4
-	InverseViewMatrixWithoutTranslation mgl64.Mat4
-	ProjectionMatrix                    mgl64.Mat4
-	ViewProjectionMatrix                mgl64.Mat4
+	ViewMatrix                   mgl64.Mat4
+	ViewMatrixWithoutTranslation mgl64.Mat4
+	ProjectionMatrix             mgl64.Mat4
+	ViewProjectionMatrix         mgl64.Mat4
 }
 
 type LightContext struct {

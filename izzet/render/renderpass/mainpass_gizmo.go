@@ -32,7 +32,7 @@ func (p *MainRenderPass) drawTranslationGizmo(viewerContext *context.ViewerConte
 
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Translate3D(renderPosition.X(), renderPosition.Y(), renderPosition.Z())))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	axisEntityIDs := []int{gizmo.GizmoXAxisPickingID, gizmo.GizmoYAxisPickingID, gizmo.GizmoZAxisPickingID}
@@ -114,7 +114,7 @@ func (p *MainRenderPass) drawScaleGizmo(viewerContext *context.ViewerContext, sh
 	renderPosition := nearPlanePosition.Sub(viewerContext.Position).Normalize().Mul(settings.GizmoDistanceFactor).Add(viewerContext.Position)
 
 	shader.Use()
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	colors := map[int]mgl64.Vec3{

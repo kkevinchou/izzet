@@ -215,7 +215,7 @@ func (p *MainRenderPass) drawColliders(
 			if len(lines) > 0 {
 				scale := e.Scale()
 				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 				rutils.DrawLineGroup(fmt.Sprintf("pogchamp_%d", len(lines)), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, mgl64.Vec3{1, 0, 0})
 			}
@@ -295,7 +295,7 @@ func (p *MainRenderPass) drawColliders(
 			scale := e.Scale()
 			modelMat := mgl64.Translate3D(position.X(), position.Y(), position.Z()).Mul4(mgl64.Scale3D(scale.X(), scale.Y(), scale.Z()))
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMat))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 			rutils.DrawLineGroup(fmt.Sprintf("%d_capsule_collider", e.ID), shader, lines, 1/(scale.X()+scale.Y()+scale.Z())/3/8, color)
@@ -318,7 +318,7 @@ func (p *MainRenderPass) drawNonEntity(
 
 				shader.SetUniformUInt("entityID", uint32(e.ID))
 				shader.SetUniformMat4("model", utils.Mat4F64ToF32(modelMatrix))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			}
 
@@ -374,7 +374,7 @@ func (p *MainRenderPass) drawNonEntity(
 				shader := p.sm.GetShaderProgram("flat")
 				shader.Use()
 				shader.SetUniformMat4("model", mgl32.Translate3D(float32(e.Position().X()), float32(e.Position().Y()), float32(e.Position().Z())))
-				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+				shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 				shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 				rutils.DrawLineGroup(fmt.Sprintf("web_%d", len(lines)), shader, lines, 0.05, mgl64.Vec3{1, 0, 0})
@@ -404,7 +404,7 @@ func (p *MainRenderPass) drawSkybox(renderContext context.RenderContext, viewerC
 
 	shader := p.sm.GetShaderProgram("skybox")
 	shader.Use()
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrixWithoutTranslation))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrixWithoutTranslation))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	shader.SetUniformInt("fogDensity", p.app.RuntimeConfig().FogDensity)
 	shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
@@ -526,7 +526,7 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 					color := mgl64.Vec3{252.0 / 255, 241.0 / 255, 33.0 / 255}
 					shader.Use()
 					shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+					shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 					shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 					rutils.DrawLineGroup(fmt.Sprintf("%d_%v_%v", entity.ID, entity.Position(), dir), shader, lines, 0.05, color)
@@ -573,7 +573,7 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 			color := mgl64.Vec3{1, 0, 0}
 			shader.Use()
 			shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+			shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 			shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 			rutils.DrawLineGroup(fmt.Sprintf("navmesh_debuglines_%d", nm.InvalidatedTimestamp), shader, nm.DebugLines, 0.05, color)
 		}
@@ -633,7 +633,7 @@ func (p *MainRenderPass) drawSpatialPartition(viewerContext context.ViewerContex
 	shader := p.sm.GetShaderProgram("flat")
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	rutils.DrawLineGroup("spatial_partition", shader, allLines, thickness, color)

@@ -112,7 +112,7 @@ func (r *RenderSystem) drawTexturedQuad(viewerContext *context.ViewerContext, sh
 			shader.SetUniformUInt("entityID", uint32(*pickingID))
 		}
 		shader.SetUniformMat4("model", *modelMatrix)
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	} else {
 		shader := shaderManager.GetShaderProgram("screen_space_quad")

@@ -278,7 +278,7 @@ func DrawTexturedQuad(viewerContext *context.ViewerContext, shaderManager *shade
 			shader.SetUniformUInt("entityID", uint32(*pickingID))
 		}
 		shader.SetUniformMat4("model", *modelMatrix)
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	} else {
 		shader := shaderManager.GetShaderProgram("screen_space_quad")
@@ -421,7 +421,7 @@ func DrawAABB(shader *shaders.ShaderProgram, viewerContext context.ViewerContext
 	}
 
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 
 	DrawLineGroup(fmt.Sprintf("aabb_%v_%v", aabb.MinVertex, aabb.MaxVertex), shader, allLines, thickness, color)
@@ -566,7 +566,7 @@ func GetNDCQuadVAO() uint32 {
 // computes the near plane position for a given x y coordinate
 func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.Vec3) mgl64.Vec3 {
 	// ndcP := mgl64.Vec4{((x / float64(g.width)) - 0.5) * 2, ((y / float64(g.height)) - 0.5) * -2, -1, 1}
-	nearPlanePos := viewerContext.InverseViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
+	nearPlanePos := viewerContext.ViewMatrix.Inv().Mul4(viewerContext.ProjectionMatrix.Inv()).Mul4x1(directionVec.Vec4(1))
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()

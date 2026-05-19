@@ -200,7 +200,7 @@ func (p *MainRenderPass) drawContour(shaderManager *shaders.ShaderManager, viewe
 	shader := shaderManager.GetShaderProgram("line")
 	shader.Use()
 	shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
+	shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.ViewMatrix))
 	shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
 	gl.BindVertexArray(vao)
 	rutils.IztDrawLines(count)

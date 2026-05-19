@@ -402,16 +402,16 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 
 	// configure camera viewer context
 
-	viewerViewMatrix := rotation.Mat4()
+	rotationMatrix := rotation.Mat4()
 	viewTranslationMatrix := mgl64.Translate3D(position.X(), position.Y(), position.Z())
 
 	cameraViewerContext := context.ViewerContext{
 		Position: position,
 		Rotation: rotation,
 
-		InverseViewMatrix:                   viewTranslationMatrix.Mul4(viewerViewMatrix).Inv(),
-		InverseViewMatrixWithoutTranslation: viewerViewMatrix.Inv(),
-		ProjectionMatrix:                    mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
+		ViewMatrix:                   viewTranslationMatrix.Mul4(rotationMatrix).Inv(),
+		ViewMatrixWithoutTranslation: rotationMatrix.Inv(),
+		ProjectionMatrix:             mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
 	}
 
 	// find the directional light if there is one
@@ -457,7 +457,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		lightViewerContext := context.ViewerContext{
 			Position:             lightPosition,
 			Rotation:             lightRotation,
-			InverseViewMatrix:    lightViewMatrix,
+			ViewMatrix:           lightViewMatrix,
 			ProjectionMatrix:     lightProjectionMatrix,
 			ViewProjectionMatrix: lightProjectionMatrix.Mul4(lightViewMatrix),
 		}

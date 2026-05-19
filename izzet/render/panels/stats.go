@@ -33,6 +33,9 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.SetupRow("Command Frame Time", func() {
 			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("command_frame_nanoseconds", metricRange)/1000000))
 		}, true)
+		panelutils.SetupRow("Client Sleep Time", func() {
+			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("client_sleep_nanoseconds", metricRange)/1000000))
+		}, true)
 		panelutils.SetupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("fps", metricRange))) }, true)
 		panelutils.SetupRow("CFPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("command_frames", metricRange))) }, true)
 		panelutils.SetupRow("Command Frame", func() { imgui.LabelText("", fmt.Sprintf("%d", app.CommandFrame())) }, true)

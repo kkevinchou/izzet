@@ -114,7 +114,7 @@ func (g *Server) Start(started chan bool, done chan bool) {
 	started <- true
 	var accumulator float64
 
-	// msPerFrame := float64(1000) / float64(60)
+	msPerCommandFrame := float64(settings.MSPerCommandFrame)
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
 
 	for !g.gameOver {
@@ -139,6 +139,11 @@ func (g *Server) Start(started chan bool, done chan bool) {
 				g.Logger().Info("ran into max command frames per loop")
 				accumulator = 0
 			}
+		}
+
+		nextCommandFrameMs := msPerCommandFrame - accumulator
+		if nextCommandFrameMs > 0 {
+			time.Sleep(time.Duration(nextCommandFrameMs * float64(time.Millisecond)))
 		}
 
 		select {

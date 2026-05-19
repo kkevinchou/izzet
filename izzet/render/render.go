@@ -701,8 +701,13 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	dockspaceID := imgui.IDStr("MainDockSpace")
 	imgui.DockSpace(dockspaceID)
 
-	if !viewportInitialized && shouldSeedDefaultLayout(*imgui.CurrentIO(), dockspaceID) {
+	seedDefaultLayout := false
+	if !viewportInitialized {
 		viewportInitialized = true
+		seedDefaultLayout = shouldSeedDefaultLayout(*imgui.CurrentIO(), dockspaceID)
+	}
+
+	if seedDefaultLayout {
 
 		var rightID, mainAfterRight imgui.ID
 		var bottomID, centerID imgui.ID

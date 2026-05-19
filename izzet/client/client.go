@@ -197,6 +197,15 @@ func (g *Client) Start() {
 				renderAccumulator -= msPerFrame
 			}
 		}
+
+		nextCommandFrameMs := float64(settings.MSPerCommandFrame) - accumulator
+		nextRenderFrameMs := msPerFrame - renderAccumulator
+		minNextFrameMs := min(nextCommandFrameMs, nextRenderFrameMs)
+		if minNextFrameMs > 0 {
+			sleepStart := time.Now()
+			time.Sleep(time.Duration(minNextFrameMs * float64(time.Millisecond)))
+			globals.ClientRegistry().Inc("client_sleep_nanoseconds", float64(time.Since(sleepStart).Nanoseconds()))
+		}
 	}
 }
 

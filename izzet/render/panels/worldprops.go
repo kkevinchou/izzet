@@ -14,7 +14,6 @@ import (
 type NavMeshRenderComboOption string
 
 const (
-	ComboOptionNavMesh                NavMeshRenderComboOption = "Nav Mesh"
 	ComboOptionCompactHeightField     NavMeshRenderComboOption = "Compact Height Field"
 	ComboOptionDistanceField          NavMeshRenderComboOption = "Distance Field"
 	ComboOptionVoxel                  NavMeshRenderComboOption = "Voxel"
@@ -27,11 +26,10 @@ const (
 	ComboOptionDebug                  NavMeshRenderComboOption = "Debug"
 )
 
-var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionCompactHeightField
+var SelectedNavmeshRenderComboOption NavMeshRenderComboOption = ComboOptionDetailedMesh
 
 var (
 	navmeshRenderComboOptions []NavMeshRenderComboOption = []NavMeshRenderComboOption{
-		ComboOptionNavMesh,
 		ComboOptionCompactHeightField,
 		ComboOptionDetailedMesh,
 		ComboOptionDetailedMeshAndSamples,

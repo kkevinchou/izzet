@@ -82,7 +82,8 @@ const (
 	ScaleSensitivity        float64 = 0.8
 	ScaleAllAxisSensitivity float64 = 0.035
 
-	DrawerbarSize float32 = 35
+	DrawerbarSize        float32 = 35
+	NavmeshRenderYOffset float64 = 0.1
 )
 
 var (

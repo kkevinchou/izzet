@@ -14,13 +14,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
 var (
-	navmeshVAOCache    uint32
-	navmeshVertexCount int32
-
 	chfVAOCache    uint32
 	chfVertexCount int32
 
@@ -39,10 +37,10 @@ var (
 	premergeTrianglesVAOCache    uint32
 	premergeTrianglesVertexCount int32
 
+	polygonVAOCache                  uint32
+	polygonVertexCount               int32
 	polygonColoredOutlineVAOCache    uint32
 	polygonColoredOutlineVertexCount int32
-	polygonBlackOutlineVAOCache      uint32
-	polygonBlackOutlineVertexCount   int32
 
 	detailedMeshVAOCache                   uint32
 	detailedMeshVertexCount                int32
@@ -65,12 +63,6 @@ var (
 func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
 		start := time.Now()
-		navmeshVAOCache, navmeshVertexCount = p.createDetailedMeshVAO(nm, colorStyleBlue)
-		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
-		start = time.Now()
-		polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleBlack)
-		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
-		start = time.Now()
 		chfVAOCache, chfVertexCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
 		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
 		start = time.Now()
@@ -89,7 +81,8 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
 		fmt.Printf("%.1f seconds to create premerge triangle vao\n", time.Since(start).Seconds())
 		start = time.Now()
-		polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleRegionID)
+		polygonVAOCache, polygonVertexCount = p.createPolygonMeshVAO(nm, colorStyleRegionID)
+		polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleBlack)
 		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
 		// debugVAOCache, debugVertexCount = r.createDebugVAO(nm)
 		start = time.Now()
@@ -105,16 +98,7 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 		fmt.Printf("%.1f seconds to create path vao\n", time.Since(start).Seconds())
 	}
 
-	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionNavMesh {
-		if navmeshVertexCount > 0 {
-			gl.BindVertexArray(navmeshVAOCache)
-			rutils.IztDrawElements(navmeshVertexCount * 3)
-			p.drawContour(shaderManager, viewerContext, polygonBlackOutlineVAOCache, polygonBlackOutlineVertexCount)
-		}
-		if pathVertexCount > 0 {
-			p.drawContour(shaderManager, viewerContext, pathVAOCache, pathVertexCount)
-		}
-	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
+	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
 		if chfVertexCount > 0 {
 			gl.BindVertexArray(chfVAOCache)
 			rutils.IztDrawElements(chfVertexCount * 36)
@@ -142,6 +126,10 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 			p.drawContour(shaderManager, viewerContext, premergeTrianglesVAOCache, premergeTrianglesVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPolygons {
+		if polygonVertexCount > 0 {
+			gl.BindVertexArray(polygonVAOCache)
+			rutils.IztDrawElements(polygonVertexCount * 3)
+		}
 		if polygonColoredOutlineVertexCount > 0 {
 			p.drawContour(shaderManager, viewerContext, polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount)
 		}
@@ -230,7 +218,7 @@ func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 			// v0
 			vertexAttributes = append(vertexAttributes,
 				float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
-				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y())+float32(settings.NavmeshRenderYOffset),
 				float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
 			)
 			vertexAttributes = append(vertexAttributes, regionIDToColor(tri.RegionID)...)
@@ -238,7 +226,7 @@ func createPremergeTriangleVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
 			// v1
 			vertexAttributes = append(vertexAttributes,
 				float32(v1.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
-				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y())+float32(settings.NavmeshRenderYOffset),
 				float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
 			)
 			vertexAttributes = append(vertexAttributes, regionIDToColor(tri.RegionID)...)
@@ -279,7 +267,7 @@ func (p *MainRenderPass) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cst
 			// v0
 			vertexAttributes = append(vertexAttributes,
 				float32(v0.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
-				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v0.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y())+float32(settings.NavmeshRenderYOffset),
 				float32(v0.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
 			)
 			vertexAttributes = append(vertexAttributes, color...)
@@ -287,13 +275,63 @@ func (p *MainRenderPass) createPolygonOutlineVAO(nm *navmesh.NavigationMesh, cst
 			// v1
 			vertexAttributes = append(vertexAttributes,
 				float32(v1.X)*float32(nm.Mesh.CellSize)+float32(minVertex.X()),
-				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y()),
+				float32(v1.Y)*float32(nm.Mesh.CellHeight)+float32(minVertex.Y())+float32(settings.NavmeshRenderYOffset),
 				float32(v1.Z)*float32(nm.Mesh.CellSize)+float32(minVertex.Z()),
 			)
 			vertexAttributes = append(vertexAttributes, color...)
 		}
 	}
 	return createLineVAO(vertexAttributes)
+}
+
+func (p *MainRenderPass) createPolygonMeshVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
+	minVertex := nm.Volume.MinVertex
+	debugMap := p.app.RuntimeConfig().DebugBlob1IntMap
+
+	var triangles [][3]mgl32.Vec3
+	var colors []float32
+
+	for polyIndex, poly := range nm.Mesh.Polygons {
+		if !debugMap[polyIndex] && len(debugMap) > 0 {
+			continue
+		}
+		if len(poly.Verts) < 3 {
+			continue
+		}
+
+		var color []float32
+		if cstyle == colorStyleRegionID {
+			color = regionIDToColor(poly.RegionID)
+		} else if cstyle == colorStyleBlue {
+			color = []float32{0, 0, 0.7}
+		} else if cstyle == colorStyleBlack {
+			color = []float32{0, 0, 0}
+		}
+
+		v0 := polygonVertexToWorld(nm, minVertex, poly.Verts[0])
+		for i := 1; i < len(poly.Verts)-1; i++ {
+			v1 := polygonVertexToWorld(nm, minVertex, poly.Verts[i])
+			v2 := polygonVertexToWorld(nm, minVertex, poly.Verts[i+1])
+
+			triangles = append(triangles, [3]mgl32.Vec3{v0, v1, v2})
+			colors = append(colors, color...)
+		}
+	}
+
+	if len(triangles) == 0 {
+		return 0, 0
+	}
+
+	return triangleAttributes(triangles, colors), int32(len(triangles))
+}
+
+func polygonVertexToWorld(nm *navmesh.NavigationMesh, minVertex mgl64.Vec3, vertexIndex int) mgl32.Vec3 {
+	v := nm.Mesh.Vertices[vertexIndex]
+	return mgl32.Vec3{
+		float32(v.X)*float32(nm.Mesh.CellSize) + float32(minVertex.X()),
+		float32(v.Y)*float32(nm.Mesh.CellHeight) + float32(minVertex.Y()) + float32(settings.NavmeshRenderYOffset),
+		float32(v.Z)*float32(nm.Mesh.CellSize) + float32(minVertex.Z()),
+	}
 }
 
 func (p *MainRenderPass) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyle colorStyle) (uint32, int32) {
@@ -325,9 +363,9 @@ func (p *MainRenderPass) createDetailedMeshVAO(nm *navmesh.NavigationMesh, cstyl
 			}
 
 			triangles = append(triangles, [3]mgl32.Vec3{
-				{float32(v0.X), float32(v0.Y), float32(v0.Z)},
-				{float32(v1.X), float32(v1.Y), float32(v1.Z)},
-				{float32(v2.X), float32(v2.Y), float32(v2.Z)},
+				{float32(v0.X), float32(v0.Y + settings.NavmeshRenderYOffset), float32(v0.Z)},
+				{float32(v1.X), float32(v1.Y + settings.NavmeshRenderYOffset), float32(v1.Z)},
+				{float32(v2.X), float32(v2.Y + settings.NavmeshRenderYOffset), float32(v2.Z)},
 			})
 			colors = append(colors, color...)
 		}

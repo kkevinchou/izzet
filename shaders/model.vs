@@ -14,6 +14,7 @@ out VS_OUT {
     vec3 Normal;
     mat4 View;
     vec2 TexCoord;
+    vec4 Color;
     flat uint EntityID;
 } vs_out;
 
@@ -62,5 +63,6 @@ void main() {
     }
 
     vs_out.EntityID = entityID;
+    vs_out.Color = vec4(1.0);
     gl_Position = (projection * (view * (model * totalPos)));
 }

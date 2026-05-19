@@ -23,7 +23,7 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("batch", "batch", "pbr", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("navmesh", "navmesh", "navmesh", ""); err != nil {
+	if err := shaderManager.CompileShaderProgram("navmesh", "navmesh", "pbr", ""); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("depthDebug", "basictexture", "depthvalue", ""); err != nil {

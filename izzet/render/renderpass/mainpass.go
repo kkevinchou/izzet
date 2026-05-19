@@ -543,28 +543,15 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 	if nm != nil {
 		shader := p.sm.GetShaderProgram("navmesh")
 		shader.Use()
+		commonPBRShaderSetup(p.app, shader, renderContext, viewerContext, lightContext)
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
-		shader.SetUniformMat4("view", utils.Mat4F64ToF32(viewerContext.InverseViewMatrix))
-		shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
-
-		setupLightingUniforms(shader, lightContext.Lights)
-		shader.SetUniformInt("width", int32(renderContext.Width()))
-		shader.SetUniformVec3("viewPos", utils.Vec3F64ToF32(viewerContext.Position))
-		shader.SetUniformFloat("shadowDistance", float32(renderContext.ShadowDistance))
-		shader.SetUniformFloat("ambientFactor", p.app.RuntimeConfig().AmbientFactor)
-		shader.SetUniformInt("shadowMap", 31)
-		shader.SetUniformInt("depthCubeMap", 30)
-		shader.SetUniformInt("cameraDepthMap", 29)
-		shader.SetUniformFloat("near", p.app.RuntimeConfig().Near)
-		shader.SetUniformFloat("far", p.app.RuntimeConfig().Far)
-		shader.SetUniformFloat("pointLightBias", p.app.RuntimeConfig().PointLightBias)
-		shader.SetUniformFloat("shadowMapMinBias", p.app.RuntimeConfig().ShadowMapMinBias/100000)
-		shader.SetUniformFloat("shadowMapAngleBiasRate", p.app.RuntimeConfig().ShadowMapAngleBiasRate/100000)
-		if len(lightContext.PointLights) > 0 {
-			shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
-		}
-		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 0, 0})
-
+		shader.SetUniformUInt("entityID", 0)
+		shader.SetUniformInt("hasPBRBaseColorTexture", 0)
+		shader.SetUniformInt("repeatTexture", 0)
+		shader.SetUniformInt("alphaMode", 0)
+		shader.SetUniformInt("useVertexColor", 1)
+		shader.SetUniformInt("enableAmbientOcclusion", 0)
+		shader.SetUniformVec3("albedo", mgl32.Vec3{1, 1, 1})
 		shader.SetUniformFloat("roughness", .8)
 		shader.SetUniformFloat("metallic", 0)
 

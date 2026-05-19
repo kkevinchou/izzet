@@ -9,9 +9,10 @@ layout (location = 2) in vec3 aColor;
 out VS_OUT {
     vec3 FragPos;
     vec3 Normal;
-    vec3 Color;
-    vec4 FragPosLightSpace;
     mat4 View;
+    vec2 TexCoord;
+    vec4 Color;
+    flat uint EntityID;
 } vs_out;
 
 uniform mat4 model;
@@ -21,8 +22,7 @@ uniform mat4 projection;
 uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
-
-const vec3 errorColor = vec3(255.0 / 255, 28.0 / 255, 217.0 / 121.0);
+uniform uint entityID;
 
 void main() {
     vec4 totalPos = vec4(0.0);
@@ -36,9 +36,9 @@ void main() {
     vs_out.FragPos = vec3(model * totalPos);
     vs_out.View = view;
 
-    vs_out.Color = aColor;
-
-    vs_out.FragPosLightSpace = lightSpaceMatrix * (model * totalPos);
+    vs_out.TexCoord = vec2(0.0);
+    vs_out.Color = vec4(aColor, 0.9);
+    vs_out.EntityID = entityID;
 
     gl_Position = (projection * (view * (model * totalPos)));
 }

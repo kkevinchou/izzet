@@ -12,6 +12,7 @@ uniform vec3  scale;
 
 uniform int repeatTexture;
 uniform int alphaMode;
+uniform int useVertexColor;
 
 // lights
 const int MAX_LIGHTS = 10;
@@ -75,6 +76,7 @@ in VS_OUT {
     vec3 Normal;
     mat4 View;
     vec2 TexCoord;
+    vec4 Color;
     flat uint EntityID;
 } fs_in;
 
@@ -287,6 +289,9 @@ void main()
     // reflectance equation
     vec3 Lo = vec3(0.0);
     vec3 in_albedo = albedo;
+    if (useVertexColor == 1) {
+        in_albedo = fs_in.Color.rgb;
+    }
     if (hasPBRBaseColorTexture == 1) {
         vec4 texture_value = texture(modelTexture, fs_in.TexCoord);
 
@@ -384,8 +389,12 @@ void main()
     vec3 color = ambient + Lo;
 	
 
-    // only use the alpha if the alpha mode is set to blend (2) otherwise it is opaque (i.e. dont do alpha blending and set alpha to 1)
-    float alpha = alphaMode == 2 ? textureAlpha : 1.0;
+    // Only use texture alpha when alpha mode is blend (2);
+    float alpha = (alphaMode == 2 ? textureAlpha : 1.0);
+    if (useVertexColor == 1) {
+        alpha = fs_in.Color.a;
+    }
+
     FragColor = vec4(color, alpha);
 
     if (fogDensity > 0) {

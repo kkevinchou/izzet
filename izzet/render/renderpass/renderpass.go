@@ -221,6 +221,7 @@ func drawBatches(
 	shader.SetUniformInt("isAnimated", 0)
 	shader.SetUniformInt("alphaMode", int32(modelspec.AlphaModeOpaque))
 	shader.SetUniformInt("repeatTexture", 0)
+	shader.SetUniformInt("useVertexColor", 0)
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
 	for _, batch := range renderContext.BatchRenders {
@@ -286,7 +287,7 @@ func drawModels(
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, renderPassContext.ShadowMapTexture)
 
 	renderShader.Use()
-	preModelRenderShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)
+	commonPBRShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)
 
 	var drawCount int
 	for _, e := range ents {
@@ -305,14 +306,15 @@ func drawModels(
 
 	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		batchShader.Use()
-		preModelRenderShaderSetup(app, batchShader, renderContext, viewerContext, lightContext)
+		commonPBRShaderSetup(app, batchShader, renderContext, viewerContext, lightContext)
 		drawBatches(app, renderContext, batchShader)
 		globals.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
-func preModelRenderShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, renderContext context.RenderContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
+func commonPBRShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, renderContext context.RenderContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
 	shader.SetUniformInt("fogDensity", app.RuntimeConfig().FogDensity)
+	shader.SetUniformInt("useVertexColor", 0)
 
 	shader.SetUniformInt("width", int32(renderContext.Width()))
 	shader.SetUniformInt("height", int32(renderContext.Height()))

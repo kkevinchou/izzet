@@ -36,7 +36,6 @@ func (p *CameraDepthRenderPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 ) {
 	start := time.Now()
 	defer func() {

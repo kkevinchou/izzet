@@ -76,7 +76,6 @@ func (p *ShadowMapRenderPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 ) {
 	start := time.Now()
 	defer func() { globals.ClientRegistry().Inc("render_shadow_pass", float64(time.Since(start).Milliseconds())) }()

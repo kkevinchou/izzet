@@ -18,11 +18,6 @@ type ViewerContext struct {
 	ViewProjectionMatrix         mgl64.Mat4
 }
 
-type LightContext struct {
-	Lights      []*entity.Entity
-	PointLights []*entity.Entity
-}
-
 type ShadowMapCascade struct {
 	ViewerContext ViewerContext
 	Distance      float64
@@ -40,6 +35,8 @@ type RenderContext struct {
 	// entities
 	ShadowCastingEntities []*entity.Entity
 	RenderableEntities    []*entity.Entity
+	Lights                []*entity.Entity
+	PointLights           []*entity.Entity
 	ShadowMapCascades     []ShadowMapCascade
 
 	ShadowDistance float64

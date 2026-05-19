@@ -59,7 +59,6 @@ func (p *GBufferPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 ) {
 	start := time.Now()
 	if !p.app.RuntimeConfig().EnableSSAO {
@@ -72,6 +71,6 @@ func (p *GBufferPass) Render(
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	drawModels(p.app, p.sm.GetShaderProgram("gpass"), p.sm.GetShaderProgram("gpass"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
+	drawModels(p.app, p.sm.GetShaderProgram("gpass"), p.sm.GetShaderProgram("gpass"), viewerContext, renderContext, renderPassContext, renderContext.RenderableEntities)
 
 }

@@ -327,7 +327,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		rotation = camera.Rotation()
 	}
 
-	renderContext, cameraViewerContext, lightContext := r.createRenderingContexts(position, rotation)
+	renderContext, cameraViewerContext := r.createRenderingContexts(position, rotation)
 
 	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
@@ -344,7 +344,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	// RENDER PASSES
 	for _, pass := range r.renderPasses {
-		pass.Render(renderContext, r.renderPassContext, cameraViewerContext, lightContext)
+		pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
 	}
 
 	// store color picking entity
@@ -392,7 +392,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
 }
 
-func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext, context.LightContext) {
+func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext) {
 	mr := globals.ClientRegistry()
 
 	start := time.Now()
@@ -471,15 +471,13 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		)
 	}
 
-	lightContext := context.LightContext{
-		Lights:      r.app.World().Lights(),
-		PointLights: pointLights,
-	}
+	renderContext.Lights = lights
+	renderContext.PointLights = pointLights
 
 	r.cameraViewerContext = cameraViewerContext
 	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
 
-	return renderContext, cameraViewerContext, lightContext
+	return renderContext, cameraViewerContext
 }
 
 func computeCascadeSplits(near, far float64, count int, lambda float64) [][2]float64 {

@@ -36,7 +36,6 @@ type RenderPass interface {
 		renderContext context.RenderContext,
 		renderPassContext *context.RenderPassContext,
 		viewerContext context.ViewerContext,
-		lightContext context.LightContext,
 	)
 }
 
@@ -269,7 +268,6 @@ func drawModels(
 	renderShader *shaders.ShaderProgram,
 	batchShader *shaders.ShaderProgram,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	ents []*entity.Entity,
@@ -287,7 +285,7 @@ func drawModels(
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, renderPassContext.ShadowMapTexture)
 
 	renderShader.Use()
-	commonPBRShaderSetup(app, renderShader, renderContext, viewerContext, lightContext)
+	commonPBRShaderSetup(app, renderShader, renderContext, viewerContext)
 
 	var drawCount int
 	for _, e := range ents {
@@ -306,13 +304,13 @@ func drawModels(
 
 	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		batchShader.Use()
-		commonPBRShaderSetup(app, batchShader, renderContext, viewerContext, lightContext)
+		commonPBRShaderSetup(app, batchShader, renderContext, viewerContext)
 		drawBatches(app, renderContext, batchShader)
 		globals.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
-func commonPBRShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, renderContext context.RenderContext, viewerContext context.ViewerContext, lightContext context.LightContext) {
+func commonPBRShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, renderContext context.RenderContext, viewerContext context.ViewerContext) {
 	shader.SetUniformInt("fogDensity", app.RuntimeConfig().FogDensity)
 	shader.SetUniformInt("useVertexColor", 0)
 
@@ -347,11 +345,11 @@ func commonPBRShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, re
 	shader.SetUniformFloat("pointLightBias", app.RuntimeConfig().PointLightBias)
 	shader.SetUniformFloat("shadowMapMinBias", app.RuntimeConfig().ShadowMapMinBias/100000)
 	shader.SetUniformFloat("shadowMapAngleBiasRate", app.RuntimeConfig().ShadowMapAngleBiasRate/100000)
-	if len(lightContext.PointLights) > 0 {
-		shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+	if len(renderContext.PointLights) > 0 {
+		shader.SetUniformFloat("far_plane", renderContext.PointLights[0].LightInfo.Range)
 	}
 
-	setupLightingUniforms(shader, lightContext.Lights)
+	setupLightingUniforms(shader, renderContext.Lights)
 }
 
 func drawModel(

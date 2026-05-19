@@ -37,7 +37,6 @@ func (p *SSAOBlurRenderPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 ) {
 	start := time.Now()
 	if !p.app.RuntimeConfig().EnableSSAO {

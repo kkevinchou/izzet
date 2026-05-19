@@ -116,7 +116,6 @@ func (p *MainRenderPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 ) {
 	start := time.Now()
 	defer func() { globals.ClientRegistry().Inc("render_main_pass", float64(time.Since(start).Milliseconds())) }()
@@ -136,7 +135,7 @@ func (p *MainRenderPass) Render(
 
 	// models
 	// rutils.TimeFunc("render_main", func() {
-	drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, lightContext, renderContext, renderPassContext, renderContext.RenderableEntities)
+	drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, renderContext, renderPassContext, renderContext.RenderableEntities)
 	// })
 
 	// colliders
@@ -148,7 +147,7 @@ func (p *MainRenderPass) Render(
 	p.drawNonEntity(viewerContext, renderContext)
 
 	// annotations
-	p.drawAnnotations(viewerContext, lightContext, renderContext)
+	p.drawAnnotations(viewerContext, renderContext)
 
 	// gizmos
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -487,7 +486,7 @@ func setupLightingUniforms(shader *shaders.ShaderProgram, lights []*entity.Entit
 	}
 }
 
-func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, lightContext context.LightContext, renderContext context.RenderContext) {
+func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, renderContext context.RenderContext) {
 	if p.app.RuntimeConfig().ShowSelectionBoundingBox {
 		e := p.app.SelectedEntity()
 		if e != nil {
@@ -543,7 +542,7 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, li
 	if nm != nil {
 		shader := p.sm.GetShaderProgram("navmesh")
 		shader.Use()
-		commonPBRShaderSetup(p.app, shader, renderContext, viewerContext, lightContext)
+		commonPBRShaderSetup(p.app, shader, renderContext, viewerContext)
 		shader.SetUniformMat4("model", utils.Mat4F64ToF32(mgl64.Ident4()))
 		shader.SetUniformUInt("entityID", 0)
 		shader.SetUniformInt("hasPBRBaseColorTexture", 0)

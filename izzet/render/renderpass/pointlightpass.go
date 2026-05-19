@@ -80,7 +80,6 @@ func (p *PointLightRenderPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
-	lightContext context.LightContext,
 ) {
 	start := time.Now()
 	defer func() {
@@ -89,24 +88,24 @@ func (p *PointLightRenderPass) Render(
 
 	// we only support cube depth maps for one point light atm
 	var pointLight *entity.Entity
-	if len(lightContext.PointLights) == 0 {
+	if len(renderContext.PointLights) == 0 {
 		return
 	}
-	pointLight = lightContext.PointLights[0]
+	pointLight = renderContext.PointLights[0]
 
 	gl.Viewport(0, 0, int32(PointLightCubeMapWidth), int32(PointLightCubeMapHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.PointLightFBO)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	position := pointLight.Position()
-	shadowTransforms := computeCubeMapTransforms(position, PointLightCubeMapNear, float64(lightContext.PointLights[0].LightInfo.Range))
+	shadowTransforms := computeCubeMapTransforms(position, PointLightCubeMapNear, float64(renderContext.PointLights[0].LightInfo.Range))
 
 	p.shader.Use()
 	for i, transform := range shadowTransforms {
 		p.shader.SetUniformMat4(fmt.Sprintf("shadowMatrices[%d]", i), utils.Mat4F64ToF32(transform))
 	}
-	if len(lightContext.PointLights) > 0 {
-		p.shader.SetUniformFloat("far_plane", lightContext.PointLights[0].LightInfo.Range)
+	if len(renderContext.PointLights) > 0 {
+		p.shader.SetUniformFloat("far_plane", renderContext.PointLights[0].LightInfo.Range)
 	}
 	p.shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 

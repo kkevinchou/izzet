@@ -35,7 +35,7 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	_, startPolygon, _ := FindNearestPolygon(tile, start)
 	_, goalPolygon, _ := FindNearestPolygon(tile, goal)
 
-	startNode := &Node{Polygon: startPolygon, Cost: 0}
+	startNode := &Node{Polygon: startPolygon, Cost: 0, Position: start}
 	lastBestNode := startNode
 	lastBestCost := start.Sub(goal).Len()
 
@@ -133,45 +133,33 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 }
 
 func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {
-	portalApex := start
+	if len(polyPath) == 0 {
+		return nil
+	}
+
+	closestStart, _ := closestPointOnPoly(tile, polyPath[0], start)
+	closestGoal, _ := closestPointOnPoly(tile, polyPath[len(polyPath)-1], goal)
+
+	portalApex := closestStart
 	portalLeft := portalApex
 	portalRight := portalApex
 
 	var apexIndex, leftIndex, rightIndex int
 
-	closestStart := closestPointOnPolyBoundary(tile, polyPath[0], start)
-	closestGoal := closestPointOnPolyBoundary(tile, polyPath[len(polyPath)-1], goal)
-
-	var path []mgl64.Vec3
-	path = append(path, closestStart)
-
-	// if len(polyPath) == 1 {
-	// 	if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[0] {
-	// 		// goal is the same as the start poly, create a straight path and return
-	// 		path = append(path, goal)
-	// 	} else {
-	// 		clippedPoint, success := closestPointOnPoly(tile, polyPath[0], goal)
-	// 		if !success {
-	// 			panic("WAT")
-	// 		}
-	// 		path = append(path, clippedPoint)
-	// 	}
-	// 	// TODO: clip the goal to the poly if it does not lie on the polygon
-	// 	return path
-	// }
+	path := []mgl64.Vec3{closestStart}
 
 	iterCount := 0
 	maxIterCount := 2000
 
-	for i := 0; i < len(polyPath) && iterCount < maxIterCount; i++ {
+	for i := 1; i <= len(polyPath) && iterCount < maxIterCount; i++ {
 		iterCount++
 
 		var left, right mgl64.Vec3
 
-		if i+1 < len(polyPath) {
-			l, r, success := GetPortalVertIndices(tile, polyPath[i], polyPath[i+1])
+		if i < len(polyPath) {
+			l, r, success := GetPortalVertIndices(tile, polyPath[i-1], polyPath[i])
 			if !success {
-				panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i], polyPath[i+1]))
+				panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i-1], polyPath[i]))
 			}
 			left = tile.Vertices[l]
 			right = tile.Vertices[r]
@@ -180,55 +168,60 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 			right = closestGoal
 		}
 
-		// update the right vertex
 		if vLeftOn(portalApex, portalRight, right) {
 			if vEqual(portalApex, portalRight) || vRight(portalApex, portalLeft, right) {
-				// tighten the funnel
 				portalRight = right
 				rightIndex = i
 			} else {
-				// right crossed over left, insert left onto the path and restart scan from portal left point
-				path = append(path, portalLeft)
+				appendStraightPathPoint(&path, projectPathPoint(tile, polyPath, leftIndex, portalLeft))
 				portalApex = portalLeft
-				portalRight = portalApex
 				apexIndex = leftIndex
+				portalLeft = portalApex
+				portalRight = portalApex
+				leftIndex = apexIndex
 				rightIndex = apexIndex
 				i = apexIndex
 				continue
 			}
 		}
 
-		// update the right vertex
 		if vRightOn(portalApex, portalLeft, left) {
 			if vEqual(portalApex, portalLeft) || vLeft(portalApex, portalRight, left) {
-				// tighten the funnel
 				portalLeft = left
 				leftIndex = i
 			} else {
-				// right crossed over right, insert right onto the path and restart scan from portal right point
-				path = append(path, portalRight)
+				appendStraightPathPoint(&path, projectPathPoint(tile, polyPath, rightIndex, portalRight))
 				portalApex = portalRight
-				portalLeft = portalApex
 				apexIndex = rightIndex
+				portalLeft = portalApex
+				portalRight = portalApex
 				leftIndex = apexIndex
+				rightIndex = apexIndex
 				i = apexIndex
 				continue
 			}
 		}
 	}
 
-	// if _, pidx, success := FindNearestPolygon(tile, goal); success && pidx == polyPath[len(polyPath)-1] {
-	// 	path = append(path, goal)
-	// } else {
-	// 	clippedPoint, success := closestPointOnPoly(tile, polyPath[len(polyPath)-2], goal)
-	// 	if !success {
-	// 		panic("WAT")
-	// 	}
-	// 	path = append(path, clippedPoint)
-	// }
-	path = append(path, closestGoal)
+	appendStraightPathPoint(&path, closestGoal)
 
 	return path
+}
+
+func appendStraightPathPoint(path *[]mgl64.Vec3, point mgl64.Vec3) {
+	if len(*path) > 0 && vEqual((*path)[len(*path)-1], point) {
+		return
+	}
+	*path = append(*path, point)
+}
+
+// project the waypoint onto a detailed polygon if possible to extract a more detailed y value
+func projectPathPoint(tile CTile, polyPath []int, portalIndex int, point mgl64.Vec3) mgl64.Vec3 {
+	if len(polyPath) == 0 {
+		return point
+	}
+	projected, _ := closestPointOnPoly(tile, polyPath[portalIndex], point)
+	return projected
 }
 
 func vEqual(a, b mgl64.Vec3) bool {
@@ -349,10 +342,18 @@ func closestPointOnPoly(tile CTile, poly int, point mgl64.Vec3) (mgl64.Vec3, boo
 		return np, true
 	}
 
+	if !hasDetailedPoly(tile, poly) {
+		return closestPointOnPolyEdges(tile, poly, point), false
+	}
+
 	return closestPointOnDetailPolyEdges(tile, poly, point), false
 }
 
 func closestPointOnDetailPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+	if !hasDetailedPoly(tile, poly) {
+		return closestPointOnPolyEdges(tile, poly, point)
+	}
+
 	dp := tile.DetailedPolygon[poly]
 	var dmin float64 = math.MaxFloat64
 	var tMin float64
@@ -392,14 +393,15 @@ func closestPointOnDetailPolyEdges(tile CTile, poly int, point mgl64.Vec3) mgl64
 		}
 	}
 
+	if dmin == math.MaxFloat64 {
+		return closestPointOnPolyEdges(tile, poly, point)
+	}
+
 	return vMin.Add(vMax.Sub(vMin).Mul(tMin))
 }
 
 func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
-	// project point onto polygon
-	// early return if it's not within the poly
-
-	if !pointInPoly(tile, poly, point) {
+	if !hasDetailedPoly(tile, poly) {
 		return -1, false
 	}
 
@@ -419,6 +421,15 @@ func getPolyHeight(tile CTile, poly int, point mgl64.Vec3) (float64, bool) {
 
 	return -1, false
 }
+
+func hasDetailedPoly(tile CTile, poly int) bool {
+	return poly >= 0 &&
+		poly < len(tile.DetailedPolygon) &&
+		poly < len(tile.DetailedVertices) &&
+		len(tile.DetailedPolygon[poly].Triangles) > 0 &&
+		len(tile.DetailedVertices[poly]) > 0
+}
+
 func closestHeightOnTriangle(p, a, b, c mgl64.Vec3) (float64, bool) {
 	epsilon := 1e-6
 	v0 := c.Sub(a)

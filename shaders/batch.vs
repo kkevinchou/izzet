@@ -15,7 +15,6 @@ out VS_OUT {
     vec3 Normal;
     mat4 View;
     vec2 TexCoord;
-    vec3 ColorOverride;
     flat uint EntityID;
 } vs_out;
 
@@ -26,8 +25,6 @@ uniform mat4 projection;
 uniform mat4 jointTransforms[MAX_JOINTS];
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
-
-const vec3 errorColor = vec3(255.0 / 255, 28.0 / 255, 217.0 / 121.0);
 
 void main() {
     vec4 totalPos = vec4(0.0);
@@ -64,7 +61,6 @@ void main() {
         vs_out.TexCoord = aTexCoord1;
     }
 
-    vs_out.ColorOverride = errorColor;
     vs_out.EntityID = entityID;
     gl_Position = (projection * (view * (model * totalPos)));
 }

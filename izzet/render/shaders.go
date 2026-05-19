@@ -20,7 +20,7 @@ func compileShaders(shaderManager *shaders.ShaderManager) {
 	if err := shaderManager.CompileShaderProgram("blur", "blur", "blur", ""); err != nil {
 		panic(err)
 	}
-	if err := shaderManager.CompileShaderProgram("batch", "batch", "batch", ""); err != nil {
+	if err := shaderManager.CompileShaderProgram("batch", "batch", "pbr", ""); err != nil {
 		panic(err)
 	}
 	if err := shaderManager.CompileShaderProgram("navmesh", "navmesh", "navmesh", ""); err != nil {

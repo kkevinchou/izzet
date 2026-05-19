@@ -220,6 +220,7 @@ func drawBatches(
 ) {
 	shader.SetUniformInt("isAnimated", 0)
 	shader.SetUniformInt("alphaMode", int32(modelspec.AlphaModeOpaque))
+	shader.SetUniformInt("repeatTexture", 0)
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
 	for _, batch := range renderContext.BatchRenders {

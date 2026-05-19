@@ -66,8 +66,6 @@ uniform float pointLightBias;
 uniform float shadowMapMinBias;
 uniform float shadowMapAngleBiasRate;
 
-uniform uint entityID;
-
 const float PI = 3.14159265359;
 
 const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
@@ -77,6 +75,7 @@ in VS_OUT {
     vec3 Normal;
     mat4 View;
     vec2 TexCoord;
+    flat uint EntityID;
 } fs_in;
 
 const float A = 2.51;
@@ -399,5 +398,5 @@ void main()
         FragColor = vec4(mix(color, vec3(1,1,1), fogFactor), alpha);
     }
 
-    PickingColor = entityID;
+    PickingColor = fs_in.EntityID;
 }

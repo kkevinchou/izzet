@@ -77,7 +77,7 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 
 	g.inputBuffer = inputbuffer.New(g)
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
-	g.assetManager = assets.NewAssetManager(false)
+	g.assetManager = assets.NewAssetManager(false, g.Logger())
 	g.world = world
 
 	fmt.Println(time.Since(start), "spatial partition done")

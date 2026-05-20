@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
@@ -11,6 +12,8 @@ import (
 )
 
 func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.Document {
+	start := time.Now()
+
 	config := d.Config
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
@@ -41,10 +44,14 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.
 		a.RootJoints[config.Name] = document.RootJoint.ID
 	}
 
+	a.logger.Info("LoadAndRegisterDocumentAsset", "name", d.Document.Name, "time (ms)", time.Since(start).Milliseconds())
+
 	return document
 }
 
 func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
+	start := time.Now()
+
 	document := loaders.LoadDocument(config.Name, config.FilePath)
 	if _, ok := a.documentAssets[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
@@ -82,6 +89,8 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		a.Joints[config.Name] = document.JointMap
 		a.RootJoints[config.Name] = document.RootJoint.ID
 	}
+
+	a.logger.Info("LoadAndRegisterDocument", "name", document.Name, "time (ms)", time.Since(start).Milliseconds())
 
 	return document
 }

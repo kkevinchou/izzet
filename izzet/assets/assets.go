@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,6 +37,7 @@ type MaterialAsset struct {
 }
 
 type AssetManager struct {
+	logger *slog.Logger
 	// Static Assets
 	textures       map[string]*textures.Texture
 	documentAssets map[string]DocumentAsset
@@ -51,7 +53,7 @@ type AssetManager struct {
 	processVisuals bool
 }
 
-func NewAssetManager(processVisualAssets bool) *AssetManager {
+func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]fonts.Font
 
@@ -63,6 +65,7 @@ func NewAssetManager(processVisualAssets bool) *AssetManager {
 	}
 
 	assetManager := AssetManager{
+		logger:         logger,
 		textures:       loadedTextures,
 		fonts:          loadedFonts,
 		processVisuals: processVisualAssets,

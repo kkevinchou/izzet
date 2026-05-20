@@ -154,7 +154,7 @@ func (g *Client) SaveProjectAs(name string) error {
 func (g *Client) NewProject(name string) {
 	g.InitializeProjectFolders(name)
 	g.project = &Project{Name: name}
-	g.assetManager = assets.NewAssetManager(true)
+	g.assetManager = assets.NewAssetManager(true, g.Logger())
 	g.world = world.New()
 
 	g.initializeAppSystems()
@@ -236,7 +236,7 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		panic(err)
 	}
 
-	g.assetManager = assets.NewAssetManager(true)
+	g.assetManager = assets.NewAssetManager(true, g.Logger())
 
 	// load meshes, skip materials
 	// materials are skipped because the materials from the document should already

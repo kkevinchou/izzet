@@ -8,6 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/izzet/assets"
@@ -106,7 +107,7 @@ func New(shaderDirectory string, config settings.Config) *Client {
 
 	w, h := window.GetSize()
 
-	assetManager := assets.NewAssetManager(true)
+	assetManager := assets.NewAssetManager(true, iztlog.ClientLogger)
 
 	g := &Client{
 		asyncServerDone: make(chan bool),

@@ -44,8 +44,8 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
-		var radius float64 = 40
-		var length float64 = 80
+		var radius float64 = 0.4
+		var length float64 = 1.0
 		playerEntity := entity.CreateEmptyEntity("player")
 		playerEntity.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
 		capsule := collider.Capsule{
@@ -55,12 +55,12 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 		}
 		playerEntity.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
 		playerEntity.CharacterControllerComponent = &entity.CharacterControllerComponent{}
-		handle := assets.NewSingleEntityMeshHandle("alpha3")
+		handle := assets.NewSingleEntityMeshHandle("mannequin_m")
 
 		playerEntity.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-		playerEntity.Animation = entity.NewAnimationComponent("alpha3", s.app.AssetManager())
+		playerEntity.Animation = entity.NewAnimationComponent("mannequin_m", s.app.AssetManager())
 		playerEntity.RenderBlend = &entity.RenderBlend{}
-		entity.SetScale(playerEntity, mgl64.Vec3{0.01, 0.01, 0.01})
+		entity.SetScale(playerEntity, mgl64.Vec3{1, 1, 1})
 
 		world := s.app.World()
 		for _, spawnPoint := range world.Entities() {

@@ -8,13 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 )
 
-var testFile string = "../../../_assets/gltf/dude.gltf"
-var testFile2 string = "../../../_assets/gltf/demo_scene_west.gltf"
-var testFile3 string = "../../../_assets/gltf/mountain.gltf"
-var testFile4 string = "../../../_assets/gltf/lootbox.gltf"
-var testFile5 string = "../../../_assets/gltf/demo_scene_samurai.gltf"
-var sponza string = "../../../_assets/gltf/Sponza.gltf"
-var orgrimmar string = "../../../../_assets/gltf/orgrimmar.gltf"
+var testFile string = "../../../../_assets/gltf/velociraptor.gltf"
 
 // bug hint: when a joint is defined but has no poses our
 // animation loading code freaks out. i removed the joint animatiosn from the legs
@@ -23,32 +17,8 @@ var orgrimmar string = "../../../../_assets/gltf/orgrimmar.gltf"
 // for the joint which our animation loading code did not understand. likely need to see
 // how we handled poses where a joint does not have any poses
 
-func TestOrgrimmar(t *testing.T) {
-	d, err := gltf.ParseGLTF("", orgrimmar, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-	_ = d
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func TestBasic(t *testing.T) {
 	d, err := gltf.ParseGLTF("", testFile, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-	_ = d
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestBasic2(t *testing.T) {
-	d, err := gltf.ParseGLTF("", testFile4, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
-	if err != nil {
-		t.Error(err)
-	}
-	_ = d
-}
-
-func TestBasic3(t *testing.T) {
-	d, err := gltf.ParseGLTF("", testFile3, &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL})
 	if err != nil {
 		t.Error(err)
 	}

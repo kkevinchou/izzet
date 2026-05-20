@@ -41,15 +41,15 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			if e.CharacterControllerComponent != nil {
 				if e.Kinematic != nil {
 					animationPlayer := e.Animation.AnimationPlayer
-					var animationName = "Walk"
+					var animationName = "Sprint_Loop"
 					if !e.Kinematic.GravityEnabled {
-						animationName = "Floating"
+						animationName = "Jump_Loop"
 					} else if !e.Kinematic.Grounded {
-						animationName = "Falling"
+						animationName = "Jump_Loop"
 					} else if !apputils.IsZeroVec(e.CharacterControllerComponent.ControlVector) {
-						animationName = "Running"
+						animationName = "Sprint_Loop"
 					} else {
-						animationName = "Idle"
+						animationName = "Idle_Loop"
 					}
 					animationPlayer.PlayAnimation(animationName)
 				}

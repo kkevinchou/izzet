@@ -65,8 +65,6 @@ type ModelSpecification struct {
 	// Animations
 	Animations map[string]*AnimationSpec
 
-	RootTransforms mgl32.Mat4
-
 	JointMap map[int]*JointSpec
 
 	// list of textures by name. the index within this slice is

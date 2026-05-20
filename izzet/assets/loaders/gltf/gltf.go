@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/qmuntal/gltf"
 	"github.com/qmuntal/gltf/modeler"
 )
@@ -96,19 +97,21 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 			return nil, err
 		}
 	}
-	if parsedJoints != nil {
-		document.JointMap = parsedJoints.JointMap
-	}
 
-	parsedAnimations := map[string]*modelspec.AnimationSpec{}
-	for _, animation := range gltfDocument.Animations {
-		parsedAnimation, err := parseAnimation(gltfDocument, animation, parsedJoints)
-		parsedAnimations[animation.Name] = parsedAnimation
-		if err != nil {
-			return nil, err
+	rootParentTransform := mgl32.Ident4()
+	if parsedJoints != nil {
+		rootParentTransform = rootParentTransforms(gltfDocument, parsedJoints)
+		parsedJoints.RootJoint.LocalBindTransform = rootParentTransform.Mul4(parsedJoints.RootJoint.LocalBindTransform)
+		document.JointMap = parsedJoints.JointMap
+
+		parsedAnimations := map[string]*modelspec.AnimationSpec{}
+		for _, animation := range gltfDocument.Animations {
+			parsedAnimation, err := parseAnimation(gltfDocument, animation, parsedJoints, rootParentTransform)
+			if err != nil {
+				return nil, err
+			}
+			parsedAnimations[animation.Name] = parsedAnimation
 		}
-	}
-	if len(parsedAnimations) > 0 {
 		document.Animations = parsedAnimations
 	}
 
@@ -156,11 +159,8 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		break
 	}
 
-	rootTransforms := mgl32.Ident4()
 	if parsedJoints != nil {
 		document.RootJoint = parsedJoints.RootJoint
-		rootTransforms = rootParentTransforms(gltfDocument, parsedJoints)
-		_ = rootTransforms
 	}
 
 	return &document, nil
@@ -184,11 +184,7 @@ func parseNode(document *gltf.Document, root uint32) *modelspec.Node {
 	node.Translation = translation
 	node.Rotation = mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}
 	node.Scale = scale
-
-	translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
-	rotationMatrix := node.Rotation.Mat4()
-	scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
-	node.Transform = translationMatrix.Mul4(rotationMatrix).Mul4(scaleMatrix)
+	node.Transform = getNodeTransform(docNode)
 
 	for _, childNodeID := range docNode.Children {
 		node.Children = append(node.Children, parseNode(document, childNodeID))
@@ -198,13 +194,10 @@ func parseNode(document *gltf.Document, root uint32) *modelspec.Node {
 }
 
 func rootParentTransforms(document *gltf.Document, parsedJoints *ParsedJoints) mgl32.Mat4 {
-	children := map[int][]int{}
 	parents := map[int]*int{}
 	for i, node := range document.Nodes {
 		nodeID := i
-		cs := uint32SliceToIntSlice(node.Children)
-		children[i] = cs
-		for _, c := range cs {
+		for _, c := range uint32SliceToIntSlice(node.Children) {
 			// take address of loop index
 			parents[c] = &nodeID
 		}
@@ -215,21 +208,24 @@ func rootParentTransforms(document *gltf.Document, parsedJoints *ParsedJoints) m
 	parent := parents[node]
 	for parent != nil {
 		parentNode := document.Nodes[*parent]
-		translation := parentNode.Translation
-		rotation := parentNode.Rotation
-		scale := parentNode.Scale
-
-		translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
-		rotationMatrix := mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}.Mat4()
-		scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
-
-		nodeTransform := translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix))
+		nodeTransform := getNodeTransform(parentNode)
 		transform = nodeTransform.Mul4(transform)
 		parent = parents[*parent]
 	}
 
-	// transform = mgl32.Ident4()
 	return transform
+}
+
+func getNodeTransform(node *gltf.Node) mgl32.Mat4 {
+	translation := node.Translation
+	rotation := node.Rotation
+	scale := node.Scale
+
+	translationMatrix := mgl32.Translate3D(translation[0], translation[1], translation[2])
+	rotationMatrix := mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}.Mat4()
+	scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
+
+	return translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix))
 }
 
 // preprocessAnimations is a preprocessing method that loops through all animation channels
@@ -285,8 +281,10 @@ func preprocessAnimations(document *gltf.Document, animation *gltf.Animation, pa
 	return timestamps, sliceJointIDs, nil
 }
 
-func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints) (*modelspec.AnimationSpec, error) {
+func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJoints *ParsedJoints, rootParentTransform mgl32.Mat4) (*modelspec.AnimationSpec, error) {
 	keyFrames := map[float32]*modelspec.KeyFrame{}
+
+	pTranslation, pRotation, pScale := utils.Decompose(rootParentTransform)
 
 	allTimestamps, allJointIDs, err := preprocessAnimations(document, animation, parsedJoints)
 	if err != nil {
@@ -302,6 +300,13 @@ func parseAnimation(document *gltf.Document, animation *gltf.Animation, parsedJo
 		}
 		for _, jointID := range allJointIDs {
 			keyFrames[timestamp].Pose[jointID] = modelspec.NewDefaultJointTransform()
+			if jointID == parsedJoints.RootJoint.ID {
+				// in gltf files, the root joint can be affected by parent nodes that aren't part of the skin
+				// their transformations still apply, so we bake it into the root joint
+				keyFrames[timestamp].Pose[jointID] = modelspec.NewJointTransform(pTranslation, pRotation, pScale)
+			} else {
+				keyFrames[timestamp].Pose[jointID] = modelspec.NewDefaultJointTransform()
+			}
 		}
 	}
 
@@ -545,18 +550,7 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 		}
 	}
 
-	// find the root
-	var root *modelspec.JointSpec
-	for id, _ := range joints {
-		if _, ok := childIDSet[id]; !ok {
-			joint := joints[id]
-			if len(joint.Children) > 0 {
-				// sometimes people put joints as control objects that aren't actual parents
-				root = joint
-				break
-			}
-		}
-	}
+	root := selectRootJoint(joints, jointNodeIDs, nodeIDToJointID, childIDSet)
 
 	parsedJoints := &ParsedJoints{
 		RootJoint:       root,
@@ -565,6 +559,34 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 		JointMap:        joints,
 	}
 	return parsedJoints, nil
+}
+
+// a skin requires its joints to share a common parent node known as the root.
+// that root may or may not be a joint (i.e. listed under skin.joints)
+// if skin.skeleton is present, it points to the root node
+//
+// TODO - support multiple skins
+func selectRootJoint(joints map[int]*modelspec.JointSpec, jointNodeIDs []int, nodeIDToJointID map[int]int, childIDSet map[int]bool) *modelspec.JointSpec {
+	for _, nodeID := range jointNodeIDs {
+		jointID := nodeIDToJointID[nodeID]
+		if childIDSet[jointID] {
+			continue
+		}
+
+		joint := joints[jointID]
+		if len(joint.Children) > 0 {
+			return joint
+		}
+	}
+
+	for _, nodeID := range jointNodeIDs {
+		jointID := nodeIDToJointID[nodeID]
+		if !childIDSet[jointID] {
+			return joints[jointID]
+		}
+	}
+
+	return nil
 }
 
 // parseMaterialSpecs creates MaterialSpecifications from the gltf materials list

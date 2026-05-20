@@ -28,6 +28,14 @@ type JointTransform struct {
 	Scale       mgl32.Vec3
 }
 
+func NewJointTransform(translation mgl32.Vec3, rotation mgl32.Quat, scale mgl32.Vec3) JointTransform {
+	return JointTransform{
+		Translation: translation,
+		Rotation:    rotation,
+		Scale:       scale,
+	}
+}
+
 func NewDefaultJointTransform() JointTransform {
 	return JointTransform{
 		Translation: mgl32.Vec3{0, 0, 0},

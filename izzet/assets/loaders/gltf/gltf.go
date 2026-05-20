@@ -546,7 +546,6 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 			childJointID := nodeIDToJointID[childNodeID]
 			childIDSet[childJointID] = true
 			joints[jointID].Children = append(joints[jointID].Children, joints[childJointID])
-			joints[childJointID].Parent = joints[jointID]
 		}
 	}
 

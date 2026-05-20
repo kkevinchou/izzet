@@ -17,5 +17,4 @@ type JointSpec struct {
 	LocalBindTransform mgl32.Mat4
 
 	Children []*JointSpec
-	Parent   *JointSpec
 }

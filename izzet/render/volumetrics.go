@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/internal/noise"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/kitolib/shaders"
 )
@@ -113,7 +114,22 @@ func (r *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (u
 	return vao, worleyNoiseTexture, fbo, texture
 }
 
-func (r *RenderSystem) renderVolumetrics(vao, texture, fbo uint32, shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
+func (r *RenderSystem) renderVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
+	cloudTexture := r.activeCloudTexture()
+
+	if panels.RecreateCloudTexture {
+		gl.DeleteTextures(1, &cloudTexture.WorleyTexture)
+		gl.DeleteTextures(1, &cloudTexture.RenderTexture)
+		gl.DeleteVertexArrays(1, &cloudTexture.VAO)
+		gl.DeleteFramebuffers(1, &cloudTexture.FBO)
+		cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, cloudTexture.RenderTexture = r.setupVolumetrics(r.shaderManager)
+		panels.RecreateCloudTexture = false
+	}
+
+	vao := cloudTexture.VAO
+	texture := cloudTexture.WorleyTexture
+	fbo := cloudTexture.FBO
+
 	gl.Viewport(0, 0, int32(textureWidth), int32(textureHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 	defer gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
@@ -121,7 +137,6 @@ func (r *RenderSystem) renderVolumetrics(vao, texture, fbo uint32, shaderManager
 	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
 
-	cloudTexture := r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
 	activeChannelIndex := r.app.RuntimeConfig().ActiveCloudTextureChannelIndex
 	shader.SetUniformFloat("z", cloudTexture.Channels[activeChannelIndex].NoiseZ)
 	shader.SetUniformInt("channel", int32(activeChannelIndex))

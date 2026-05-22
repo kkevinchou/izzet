@@ -250,17 +250,8 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.gpuProfiler.CollectAvailable()
 
 	start := time.Now()
-	cloudTexture := r.activeCloudTexture()
-	if panels.RecreateCloudTexture {
-		gl.DeleteTextures(1, &cloudTexture.WorleyTexture)
-		gl.DeleteTextures(1, &cloudTexture.RenderTexture)
-		gl.DeleteVertexArrays(1, &cloudTexture.VAO)
-		gl.DeleteFramebuffers(1, &cloudTexture.FBO)
-		cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, cloudTexture.RenderTexture = r.setupVolumetrics(r.shaderManager)
-		panels.RecreateCloudTexture = false
-	}
 	r.gpuProfiler.Profile("volumetrics", func() {
-		r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
+		r.renderVolumetrics(r.shaderManager, r.app.AssetManager())
 	})
 	mr.Inc("render_cpu_volumetrics", durationMilliseconds(start))
 

@@ -31,6 +31,10 @@ func NewSSAOPass(app renderiface.App, sm *shaders.ShaderManager) *SSAORenderPass
 	return &SSAORenderPass{app: app, shader: sm.GetShaderProgram("ssao")}
 }
 
+func (p *SSAORenderPass) Name() string {
+	return "ssao_pass"
+}
+
 func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext) {
 	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true, true)
 	ctx.SSAOFBO = fbo

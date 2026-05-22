@@ -23,6 +23,10 @@ func NewShadowMapPass(dimension int, app renderiface.App, sm *shaders.ShaderMana
 	return &ShadowMapRenderPass{dimension: dimension, app: app, shader: sm.GetShaderProgram("cascaded_shadow_map")}
 }
 
+func (p *ShadowMapRenderPass) Name() string {
+	return "shadow_pass"
+}
+
 func (p *ShadowMapRenderPass) Init(_, _ int, ctx *context.RenderPassContext) {
 	fbo, texture := initShadowMapFrameBuffer(p.dimension, p.dimension)
 	ctx.ShadowMapFBO = fbo

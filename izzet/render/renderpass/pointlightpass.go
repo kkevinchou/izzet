@@ -31,6 +31,10 @@ func NewPointLightPass(app renderiface.App, sm *shaders.ShaderManager) *PointLig
 	return &PointLightRenderPass{app: app, shader: sm.GetShaderProgram("point_shadow")}
 }
 
+func (p *PointLightRenderPass) Name() string {
+	return "pointlight_pass"
+}
+
 func (p *PointLightRenderPass) Init(_, _ int, ctx *context.RenderPassContext) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)

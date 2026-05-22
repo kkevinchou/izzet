@@ -24,6 +24,9 @@ import (
 
 // RenderPass is a single step in the frame‐render pipeline.
 type RenderPass interface {
+	// Name is used for profiling and diagnostics.
+	Name() string
+
 	// Init is called once at startup (or when switching pipelines)
 	Init(width, height int, ctx *context.RenderPassContext)
 

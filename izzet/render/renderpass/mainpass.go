@@ -47,6 +47,10 @@ func NewMainPass(app renderiface.App, sm *shaders.ShaderManager) *MainRenderPass
 	return &MainRenderPass{app: app, sm: sm}
 }
 
+func (p *MainRenderPass) Name() string {
+	return "main_pass"
+}
+
 func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
 	fbo, textures := initFrameBuffer(
 		width,

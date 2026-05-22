@@ -20,6 +20,10 @@ func NewSSAOBlurPass(app renderiface.App, sm *shaders.ShaderManager) *SSAOBlurRe
 	return &SSAOBlurRenderPass{app: app, shader: sm.GetShaderProgram("blur")}
 }
 
+func (p *SSAOBlurRenderPass) Name() string {
+	return "ssao_blur_pass"
+}
+
 func (p *SSAOBlurRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
 	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, false, true)
 	ctx.SSAOBlurFBO = fbo

@@ -58,7 +58,7 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		metrics := mr.MetricsByPrefix("render_")
 		var pairs []metricPair
 		for _, metric := range metrics {
-			if metric == "render_time" {
+			if metric == "render_time" || strings.HasPrefix(metric, "render_gpu_") {
 				continue
 			}
 			pairs = append(
@@ -79,6 +79,36 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 
 		for _, pair := range pairs {
 			panelutils.SetupRow(pair.name, func() { imgui.LabelText("", fmt.Sprintf("%.1f", pair.value)) }, true)
+		}
+
+		imgui.EndTable()
+	}
+
+	if imgui.CollapsingHeaderTreeNodeFlagsV("GPU Rendering", imgui.TreeNodeFlagsNone) {
+		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
+		panelutils.InitColumns()
+
+		metrics := mr.MetricsByPrefix("render_gpu_")
+		var pairs []metricPair
+		for _, metric := range metrics {
+			pairs = append(
+				pairs,
+				metricPair{
+					name:  strings.Title(strings.ReplaceAll(strings.TrimPrefix(metric, "render_gpu_"), "_", " ")),
+					value: mr.AvgOver(metric, renderingMetricRange),
+				},
+			)
+		}
+
+		sort.Slice(pairs, func(i, j int) bool {
+			if pairs[i].value == pairs[j].value {
+				return pairs[i].name < pairs[j].name
+			}
+			return pairs[i].value > pairs[j].value
+		})
+
+		for _, pair := range pairs {
+			panelutils.SetupRow(pair.name, func() { imgui.LabelText("", fmt.Sprintf("%.2f", pair.value)) }, true)
 		}
 
 		imgui.EndTable()

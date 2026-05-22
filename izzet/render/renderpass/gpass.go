@@ -24,6 +24,10 @@ func NewGPass(app renderiface.App, sm *shaders.ShaderManager) *GBufferPass {
 	return &GBufferPass{app: app, sm: sm}
 }
 
+func (p *GBufferPass) Name() string {
+	return "gpass"
+}
+
 func (p *GBufferPass) Init(width, height int, ctx *context.RenderPassContext) {
 	fbo, textures := initFrameBuffer(
 		width,

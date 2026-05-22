@@ -19,6 +19,10 @@ func NewCameraDepthPass(app renderiface.App, sm *shaders.ShaderManager) *CameraD
 	return &CameraDepthRenderPass{app: app, shader: sm.GetShaderProgram("modelgeo")}
 }
 
+func (p *CameraDepthRenderPass) Name() string {
+	return "camera_depth_pass"
+}
+
 func (p *CameraDepthRenderPass) Init(width, height int, ctx *context.RenderPassContext) {
 	fbo, texture := initDepthOnlyFrameBuffer(width, height)
 	ctx.CameraDepthFBO = fbo

@@ -346,8 +346,13 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_cpu_query_shadowcasting", durationMilliseconds(start))
 
+	start = time.Now()
+	pointLightShadowEntities := r.fetchPointLightShadowCastingEntities(renderContext)
+	mr.Inc("render_cpu_query_pointlight_shadowcasting", durationMilliseconds(start))
+
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
+	renderContext.PointLightShadowCastingEntities = pointLightShadowEntities
 	renderContext.ShadowDistance = renderContext.ShadowMapCascades[len(renderContext.ShadowMapCascades)-1].Distance
 	renderContext.BatchRenders = r.batchRenders
 
@@ -598,6 +603,30 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 	var result []*entity.Entity
 	for _, spatialEntity := range sp.QueryEntities(bb) {
 		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
+		if e.MeshComponent != nil && e.MeshComponent.ShadowCasting {
+			result = append(result, e)
+		}
+	}
+	return result
+}
+
+func (r *RenderSystem) fetchPointLightShadowCastingEntities(renderContext context.RenderContext) []*entity.Entity {
+	if len(renderContext.PointLights) == 0 {
+		return nil
+	}
+
+	pointLight := renderContext.PointLights[0]
+	position := pointLight.Position()
+	lightRange := float64(pointLight.LightInfo.Range)
+	queryBounds := collider.BoundingBox{
+		MinVertex: position.Sub(mgl64.Vec3{lightRange, lightRange, lightRange}),
+		MaxVertex: position.Add(mgl64.Vec3{lightRange, lightRange, lightRange}),
+	}
+
+	sp := r.app.World().SpatialPartition()
+	var result []*entity.Entity
+	for _, spatialEntity := range sp.QueryEntities(queryBounds) {
+		e := r.app.World().GetEntityByID(spatialEntity.GetID())
 		if e.MeshComponent != nil && e.MeshComponent.ShadowCasting {
 			result = append(result, e)
 		}

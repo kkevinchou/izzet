@@ -33,8 +33,9 @@ type RenderContext struct {
 	BatchRenders []assets.Batch
 
 	// entities
-	ShadowCastingEntities []*entity.Entity
-	RenderableEntities    []*entity.Entity
+	ShadowCastingEntities           []*entity.Entity
+	PointLightShadowCastingEntities []*entity.Entity
+	RenderableEntities              []*entity.Entity
 
 	// lights
 	Lights      []*entity.Entity

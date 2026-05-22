@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	PointLightCubeMapWidth  float32 = 4096
-	PointLightCubeMapHeight float32 = 4096
+	PointLightCubeMapWidth  float32 = 2048
+	PointLightCubeMapHeight float32 = 2048
 	PointLightCubeMapNear   float64 = 1
 )
 
@@ -84,17 +84,19 @@ func (p *PointLightRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	// we only support cube depth maps for one point light atm
-	var pointLight *entity.Entity
-	if len(renderContext.PointLights) == 0 {
-		return
-	}
-	pointLight = renderContext.PointLights[0]
-
 	gl.Viewport(0, 0, int32(PointLightCubeMapWidth), int32(PointLightCubeMapHeight))
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.PointLightFBO)
+
+	gl.ClearDepth(1)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
+	if !p.app.RuntimeConfig().EnableShadowMapping || len(renderContext.PointLights) == 0 {
+		return
+	}
+
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+
+	pointLight := renderContext.PointLights[0]
 	position := pointLight.Position()
 	shadowTransforms := computeCubeMapTransforms(position, PointLightCubeMapNear, float64(renderContext.PointLights[0].LightInfo.Range))
 
@@ -107,7 +109,7 @@ func (p *PointLightRenderPass) Render(
 	}
 	p.shader.SetUniformVec3("lightPos", utils.Vec3F64ToF32(position))
 
-	for _, e := range renderContext.RenderableEntities {
+	for _, e := range renderContext.PointLightShadowCastingEntities {
 		if e == nil || e.MeshComponent == nil {
 			continue
 		}

@@ -60,7 +60,7 @@ func Rendering(app renderiface.App) {
 		panelutils.InitColumns()
 		panelutils.SetupRow("Ambient Factor", func() { imgui.SliderFloat("", &runtimeConfig.AmbientFactor, 0, 100) }, true)
 		panelutils.SetupRow("Specular Factor", func() { imgui.SliderFloat("", &runtimeConfig.SpecularFactor, 0, 1) }, true)
-		panelutils.SetupRow("Point Light Bias", func() { imgui.SliderFloat("", &runtimeConfig.PointLightBias, 0, 0.3) }, true)
+		panelutils.SetupRow("Point Light Bias", func() { imgui.SliderFloat("", &runtimeConfig.PointLightBias, 0, 1) }, true)
 		panelutils.SetupRow("Shadow Map Min Bias", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapMinBias, 0, 100) }, true)
 		panelutils.SetupRow("Shadow Map Angle Bias Rate", func() { imgui.SliderFloat("", &runtimeConfig.ShadowMapAngleBiasRate, 0, 100) }, true)
 		panelutils.SetupRow("Shadow Near Distance", func() { imgui.SliderFloat("", &runtimeConfig.ShadowNearDistance, 0.01, 1) }, true)

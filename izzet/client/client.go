@@ -139,7 +139,7 @@ func (g *Client) Start() {
 
 	// 1 - vsync on
 	// 0 - vsync off
-	err := sdl.GLSetSwapInterval(0)
+	err := sdl.GLSetSwapInterval(1)
 	if err != nil {
 		panic(err)
 	}

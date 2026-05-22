@@ -3,12 +3,10 @@ package renderpass
 import (
 	"fmt"
 	"math/rand/v2"
-	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -57,11 +55,9 @@ func (p *SSAORenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	start := time.Now()
 	if !p.app.RuntimeConfig().EnableSSAO {
 		return
 	}
-	defer func() { globals.ClientRegistry().Inc("render_ssao_pass", float64(time.Since(start).Milliseconds())) }()
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))

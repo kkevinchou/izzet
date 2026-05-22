@@ -2,11 +2,9 @@ package renderpass
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -81,9 +79,6 @@ func (p *ShadowMapRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	start := time.Now()
-	defer func() { globals.ClientRegistry().Inc("render_shadow_pass", float64(time.Since(start).Milliseconds())) }()
-
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.ShadowMapFBO)
 	gl.Viewport(0, 0, int32(p.dimension), int32(p.dimension))
 

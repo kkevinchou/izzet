@@ -350,7 +350,9 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	for _, pass := range r.renderPasses {
 		r.gpuProfiler.Profile(pass.Name(), func() {
+			start := time.Now()
 			pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
+			mr.Inc("render_"+pass.Name(), float64(time.Since(start).Milliseconds()))
 		})
 	}
 

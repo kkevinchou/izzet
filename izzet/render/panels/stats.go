@@ -9,6 +9,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -24,6 +26,7 @@ type metricPair struct {
 func Stats(app renderiface.App, renderContext RenderContext) {
 	runtimeConfig := app.RuntimeConfig()
 	mr := globals.ClientRegistry()
+	caser := cases.Title(language.English)
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
@@ -64,37 +67,7 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 			pairs = append(
 				pairs,
 				metricPair{
-					name:  strings.Title(strings.ReplaceAll(strings.TrimPrefix(metric, "render_"), "_", " ")),
-					value: mr.AvgOver(metric, renderingMetricRange),
-				},
-			)
-		}
-
-		sort.Slice(pairs, func(i, j int) bool {
-			if pairs[i].value == pairs[j].value {
-				return pairs[i].name < pairs[j].name // ascending name on tie
-			}
-			return pairs[i].value > pairs[j].value // descending value
-		})
-
-		for _, pair := range pairs {
-			panelutils.SetupRow(pair.name, func() { imgui.LabelText("", fmt.Sprintf("%.1f", pair.value)) }, true)
-		}
-
-		imgui.EndTable()
-	}
-
-	if imgui.CollapsingHeaderTreeNodeFlagsV("GPU Rendering", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-
-		metrics := mr.MetricsByPrefix("render_gpu_")
-		var pairs []metricPair
-		for _, metric := range metrics {
-			pairs = append(
-				pairs,
-				metricPair{
-					name:  strings.Title(strings.ReplaceAll(strings.TrimPrefix(metric, "render_gpu_"), "_", " ")),
+					name:  strings.ReplaceAll(strings.TrimPrefix(metric, "render_"), "_", " "),
 					value: mr.AvgOver(metric, renderingMetricRange),
 				},
 			)
@@ -108,9 +81,44 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		})
 
 		for _, pair := range pairs {
-			panelutils.SetupRow(pair.name, func() { imgui.LabelText("", fmt.Sprintf("%.2f", pair.value)) }, true)
+			panelutils.SetupRow(caser.String(pair.name), func() { imgui.LabelText("", fmt.Sprintf("%.1f", pair.value)) }, true)
 		}
 
+		imgui.EndTable()
+	}
+
+	// gpu metrics
+
+	metrics := mr.MetricsByPrefix("render_gpu_")
+	var pairs []metricPair
+	for _, metric := range metrics {
+		pairs = append(
+			pairs,
+			metricPair{
+				name:  strings.ReplaceAll(strings.TrimPrefix(metric, "render_gpu_"), "_", " "),
+				value: mr.AvgOver(metric, renderingMetricRange),
+			},
+		)
+	}
+
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].value == pairs[j].value {
+			return pairs[i].name < pairs[j].name
+		}
+		return pairs[i].value > pairs[j].value
+	})
+
+	var gpuRenderingTotal float64
+	for _, pair := range pairs {
+		gpuRenderingTotal += pair.value
+	}
+
+	if imgui.CollapsingHeaderTreeNodeFlagsV(fmt.Sprintf("GPU Rendering (%.2f)###GPU Rendering Header", gpuRenderingTotal), imgui.TreeNodeFlagsNone) {
+		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
+		panelutils.InitColumns()
+		for _, pair := range pairs {
+			panelutils.SetupRow(caser.String(pair.name), func() { imgui.LabelText("", fmt.Sprintf("%.2f", pair.value)) }, true)
+		}
 		imgui.EndTable()
 	}
 

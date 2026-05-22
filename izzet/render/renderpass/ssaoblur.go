@@ -1,10 +1,7 @@
 package renderpass
 
 import (
-	"time"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
@@ -42,13 +39,9 @@ func (p *SSAOBlurRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	start := time.Now()
 	if !p.app.RuntimeConfig().EnableSSAO {
 		return
 	}
-	defer func() {
-		globals.ClientRegistry().Inc("render_ssao_blur_pass", float64(time.Since(start).Milliseconds()))
-	}()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.SSAOBlurFBO)
 
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))

@@ -1,8 +1,6 @@
 module github.com/kkevinchou/izzet
 
-go 1.23.0
-
-toolchain go1.23.3
+go 1.25.0
 
 require (
 	github.com/AllenDang/cimgui-go v1.2.0
@@ -20,6 +18,7 @@ require (
 require (
 	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
 
 replace github.com/kkevinchou/kitolib => ../kitolib

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -14,7 +13,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
@@ -121,9 +119,6 @@ func (p *MainRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	start := time.Now()
-	defer func() { globals.ClientRegistry().Inc("render_main_pass", float64(time.Since(start).Milliseconds())) }()
-
 	if p.app.RuntimeConfig().EnableAntialiasing {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.MainMultisampleFBO)
 	} else {

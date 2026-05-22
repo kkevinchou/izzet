@@ -3,7 +3,6 @@ package renderpass
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
@@ -85,11 +84,6 @@ func (p *PointLightRenderPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	start := time.Now()
-	defer func() {
-		globals.ClientRegistry().Inc("render_pointlight_pass", float64(time.Since(start).Milliseconds()))
-	}()
-
 	// we only support cube depth maps for one point light atm
 	var pointLight *entity.Entity
 	if len(renderContext.PointLights) == 0 {

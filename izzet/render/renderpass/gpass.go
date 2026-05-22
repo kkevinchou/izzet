@@ -1,10 +1,7 @@
 package renderpass
 
 import (
-	"time"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/kitolib/shaders"
@@ -64,17 +61,10 @@ func (p *GBufferPass) Render(
 	renderPassContext *context.RenderPassContext,
 	viewerContext context.ViewerContext,
 ) {
-	start := time.Now()
-	if !p.app.RuntimeConfig().EnableSSAO {
-		return
-	}
-	defer func() { globals.ClientRegistry().Inc("render_gpass", float64(time.Since(start).Milliseconds())) }()
-
 	// bind, clear, draw
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.GeometryFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	drawModels(p.app, p.sm.GetShaderProgram("gpass"), p.sm.GetShaderProgram("gpass"), viewerContext, renderContext, renderPassContext, renderContext.RenderableEntities)
-
 }

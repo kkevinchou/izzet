@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math"
+	"time"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -346,4 +347,8 @@ func ComputeDirectionalLightProps(lightRotationMatrix mgl64.Mat4, frustumPoints 
 	position = lightRotationMatrix.Mul4x1(position.Vec4(1)).Vec3() // bring position back into world space
 	orthoProjMatrix := mgl64.Ortho(-halfX, halfX, -halfY, halfY, 0, halfZ*2)
 	return position, orthoProjMatrix
+}
+
+func durationMilliseconds(start time.Time) float64 {
+	return float64(time.Since(start).Nanoseconds()) / 1000000.0
 }

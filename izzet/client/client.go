@@ -219,8 +219,12 @@ func (g *Client) render(delta time.Duration) {
 	g.renderSystem.Render(delta)
 	swapStart := time.Now()
 	g.window.Swap()
-	globals.ClientRegistry().Inc("render_cpu_swap", float64(time.Since(swapStart).Milliseconds()))
-	globals.ClientRegistry().Inc("renderer_cpu_time", float64(time.Since(start).Milliseconds()))
+	globals.ClientRegistry().Inc("render_cpu_swap", durationMilliseconds(swapStart))
+	globals.ClientRegistry().Inc("renderer_cpu_time", durationMilliseconds(start))
+}
+
+func durationMilliseconds(start time.Time) float64 {
+	return float64(time.Since(start).Nanoseconds()) / 1000000.0
 }
 
 func initSeed() {

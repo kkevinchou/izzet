@@ -33,12 +33,12 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
-		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("renderer_cpu_time", metricRange))) }, true)
+		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.2f", mr.AvgOver("renderer_cpu_time", metricRange))) }, true)
 		panelutils.SetupRow("Command Frame Time", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("command_frame_nanoseconds", metricRange)/1000000))
+			imgui.LabelText("", fmt.Sprintf("%.2f", mr.AvgOver("command_frame_nanoseconds", metricRange)/1000000))
 		}, true)
 		panelutils.SetupRow("Client Sleep Time", func() {
-			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("client_sleep_nanoseconds", metricRange)/1000000))
+			imgui.LabelText("", fmt.Sprintf("%.2f", mr.AvgOver("client_sleep_nanoseconds", metricRange)/1000000))
 		}, true)
 		panelutils.SetupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("fps", metricRange))) }, true)
 		panelutils.SetupRow("CFPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("command_frames", metricRange))) }, true)

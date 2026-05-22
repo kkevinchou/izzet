@@ -576,5 +576,5 @@ func TimeFunc(name string, f func()) {
 	mr := globals.ClientRegistry()
 	start := time.Now()
 	f()
-	mr.Inc(name, float64(time.Since(start).Milliseconds()))
+	mr.Inc(name, float64(time.Since(start).Nanoseconds())/1000000.0)
 }

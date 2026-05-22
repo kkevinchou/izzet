@@ -72,9 +72,6 @@ type RenderSystem struct {
 
 	ndcQuadVAO uint32
 
-	postProcessingFBO     uint32
-	postProcessingTexture uint32
-
 	textureArrayDebugFBO     uint32
 	textureArrayDebugTexture uint32
 
@@ -139,6 +136,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewMainPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewBloomPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewPostProcessingPass(app, r.shaderManager))
 
 	for _, pass := range r.renderPasses {
 		pass.Init(width, height, r.renderPassContext)
@@ -211,18 +209,6 @@ func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
 
 // this might be the most garbage code i've ever written
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
-	// post processing FBO
-	postProcessingTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
-	var postProcessingTextures []uint32
-	if init {
-		r.postProcessingFBO, postProcessingTextures = r.initFrameBufferNoDepth(postProcessingTextureFn)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.postProcessingFBO)
-		_, _, postProcessingTextures = postProcessingTextureFn()
-	}
-	gl.DeleteTextures(1, &r.postProcessingTexture)
-	r.postProcessingTexture = postProcessingTextures[0]
-
 	// texture array debug resolve FBO
 	textureArrayDebugTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	var textureArrayDebugTextures []uint32
@@ -329,14 +315,6 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 	mr.Inc("render_cpu_colorpicking_pick", durationMilliseconds(start))
 
-	start = time.Now()
-	r.gpuProfiler.Profile("post_process", func() {
-		r.postProcessingTexture = r.postProcess(renderContext,
-			r.renderPassContext.HDRTexture,
-		)
-	})
-	mr.Inc("render_cpu_post_process", durationMilliseconds(start))
-
 	r.setDebugTexture(renderContext)
 
 	// render to back buffer
@@ -346,7 +324,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	start = time.Now()
 	r.gpuProfiler.Profile("imgui", func() {
-		r.renderHelper(renderContext, imgui.TextureID(r.postProcessingTexture))
+		r.renderHelper(renderContext, imgui.TextureID(r.renderPassContext.PostProcessingTexture))
 	})
 	mr.Inc("render_cpu_imgui", durationMilliseconds(start))
 }
@@ -489,7 +467,7 @@ func (r *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.Ren
 
 func (r *RenderSystem) setDebugTexture(renderContext context.RenderContext) {
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
-		r.app.RuntimeConfig().DebugTexture = r.postProcessingTexture
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.PostProcessingTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainColorPickingTexture
@@ -815,7 +793,7 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	if imgui.IsWindowHovered() {
 		r.gameWindowHovered = true
 	}
-	texture := imgui.TextureID(r.postProcessingTexture)
+	texture := imgui.TextureID(r.renderPassContext.PostProcessingTexture)
 
 	var drawerbarSize float32
 	if r.app.RuntimeConfig().UIEnabled {

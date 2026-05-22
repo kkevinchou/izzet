@@ -82,6 +82,10 @@ type RenderPassContext struct {
 	BloomCompositeTexture   uint32
 	HDRTexture              uint32
 
+	// Post Processing
+	PostProcessingFBO     uint32
+	PostProcessingTexture uint32
+
 	// Shadow Map
 	ShadowMapFBO     uint32
 	ShadowMapTexture uint32

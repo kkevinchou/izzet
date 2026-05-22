@@ -41,10 +41,6 @@ type GameWorld interface {
 }
 
 const (
-	mipsCount             int = 6
-	MaxBloomTextureWidth  int = 1920
-	MaxBloomTextureHeight int = 1080
-
 	materialTextureWidth  int32 = 512
 	materialTextureHeight int32 = 512
 
@@ -74,27 +70,13 @@ type RenderSystem struct {
 
 	cameraViewerContext context.ViewerContext
 
-	downSampleFBO      uint32
-	ndcQuadVAO         uint32
-	downSampleTextures []uint32
-
-	upSampleFBO         uint32
-	upSampleTextures    []uint32
-	blendTargetTextures []uint32
-
-	compositeFBO     uint32
-	compositeTexture uint32
+	ndcQuadVAO uint32
 
 	postProcessingFBO     uint32
 	postProcessingTexture uint32
 
 	textureArrayDebugFBO     uint32
 	textureArrayDebugTexture uint32
-
-	blendFBO uint32
-
-	bloomTextureWidths  []int
-	bloomTextureHeights []int
 
 	gameWindowHovered bool
 
@@ -134,26 +116,11 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 		panic(err)
 	}
 	r.imguiRenderer = imguiRenderer
-	r.ndcQuadVAO = r.init2f2fVAO()
+	r.ndcQuadVAO = rutils.Init2f2fVAO()
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
 	r.lastResize = time.Now()
 	r.initorReinitTextures(width, height, true)
-
-	// bloom setup
-	widths, heights := createSamplingDimensions(MaxBloomTextureWidth/2, MaxBloomTextureHeight/2, 6)
-	r.bloomTextureWidths = widths
-	r.bloomTextureHeights = heights
-	r.downSampleTextures = initSamplingTextures(widths, heights)
-	r.downSampleFBO = initSamplingBuffer(r.downSampleTextures[0])
-
-	widths, heights = createSamplingDimensions(MaxBloomTextureWidth, MaxBloomTextureHeight, 6)
-	r.upSampleTextures = initSamplingTextures(widths, heights)
-	r.blendTargetTextures = initSamplingTextures(widths, heights)
-	r.upSampleFBO = initSamplingBuffer(r.upSampleTextures[0])
-
-	blendTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
-	r.blendFBO, _ = r.initFrameBufferNoDepth(blendTextureFn)
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
 	cloudTexture0.VAO, cloudTexture0.WorleyTexture, cloudTexture0.FBO, cloudTexture0.RenderTexture = r.setupVolumetrics(r.shaderManager)
@@ -171,6 +138,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewSSAOBlurPass(app, r.shaderManager))
 	r.renderPasses = append(r.renderPasses, renderpass.NewMainPass(app, r.shaderManager))
+	r.renderPasses = append(r.renderPasses, renderpass.NewBloomPass(app, r.shaderManager))
 
 	for _, pass := range r.renderPasses {
 		pass.Init(width, height, r.renderPassContext)
@@ -243,18 +211,6 @@ func (r *RenderSystem) CreateMaterialTexture(handle types.MaterialHandle) {
 
 // this might be the most garbage code i've ever written
 func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
-	// composite FBO
-	compositeTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
-	var compositeTextures []uint32
-	if init {
-		r.compositeFBO, compositeTextures = r.initFrameBufferNoDepth(compositeTextureFn)
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.compositeFBO)
-		_, _, compositeTextures = compositeTextureFn()
-	}
-	gl.DeleteTextures(1, &r.compositeTexture)
-	r.compositeTexture = compositeTextures[0]
-
 	// post processing FBO
 	postProcessingTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	var postProcessingTextures []uint32
@@ -373,31 +329,10 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	}
 	mr.Inc("render_cpu_colorpicking_pick", durationMilliseconds(start))
 
-	var hdrColorTexture uint32
-
-	if r.app.RuntimeConfig().Bloom {
-		start = time.Now()
-		var upsampleTexture uint32
-		r.gpuProfiler.Profile("bloom_pass", func() {
-			r.downSample(r.renderPassContext.MainTexture, r.bloomTextureWidths, r.bloomTextureHeights)
-			upsampleTexture = r.upSampleAndBlend(r.bloomTextureWidths, r.bloomTextureHeights)
-			hdrColorTexture = r.composite(renderContext, r.renderPassContext.MainTexture, upsampleTexture)
-		})
-		mr.Inc("render_cpu_bloom_pass", durationMilliseconds(start))
-
-		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
-			r.app.RuntimeConfig().DebugTexture = upsampleTexture
-		} else if menus.SelectedDebugComboOption == menus.ComboOptionPreBloomHDR {
-			r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainTexture
-		}
-	} else {
-		hdrColorTexture = r.renderPassContext.MainTexture
-	}
-
 	start = time.Now()
 	r.gpuProfiler.Profile("post_process", func() {
 		r.postProcessingTexture = r.postProcess(renderContext,
-			hdrColorTexture,
+			r.renderPassContext.HDRTexture,
 		)
 	})
 	mr.Inc("render_cpu_post_process", durationMilliseconds(start))
@@ -558,6 +493,12 @@ func (r *RenderSystem) setDebugTexture(renderContext context.RenderContext) {
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
 		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainColorPickingTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.BloomTexture
+		r.app.RuntimeConfig().DebugAspectRatio = 0
+	} else if menus.SelectedDebugComboOption == menus.ComboOptionPreBloomHDR {
+		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainTexture
 		r.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
 		r.app.RuntimeConfig().DebugTexture = r.resolveTextureArrayDebugTexture(renderContext, r.renderPassContext.ShadowMapTexture, int32(settings.NumShadowMapCascades))

@@ -70,6 +70,18 @@ type RenderPassContext struct {
 	PointLightFBO     uint32
 	PointLightTexture uint32
 
+	// Bloom
+	BloomDownSampleFBO      uint32
+	BloomDownSampleTextures []uint32
+	BloomUpSampleFBO        uint32
+	BloomUpSampleTextures   []uint32
+	BloomBlendFBO           uint32
+	BloomBlendTextures      []uint32
+	BloomCompositeFBO       uint32
+	BloomTexture            uint32
+	BloomCompositeTexture   uint32
+	HDRTexture              uint32
+
 	// Shadow Map
 	ShadowMapFBO     uint32
 	ShadowMapTexture uint32

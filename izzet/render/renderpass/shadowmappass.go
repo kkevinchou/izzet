@@ -82,10 +82,10 @@ func (p *ShadowMapRenderPass) Render(
 	gl.BindFramebuffer(gl.FRAMEBUFFER, renderPassContext.ShadowMapFBO)
 	gl.Viewport(0, 0, int32(p.dimension), int32(p.dimension))
 
+	gl.ClearDepth(1)
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+
 	if !p.app.RuntimeConfig().EnableShadowMapping {
-		gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, renderPassContext.ShadowMapTexture, 0)
-		gl.ClearDepth(1)
-		gl.Clear(gl.DEPTH_BUFFER_BIT)
 		return
 	}
 
@@ -93,9 +93,6 @@ func (p *ShadowMapRenderPass) Render(
 	defer gl.CullFace(gl.BACK)
 
 	p.shader.Use()
-
-	gl.FramebufferTexture(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, renderPassContext.ShadowMapTexture, 0)
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	p.shader.SetUniformInt("cascadeCount", int32(len(renderContext.ShadowMapCascades)))
 	for i, cascade := range renderContext.ShadowMapCascades {

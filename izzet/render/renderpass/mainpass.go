@@ -133,9 +133,7 @@ func (p *MainRenderPass) Render(
 	p.drawSkybox(renderContext, viewerContext)
 
 	// models
-	// rutils.TimeFunc("render_main", func() {
 	drawModels(p.app, p.sm.GetShaderProgram("modelpbr"), p.sm.GetShaderProgram("batch"), viewerContext, renderContext, renderPassContext, renderContext.RenderableEntities)
-	// })
 
 	// colliders
 	if p.app.RuntimeConfig().ShowColliders {

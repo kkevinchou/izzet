@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/internal/metrics"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -24,15 +25,15 @@ type metricPair struct {
 }
 
 func Stats(app renderiface.App, renderContext RenderContext) {
-	runtimeConfig := app.RuntimeConfig()
 	mr := globals.ClientRegistry()
+	runtimeConfig := app.RuntimeConfig()
 	caser := cases.Title(language.English)
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 
-		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("render_time", metricRange))) }, true)
+		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("renderer_cpu_time", metricRange))) }, true)
 		panelutils.SetupRow("Command Frame Time", func() {
 			imgui.LabelText("", fmt.Sprintf("%.1f", mr.AvgOver("command_frame_nanoseconds", metricRange)/1000000))
 		}, true)
@@ -54,66 +55,22 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		imgui.EndTable()
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Rendering", imgui.TreeNodeFlagsNone) {
+	// rendering metrics tracked from gpu
+	pairs, total := metricPairsByPrefix(mr, "render_gpu_")
+
+	if imgui.CollapsingHeaderTreeNodeFlagsV(fmt.Sprintf("Rendering - GPU (%.2f)###gpu_rendering_header", total), imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
-
-		metrics := mr.MetricsByPrefix("render_")
-		var pairs []metricPair
-		for _, metric := range metrics {
-			if metric == "render_time" || strings.HasPrefix(metric, "render_gpu_") {
-				continue
-			}
-			pairs = append(
-				pairs,
-				metricPair{
-					name:  strings.ReplaceAll(strings.TrimPrefix(metric, "render_"), "_", " "),
-					value: mr.AvgOver(metric, renderingMetricRange),
-				},
-			)
-		}
-
-		sort.Slice(pairs, func(i, j int) bool {
-			if pairs[i].value == pairs[j].value {
-				return pairs[i].name < pairs[j].name
-			}
-			return pairs[i].value > pairs[j].value
-		})
-
 		for _, pair := range pairs {
-			panelutils.SetupRow(caser.String(pair.name), func() { imgui.LabelText("", fmt.Sprintf("%.1f", pair.value)) }, true)
+			panelutils.SetupRow(caser.String(pair.name), func() { imgui.LabelText("", fmt.Sprintf("%.2f", pair.value)) }, true)
 		}
-
 		imgui.EndTable()
 	}
 
-	// gpu metrics
+	// rendering metrics tracked from cpu
+	pairs, total = metricPairsByPrefix(mr, "render_cpu_")
 
-	metrics := mr.MetricsByPrefix("render_gpu_")
-	var pairs []metricPair
-	for _, metric := range metrics {
-		pairs = append(
-			pairs,
-			metricPair{
-				name:  strings.ReplaceAll(strings.TrimPrefix(metric, "render_gpu_"), "_", " "),
-				value: mr.AvgOver(metric, renderingMetricRange),
-			},
-		)
-	}
-
-	sort.Slice(pairs, func(i, j int) bool {
-		if pairs[i].value == pairs[j].value {
-			return pairs[i].name < pairs[j].name
-		}
-		return pairs[i].value > pairs[j].value
-	})
-
-	var gpuRenderingTotal float64
-	for _, pair := range pairs {
-		gpuRenderingTotal += pair.value
-	}
-
-	if imgui.CollapsingHeaderTreeNodeFlagsV(fmt.Sprintf("GPU Rendering (%.2f)###GPU Rendering Header", gpuRenderingTotal), imgui.TreeNodeFlagsNone) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV(fmt.Sprintf("Rendering - CPU (%.2f)###cpu_rendering_header", total), imgui.TreeNodeFlagsNone) {
 		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
 		panelutils.InitColumns()
 		for _, pair := range pairs {
@@ -132,4 +89,34 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		}
 		imgui.EndTable()
 	}
+}
+
+func metricPairsByPrefix(mr *metrics.Registry, prefix string) ([]metricPair, float64) {
+	// TODO - this should probably support metric tags rather than using prefixes
+	metrics := mr.MetricsByPrefix(prefix)
+
+	var pairs []metricPair
+	for _, metric := range metrics {
+		pairs = append(
+			pairs,
+			metricPair{
+				name:  strings.ReplaceAll(strings.TrimPrefix(metric, prefix), "_", " "),
+				value: mr.AvgOver(metric, renderingMetricRange),
+			},
+		)
+	}
+
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].value == pairs[j].value {
+			return pairs[i].name < pairs[j].name
+		}
+		return pairs[i].value > pairs[j].value
+	})
+
+	var total float64
+	for _, pair := range pairs {
+		total += pair.value
+	}
+
+	return pairs, total
 }

@@ -5,8 +5,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 )
 
-const gpuProfilerMetricPrefix = "render_gpu_"
-
 type GPUTimerQuery struct {
 	name  string
 	query uint32
@@ -34,7 +32,7 @@ func (p *GPUProfiler) CollectAvailable() {
 		gl.GetQueryObjectui64v(timer.query, gl.QUERY_RESULT, &elapsedNanoseconds)
 		gl.DeleteQueries(1, &timer.query)
 
-		globals.ClientRegistry().Inc(gpuProfilerMetricPrefix+timer.name, float64(elapsedNanoseconds)/1000000.0)
+		globals.ClientRegistry().Inc("render_gpu_"+timer.name, float64(elapsedNanoseconds)/1000000.0)
 	}
 	p.pending = stillPending
 }

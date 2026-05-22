@@ -317,7 +317,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.gpuProfiler.Profile("volumetrics", func() {
 		r.renderVolumetrics(cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, r.shaderManager, r.app.AssetManager())
 	})
-	mr.Inc("render_volumetrics", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_volumetrics", float64(time.Since(start).Milliseconds()))
 
 	r.createMaterialTextures()
 
@@ -337,11 +337,11 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	start = time.Now()
 	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
-	mr.Inc("render_query_renderable", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_query_renderable", float64(time.Since(start).Milliseconds()))
 
 	start = time.Now()
 	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
-	mr.Inc("render_query_shadowcasting", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_query_shadowcasting", float64(time.Since(start).Milliseconds()))
 
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
@@ -352,7 +352,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 		r.gpuProfiler.Profile(pass.Name(), func() {
 			start := time.Now()
 			pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
-			mr.Inc("render_"+pass.Name(), float64(time.Since(start).Milliseconds()))
+			mr.Inc("render_cpu_"+pass.Name(), float64(time.Since(start).Milliseconds()))
 		})
 	}
 
@@ -363,7 +363,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	if r.app.AppMode() == types.AppModeEditor && r.app.SelectedEntity() != nil {
 		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
-	mr.Inc("render_colorpicking_pick", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_colorpicking_pick", float64(time.Since(start).Milliseconds()))
 
 	var hdrColorTexture uint32
 
@@ -375,7 +375,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 			upsampleTexture = r.upSampleAndBlend(r.bloomTextureWidths, r.bloomTextureHeights)
 			hdrColorTexture = r.composite(renderContext, r.renderPassContext.MainTexture, upsampleTexture)
 		})
-		mr.Inc("render_bloom_pass", float64(time.Since(start).Milliseconds()))
+		mr.Inc("render_cpu_bloom_pass", float64(time.Since(start).Milliseconds()))
 
 		if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
 			r.app.RuntimeConfig().DebugTexture = upsampleTexture
@@ -392,7 +392,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 			hdrColorTexture,
 		)
 	})
-	mr.Inc("render_post_process", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_post_process", float64(time.Since(start).Milliseconds()))
 
 	r.setDebugTexture(renderContext)
 
@@ -405,7 +405,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	r.gpuProfiler.Profile("imgui", func() {
 		r.renderHelper(renderContext, imgui.TextureID(r.postProcessingTexture))
 	})
-	mr.Inc("render_imgui", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_imgui", float64(time.Since(start).Milliseconds()))
 }
 
 func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext) {
@@ -491,7 +491,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	renderContext.PointLights = pointLights
 
 	r.cameraViewerContext = cameraViewerContext
-	mr.Inc("render_context_setup", float64(time.Since(start).Milliseconds()))
+	mr.Inc("render_cpu_context_setup", float64(time.Since(start).Milliseconds()))
 
 	return renderContext, cameraViewerContext
 }

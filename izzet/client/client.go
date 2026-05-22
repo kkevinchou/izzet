@@ -137,7 +137,8 @@ func (g *Client) Start() {
 	msPerFrame := float64(1000) / float64(settings.FPS)
 	previousTimeStamp := float64(time.Now().UnixNano()) / 1000000
 
-	// immediate updates when swapping buffers
+	// 1 - vsync on
+	// 0 - vsync off
 	err := sdl.GLSetSwapInterval(0)
 	if err != nil {
 		panic(err)
@@ -218,8 +219,8 @@ func (g *Client) render(delta time.Duration) {
 	g.renderSystem.Render(delta)
 	swapStart := time.Now()
 	g.window.Swap()
-	globals.ClientRegistry().Inc("render_swap", float64(time.Since(swapStart).Milliseconds()))
-	globals.ClientRegistry().Inc("render_time", float64(time.Since(start).Milliseconds()))
+	globals.ClientRegistry().Inc("render_cpu_swap", float64(time.Since(swapStart).Milliseconds()))
+	globals.ClientRegistry().Inc("renderer_cpu_time", float64(time.Since(start).Milliseconds()))
 }
 
 func initSeed() {

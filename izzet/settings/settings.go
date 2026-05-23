@@ -65,6 +65,7 @@ const (
 	CameraEntityFollowVerticalOffset float64 = 1.5
 	ProjectsDirectory                string  = ".project/"
 	NewProjectName                   string  = "my_new_project"
+	StartupProject                   string  = "kitchen_miniature" // if empty, defaults to default scene
 
 	CharacterSpeed           float64 = 10
 	CharacterFlySpeed        float64 = 30

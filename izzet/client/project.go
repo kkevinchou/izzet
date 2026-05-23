@@ -11,7 +11,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
@@ -154,19 +153,15 @@ func (g *Client) SaveProjectAs(name string) error {
 func (g *Client) NewProject(name string) {
 	g.InitializeProjectFolders(name)
 	g.project = &Project{Name: name}
+
 	g.assetManager = assets.NewAssetManager(true, g.Logger())
 	g.world = world.New()
 
-	g.initializeAppSystems()
+	g.initializeApp()
 	g.LoadDefaultAssets()
 	g.SelectEntity(nil)
 
 	// set up the default scene
-
-	g.camera = &editorcamera.Camera{
-		Position: settings.EditorCameraStartPosition,
-		Rotation: mgl64.QuatIdent(),
-	}
 
 	cube := entity.CreateCube(g.AssetManager(), 1)
 	cube.Material = &entity.MaterialComponent{MaterialHandle: assets.DefaultMaterialHandle}

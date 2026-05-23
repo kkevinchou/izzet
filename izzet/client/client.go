@@ -123,7 +123,17 @@ func New(shaderDirectory string, config settings.Config) *Client {
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
 
-	g.NewProject(settings.NewProjectName)
+	g.camera = &editorcamera.Camera{
+		Position: settings.EditorCameraStartPosition,
+		Rotation: mgl64.QuatIdent(),
+	}
+
+	if settings.StartupProject == "" {
+		g.NewProject(settings.NewProjectName)
+	} else {
+		g.LoadProject(settings.StartupProject)
+	}
+
 	g.setupSystems()
 
 	return g

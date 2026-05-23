@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/animation"
+	"github.com/kkevinchou/izzet/internal/animationv2"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -360,9 +360,14 @@ func drawModel(
 	shader *shaders.ShaderProgram,
 	e *entity.Entity,
 ) {
-	var animationPlayer *animation.AnimationPlayer
+	// var animationPlayer *animation.AnimationPlayer
+	// if e.Animation != nil {
+	// 	animationPlayer = e.Animation.AnimationPlayer
+	// }
+
+	var animationPlayer *animationv2.AnimationPlayer
 	if e.Animation != nil {
-		animationPlayer = e.Animation.AnimationPlayer
+		animationPlayer = e.Animation.AnimationPlayerV2
 	}
 
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {

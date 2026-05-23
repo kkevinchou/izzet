@@ -3,6 +3,7 @@ package system
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/internal/animationv2"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -81,5 +82,12 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 		}
 
 		e.Animation.AnimationPlayer.Update(delta)
+
+		animationContext := &animationv2.AnimationContext{
+			Player:   e.Animation.AnimationPlayerV2,
+			Grounded: e.Kinematic.Grounded,
+			Airborne: !e.GravityEnabled() || !e.Kinematic.Grounded,
+		}
+		e.Animation.AnimationStateMachine.Update(delta, s.app, world, *animationContext)
 	}
 }

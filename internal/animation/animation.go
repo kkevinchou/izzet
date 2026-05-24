@@ -286,10 +286,13 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 		startKeyFrame = keyFrames[startKeyFrameIndex]
 		endKeyFrame = keyFrames[endKeyFrameIndex]
 		startKeyFrameTimestamp := startKeyFrame.Start
+
+		// don't think this is needed?
 		if startKeyFrameIndex > endKeyFrameIndex {
 			// handle case where we're looping from the last key frame
 			startKeyFrameTimestamp = 0
 		}
+
 		progression = float32(elapsedTime-startKeyFrameTimestamp) / float32((endKeyFrame.Start - startKeyFrameTimestamp))
 		break
 	}

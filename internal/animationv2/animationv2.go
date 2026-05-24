@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 )
@@ -30,7 +31,11 @@ func (player *AnimationPlayer) Initialize(animations map[string]*modelspec.Anima
 }
 
 func (player *AnimationPlayer) NormalizedClipProgress() float64 {
-	return float64(player.elapsedTime.Milliseconds() / player.currentAnimation.Length.Milliseconds())
+	return float64(player.elapsedTime.Milliseconds()) / float64(player.currentAnimation.Length.Milliseconds())
+}
+
+func (player *AnimationPlayer) ElapsedTime() time.Duration {
+	return player.elapsedTime
 }
 
 func (player *AnimationPlayer) CurrentAnimation() string {
@@ -72,6 +77,7 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 	}
 
 	player.elapsedTime += delta
+	iztlog.ClientLogger.Info(fmt.Sprintf("elapsed time %d", player.elapsedTime.Milliseconds()))
 	for player.elapsedTime > player.currentAnimation.Length {
 		player.elapsedTime = player.currentAnimation.Length
 	}
@@ -133,10 +139,6 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 		startKeyFrame = keyFrames[startKeyFrameIndex]
 		endKeyFrame = keyFrames[endKeyFrameIndex]
 		startKeyFrameTimestamp := startKeyFrame.Start
-		if startKeyFrameIndex > endKeyFrameIndex {
-			// handle case where we're looping from the last key frame
-			startKeyFrameTimestamp = 0
-		}
 		progression = float32(elapsedTime-startKeyFrameTimestamp) / float32((endKeyFrame.Start - startKeyFrameTimestamp))
 		break
 	}

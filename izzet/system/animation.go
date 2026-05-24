@@ -84,9 +84,10 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 		e.Animation.AnimationPlayer.Update(delta)
 
 		animationContext := &animationv2.AnimationContext{
-			Player:   e.Animation.AnimationPlayerV2,
-			Grounded: e.Kinematic.Grounded,
-			Airborne: !e.GravityEnabled() || !e.Kinematic.Grounded,
+			Player:        e.Animation.AnimationPlayerV2,
+			Grounded:      e.Kinematic.Grounded,
+			JumpTriggered: e.Kinematic.Jump,
+			Airborne:      !e.GravityEnabled() || !e.Kinematic.Grounded,
 		}
 		e.Animation.AnimationStateMachine.Update(delta, s.app, world, *animationContext)
 	}

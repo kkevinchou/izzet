@@ -2,8 +2,6 @@ package animationv2
 
 import (
 	"time"
-
-	"github.com/kkevinchou/izzet/internal/iztlog"
 )
 
 type App interface {
@@ -16,6 +14,13 @@ type World interface {
 
 type Condition interface {
 	Evaluate(app App, world World, ctx AnimationContext) bool
+}
+
+type JumpTriggeredCondition struct {
+}
+
+func (c *JumpTriggeredCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
+	return ctx.JumpTriggered
 }
 
 type ClipCompletedCondition struct {
@@ -42,8 +47,8 @@ func (c *GroundedCondition) Evaluate(app App, world World, ctx AnimationContext)
 // Animation State
 
 type AnimationState struct {
-	name     string
-	clipName string
+	Name     string
+	ClipName string
 }
 
 // Transition
@@ -116,8 +121,9 @@ func (t *Transition) Evaluate(app App, world World, ctx AnimationContext) bool {
 type AnimationContext struct {
 	Player *AnimationPlayer
 
-	Grounded bool
-	Airborne bool
+	Grounded      bool
+	Airborne      bool
+	JumpTriggered bool
 }
 
 type AnimationStateMachine struct {
@@ -126,8 +132,9 @@ type AnimationStateMachine struct {
 }
 
 func NewAnimationStateMachine() *AnimationStateMachine {
-	idle := &AnimationState{name: "idle", clipName: "Idle_Loop"}
-	airborne := &AnimationState{name: "airborne", clipName: "Jump_Loop"}
+	idle := &AnimationState{Name: "idle", ClipName: "Idle_Loop"}
+	airborne := &AnimationState{Name: "airborne", ClipName: "Jump_Loop"}
+	jumpStart := &AnimationState{Name: "jumpStart", ClipName: "Jump_Start"}
 
 	sm := &AnimationStateMachine{}
 	sm.currentState = idle
@@ -136,16 +143,21 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	idleIdleTransition.AddCondition(&ClipCompletedCondition{})
 	idleIdleTransition.AddCondition(&GroundedCondition{})
 
+	idleJumpStartTransition := NewTransition(idle, jumpStart)
+	idleJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
+
 	airborneAirborneTransition := NewTransition(airborne, airborne)
 	airborneAirborneTransition.AddCondition(&ClipCompletedCondition{})
 
-	idleairborneTransition := NewTransition(idle, airborne)
-	idleairborneTransition.AddCondition(&AirborneCondition{})
+	jumpStartAirborneTransition := NewTransition(jumpStart, airborne)
+	jumpStartAirborneTransition.AddCondition(&ClipCompletedCondition{})
+	jumpStartAirborneTransition.AddCondition(&AirborneCondition{})
 
 	airborneIdleTransition := NewTransition(airborne, idle)
 	airborneIdleTransition.AddCondition(&GroundedCondition{})
 
-	sm.transitions = append(sm.transitions, idleairborneTransition)
+	sm.transitions = append(sm.transitions, idleJumpStartTransition)
+	sm.transitions = append(sm.transitions, jumpStartAirborneTransition)
 	sm.transitions = append(sm.transitions, airborneIdleTransition)
 	sm.transitions = append(sm.transitions, idleIdleTransition)
 	sm.transitions = append(sm.transitions, airborneAirborneTransition)
@@ -153,10 +165,14 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	return sm
 }
 
+func (sm *AnimationStateMachine) CurrentAnimationState() string {
+	return sm.currentState.Name
+}
+
 func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world World, ctx AnimationContext) {
 	// TDOO - maybe find a better place to initialize the player
 	if ctx.Player.CurrentAnimation() == "" {
-		ctx.Player.PlayClip(sm.currentState.clipName)
+		ctx.Player.PlayClip(sm.currentState.ClipName)
 	}
 
 	// i know the current state, i only need to look up the relevant transitions theoretically
@@ -167,15 +183,13 @@ func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world Worl
 	// - how do we handle multiple transitions happening? have a priority order?
 
 	ctx.Player.Update(delta)
-	iztlog.ClientLogger.Info("Update")
 	for _, t := range sm.transitions {
-		if sm.currentState.name != t.source.name {
+		if sm.currentState.Name != t.source.Name {
 			continue
 		}
 		if t.Evaluate(app, world, ctx) {
 			sm.currentState = t.NextState()
-			ctx.Player.PlayClip(sm.currentState.clipName)
-			iztlog.ClientLogger.Info("PlayClip")
+			ctx.Player.PlayClip(sm.currentState.ClipName)
 			break
 		}
 	}

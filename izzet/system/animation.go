@@ -70,12 +70,23 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					continue
 				}
 				runtimeConfig := s.app.RuntimeConfig()
+				animationPlayer := e.Animation.AnimationPlayerV2
+
+				if runtimeConfig.SelectedAnimation != "" {
+					if runtimeConfig.LoopAnimation {
+						if animationPlayer.CurrentAnimation() != runtimeConfig.SelectedAnimation || animationPlayer.NormalizedClipProgress() >= 1 {
+							animationPlayer.PlayClip(runtimeConfig.SelectedAnimation)
+						}
+						animationPlayer.Update(delta)
+					} else {
+						if animationPlayer.CurrentAnimation() != runtimeConfig.SelectedAnimation {
+							animationPlayer.PlayClip(runtimeConfig.SelectedAnimation)
+						}
+						e.Animation.AnimationPlayerV2.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
+					}
+				}
 				if runtimeConfig.LoopAnimation {
-					animationPlayer := e.Animation.AnimationPlayer
-					animationPlayer.PlayAnimation(runtimeConfig.SelectedAnimation)
-					e.Animation.AnimationPlayer.Update(delta)
-				} else {
-					e.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
+				} else if runtimeConfig.SelectedAnimation != "" {
 				}
 				continue
 			}

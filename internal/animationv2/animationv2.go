@@ -18,6 +18,8 @@ type AnimationPlayer struct {
 	// these fields are from the loaded animation and should not be modified
 	animations map[string]*modelspec.AnimationSpec
 	rootJoint  *modelspec.JointSpec
+
+	leftover time.Duration
 }
 
 // support blend tree operations
@@ -64,6 +66,27 @@ func (player *AnimationPlayer) PlayClip(animationName string) {
 	}
 }
 
+func (player *AnimationPlayer) SetCurrentAnimationFrame(animation string, keyframe int) {
+	if _, ok := player.animations[animation]; !ok {
+		return
+	}
+	player.currentAnimation = player.animations[animation]
+	keyFrames := player.currentAnimation.KeyFrames
+
+	if keyframe >= len(keyFrames) {
+		return
+	}
+
+	startKeyFrame := keyFrames[keyframe]
+	endKeyFrame := keyFrames[(keyframe+1)%len(keyFrames)]
+
+	pose := interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, 0)
+	poseTransforms := convertPoseToTransformMatrix(pose)
+	animationTransforms := map[int]mgl32.Mat4{}
+	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
+	player.animationTransforms = animationTransforms
+}
+
 func (player *AnimationPlayer) Length() time.Duration {
 	if player.currentAnimation == nil {
 		return 0
@@ -76,9 +99,13 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 		return
 	}
 
-	player.elapsedTime += delta
+	// leftover time from the last animation
+	player.leftover = 0
+	player.elapsedTime += delta + player.leftover
+
 	iztlog.ClientLogger.Info(fmt.Sprintf("elapsed time %d", player.elapsedTime.Milliseconds()))
 	for player.elapsedTime > player.currentAnimation.Length {
+		player.leftover = player.elapsedTime - player.currentAnimation.Length
 		player.elapsedTime = player.currentAnimation.Length
 	}
 
@@ -86,6 +113,7 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 	poseTransforms := convertPoseToTransformMatrix(pose)
 	animationTransforms := map[int]mgl32.Mat4{}
 	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
+
 	player.animationTransforms = animationTransforms
 }
 
@@ -139,6 +167,7 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 		startKeyFrame = keyFrames[startKeyFrameIndex]
 		endKeyFrame = keyFrames[endKeyFrameIndex]
 		startKeyFrameTimestamp := startKeyFrame.Start
+
 		progression = float32(elapsedTime-startKeyFrameTimestamp) / float32((endKeyFrame.Start - startKeyFrameTimestamp))
 		break
 	}

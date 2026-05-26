@@ -69,12 +69,12 @@ const (
 
 	CharacterSpeed           float64 = 10
 	CharacterFlySpeed        float64 = 30
-	CharacterJumpSpeed       float64 = 25
+	CharacterJumpSpeed       float64 = 30
 	CharacterWebSpeed        float64 = 110
 	CharacterWebLaunchSpeed  float64 = 80
 	CameraSpeed              float64 = 20
 	CameraSlowSpeed          float64 = 2
-	AccelerationDueToGravity float64 = 75 // units per second
+	AccelerationDueToGravity float64 = 60 // units per second
 
 	BuiltinAssetsDir                string  = "_assets"
 	RenderBlendDurationMilliseconds float64 = 3000

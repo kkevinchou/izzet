@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 )
@@ -20,16 +19,25 @@ type AnimationPlayer struct {
 	rootJoint  *modelspec.JointSpec
 
 	leftover time.Duration
+	playRate float64
 }
 
 // support blend tree operations
 func NewAnimationPlayer() *AnimationPlayer {
-	return &AnimationPlayer{}
+	return &AnimationPlayer{playRate: 1}
 }
 
 func (player *AnimationPlayer) Initialize(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.JointSpec) {
 	player.animations = animations
 	player.rootJoint = rootJoint
+}
+
+func (player *AnimationPlayer) SetPlayRate(rate float64) {
+	player.playRate = rate
+}
+
+func (player *AnimationPlayer) PlayRate() float64 {
+	return player.playRate
 }
 
 func (player *AnimationPlayer) NormalizedClipProgress() float64 {
@@ -99,17 +107,15 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 		return
 	}
 
-	// leftover time from the last animation
+	player.elapsedTime += (delta + player.leftover) * time.Duration(player.playRate)
 	player.leftover = 0
-	player.elapsedTime += delta + player.leftover
 
-	iztlog.ClientLogger.Info(fmt.Sprintf("elapsed time %d", player.elapsedTime.Milliseconds()))
-	for player.elapsedTime > player.currentAnimation.Length {
-		player.leftover = player.elapsedTime - player.currentAnimation.Length
+	if player.elapsedTime > player.currentAnimation.Length {
+		player.leftover = (player.elapsedTime - player.currentAnimation.Length) / time.Duration(player.playRate)
 		player.elapsedTime = player.currentAnimation.Length
 	}
 
-	pose := calculateCurrentAnimationPose(player.elapsedTime, player.currentAnimation.KeyFrames)
+	pose := calculateCurrentAnimationPose(player.elapsedTime*time.Duration(player.playRate), player.currentAnimation.KeyFrames)
 	poseTransforms := convertPoseToTransformMatrix(pose)
 	animationTransforms := map[int]mgl32.Mat4{}
 	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)

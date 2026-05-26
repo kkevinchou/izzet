@@ -14,6 +14,7 @@ type World interface {
 
 type Condition interface {
 	Evaluate(app App, world World, ctx AnimationContext) bool
+	Name() string
 }
 
 type JumpTriggeredCondition struct {
@@ -23,11 +24,19 @@ func (c *JumpTriggeredCondition) Evaluate(app App, world World, ctx AnimationCon
 	return ctx.JumpTriggered
 }
 
+func (c *JumpTriggeredCondition) Name() string {
+	return "JumpTriggeredCondition"
+}
+
 type ClipCompletedCondition struct {
 }
 
 func (c *ClipCompletedCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
 	return ctx.Player.elapsedTime >= ctx.Player.currentAnimation.Length
+}
+
+func (c *ClipCompletedCondition) Name() string {
+	return "ClipCompletedCondition"
 }
 
 type AirborneCondition struct {
@@ -37,6 +46,10 @@ func (c *AirborneCondition) Evaluate(app App, world World, ctx AnimationContext)
 	return ctx.Airborne
 }
 
+func (c *AirborneCondition) Name() string {
+	return "AirborneCondition"
+}
+
 type GroundedCondition struct {
 }
 
@@ -44,23 +57,29 @@ func (c *GroundedCondition) Evaluate(app App, world World, ctx AnimationContext)
 	return ctx.Grounded
 }
 
+func (c *GroundedCondition) Name() string {
+	return "GroundedCondition"
+}
+
 // Animation State
 
 type AnimationState struct {
 	Name     string
 	ClipName string
+	PlayRate float64
 }
 
 // Transition
 
 type Transition struct {
+	name       string
 	source     *AnimationState
 	target     *AnimationState
 	conditions []Condition
 }
 
-func NewTransition(source, target *AnimationState) *Transition {
-	return &Transition{source: source, target: target}
+func NewTransition(name string, source, target *AnimationState) *Transition {
+	return &Transition{name: name, source: source, target: target}
 }
 
 func (t *Transition) AddCondition(c Condition) {
@@ -132,33 +151,43 @@ type AnimationStateMachine struct {
 }
 
 func NewAnimationStateMachine() *AnimationStateMachine {
-	idle := &AnimationState{Name: "idle", ClipName: "Idle_Loop"}
-	airborne := &AnimationState{Name: "airborne", ClipName: "Jump_Loop"}
-	jumpStart := &AnimationState{Name: "jumpStart", ClipName: "Jump_Start"}
+	idle := &AnimationState{Name: "idle", ClipName: "Idle_Loop", PlayRate: 1}
+	airborne := &AnimationState{Name: "airborne", ClipName: "Jump_Loop", PlayRate: 1.5}
+	jumpStart := &AnimationState{Name: "jumpStart", ClipName: "Jump_Start", PlayRate: 2}
+	jumpLand := &AnimationState{Name: "jumpLand", ClipName: "Jump_Land", PlayRate: 1.5}
 
 	sm := &AnimationStateMachine{}
 	sm.currentState = idle
 
-	idleIdleTransition := NewTransition(idle, idle)
+	idleIdleTransition := NewTransition("idleIdleTransition", idle, idle)
 	idleIdleTransition.AddCondition(&ClipCompletedCondition{})
 	idleIdleTransition.AddCondition(&GroundedCondition{})
 
-	idleJumpStartTransition := NewTransition(idle, jumpStart)
+	idleJumpStartTransition := NewTransition("idleJumpStartTransition", idle, jumpStart)
 	idleJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
-	airborneAirborneTransition := NewTransition(airborne, airborne)
+	airborneAirborneTransition := NewTransition("airborneAirborneTransition", airborne, airborne)
 	airborneAirborneTransition.AddCondition(&ClipCompletedCondition{})
 
-	jumpStartAirborneTransition := NewTransition(jumpStart, airborne)
+	jumpStartAirborneTransition := NewTransition("jumpStartAirborneTransition", jumpStart, airborne)
 	jumpStartAirborneTransition.AddCondition(&ClipCompletedCondition{})
 	jumpStartAirborneTransition.AddCondition(&AirborneCondition{})
 
-	airborneIdleTransition := NewTransition(airborne, idle)
-	airborneIdleTransition.AddCondition(&GroundedCondition{})
+	airborneJumpLandTransition := NewTransition("airborneJumpLandTransition", airborne, jumpLand)
+	airborneJumpLandTransition.AddCondition(&GroundedCondition{})
 
+	jumpLandIdleTransition := NewTransition("jumpLandIdleTransition", jumpLand, idle)
+	jumpLandIdleTransition.AddCondition(&GroundedCondition{})
+	jumpLandIdleTransition.AddCondition(&ClipCompletedCondition{})
+
+	jumpLandJumpStartTransition := NewTransition("jumpLandJumpStartTransition", jumpLand, jumpStart)
+	jumpLandJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
+
+	sm.transitions = append(sm.transitions, jumpLandJumpStartTransition)
 	sm.transitions = append(sm.transitions, idleJumpStartTransition)
 	sm.transitions = append(sm.transitions, jumpStartAirborneTransition)
-	sm.transitions = append(sm.transitions, airborneIdleTransition)
+	sm.transitions = append(sm.transitions, airborneJumpLandTransition)
+	sm.transitions = append(sm.transitions, jumpLandIdleTransition)
 	sm.transitions = append(sm.transitions, idleIdleTransition)
 	sm.transitions = append(sm.transitions, airborneAirborneTransition)
 
@@ -172,6 +201,7 @@ func (sm *AnimationStateMachine) CurrentAnimationState() string {
 func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world World, ctx AnimationContext) {
 	// TDOO - maybe find a better place to initialize the player
 	if ctx.Player.CurrentAnimation() == "" {
+		ctx.Player.SetPlayRate(sm.currentState.PlayRate)
 		ctx.Player.PlayClip(sm.currentState.ClipName)
 	}
 
@@ -189,6 +219,7 @@ func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world Worl
 		}
 		if t.Evaluate(app, world, ctx) {
 			sm.currentState = t.NextState()
+			ctx.Player.SetPlayRate(sm.currentState.PlayRate)
 			ctx.Player.PlayClip(sm.currentState.ClipName)
 			break
 		}

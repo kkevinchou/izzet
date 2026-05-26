@@ -17,6 +17,28 @@ type Condition interface {
 	Name() string
 }
 
+type MovingCondition struct {
+}
+
+func (c *MovingCondition) Name() string {
+	return "MovingCondition"
+}
+
+func (c *MovingCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
+	return ctx.Moving
+}
+
+type NotMovingCondition struct {
+}
+
+func (c *NotMovingCondition) Name() string {
+	return "NotMovingCondition"
+}
+
+func (c *NotMovingCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
+	return !ctx.Moving
+}
+
 type JumpTriggeredCondition struct {
 }
 
@@ -143,6 +165,7 @@ type AnimationContext struct {
 	Grounded      bool
 	Airborne      bool
 	JumpTriggered bool
+	Moving        bool
 }
 
 type AnimationStateMachine struct {
@@ -155,6 +178,7 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	airborne := &AnimationState{Name: "airborne", ClipName: "Jump_Loop", PlayRate: 1.5}
 	jumpStart := &AnimationState{Name: "jumpStart", ClipName: "Jump_Start", PlayRate: 2}
 	jumpLand := &AnimationState{Name: "jumpLand", ClipName: "Jump_Land", PlayRate: 1.5}
+	sprint := &AnimationState{Name: "sprint", ClipName: "Sprint_Loop", PlayRate: 1}
 
 	sm := &AnimationStateMachine{}
 	sm.currentState = idle
@@ -166,6 +190,21 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	idleJumpStartTransition := NewTransition("idleJumpStartTransition", idle, jumpStart)
 	idleJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
+	sprintJumpStartTransition := NewTransition("sprintJumpStartTransition", sprint, jumpStart)
+	sprintJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
+
+	idleSprintTransition := NewTransition("idleSprintTransition", idle, sprint)
+	idleSprintTransition.AddCondition(&MovingCondition{})
+
+	sprintSprintTransition := NewTransition("sprintSprintTransition", sprint, sprint)
+	sprintSprintTransition.AddCondition(&MovingCondition{})
+	sprintSprintTransition.AddCondition(&GroundedCondition{})
+	sprintSprintTransition.AddCondition(&ClipCompletedCondition{})
+
+	sprintIdleTransition := NewTransition("sprintIdleTransition", sprint, idle)
+	sprintIdleTransition.AddCondition(&NotMovingCondition{})
+	sprintIdleTransition.AddCondition(&GroundedCondition{})
+
 	airborneAirborneTransition := NewTransition("airborneAirborneTransition", airborne, airborne)
 	airborneAirborneTransition.AddCondition(&ClipCompletedCondition{})
 
@@ -176,6 +215,10 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	airborneJumpLandTransition := NewTransition("airborneJumpLandTransition", airborne, jumpLand)
 	airborneJumpLandTransition.AddCondition(&GroundedCondition{})
 
+	jumpLandSprintTransition := NewTransition("jumpLandSprintTransition", jumpLand, sprint)
+	jumpLandSprintTransition.AddCondition(&GroundedCondition{})
+	jumpLandSprintTransition.AddCondition(&MovingCondition{})
+
 	jumpLandIdleTransition := NewTransition("jumpLandIdleTransition", jumpLand, idle)
 	jumpLandIdleTransition.AddCondition(&GroundedCondition{})
 	jumpLandIdleTransition.AddCondition(&ClipCompletedCondition{})
@@ -185,8 +228,13 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 
 	sm.transitions = append(sm.transitions, jumpLandJumpStartTransition)
 	sm.transitions = append(sm.transitions, idleJumpStartTransition)
+	sm.transitions = append(sm.transitions, sprintJumpStartTransition)
+	sm.transitions = append(sm.transitions, idleSprintTransition)
+	sm.transitions = append(sm.transitions, sprintSprintTransition)
+	sm.transitions = append(sm.transitions, sprintIdleTransition)
 	sm.transitions = append(sm.transitions, jumpStartAirborneTransition)
 	sm.transitions = append(sm.transitions, airborneJumpLandTransition)
+	sm.transitions = append(sm.transitions, jumpLandSprintTransition)
 	sm.transitions = append(sm.transitions, jumpLandIdleTransition)
 	sm.transitions = append(sm.transitions, idleIdleTransition)
 	sm.transitions = append(sm.transitions, airborneAirborneTransition)

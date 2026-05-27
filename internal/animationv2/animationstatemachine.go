@@ -51,10 +51,12 @@ func (c *JumpTriggeredCondition) Name() string {
 }
 
 type ClipCompletedCondition struct {
+	debug bool
 }
 
 func (c *ClipCompletedCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	return ctx.Player.elapsedTime >= ctx.Player.currentAnimation.Length
+	result := ctx.Player.NormalizedClipProgress() >= 1
+	return result
 }
 
 func (c *ClipCompletedCondition) Name() string {
@@ -123,17 +125,6 @@ func (t *Transition) Evaluate(app App, world World, ctx AnimationContext) bool {
 
 // === STATES ===
 //
-// TODO - break this down into multiple animations. i don't think my assets
-// would work well with blend trees. could experiment with this later using
-// normalized timestamps and scaling animations to have the animation period
-// match
-//
-// grounded locomotion
-//	- blend tree based on move amount
-//		- movement amount == 0 		play idle clip
-//		- movement amount == 0.5 	play jog clip
-//		- movement amount == 1	 	play sprint clip
-//
 // jump start
 //	- play jump start clip
 //
@@ -179,9 +170,13 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	jumpStart := &AnimationState{Name: "jumpStart", ClipName: "Jump_Start", PlayRate: 2}
 	jumpLand := &AnimationState{Name: "jumpLand", ClipName: "Jump_Land", PlayRate: 1.5}
 	sprint := &AnimationState{Name: "sprint", ClipName: "Sprint_Loop", PlayRate: 1}
+	sprintEnter := &AnimationState{Name: "sprintEnter", ClipName: "Sprint_Enter", PlayRate: 1.5}
+	sprintExit := &AnimationState{Name: "sprintExit", ClipName: "Sprint_Exit", PlayRate: 2}
 
 	sm := &AnimationStateMachine{}
-	sm.currentState = idle
+	sm.currentState = airborne
+
+	// idle
 
 	idleIdleTransition := NewTransition("idleIdleTransition", idle, idle)
 	idleIdleTransition.AddCondition(&ClipCompletedCondition{})
@@ -190,11 +185,30 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	idleJumpStartTransition := NewTransition("idleJumpStartTransition", idle, jumpStart)
 	idleJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
+	idleSprintEnterTransition := NewTransition("idleSprintTransition", idle, sprintEnter)
+	idleSprintEnterTransition.AddCondition(&MovingCondition{})
+	idleIdleTransition.AddCondition(&GroundedCondition{})
+
+	// sprint  enter
+
+	sprintEnterJumpStartTransition := NewTransition("sprintEnterJumpStartTransition", sprintEnter, jumpStart)
+	sprintEnterJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
+
+	sprintEnterSprintExitTransition := NewTransition("sprintEnterSprintExitTransition", sprintEnter, sprintExit)
+	sprintEnterSprintExitTransition.AddCondition(&NotMovingCondition{})
+	sprintEnterSprintExitTransition.AddCondition(&GroundedCondition{})
+
+	sprintEnterSprintTransition := NewTransition("sprintEnterSprintTransition", sprintEnter, sprint)
+	sprintEnterSprintTransition.AddCondition(&MovingCondition{})
+	sprintEnterSprintTransition.AddCondition(&ClipCompletedCondition{debug: true})
+
+	// sprint
+
 	sprintJumpStartTransition := NewTransition("sprintJumpStartTransition", sprint, jumpStart)
 	sprintJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
-	idleSprintTransition := NewTransition("idleSprintTransition", idle, sprint)
-	idleSprintTransition.AddCondition(&MovingCondition{})
+	sprintSprintExitTransition := NewTransition("sprintSprintExit", sprint, sprintExit)
+	sprintSprintExitTransition.AddCondition(&NotMovingCondition{})
 
 	sprintSprintTransition := NewTransition("sprintSprintTransition", sprint, sprint)
 	sprintSprintTransition.AddCondition(&MovingCondition{})
@@ -205,19 +219,25 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	sprintIdleTransition.AddCondition(&NotMovingCondition{})
 	sprintIdleTransition.AddCondition(&GroundedCondition{})
 
-	airborneAirborneTransition := NewTransition("airborneAirborneTransition", airborne, airborne)
-	airborneAirborneTransition.AddCondition(&ClipCompletedCondition{})
+	// sprint exit
 
-	jumpStartAirborneTransition := NewTransition("jumpStartAirborneTransition", jumpStart, airborne)
-	jumpStartAirborneTransition.AddCondition(&ClipCompletedCondition{})
-	jumpStartAirborneTransition.AddCondition(&AirborneCondition{})
+	sprintExitJumpStartTransition := NewTransition("sprintExitJumpStartTransition", sprintExit, jumpStart)
+	sprintExitJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
-	airborneJumpLandTransition := NewTransition("airborneJumpLandTransition", airborne, jumpLand)
-	airborneJumpLandTransition.AddCondition(&GroundedCondition{})
+	sprintExitSprintEnterTransition := NewTransition("sprintExitSprintEnter", sprintExit, sprintEnter)
+	sprintExitSprintEnterTransition.AddCondition(&MovingCondition{})
+	sprintExitSprintEnterTransition.AddCondition(&GroundedCondition{})
 
-	jumpLandSprintTransition := NewTransition("jumpLandSprintTransition", jumpLand, sprint)
-	jumpLandSprintTransition.AddCondition(&GroundedCondition{})
-	jumpLandSprintTransition.AddCondition(&MovingCondition{})
+	sprintExitIdleTransition := NewTransition("sprintExitIdle", sprintExit, idle)
+	sprintExitIdleTransition.AddCondition(&NotMovingCondition{})
+	sprintExitIdleTransition.AddCondition(&GroundedCondition{})
+	sprintExitIdleTransition.AddCondition(&ClipCompletedCondition{})
+
+	// jump land
+
+	jumpLandSprintEnterTransition := NewTransition("jumpLandSprintTransition", jumpLand, sprintEnter)
+	jumpLandSprintEnterTransition.AddCondition(&GroundedCondition{})
+	jumpLandSprintEnterTransition.AddCondition(&MovingCondition{})
 
 	jumpLandIdleTransition := NewTransition("jumpLandIdleTransition", jumpLand, idle)
 	jumpLandIdleTransition.AddCondition(&GroundedCondition{})
@@ -226,15 +246,38 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	jumpLandJumpStartTransition := NewTransition("jumpLandJumpStartTransition", jumpLand, jumpStart)
 	jumpLandJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
+	// jump start
+
+	jumpStartAirborneTransition := NewTransition("jumpStartAirborneTransition", jumpStart, airborne)
+	jumpStartAirborneTransition.AddCondition(&ClipCompletedCondition{})
+	jumpStartAirborneTransition.AddCondition(&AirborneCondition{})
+
+	// airborne
+
+	airborneAirborneTransition := NewTransition("airborneAirborneTransition", airborne, airborne)
+	airborneAirborneTransition.AddCondition(&ClipCompletedCondition{})
+
+	airborneJumpLandTransition := NewTransition("airborneJumpLandTransition", airborne, jumpLand)
+	airborneJumpLandTransition.AddCondition(&GroundedCondition{})
+
+	// add transitions
+
 	sm.transitions = append(sm.transitions, jumpLandJumpStartTransition)
 	sm.transitions = append(sm.transitions, idleJumpStartTransition)
 	sm.transitions = append(sm.transitions, sprintJumpStartTransition)
-	sm.transitions = append(sm.transitions, idleSprintTransition)
+	sm.transitions = append(sm.transitions, sprintEnterJumpStartTransition)
+	sm.transitions = append(sm.transitions, sprintEnterSprintExitTransition)
+	sm.transitions = append(sm.transitions, sprintExitJumpStartTransition)
+	sm.transitions = append(sm.transitions, idleSprintEnterTransition)
+	sm.transitions = append(sm.transitions, sprintExitSprintEnterTransition)
+	sm.transitions = append(sm.transitions, sprintExitIdleTransition)
+	sm.transitions = append(sm.transitions, sprintEnterSprintTransition)
+	sm.transitions = append(sm.transitions, sprintSprintExitTransition)
 	sm.transitions = append(sm.transitions, sprintSprintTransition)
 	sm.transitions = append(sm.transitions, sprintIdleTransition)
 	sm.transitions = append(sm.transitions, jumpStartAirborneTransition)
 	sm.transitions = append(sm.transitions, airborneJumpLandTransition)
-	sm.transitions = append(sm.transitions, jumpLandSprintTransition)
+	sm.transitions = append(sm.transitions, jumpLandSprintEnterTransition)
 	sm.transitions = append(sm.transitions, jumpLandIdleTransition)
 	sm.transitions = append(sm.transitions, idleIdleTransition)
 	sm.transitions = append(sm.transitions, airborneAirborneTransition)
@@ -265,6 +308,7 @@ func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world Worl
 		if sm.currentState.Name != t.source.Name {
 			continue
 		}
+		// t.blend config
 		if t.Evaluate(app, world, ctx) {
 			sm.currentState = t.NextState()
 			ctx.Player.SetPlayRate(sm.currentState.PlayRate)

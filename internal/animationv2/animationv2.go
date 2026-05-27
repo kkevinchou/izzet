@@ -65,12 +65,15 @@ func (player *AnimationPlayer) BindPoseTransforms() map[int]mgl32.Mat4 {
 	return animationTransforms
 }
 
-func (player *AnimationPlayer) PlayClip(animationName string) {
-	if currentAnimation, ok := player.animations[animationName]; ok {
+var clip string
+
+func (player *AnimationPlayer) PlayClip(clipName string) {
+	if currentAnimation, ok := player.animations[clipName]; ok {
 		player.currentAnimation = currentAnimation
 		player.elapsedTime = 0
+		clip = clipName
 	} else {
-		panic(fmt.Sprintf("failed to find animation %s", animationName))
+		panic(fmt.Sprintf("failed to find animation %s", clipName))
 	}
 }
 
@@ -107,15 +110,16 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 		return
 	}
 
-	player.elapsedTime += (delta + player.leftover) * time.Duration(player.playRate)
+	player.elapsedTime += time.Duration(float64(delta+player.leftover) * player.playRate)
 	player.leftover = 0
 
 	if player.elapsedTime > player.currentAnimation.Length {
-		player.leftover = (player.elapsedTime - player.currentAnimation.Length) / time.Duration(player.playRate)
+		overrunClipTime := player.elapsedTime - player.currentAnimation.Length
+		player.leftover = time.Duration(float64(overrunClipTime) / player.playRate)
 		player.elapsedTime = player.currentAnimation.Length
 	}
 
-	pose := calculateCurrentAnimationPose(player.elapsedTime*time.Duration(player.playRate), player.currentAnimation.KeyFrames)
+	pose := calculateCurrentAnimationPose(player.elapsedTime, player.currentAnimation.KeyFrames)
 	poseTransforms := convertPoseToTransformMatrix(pose)
 	animationTransforms := map[int]mgl32.Mat4{}
 	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
@@ -161,6 +165,7 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 	// iterate backwards looking for the starting keyframe
 	for i := len(keyFrames) - 1; i >= 0; i-- {
 		var startKeyFrameIndex int
+
 		if elapsedTime >= keyFrames[i].Start {
 			startKeyFrameIndex = i
 		} else if i == 0 {
@@ -178,8 +183,6 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 		break
 	}
 
-	// progression = 0
-	// startKeyFrame = keyFrames[0]
 	return interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, progression)
 }
 

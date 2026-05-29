@@ -14,6 +14,10 @@ type AnimationPlayer struct {
 	animationTransforms map[int]mgl32.Mat4
 	currentAnimation    *modelspec.AnimationSpec
 
+	currentPose     map[int]modelspec.JointTransform
+	blendSourcePose map[int]modelspec.JointTransform
+	blendDuration   time.Duration
+
 	// these fields are from the loaded animation and should not be modified
 	animations map[string]*modelspec.AnimationSpec
 	rootJoint  *modelspec.JointSpec
@@ -77,6 +81,46 @@ func (player *AnimationPlayer) PlayClip(clipName string) {
 	}
 }
 
+func (player *AnimationPlayer) BlendClip(clipName string, blendDuration time.Duration) {
+	player.PlayClip(clipName)
+	player.blendSourcePose = player.currentPose
+	player.blendDuration = blendDuration
+}
+
+func (player *AnimationPlayer) Update(delta time.Duration) {
+	if player.currentAnimation == nil {
+		return
+	}
+
+	player.elapsedTime += time.Duration(float64(delta+player.leftover) * player.playRate)
+	player.leftover = 0
+
+	if player.elapsedTime > player.currentAnimation.Length {
+		overrunClipTime := player.elapsedTime - player.currentAnimation.Length
+		player.leftover = time.Duration(float64(overrunClipTime) / player.playRate)
+		player.elapsedTime = player.currentAnimation.Length
+	}
+
+	pose := calculateCurrentAnimationPose(player.elapsedTime, player.currentAnimation.KeyFrames)
+
+	if player.blendSourcePose != nil {
+		t := float64(player.elapsedTime) / float64(player.blendDuration)
+		t = min(1, t)
+		pose = interpolatePoses(player.blendSourcePose, pose, float32(t))
+
+		if t == 1 {
+			player.blendSourcePose = nil
+		}
+	}
+
+	player.currentPose = pose
+	poseTransforms := convertPoseToTransformMatrix(pose)
+	animationTransforms := map[int]mgl32.Mat4{}
+	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
+
+	player.animationTransforms = animationTransforms
+}
+
 func (player *AnimationPlayer) SetCurrentAnimationFrame(animation string, keyframe int) {
 	if _, ok := player.animations[animation]; !ok {
 		return
@@ -103,28 +147,6 @@ func (player *AnimationPlayer) Length() time.Duration {
 		return 0
 	}
 	return player.currentAnimation.Length
-}
-
-func (player *AnimationPlayer) Update(delta time.Duration) {
-	if player.currentAnimation == nil {
-		return
-	}
-
-	player.elapsedTime += time.Duration(float64(delta+player.leftover) * player.playRate)
-	player.leftover = 0
-
-	if player.elapsedTime > player.currentAnimation.Length {
-		overrunClipTime := player.elapsedTime - player.currentAnimation.Length
-		player.leftover = time.Duration(float64(overrunClipTime) / player.playRate)
-		player.elapsedTime = player.currentAnimation.Length
-	}
-
-	pose := calculateCurrentAnimationPose(player.elapsedTime, player.currentAnimation.KeyFrames)
-	poseTransforms := convertPoseToTransformMatrix(pose)
-	animationTransforms := map[int]mgl32.Mat4{}
-	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
-
-	player.animationTransforms = animationTransforms
 }
 
 func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mgl32.Mat4, poseTransforms map[int]mgl32.Mat4, transforms map[int]mgl32.Mat4) {

@@ -115,12 +115,16 @@ func (t *Transition) NextState() *AnimationState {
 }
 
 func (t *Transition) Evaluate(app App, world World, ctx AnimationContext) bool {
+	transition := true
+
 	for _, c := range t.conditions {
 		if !c.Evaluate(app, world, ctx) {
-			return false
+			transition = false
+			break
 		}
 	}
-	return true
+
+	return transition
 }
 
 // === STATES ===
@@ -185,11 +189,11 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	idleJumpStartTransition := NewTransition("idleJumpStartTransition", idle, jumpStart)
 	idleJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
 
-	idleSprintEnterTransition := NewTransition("idleSprintTransition", idle, sprintEnter)
+	idleSprintEnterTransition := NewTransition("idleSprintEnterTransition", idle, sprintEnter)
 	idleSprintEnterTransition.AddCondition(&MovingCondition{})
 	idleIdleTransition.AddCondition(&GroundedCondition{})
 
-	// sprint  enter
+	// sprint enter
 
 	sprintEnterJumpStartTransition := NewTransition("sprintEnterJumpStartTransition", sprintEnter, jumpStart)
 	sprintEnterJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
@@ -296,23 +300,25 @@ func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world Worl
 		ctx.Player.PlayClip(sm.currentState.ClipName)
 	}
 
-	// i know the current state, i only need to look up the relevant transitions theoretically
-	// for each transition
-	// - determine when the current state's animation starts blending
-	// - determine when to actually update the transition state
-	// - these are all properties of transitions
-	// - how do we handle multiple transitions happening? have a priority order?
-
 	ctx.Player.Update(delta)
 	for _, t := range sm.transitions {
 		if sm.currentState.Name != t.source.Name {
 			continue
 		}
-		// t.blend config
+
 		if t.Evaluate(app, world, ctx) {
+			var blend bool
+			if sm.currentState != t.NextState() {
+				blend = true
+			}
 			sm.currentState = t.NextState()
 			ctx.Player.SetPlayRate(sm.currentState.PlayRate)
-			ctx.Player.PlayClip(sm.currentState.ClipName)
+
+			if blend {
+				ctx.Player.BlendClip(sm.currentState.ClipName, 100*time.Millisecond)
+			} else {
+				ctx.Player.PlayClip(sm.currentState.ClipName)
+			}
 			break
 		}
 	}

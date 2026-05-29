@@ -44,14 +44,25 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 			}
 		} else {
-			animationContext := &animation.AnimationContext{
-				Player:        e.Animation.AnimationPlayer,
-				Grounded:      e.Kinematic.Grounded,
-				JumpTriggered: e.Kinematic.Jump,
-				Moving:        !apputils.IsZeroVec(e.Kinematic.MoveIntent),
-				Airborne:      !e.GravityEnabled() || !e.Kinematic.Grounded,
+			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
+				animationContext := &animation.AnimationContext{
+					Player:        e.Animation.AnimationPlayer,
+					Grounded:      e.Kinematic.Grounded,
+					JumpTriggered: e.Kinematic.Jump,
+					Moving:        !apputils.IsZeroVec(e.Kinematic.MoveIntent),
+					Airborne:      !e.GravityEnabled() || !e.Kinematic.Grounded,
+				}
+				e.Animation.AnimationStateMachine.Update(delta, s.app, world, *animationContext)
+			} else {
+				// entities replicated to the client just need their animation player updated.
+				// we rely on the game state update message to set the animation clip
+				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
+					e.Animation.AnimationPlayer.Update(delta)
+					if e.Animation.AnimationPlayer.NormalizedClipProgress() >= 1 {
+						e.Animation.AnimationPlayer.PlayClip(e.Animation.AnimationPlayer.CurrentAnimation())
+					}
+				}
 			}
-			e.Animation.AnimationStateMachine.Update(delta, s.app, world, *animationContext)
 		}
 	}
 }

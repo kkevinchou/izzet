@@ -3,7 +3,7 @@ package system
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/internal/animationv2"
+	"github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
@@ -28,7 +28,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 
 		if s.app.IsClient() && s.app.AppMode() == types.AppModeEditor {
 			runtimeConfig := s.app.RuntimeConfig()
-			animationPlayer := e.Animation.AnimationPlayerV2
+			animationPlayer := e.Animation.AnimationPlayer
 
 			if runtimeConfig.SelectedAnimation != "" {
 				if runtimeConfig.LoopAnimation {
@@ -40,12 +40,12 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					if animationPlayer.CurrentAnimation() != runtimeConfig.SelectedAnimation {
 						animationPlayer.PlayClip(runtimeConfig.SelectedAnimation)
 					}
-					e.Animation.AnimationPlayerV2.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
+					e.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
 				}
 			}
 		} else {
-			animationContext := &animationv2.AnimationContext{
-				Player:        e.Animation.AnimationPlayerV2,
+			animationContext := &animation.AnimationContext{
+				Player:        e.Animation.AnimationPlayer,
 				Grounded:      e.Kinematic.Grounded,
 				JumpTriggered: e.Kinematic.Jump,
 				Moving:        !apputils.IsZeroVec(e.Kinematic.MoveIntent),

@@ -62,9 +62,8 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 						continue
 					}
 
-					if e.Animation != nil {
-						animationPlayer := e.Animation.AnimationPlayer
-						animationPlayer.PlayAnimation(transform.Animation)
+					if e.Animation != nil && e.Animation.AnimationPlayer.CurrentAnimation() != transform.Animation {
+						e.Animation.AnimationPlayer.PlayClip(transform.Animation)
 					}
 				}
 

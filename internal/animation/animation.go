@@ -9,14 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 )
 
-type AnimationState interface {
-	Loop() bool
-	ElapsedTime() time.Duration
-	AnimationTransforms() map[int]mgl32.Mat4
-	AnimationName() string
-	RootJoint() *modelspec.JointSpec
-}
-
 type AnimationPlayer struct {
 	elapsedTime         time.Duration
 	animationTransforms map[int]mgl32.Mat4
@@ -26,32 +18,39 @@ type AnimationPlayer struct {
 	animations map[string]*modelspec.AnimationSpec
 	rootJoint  *modelspec.JointSpec
 
-	secondaryAnimation *string
-	loop               bool
-
-	blendActive               bool
-	blendAnimationElapsedTime time.Duration
-	blendAnimation            *modelspec.AnimationSpec
-	blendDuration             time.Duration
-	blendDurationSoFar        time.Duration
+	leftover time.Duration
+	playRate float64
 }
 
+// support blend tree operations
 func NewAnimationPlayer() *AnimationPlayer {
-	return &AnimationPlayer{}
+	return &AnimationPlayer{playRate: 1}
 }
 
 func (player *AnimationPlayer) Initialize(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.JointSpec) {
 	player.animations = animations
 	player.rootJoint = rootJoint
-	player.loop = true
+}
+
+func (player *AnimationPlayer) SetPlayRate(rate float64) {
+	player.playRate = rate
+}
+
+func (player *AnimationPlayer) PlayRate() float64 {
+	return player.playRate
+}
+
+func (player *AnimationPlayer) NormalizedClipProgress() float64 {
+	return float64(player.elapsedTime.Milliseconds()) / float64(player.currentAnimation.Length.Milliseconds())
+}
+
+func (player *AnimationPlayer) ElapsedTime() time.Duration {
+	return player.elapsedTime
 }
 
 func (player *AnimationPlayer) CurrentAnimation() string {
 	if player.currentAnimation == nil {
 		return ""
-	}
-	if player.blendAnimation != nil {
-		return player.blendAnimation.Name
 	}
 	return player.currentAnimation.Name
 }
@@ -60,39 +59,21 @@ func (player *AnimationPlayer) AnimationTransforms() map[int]mgl32.Mat4 {
 	return player.animationTransforms
 }
 
-func bindPoseHelper(joint *modelspec.JointSpec, transforms map[int]mgl32.Mat4) {
-	transforms[joint.ID] = joint.FullBindTransform
-	for _, child := range joint.Children {
-		bindPoseHelper(child, transforms)
-	}
-}
-
 func (player *AnimationPlayer) BindPoseTransforms() map[int]mgl32.Mat4 {
 	animationTransforms := map[int]mgl32.Mat4{}
 	bindPoseHelper(player.rootJoint, animationTransforms)
 	return animationTransforms
 }
 
-func (player *AnimationPlayer) PlayAnimation(animationName string) {
-	if player.blendAnimation == nil && player.currentAnimation != nil && player.currentAnimation.Name == animationName {
-		return
-	}
-	if player.secondaryAnimation != nil && animationName == *player.secondaryAnimation {
-		return
-	}
+var clip string
 
-	if player.CurrentAnimation() != animationName {
-		if player.CurrentAnimation() == "" {
-			if currentAnimation, ok := player.animations[animationName]; ok {
-				player.currentAnimation = currentAnimation
-				player.elapsedTime = 0
-				player.blendAnimation = nil
-			} else {
-				panic(fmt.Sprintf("failed to find animation %s", animationName))
-			}
-		} else {
-			player.PlayAndBlendAnimation(animationName, 250*time.Millisecond)
-		}
+func (player *AnimationPlayer) PlayClip(clipName string) {
+	if currentAnimation, ok := player.animations[clipName]; ok {
+		player.currentAnimation = currentAnimation
+		player.elapsedTime = 0
+		clip = clipName
+	} else {
+		panic(fmt.Sprintf("failed to find animation %s", clipName))
 	}
 }
 
@@ -111,60 +92,10 @@ func (player *AnimationPlayer) SetCurrentAnimationFrame(animation string, keyfra
 	endKeyFrame := keyFrames[(keyframe+1)%len(keyFrames)]
 
 	pose := interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, 0)
-	animationTransforms := player.computeAnimationTransforms(pose)
+	poseTransforms := convertPoseToTransformMatrix(pose)
+	animationTransforms := map[int]mgl32.Mat4{}
+	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
 	player.animationTransforms = animationTransforms
-}
-
-func (player *AnimationPlayer) PlayAndBlendAnimation(animationName string, blendDuration time.Duration) {
-	if player.currentAnimation == nil {
-		fmt.Println("NO ANIMATION TO BLEND FROM")
-		return
-	}
-
-	if player.blendAnimation == nil && player.currentAnimation != nil && player.currentAnimation.Name == animationName {
-		return
-	}
-	if player.blendAnimation != nil && player.blendAnimation.Name == animationName {
-		return
-	}
-	if player.secondaryAnimation != nil && animationName == *player.secondaryAnimation {
-		return
-	}
-
-	if blendAnimation, ok := player.animations[animationName]; ok {
-		player.blendAnimation = blendAnimation
-		player.elapsedTime = 0
-		player.blendAnimationElapsedTime = 0
-		player.blendDuration = blendDuration
-		player.blendDurationSoFar = 0
-	} else {
-		panic(fmt.Sprintf("failed to find animation %s", animationName))
-	}
-}
-
-func (player *AnimationPlayer) PlayOnce(animationName string, secondaryAnimation string, blendDuration time.Duration) {
-	local := secondaryAnimation
-	player.secondaryAnimation = &local
-
-	if blendAnimation, ok := player.animations[animationName]; ok {
-		player.blendAnimation = blendAnimation
-		player.elapsedTime = 0
-		player.blendAnimationElapsedTime = 0
-		player.blendDuration = blendDuration
-		player.blendDurationSoFar = 0
-		player.loop = false
-	} else {
-		panic(fmt.Sprintf("failed to find animation %s", animationName))
-	}
-}
-
-func (player *AnimationPlayer) UpdateTo(elapsedTime time.Duration) {
-	if player.currentAnimation == nil {
-		return
-	}
-
-	player.elapsedTime = elapsedTime
-	player.update()
 }
 
 func (player *AnimationPlayer) Length() time.Duration {
@@ -174,91 +105,51 @@ func (player *AnimationPlayer) Length() time.Duration {
 	return player.currentAnimation.Length
 }
 
-func (player *AnimationPlayer) update() {
-	pose := player.calcPose(player.elapsedTime, player.currentAnimation)
-	if player.blendAnimation != nil {
-		for player.blendAnimationElapsedTime.Milliseconds() > player.blendAnimation.Length.Milliseconds() {
-			player.blendAnimationElapsedTime = time.Duration(player.blendAnimationElapsedTime.Milliseconds()-player.blendAnimation.Length.Milliseconds()) * time.Millisecond
-		}
-		blendTargetPose := player.calcPose(player.blendAnimationElapsedTime, player.blendAnimation)
-		blendProgression := float32(player.blendDurationSoFar.Milliseconds()) / float32(player.blendDuration.Milliseconds())
-		if blendProgression >= 1 {
-			player.currentAnimation = player.blendAnimation
-			player.blendAnimation = nil
-		}
-		pose = interpolatePoses(pose, blendTargetPose, blendProgression)
-	}
-
-	animationTransforms := player.computeAnimationTransforms(pose)
-	player.animationTransforms = animationTransforms
-}
-
 func (player *AnimationPlayer) Update(delta time.Duration) {
 	if player.currentAnimation == nil {
 		return
 	}
 
-	player.elapsedTime += delta
-	player.blendAnimationElapsedTime += delta
-	player.blendDurationSoFar += delta
+	player.elapsedTime += time.Duration(float64(delta+player.leftover) * player.playRate)
+	player.leftover = 0
 
-	for player.elapsedTime > player.currentAnimation.Length {
-		player.elapsedTime = player.elapsedTime - player.currentAnimation.Length
-
-		// if we're not looping, we should have a secondary animation to fall back into
-		if !player.loop {
-			player.loop = true
-			anim := player.secondaryAnimation
-			player.secondaryAnimation = nil
-			player.PlayAndBlendAnimation(*anim, 250*time.Millisecond)
-		}
+	if player.elapsedTime > player.currentAnimation.Length {
+		overrunClipTime := player.elapsedTime - player.currentAnimation.Length
+		player.leftover = time.Duration(float64(overrunClipTime) / player.playRate)
+		player.elapsedTime = player.currentAnimation.Length
 	}
-	player.update()
-}
 
-func (player *AnimationPlayer) calcPose(elapsedTime time.Duration, animation *modelspec.AnimationSpec) map[int]modelspec.JointTransform {
-	pose := calculateCurrentAnimationPose(elapsedTime, animation.KeyFrames)
-	return pose
-}
-
-func (player *AnimationPlayer) computeAnimationTransforms(pose map[int]modelspec.JointTransform) map[int]mgl32.Mat4 {
+	pose := calculateCurrentAnimationPose(player.elapsedTime, player.currentAnimation.KeyFrames)
 	poseTransforms := convertPoseToTransformMatrix(pose)
-	animationTransforms := computeJointTransforms(player.rootJoint, poseTransforms)
-	return animationTransforms
-}
-
-// applyPoseToJoints returns the set of transforms that move the joint from the bind pose to the given pose
-func computeJointTransforms(joint *modelspec.JointSpec, pose map[int]mgl32.Mat4) map[int]mgl32.Mat4 {
 	animationTransforms := map[int]mgl32.Mat4{}
-	computeJointTransformsHelper(joint, mgl32.Ident4(), pose, animationTransforms)
-	return animationTransforms
+	computeJointTransformsHelper(player.rootJoint, mgl32.Ident4(), poseTransforms, animationTransforms)
+
+	player.animationTransforms = animationTransforms
 }
 
-func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mgl32.Mat4, pose map[int]mgl32.Mat4, transforms map[int]mgl32.Mat4) {
-	localTransform := pose[joint.ID]
+func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mgl32.Mat4, poseTransforms map[int]mgl32.Mat4, transforms map[int]mgl32.Mat4) {
+	localTransform := poseTransforms[joint.ID]
 
-	if _, ok := pose[joint.ID]; !ok {
+	if _, ok := poseTransforms[joint.ID]; !ok {
 		// if there is no pose in the animation, just use the local bind transform.
 		// when a pose is present, the keyframe data already includes the local bind transform
 
 		// using the identity matrix is not correct, we still need the bind transform.
+		// localTransform = mgl32.Ident4()
+
 		// further down, we multiply by the inverse bind transform which is what allows us
 		// to cancel out the local bind transform and produce the actual output identity matrix
 
 		localTransform = joint.LocalBindTransform
-		// localTransform = joint.InverseBindTransform.Inv()
-
-		// this is wrong, should not be identity
-		// localTransform = mgl32.Ident4()
 	}
 
 	// model-space transform that includes all the parental transforms
-	// and the local transform, not meant to be used to transform any vertices
+	// and the local transform and is not meant to be used to transform any vertices
 	// until we multiply it by the inverse bind transform
 	poseTransform := parentTransform.Mul4(localTransform)
 
 	for _, child := range joint.Children {
-		computeJointTransformsHelper(child, poseTransform, pose, transforms)
+		computeJointTransformsHelper(child, poseTransform, poseTransforms, transforms)
 	}
 
 	// this is the model-space transform that can finally be used to transform
@@ -274,6 +165,7 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 	// iterate backwards looking for the starting keyframe
 	for i := len(keyFrames) - 1; i >= 0; i-- {
 		var startKeyFrameIndex int
+
 		if elapsedTime >= keyFrames[i].Start {
 			startKeyFrameIndex = i
 		} else if i == 0 {
@@ -287,18 +179,10 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 		endKeyFrame = keyFrames[endKeyFrameIndex]
 		startKeyFrameTimestamp := startKeyFrame.Start
 
-		// don't think this is needed?
-		if startKeyFrameIndex > endKeyFrameIndex {
-			// handle case where we're looping from the last key frame
-			startKeyFrameTimestamp = 0
-		}
-
 		progression = float32(elapsedTime-startKeyFrameTimestamp) / float32((endKeyFrame.Start - startKeyFrameTimestamp))
 		break
 	}
 
-	// progression = 0
-	// startKeyFrame = keyFrames[0]
 	return interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, progression)
 }
 
@@ -342,4 +226,11 @@ func interpolatePoses(j1, j2 map[int]modelspec.JointTransform, progression float
 		}
 	}
 	return interpolatedPose
+}
+
+func bindPoseHelper(joint *modelspec.JointSpec, transforms map[int]mgl32.Mat4) {
+	transforms[joint.ID] = joint.FullBindTransform
+	for _, child := range joint.Children {
+		bindPoseHelper(child, transforms)
+	}
 }

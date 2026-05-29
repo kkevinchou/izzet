@@ -481,16 +481,16 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			}, true)
 			panelutils.SetupRow("Clip Elapsed Time", func() {
 				text := ""
-				if e.Animation.AnimationPlayerV2.CurrentAnimation() != "" {
-					elapsedTime := e.Animation.AnimationPlayerV2.ElapsedTime()
+				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
+					elapsedTime := e.Animation.AnimationPlayer.ElapsedTime()
 					text = fmt.Sprintf("%d", elapsedTime.Milliseconds())
 				}
 				imgui.LabelText("", text)
 			}, true)
 			panelutils.SetupRow("Normalized Clip Progress", func() {
 				text := ""
-				if e.Animation.AnimationPlayerV2.CurrentAnimation() != "" {
-					progress := e.Animation.AnimationPlayerV2.NormalizedClipProgress()
+				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
+					progress := e.Animation.AnimationPlayer.NormalizedClipProgress()
 					text = fmt.Sprintf("%.2f", progress)
 				}
 				imgui.LabelText("", text)

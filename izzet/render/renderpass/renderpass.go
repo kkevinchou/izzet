@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/animationv2"
+	"github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -182,9 +182,9 @@ func renderGeometryWithoutColor(
 			continue
 		}
 
-		if e.Animation != nil && e.Animation.AnimationPlayerV2.CurrentAnimation() != "" {
+		if e.Animation != nil && e.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := e.Animation.AnimationPlayerV2.AnimationTransforms()
+			animationTransforms := e.Animation.AnimationPlayer.AnimationTransforms()
 			// if animationTransforms is nil, the shader will execute reading into invalid memory
 			// so, we need to explicitly guard for this
 			if animationTransforms == nil {
@@ -365,9 +365,9 @@ func drawModel(
 	// 	animationPlayer = e.Animation.AnimationPlayer
 	// }
 
-	var animationPlayer *animationv2.AnimationPlayer
+	var animationPlayer *animation.AnimationPlayer
 	if e.Animation != nil {
-		animationPlayer = e.Animation.AnimationPlayerV2
+		animationPlayer = e.Animation.AnimationPlayer
 	}
 
 	if animationPlayer != nil && animationPlayer.CurrentAnimation() != "" {

@@ -118,9 +118,9 @@ func (p *PointLightRenderPass) Render(
 			continue
 		}
 
-		if e.Animation != nil && e.Animation.AnimationPlayerV2.CurrentAnimation() != "" {
+		if e.Animation != nil && e.Animation.AnimationPlayer.CurrentAnimation() != "" {
 			p.shader.SetUniformInt("isAnimated", 1)
-			animationTransforms := e.Animation.AnimationPlayerV2.AnimationTransforms()
+			animationTransforms := e.Animation.AnimationPlayer.AnimationTransforms()
 			// if animationTransforms is nil, the shader will execute reading into invalid memory
 			// so, we need to explicitly guard for this
 			if animationTransforms == nil {

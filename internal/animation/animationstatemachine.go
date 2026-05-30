@@ -256,6 +256,9 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	jumpStartAirborneTransition.AddCondition(&ClipCompletedCondition{})
 	jumpStartAirborneTransition.AddCondition(&AirborneCondition{})
 
+	jumpStartjumpLandTransition := NewTransition("jumpStartjumpLandTransition", jumpStart, jumpLand)
+	jumpStartjumpLandTransition.AddCondition(&GroundedCondition{})
+
 	// airborne
 
 	airborneAirborneTransition := NewTransition("airborneAirborneTransition", airborne, airborne)
@@ -280,6 +283,7 @@ func NewAnimationStateMachine() *AnimationStateMachine {
 	sm.transitions = append(sm.transitions, sprintSprintTransition)
 	sm.transitions = append(sm.transitions, sprintIdleTransition)
 	sm.transitions = append(sm.transitions, jumpStartAirborneTransition)
+	sm.transitions = append(sm.transitions, jumpStartjumpLandTransition)
 	sm.transitions = append(sm.transitions, airborneJumpLandTransition)
 	sm.transitions = append(sm.transitions, jumpLandSprintEnterTransition)
 	sm.transitions = append(sm.transitions, jumpLandIdleTransition)

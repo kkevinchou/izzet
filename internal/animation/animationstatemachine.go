@@ -127,33 +127,6 @@ func (t *Transition) Evaluate(app App, world World, ctx AnimationContext) bool {
 	return transition
 }
 
-// === STATES ===
-//
-// jump start
-//	- play jump start clip
-//
-// airborne
-//	- play jump loop clip
-//
-// === TRANSITIONS ===
-//
-// grounded -> jumpstart
-//	- source = grounded locomotion
-//	- destination = jump start
-//
-//	- condition
-//		- player input for jump was accepted
-//	- blend
-//		- start normalized ts = 0.8
-//
-// jumpstart -> airborne
-//	- source = jump start
-//	- destination = airborne
-//
-//	- condition
-//		- source normalized ts >= 1.0
-//
-
 type AnimationContext struct {
 	Player *AnimationPlayer
 

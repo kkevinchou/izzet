@@ -2,7 +2,11 @@ package animation
 
 import (
 	"fmt"
+	"io"
+	"sort"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Condition[T any] interface {
@@ -57,6 +61,8 @@ func (t *transitionImpl[T]) Evaluate(ctx T) bool {
 type AnimationStateMachine[T any] interface {
 	RegisterAnimationState(name, clipName string, playRate float64)
 	RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T])
+	Update(delta time.Duration, player *AnimationPlayer, ctx T)
+	CurrentAnimationState() string
 	SetCurrentState(name string)
 }
 
@@ -67,11 +73,42 @@ type AnimationStateMachineImpl[T any] struct {
 	transitions     []transition[T]
 }
 
-func NewAnimationStateMachine[T any]() *AnimationStateMachineImpl[T] {
-	return &AnimationStateMachineImpl[T]{
+func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser func(string) Condition[T]) *AnimationStateMachineImpl[T] {
+	sm := &AnimationStateMachineImpl[T]{
 		states:          map[string]*animationState{},
 		transitionNames: map[string]struct{}{},
 	}
+
+	var config animationStateMachineConfig
+	if err := yaml.NewDecoder(configReader).Decode(&config); err != nil {
+		panic(err)
+	}
+
+	stateNames := make([]string, 0, len(config.States))
+	for stateName := range config.States {
+		stateNames = append(stateNames, stateName)
+	}
+	sort.Strings(stateNames)
+
+	for _, stateName := range stateNames {
+		state := config.States[stateName]
+		sm.RegisterAnimationState(stateName, state.Clip, state.PlayRate)
+	}
+
+	for _, source := range stateNames {
+		state := config.States[source]
+		for i, transition := range state.Transitions {
+			conditions := make([]Condition[T], 0, len(transition.When))
+			for _, conditionName := range transition.When {
+				conditions = append(conditions, conditionParser(conditionName))
+			}
+			sm.RegisterTransition(transitionName(source, transition, i), source, transition.To, conditions...)
+		}
+	}
+
+	sm.SetCurrentState(config.Initial)
+
+	return sm
 }
 
 func (sm *AnimationStateMachineImpl[T]) RegisterAnimationState(name, clipName string, playRate float64) {
@@ -170,4 +207,8 @@ func (sm *AnimationStateMachineImpl[T]) Update(delta time.Duration, player *Anim
 			break
 		}
 	}
+}
+
+func transitionName(source string, transition transitionConfig, index int) string {
+	return fmt.Sprintf("%s_to_%s_%d", source, transition.To, index)
 }

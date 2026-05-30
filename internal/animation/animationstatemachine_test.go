@@ -3,7 +3,7 @@ package animation
 import "testing"
 
 func TestAnimationStateMachineRegistration(t *testing.T) {
-	sm := NewAnimationStateMachine[struct{}]()
+	sm := NewAnimationStateMachine[struct{}](nil, nil)
 
 	sm.RegisterAnimationState("idle", "Idle_Loop", 1)
 	sm.RegisterAnimationState("run", "Run_Loop", 1.25)
@@ -16,7 +16,7 @@ func TestAnimationStateMachineRegistration(t *testing.T) {
 }
 
 func TestAnimationStateMachineRegistrationValidation(t *testing.T) {
-	sm := NewAnimationStateMachine[struct{}]()
+	sm := NewAnimationStateMachine[struct{}](nil, nil)
 
 	sm.RegisterAnimationState("idle", "Idle_Loop", 1)
 	assertPanics(t, func() { sm.RegisterAnimationState("idle", "Idle_Loop", 1) })

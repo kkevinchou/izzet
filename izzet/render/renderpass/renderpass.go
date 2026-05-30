@@ -360,6 +360,11 @@ func drawModel(
 	shader *shaders.ShaderProgram,
 	e *entity.Entity,
 ) {
+	// var animationPlayer *animation.AnimationPlayer
+	// if e.Animation != nil {
+	// 	animationPlayer = e.Animation.AnimationPlayer
+	// }
+
 	var animationPlayer *animation.AnimationPlayer
 	if e.Animation != nil {
 		animationPlayer = e.Animation.AnimationPlayer

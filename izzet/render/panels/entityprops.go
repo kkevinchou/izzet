@@ -453,41 +453,6 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		}
 	}
 
-	imgui.PushIDStr("Component Combo")
-	if imgui.BeginCombo("", string(SelectedComponentComboOption)) {
-		for _, option := range componentComboOptions {
-			if imgui.SelectableBool(string(option)) {
-				SelectedComponentComboOption = option
-			}
-		}
-		imgui.EndCombo()
-	}
-	imgui.PopID()
-	imgui.SameLine()
-	if imgui.Button("Add Component") {
-		selectedEntity := app.SelectedEntity()
-		if selectedEntity != nil {
-			if SelectedComponentComboOption == MaterialComboOption {
-				selectedEntity.Material = &entity.MaterialComponent{
-					MaterialHandle: assets.DefaultMaterialHandle,
-				}
-			} else if SelectedComponentComboOption == LightComboOption {
-				selectedEntity.LightInfo = &entity.LightInfo{
-					PreScaledIntensity: 0.05,
-					Diffuse3F:          [3]float32{1, 1, 1},
-					Type:               entity.LightTypePoint,
-					Range:              800,
-				}
-			} else if SelectedComponentComboOption == PhysicsComboOption {
-				selectedEntity.Physics = &entity.PhysicsComponent{}
-			} else if SelectedComponentComboOption == SpawnPointComboOption {
-				selectedEntity.SpawnPointComponent = &entity.SpawnPoint{}
-			} else if SelectedComponentComboOption == ImageComboOption {
-				selectedEntity.ImageComponent = entity.NewImageComponent("default.png", 1, true)
-			}
-		}
-	}
-
 	if e.Collider != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Debugging Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
@@ -510,6 +475,26 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Animation", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			panelutils.InitColumns()
+
+			panelutils.SetupRow("Animation State", func() {
+				imgui.LabelText("", e.Animation.AnimationStateMachine.CurrentAnimationState())
+			}, true)
+			panelutils.SetupRow("Clip Elapsed Time", func() {
+				text := ""
+				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
+					elapsedTime := e.Animation.AnimationPlayer.ElapsedTime()
+					text = fmt.Sprintf("%d", elapsedTime.Milliseconds())
+				}
+				imgui.LabelText("", text)
+			}, true)
+			panelutils.SetupRow("Normalized Clip Progress", func() {
+				text := ""
+				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
+					progress := e.Animation.AnimationPlayer.NormalizedClipProgress()
+					text = fmt.Sprintf("%.2f", progress)
+				}
+				imgui.LabelText("", text)
+			}, true)
 
 			panelutils.SetupRow("Animation", func() {
 				var animationList []string
@@ -547,6 +532,39 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			panelutils.SetupRow("LoopAnimation", func() { imgui.Checkbox("", &app.RuntimeConfig().LoopAnimation) }, true)
 
 			imgui.EndTable()
+		}
+	}
+
+	if imgui.BeginCombo("##add_component_combo", string(SelectedComponentComboOption)) {
+		for _, option := range componentComboOptions {
+			if imgui.SelectableBool(string(option)) {
+				SelectedComponentComboOption = option
+			}
+		}
+		imgui.EndCombo()
+	}
+	imgui.SameLine()
+	if imgui.Button("Add Component") {
+		selectedEntity := app.SelectedEntity()
+		if selectedEntity != nil {
+			if SelectedComponentComboOption == MaterialComboOption {
+				selectedEntity.Material = &entity.MaterialComponent{
+					MaterialHandle: assets.DefaultMaterialHandle,
+				}
+			} else if SelectedComponentComboOption == LightComboOption {
+				selectedEntity.LightInfo = &entity.LightInfo{
+					PreScaledIntensity: 0.05,
+					Diffuse3F:          [3]float32{1, 1, 1},
+					Type:               entity.LightTypePoint,
+					Range:              800,
+				}
+			} else if SelectedComponentComboOption == PhysicsComboOption {
+				selectedEntity.Physics = &entity.PhysicsComponent{}
+			} else if SelectedComponentComboOption == SpawnPointComboOption {
+				selectedEntity.SpawnPointComponent = &entity.SpawnPoint{}
+			} else if SelectedComponentComboOption == ImageComboOption {
+				selectedEntity.ImageComponent = entity.NewImageComponent("default.png", 1, true)
+			}
 		}
 	}
 }

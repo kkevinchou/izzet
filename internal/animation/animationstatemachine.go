@@ -1,124 +1,51 @@
 package animation
 
 import (
+	"fmt"
 	"time"
 )
 
-type App interface {
-}
-
-type World interface {
-}
-
-// Condition
-
-type Condition interface {
-	Evaluate(app App, world World, ctx AnimationContext) bool
+type Condition[T any] interface {
+	Evaluate(ctx T) bool
 	Name() string
 }
 
-type MovingCondition struct {
-}
-
-func (c *MovingCondition) Name() string {
-	return "MovingCondition"
-}
-
-func (c *MovingCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	return ctx.Moving
-}
-
-type NotMovingCondition struct {
-}
-
-func (c *NotMovingCondition) Name() string {
-	return "NotMovingCondition"
-}
-
-func (c *NotMovingCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	return !ctx.Moving
-}
-
-type JumpTriggeredCondition struct {
-}
-
-func (c *JumpTriggeredCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	return ctx.JumpTriggered
-}
-
-func (c *JumpTriggeredCondition) Name() string {
-	return "JumpTriggeredCondition"
-}
-
-type ClipCompletedCondition struct {
-	debug bool
-}
-
-func (c *ClipCompletedCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	result := ctx.Player.NormalizedClipProgress() >= 1
-	return result
-}
-
-func (c *ClipCompletedCondition) Name() string {
-	return "ClipCompletedCondition"
-}
-
-type AirborneCondition struct {
-}
-
-func (c *AirborneCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	return ctx.Airborne
-}
-
-func (c *AirborneCondition) Name() string {
-	return "AirborneCondition"
-}
-
-type GroundedCondition struct {
-}
-
-func (c *GroundedCondition) Evaluate(app App, world World, ctx AnimationContext) bool {
-	return ctx.Grounded
-}
-
-func (c *GroundedCondition) Name() string {
-	return "GroundedCondition"
-}
-
-// Animation State
-
-type AnimationState struct {
+type animationState struct {
 	Name     string
 	ClipName string
 	PlayRate float64
 }
 
-// Transition
+type transition[T any] interface {
+	SourceState() *animationState
+	NextState() *animationState
+	Evaluate(ctx T) bool
+}
 
-type Transition struct {
+type transitionImpl[T any] struct {
 	name       string
-	source     *AnimationState
-	target     *AnimationState
-	conditions []Condition
+	source     *animationState
+	target     *animationState
+	conditions []Condition[T]
 }
 
-func NewTransition(name string, source, target *AnimationState) *Transition {
-	return &Transition{name: name, source: source, target: target}
-}
-
-func (t *Transition) AddCondition(c Condition) {
+func (t *transitionImpl[T]) AddCondition(c Condition[T]) {
 	t.conditions = append(t.conditions, c)
 }
 
-func (t *Transition) NextState() *AnimationState {
+func (t *transitionImpl[T]) SourceState() *animationState {
+	return t.source
+}
+
+func (t *transitionImpl[T]) NextState() *animationState {
 	return t.target
 }
 
-func (t *Transition) Evaluate(app App, world World, ctx AnimationContext) bool {
+func (t *transitionImpl[T]) Evaluate(ctx T) bool {
 	transition := true
 
 	for _, c := range t.conditions {
-		if !c.Evaluate(app, world, ctx) {
+		if !c.Evaluate(ctx) {
 			transition = false
 			break
 		}
@@ -127,174 +54,118 @@ func (t *Transition) Evaluate(app App, world World, ctx AnimationContext) bool {
 	return transition
 }
 
-type AnimationContext struct {
-	Player *AnimationPlayer
-
-	Grounded      bool
-	Airborne      bool
-	JumpTriggered bool
-	Moving        bool
+type AnimationStateMachine[T any] interface {
+	RegisterAnimationState(name, clipName string, playRate float64)
+	RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T])
+	SetCurrentState(name string)
 }
 
-type AnimationStateMachine struct {
-	currentState *AnimationState
-	transitions  []*Transition
+type AnimationStateMachineImpl[T any] struct {
+	currentState    *animationState
+	states          map[string]*animationState
+	transitionNames map[string]struct{}
+	transitions     []transition[T]
 }
 
-func NewAnimationStateMachine() *AnimationStateMachine {
-	idle := &AnimationState{Name: "idle", ClipName: "Idle_Loop", PlayRate: 1}
-	airborne := &AnimationState{Name: "airborne", ClipName: "Jump_Loop", PlayRate: 1.5}
-	jumpStart := &AnimationState{Name: "jumpStart", ClipName: "Jump_Start", PlayRate: 2}
-	jumpLand := &AnimationState{Name: "jumpLand", ClipName: "Jump_Land", PlayRate: 1.5}
-	sprint := &AnimationState{Name: "sprint", ClipName: "Sprint_Loop", PlayRate: 1}
-	sprintEnter := &AnimationState{Name: "sprintEnter", ClipName: "Sprint_Enter", PlayRate: 1.5}
-	sprintExit := &AnimationState{Name: "sprintExit", ClipName: "Sprint_Exit", PlayRate: 2}
-
-	sm := &AnimationStateMachine{}
-	sm.currentState = airborne
-
-	// idle
-
-	idleIdleTransition := NewTransition("idleIdleTransition", idle, idle)
-	idleIdleTransition.AddCondition(&ClipCompletedCondition{})
-	idleIdleTransition.AddCondition(&GroundedCondition{})
-
-	idleJumpStartTransition := NewTransition("idleJumpStartTransition", idle, jumpStart)
-	idleJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
-
-	idleSprintEnterTransition := NewTransition("idleSprintEnterTransition", idle, sprintEnter)
-	idleSprintEnterTransition.AddCondition(&MovingCondition{})
-	idleIdleTransition.AddCondition(&GroundedCondition{})
-
-	// sprint enter
-
-	sprintEnterJumpStartTransition := NewTransition("sprintEnterJumpStartTransition", sprintEnter, jumpStart)
-	sprintEnterJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
-
-	sprintEnterSprintExitTransition := NewTransition("sprintEnterSprintExitTransition", sprintEnter, sprintExit)
-	sprintEnterSprintExitTransition.AddCondition(&NotMovingCondition{})
-	sprintEnterSprintExitTransition.AddCondition(&GroundedCondition{})
-
-	sprintEnterSprintTransition := NewTransition("sprintEnterSprintTransition", sprintEnter, sprint)
-	sprintEnterSprintTransition.AddCondition(&MovingCondition{})
-	sprintEnterSprintTransition.AddCondition(&ClipCompletedCondition{debug: true})
-
-	// sprint
-
-	sprintJumpStartTransition := NewTransition("sprintJumpStartTransition", sprint, jumpStart)
-	sprintJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
-
-	sprintSprintExitTransition := NewTransition("sprintSprintExit", sprint, sprintExit)
-	sprintSprintExitTransition.AddCondition(&NotMovingCondition{})
-
-	sprintSprintTransition := NewTransition("sprintSprintTransition", sprint, sprint)
-	sprintSprintTransition.AddCondition(&MovingCondition{})
-	sprintSprintTransition.AddCondition(&GroundedCondition{})
-	sprintSprintTransition.AddCondition(&ClipCompletedCondition{})
-
-	sprintIdleTransition := NewTransition("sprintIdleTransition", sprint, idle)
-	sprintIdleTransition.AddCondition(&NotMovingCondition{})
-	sprintIdleTransition.AddCondition(&GroundedCondition{})
-
-	// sprint exit
-
-	sprintExitJumpStartTransition := NewTransition("sprintExitJumpStartTransition", sprintExit, jumpStart)
-	sprintExitJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
-
-	sprintExitSprintEnterTransition := NewTransition("sprintExitSprintEnter", sprintExit, sprintEnter)
-	sprintExitSprintEnterTransition.AddCondition(&MovingCondition{})
-	sprintExitSprintEnterTransition.AddCondition(&GroundedCondition{})
-
-	sprintExitIdleTransition := NewTransition("sprintExitIdle", sprintExit, idle)
-	sprintExitIdleTransition.AddCondition(&NotMovingCondition{})
-	sprintExitIdleTransition.AddCondition(&GroundedCondition{})
-	sprintExitIdleTransition.AddCondition(&ClipCompletedCondition{})
-
-	// jump land
-
-	jumpLandSprintEnterTransition := NewTransition("jumpLandSprintTransition", jumpLand, sprintEnter)
-	jumpLandSprintEnterTransition.AddCondition(&GroundedCondition{})
-	jumpLandSprintEnterTransition.AddCondition(&MovingCondition{})
-
-	jumpLandIdleTransition := NewTransition("jumpLandIdleTransition", jumpLand, idle)
-	jumpLandIdleTransition.AddCondition(&GroundedCondition{})
-	jumpLandIdleTransition.AddCondition(&ClipCompletedCondition{})
-
-	jumpLandJumpStartTransition := NewTransition("jumpLandJumpStartTransition", jumpLand, jumpStart)
-	jumpLandJumpStartTransition.AddCondition(&JumpTriggeredCondition{})
-
-	// jump start
-
-	jumpStartAirborneTransition := NewTransition("jumpStartAirborneTransition", jumpStart, airborne)
-	jumpStartAirborneTransition.AddCondition(&ClipCompletedCondition{})
-	jumpStartAirborneTransition.AddCondition(&AirborneCondition{})
-
-	jumpStartjumpLandTransition := NewTransition("jumpStartjumpLandTransition", jumpStart, jumpLand)
-	jumpStartjumpLandTransition.AddCondition(&GroundedCondition{})
-
-	// airborne
-
-	airborneAirborneTransition := NewTransition("airborneAirborneTransition", airborne, airborne)
-	airborneAirborneTransition.AddCondition(&ClipCompletedCondition{})
-
-	airborneJumpLandTransition := NewTransition("airborneJumpLandTransition", airborne, jumpLand)
-	airborneJumpLandTransition.AddCondition(&GroundedCondition{})
-
-	// add transitions
-
-	sm.transitions = append(sm.transitions, jumpLandJumpStartTransition)
-	sm.transitions = append(sm.transitions, idleJumpStartTransition)
-	sm.transitions = append(sm.transitions, sprintJumpStartTransition)
-	sm.transitions = append(sm.transitions, sprintEnterJumpStartTransition)
-	sm.transitions = append(sm.transitions, sprintEnterSprintExitTransition)
-	sm.transitions = append(sm.transitions, sprintExitJumpStartTransition)
-	sm.transitions = append(sm.transitions, idleSprintEnterTransition)
-	sm.transitions = append(sm.transitions, sprintExitSprintEnterTransition)
-	sm.transitions = append(sm.transitions, sprintExitIdleTransition)
-	sm.transitions = append(sm.transitions, sprintEnterSprintTransition)
-	sm.transitions = append(sm.transitions, sprintSprintExitTransition)
-	sm.transitions = append(sm.transitions, sprintSprintTransition)
-	sm.transitions = append(sm.transitions, sprintIdleTransition)
-	sm.transitions = append(sm.transitions, jumpStartAirborneTransition)
-	sm.transitions = append(sm.transitions, jumpStartjumpLandTransition)
-	sm.transitions = append(sm.transitions, airborneJumpLandTransition)
-	sm.transitions = append(sm.transitions, jumpLandSprintEnterTransition)
-	sm.transitions = append(sm.transitions, jumpLandIdleTransition)
-	sm.transitions = append(sm.transitions, idleIdleTransition)
-	sm.transitions = append(sm.transitions, airborneAirborneTransition)
-
-	return sm
+func NewAnimationStateMachine[T any]() *AnimationStateMachineImpl[T] {
+	return &AnimationStateMachineImpl[T]{
+		states:          map[string]*animationState{},
+		transitionNames: map[string]struct{}{},
+	}
 }
 
-func (sm *AnimationStateMachine) CurrentAnimationState() string {
+func (sm *AnimationStateMachineImpl[T]) RegisterAnimationState(name, clipName string, playRate float64) {
+	if name == "" {
+		panic("animation state name cannot be empty")
+	}
+
+	if _, ok := sm.states[name]; ok {
+		panic(fmt.Sprintf("animation state %q is already registered", name))
+	}
+
+	sm.states[name] = &animationState{Name: name, ClipName: clipName, PlayRate: playRate}
+}
+
+func (sm *AnimationStateMachineImpl[T]) RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T]) {
+	if name == "" {
+		panic("animation transition name cannot be empty")
+	}
+
+	if _, ok := sm.transitionNames[name]; ok {
+		panic(fmt.Sprintf("animation transition %q is already registered", name))
+	}
+
+	source, ok := sm.states[sourceStateName]
+	if !ok {
+		panic(fmt.Sprintf("animation transition %q references unknown source state %q", name, sourceStateName))
+	}
+
+	target, ok := sm.states[targetStateName]
+	if !ok {
+		panic(fmt.Sprintf("animation transition %q references unknown target state %q", name, targetStateName))
+	}
+
+	for _, condition := range conditions {
+		if condition == nil {
+			panic(fmt.Sprintf("animation transition %q contains nil condition", name))
+		}
+	}
+
+	t := &transitionImpl[T]{name: name, source: source, target: target}
+	for _, condition := range conditions {
+		t.AddCondition(condition)
+	}
+
+	sm.transitions = append(sm.transitions, t)
+	sm.transitionNames[name] = struct{}{}
+}
+
+func (sm *AnimationStateMachineImpl[T]) SetCurrentState(name string) {
+	state, ok := sm.states[name]
+	if !ok {
+		panic(fmt.Sprintf("unknown animation state %q", name))
+	}
+
+	sm.currentState = state
+}
+
+func (sm *AnimationStateMachineImpl[T]) CurrentAnimationState() string {
+	if sm.currentState == nil {
+		return ""
+	}
+
 	return sm.currentState.Name
 }
 
-func (sm *AnimationStateMachine) Update(delta time.Duration, app App, world World, ctx AnimationContext) {
-	// TDOO - maybe find a better place to initialize the player
-	if ctx.Player.CurrentAnimation() == "" {
-		ctx.Player.SetPlayRate(sm.currentState.PlayRate)
-		ctx.Player.PlayClip(sm.currentState.ClipName)
+func (sm *AnimationStateMachineImpl[T]) Update(delta time.Duration, player *AnimationPlayer, ctx T) {
+	if sm.currentState == nil {
+		return
 	}
 
-	ctx.Player.Update(delta)
+	// TDOO - maybe find a better place to initialize the player
+	if player.CurrentAnimation() == "" {
+		player.SetPlayRate(sm.currentState.PlayRate)
+		player.PlayClip(sm.currentState.ClipName)
+	}
+
+	player.Update(delta)
 	for _, t := range sm.transitions {
-		if sm.currentState.Name != t.source.Name {
+		if sm.currentState.Name != t.SourceState().Name {
 			continue
 		}
 
-		if t.Evaluate(app, world, ctx) {
+		if t.Evaluate(ctx) {
 			var blend bool
 			if sm.currentState != t.NextState() {
 				blend = true
 			}
 			sm.currentState = t.NextState()
-			ctx.Player.SetPlayRate(sm.currentState.PlayRate)
+			player.SetPlayRate(sm.currentState.PlayRate)
 
 			if blend {
-				ctx.Player.BlendClip(sm.currentState.ClipName, 100*time.Millisecond)
+				player.BlendClip(sm.currentState.ClipName, 100*time.Millisecond)
 			} else {
-				ctx.Player.PlayClip(sm.currentState.ClipName)
+				player.PlayClip(sm.currentState.ClipName)
 			}
 			break
 		}

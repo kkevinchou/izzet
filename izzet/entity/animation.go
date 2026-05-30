@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/kkevinchou/izzet/internal/animation"
+	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/modelspec"
+	animationparser "github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 )
 
@@ -19,14 +20,16 @@ type AnimationComponent struct {
 
 	AnimationNames map[string]string
 
-	AnimationStateMachine *animation.AnimationStateMachine
-	AnimationPlayer       *animation.AnimationPlayer `json:"-"`
+	AnimationStateMachine *iztanimation.AnimationStateMachineImpl[animationparser.AnimationContext]
+	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
 }
 
 func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {
 	animations, joints, rootJointID := ml.GetAnimations(animationHandle)
-	animationPlayer := animation.NewAnimationPlayer()
+	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
+	animationStateMachine := iztanimation.NewAnimationStateMachine[animationparser.AnimationContext]()
+	animationparser.ConfigureAnimationStateMachine(animationStateMachine)
 
 	return &AnimationComponent{
 		RootJointID:     rootJointID,
@@ -35,6 +38,6 @@ func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *Ani
 		AnimationNames:  make(map[string]string),
 
 		AnimationPlayer:       animationPlayer,
-		AnimationStateMachine: animation.NewAnimationStateMachine(),
+		AnimationStateMachine: animationStateMachine,
 	}
 }

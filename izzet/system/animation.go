@@ -3,7 +3,7 @@ package system
 import (
 	"time"
 
-	"github.com/kkevinchou/izzet/internal/animation"
+	animationparser "github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
@@ -45,14 +45,14 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			}
 		} else {
 			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
-				animationContext := &animation.AnimationContext{
+				animationContext := &animationparser.AnimationContext{
 					Player:        e.Animation.AnimationPlayer,
 					Grounded:      e.Kinematic.Grounded,
 					JumpTriggered: e.Kinematic.Jump,
 					Moving:        !apputils.IsZeroVec(e.Kinematic.MoveIntent),
 					Airborne:      !e.GravityEnabled() || !e.Kinematic.Grounded,
 				}
-				e.Animation.AnimationStateMachine.Update(delta, s.app, world, *animationContext)
+				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, *animationContext)
 			} else {
 				// entities replicated to the client just need their animation player updated.
 				// we rely on the game state update message to set the animation clip

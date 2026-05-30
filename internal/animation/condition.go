@@ -2,6 +2,8 @@ package animation
 
 import "fmt"
 
+const ConditionClipCompleted = "clipCompleted"
+
 type evalContext[T any] struct {
 	game   T
 	player *AnimationPlayer
@@ -27,7 +29,7 @@ func NewGameCondition[T any](name string, eval func(T) bool) Condition[T] {
 
 func ClipCompletedCondition[T any]() Condition[T] {
 	return Condition[T]{
-		name: "clipCompleted",
+		name: ConditionClipCompleted,
 		eval: func(ctx evalContext[T]) bool {
 			return ctx.player != nil && ctx.player.NormalizedClipProgress() >= 1
 		},

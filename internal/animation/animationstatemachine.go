@@ -62,7 +62,7 @@ func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser fun
 
 func parseCondition[T any](name string, conditionParser func(string) Condition[T]) Condition[T] {
 	switch name {
-	case "clipCompleted":
+	case ConditionClipCompleted:
 		return ClipCompletedCondition[T]()
 	}
 

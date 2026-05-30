@@ -478,7 +478,9 @@ func buildDetailedPoly(chf *CompactHeightField, inVerts []DetailedVertex, sample
 func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 	var edges []DetailedEdge
 	for i, j := 0, len(hull)-1; i < len(hull); j, i = i, i+1 {
-		edges = addEdge(edges, hull[j], hull[i], edgeHull, edgeUndefined)
+		// Recast's detail mesh builder treats positive cross as left. This package
+		// uses negative cross as left, so the hull starts on the right side.
+		edges = addEdge(edges, hull[j], hull[i], edgeUndefined, edgeHull)
 	}
 
 	nfaces := 0
@@ -501,9 +503,9 @@ func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 	}
 
 	for _, edge := range edges {
-		if edge.r >= 0 {
+		if edge.l >= 0 {
 			// left face
-			t := &tris[edge.r]
+			t := &tris[edge.l]
 			if t.Vertices[0] == -1 {
 				t.Vertices[0] = edge.s
 				t.Vertices[1] = edge.t
@@ -513,9 +515,9 @@ func delaunayHull(verts []DetailedVertex, hull []int) []Triangle {
 				t.Vertices[2] = edge.t
 			}
 		}
-		if edge.l >= 0 {
+		if edge.r >= 0 {
 			// right face
-			t := &tris[edge.l]
+			t := &tris[edge.r]
 			if t.Vertices[0] == -1 {
 				t.Vertices[0] = edge.t
 				t.Vertices[1] = edge.s
@@ -581,13 +583,9 @@ func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) (
 	if edge.l == edgeUndefined {
 		s = edge.s
 		t = edge.t
-		// s = edge.t
-		// t = edge.s
 	} else if edge.r == edgeUndefined {
 		s = edge.t
 		t = edge.s
-		// s = edge.s
-		// t = edge.t
 	} else {
 		return edges, 0
 	}
@@ -605,7 +603,9 @@ func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) (
 			continue
 		}
 
-		if vCross2D(verts[s], verts[t], verts[u]) > epsilon {
+		// Recast checks for > epsilon here. Keep this negative to match this
+		// package's -Z-forward convention, where negative cross means left.
+		if vCross2D(verts[s], verts[t], verts[u]) < -epsilon {
 			if radius < 0 {
 				// first time circumcircle is set
 				pt = u

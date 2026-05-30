@@ -85,3 +85,40 @@ func TestCrossDirection(t *testing.T) {
 		t.Fatal("v0->v2 should be to the left of v0->v1, and therefore negative")
 	}
 }
+
+func TestDelaunayHullUsesNegativeCrossLeftConvention(t *testing.T) {
+	verts := []DetailedVertex{
+		{X: 0, Y: 0, Z: 0},
+		{X: 1, Y: 0, Z: 0},
+		{X: 1, Y: 0, Z: -1},
+		{X: 0, Y: 0, Z: -1},
+		{X: 0.5, Y: 0, Z: -0.5},
+	}
+	hull := []int{0, 1, 2, 3}
+
+	tris := delaunayHull(verts, hull)
+	if len(tris) == 0 {
+		t.Fatal("expected delaunayHull to produce triangles")
+	}
+
+	setTriFlags(tris, hull)
+	hullEdgeCount := 0
+	for _, tri := range tris {
+		a := verts[tri.Vertices[0]]
+		b := verts[tri.Vertices[1]]
+		c := verts[tri.Vertices[2]]
+		if cross := vCross2D(a, b, c); cross >= 0 {
+			t.Fatalf("expected triangle %v to use negative-cross winding, got %f", tri.Vertices, cross)
+		}
+
+		for _, onHull := range tri.OnHull {
+			if onHull {
+				hullEdgeCount++
+			}
+		}
+	}
+
+	if hullEdgeCount != len(hull) {
+		t.Fatalf("expected %d hull edges to be flagged, got %d", len(hull), hullEdgeCount)
+	}
+}

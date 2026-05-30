@@ -61,7 +61,7 @@ func (g *Client) saveWorld(worldFilePath string) {
 
 func (g *Client) initializeAppAndWorld(reader io.Reader, projectName string) {
 	g.initializeAssetManagerWithProject(projectName)
-	g.initializeAppSystems()
+	g.initializeApp()
 
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.editorWorld = g.world
@@ -300,12 +300,14 @@ func (g *Client) StateBuffer() *clientsystems.StateBuffer {
 	return g.stateBuffer
 }
 
-func (g *Client) initializeAppSystems() {
+func (g *Client) initializeApp() {
 	g.stateBuffer = clientsystems.NewStateBuffer()
 	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
 	g.editHistory = edithistory.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
 	g.stateBuffer = clientsystems.NewStateBuffer()
+	g.camera.Position = settings.EditorCameraStartPosition
+	g.camera.Rotation = mgl64.QuatIdent()
 }
 
 func (g *Client) ServerAddress() string {

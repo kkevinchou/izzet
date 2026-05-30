@@ -216,7 +216,7 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		RotationSnapSize:    20,
 		RotationSensitivity: 200,
 
-		ShowSelectionBoundingBox: true,
+		ShowSelectionBoundingBox: false,
 		ShowColliders:            false,
 		ShowTextureViewer:        false,
 

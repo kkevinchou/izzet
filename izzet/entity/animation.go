@@ -14,11 +14,13 @@ const (
 
 type AnimationComponent struct {
 	AnimationHandle string
-	AnimationPlayer *animation.AnimationPlayer `json:"-"`
 	RootJointID     int
 	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
 
 	AnimationNames map[string]string
+
+	AnimationStateMachine *animation.AnimationStateMachine
+	AnimationPlayer       *animation.AnimationPlayer `json:"-"`
 }
 
 func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {
@@ -29,8 +31,10 @@ func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *Ani
 	return &AnimationComponent{
 		RootJointID:     rootJointID,
 		AnimationHandle: animationHandle,
-		AnimationPlayer: animationPlayer,
 		Animations:      animations,
 		AnimationNames:  make(map[string]string),
+
+		AnimationPlayer:       animationPlayer,
+		AnimationStateMachine: animation.NewAnimationStateMachine(),
 	}
 }

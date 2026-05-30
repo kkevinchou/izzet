@@ -23,7 +23,11 @@ func NewPlayerAnimationStateMachine() *iztanimation.AnimationStateMachine[GameCo
 }
 
 // parseCondition takes in a condition name and generates the condition function
-// that performs that condition check based on GameContext
+// that performs that condition check based on GameContext.
+//
+// The engine offers baseline conditions like "clipCompleted" which are automatically
+// supported and can be referenced in config - the game level parser does not need to
+// handle it.
 func parseCondition(name string) iztanimation.Condition[GameContext] {
 	switch name {
 	case "moving":

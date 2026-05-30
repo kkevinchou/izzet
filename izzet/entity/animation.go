@@ -20,15 +20,15 @@ type AnimationComponent struct {
 
 	AnimationNames map[string]string
 
-	AnimationStateMachine iztanimation.AnimationStateMachine[animationparser.AnimationContext] `json:"-"`
-	AnimationPlayer       *iztanimation.AnimationPlayer                                        `json:"-"`
+	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext] `json:"-"`
+	AnimationPlayer       *iztanimation.AnimationPlayer                                    `json:"-"`
 }
 
 func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {
 	animations, joints, rootJointID := ml.GetAnimations(animationHandle)
 	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
-	animationStateMachine := animationparser.NewAnimationStateMachine()
+	animationStateMachine := animationparser.NewPlayerAnimationStateMachine()
 
 	return &AnimationComponent{
 		RootJointID:     rootJointID,

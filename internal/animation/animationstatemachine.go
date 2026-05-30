@@ -9,72 +9,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Condition[T any] interface {
-	Evaluate(ctx T) bool
-	Name() string
-}
-
 type animationState struct {
 	Name     string
 	ClipName string
 	PlayRate float64
 }
 
-type transition[T any] interface {
-	SourceState() *animationState
-	NextState() *animationState
-	Evaluate(ctx T) bool
-}
-
-type transitionImpl[T any] struct {
-	name       string
-	source     *animationState
-	target     *animationState
-	conditions []Condition[T]
-}
-
-func (t *transitionImpl[T]) AddCondition(c Condition[T]) {
-	t.conditions = append(t.conditions, c)
-}
-
-func (t *transitionImpl[T]) SourceState() *animationState {
-	return t.source
-}
-
-func (t *transitionImpl[T]) NextState() *animationState {
-	return t.target
-}
-
-func (t *transitionImpl[T]) Evaluate(ctx T) bool {
-	transition := true
-
-	for _, c := range t.conditions {
-		if !c.Evaluate(ctx) {
-			transition = false
-			break
-		}
-	}
-
-	return transition
-}
-
-type AnimationStateMachine[T any] interface {
-	RegisterAnimationState(name, clipName string, playRate float64)
-	RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T])
-	Update(delta time.Duration, player *AnimationPlayer, ctx T)
-	CurrentAnimationState() string
-	SetCurrentState(name string)
-}
-
-type AnimationStateMachineImpl[T any] struct {
+type AnimationStateMachine[T any] struct {
 	currentState    *animationState
 	states          map[string]*animationState
 	transitionNames map[string]struct{}
 	transitions     []transition[T]
 }
 
-func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser func(string) Condition[T]) *AnimationStateMachineImpl[T] {
-	sm := &AnimationStateMachineImpl[T]{
+func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser func(string) Condition[T]) *AnimationStateMachine[T] {
+	sm := &AnimationStateMachine[T]{
 		states:          map[string]*animationState{},
 		transitionNames: map[string]struct{}{},
 	}
@@ -100,7 +49,7 @@ func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser fun
 		for i, transition := range state.Transitions {
 			conditions := make([]Condition[T], 0, len(transition.When))
 			for _, conditionName := range transition.When {
-				conditions = append(conditions, conditionParser(conditionName))
+				conditions = append(conditions, parseCondition(conditionName, conditionParser))
 			}
 			sm.RegisterTransition(transitionName(source, transition, i), source, transition.To, conditions...)
 		}
@@ -111,7 +60,20 @@ func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser fun
 	return sm
 }
 
-func (sm *AnimationStateMachineImpl[T]) RegisterAnimationState(name, clipName string, playRate float64) {
+func parseCondition[T any](name string, conditionParser func(string) Condition[T]) Condition[T] {
+	switch name {
+	case "clipCompleted":
+		return ClipCompletedCondition[T]()
+	}
+
+	if conditionParser == nil {
+		panic(fmt.Sprintf("unknown animation condition %q", name))
+	}
+
+	return conditionParser(name)
+}
+
+func (sm *AnimationStateMachine[T]) RegisterAnimationState(name, clipName string, playRate float64) {
 	if name == "" {
 		panic("animation state name cannot be empty")
 	}
@@ -123,7 +85,7 @@ func (sm *AnimationStateMachineImpl[T]) RegisterAnimationState(name, clipName st
 	sm.states[name] = &animationState{Name: name, ClipName: clipName, PlayRate: playRate}
 }
 
-func (sm *AnimationStateMachineImpl[T]) RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T]) {
+func (sm *AnimationStateMachine[T]) RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T]) {
 	if name == "" {
 		panic("animation transition name cannot be empty")
 	}
@@ -143,7 +105,7 @@ func (sm *AnimationStateMachineImpl[T]) RegisterTransition(name, sourceStateName
 	}
 
 	for _, condition := range conditions {
-		if condition == nil {
+		if condition.eval == nil {
 			panic(fmt.Sprintf("animation transition %q contains nil condition", name))
 		}
 	}
@@ -157,7 +119,7 @@ func (sm *AnimationStateMachineImpl[T]) RegisterTransition(name, sourceStateName
 	sm.transitionNames[name] = struct{}{}
 }
 
-func (sm *AnimationStateMachineImpl[T]) SetCurrentState(name string) {
+func (sm *AnimationStateMachine[T]) SetCurrentState(name string) {
 	state, ok := sm.states[name]
 	if !ok {
 		panic(fmt.Sprintf("unknown animation state %q", name))
@@ -166,7 +128,7 @@ func (sm *AnimationStateMachineImpl[T]) SetCurrentState(name string) {
 	sm.currentState = state
 }
 
-func (sm *AnimationStateMachineImpl[T]) CurrentAnimationState() string {
+func (sm *AnimationStateMachine[T]) CurrentAnimationState() string {
 	if sm.currentState == nil {
 		return ""
 	}
@@ -174,7 +136,7 @@ func (sm *AnimationStateMachineImpl[T]) CurrentAnimationState() string {
 	return sm.currentState.Name
 }
 
-func (sm *AnimationStateMachineImpl[T]) Update(delta time.Duration, player *AnimationPlayer, ctx T) {
+func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) {
 	if sm.currentState == nil {
 		return
 	}
@@ -186,6 +148,11 @@ func (sm *AnimationStateMachineImpl[T]) Update(delta time.Duration, player *Anim
 	}
 
 	player.Update(delta)
+	ctx := evalContext[T]{
+		game:   gameCtx,
+		player: player,
+	}
+
 	for _, t := range sm.transitions {
 		if sm.currentState.Name != t.SourceState().Name {
 			continue

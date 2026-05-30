@@ -45,8 +45,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			}
 		} else {
 			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
-				animationContext := &animationparser.AnimationContext{
-					Player:        e.Animation.AnimationPlayer,
+				animationContext := &animationparser.GameContext{
 					Grounded:      e.Kinematic.Grounded,
 					JumpTriggered: e.Kinematic.Jump,
 					Moving:        !apputils.IsZeroVec(e.Kinematic.MoveIntent),

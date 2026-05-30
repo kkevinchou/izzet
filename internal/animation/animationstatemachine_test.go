@@ -1,14 +1,25 @@
 package animation
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestAnimationStateMachineRegistration(t *testing.T) {
-	sm := NewAnimationStateMachine[struct{}](nil, nil)
+	config := `
+initial: idle
+states:
+  idle:
+    clip: Idle_Loop
+    playRate: 1
+    transitions:
+      - to: run
+  run:
+    clip: Run_Loop
+    playRate: 1.25
+`
 
-	sm.RegisterAnimationState("idle", "Idle_Loop", 1)
-	sm.RegisterAnimationState("run", "Run_Loop", 1.25)
-	sm.RegisterTransition("idleRun", "idle", "run")
-	sm.SetCurrentState("idle")
+	sm := NewAnimationStateMachine[struct{}](strings.NewReader(config), nil)
 
 	if got, want := sm.CurrentAnimationState(), "idle"; got != want {
 		t.Fatalf("current animation state = %q, want %q", got, want)
@@ -16,7 +27,10 @@ func TestAnimationStateMachineRegistration(t *testing.T) {
 }
 
 func TestAnimationStateMachineRegistrationValidation(t *testing.T) {
-	sm := NewAnimationStateMachine[struct{}](nil, nil)
+	sm := &AnimationStateMachine[struct{}]{
+		states:          map[string]*animationState{},
+		transitionNames: map[string]struct{}{},
+	}
 
 	sm.RegisterAnimationState("idle", "Idle_Loop", 1)
 	assertPanics(t, func() { sm.RegisterAnimationState("idle", "Idle_Loop", 1) })

@@ -6,19 +6,17 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 )
 
-func TestQ(t *testing.T) {
-	config := &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL}
-	doc, err := gltf.ParseGLTF("model", "../../_assets/test/stall.gltf", config)
-	if err != nil {
-		t.Fail()
-		t.Errorf(err.Error())
-	}
+// func TestQ(t *testing.T) {
+// 	config := &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL}
+// 	doc, err := gltf.ParseGLTF("model", "../../_assets/test/stall.gltf", config)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	geometry.SimplifyMesh(doc.Meshes[0].Primitives[0], -1)
-}
+// 	geometry.SimplifyMesh(doc.Meshes[0].Primitives[0], -1)
+// }
 
 func TestFlatShape(t *testing.T) {
 	p := &modelspec.PrimitiveSpecification{

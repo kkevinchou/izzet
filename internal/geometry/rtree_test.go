@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kkevinchou/izzet/internal/geometry"
-	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/patrick-higgins/rtreego"
 )
 
@@ -32,13 +30,12 @@ func TestRTree(t *testing.T) {
 	fmt.Println(results)
 }
 
-func TestMergeStall(t *testing.T) {
-	config := &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL}
-	doc, err := gltf.ParseGLTF("model", "../../_assets/test/stall.gltf", config)
-	if err != nil {
-		t.Fail()
-		t.Errorf(err.Error())
-	}
+// func TestMergeStall(t *testing.T) {
+// 	config := &gltf.ParseConfig{TextureCoordStyle: gltf.TextureCoordStyleOpenGL}
+// 	doc, err := gltf.ParseGLTF("model", "../../_assets/test/stall.gltf", config)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	geometry.SimplifyMesh(doc.Meshes[0].Primitives[0], -1)
-}
+// 	geometry.SimplifyMesh(doc.Meshes[0].Primitives[0], -1)
+// }

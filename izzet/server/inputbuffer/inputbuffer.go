@@ -45,8 +45,6 @@ func (b *InputBuffer) DeregisterPlayer(playerID int) {
 func (b *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput input.Input) {
 	buffer := b.playerBuffers[playerID]
 
-	b.app.Logger().Info("push input", "cf", localCommandFrame, "gcf", b.app.CommandFrame(), "stale")
-
 	buffer.inputs[buffer.count%maxBufferedInput] = BufferedInput{LocalCommandFrame: localCommandFrame, Input: frameInput}
 	buffer.count++
 	if buffer.count-buffer.cursor > maxBufferedInput {

@@ -2,12 +2,17 @@ package navmesh
 
 import (
 	"testing"
+
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 )
 
 func TestPolyMeshDetail(t *testing.T) {
 	contourSet := &ContourSet{
+		CellSize:   1,
+		CellHeight: 1,
 		Contours: []Contour{
 			{
+				RegionID: 1,
 				Verts: []SimplifiedVertex{
 					{X: 100, Y: 0, Z: 0},
 					{X: 100, Y: 0, Z: -100},
@@ -21,8 +26,30 @@ func TestPolyMeshDetail(t *testing.T) {
 
 	mesh := BuildPolyMesh(contourSet)
 
-	chf := &CompactHeightField{width: 200, height: 200}
-	BuildDetailedPolyMesh(mesh, chf, nil)
+	chf := newFlatCompactHeightField(200, 200, 101, 1)
+	BuildDetailedPolyMesh(mesh, chf, runtimeconfig.DefaultRuntimeConfig())
+}
+
+func newFlatCompactHeightField(width, height, populatedWidth, regionID int) *CompactHeightField {
+	chf := &CompactHeightField{
+		width:      width,
+		height:     height,
+		spanCount:  populatedWidth,
+		cells:      make([]CompactCell, width*height),
+		spans:      make([]CompactSpan, populatedWidth),
+		CellSize:   1,
+		CellHeight: 1,
+	}
+
+	for x := range populatedWidth {
+		chf.cells[x] = CompactCell{SpanIndex: SpanIndex(x), SpanCount: 1}
+		chf.spans[x] = CompactSpan{
+			regionID:  regionID,
+			neighbors: [4]SpanIndex{-1, -1, -1, -1},
+		}
+	}
+
+	return chf
 }
 
 func TestTriDist(t *testing.T) {
@@ -49,13 +76,12 @@ func TestTriDist(t *testing.T) {
 }
 
 func TestCrossDirection(t *testing.T) {
-	v0 := DetailedVertex{X: 640, Y: 301, Z: 550}
-	v1 := DetailedVertex{X: 640, Y: 301, Z: 450}
-	v2 := DetailedVertex{X: 600, Y: 301, Z: 500}
+	v0 := DetailedVertex{X: 0, Y: 0, Z: 0}
+	v1 := DetailedVertex{X: 1, Y: 0, Z: -1}
+	v2 := DetailedVertex{X: 0, Y: 0, Z: -1}
 
 	res := vCross2D(v0, v1, v2)
-	if res <= 0 {
-		t.Errorf("crossing these two vectors should be positive (to the left)")
-		return
+	if res >= 0 {
+		t.Fatal("v0->v2 should be to the left of v0->v1, and therefore negative")
 	}
 }

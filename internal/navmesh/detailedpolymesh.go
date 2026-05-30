@@ -606,7 +606,6 @@ func completeFacet(e int, edges []DetailedEdge, verts []DetailedVertex, f int) (
 		}
 
 		if vCross2D(verts[s], verts[t], verts[u]) > epsilon {
-			// if vCross2D(verts[s], verts[t], verts[u]) < epsilon {
 			if radius < 0 {
 				// first time circumcircle is set
 				pt = u
@@ -1038,6 +1037,7 @@ func dist2dSq(v0, v1 DetailedVertex) float64 {
 	return dx*dx + dz*dz
 }
 
+// if p1->p3 is to the left of p1->p2, then the result will be negative
 func vCross2D(p1, p2, p3 DetailedVertex) float64 {
 	u1 := p2.X - p1.X
 	v1 := p2.Z - p1.Z

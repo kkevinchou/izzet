@@ -20,9 +20,7 @@ func renderConfirmationModal(title string, message string, open *bool, onConfirm
 		}
 		imgui.SameLine()
 		if imgui.Button("Cancel") {
-			if onCancel != nil {
-				onCancel()
-			}
+			onCancel()
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()

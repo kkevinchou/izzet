@@ -209,5 +209,5 @@ func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, ma
 }
 
 func (a *AssetManager) DeleteDocument(documentAsset DocumentAsset) {
-	delete(a.documentAssets, documentAsset.Document.Name)
+	delete(a.documentAssets, documentAsset.Config.Name)
 }

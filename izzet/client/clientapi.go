@@ -335,8 +335,23 @@ func (g *Client) ImportAsset(config assets.AssetConfig) {
 	g.assetManager.LoadAndRegisterDocument(newConfig)
 }
 
-func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) {
+func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) []int {
+	var referencingEntityIDs []int
+	namespace := documentAsset.Config.Name
+	for _, e := range g.world.Entities() {
+		if e.MeshComponent == nil {
+			continue
+		}
+		if e.MeshComponent.MeshHandle.Namespace == namespace {
+			referencingEntityIDs = append(referencingEntityIDs, e.ID)
+		}
+	}
+	if len(referencingEntityIDs) > 0 {
+		return referencingEntityIDs
+	}
+
 	g.assetManager.DeleteDocument(documentAsset)
+	return nil
 }
 
 func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {

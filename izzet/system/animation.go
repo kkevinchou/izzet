@@ -41,14 +41,16 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
 			}
 		} else {
-			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
-				animationContext := &animationparser.GameContext{
-					Grounded:      e.Kinematic.Grounded,
-					JumpTriggered: e.Kinematic.Jump,
-					Moving:        !apputils.IsZeroVec(e.Kinematic.MoveIntent),
-					Airborne:      !e.GravityEnabled() || !e.Kinematic.Grounded,
+			// TODO - remove the kinematic check. right now i only support animation state machines for players
+			if e.Kinematic != nil && ((s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer()) {
+				var ctx animationparser.GameContext
+				if e.Kinematic != nil {
+					ctx.Grounded = e.Kinematic.Grounded
+					ctx.JumpTriggered = e.Kinematic.Jump
+					ctx.Moving = !apputils.IsZeroVec(e.Kinematic.MoveIntent)
+					ctx.Airborne = !e.GravityEnabled() || !e.Kinematic.Grounded
 				}
-				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, *animationContext)
+				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
 			} else {
 				// entities replicated to the client just need their animation player updated.
 				// we rely on the game state update message to set the animation clip

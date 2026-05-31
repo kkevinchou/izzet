@@ -6,13 +6,19 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/assets"
 )
 
+var blockedDeleteDocumentName string
+var blockedDeleteDocumentEntityIDs []int
+var showDeleteDocumentBlockedPopup bool
+
 func contentBrowser(app renderiface.App) {
+	showDeleteDocumentBlockedPopup = false
 	style := imgui.CurrentStyle()
 	imgui.PushStyleVarVec2(
 		imgui.StyleVarCellPadding,
@@ -29,6 +35,8 @@ func contentBrowser(app renderiface.App) {
 		}
 		imgui.EndTable()
 	}
+
+	renderDeleteDocumentBlockedPopup()
 }
 
 func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, idx int) {
@@ -60,7 +68,13 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Delete") {
-			app.DeleteDocument(documentAsset)
+			referencingEntityIDs := app.DeleteDocument(documentAsset)
+			if len(referencingEntityIDs) > 0 {
+				blockedDeleteDocumentName = documentAsset.Config.Name
+				blockedDeleteDocumentEntityIDs = referencingEntityIDs
+				showDeleteDocumentBlockedPopup = true
+			}
+			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()
 	}
@@ -86,4 +100,33 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 	cur := imgui.CursorPos()
 	imgui.SetCursorPosX(cur.X + (cellWidth-textSize.X)*0.5)
 	imgui.TextUnformatted(label)
+}
+
+func renderDeleteDocumentBlockedPopup() {
+	if len(blockedDeleteDocumentEntityIDs) == 0 {
+		return
+	}
+
+	const deleteDocumentBlockedPopup = "Cannot Delete Document"
+
+	center := imgui.MainViewport().Center()
+	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
+
+	if showDeleteDocumentBlockedPopup {
+		imgui.OpenPopupStr(deleteDocumentBlockedPopup)
+	}
+	if imgui.BeginPopupModalV(deleteDocumentBlockedPopup, nil, imgui.WindowFlagsAlwaysAutoResize) {
+		imgui.Text(fmt.Sprintf("Document [%s] is still referenced by entities.", blockedDeleteDocumentName))
+		imgui.Separator()
+		imgui.Text("Referencing entity IDs:")
+		for _, entityID := range blockedDeleteDocumentEntityIDs {
+			imgui.Text(fmt.Sprintf("%d", entityID))
+		}
+		if imgui.Button("OK") {
+			blockedDeleteDocumentEntityIDs = nil
+			blockedDeleteDocumentName = ""
+			imgui.CloseCurrentPopup()
+		}
+		imgui.EndPopup()
+	}
 }

@@ -209,6 +209,5 @@ func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, ma
 }
 
 func (a *AssetManager) DeleteDocument(documentAsset DocumentAsset) {
-	// validate that no entities refer to this asset?
 	delete(a.documentAssets, documentAsset.Document.Name)
 }

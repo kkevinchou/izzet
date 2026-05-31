@@ -29,18 +29,16 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			animationComponent := e.Animation
 			animationPlayer := e.Animation.AnimationPlayer
 
-			if animationComponent.SelectedAnimation != "" {
-				if animationComponent.LoopAnimation {
-					if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation || animationPlayer.NormalizedClipProgress() >= 1 {
-						animationPlayer.PlayClip(animationComponent.SelectedAnimation)
-					}
-					animationPlayer.Update(delta)
-				} else {
-					if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation {
-						animationPlayer.PlayClip(animationComponent.SelectedAnimation)
-					}
-					animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
+			if animationComponent.LoopAnimation {
+				if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation || animationPlayer.NormalizedClipProgress() >= 1 {
+					animationPlayer.PlayClip(animationComponent.SelectedAnimation)
 				}
+				animationPlayer.Update(delta)
+			} else {
+				if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation {
+					animationPlayer.PlayClip(animationComponent.SelectedAnimation)
+				}
+				animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
 			}
 		} else {
 			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {

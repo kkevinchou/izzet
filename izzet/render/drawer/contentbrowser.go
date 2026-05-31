@@ -59,6 +59,9 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 			app.CreateEntitiesFromDocumentAsset(documentAsset, true)
 			imgui.CloseCurrentPopup()
 		}
+		if imgui.Button("Delete") {
+			app.DeleteDocument(documentAsset)
+		}
 		imgui.EndPopup()
 	}
 	imgui.PopID()

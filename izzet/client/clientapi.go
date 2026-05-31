@@ -335,6 +335,10 @@ func (g *Client) ImportAsset(config assets.AssetConfig) {
 	g.assetManager.LoadAndRegisterDocument(newConfig)
 }
 
+func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) {
+	g.assetManager.DeleteDocument(documentAsset)
+}
+
 func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {
 	peripheralFiles, err := loaders.GetPeripheralFiles(config.FilePath)
 	if err != nil {

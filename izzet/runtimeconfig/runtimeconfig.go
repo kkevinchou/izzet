@@ -129,10 +129,7 @@ type RuntimeConfig struct {
 
 	EnableSSAO bool
 
-	SelectedAnimation string
-	SelectedKeyFrame  int
-	LoopAnimation     bool
-	ShowHUD           bool
+	ShowHUD bool
 
 	TestPosition       mgl32.Vec3
 	TestAngle          int32

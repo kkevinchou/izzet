@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
@@ -37,7 +38,10 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 var (
 	selectedMaterialHandle types.MaterialHandle
 	selectedMaterialName   string
+	animationFilterText    string
 )
+
+const animationComboListHeight float32 = 200
 
 func EntityProps(e *entity.Entity, app renderiface.App) {
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Entity Properties", imgui.TreeNodeFlagsDefaultOpen) {
@@ -503,33 +507,59 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				}
 				slices.Sort(animationList)
 
-				imgui.PushIDStr("Animation Combo")
-				if imgui.BeginCombo("", app.RuntimeConfig().SelectedAnimation) {
+				comboWidth := imgui.ContentRegionAvail().X
+				imgui.SetNextItemWidth(comboWidth)
+				imgui.SetNextWindowSizeConstraints(
+					imgui.Vec2{X: comboWidth, Y: 0},
+					imgui.Vec2{X: comboWidth, Y: float32(math.MaxFloat32)},
+				)
+				if imgui.BeginComboV("##AnimationCombo", e.Animation.SelectedAnimation, imgui.ComboFlagsPopupAlignLeft) {
+					if imgui.IsWindowAppearing() {
+						imgui.SetKeyboardFocusHere()
+					}
+					imgui.SetNextItemWidth(-1)
+					imgui.InputTextWithHint("##AnimationComboFilter", "Filter animations", &animationFilterText, imgui.InputTextFlagsNone, nil)
+					imgui.Separator()
+
+					filter := strings.ToLower(strings.TrimSpace(animationFilterText))
+					matchCount := 0
+					imgui.BeginChildStrV("##AnimationComboList", imgui.Vec2{X: 0, Y: animationComboListHeight}, imgui.ChildFlagsNone, imgui.WindowFlagsAlwaysVerticalScrollbar)
 					for _, option := range animationList {
+						if filter != "" && !strings.Contains(strings.ToLower(option), filter) {
+							continue
+						}
+
+						matchCount++
 						if imgui.SelectableBool(option) {
-							app.RuntimeConfig().SelectedAnimation = option
-							app.RuntimeConfig().SelectedKeyFrame = 0
+							e.Animation.SelectedAnimation = option
+							e.Animation.SelectedKeyFrame = 0
+							animationFilterText = ""
+							imgui.CloseCurrentPopup()
 						}
 					}
+
+					if matchCount == 0 {
+						imgui.TextDisabled("No animations found")
+					}
+					imgui.EndChild()
 					imgui.EndCombo()
 				}
-				imgui.PopID()
 			}, true)
 
 			panelutils.SetupRow("Key Frame", func() {
-				currentAnimation := app.RuntimeConfig().SelectedAnimation
+				currentAnimation := e.Animation.SelectedAnimation
 				animations, _, _ := app.AssetManager().GetAnimations(e.Animation.AnimationHandle)
 				animation := animations[currentAnimation]
 
-				val := int32(app.RuntimeConfig().SelectedKeyFrame)
+				val := int32(e.Animation.SelectedKeyFrame)
 				if animation != nil {
 					if imgui.SliderInt("##", &val, 0, int32(len(animation.KeyFrames)-1)) {
-						app.RuntimeConfig().SelectedKeyFrame = int(val)
+						e.Animation.SelectedKeyFrame = int(val)
 					}
 				}
 			}, true)
 
-			panelutils.SetupRow("LoopAnimation", func() { imgui.Checkbox("", &app.RuntimeConfig().LoopAnimation) }, true)
+			panelutils.SetupRow("LoopAnimation", func() { imgui.Checkbox("", &e.Animation.LoopAnimation) }, true)
 
 			imgui.EndTable()
 		}

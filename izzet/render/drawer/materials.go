@@ -67,6 +67,10 @@ func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textur
 			windows.ShowEditMaterialWindow(app, material)
 			imgui.CloseCurrentPopup()
 		}
+		if imgui.Button("Delete") {
+			app.AssetManager().DeleteMaterial(material.Handle)
+			imgui.CloseCurrentPopup()
+		}
 		imgui.EndPopup()
 	}
 

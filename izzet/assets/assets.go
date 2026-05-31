@@ -149,6 +149,10 @@ func (m *AssetManager) GetMaterial(handle types.MaterialHandle) MaterialAsset {
 	return material
 }
 
+func (m *AssetManager) DeleteMaterial(handle types.MaterialHandle) {
+	delete(m.materialAssets, handle)
+}
+
 func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 	if _, ok := m.materialAssets[material.Handle]; ok {
 		m.materialAssets[material.Handle] = material
@@ -202,4 +206,9 @@ func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, ma
 	handle := NewMeshHandle("runtime", fmt.Sprintf("%d", runtimeMeshIDGen))
 	runtimeMeshIDGen++
 	return m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
+}
+
+func (a *AssetManager) DeleteDocument(documentAsset DocumentAsset) {
+	// validate that no entities refer to this asset?
+	delete(a.documentAssets, documentAsset.Document.Name)
 }

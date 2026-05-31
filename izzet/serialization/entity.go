@@ -30,8 +30,12 @@ func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager)
 
 	// rebuild animation player
 	if e.Animation != nil {
-		handle := e.Animation.AnimationHandle
-		e.Animation = entity.NewAnimationComponent(handle, assetManager)
+		animation := e.Animation
+		e.Animation = entity.NewAnimationComponent(animation.AnimationHandle, assetManager)
+		e.Animation.AnimationNames = animation.AnimationNames
+		e.Animation.SelectedAnimation = animation.SelectedAnimation
+		e.Animation.SelectedKeyFrame = animation.SelectedKeyFrame
+		e.Animation.LoopAnimation = animation.LoopAnimation
 	}
 
 	if e.MeshComponent != nil && e.Collider != nil {

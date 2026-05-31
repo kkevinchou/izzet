@@ -5,7 +5,6 @@ import (
 
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type AnimationSystem struct {
@@ -26,21 +25,21 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		if s.app.IsClient() && s.app.AppMode() == types.AppModeEditor {
-			runtimeConfig := s.app.RuntimeConfig()
+		if e.Animation.SelectedAnimation != "" {
+			animationComponent := e.Animation
 			animationPlayer := e.Animation.AnimationPlayer
 
-			if runtimeConfig.SelectedAnimation != "" {
-				if runtimeConfig.LoopAnimation {
-					if animationPlayer.CurrentAnimation() != runtimeConfig.SelectedAnimation || animationPlayer.NormalizedClipProgress() >= 1 {
-						animationPlayer.PlayClip(runtimeConfig.SelectedAnimation)
+			if animationComponent.SelectedAnimation != "" {
+				if animationComponent.LoopAnimation {
+					if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation || animationPlayer.NormalizedClipProgress() >= 1 {
+						animationPlayer.PlayClip(animationComponent.SelectedAnimation)
 					}
 					animationPlayer.Update(delta)
 				} else {
-					if animationPlayer.CurrentAnimation() != runtimeConfig.SelectedAnimation {
-						animationPlayer.PlayClip(runtimeConfig.SelectedAnimation)
+					if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation {
+						animationPlayer.PlayClip(animationComponent.SelectedAnimation)
 					}
-					e.Animation.AnimationPlayer.SetCurrentAnimationFrame(runtimeConfig.SelectedAnimation, runtimeConfig.SelectedKeyFrame)
+					animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
 				}
 			}
 		} else {

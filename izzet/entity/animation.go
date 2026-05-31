@@ -20,6 +20,10 @@ type AnimationComponent struct {
 
 	AnimationNames map[string]string
 
+	SelectedAnimation string
+	SelectedKeyFrame  int
+	LoopAnimation     bool
+
 	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext] `json:"-"`
 	AnimationPlayer       *iztanimation.AnimationPlayer                                    `json:"-"`
 }

@@ -18,7 +18,6 @@ var blockedDeleteDocumentEntityIDs []int
 var showDeleteDocumentBlockedPopup bool
 
 func contentBrowser(app renderiface.App) {
-	showDeleteDocumentBlockedPopup = false
 	style := imgui.CurrentStyle()
 	imgui.PushStyleVarVec2(
 		imgui.StyleVarCellPadding,
@@ -29,9 +28,9 @@ func contentBrowser(app renderiface.App) {
 	if imgui.BeginTableV("DocumentsTable", itemsPerRow,
 		imgui.TableFlagsSizingFixedSame, imgui.Vec2{X: 0, Y: 0}, 0) {
 
-		for i, document := range app.AssetManager().GetDocuments() {
+		for _, document := range app.AssetManager().GetDocuments() {
 			imgui.TableNextColumn()
-			drawDocumentCell(app, document, i)
+			drawDocumentCell(app, document)
 		}
 		imgui.EndTable()
 	}
@@ -39,9 +38,9 @@ func contentBrowser(app renderiface.App) {
 	renderDeleteDocumentBlockedPopup()
 }
 
-func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, idx int) {
+func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset) {
 	documentName := documentAsset.Document.Name
-	imgui.PushIDInt(int32(idx))
+	documentID := documentAsset.Config.Name
 
 	t := app.AssetManager().GetTexture("document")
 
@@ -58,7 +57,7 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 		imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0},
 	)
 
-	if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
+	if imgui.BeginPopupContextItemV(fmt.Sprintf("document-context-%s", documentID), imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate Entities") {
 			app.CreateEntitiesFromDocumentAsset(documentAsset, false)
 			imgui.CloseCurrentPopup()
@@ -78,7 +77,6 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset, i
 		}
 		imgui.EndPopup()
 	}
-	imgui.PopID()
 
 	if imgui.IsItemHovered() {
 		imgui.BeginTooltip()
@@ -114,7 +112,9 @@ func renderDeleteDocumentBlockedPopup() {
 
 	if showDeleteDocumentBlockedPopup {
 		imgui.OpenPopupStr(deleteDocumentBlockedPopup)
+		showDeleteDocumentBlockedPopup = false
 	}
+
 	if imgui.BeginPopupModalV(deleteDocumentBlockedPopup, nil, imgui.WindowFlagsAlwaysAutoResize) {
 		imgui.Text(fmt.Sprintf("Document [%s] is still referenced by entities.", blockedDeleteDocumentName))
 		imgui.Separator()

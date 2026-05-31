@@ -11,6 +11,8 @@ states:
         when: [moving]
       - to: idle
         when: [clipCompleted, grounded]
+      - to: airborne
+        when: [airborne]
 
   airborne:
     clip: Jump_Loop
@@ -53,6 +55,8 @@ states:
         when: [moving, grounded, clipCompleted]
       - to: idle
         when: [notMoving, grounded]
+      - to: airborne
+        when: [airborne]
 
   sprintEnter:
     clip: Sprint_Enter
@@ -64,6 +68,8 @@ states:
         when: [notMoving, grounded]
       - to: sprint
         when: [moving, clipCompleted]
+      - to: airborne
+        when: [airborne]
 
   sprintExit:
     clip: Sprint_Exit

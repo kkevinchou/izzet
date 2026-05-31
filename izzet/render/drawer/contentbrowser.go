@@ -13,9 +13,17 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 )
 
+const (
+	deleteDocumentConfirmationPopup = "Delete Document"
+	deleteDocumentBlockedPopup      = "Cannot Delete Document"
+)
+
 var blockedDeleteDocumentName string
 var blockedDeleteDocumentEntityIDs []int
 var showDeleteDocumentBlockedPopup bool
+
+var pendingDeleteDocument *assets.DocumentAsset
+var showDeleteDocumentConfirmationPopup bool
 
 func contentBrowser(app renderiface.App) {
 	style := imgui.CurrentStyle()
@@ -35,6 +43,7 @@ func contentBrowser(app renderiface.App) {
 		imgui.EndTable()
 	}
 
+	renderDeleteDocumentConfirmationPopup(app)
 	renderDeleteDocumentBlockedPopup()
 }
 
@@ -67,12 +76,8 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset) {
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Delete") {
-			referencingEntityIDs := app.DeleteDocument(documentAsset)
-			if len(referencingEntityIDs) > 0 {
-				blockedDeleteDocumentName = documentAsset.Config.Name
-				blockedDeleteDocumentEntityIDs = referencingEntityIDs
-				showDeleteDocumentBlockedPopup = true
-			}
+			pendingDeleteDocument = &documentAsset
+			showDeleteDocumentConfirmationPopup = true
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()
@@ -100,12 +105,45 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset) {
 	imgui.TextUnformatted(label)
 }
 
+func renderDeleteDocumentConfirmationPopup(app renderiface.App) {
+	if pendingDeleteDocument == nil {
+		return
+	}
+
+	center := imgui.MainViewport().Center()
+	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
+
+	if showDeleteDocumentConfirmationPopup {
+		imgui.OpenPopupStr(deleteDocumentConfirmationPopup)
+		showDeleteDocumentConfirmationPopup = false
+	}
+
+	if imgui.BeginPopupModalV(deleteDocumentConfirmationPopup, nil, imgui.WindowFlagsAlwaysAutoResize) {
+		imgui.Text(fmt.Sprintf("Delete document [%s]?", pendingDeleteDocument.Config.Name))
+		imgui.Separator()
+		if imgui.Button("Delete") {
+			referencingEntityIDs := app.DeleteDocument(*pendingDeleteDocument)
+			if len(referencingEntityIDs) > 0 {
+				blockedDeleteDocumentName = pendingDeleteDocument.Config.Name
+				blockedDeleteDocumentEntityIDs = referencingEntityIDs
+				showDeleteDocumentBlockedPopup = true
+			}
+			pendingDeleteDocument = nil
+			imgui.CloseCurrentPopup()
+		}
+		imgui.SameLine()
+		if imgui.Button("Cancel") {
+			pendingDeleteDocument = nil
+			imgui.CloseCurrentPopup()
+		}
+		imgui.EndPopup()
+	}
+}
+
 func renderDeleteDocumentBlockedPopup() {
 	if len(blockedDeleteDocumentEntityIDs) == 0 {
 		return
 	}
-
-	const deleteDocumentBlockedPopup = "Cannot Delete Document"
 
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})

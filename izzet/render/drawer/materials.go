@@ -1,6 +1,8 @@
 package drawer
 
 import (
+	"fmt"
+
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -12,8 +14,12 @@ const (
 	cellWidth   float32 = 100
 	cellHeight  float32 = 100
 	itemsPerRow int32   = 7
-	iconPadding float32 = 10
+
+	deleteMaterialConfirmationPopup = "Delete Material"
 )
+
+var pendingDeleteMaterial *assets.MaterialAsset
+var showDeleteMaterialConfirmationPopup bool
 
 func materialssUI(app renderiface.App, materialTextureMap map[types.MaterialHandle]uint32) {
 	style := imgui.CurrentStyle()
@@ -36,6 +42,8 @@ func materialssUI(app renderiface.App, materialTextureMap map[types.MaterialHand
 
 		imgui.EndTable()
 	}
+
+	renderDeleteMaterialConfirmationPopup(app)
 }
 
 func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textureID uint32, idx int) {
@@ -68,7 +76,8 @@ func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textur
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Delete") {
-			app.AssetManager().DeleteMaterial(material.Handle)
+			pendingDeleteMaterial = &material
+			showDeleteMaterialConfirmationPopup = true
 			imgui.CloseCurrentPopup()
 		}
 		imgui.EndPopup()
@@ -88,6 +97,36 @@ func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textur
 	cur := imgui.CursorPos()
 	imgui.SetCursorPosX(cur.X + (cellWidth-textSize.X)*0.5)
 	imgui.TextUnformatted(label)
+}
+
+func renderDeleteMaterialConfirmationPopup(app renderiface.App) {
+	if pendingDeleteMaterial == nil {
+		return
+	}
+
+	center := imgui.MainViewport().Center()
+	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
+
+	if showDeleteMaterialConfirmationPopup {
+		imgui.OpenPopupStr(deleteMaterialConfirmationPopup)
+		showDeleteMaterialConfirmationPopup = false
+	}
+
+	if imgui.BeginPopupModalV(deleteMaterialConfirmationPopup, nil, imgui.WindowFlagsAlwaysAutoResize) {
+		imgui.Text(fmt.Sprintf("Delete material [%s]?", pendingDeleteMaterial.Name))
+		imgui.Separator()
+		if imgui.Button("Delete") {
+			app.AssetManager().DeleteMaterial(pendingDeleteMaterial.Handle)
+			pendingDeleteMaterial = nil
+			imgui.CloseCurrentPopup()
+		}
+		imgui.SameLine()
+		if imgui.Button("Cancel") {
+			pendingDeleteMaterial = nil
+			imgui.CloseCurrentPopup()
+		}
+		imgui.EndPopup()
+	}
 }
 
 // ellipsize returns a version of s that fits within maxWidth, adding "…" if it had to cut.

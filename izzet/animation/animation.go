@@ -10,7 +10,6 @@ import (
 
 type GameContext struct {
 	Grounded      bool
-	Airborne      bool
 	JumpTriggered bool
 	Moving        bool
 }
@@ -34,7 +33,7 @@ func parseCondition(name string) iztanimation.Condition[GameContext] {
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return ctx.Moving
 		})
-	case "notMoving":
+	case "stationary":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return !ctx.Moving
 		})
@@ -44,7 +43,7 @@ func parseCondition(name string) iztanimation.Condition[GameContext] {
 		})
 	case "airborne":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
-			return ctx.Airborne
+			return !ctx.Grounded
 		})
 	case "grounded":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {

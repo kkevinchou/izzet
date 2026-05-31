@@ -50,11 +50,11 @@ states:
       - to: jumpStart
         when: [jumpTriggered]
       - to: sprintExit
-        when: [notMoving]
+        when: [stationary]
       - to: sprint
         when: [moving, grounded, clipCompleted]
       - to: idle
-        when: [notMoving, grounded]
+        when: [stationary, grounded]
       - to: airborne
         when: [airborne]
 
@@ -65,7 +65,7 @@ states:
       - to: jumpStart
         when: [jumpTriggered]
       - to: sprintExit
-        when: [notMoving, grounded]
+        when: [stationary, grounded]
       - to: sprint
         when: [moving, clipCompleted]
       - to: airborne
@@ -80,4 +80,4 @@ states:
       - to: sprintEnter
         when: [moving, grounded]
       - to: idle
-        when: [notMoving, grounded, clipCompleted]
+        when: [stationary, grounded, clipCompleted]

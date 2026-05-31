@@ -104,29 +104,18 @@ func renderDeleteMaterialConfirmationPopup(app renderiface.App) {
 		return
 	}
 
-	center := imgui.MainViewport().Center()
-	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
-
-	if showDeleteMaterialConfirmationPopup {
-		imgui.OpenPopupStr(deleteMaterialConfirmationPopup)
-		showDeleteMaterialConfirmationPopup = false
-	}
-
-	if imgui.BeginPopupModalV(deleteMaterialConfirmationPopup, nil, imgui.WindowFlagsAlwaysAutoResize) {
-		imgui.Text(fmt.Sprintf("Delete material [%s]?", pendingDeleteMaterial.Name))
-		imgui.Separator()
-		if imgui.Button("Delete") {
+	renderConfirmationModal(
+		deleteMaterialConfirmationPopup,
+		fmt.Sprintf("Delete material [%s]?", pendingDeleteMaterial.Name),
+		&showDeleteMaterialConfirmationPopup,
+		func() {
 			app.AssetManager().DeleteMaterial(pendingDeleteMaterial.Handle)
 			pendingDeleteMaterial = nil
-			imgui.CloseCurrentPopup()
-		}
-		imgui.SameLine()
-		if imgui.Button("Cancel") {
+		},
+		func() {
 			pendingDeleteMaterial = nil
-			imgui.CloseCurrentPopup()
-		}
-		imgui.EndPopup()
-	}
+		},
+	)
 }
 
 // ellipsize returns a version of s that fits within maxWidth, adding "…" if it had to cut.

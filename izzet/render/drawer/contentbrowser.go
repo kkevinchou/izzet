@@ -110,18 +110,11 @@ func renderDeleteDocumentConfirmationPopup(app renderiface.App) {
 		return
 	}
 
-	center := imgui.MainViewport().Center()
-	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
-
-	if showDeleteDocumentConfirmationPopup {
-		imgui.OpenPopupStr(deleteDocumentConfirmationPopup)
-		showDeleteDocumentConfirmationPopup = false
-	}
-
-	if imgui.BeginPopupModalV(deleteDocumentConfirmationPopup, nil, imgui.WindowFlagsAlwaysAutoResize) {
-		imgui.Text(fmt.Sprintf("Delete document [%s]?", pendingDeleteDocument.Config.Name))
-		imgui.Separator()
-		if imgui.Button("Delete") {
+	renderConfirmationModal(
+		deleteDocumentConfirmationPopup,
+		fmt.Sprintf("Delete document [%s]?", pendingDeleteDocument.Config.Name),
+		&showDeleteDocumentConfirmationPopup,
+		func() {
 			referencingEntityIDs := app.DeleteDocument(*pendingDeleteDocument)
 			if len(referencingEntityIDs) > 0 {
 				blockedDeleteDocumentName = pendingDeleteDocument.Config.Name
@@ -129,15 +122,11 @@ func renderDeleteDocumentConfirmationPopup(app renderiface.App) {
 				showDeleteDocumentBlockedPopup = true
 			}
 			pendingDeleteDocument = nil
-			imgui.CloseCurrentPopup()
-		}
-		imgui.SameLine()
-		if imgui.Button("Cancel") {
+		},
+		func() {
 			pendingDeleteDocument = nil
-			imgui.CloseCurrentPopup()
-		}
-		imgui.EndPopup()
-	}
+		},
+	)
 }
 
 func renderDeleteDocumentBlockedPopup() {

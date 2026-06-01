@@ -26,11 +26,9 @@ type Node struct {
 var PATHPOLYGONS map[int]bool
 var PATHVERTICES []mgl64.Vec3
 
+// FindPath returns a list of polygons through which it is possible to path from start to goal
 func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	tile := nm.Tiles[0]
-
-	// start = mgl64.Vec3{-5.953646739493656, 46.86907447625646, -5.199594605599351}
-	// goal = mgl64.Vec3{3.081538628009632, 50.35613034511499, -8.687769285772625}
 
 	_, startPolygon, _ := FindNearestPolygon(tile, start)
 	_, goalPolygon, _ := FindNearestPolygon(tile, goal)
@@ -132,6 +130,8 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	return path
 }
 
+// FindStraightPath takes polyPath which is a list of polygons and runs the funnel
+// algorithm along the portals between each polygon
 func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {
 	if len(polyPath) == 0 {
 		return nil
@@ -220,7 +220,19 @@ func projectPathPoint(tile CTile, polyPath []int, portalIndex int, point mgl64.V
 	if len(polyPath) == 0 {
 		return point
 	}
-	projected, _ := closestPointOnPoly(tile, polyPath[portalIndex], point)
+
+	if portalIndex < 0 {
+		portalIndex = 0
+	} else if portalIndex >= len(polyPath) {
+		portalIndex = len(polyPath) - 1
+	}
+
+	poly := polyPath[portalIndex]
+	if poly < 0 || poly >= len(tile.Polygons) {
+		return point
+	}
+
+	projected, _ := closestPointOnPoly(tile, poly, point)
 	return projected
 }
 

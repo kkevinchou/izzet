@@ -12,13 +12,23 @@ type GameContext struct {
 	Grounded      bool
 	JumpTriggered bool
 	Moving        bool
+	Walking       bool
+	Attacking     bool
+	Dead          bool
 }
 
 //go:embed player_state_machine.yaml
 var playerStateMachineConfig []byte
 
+//go:embed raptor_state_machine.yaml
+var raptorStateMachineConfig []byte
+
 func NewPlayerAnimationStateMachine() *iztanimation.AnimationStateMachine[GameContext] {
 	return iztanimation.NewAnimationStateMachine(bytes.NewReader(playerStateMachineConfig), parseCondition)
+}
+
+func NewRaptorAnimationStateMachine() *iztanimation.AnimationStateMachine[GameContext] {
+	return iztanimation.NewAnimationStateMachine(bytes.NewReader(raptorStateMachineConfig), parseCondition)
 }
 
 // parseCondition takes in a condition name and generates the condition function
@@ -37,9 +47,25 @@ func parseCondition(name string) iztanimation.Condition[GameContext] {
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return !ctx.Moving
 		})
+	case "walking":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return ctx.Walking
+		})
+	case "running":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return ctx.Moving && !ctx.Walking
+		})
 	case "jumpTriggered":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return ctx.JumpTriggered
+		})
+	case "attacking":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return ctx.Attacking
+		})
+	case "dead":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return ctx.Dead
 		})
 	case "airborne":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {

@@ -1,0 +1,89 @@
+initial: airborne
+
+states:
+  idle:
+    clip: Velociraptor_Idle
+    playRate: 1
+    transitions:
+      - to: death
+        when: [dead]
+      - to: attack
+        when: [attacking]
+      - to: airborne
+        when: [airborne]
+      - to: walk
+        when: [walking]
+      - to: run
+        when: [running]
+      - to: idle
+        when: [clipCompleted, grounded]
+
+  walk:
+    clip: Velociraptor_Walk
+    playRate: 1
+    transitions:
+      - to: death
+        when: [dead]
+      - to: attack
+        when: [attacking]
+      - to: airborne
+        when: [airborne]
+      - to: idle
+        when: [stationary, grounded]
+      - to: run
+        when: [running]
+      - to: walk
+        when: [walking, grounded, clipCompleted]
+
+  run:
+    clip: Velociraptor_Run
+    playRate: 1
+    transitions:
+      - to: death
+        when: [dead]
+      - to: attack
+        when: [attacking]
+      - to: airborne
+        when: [airborne]
+      - to: idle
+        when: [stationary, grounded]
+      - to: walk
+        when: [walking]
+      - to: run
+        when: [running, grounded, clipCompleted]
+
+  airborne:
+    clip: Velociraptor_Jump
+    playRate: 1
+    transitions:
+      - to: death
+        when: [dead]
+      - to: walk
+        when: [grounded, walking]
+      - to: run
+        when: [grounded, running]
+      - to: idle
+        when: [grounded, stationary]
+      - to: airborne
+        when: [clipCompleted]
+
+  attack:
+    clip: Velociraptor_Attack
+    playRate: 1
+    transitions:
+      - to: death
+        when: [dead]
+      - to: attack
+        when: [attacking, clipCompleted]
+      - to: airborne
+        when: [clipCompleted, airborne]
+      - to: walk
+        when: [clipCompleted, grounded, walking]
+      - to: run
+        when: [clipCompleted, grounded, running]
+      - to: idle
+        when: [clipCompleted, grounded, stationary]
+
+  death:
+    clip: Velociraptor_Death
+    playRate: 1

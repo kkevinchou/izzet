@@ -98,6 +98,7 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 	}
 
 	for _, e := range s.entitySpawnConsumer.ReadNewEvents() {
+		world.AddEntity(e.Entity)
 		s.notifyEntityCreation(e.Entity)
 	}
 }

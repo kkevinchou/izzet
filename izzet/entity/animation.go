@@ -33,6 +33,9 @@ func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *Ani
 	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
 	animationStateMachine := animationparser.NewPlayerAnimationStateMachine()
+	if animationHandle == string(EntityTypeVelociraptor) || animationHandle == "velociraptor" {
+		animationStateMachine = animationparser.NewRaptorAnimationStateMachine()
+	}
 
 	return &AnimationComponent{
 		RootJointID:     rootJointID,

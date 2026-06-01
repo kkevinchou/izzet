@@ -39,7 +39,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 			continue
 		}
 
-		e.Kinematic.Velocity = mgl64.Vec3{}
+		e.Kinematic.MoveIntent = mgl64.Vec3{}
 
 		position := e.Position()
 
@@ -50,7 +50,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 				target = aiComponent.PatrolConfig.Points[aiComponent.PatrolConfig.Index]
 			}
 			dir := target.Sub(position).Normalize()
-			e.Kinematic.Velocity = dir.Mul(e.Kinematic.Speed)
+			e.Kinematic.MoveIntent = dir
 		}
 
 		if aiComponent.RotationConfig != nil {
@@ -67,7 +67,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 				dir[1] = 0
 				if dir.LenSqr() > 0 {
 					dir = dir.Normalize()
-					e.Kinematic.Velocity = dir.Mul(e.Kinematic.Speed)
+					e.Kinematic.MoveIntent = dir
 
 					if dir != apputils.ZeroVec {
 						newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
@@ -82,6 +82,13 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 				polyPath := navmesh.FindPath(s.app.NavMesh(), e.Position(), aiComponent.PathfindConfig.Goal)
 				straightPath := navmesh.FindStraightPath(s.app.NavMesh().Tiles[0], e.Position(), aiComponent.PathfindConfig.Goal, polyPath)
 				navmesh.PATHVERTICES = straightPath
+
+				if len(straightPath) < 2 {
+					aiComponent.PathfindConfig.Path = nil
+					aiComponent.PathfindConfig.NextTarget = -1
+					aiComponent.PathfindConfig.State = entity.PathfindingStateNoGoal
+					continue
+				}
 
 				aiComponent.PathfindConfig.PolyPath = polyPath
 				aiComponent.PathfindConfig.Path = straightPath
@@ -115,7 +122,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						e.Kinematic.Velocity = dir.Mul(e.Kinematic.Speed)
+						e.Kinematic.MoveIntent = dir
 
 						if dir != apputils.ZeroVec {
 							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)

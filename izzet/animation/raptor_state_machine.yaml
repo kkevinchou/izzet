@@ -11,29 +11,10 @@ states:
         when: [attacking]
       - to: airborne
         when: [airborne]
-      - to: walk
-        when: [walking]
       - to: run
-        when: [running]
+        when: [moving]
       - to: idle
         when: [clipCompleted, grounded]
-
-  walk:
-    clip: Velociraptor_Walk
-    playRate: 1
-    transitions:
-      - to: death
-        when: [dead]
-      - to: attack
-        when: [attacking]
-      - to: airborne
-        when: [airborne]
-      - to: idle
-        when: [stationary, grounded]
-      - to: run
-        when: [running]
-      - to: walk
-        when: [walking, grounded, clipCompleted]
 
   run:
     clip: Velociraptor_Run
@@ -47,10 +28,8 @@ states:
         when: [airborne]
       - to: idle
         when: [stationary, grounded]
-      - to: walk
-        when: [walking]
       - to: run
-        when: [running, grounded, clipCompleted]
+        when: [moving, grounded, clipCompleted]
 
   airborne:
     clip: Velociraptor_Jump
@@ -58,10 +37,8 @@ states:
     transitions:
       - to: death
         when: [dead]
-      - to: walk
-        when: [grounded, walking]
       - to: run
-        when: [grounded, running]
+        when: [grounded, moving]
       - to: idle
         when: [grounded, stationary]
       - to: airborne
@@ -77,10 +54,8 @@ states:
         when: [attacking, clipCompleted]
       - to: airborne
         when: [clipCompleted, airborne]
-      - to: walk
-        when: [clipCompleted, grounded, walking]
       - to: run
-        when: [clipCompleted, grounded, running]
+        when: [clipCompleted, grounded, moving]
       - to: idle
         when: [clipCompleted, grounded, stationary]
 

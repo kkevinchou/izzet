@@ -12,7 +12,6 @@ type GameContext struct {
 	Grounded      bool
 	JumpTriggered bool
 	Moving        bool
-	Walking       bool
 	Attacking     bool
 	Dead          bool
 }
@@ -46,14 +45,6 @@ func parseCondition(name string) iztanimation.Condition[GameContext] {
 	case "stationary":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return !ctx.Moving
-		})
-	case "walking":
-		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
-			return ctx.Walking
-		})
-	case "running":
-		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
-			return ctx.Moving && !ctx.Walking
 		})
 	case "jumpTriggered":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {

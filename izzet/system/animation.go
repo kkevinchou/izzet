@@ -42,18 +42,16 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
 			}
 		} else {
-			// TODO - remove the kinematic check. right now i only support animation state machines for players
 			if e.Kinematic != nil && ((s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer()) {
 				var ctx animationparser.GameContext
-				if e.Kinematic != nil {
-					ctx.Grounded = e.Kinematic.Grounded
-					ctx.JumpTriggered = e.Kinematic.Jump
-					ctx.Moving = !apputils.IsZeroVec(e.Kinematic.MoveIntent)
-				}
+				ctx.Grounded = e.Kinematic.Grounded
+				ctx.JumpTriggered = e.Kinematic.Jump
+				ctx.Moving = !apputils.IsZeroVec(e.Kinematic.MoveIntent)
+
 				if e.AIComponent != nil {
-					ctx.Walking = ctx.Moving && e.AIComponent.PatrolConfig != nil
 					ctx.Attacking = e.AIComponent.State == entity.AIStateAttack
 				}
+
 				ctx.Dead = e.Deadge
 				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
 			} else {

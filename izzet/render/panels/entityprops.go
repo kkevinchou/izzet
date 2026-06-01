@@ -480,6 +480,10 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			panelutils.InitColumns()
 
+			panelutils.SetupRow("Current Animation", func() {
+				imgui.LabelText("", e.Animation.AnimationPlayer.CurrentAnimation())
+			}, true)
+
 			panelutils.SetupRow("Animation State", func() {
 				imgui.LabelText("", e.Animation.AnimationStateMachine.CurrentAnimationState())
 			}, true)

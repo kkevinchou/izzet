@@ -24,6 +24,7 @@ type GameWorld interface {
 	DeleteEntity(int)
 	SpatialPartition() *spatialpartition.SpatialPartition
 	AddEntity(*entity.Entity)
+	GetSpawnPoint() *entity.Entity
 }
 
 type App interface {

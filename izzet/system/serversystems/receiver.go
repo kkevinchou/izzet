@@ -2,19 +2,15 @@ package serversystems
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/collision/collider"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
-	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/system"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type ReceiverSystem struct {
@@ -61,7 +57,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 					}
 
 					if rpc.CreateEntity != nil {
-						s.handleCreateEntityRPC(rpc)
+						s.handleCreateEntityRPC(world, rpc)
 					}
 				}
 			case <-player.DisconnectChannel:
@@ -87,54 +83,27 @@ func (s *ReceiverSystem) handlePathfindRPC(rpc network.RPCMessage) {
 	}
 }
 
-func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
-	var modelName string
-
-	// TODO: this should probably imported as a data file rather than hard coded
-	if rpc.CreateEntity.EntityType == string(entity.EntityTypeVelociraptor) {
-		modelName = "velociraptor"
-	} else if rpc.CreateEntity.EntityType == string(entity.EntityTypeParasaurolophus) {
-		modelName = "parasaurolophus"
-	}
-
-	handle := assets.NewSingleEntityMeshHandle(modelName)
-	e := entity.CreateEmptyEntity(modelName)
-	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
-
-	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
-	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
-	e.Collider.CapsuleCollider = &capsule
-
-	e.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-	e.Animation = entity.NewAnimationComponent(modelName, s.app.AssetManager())
-
-	jitterX := rand.Intn(10)
-	jitterZ := rand.Intn(10)
-	entity.SetLocalPosition(e, mgl64.Vec3{float64(jitterX), 20, float64(jitterZ)})
-	entity.SetScale(e, mgl64.Vec3{0.5, 0.5, 0.5})
-
-	e.AIComponent = &entity.AIComponent{
-		// AttackConfig:   &entity.AttackConfig{},
-	}
+func (s *ReceiverSystem) handleCreateEntityRPC(world system.GameWorld, rpc network.RPCMessage) {
+	e := prefab.CreateNPC(s.app, entity.EntityType(rpc.CreateEntity.EntityType))
 
 	if rpc.CreateEntity.Patrol {
+		jitterX := rand.Intn(10)
+		jitterZ := rand.Intn(10)
+		entity.SetLocalPosition(e, mgl64.Vec3{float64(jitterX), 20, float64(jitterZ)})
+
 		targetDist := 20
 		jitterTargetX := rand.Intn(targetDist) - 10
 		jitterTargetZ := rand.Intn(targetDist) - 10
 		target := mgl64.Vec3{float64(jitterTargetX), 0, float64(jitterTargetZ)}.Normalize().Mul(float64(targetDist))
+
 		e.AIComponent.PatrolConfig = &entity.PatrolConfig{Points: []mgl64.Vec3{{float64(jitterX), 0, float64(jitterZ)}, target}}
 	} else {
 		e.AIComponent.PathfindConfig = &entity.PathfindConfig{}
-
 	}
 
-	world := s.app.World()
-	for _, spawnPoint := range world.Entities() {
-		if spawnPoint.SpawnPointComponent != nil {
-			entity.SetLocalPosition(e, spawnPoint.Position())
-			// entity.SetLocalPosition(e, mgl64.Vec3{spawnPoint.Position().X() + float64(jitterX), spawnPoint.Position().Y(), spawnPoint.Position().Z() + float64(jitterZ)})
-			break
-		}
+	spawnPoint := world.GetSpawnPoint()
+	if spawnPoint != nil {
+		entity.SetLocalPosition(e, spawnPoint.Position())
 	}
 
 	s.app.EventsManager().EntitySpawnTopic.Write(events.EntitySpawnEvent{Entity: e})

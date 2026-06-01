@@ -2,20 +2,17 @@ package serversystems
 
 import (
 	"bytes"
-	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/iztlog"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -44,37 +41,14 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
-		var radius float64 = 0.4
-		var length float64 = 1.0
-		playerEntity := entity.CreateEmptyEntity("player")
-		playerEntity.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
-		capsule := collider.Capsule{
-			Radius: radius,
-			Top:    mgl64.Vec3{0, radius + length, 0},
-			Bottom: mgl64.Vec3{0, radius, 0},
-		}
-		playerEntity.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
-		playerEntity.CharacterControllerComponent = &entity.CharacterControllerComponent{}
-		handle := assets.NewSingleEntityMeshHandle("mannequin_m")
-
-		playerEntity.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-		playerEntity.Animation = entity.NewAnimationComponent("mannequin_m", s.app.AssetManager())
-		playerEntity.RenderBlend = &entity.RenderBlend{}
-		entity.SetScale(playerEntity, mgl64.Vec3{1, 1, 1})
-
-		world := s.app.World()
-		for _, spawnPoint := range world.Entities() {
-			if spawnPoint.SpawnPointComponent != nil {
-				entity.SetLocalPosition(playerEntity, spawnPoint.Position())
-				break
-			}
+		playerEntity := prefab.CreatePlayer(s.app)
+		spawnPoint := world.GetSpawnPoint()
+		if spawnPoint != nil {
+			entity.SetLocalPosition(playerEntity, spawnPoint.Position())
 		}
 
 		camera := createCamera(e.PlayerID, playerEntity.GetID())
 
-		// technically spawnEntity will also attempt to add the entity to the game world
-		// but we want to pre-emptively add the entities before serializing the player ack
-		// message
 		world.AddEntity(playerEntity)
 		world.AddEntity(camera)
 
@@ -82,7 +56,8 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 		if err != nil {
 			panic(err)
 		}
-		player.Client.Send(message, s.app.CommandFrame())
+
+		err = player.Client.Send(message, s.app.CommandFrame())
 		if err != nil {
 			panic(err)
 		}

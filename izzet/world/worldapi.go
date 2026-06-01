@@ -84,3 +84,12 @@ func (g *GameWorld) Lights() []*entity.Entity {
 func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
 }
+
+func (g *GameWorld) GetSpawnPoint() *entity.Entity {
+	for _, e := range g.Entities() {
+		if e.SpawnPointComponent != nil {
+			return e
+		}
+	}
+	return nil
+}

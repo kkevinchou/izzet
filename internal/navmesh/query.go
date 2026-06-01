@@ -9,7 +9,11 @@ import (
 	"github.com/kkevinchou/izzet/internal/gheap"
 )
 
-type Path struct {
+type pathPortal struct {
+	Left        mgl64.Vec3
+	Right       mgl64.Vec3
+	ProjectPoly int
+	End         bool
 }
 
 type Node struct {
@@ -131,7 +135,10 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 }
 
 // FindStraightPath takes polyPath which is a list of polygons and runs the funnel
-// algorithm along the portals between each polygon
+// algorithm along the portals between each polygon.
+//
+// the funnel is the actively managed funnel that we are attempting tho tighten
+// portals are the shared edge connection between two polygons
 func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl64.Vec3 {
 	if len(polyPath) == 0 {
 		return nil
@@ -140,100 +147,82 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 	closestStart, _ := closestPointOnPoly(tile, polyPath[0], start)
 	closestGoal, _ := closestPointOnPoly(tile, polyPath[len(polyPath)-1], goal)
 
-	portalApex := closestStart
-	portalLeft := portalApex
-	portalRight := portalApex
+	portals := buildPathPortals(tile, polyPath, closestGoal)
 
-	var apexIndex, leftIndex, rightIndex int
+	funnelApex := closestStart
+	funnelLeft := funnelApex
+	funnelRight := funnelApex
+
+	apexIndex := -1
+	leftIndex := -1
+	rightIndex := -1
 
 	path := []mgl64.Vec3{closestStart}
 
 	iterCount := 0
 	maxIterCount := 2000
 
-	for i := 1; i <= len(polyPath) && iterCount < maxIterCount; i++ {
+	for i := 0; i < len(portals) && iterCount < maxIterCount; i++ {
 		iterCount++
 
-		var left, right mgl64.Vec3
+		portal := portals[i]
 
-		if i < len(polyPath) {
-			l, r, success := GetPortalVertIndices(tile, polyPath[i-1], polyPath[i])
-			if !success {
-				panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i-1], polyPath[i]))
-			}
-			left = tile.Vertices[l]
-			right = tile.Vertices[r]
-		} else {
-			left = closestGoal
-			right = closestGoal
-		}
-
-		if vLeftOn(portalApex, portalRight, right) {
-			if vEqual(portalApex, portalRight) || vRight(portalApex, portalLeft, right) {
-				portalRight = right
+		if vLeftOn(funnelApex, funnelRight, portal.Right) {
+			if vEqual(funnelApex, funnelRight) || vRight(funnelApex, funnelLeft, portal.Right) {
+				// the portal's right vertex lies within the funnel, update the funnel's right
+				funnelRight = portal.Right
 				rightIndex = i
 			} else {
-				appendStraightPathPoint(&path, projectPathPoint(tile, polyPath, leftIndex, portalLeft))
-				portalApex = portalLeft
+				// the portal's right vertex collapses the funnel and we've discovered a turning update the apex
+				if appendPortalPoint(&path, tile, portals[leftIndex], funnelLeft) {
+					return path
+				}
+
+				// collapse the funnel into a new singular apex
+				funnelApex = funnelLeft
+				funnelLeft = funnelApex
+				funnelRight = funnelApex
+
+				// reset the funnel algorithm from the new apex
 				apexIndex = leftIndex
-				portalLeft = portalApex
-				portalRight = portalApex
 				leftIndex = apexIndex
 				rightIndex = apexIndex
 				i = apexIndex
+
 				continue
 			}
 		}
 
-		if vRightOn(portalApex, portalLeft, left) {
-			if vEqual(portalApex, portalLeft) || vLeft(portalApex, portalRight, left) {
-				portalLeft = left
+		if vRightOn(funnelApex, funnelLeft, portal.Left) {
+			if vEqual(funnelApex, funnelLeft) || vLeft(funnelApex, funnelRight, portal.Left) {
+				// the portal's left vertex lies within the funnel, update the funnel's left
+				funnelLeft = portal.Left
 				leftIndex = i
 			} else {
-				appendStraightPathPoint(&path, projectPathPoint(tile, polyPath, rightIndex, portalRight))
-				portalApex = portalRight
+				// the portal's left vertex collapses the funnel and we've discovered a turning point update the apex
+				if appendPortalPoint(&path, tile, portals[rightIndex], funnelRight) {
+					return path
+				}
+
+				// collapse the funnel into a new singular apex
+				funnelApex = funnelRight
+				funnelLeft = funnelApex
+				funnelRight = funnelApex
+
+				// reset the funnel algorithm from the new apex
 				apexIndex = rightIndex
-				portalLeft = portalApex
-				portalRight = portalApex
 				leftIndex = apexIndex
 				rightIndex = apexIndex
 				i = apexIndex
+
 				continue
 			}
 		}
 	}
 
-	appendStraightPathPoint(&path, closestGoal)
+	appendPoint(&path, closestGoal)
 
 	return path
-}
-
-func appendStraightPathPoint(path *[]mgl64.Vec3, point mgl64.Vec3) {
-	if len(*path) > 0 && vEqual((*path)[len(*path)-1], point) {
-		return
-	}
-	*path = append(*path, point)
-}
-
-// project the waypoint onto a detailed polygon if possible to extract a more detailed y value
-func projectPathPoint(tile CTile, polyPath []int, portalIndex int, point mgl64.Vec3) mgl64.Vec3 {
-	if len(polyPath) == 0 {
-		return point
-	}
-
-	if portalIndex < 0 {
-		portalIndex = 0
-	} else if portalIndex >= len(polyPath) {
-		portalIndex = len(polyPath) - 1
-	}
-
-	poly := polyPath[portalIndex]
-	if poly < 0 || poly >= len(tile.Polygons) {
-		return point
-	}
-
-	projected, _ := closestPointOnPoly(tile, poly, point)
-	return projected
 }
 
 func vEqual(a, b mgl64.Vec3) bool {
@@ -491,4 +480,55 @@ func pointInPoly(tile CTile, poly int, point mgl64.Vec3) bool {
 
 func Less(n0, n1 *Node) bool {
 	return n0.Cost < n1.Cost
+}
+
+func buildPathPortals(tile CTile, polyPath []int, closestGoal mgl64.Vec3) []pathPortal {
+	portals := make([]pathPortal, 0, len(polyPath))
+	for i := 1; i < len(polyPath); i++ {
+		l, r, success := GetPortalVertIndices(tile, polyPath[i-1], polyPath[i])
+		if !success {
+			panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i-1], polyPath[i]))
+		}
+		portals = append(portals, pathPortal{
+			Left:        tile.Vertices[l],
+			Right:       tile.Vertices[r],
+			ProjectPoly: polyPath[i],
+		})
+	}
+
+	portals = append(portals, pathPortal{
+		Left:        closestGoal,
+		Right:       closestGoal,
+		ProjectPoly: polyPath[len(polyPath)-1],
+		End:         true,
+	})
+
+	return portals
+}
+
+func appendPortalPoint(path *[]mgl64.Vec3, tile CTile, portal pathPortal, point mgl64.Vec3) bool {
+	if portal.End {
+		appendPoint(path, point)
+		return true
+	}
+
+	appendPoint(path, projectPathPoint(tile, portal.ProjectPoly, point))
+	return false
+}
+
+func appendPoint(path *[]mgl64.Vec3, point mgl64.Vec3) {
+	if len(*path) > 0 && vEqual((*path)[len(*path)-1], point) {
+		return
+	}
+	*path = append(*path, point)
+}
+
+// project the waypoint onto a detailed polygon if possible to extract a more detailed y value
+func projectPathPoint(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+	if poly < 0 || poly >= len(tile.Polygons) {
+		return point
+	}
+
+	projected, _ := closestPointOnPoly(tile, poly, point)
+	return projected
 }

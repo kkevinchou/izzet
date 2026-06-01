@@ -177,10 +177,11 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 				rightIndex = i
 			} else {
 				// the portal's right vertex collapses the funnel and we've discovered a turning update the apex
-				if appendPortalPoint(&path, tile, portalAt(portals, leftIndex), funnelLeft) {
+				if appendPortalPoint(&path, tile, portals[leftIndex], funnelLeft) {
 					return path
 				}
 
+				// collapse the funnel into a new singular apex
 				funnelApex = funnelLeft
 				funnelLeft = funnelApex
 				funnelRight = funnelApex
@@ -202,10 +203,11 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 				leftIndex = i
 			} else {
 				// the portal's left vertex collapses the funnel and we've discovered a turning point update the apex
-				if appendPortalPoint(&path, tile, portalAt(portals, rightIndex), funnelRight) {
+				if appendPortalPoint(&path, tile, portals[rightIndex], funnelRight) {
 					return path
 				}
 
+				// collapse the funnel into a new singular apex
 				funnelApex = funnelRight
 				funnelLeft = funnelApex
 				funnelRight = funnelApex
@@ -248,13 +250,6 @@ func buildPathPortals(tile CTile, polyPath []int, closestGoal mgl64.Vec3) []path
 	})
 
 	return portals
-}
-
-func portalAt(portals []pathPortal, index int) pathPortal {
-	if index < 0 {
-		return pathPortal{}
-	}
-	return portals[index]
 }
 
 func appendPortalPoint(path *[]mgl64.Vec3, tile CTile, portal pathPortal, point mgl64.Vec3) bool {

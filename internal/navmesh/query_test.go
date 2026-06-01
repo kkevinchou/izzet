@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-func TestProjectPathPointClampsTerminalPortalIndex(t *testing.T) {
+func TestProjectPathPointUsesExplicitPolygon(t *testing.T) {
 	tile := CTile{
 		Vertices: []mgl64.Vec3{
 			{0, 0, 0}, {1, 0, 0}, {1, 0, 1}, {0, 0, 1},
@@ -31,7 +31,7 @@ func TestProjectPathPointClampsTerminalPortalIndex(t *testing.T) {
 		},
 	}
 
-	point := projectPathPoint(tile, []int{0, 1}, 2, mgl64.Vec3{1.5, 0, 0.5})
+	point := projectPathPoint(tile, 1, mgl64.Vec3{1.5, 0, 0.5})
 
 	if got, want := point.Y(), 3.0; got != want {
 		t.Fatalf("projected y = %v, want %v", got, want)

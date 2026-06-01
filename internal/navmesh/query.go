@@ -9,7 +9,11 @@ import (
 	"github.com/kkevinchou/izzet/internal/gheap"
 )
 
-type Path struct {
+type pathPortal struct {
+	Left        mgl64.Vec3
+	Right       mgl64.Vec3
+	ProjectPoly int
+	End         bool
 }
 
 type Node struct {
@@ -130,13 +134,6 @@ func FindPath(nm *CompiledNavMesh, start, goal mgl64.Vec3) []int {
 	return path
 }
 
-type pathPortal struct {
-	Left        mgl64.Vec3
-	Right       mgl64.Vec3
-	ProjectPoly int
-	End         bool
-}
-
 // FindStraightPath takes polyPath which is a list of polygons and runs the funnel
 // algorithm along the portals between each polygon.
 //
@@ -223,60 +220,9 @@ func FindStraightPath(tile CTile, start, goal mgl64.Vec3, polyPath []int) []mgl6
 		}
 	}
 
-	appendStraightPathPoint(&path, closestGoal)
+	appendPoint(&path, closestGoal)
 
 	return path
-}
-
-func buildPathPortals(tile CTile, polyPath []int, closestGoal mgl64.Vec3) []pathPortal {
-	portals := make([]pathPortal, 0, len(polyPath))
-	for i := 1; i < len(polyPath); i++ {
-		l, r, success := GetPortalVertIndices(tile, polyPath[i-1], polyPath[i])
-		if !success {
-			panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i-1], polyPath[i]))
-		}
-		portals = append(portals, pathPortal{
-			Left:        tile.Vertices[l],
-			Right:       tile.Vertices[r],
-			ProjectPoly: polyPath[i],
-		})
-	}
-
-	portals = append(portals, pathPortal{
-		Left:        closestGoal,
-		Right:       closestGoal,
-		ProjectPoly: polyPath[len(polyPath)-1],
-		End:         true,
-	})
-
-	return portals
-}
-
-func appendPortalPoint(path *[]mgl64.Vec3, tile CTile, portal pathPortal, point mgl64.Vec3) bool {
-	if portal.End {
-		appendStraightPathPoint(path, point)
-		return true
-	}
-
-	appendStraightPathPoint(path, projectPathPoint(tile, portal.ProjectPoly, point))
-	return false
-}
-
-func appendStraightPathPoint(path *[]mgl64.Vec3, point mgl64.Vec3) {
-	if len(*path) > 0 && vEqual((*path)[len(*path)-1], point) {
-		return
-	}
-	*path = append(*path, point)
-}
-
-// project the waypoint onto a detailed polygon if possible to extract a more detailed y value
-func projectPathPoint(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
-	if poly < 0 || poly >= len(tile.Polygons) {
-		return point
-	}
-
-	projected, _ := closestPointOnPoly(tile, poly, point)
-	return projected
 }
 
 func vEqual(a, b mgl64.Vec3) bool {
@@ -534,4 +480,55 @@ func pointInPoly(tile CTile, poly int, point mgl64.Vec3) bool {
 
 func Less(n0, n1 *Node) bool {
 	return n0.Cost < n1.Cost
+}
+
+func buildPathPortals(tile CTile, polyPath []int, closestGoal mgl64.Vec3) []pathPortal {
+	portals := make([]pathPortal, 0, len(polyPath))
+	for i := 1; i < len(polyPath); i++ {
+		l, r, success := GetPortalVertIndices(tile, polyPath[i-1], polyPath[i])
+		if !success {
+			panic(fmt.Sprintf("could not find portal vertices between %d, %d", polyPath[i-1], polyPath[i]))
+		}
+		portals = append(portals, pathPortal{
+			Left:        tile.Vertices[l],
+			Right:       tile.Vertices[r],
+			ProjectPoly: polyPath[i],
+		})
+	}
+
+	portals = append(portals, pathPortal{
+		Left:        closestGoal,
+		Right:       closestGoal,
+		ProjectPoly: polyPath[len(polyPath)-1],
+		End:         true,
+	})
+
+	return portals
+}
+
+func appendPortalPoint(path *[]mgl64.Vec3, tile CTile, portal pathPortal, point mgl64.Vec3) bool {
+	if portal.End {
+		appendPoint(path, point)
+		return true
+	}
+
+	appendPoint(path, projectPathPoint(tile, portal.ProjectPoly, point))
+	return false
+}
+
+func appendPoint(path *[]mgl64.Vec3, point mgl64.Vec3) {
+	if len(*path) > 0 && vEqual((*path)[len(*path)-1], point) {
+		return
+	}
+	*path = append(*path, point)
+}
+
+// project the waypoint onto a detailed polygon if possible to extract a more detailed y value
+func projectPathPoint(tile CTile, poly int, point mgl64.Vec3) mgl64.Vec3 {
+	if poly < 0 || poly >= len(tile.Polygons) {
+		return point
+	}
+
+	projected, _ := closestPointOnPoly(tile, poly, point)
+	return projected
 }

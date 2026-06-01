@@ -32,7 +32,6 @@ func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager)
 	if e.Animation != nil {
 		animation := e.Animation
 		e.Animation = entity.NewAnimationComponent(animation.AnimationHandle, assetManager)
-		e.Animation.AnimationNames = animation.AnimationNames
 		e.Animation.SelectedAnimation = animation.SelectedAnimation
 		e.Animation.SelectedKeyFrame = animation.SelectedKeyFrame
 		e.Animation.LoopAnimation = animation.LoopAnimation

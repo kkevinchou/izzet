@@ -91,19 +91,10 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 	var modelName string
 
 	// TODO: this should probably imported as a data file rather than hard coded
-	var idleAnimation string
-	var attackAnimation string
-	var runAnimation string
 	if rpc.CreateEntity.EntityType == string(entity.EntityTypeVelociraptor) {
 		modelName = "velociraptor"
-		idleAnimation = "Velociraptor_Idle"
-		attackAnimation = "Velociraptor_Attack"
-		runAnimation = "Velociraptor_Run"
 	} else if rpc.CreateEntity.EntityType == string(entity.EntityTypeParasaurolophus) {
 		modelName = "parasaurolophus"
-		idleAnimation = "Parasaurolophus_Idle"
-		attackAnimation = "Parasaurolophus_Attack"
-		runAnimation = "Parasaurolophus_Run"
 	}
 
 	handle := assets.NewSingleEntityMeshHandle(modelName)
@@ -116,9 +107,6 @@ func (s *ReceiverSystem) handleCreateEntityRPC(rpc network.RPCMessage) {
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 	e.Animation = entity.NewAnimationComponent(modelName, s.app.AssetManager())
-	e.Animation.AnimationNames[entity.AnimationKeyIdle] = idleAnimation
-	e.Animation.AnimationNames[entity.AnimationKeyAttack] = attackAnimation
-	e.Animation.AnimationNames[entity.AnimationKeyRun] = runAnimation
 
 	jitterX := rand.Intn(10)
 	jitterZ := rand.Intn(10)

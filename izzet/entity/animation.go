@@ -18,7 +18,7 @@ type AnimationComponent struct {
 	RootJointID     int
 	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
 
-	AnimationNames map[string]string
+	// AnimationNames map[string]string
 
 	SelectedAnimation string
 	SelectedKeyFrame  int
@@ -41,7 +41,6 @@ func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *Ani
 		RootJointID:     rootJointID,
 		AnimationHandle: animationHandle,
 		Animations:      animations,
-		AnimationNames:  make(map[string]string),
 
 		AnimationPlayer:       animationPlayer,
 		AnimationStateMachine: animationStateMachine,

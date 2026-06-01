@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/serialization"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -47,7 +45,7 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 			entity.SetLocalPosition(playerEntity, spawnPoint.Position())
 		}
 
-		camera := createCamera(e.PlayerID, playerEntity.GetID())
+		camera := prefab.CreateCamera(e.PlayerID, playerEntity.GetID())
 
 		world.AddEntity(playerEntity)
 		world.AddEntity(camera)
@@ -101,14 +99,6 @@ func createEntityMessage(playerID int, entity *entity.Entity) (network.CreateEnt
 	createEntityMessage.EntityBytes = entityBytes
 
 	return createEntityMessage, nil
-}
-
-func createCamera(playerID int, targetEntityID int) *entity.Entity {
-	e := entity.CreateEmptyEntity("camera")
-	e.CameraComponent = &entity.CameraComponent{TargetPositionOffset: mgl64.Vec3{0, settings.CameraEntityFollowVerticalOffset, 0}, Target: &targetEntityID}
-	e.ImageComponent = entity.NewImageComponent("camera.png", 1, true)
-	e.PlayerInput = &entity.PlayerInputComponent{PlayerID: playerID}
-	return e
 }
 
 func createAckPlayerJoinMessage(playerID int, cameraEntityID int, playerEntityID int, world *world.GameWorld, projectName string) (network.AckPlayerJoinMessage, error) {

@@ -90,9 +90,12 @@ type RenderSystem struct {
 	renderPassContext *context.RenderPassContext
 	gpuProfiler       *GPUProfiler
 
-	sceneSize       [2]int
-	resizeNextFrame bool
-	lastResize      time.Time
+	// the next scene size measured from the SceneView layout
+	// if this differs from sceneSize, framebuffers will be reinitialized
+	nextSceneSize [2]int
+
+	// the current scene size and the size of the framebuffer used for rendering
+	sceneSize [2]int
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -100,7 +103,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.shaderManager = shaders.NewShaderManager(shaderDirectory)
 	compileShaders(r.shaderManager)
 	rutils.SetRuntimeConfigProvider(app.RuntimeConfig)
-	r.sceneSize = [2]int{1, 1}
+	r.sceneSize, r.nextSceneSize = [2]int{width, height}, [2]int{width, height}
 
 	r.assertShaderConfigurations()
 
@@ -116,7 +119,6 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	r.ndcQuadVAO = rutils.Init2f2fVAO()
 	r.materialTextureMap = map[types.MaterialHandle]uint32{}
 
-	r.lastResize = time.Now()
 	r.initorReinitTextures(width, height, true)
 
 	cloudTexture0 := &r.app.RuntimeConfig().CloudTextures[0]
@@ -237,9 +239,9 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 func (r *RenderSystem) Render(delta time.Duration) {
 	mr := globals.ClientRegistry()
 
-	if r.resizeNextFrame {
+	if r.sceneSize != r.nextSceneSize {
+		r.sceneSize = r.nextSceneSize
 		r.ReinitializeFrameBuffers()
-		r.resizeNextFrame = false
 	}
 
 	initOpenGLRenderSettings()
@@ -315,7 +317,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 
 	start = time.Now()
 	r.gpuProfiler.Profile("imgui", func() {
-		r.renderHelper(renderContext, imgui.TextureID(r.renderPassContext.PostProcessingTexture))
+		r.renderHelper(renderContext)
 	})
 	mr.Inc("render_cpu_imgui", durationMilliseconds(start))
 }
@@ -590,6 +592,7 @@ func init() {
 }
 
 func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
+	uiEnabled := r.app.RuntimeConfig().UIEnabled
 	viewport := imgui.MainViewport()
 	imgui.SetNextWindowPos(viewport.Pos())
 	imgui.SetNextWindowSize(viewport.Size())
@@ -711,18 +714,14 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 
 	imgui.End() // host window
 
-	r.drawScene(renderContext)
-
-	if r.app.RuntimeConfig().UIEnabled {
+	if uiEnabled {
 		r.drawInspector()
-		r.drawRightTop(renderContext)
-		drawer.BuildDrawerbar(
-			r.app,
-			renderContext,
-			r.sceneSize[0],
-			r.materialTextureMap,
-		)
+		r.drawSidebarPanels(renderContext)
+	}
 
+	r.drawSceneView(renderContext, uiEnabled)
+
+	if uiEnabled {
 		if r.app.RuntimeConfig().ShowTextureViewer {
 			imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
 			if imgui.BeginV("Texture Viewer", &r.app.RuntimeConfig().ShowTextureViewer, imgui.WindowFlagsNone) {
@@ -771,14 +770,15 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	imgui.PopStyleVarV(int32(len(styles)))
 	imgui.PopStyleColorV(int32(len(colorStyles)))
 
-	if r.app.RuntimeConfig().UIEnabled {
+	if uiEnabled {
 		if r.app.RuntimeConfig().ShowImguiDemo {
 			imgui.ShowDemoWindow()
 		}
 	}
 }
 
-func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
+// drawSceneView draws the main scene as well as the footer.
+func (r *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnabled bool) {
 	r.gameWindowHovered = false
 	imgui.BeginV("SceneView", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 	if imgui.IsWindowHovered() {
@@ -787,19 +787,13 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 	texture := imgui.TextureID(r.renderPassContext.PostProcessingTexture)
 
 	var drawerbarSize float32
-	if r.app.RuntimeConfig().UIEnabled {
+	if uiEnabled {
 		drawerbarSize = settings.DrawerbarSize
 	}
 
 	sceneSize := imgui.ContentRegionAvail()
-	sceneSize = sceneSize.Add(imgui.Vec2{X: 0, Y: -drawerbarSize})
-
-	newSceneSize := [2]int{int(sceneSize.X), int(sceneSize.Y)}
-	if (sceneSize != imgui.Vec2{}) && (newSceneSize != r.sceneSize) {
-		r.sceneSize = newSceneSize
-		r.resizeNextFrame = true
-		r.lastResize = time.Now()
-	}
+	sceneSize = sceneSize.Sub(imgui.Vec2{X: 0, Y: drawerbarSize})
+	r.nextSceneSize = [2]int{int(sceneSize.X), int(sceneSize.Y)}
 
 	imgui.ImageV(
 		texture,
@@ -809,6 +803,14 @@ func (r *RenderSystem) drawScene(renderContext context.RenderContext) {
 		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},
 		imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0},
 	)
+	if uiEnabled {
+		drawer.BuildDrawerbar(
+			r.app,
+			renderContext,
+			r.sceneSize[0],
+			r.materialTextureMap,
+		)
+	}
 	imgui.End()
 }
 
@@ -818,7 +820,7 @@ func (r *RenderSystem) drawInspector() {
 	imgui.End()
 }
 
-func (r *RenderSystem) drawRightTop(renderContext context.RenderContext) {
+func (r *RenderSystem) drawSidebarPanels(renderContext context.RenderContext) {
 	imgui.Begin("Scene")
 	panels.SceneGraph(r.app)
 	imgui.End()
@@ -833,7 +835,7 @@ func (r *RenderSystem) drawRightTop(renderContext context.RenderContext) {
 	imgui.End()
 }
 
-func (r *RenderSystem) renderHelper(renderContext context.RenderContext, gameWindowTexture imgui.TextureID) {
+func (r *RenderSystem) renderHelper(renderContext context.RenderContext) {
 	r.app.Platform().NewFrame()
 	imgui.NewFrame()
 

@@ -27,27 +27,10 @@ var (
 )
 
 func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[types.MaterialHandle]uint32) {
-	var drawerbarSize float32
-	if app.RuntimeConfig().UIEnabled {
-		drawerbarSize = settings.DrawerbarSize
-	}
-
 	var drawerbarX float32 = settings.WindowPadding[0]
-	var drawerbarY float32 = imgui.MainViewport().Pos().Y + imgui.MainViewport().Size().Y - drawerbarSize
-
-	imgui.SetNextWindowBgAlpha(1)
-	imgui.SetNextWindowPosV(imgui.Vec2{X: drawerbarX, Y: drawerbarY}, imgui.CondAlways, imgui.Vec2{X: 0, Y: 0})
-	imgui.SetNextWindowSize(imgui.Vec2{X: float32(width), Y: 0})
-
-	var open bool = true
-	var drawerbarFlags imgui.WindowFlags = imgui.WindowFlagsNoResize |
-		imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse |
-		imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing |
-		imgui.WindowFlagsNoScrollbar | imgui.WindowFlagsNoScrollWithMouse
+	var drawerbarY float32 = imgui.MainViewport().Pos().Y + imgui.MainViewport().Size().Y - settings.DrawerbarSize
 
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 5, Y: 5})
-
-	imgui.BeginV("Drawerbar", &open, drawerbarFlags)
 
 	if last == DrawerTabContent {
 		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorActive)
@@ -84,6 +67,7 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 	imgui.PopStyleColor()
 
 	if expanded {
+		var open bool = true
 		var drawerTabFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
 		drawerTabFlags |= imgui.WindowFlagsNoTitleBar | imgui.WindowFlagsNoFocusOnAppearing
 
@@ -102,6 +86,5 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 		imgui.PopStyleVar()
 	}
 
-	imgui.End()
 	imgui.PopStyleVar()
 }

@@ -85,6 +85,8 @@ const (
 	KeyboardKeyF8   KeyboardKey = "F8"
 	KeyboardKeyF9   KeyboardKey = "F9"
 	KeyboardKeyF10  KeyboardKey = "F10"
+	KeyboardKeyF11  KeyboardKey = "F11"
+	KeyboardKeyF12  KeyboardKey = "F12"
 
 	KeyboardEventUp   KeyboardEvent = "UP"
 	KeyboardEventDown KeyboardEvent = "DOWN"

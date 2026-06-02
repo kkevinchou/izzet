@@ -260,7 +260,7 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 
-	if event, ok := keyboardInput[input.KeyboardKeyF1]; ok && event.Event == input.KeyboardEventUp {
+	if event, ok := keyboardInput[input.KeyboardKeyF11]; ok && event.Event == input.KeyboardEventUp {
 		g.ConfigureUI(!g.runtimeConfig.UIEnabled)
 	}
 

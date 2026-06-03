@@ -71,15 +71,11 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 
 func (s *ReceiverSystem) handlePathfindRPC(rpc network.RPCMessage) {
 	for _, e := range s.app.World().Entities() {
-		if e.AIComponent == nil {
+		if e.NavigationComponent == nil {
 			continue
 		}
-
-		if e.AIComponent.PathfindConfig == nil {
-			continue
-		}
-		e.AIComponent.PathfindConfig.Goal = rpc.Pathfind.Goal
-		e.AIComponent.PathfindConfig.State = entity.PathfindingStateGoalSet
+		e.NavigationComponent.Goal = rpc.Pathfind.Goal
+		e.NavigationComponent.State = entity.PathfindingStateGoalSet
 	}
 }
 
@@ -98,7 +94,7 @@ func (s *ReceiverSystem) handleCreateEntityRPC(world system.GameWorld, rpc netwo
 
 		e.AIComponent.PatrolConfig = &entity.PatrolConfig{Points: []mgl64.Vec3{{float64(jitterX), 0, float64(jitterZ)}, target}}
 	} else {
-		e.AIComponent.PathfindConfig = &entity.PathfindConfig{}
+		e.NavigationComponent = &entity.NavigationComponent{}
 	}
 
 	spawnPoint := world.GetSpawnPoint()

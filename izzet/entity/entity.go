@@ -47,6 +47,9 @@ type Entity struct {
 	PlayerInput *PlayerInputComponent
 	AIComponent *AIComponent
 
+	NavigationComponent *NavigationComponent
+	AttackComponent     *AttackComponent
+
 	SpawnPointComponent *SpawnPoint
 }
 

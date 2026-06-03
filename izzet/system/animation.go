@@ -5,7 +5,6 @@ import (
 
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type AnimationSystem struct {
@@ -47,10 +46,6 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				ctx.Grounded = e.Kinematic.Grounded
 				ctx.JumpTriggered = e.Kinematic.Jump
 				ctx.Moving = !apputils.IsZeroVec(e.Kinematic.MoveIntent)
-
-				if e.AIComponent != nil {
-					ctx.Attacking = e.AIComponent.State == entity.AIStateAttack
-				}
 
 				ctx.Dead = e.Deadge
 				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)

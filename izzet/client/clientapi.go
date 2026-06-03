@@ -31,7 +31,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/server"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/system/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/system/clientsystem"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -216,7 +216,7 @@ func (g *Client) GetPlayerCamera() *entity.Entity {
 	return g.playerCamera
 }
 
-func (g *Client) GetCommandFrameHistory() *clientsystems.CommandFrameHistory {
+func (g *Client) GetCommandFrameHistory() *clientsystem.CommandFrameHistory {
 	return g.commandFrameHistory
 }
 
@@ -296,16 +296,16 @@ func (g *Client) World() *world.GameWorld {
 	return g.world
 }
 
-func (g *Client) StateBuffer() *clientsystems.StateBuffer {
+func (g *Client) StateBuffer() *clientsystem.StateBuffer {
 	return g.stateBuffer
 }
 
 func (g *Client) initializeApp() {
-	g.stateBuffer = clientsystems.NewStateBuffer()
-	g.commandFrameHistory = clientsystems.NewCommandFrameHistory()
+	g.stateBuffer = clientsystem.NewStateBuffer()
+	g.commandFrameHistory = clientsystem.NewCommandFrameHistory()
 	g.editHistory = edithistory.New()
 	g.collisionObserver = collisionobserver.NewCollisionObserver()
-	g.stateBuffer = clientsystems.NewStateBuffer()
+	g.stateBuffer = clientsystem.NewStateBuffer()
 	g.camera.Position = settings.EditorCameraStartPosition
 	g.camera.Rotation = mgl64.QuatIdent()
 }

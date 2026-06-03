@@ -1,4 +1,4 @@
-package clientsystems
+package clientsystem
 
 import (
 	"time"

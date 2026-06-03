@@ -19,7 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
-	"github.com/kkevinchou/izzet/izzet/system/serversystems"
+	"github.com/kkevinchou/izzet/izzet/system/serversystem"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -88,17 +88,18 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 
 	g.newConnections = make(chan NewConnection, 100)
 
-	g.systems = append(g.systems, serversystems.NewReceiverSystem(g))
-	g.systems = append(g.systems, serversystems.NewInputSystem(g))
-	g.systems = append(g.systems, serversystems.NewCharacterControllerSystem(g))
-	g.systems = append(g.systems, serversystems.NewAISystemSystem(g))
+	g.systems = append(g.systems, serversystem.NewReceiverSystem(g))
+	g.systems = append(g.systems, serversystem.NewInputSystem(g))
+	g.systems = append(g.systems, serversystem.NewCharacterControllerSystem(g))
+	g.systems = append(g.systems, serversystem.NewAISystemSystem(g))
+	g.systems = append(g.systems, serversystem.NewBrainSystem(g))
 	g.systems = append(g.systems, system.NewKinematicSystem(g))
 	g.systems = append(g.systems, system.NewCameraTargetSystem(g))
-	g.systems = append(g.systems, serversystems.NewRulesSystem(g))
+	g.systems = append(g.systems, serversystem.NewRulesSystem(g))
 	g.systems = append(g.systems, system.NewAnimationSystem(g))
 	g.systems = append(g.systems, system.NewCleanupSystem(g))
-	g.systems = append(g.systems, serversystems.NewEventsSystem(g))
-	g.systems = append(g.systems, serversystems.NewReplicationSystem(g))
+	g.systems = append(g.systems, serversystem.NewEventsSystem(g))
+	g.systems = append(g.systems, serversystem.NewReplicationSystem(g))
 
 	fmt.Println(time.Since(start), "to start up systems")
 

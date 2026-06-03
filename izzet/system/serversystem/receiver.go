@@ -1,4 +1,4 @@
-package serversystems
+package serversystem
 
 import (
 	"fmt"

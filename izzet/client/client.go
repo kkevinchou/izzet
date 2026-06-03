@@ -23,7 +23,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
-	"github.com/kkevinchou/izzet/izzet/system/clientsystems"
+	"github.com/kkevinchou/izzet/izzet/system/clientsystem"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 	"github.com/veandco/go-sdl2/sdl"
@@ -54,7 +54,7 @@ type Client struct {
 	editorModeSystems []system.System
 	appMode           types.AppMode
 	collisionObserver *collisionobserver.CollisionObserver
-	stateBuffer       *clientsystems.StateBuffer
+	stateBuffer       *clientsystem.StateBuffer
 
 	runtimeConfig *runtimeconfig.RuntimeConfig
 
@@ -66,7 +66,7 @@ type Client struct {
 	commandFrame    int
 	clientConnected bool
 
-	commandFrameHistory *clientsystems.CommandFrameHistory
+	commandFrameHistory *clientsystem.CommandFrameHistory
 	asyncServerStarted  bool
 	asyncServerDone     chan bool
 	serverAddress       string
@@ -243,15 +243,15 @@ func initSeed() {
 }
 
 func (g *Client) setupSystems() {
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewReceiverSystem(g))
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewInputSystem(g))
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewCharacterControllerSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystem.NewReceiverSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystem.NewInputSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystem.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewKinematicSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewCameraTargetSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewAnimationSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewCleanupSystem(g))
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPingSystem(g))
-	g.playModeSystems = append(g.playModeSystems, clientsystems.NewPostFrameSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystem.NewPingSystem(g))
+	g.playModeSystems = append(g.playModeSystems, clientsystem.NewPostFrameSystem(g))
 
 	g.editorModeSystems = append(g.editorModeSystems, system.NewAnimationSystem(g))
 }

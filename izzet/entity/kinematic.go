@@ -11,10 +11,8 @@ type KinematicComponent struct {
 	GravityEnabled      bool
 	Speed               float64
 
-	// the movement direction of the entity without the Y component
-	MoveIntent   mgl64.Vec3
-	XZMoveIntent mgl64.Vec3
-	Jump         bool
+	MoveIntent mgl64.Vec3
+	Jump       bool
 }
 
 func (e *Entity) IsKinematic() bool {

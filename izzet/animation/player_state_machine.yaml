@@ -64,7 +64,7 @@ states:
     transitions:
       - to: jumpStart
         when: [jumpTriggered]
-      - to: sprintExit
+      - to: idle
         when: [stationary, grounded]
       - to: sprint
         when: [moving, clipCompleted]

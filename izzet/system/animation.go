@@ -46,6 +46,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				ctx.Grounded = e.Kinematic.Grounded
 				ctx.JumpTriggered = e.Kinematic.Jump
 				ctx.Moving = !apputils.IsZeroVec(e.Kinematic.MoveIntent)
+				if e.AttackComponent != nil {
+					ctx.Attacking = e.AttackComponent.Attacking
+				}
 
 				ctx.Dead = e.Deadge
 				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)

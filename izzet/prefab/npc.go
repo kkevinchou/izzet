@@ -32,6 +32,7 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 	e.Animation = entity.NewAnimationComponent(modelName, app.AssetManager())
+	e.AttackComponent = &entity.AttackComponent{AttackRange: 4}
 
 	entity.SetScale(e, mgl64.Vec3{0.5, 0.5, 0.5})
 

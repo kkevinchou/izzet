@@ -21,4 +21,7 @@ func (s *BrainSystem) Name() string {
 }
 
 func (s *BrainSystem) Update(delta time.Duration, world system.GameWorld) {
+	// find player within range
+	// pathfind to player
+	// attack
 }

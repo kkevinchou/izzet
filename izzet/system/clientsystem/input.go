@@ -31,7 +31,6 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	playerCamera := s.app.GetPlayerCamera()
 	cameraRotation := s.computePlayerCameraRotation(playerCamera, *frameInput)
 	frameInput.CameraRotation = cameraRotation
-	frameInput.CameraMode = input.CameraMode(playerCamera.CameraComponent.CameraMode)
 
 	inputMessage := network.InputMessage{
 		Input: *frameInput,

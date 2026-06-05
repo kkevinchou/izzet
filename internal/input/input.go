@@ -120,16 +120,8 @@ type Input struct {
 	KeyboardInput  KeyboardInput
 	MouseInput     MouseInput
 	CameraRotation mgl64.Quat
-	CameraMode     CameraMode
 	Commands       []any
 }
-
-type CameraMode string
-
-const (
-	CameraModeOverShoulder = "OVERSHOULDER"
-	CameraModeWideView     = "WIDEVIEW"
-)
 
 type InputCollector struct {
 	MousePosition    [2]float64

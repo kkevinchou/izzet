@@ -1,5 +1,13 @@
 package entity
 
 type CameraComponent struct {
-	Target *int
+	Target     *int
+	CameraMode CameraMode
 }
+
+type CameraMode string
+
+const (
+	CameraModeOverShoulder = "OVERSHOULDER"
+	CameraModeWideView     = "WIDEVIEW"
+)

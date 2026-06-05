@@ -120,20 +120,16 @@ type Input struct {
 	KeyboardInput  KeyboardInput
 	MouseInput     MouseInput
 	CameraRotation mgl64.Quat
+	CameraMode     CameraMode
 	Commands       []any
 }
 
-// func (i Input) Copy() Input {
-// 	keyboardInput := KeyboardInput{}
-// 	for k, v := range i.KeyboardInput {
-// 		keyboardInput[k] = v
-// 	}
+type CameraMode string
 
-// 	return Input{
-// 		KeyboardInput: keyboardInput,
-// 		MouseInput:    i.MouseInput,
-// 	}
-// }
+const (
+	CameraModeOverShoulder = "OVERSHOULDER"
+	CameraModeWideView     = "WIDEVIEW"
+)
 
 type InputCollector struct {
 	MousePosition    [2]float64

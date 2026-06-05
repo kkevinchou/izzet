@@ -25,13 +25,13 @@ func (s *InputSystem) Name() string {
 	return "InputSystem"
 }
 
-var predictionDebugLoggingStart time.Time
-
 func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	frameInput := s.app.GetFrameInputPtr()
 
-	cameraRotation := s.computePlayerCameraRotation(world, *frameInput)
+	playerCamera := s.app.GetPlayerCamera()
+	cameraRotation := s.computePlayerCameraRotation(playerCamera, *frameInput)
 	frameInput.CameraRotation = cameraRotation
+	frameInput.CameraMode = input.CameraMode(playerCamera.CameraComponent.CameraMode)
 
 	inputMessage := network.InputMessage{
 		Input: *frameInput,
@@ -44,8 +44,7 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	}
 }
 
-func (s *InputSystem) computePlayerCameraRotation(world system.GameWorld, frameInput input.Input) mgl64.Quat {
-	camera := s.app.GetPlayerCamera()
+func (s *InputSystem) computePlayerCameraRotation(camera *entity.Entity, frameInput input.Input) mgl64.Quat {
 	newRotation := computeCameraRotation(frameInput, camera)
 	camera.SetLocalRotation(newRotation)
 	return newRotation

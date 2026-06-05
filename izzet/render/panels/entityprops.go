@@ -140,44 +140,6 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
 			panelutils.InitColumns()
 
-			var position *mgl64.Vec3
-			var x, y, z int32
-			if e != nil {
-				position = &e.CameraComponent.TargetPositionOffset
-				x, y, z = int32(position.X()), int32(position.Y()), int32(position.Z())
-			}
-
-			panelutils.SetupRow("Target Position Offset", func() {
-				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
-				imgui.PushIDStr("position x")
-				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
-					if e != nil {
-						position[0] = float64(x)
-						entity.SetDirty(e)
-					}
-				}
-				imgui.PopID()
-				imgui.SameLine()
-				imgui.PushIDStr("position y")
-				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
-					if e != nil {
-						position[1] = float64(y)
-						entity.SetDirty(e)
-					}
-				}
-				imgui.PopID()
-				imgui.SameLine()
-				imgui.PushIDStr("position z")
-				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
-					if e != nil {
-						position[2] = float64(z)
-						entity.SetDirty(e)
-					}
-				}
-				imgui.PopID()
-				imgui.PopItemWidth()
-			}, false)
-
 			panelutils.SetupRow("Target ID", func() {
 				var target int32
 

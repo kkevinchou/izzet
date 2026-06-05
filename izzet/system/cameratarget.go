@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 type CameraTargetSystem struct {
@@ -57,14 +56,17 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 		t := apputils.RenderBlendMath(deltaMs)
 		position = position.Sub(target.RenderBlend.BlendStartPosition).Mul(t).Add(target.RenderBlend.BlendStartPosition)
 	}
-	targetPosition := position.Add(camera.CameraComponent.TargetPositionOffset)
 
-	cameraOffset := settings.CameraEntityFollowDistance
-	if settings.FirstPersonCamera {
-		cameraOffset = 0
+	targetPosition := position.Add(mgl64.Vec3{0, 1.5, 0})
+	if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
+		targetPosition = position.Add(mgl64.Vec3{0, 1.5, 0})
 	}
 
-	cameraPosition := camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, cameraOffset}).Add(targetPosition)
+	cameraPosition := camera.GetLocalRotation().Rotate(mgl64.Vec3{0.32, 0, 1.5}).Add(targetPosition)
+	if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
+		cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
+	}
+
 	entityCameraLine := collider.Line{P1: targetPosition, P2: cameraPosition}
 	ents := s.app.World().SpatialPartition().EntitiesByLineSegment(entityCameraLine)
 

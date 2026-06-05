@@ -2,6 +2,7 @@ package menus
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
@@ -70,6 +71,22 @@ func view(app renderiface.App, renderContext RenderContext) {
 
 		if imgui.MenuItemBoolV("Show Texture Viewer", "", runtimeConfig.ShowTextureViewer, true) {
 			runtimeConfig.ShowTextureViewer = !runtimeConfig.ShowTextureViewer
+		}
+
+		playerCamera := app.GetPlayerCamera()
+		cameraModeEnabled := playerCamera != nil && playerCamera.CameraComponent != nil
+		if imgui.BeginMenuV("Camera Mode", cameraModeEnabled) {
+			selected := playerCamera.CameraComponent.CameraMode == entity.CameraModeOverShoulder
+			if imgui.MenuItemBoolV("Over The Shoulder", "", selected, true) {
+				playerCamera.CameraComponent.CameraMode = entity.CameraModeOverShoulder
+			}
+
+			selected = playerCamera.CameraComponent.CameraMode == entity.CameraModeWideView
+			if imgui.MenuItemBoolV("Wide View", "", selected, true) {
+				playerCamera.CameraComponent.CameraMode = entity.CameraModeWideView
+			}
+
+			imgui.EndMenu()
 		}
 
 		imgui.EndMenu()

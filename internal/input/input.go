@@ -123,18 +123,6 @@ type Input struct {
 	Commands       []any
 }
 
-// func (i Input) Copy() Input {
-// 	keyboardInput := KeyboardInput{}
-// 	for k, v := range i.KeyboardInput {
-// 		keyboardInput[k] = v
-// 	}
-
-// 	return Input{
-// 		KeyboardInput: keyboardInput,
-// 		MouseInput:    i.MouseInput,
-// 	}
-// }
-
 type InputCollector struct {
 	MousePosition    [2]float64
 	MouseButtonState [3]bool

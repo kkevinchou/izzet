@@ -60,12 +60,11 @@ const (
 	MaxCommandFrameBufferSize int = 100000
 	MaxStateBufferSize        int = 100
 
-	FirstPersonCamera                bool    = false
-	CameraEntityFollowDistance       float64 = 5
-	CameraEntityFollowVerticalOffset float64 = 1.5
-	ProjectsDirectory                string  = ".project/"
-	NewProjectName                   string  = "my_new_project"
-	StartupProject                   string  = "1" // if empty, defaults to default scene
+	FirstPersonCamera          bool    = false
+	CameraEntityFollowDistance float64 = 5
+	ProjectsDirectory          string  = ".project/"
+	NewProjectName             string  = "my_new_project"
+	StartupProject             string  = "1" // if empty, defaults to default scene
 
 	CharacterSpeed           float64 = 10
 	CharacterFlySpeed        float64 = 30

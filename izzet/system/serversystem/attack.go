@@ -1,11 +1,9 @@
 package serversystem
 
 import (
-	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/system"
 )
 
@@ -27,36 +25,17 @@ func (s *AttackSystem) Update(delta time.Duration, world system.GameWorld) {
 			continue
 		}
 		e.AttackComponent.Attacking = false
-
-		closestDist := math.MaxFloat64
-		var dirToTarget mgl64.Vec3
-		var closestEntity *entity.Entity
-
-		for _, targetEntity := range world.Entities() {
-			if e.ID == targetEntity.ID {
-				continue
-			}
-
-			// only attack players
-			if targetEntity.CharacterControllerComponent == nil {
-				continue
-			}
-
-			vecToTarget := targetEntity.Position().Sub(e.Position())
-			if vecToTarget.Len() < closestDist {
-				closestDist = vecToTarget.Len()
-				closestEntity = targetEntity
-				dirToTarget = vecToTarget.Normalize()
-			}
+		if e.AttackComponent.TargetID <= 0 {
+			continue
 		}
 
-		if closestEntity != nil && closestDist <= e.AttackComponent.AttackRange {
-			newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{dirToTarget.X(), 0, dirToTarget.Z()})
+		target := world.GetEntityByID(e.AttackComponent.TargetID)
+		vecToTarget := target.Position().Sub(e.Position())
+
+		if vecToTarget.Len() <= e.AttackComponent.AttackRange {
+			newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{vecToTarget.X(), 0, vecToTarget.Z()})
 			e.AttackComponent.Attacking = true
 			e.SetLocalRotation(newRotation)
-			// if e.NavigationComponent != nil {
-			// 	e.NavigationComponent.State = entity.PathfindingStateNoGoal
-			// }
 		}
 	}
 }

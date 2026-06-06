@@ -257,7 +257,6 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 
 	if event, ok := keyboardInput[input.KeyboardKeyF11]; ok && event.Event == input.KeyboardEventUp {
@@ -273,24 +272,22 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	if g.renderSystem.GameWindowHovered() {
-		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
+	// mouseInput := frameInput.MouseInput
+	if event, ok := keyboardInput[input.KeyboardKeyQ]; ok && event.Event == input.KeyboardEventUp {
+		if !g.relativeMouseActive {
+			// if g.renderSystem.GameWindowHovered() {
+			// if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
 			g.relativeMouseActive = true
-			g.relativeMouseOrigin[0] = int32(mouseInput.Position[0])
-			g.relativeMouseOrigin[1] = int32(mouseInput.Position[1])
 			g.platform.SetRelativeMouse(true)
-		}
-	}
+			// }
+		} else {
+			w, h := g.WindowSize()
+			g.platform.MoveMouse(int32(w/2), int32(h/2))
+			// g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
 
-	// we should continue to keep the mouse at the origin, regardless of
-	// whether we're hoving the game window or not
-	if g.relativeMouseActive {
-		g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-
-		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
 			g.relativeMouseActive = false
 			g.platform.SetRelativeMouse(false)
-			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
+			// g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
 		}
 	}
 }

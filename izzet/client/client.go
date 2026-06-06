@@ -286,6 +286,10 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 	return nearPlanePos.Vec3()
 }
 
+func (g *Client) RelativeMouse() bool {
+	return g.relativeMouseActive
+}
+
 type Window interface {
 	Minimized() bool
 	WindowFocused() bool

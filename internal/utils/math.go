@@ -26,8 +26,10 @@ func Vec3ApproxEqualThreshold(v1 mgl64.Vec3, v2 mgl64.Vec3, threshold float64) b
 	})
 }
 
+var zeroVec mgl64.Vec3
+
 func Vec3IsZero(v mgl64.Vec3) bool {
-	return v[0] == 0 && v[1] == 0 && v[2] == 0
+	return v == zeroVec
 }
 
 func Cross2D(v1, v2 mgl64.Vec3) float64 {

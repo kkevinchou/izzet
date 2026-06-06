@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/system"
 )
 
@@ -31,9 +32,10 @@ func (s *AttackSystem) Update(delta time.Duration, world system.GameWorld) {
 
 		target := world.GetEntityByID(e.AttackComponent.TargetID)
 		vecToTarget := target.Position().Sub(e.Position())
+		vecToTargetXZ := mgl64.Vec3{vecToTarget.X(), 0, vecToTarget.Z()}
 
-		if vecToTarget.Len() <= e.AttackComponent.AttackRange {
-			newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, mgl64.Vec3{vecToTarget.X(), 0, vecToTarget.Z()})
+		if vecToTarget.Len() <= e.AttackComponent.AttackRange && !utils.Vec3IsZero(vecToTargetXZ) {
+			newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, vecToTargetXZ)
 			e.AttackComponent.Attacking = true
 			e.SetLocalRotation(newRotation)
 		}

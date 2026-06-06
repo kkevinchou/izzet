@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/navmesh"
-	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/system"
 )
@@ -79,7 +79,7 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 						dir = dir.Normalize()
 						e.Kinematic.MoveIntent = dir
 
-						if dir != apputils.ZeroVec {
+						if !utils.Vec3IsZero(dir) {
 							newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
 							e.SetLocalRotation(newRotation)
 						}

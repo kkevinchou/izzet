@@ -25,8 +25,6 @@ func GenBuffers(n int32, buffer *uint32) {
 	gl.GenBuffers(n, buffer)
 }
 
-var ZeroVec = mgl64.Vec3{}
-
 func Vec3ApproxEqualThreshold(v1 mgl64.Vec3, v2 mgl64.Vec3, threshold float64) bool {
 	return v1.ApproxFuncEqual(v2, func(a, b float64) bool {
 		return math.Abs(a-b) < threshold
@@ -41,12 +39,6 @@ func Vec4ApproxEqualThreshold(v1 mgl64.Vec4, v2 mgl64.Vec4, threshold float64) b
 
 func PathToProjectFile(projectName string) string {
 	return filepath.Join(settings.ProjectsDirectory, projectName, "main_project.izt")
-}
-
-var zeroVec mgl64.Vec3
-
-func IsZeroVec(v mgl64.Vec3) bool {
-	return v == zeroVec
 }
 
 func GetControlVector(keyboardInput input.KeyboardInput) mgl64.Vec3 {

@@ -63,7 +63,7 @@ func (s *AISystem) Update(delta time.Duration, world system.GameWorld) {
 	// 				dir = dir.Normalize()
 	// 				e.Kinematic.MoveIntent = dir
 
-	// 				if dir != apputils.ZeroVec {
+	// 				if !utils.Vec3IsZero(dir) {
 	// 					newRotation := mgl64.QuatBetweenVectors(mgl64.Vec3{0, 0, -1}, dir)
 	// 					e.SetLocalRotation(newRotation)
 	// 				}

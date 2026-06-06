@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision"
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
-	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -72,7 +72,7 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 
 		v := e1.TotalKinematicVelocity()
 		vWithoutY := mgl64.Vec3{v.X(), 0, v.Z()}
-		if vWithoutY != apputils.ZeroVec {
+		if !utils.Vec3IsZero(vWithoutY) {
 			vWithoutY = vWithoutY.Normalize()
 			rotateEntityToFaceMovement(e1, vWithoutY)
 		}
@@ -314,7 +314,7 @@ func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact 
 }
 
 func rotateEntityToFaceMovement(entity types.KinematicEntity, movementDirWithoutY mgl64.Vec3) {
-	if movementDirWithoutY != apputils.ZeroVec {
+	if !utils.Vec3IsZero(movementDirWithoutY) {
 		currentRotation := entity.GetLocalRotation()
 		currentViewingVector := currentRotation.Rotate(mgl64.Vec3{0, 0, -1})
 		newViewingVector := movementDirWithoutY

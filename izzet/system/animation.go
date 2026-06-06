@@ -3,8 +3,8 @@ package system
 import (
 	"time"
 
+	"github.com/kkevinchou/izzet/internal/utils"
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
-	"github.com/kkevinchou/izzet/izzet/apputils"
 )
 
 type AnimationSystem struct {
@@ -45,7 +45,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				var ctx animationparser.GameContext
 				ctx.Grounded = e.Kinematic.Grounded
 				ctx.JumpTriggered = e.Kinematic.Jump
-				ctx.Moving = !apputils.IsZeroVec(e.Kinematic.MoveIntent)
+				ctx.Moving = !utils.Vec3IsZero(e.Kinematic.MoveIntent)
 				if e.AttackComponent != nil {
 					ctx.Attacking = e.AttackComponent.Attacking
 				}

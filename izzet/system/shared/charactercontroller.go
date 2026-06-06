@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -58,7 +59,7 @@ func calculateMovementDir(cameraRotation mgl64.Quat, controlVector mgl64.Vec3) m
 	movementDir := forwardVector.Add(rightVector)
 	movementDir = movementDir.Add(mgl64.Vec3{0, 1, 0}.Mul(controlVector.Y()))
 
-	if movementDir != apputils.ZeroVec {
+	if !utils.Vec3IsZero(movementDir) {
 		return movementDir.Normalize()
 	}
 
@@ -68,7 +69,7 @@ func calculateMovementDir(cameraRotation mgl64.Quat, controlVector mgl64.Vec3) m
 func removeYMovement(movementDir mgl64.Vec3) mgl64.Vec3 {
 	movementDirWithoutY := movementDir
 	movementDirWithoutY[1] = 0
-	if movementDirWithoutY != apputils.ZeroVec {
+	if !utils.Vec3IsZero(movementDirWithoutY) {
 		movementDirWithoutY = movementDirWithoutY.Normalize()
 	}
 	return movementDirWithoutY

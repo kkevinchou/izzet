@@ -64,6 +64,14 @@ func WorldProps(app renderiface.App) {
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
 
+		panelutils.SetupRow("Camera Target Offset", func() {
+			inputVec3(&runtimeConfig.CameraTargetOffset)
+		}, false)
+
+		panelutils.SetupRow("Camera Over Shoulder Offset", func() {
+			inputVec3(&runtimeConfig.CameraOverShoulderOffset)
+		}, false)
+
 		imgui.EndTable()
 	}
 
@@ -308,4 +316,22 @@ func formatNumber(number int) string {
 	}
 
 	return fmtStr
+}
+
+func inputVec3(v *mgl64.Vec3) {
+	x, y, z := float32(v.X()), float32(v.Y()), float32(v.Z())
+
+	imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
+	if imgui.InputFloatV("##x", &x, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
+		v[0] = float64(x)
+	}
+	imgui.SameLine()
+	if imgui.InputFloatV("##y", &y, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
+		v[1] = float64(y)
+	}
+	imgui.SameLine()
+	if imgui.InputFloatV("##z", &z, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
+		v[2] = float64(z)
+	}
+	imgui.PopItemWidth()
 }

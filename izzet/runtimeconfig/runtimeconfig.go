@@ -6,8 +6,10 @@ import (
 )
 
 type RuntimeConfig struct {
-	CameraPosition mgl64.Vec3
-	CameraRotation mgl64.Quat
+	CameraPosition           mgl64.Vec3
+	CameraRotation           mgl64.Quat
+	CameraTargetOffset       mgl64.Vec3
+	CameraOverShoulderOffset mgl64.Vec3
 
 	DirectionalLightDir             [3]float32
 	Roughness                       float32
@@ -186,6 +188,8 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		BloomUpsamplingScale:     1.0,
 		Color:                    [3]float32{1, 1, 1},
 		RenderSpatialPartition:   false,
+		CameraTargetOffset:       mgl64.Vec3{0, 1.75, 0},
+		CameraOverShoulderOffset: mgl64.Vec3{0.65, 0, 2.0},
 
 		Near: 0.1,
 		Far:  500,

@@ -57,14 +57,23 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 		position = position.Sub(target.RenderBlend.BlendStartPosition).Mul(t).Add(target.RenderBlend.BlendStartPosition)
 	}
 
-	targetPosition := position.Add(mgl64.Vec3{0, 1.5, 0})
-	if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
-		targetPosition = position.Add(mgl64.Vec3{0, 1.5, 0})
-	}
+	var targetPosition mgl64.Vec3
+	var cameraPosition mgl64.Vec3
+	if s.app.IsClient() {
+		runtimeConfig := s.app.RuntimeConfig()
+		targetPosition = position.Add(runtimeConfig.CameraTargetOffset)
 
-	cameraPosition := camera.GetLocalRotation().Rotate(mgl64.Vec3{0.32, 0, 1.5}).Add(targetPosition)
-	if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
-		cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
+		cameraPosition = camera.GetLocalRotation().Rotate(runtimeConfig.CameraOverShoulderOffset).Add(targetPosition)
+		if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
+			cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
+		}
+	} else {
+		targetPosition = position.Add(mgl64.Vec3{0, 1.75, 0})
+
+		cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0.65, 0, 2.0}).Add(targetPosition)
+		if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
+			cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
+		}
 	}
 
 	entityCameraLine := collider.Line{P1: targetPosition, P2: cameraPosition}

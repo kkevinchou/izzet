@@ -859,6 +859,9 @@ func (r *RenderSystem) HoveredEntityID() *int {
 	return r.hoveredEntityID
 }
 
+// TODO - might have undefined behavior calling this outside of the render loop
+// rather than proactively sampling the color texture, we should treat this as
+// a buffered request that the renderer eventually gets to
 func (r *RenderSystem) TryHoverEntity() *int {
 	r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	return r.hoveredEntityID

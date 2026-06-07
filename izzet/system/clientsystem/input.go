@@ -44,9 +44,11 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 }
 
 func (s *InputSystem) computePlayerCameraRotation(camera *entity.Entity, frameInput input.Input) mgl64.Quat {
-	newRotation := computeCameraRotation(frameInput, camera)
-	camera.SetLocalRotation(newRotation)
-	return newRotation
+	if s.app.CaptureMouse() {
+		newRotation := computeCameraRotation(frameInput, camera)
+		camera.SetLocalRotation(newRotation)
+	}
+	return camera.GetLocalRotation()
 }
 
 func computeCameraRotation(frameInput input.Input, camera *entity.Entity) mgl64.Quat {
@@ -54,7 +56,8 @@ func computeCameraRotation(frameInput input.Input, camera *entity.Entity) mgl64.
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
 	var mouseSensitivity float64 = 0.005
-	if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {
+	// if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {
+	if !mouseInput.MouseMotionEvent.IsZero() {
 		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
 	}

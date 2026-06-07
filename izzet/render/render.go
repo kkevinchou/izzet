@@ -96,6 +96,9 @@ type RenderSystem struct {
 
 	// the current scene size and the size of the framebuffer used for rendering
 	sceneSize [2]int
+
+	// screen-space top-left of the SceneView image
+	sceneViewPosition [2]float32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -795,6 +798,9 @@ func (r *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnab
 	sceneSize = sceneSize.Sub(imgui.Vec2{X: 0, Y: drawerbarSize})
 	r.nextSceneSize = [2]int{int(sceneSize.X), int(sceneSize.Y)}
 
+	imagePosition := imgui.CursorScreenPos()
+	r.sceneViewPosition = [2]float32{imagePosition.X, imagePosition.Y}
+
 	imgui.ImageV(
 		texture,
 		imgui.Vec2{X: float32(r.sceneSize[0]), Y: float32(r.sceneSize[1])},
@@ -853,6 +859,9 @@ func (r *RenderSystem) HoveredEntityID() *int {
 	return r.hoveredEntityID
 }
 
+// TODO - might have undefined behavior calling this outside of the render loop
+// rather than proactively sampling the color texture, we should treat this as
+// a buffered request that the renderer eventually gets to
 func (r *RenderSystem) TryHoverEntity() *int {
 	r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	return r.hoveredEntityID

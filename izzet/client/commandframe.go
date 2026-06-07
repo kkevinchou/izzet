@@ -31,12 +31,6 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	g.commandFrame += 1
 	frameInput := g.GetFrameInput()
 
-	if g.platform.Resized() {
-		w, h := g.window.GetSize()
-		g.SetWindowSize(w, h)
-		g.renderSystem.ReinitializeFrameBuffers()
-	}
-
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
 	g.handleSpatialPartition()
@@ -257,7 +251,6 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	mouseInput := frameInput.MouseInput
 	keyboardInput := frameInput.KeyboardInput
 
 	if event, ok := keyboardInput[input.KeyboardKeyF11]; ok && event.Event == input.KeyboardEventUp {
@@ -273,25 +266,10 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	if g.renderSystem.GameWindowHovered() {
-		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
-			g.relativeMouseActive = true
-			g.relativeMouseOrigin[0] = int32(mouseInput.Position[0])
-			g.relativeMouseOrigin[1] = int32(mouseInput.Position[1])
-			g.platform.SetRelativeMouse(true)
-		}
-	}
-
-	// we should continue to keep the mouse at the origin, regardless of
-	// whether we're hoving the game window or not
-	if g.relativeMouseActive {
-		g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-
-		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
-			g.relativeMouseActive = false
-			g.platform.SetRelativeMouse(false)
-			g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-		}
+	// mouseInput := frameInput.MouseInput
+	if event, ok := keyboardInput[input.KeyboardKeyQ]; ok && event.Event == input.KeyboardEventUp {
+		capture := g.CaptureMouse()
+		g.SetCaptureMouse(!capture)
 	}
 }
 
@@ -335,7 +313,7 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 
 	var viewRotation mgl64.Vec2
 	var controlVector mgl64.Vec3
-	if g.relativeMouseActive {
+	if g.captureMouse {
 		var xRel, yRel float64
 		var mouseSensitivity float64 = 0.003
 		if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {

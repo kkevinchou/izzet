@@ -30,6 +30,10 @@ type MainRenderPass struct {
 	app renderiface.App
 	sm  *shaders.ShaderManager
 
+	reticleVAO         uint32
+	reticleVBO         uint32
+	reticleVertexCount int32
+
 	// circle textures
 	redCircleFB         uint32
 	redCircleTexture    uint32
@@ -75,6 +79,8 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 	ctx.MainMultisampleFBO = msFBO
 	ctx.MainMultisampleTexture = msTextures[0]
 
+	p.initReticle(width, height)
+
 	// init textures
 	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
 	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
@@ -112,6 +118,8 @@ func (p *MainRenderPass) Resize(width, height int, ctx *context.RenderPassContex
 	gl.DeleteTextures(1, &ctx.MainMultisampleColorPickingTexture)
 	ctx.MainMultisampleTexture = msTextures[0]
 	ctx.MainMultisampleColorPickingTexture = msTextures[1]
+
+	p.resizeReticle(width, height)
 }
 
 func (p *MainRenderPass) Render(
@@ -150,6 +158,10 @@ func (p *MainRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	p.renderGizmos(viewerContext, renderContext)
 
+	if p.app.CaptureMouse() {
+		p.drawReticle()
+	}
+
 	if p.app.RuntimeConfig().EnableAntialiasing {
 		// blit rendered image
 		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, renderPassContext.MainMultisampleFBO)
@@ -171,6 +183,88 @@ func (p *MainRenderPass) Render(
 
 		gl.BlitFramebuffer(0, 0, int32(renderContext.Width()), int32(renderContext.Height()), 0, 0, int32(renderContext.Width()), int32(renderContext.Height()), gl.COLOR_BUFFER_BIT, gl.NEAREST)
 	}
+}
+
+func (p *MainRenderPass) drawReticle() {
+	shader := p.sm.GetShaderProgram("flat")
+	shader.Use()
+	shader.SetUniformUInt("entityID", 0)
+	shader.SetUniformFloat("intensity", 1)
+	shader.SetUniformMat4("model", mgl32.Ident4())
+	shader.SetUniformMat4("view", mgl32.Ident4())
+	shader.SetUniformMat4("projection", mgl32.Ident4())
+
+	gl.Disable(gl.DEPTH_TEST)
+	gl.BindVertexArray(p.reticleVAO)
+
+	outlineVertexCount := p.reticleVertexCount / 2
+	shader.SetUniformVec3("color", mgl32.Vec3{0, 0, 0})
+	rutils.IztDrawArrays(0, outlineVertexCount)
+
+	shader.SetUniformVec3("color", mgl32.Vec3{1, 1, 1})
+	rutils.IztDrawArrays(outlineVertexCount, outlineVertexCount)
+	gl.Enable(gl.DEPTH_TEST)
+}
+
+func (p *MainRenderPass) initReticle(width, height int) {
+	apputils.GenBuffers(1, &p.reticleVBO)
+	gl.GenVertexArrays(1, &p.reticleVAO)
+
+	gl.BindVertexArray(p.reticleVAO)
+	gl.BindBuffer(gl.ARRAY_BUFFER, p.reticleVBO)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.EnableVertexAttribArray(0)
+
+	p.resizeReticle(width, height)
+}
+
+func (p *MainRenderPass) resizeReticle(width, height int) {
+	vertices := buildReticleVertices(width, height)
+
+	gl.BindVertexArray(p.reticleVAO)
+	gl.BindBuffer(gl.ARRAY_BUFFER, p.reticleVBO)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	p.reticleVertexCount = int32(len(vertices) / 3)
+}
+
+func buildReticleVertices(width, height int) []float32 {
+	const gap float32 = 5
+	const length float32 = 13
+	const outlineThickness float32 = 3
+	const reticleThickness float32 = 1
+
+	var vertices []float32
+	appendReticleSegmentQuads(&vertices, width, height, gap, length, outlineThickness)
+	appendReticleSegmentQuads(&vertices, width, height, gap, length, reticleThickness)
+	return vertices
+}
+
+func appendReticleSegmentQuads(vertices *[]float32, width, height int, centerOffset, length, thickness float32) {
+	// left
+	appendReticleQuad(vertices, width, height, -centerOffset-length, -thickness/2, -centerOffset, thickness/2)
+	// right
+	appendReticleQuad(vertices, width, height, centerOffset, -thickness/2, centerOffset+length, thickness/2)
+	// top
+	appendReticleQuad(vertices, width, height, -thickness/2, -centerOffset-length, thickness/2, -centerOffset)
+	// bottom
+	appendReticleQuad(vertices, width, height, -thickness/2, centerOffset, thickness/2, centerOffset+length)
+}
+
+func appendReticleQuad(vertices *[]float32, width, height int, leftPx, topPx, rightPx, bottomPx float32) {
+	left := leftPx / float32(width) * 2
+	right := rightPx / float32(width) * 2
+	top := -topPx / float32(height) * 2
+	bottom := -bottomPx / float32(height) * 2
+
+	*vertices = append(*vertices,
+		left, bottom, 0,
+		right, bottom, 0,
+		right, top, 0,
+
+		right, top, 0,
+		left, top, 0,
+		left, bottom, 0,
+	)
 }
 
 func (p *MainRenderPass) drawColliders(

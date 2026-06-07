@@ -23,6 +23,7 @@ type App interface {
 
 	StopLiveWorld()
 	AppMode() types.AppMode
+	CaptureMouse() bool
 
 	// for panels
 	Platform() platforms.Platform
@@ -47,7 +48,6 @@ type App interface {
 
 	GetPlayerEntity() *entity.Entity
 	ConfigureUI(enabled bool)
-	WindowSize() (int, int)
 	Minimized() bool
 	WindowFocused() bool
 	ImportAsset(config assets.AssetConfig)

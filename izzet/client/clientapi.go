@@ -160,6 +160,7 @@ func (g *Client) Connect() error {
 
 	g.SetPlayerCamera(camera)
 	g.SetPlayerEntity(playerEntity)
+	g.SetCaptureMouse(true)
 
 	iztlog.Logger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
 
@@ -432,14 +433,6 @@ func (g *Client) Shutdown() {
 
 func (g *Client) ConfigureUI(enabled bool) {
 	g.runtimeConfig.UIEnabled = enabled
-}
-
-func (g *Client) SetWindowSize(width, height int) {
-	g.width, g.height = width, height
-}
-
-func (g *Client) WindowSize() (int, int) {
-	return g.width, g.height
 }
 
 func (g *Client) Minimized() bool {

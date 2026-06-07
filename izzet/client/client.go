@@ -31,11 +31,10 @@ import (
 )
 
 type Client struct {
-	gameOver      bool
-	window        Window
-	platform      platforms.Platform
-	width, height int
-	client        network.IzzetClient
+	gameOver bool
+	window   Window
+	platform platforms.Platform
+	client   network.IzzetClient
 
 	assetManager *assets.AssetManager
 
@@ -45,7 +44,7 @@ type Client struct {
 	editHistory  *edithistory.EditHistory
 
 	relativeMouseOrigin [2]int32
-	relativeMouseActive bool
+	captureMouse        bool
 
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
@@ -114,14 +113,12 @@ func New(shaderDirectory string, config settings.Config) *Client {
 		window:          window,
 		appMode:         types.AppModeEditor,
 		platform:        sdlPlatform,
-		width:           w,
-		height:          h,
 		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
 	}
 
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
-	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
+	g.renderSystem = render.New(g, shaderDirectory, w, h)
 
 	g.camera = &editorcamera.Camera{
 		Position: settings.EditorCameraStartPosition,
@@ -284,6 +281,21 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 	nearPlanePos = nearPlanePos.Mul(1.0 / nearPlanePos.W())
 
 	return nearPlanePos.Vec3()
+}
+
+func (g *Client) CaptureMouse() bool {
+	return g.captureMouse
+}
+
+func (g *Client) SetCaptureMouse(capture bool) {
+	if !capture {
+		w, h := g.window.GetSize()
+		g.platform.MoveMouse(int32(w/2), int32(h/2))
+	}
+
+	g.captureMouse = capture
+	g.platform.SetRelativeMouse(capture)
+
 }
 
 type Window interface {

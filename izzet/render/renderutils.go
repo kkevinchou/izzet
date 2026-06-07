@@ -230,24 +230,15 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
 	defer gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 
-	_, windowHeight := r.app.WindowSize()
 	gl.PixelStorei(gl.PACK_ALIGNMENT, 1)
 
 	if len(pickingBuffer) == 0 {
 		pickingBuffer = make([]byte, 4)
 	}
 
-	var drawerbarSize int32 = 0
-	if r.app.RuntimeConfig().UIEnabled {
-		drawerbarSize = int32(settings.DrawerbarSize)
-	}
+	pickX, pickY := r.sceneViewFramebufferPosition(pixelPosition)
 
-	var mouseX, mouseY int32 = int32(imgui.MousePos().X), int32(imgui.MousePos().Y)
-
-	// in OpenGL, the mouse origin is the bottom left corner, so we need to offset by the drawerbar size if it's present
-	// SDL, on the other hand, has the mouse origin in the top left corner
-	var weirdOffset float32 = -1 // Weirdge
-	gl.ReadPixels(mouseX, int32(windowHeight)-mouseY-drawerbarSize+int32(weirdOffset), 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
+	gl.ReadPixels(pickX, pickY, 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
 
 	uintID := binary.LittleEndian.Uint32(pickingBuffer)
 	if uintID == settings.EmptyColorPickingID {
@@ -256,6 +247,16 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 
 	id := int(uintID)
 	return &id
+}
+
+func (r *RenderSystem) sceneViewFramebufferPosition(pixelPosition mgl64.Vec2) (int32, int32) {
+	_, height := r.SceneSize()
+
+	localX := pixelPosition.X() - float64(r.sceneViewPosition[0])
+	localY := pixelPosition.Y() - float64(r.sceneViewPosition[1])
+
+	// ImGui/input coordinates are top-left origin; OpenGL framebuffer reads are bottom-left origin.
+	return int32(localX), int32(height) - 1 - int32(localY)
 }
 
 func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far, fovX, fovY float64) []mgl64.Vec3 {

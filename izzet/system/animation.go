@@ -49,6 +49,10 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				if e.AttackComponent != nil {
 					ctx.Attacking = e.AttackComponent.Attacking
 				}
+				if e.AimDownSightsComponent != nil && e.AimDownSightsComponent.Active {
+					ctx.AimDownSights = true
+					ctx.AimDownSightsFire = e.AimDownSightsComponent.Fire
+				}
 
 				ctx.Dead = e.Deadge
 				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)

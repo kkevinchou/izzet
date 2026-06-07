@@ -7,6 +7,8 @@ states:
     transitions:
       - to: jumpStart
         when: [jumpTriggered]
+      - to: aimDownSights
+        when: [grounded, aimDownSights]
       - to: sprintEnter
         when: [moving]
       - to: idle
@@ -38,10 +40,46 @@ states:
     transitions:
       - to: jumpStart
         when: [jumpTriggered]
+      - to: aimDownSights
+        when: [grounded, aimDownSights]
       - to: sprintEnter
         when: [grounded, moving]
       - to: idle
         when: [grounded, clipCompleted]
+
+  aimDownSights:
+    clip: Pistol_Aim_Neutral
+    playRate: 1
+    transitions:
+      - to: jumpStart
+        when: [jumpTriggered]
+      - to: aimDownSightsFire
+        when: [grounded, aimDownSights, aimDownSightsFire]
+      - to: airborne
+        when: [airborne]
+      - to: sprintEnter
+        when: [grounded, moving, notAimDownSights]
+      - to: idle
+        when: [grounded, stationary, notAimDownSights]
+      - to: aimDownSights
+        when: [grounded, aimDownSights, clipCompleted]
+
+  aimDownSightsFire:
+    clip: Pistol_Shoot
+    playRate: 1
+    transitions:
+      - to: jumpStart
+        when: [jumpTriggered]
+      - to: aimDownSightsFire
+        when: [grounded, aimDownSights, aimDownSightsFire]
+      - to: aimDownSights
+        when: [clipCompleted, grounded, aimDownSights]
+      - to: sprintEnter
+        when: [clipCompleted, grounded, moving]
+      - to: idle
+        when: [clipCompleted, grounded, stationary]
+      - to: airborne
+        when: [clipCompleted, airborne]
 
   sprint:
     clip: Sprint_Loop
@@ -49,6 +87,8 @@ states:
     transitions:
       - to: jumpStart
         when: [jumpTriggered]
+      - to: aimDownSights
+        when: [grounded, aimDownSights]
       - to: sprintExit
         when: [stationary]
       - to: sprint
@@ -64,6 +104,8 @@ states:
     transitions:
       - to: jumpStart
         when: [jumpTriggered]
+      - to: aimDownSights
+        when: [grounded, aimDownSights]
       - to: idle
         when: [stationary, grounded]
       - to: sprint
@@ -77,6 +119,8 @@ states:
     transitions:
       - to: jumpStart
         when: [jumpTriggered]
+      - to: aimDownSights
+        when: [grounded, aimDownSights]
       - to: sprintEnter
         when: [moving, grounded]
       - to: idle

@@ -136,7 +136,6 @@ type RuntimeConfig struct {
 	TestPosition       mgl32.Vec3
 	TestAngle          int32
 	TestObjectRotation int32
-	TestFOV            int32
 
 	TestAlbedo    [3]float32
 	TestMetallic  float32
@@ -164,6 +163,10 @@ type CloudTexture struct {
 	RenderTexture uint32
 	ColorChannel  string
 }
+
+const (
+	DefaultFovX float32 = 105
+)
 
 func DefaultRuntimeConfig() *RuntimeConfig {
 	return &RuntimeConfig{
@@ -193,7 +196,7 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 
 		Near: 0.1,
 		Far:  500,
-		FovX: 105,
+		FovX: DefaultFovX,
 
 		FogStart:   200,
 		FogEnd:     1000,
@@ -312,7 +315,6 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		TestPosition:               mgl32.Vec3{0, 4, 6},
 		TestAngle:                  -35,
 		TestObjectRotation:         35,
-		TestFOV:                    70,
 		TestAlbedo:                 [3]float32{0.5, 0.5, 0.5},
 		TestMetallic:               0,
 		TestRoughness:              1,

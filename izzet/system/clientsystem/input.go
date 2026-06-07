@@ -141,7 +141,7 @@ func computeCameraRotation(frameInput input.Input, camera *entity.Entity) mgl64.
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
 	var mouseSensitivity float64 = 0.005
-	// if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {
+
 	if !mouseInput.MouseMotionEvent.IsZero() {
 		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
 		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity

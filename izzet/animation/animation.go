@@ -9,11 +9,13 @@ import (
 )
 
 type GameContext struct {
-	Grounded      bool
-	JumpTriggered bool
-	Moving        bool
-	Attacking     bool
-	Dead          bool
+	Grounded          bool
+	JumpTriggered     bool
+	Moving            bool
+	Attacking         bool
+	Dead              bool
+	AimDownSights     bool
+	AimDownSightsFire bool
 }
 
 //go:embed player_state_machine.yaml
@@ -53,6 +55,18 @@ func parseCondition(name string) iztanimation.Condition[GameContext] {
 	case "attacking":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return ctx.Attacking
+		})
+	case "aimDownSights":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return ctx.AimDownSights
+		})
+	case "notAimDownSights":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return !ctx.AimDownSights
+		})
+	case "aimDownSightsFire":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return ctx.AimDownSightsFire
 		})
 	case "dead":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {

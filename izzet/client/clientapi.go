@@ -292,6 +292,7 @@ func (g *Client) DisconnectClient() {
 		g.StopLiveWorld()
 		g.ConfigureUI(true)
 	}
+	g.SetMouseCaptured(false)
 }
 
 func (g *Client) World() *world.GameWorld {

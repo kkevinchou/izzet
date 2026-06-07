@@ -7,25 +7,27 @@ import (
 )
 
 type Entity struct {
-	ID                          int
-	Name                        string
-	Physics                     *PhysicsComponent
-	Kinematic                   *KinematicComponent
-	Collider                    *ColliderComponent
-	Particles                   *ParticleGenerator
-	IsSocket                    bool
-	LightInfo                   *LightInfo
-	ImageComponent              *ImageComponent
-	ShapeData                   []*ShapeData
-	Material                    *MaterialComponent
-	Animation                   *AnimationComponent
-	RenderBlend                 *RenderBlend
-	CameraComponent             *CameraComponent
+	ID   int
+	Name string
+
+	// Optional Components
+	Physics         *PhysicsComponent
+	Kinematic       *KinematicComponent
+	Collider        *ColliderComponent
+	Particles       *ParticleGenerator
+	IsSocket        bool
+	LightInfo       *LightInfo
+	ImageComponent  *ImageComponent
+	ShapeData       []*ShapeData
+	Material        *MaterialComponent
+	Animation       *AnimationComponent
+	RenderBlend     *RenderBlend
+	CameraComponent *CameraComponent
+
 	Static                      bool
 	ClientSidePredicted         bool
 	SimplifiedTriMeshIterations int
-
-	Deadge bool
+	Deadge                      bool
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
@@ -50,7 +52,8 @@ type Entity struct {
 	NavigationComponent *NavigationComponent
 	AttackComponent     *AttackComponent
 
-	SpawnPointComponent *SpawnPoint
+	SpawnPointComponent    *SpawnPoint
+	AimDownSightsComponent *AimDownSightsComponent
 }
 
 func (e *Entity) GetID() int {

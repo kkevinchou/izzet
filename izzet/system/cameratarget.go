@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 )
 
 type CameraTargetSystem struct {
@@ -59,11 +60,19 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 
 	var targetPosition mgl64.Vec3
 	var cameraPosition mgl64.Vec3
+
 	if s.app.IsClient() {
+		s.app.RuntimeConfig().FovX = runtimeconfig.DefaultFovX
 		runtimeConfig := s.app.RuntimeConfig()
 		targetPosition = position.Add(runtimeConfig.CameraTargetOffset)
 
-		cameraPosition = camera.GetLocalRotation().Rotate(runtimeConfig.CameraOverShoulderOffset).Add(targetPosition)
+		cameraOffset := runtimeConfig.CameraOverShoulderOffset
+		if target.AimDownSightsComponent != nil && target.AimDownSightsComponent.Active {
+			cameraOffset = mgl64.Vec3{0.6, 0, 1.1}
+			s.app.RuntimeConfig().FovX = 85
+		}
+
+		cameraPosition = camera.GetLocalRotation().Rotate(cameraOffset).Add(targetPosition)
 		if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
 			cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
 		}

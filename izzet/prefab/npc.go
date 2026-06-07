@@ -24,6 +24,7 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	handle := assets.NewSingleEntityMeshHandle(modelName)
 	e := entity.CreateEmptyEntity(modelName)
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: 7}
+	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 
 	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
 	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)

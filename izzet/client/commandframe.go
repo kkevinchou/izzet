@@ -34,7 +34,6 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	if g.platform.Resized() {
 		w, h := g.window.GetSize()
 		g.SetWindowSize(w, h)
-		g.renderSystem.ReinitializeFrameBuffers()
 	}
 
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION

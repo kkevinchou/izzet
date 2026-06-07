@@ -44,7 +44,7 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 }
 
 func (s *InputSystem) computePlayerCameraRotation(camera *entity.Entity, frameInput input.Input) mgl64.Quat {
-	if s.app.CaptureMouse() {
+	if s.app.MouseCaptured() {
 		newRotation := computeCameraRotation(frameInput, camera)
 		camera.SetLocalRotation(newRotation)
 	}

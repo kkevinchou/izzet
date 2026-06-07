@@ -45,7 +45,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 		}
 	}
 
-	g.handleInputCommands(frameInput)
+	g.handleCommonInputCommands(frameInput)
 
 	if g.AppMode() == types.AppModeEditor {
 		g.handleEditorInputCommands(frameInput)
@@ -55,6 +55,9 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 		g.handlePlayInputCommands(frameInput)
 	}
 
+	if g.MouseCaptured() {
+		g.platform.MoveMouse(g.capturedMouseOrigin[0], g.capturedMouseOrigin[1])
+	}
 	g.RuntimeConfig().CameraPosition = g.camera.Position
 	g.RuntimeConfig().CameraRotation = g.camera.Rotation
 }
@@ -140,8 +143,8 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			}
 		}
 	}
-	// set pathfinding start and goal
 
+	// set pathfinding start and goal
 	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
 		if event.Event == input.KeyboardEventUp {
 			if g.navMesh != nil {
@@ -168,6 +171,7 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 			}
 		}
 	}
+
 	if event, ok := keyboardInput[input.KeyboardKeyM]; ok {
 		if event.Event == input.KeyboardEventUp {
 			mousePosition := frameInput.MouseInput.Position
@@ -190,6 +194,17 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 					g.runtimeConfig.NavigationMeshGoalPoint = pt
 				}
 			}
+		}
+	}
+
+	mouseInput := frameInput.MouseInput
+	if g.renderSystem.GameWindowHovered() {
+		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
+			g.capturedMouseOrigin[0] = int32(mouseInput.Position[0])
+			g.capturedMouseOrigin[1] = int32(mouseInput.Position[1])
+			g.SetMouseCaptured(true)
+		} else if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventUp {
+			g.SetMouseCaptured(false)
 		}
 	}
 }
@@ -240,9 +255,19 @@ func (g *Client) handlePlayInputCommands(frameInput input.Input) {
 			g.Client().Send(rpcMessage, g.CommandFrame())
 		}
 	}
+
+	mouseInput := frameInput.MouseInput
+	if event, ok := keyboardInput[input.KeyboardKeyQ]; ok && event.Event == input.KeyboardEventUp {
+		capture := !g.MouseCaptured()
+		g.SetMouseCaptured(capture)
+		if capture {
+			g.capturedMouseOrigin[0] = int32(mouseInput.Position[0])
+			g.capturedMouseOrigin[0] = int32(mouseInput.Position[0])
+		}
+	}
 }
 
-func (g *Client) handleInputCommands(frameInput input.Input) {
+func (g *Client) handleCommonInputCommands(frameInput input.Input) {
 	for _, cmd := range frameInput.Commands {
 		if c, ok := cmd.(input.FileDropCommand); ok {
 			fmt.Println("received drop file command", c.File)
@@ -266,11 +291,6 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 		}
 	}
 
-	// mouseInput := frameInput.MouseInput
-	if event, ok := keyboardInput[input.KeyboardKeyQ]; ok && event.Event == input.KeyboardEventUp {
-		capture := g.CaptureMouse()
-		g.SetCaptureMouse(!capture)
-	}
 }
 
 func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
@@ -313,7 +333,8 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 
 	var viewRotation mgl64.Vec2
 	var controlVector mgl64.Vec3
-	if g.captureMouse {
+
+	if g.MouseCaptured() {
 		var xRel, yRel float64
 		var mouseSensitivity float64 = 0.003
 		if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {
@@ -345,7 +366,7 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 
 	// keyboardInput := frameInput.KeyboardInput
 	// controlVector := getControlVector(keyboardInput)
-	if !frameInput.MouseInput.MouseButtonState[1] {
+	if !g.MouseCaptured() {
 		controlVector = mgl64.Vec3{}
 	}
 

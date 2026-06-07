@@ -158,7 +158,7 @@ func (p *MainRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	p.renderGizmos(viewerContext, renderContext)
 
-	if p.app.CaptureMouse() {
+	if p.app.AppMode() == types.AppModePlay && p.app.MouseCaptured() {
 		p.drawReticle()
 	}
 

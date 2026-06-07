@@ -33,5 +33,5 @@ type App interface {
 	World() *world.GameWorld
 	PredictionDebugLogging() bool
 	SetPredictionDebugLogging(value bool)
-	CaptureMouse() bool
+	MouseCaptured() bool
 }

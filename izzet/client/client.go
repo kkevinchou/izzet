@@ -43,7 +43,7 @@ type Client struct {
 	renderSystem *render.RenderSystem
 	editHistory  *edithistory.EditHistory
 
-	relativeMouseOrigin [2]int32
+	capturedMouseOrigin [2]int32
 	captureMouse        bool
 
 	editorWorld *world.GameWorld
@@ -283,19 +283,13 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 	return nearPlanePos.Vec3()
 }
 
-func (g *Client) CaptureMouse() bool {
+func (g *Client) MouseCaptured() bool {
 	return g.captureMouse
 }
 
-func (g *Client) SetCaptureMouse(capture bool) {
-	if !capture {
-		w, h := g.window.GetSize()
-		g.platform.MoveMouse(int32(w/2), int32(h/2))
-	}
-
+func (g *Client) SetMouseCaptured(capture bool) {
 	g.captureMouse = capture
 	g.platform.SetRelativeMouse(capture)
-
 }
 
 type Window interface {

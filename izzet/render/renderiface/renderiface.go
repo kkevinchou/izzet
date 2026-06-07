@@ -48,7 +48,6 @@ type App interface {
 
 	GetPlayerEntity() *entity.Entity
 	ConfigureUI(enabled bool)
-	WindowSize() (int, int)
 	Minimized() bool
 	WindowFocused() bool
 	ImportAsset(config assets.AssetConfig)

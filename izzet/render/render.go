@@ -96,6 +96,9 @@ type RenderSystem struct {
 
 	// the current scene size and the size of the framebuffer used for rendering
 	sceneSize [2]int
+
+	// screen-space top-left of the SceneView image
+	sceneViewPosition [2]float32
 }
 
 func New(app renderiface.App, shaderDirectory string, width, height int) *RenderSystem {
@@ -794,6 +797,9 @@ func (r *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnab
 	sceneSize := imgui.ContentRegionAvail()
 	sceneSize = sceneSize.Sub(imgui.Vec2{X: 0, Y: drawerbarSize})
 	r.nextSceneSize = [2]int{int(sceneSize.X), int(sceneSize.Y)}
+
+	imagePosition := imgui.CursorScreenPos()
+	r.sceneViewPosition = [2]float32{imagePosition.X, imagePosition.Y}
 
 	imgui.ImageV(
 		texture,

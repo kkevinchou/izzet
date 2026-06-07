@@ -16,8 +16,7 @@ type SDLPlatform struct {
 	shouldStop bool
 	time       uint64
 
-	resized bool
-	keyMap  map[sdl.Scancode]imgui.Key
+	keyMap map[sdl.Scancode]imgui.Key
 }
 
 func NewSDLPlatform(width, height int, fullscreen bool) (*SDLPlatform, *SDLWindow, error) {
@@ -115,18 +114,10 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		keyEvent := event.(*sdl.KeyboardEvent)
 		platform.addKeyEvent(keyEvent, false)
 		inputCollector.AddKeyEvent(sdl.GetScancodeName(keyEvent.Keysym.Scancode), false)
-	case sdl.WINDOWEVENT:
-		windowEvent := event.(*sdl.WindowEvent)
-		event := windowEvent.Event
-		if event == sdl.WINDOWEVENT_RESIZED {
-			platform.resized = true
-		}
 	}
 }
 
 func (platform *SDLPlatform) NewFrame() {
-	platform.resized = false
-
 	// Setup display size (every frame to accommodate for window resizing)
 	displaySize := platform.DisplaySize()
 	platform.imguiIO.SetDisplaySize(imgui.Vec2{X: displaySize[0], Y: displaySize[1]})
@@ -271,10 +262,6 @@ func (platform *SDLPlatform) PostRender() {
 
 func (platform *SDLPlatform) ShouldStop() bool {
 	return platform.shouldStop
-}
-
-func (platform *SDLPlatform) Resized() bool {
-	return platform.resized
 }
 
 type SDLWindow struct {

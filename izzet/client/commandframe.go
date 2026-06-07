@@ -31,11 +31,6 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	g.commandFrame += 1
 	frameInput := g.GetFrameInput()
 
-	if g.platform.Resized() {
-		w, h := g.window.GetSize()
-		g.SetWindowSize(w, h)
-	}
-
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
 	g.handleSpatialPartition()

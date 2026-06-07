@@ -31,11 +31,10 @@ import (
 )
 
 type Client struct {
-	gameOver      bool
-	window        Window
-	platform      platforms.Platform
-	width, height int
-	client        network.IzzetClient
+	gameOver bool
+	window   Window
+	platform platforms.Platform
+	client   network.IzzetClient
 
 	assetManager *assets.AssetManager
 
@@ -114,14 +113,12 @@ func New(shaderDirectory string, config settings.Config) *Client {
 		window:          window,
 		appMode:         types.AppModeEditor,
 		platform:        sdlPlatform,
-		width:           w,
-		height:          h,
 		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
 	}
 
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
-	g.renderSystem = render.New(g, shaderDirectory, g.width, g.height)
+	g.renderSystem = render.New(g, shaderDirectory, w, h)
 
 	g.camera = &editorcamera.Camera{
 		Position: settings.EditorCameraStartPosition,
@@ -292,7 +289,7 @@ func (g *Client) CaptureMouse() bool {
 
 func (g *Client) SetCaptureMouse(capture bool) {
 	if !capture {
-		w, h := g.WindowSize()
+		w, h := g.window.GetSize()
 		g.platform.MoveMouse(int32(w/2), int32(h/2))
 	}
 

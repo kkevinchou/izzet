@@ -23,6 +23,7 @@ type App interface {
 
 	StopLiveWorld()
 	AppMode() types.AppMode
+	CaptureMouse() bool
 
 	// for panels
 	Platform() platforms.Platform

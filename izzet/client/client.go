@@ -45,7 +45,7 @@ type Client struct {
 	editHistory  *edithistory.EditHistory
 
 	relativeMouseOrigin [2]int32
-	relativeMouseActive bool
+	captureMouse        bool
 
 	editorWorld *world.GameWorld
 	world       *world.GameWorld
@@ -286,8 +286,19 @@ func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int
 	return nearPlanePos.Vec3()
 }
 
-func (g *Client) RelativeMouse() bool {
-	return g.relativeMouseActive
+func (g *Client) CaptureMouse() bool {
+	return g.captureMouse
+}
+
+func (g *Client) SetCaptureMouse(capture bool) {
+	if !capture {
+		w, h := g.WindowSize()
+		g.platform.MoveMouse(int32(w/2), int32(h/2))
+	}
+
+	g.captureMouse = capture
+	g.platform.SetRelativeMouse(capture)
+
 }
 
 type Window interface {

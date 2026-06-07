@@ -160,6 +160,7 @@ func (g *Client) Connect() error {
 
 	g.SetPlayerCamera(camera)
 	g.SetPlayerEntity(playerEntity)
+	g.SetCaptureMouse(true)
 
 	iztlog.Logger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
 

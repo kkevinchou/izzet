@@ -274,21 +274,8 @@ func (g *Client) handleInputCommands(frameInput input.Input) {
 
 	// mouseInput := frameInput.MouseInput
 	if event, ok := keyboardInput[input.KeyboardKeyQ]; ok && event.Event == input.KeyboardEventUp {
-		if !g.relativeMouseActive {
-			// if g.renderSystem.GameWindowHovered() {
-			// if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
-			g.relativeMouseActive = true
-			g.platform.SetRelativeMouse(true)
-			// }
-		} else {
-			w, h := g.WindowSize()
-			g.platform.MoveMouse(int32(w/2), int32(h/2))
-			// g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-
-			g.relativeMouseActive = false
-			g.platform.SetRelativeMouse(false)
-			// g.platform.MoveMouse(g.relativeMouseOrigin[0], g.relativeMouseOrigin[1])
-		}
+		capture := g.CaptureMouse()
+		g.SetCaptureMouse(!capture)
 	}
 }
 
@@ -332,7 +319,7 @@ func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duratio
 
 	var viewRotation mgl64.Vec2
 	var controlVector mgl64.Vec3
-	if g.relativeMouseActive {
+	if g.captureMouse {
 		var xRel, yRel float64
 		var mouseSensitivity float64 = 0.003
 		if mouseInput.MouseButtonState[1] && !mouseInput.MouseMotionEvent.IsZero() {

@@ -16,9 +16,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
-	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -51,8 +49,6 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 		g.handleEditorInputCommands(frameInput)
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)
-	} else if g.AppMode() == types.AppModePlay {
-		g.handlePlayInputCommands(frameInput)
 	}
 
 	if g.MouseCaptured() {
@@ -209,64 +205,6 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 	}
 }
 
-func (g *Client) handlePlayInputCommands(frameInput input.Input) {
-	keyboardInput := frameInput.KeyboardInput
-
-	// set ai pathfinding target
-	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
-		if event.Event == input.KeyboardEventUp {
-			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderSystem.SceneSize()
-			ctx := g.renderSystem.CameraViewerContext()
-
-			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
-
-			menuBarSize := float64(render.CalculateMenuBarHeight())
-			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
-
-			nearPlanePosition := rutils.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
-			camera := g.GetPlayerCamera()
-			position := camera.Position()
-			point, success := g.intersectRayWithEntities(position, nearPlanePosition.Sub(position).Normalize())
-
-			if success {
-				rpcMessage := network.RPCMessage{
-					Pathfind: &network.Pathfind{Goal: point},
-				}
-				g.Client().Send(rpcMessage, g.CommandFrame())
-			}
-		}
-	}
-
-	if event, ok := keyboardInput[input.KeyboardKeyJ]; ok {
-		if event.Event == input.KeyboardEventUp {
-			rpcMessage := network.RPCMessage{
-				CreateEntity: &network.CreateEntityRPC{EntityType: string(panels.SelectedCreateEntityComboOption), Patrol: true},
-			}
-			g.Client().Send(rpcMessage, g.CommandFrame())
-		}
-	}
-
-	if event, ok := keyboardInput[input.KeyboardKeyK]; ok {
-		if event.Event == input.KeyboardEventUp {
-			rpcMessage := network.RPCMessage{
-				CreateEntity: &network.CreateEntityRPC{EntityType: string(panels.SelectedCreateEntityComboOption)},
-			}
-			g.Client().Send(rpcMessage, g.CommandFrame())
-		}
-	}
-
-	mouseInput := frameInput.MouseInput
-	if event, ok := keyboardInput[input.KeyboardKeyQ]; ok && event.Event == input.KeyboardEventUp {
-		capture := !g.MouseCaptured()
-		g.SetMouseCaptured(capture)
-		if capture {
-			g.capturedMouseOrigin[0] = int32(mouseInput.Position[0])
-			g.capturedMouseOrigin[0] = int32(mouseInput.Position[0])
-		}
-	}
-}
-
 func (g *Client) handleCommonInputCommands(frameInput input.Input) {
 	for _, cmd := range frameInput.Commands {
 		if c, ok := cmd.(input.FileDropCommand); ok {
@@ -290,7 +228,6 @@ func (g *Client) handleCommonInputCommands(frameInput input.Input) {
 			g.DisconnectClient()
 		}
 	}
-
 }
 
 func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
@@ -325,6 +262,10 @@ func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3,
 	}
 
 	return hitPoint, hit
+}
+
+func (g *Client) IntersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
+	return g.intersectRayWithEntities(position, dir)
 }
 
 func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duration) {

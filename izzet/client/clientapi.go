@@ -25,6 +25,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -321,6 +322,18 @@ func (g *Client) GetFrameInput() input.Input {
 
 func (g *Client) GetFrameInputPtr() *input.Input {
 	return &g.frameInput
+}
+
+func (g *Client) SceneSize() (int, int) {
+	return g.renderSystem.SceneSize()
+}
+
+func (g *Client) CameraViewerContext() context.ViewerContext {
+	return g.renderSystem.CameraViewerContext()
+}
+
+func (g *Client) SetCapturedMouseOrigin(x, y int32) {
+	g.capturedMouseOrigin = [2]int32{x, y}
 }
 
 func (g *Client) SetServerStats(stats serverstats.ServerStats) {

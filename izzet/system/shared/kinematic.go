@@ -70,13 +70,6 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 		e1.Kinematic.Velocity = movementDir.Mul(e1.Kinematic.Speed)
 		e1.AddPosition(e1.TotalKinematicVelocity().Mul(delta.Seconds()))
 
-		v := e1.TotalKinematicVelocity()
-		vWithoutY := mgl64.Vec3{v.X(), 0, v.Z()}
-		if !utils.Vec3IsZero(vWithoutY) {
-			vWithoutY = vWithoutY.Normalize()
-			rotateEntityToFaceMovement(e1, vWithoutY)
-		}
-
 		var runCount int = 0
 
 		var grounded bool

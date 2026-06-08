@@ -75,11 +75,11 @@ states:
       - to: aimDownSights
         when: [clipCompleted, grounded, aimDownSights]
       - to: sprintEnter
-        when: [clipCompleted, grounded, moving]
+        when: [grounded, moving, notAimDownSights]
       - to: idle
-        when: [clipCompleted, grounded, stationary]
+        when: [grounded, stationary, notAimDownSights]
       - to: airborne
-        when: [clipCompleted, airborne]
+        when: [airborne]
 
   sprint:
     clip: Sprint_Loop

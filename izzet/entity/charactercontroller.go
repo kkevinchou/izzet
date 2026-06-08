@@ -7,4 +7,5 @@ type CharacterControllerComponent struct {
 	FlySpeed            float64
 	WebVector           mgl64.Vec3
 	PersistentWebVector mgl64.Vec3
+	CameraEntityID      int
 }

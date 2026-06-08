@@ -244,6 +244,7 @@ func (g *Client) setupSystems() {
 	g.playModeSystems = append(g.playModeSystems, clientsystem.NewInputSystem(g))
 	g.playModeSystems = append(g.playModeSystems, clientsystem.NewCharacterControllerSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewKinematicSystem(g))
+	g.playModeSystems = append(g.playModeSystems, system.NewCharacterOrientationSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewCameraTargetSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewAnimationSystem(g))
 	g.playModeSystems = append(g.playModeSystems, system.NewCleanupSystem(g))

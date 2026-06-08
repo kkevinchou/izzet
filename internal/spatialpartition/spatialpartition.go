@@ -99,6 +99,11 @@ func (s *SpatialPartition) EntitiesByLineSegment(line collider.Line) []Entity {
 }
 
 func (s *SpatialPartition) PartitionsByLineSegment(inLine collider.Line) []PartitionKey {
+	inLine, valid := clipLineToAABB(inLine, s.calcMinPartitionVertex(), s.calcMaxPartitionVertex())
+	if !valid {
+		return nil
+	}
+
 	// spatial partition is centered at 0,0, transform the line to be relative to that origin
 	transformOffset := float64(s.PartitionCount*s.PartitionDimension) / 2
 	transformVec := mgl64.Vec3{transformOffset, transformOffset, transformOffset}
@@ -113,6 +118,15 @@ func (s *SpatialPartition) PartitionsByLineSegment(inLine collider.Line) []Parti
 	ix1 := int(math.Floor(line.P2.X() / float64(s.PartitionDimension)))
 	iy1 := int(math.Floor(line.P2.Y() / float64(s.PartitionDimension)))
 	iz1 := int(math.Floor(line.P2.Z() / float64(s.PartitionDimension)))
+
+	// clamp partitions
+	ix0 = min(max(ix0, 0), s.PartitionCount-1)
+	iy0 = min(max(iy0, 0), s.PartitionCount-1)
+	iz0 = min(max(iz0, 0), s.PartitionCount-1)
+
+	ix1 = min(max(ix1, 0), s.PartitionCount-1)
+	iy1 = min(max(iy1, 0), s.PartitionCount-1)
+	iz1 = min(max(iz1, 0), s.PartitionCount-1)
 
 	dx := line.P2.X() - line.P1.X()
 	dy := line.P2.Y() - line.P1.Y()
@@ -132,16 +146,6 @@ func (s *SpatialPartition) PartitionsByLineSegment(inLine collider.Line) []Parti
 
 	x, y, z := ix0, iy0, iz0
 	endX, endY, endZ := ix1, iy1, iz1
-
-	// clip partitions
-
-	endX = min(endX, s.PartitionCount-1)
-	endY = min(endY, s.PartitionCount-1)
-	endZ = min(endZ, s.PartitionCount-1)
-
-	endX = max(endX, 0)
-	endY = max(endY, 0)
-	endZ = max(endZ, 0)
 
 	var result []PartitionKey
 
@@ -165,6 +169,49 @@ func (s *SpatialPartition) PartitionsByLineSegment(inLine collider.Line) []Parti
 	}
 
 	return result
+}
+
+// clipLineToAABB uses the slab method to clip a line to an AABB
+// each slab is a min and max range along one axis (x, y, z)
+// we find the min and max t value amongst all slabs which determines how the line is clipped
+func clipLineToAABB(line collider.Line, min, max mgl64.Vec3) (collider.Line, bool) {
+	p := line.P1
+	d := line.P2.Sub(line.P1)
+
+	tMin := 0.0
+	tMax := 1.0
+
+	for axis := 0; axis < 3; axis++ {
+		if math.Abs(d[axis]) < 1e-9 {
+			if p[axis] < min[axis] || p[axis] > max[axis] {
+				// starting point is outside of the slab and the direction of the line is parallel.
+				// so it does not overlap with the slab
+				return collider.Line{}, false
+			}
+			// line is within this slab, does not impose restrictions on t
+			continue
+		}
+
+		// calculate the t value of where it intersects the slab
+		t1 := (min[axis] - p[axis]) / d[axis]
+		t2 := (max[axis] - p[axis]) / d[axis]
+
+		if t1 > t2 {
+			t1, t2 = t2, t1
+		}
+
+		tMin = math.Max(tMin, t1)
+		tMax = math.Min(tMax, t2)
+
+		if tMin > tMax {
+			return collider.Line{}, false
+		}
+	}
+
+	return collider.Line{
+		P1: line.P1.Add(d.Mul(tMin)),
+		P2: line.P1.Add(d.Mul(tMax)),
+	}, true
 }
 
 func sign(x float64) int {

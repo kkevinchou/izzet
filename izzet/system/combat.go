@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 const (
@@ -35,7 +36,13 @@ func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
 		position := camera.Position()
 
 		line := collider.Line{P1: position, P2: position.Add(bulletRange)}
-		hitTargets := world.SpatialPartition().EntitiesByLineSegment(line)
+		partitionEntities := world.SpatialPartition().EntitiesByLineSegment(line)
+
+		var hitTargets []*entity.Entity
+		for _, e := range partitionEntities {
+			hitTargets = append(hitTargets, world.GetEntityByID(e.GetID()))
+		}
+
 		if hitEntityID, _, hit := collision.ClosestHit(line, hitTargets); hit {
 			hitEntity := world.GetEntityByID(hitEntityID)
 			if hitEntity.HealthComponent != nil {

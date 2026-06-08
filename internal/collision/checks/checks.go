@@ -93,6 +93,43 @@ func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3
 	return mgl64.Vec3{}, mgl64.Vec3{}, false
 }
 
+func IntersectRaySphere(ray collider.Ray, sphere collider.Sphere) (mgl64.Vec3, bool) {
+	O := ray.Origin
+	C := sphere.Center
+	D := ray.Direction
+	r := sphere.Radius
+
+	OC := O.Sub(C)
+
+	// a, b, c are coefficients to the quadratic formula solving for where the ray intersects the sphere
+	a := D.Dot(D)
+	b := 2.0 * D.Dot(OC)
+	c := OC.Dot(OC) - r*r
+
+	discriminant := b*b - 4*a*c
+	if discriminant < 0 {
+		return mgl64.Vec3{}, false
+	}
+
+	sqrtDisc := math.Sqrt(discriminant)
+
+	t0 := (-b - sqrtDisc) / (2 * a)
+	t1 := (-b + sqrtDisc) / (2 * a)
+
+	// Prefer the closer hit in front of the ray origin.
+	if t0 >= 0 {
+		return O.Add(D.Mul(t0)), true
+	}
+
+	// If t0 is negative but t1 is positive, the ray started inside the sphere.
+	if t1 >= 0 {
+		return O.Add(D.Mul(t1)), true
+	}
+
+	// Both hits are behind the ray origin.
+	return mgl64.Vec3{}, false
+}
+
 func IntersectLineAABB(line collider.Line, bb collider.BoundingBox) (mgl64.Vec3, mgl64.Vec3, bool) {
 	tMin := 0.0
 	tMax := 1.0

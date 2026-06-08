@@ -1,6 +1,8 @@
 package collision
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
@@ -123,4 +125,72 @@ func CheckOverlapAABBAABB(aabb1 *collider.BoundingBox, aabb2 *collider.BoundingB
 	}
 
 	return true
+}
+
+type TriMeshEntities interface {
+	GetID() int
+	TriMeshCollider() collider.TriMesh
+	HasTriMeshCollider() bool
+	CapsuleCollider() collider.Capsule
+	HasCapsuleCollider() bool
+	BoundingBox() collider.BoundingBox
+}
+
+func ClosestHit[T TriMeshEntities](line collider.Line, entities []T) (int, mgl64.Vec3, bool) {
+	var hit bool
+	var hitPoint mgl64.Vec3
+	entityID := -1
+
+	minDistSq := math.MaxFloat64
+	lineDistSqr := line.P2.Sub(line.P1).LenSqr()
+
+	ray := collider.Ray{Origin: line.P1, Direction: line.P2.Sub(line.P1).Normalize()}
+	for _, e := range entities {
+		if _, _, success := checks.IntersectLineAABB(line, e.BoundingBox()); !success {
+			continue
+		}
+
+		if e.HasCapsuleCollider() {
+			capsule := e.CapsuleCollider()
+			s := collider.Sphere{Center: capsule.Top, Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
+
+			point, success := checks.IntersectRaySphere(ray, s)
+			if success {
+				distSq := point.Sub(line.P1).LenSqr()
+				if distSq < minDistSq && distSq <= lineDistSqr {
+					hit = true
+					minDistSq = distSq
+					hitPoint = point
+					entityID = e.GetID()
+				}
+			}
+
+			s = collider.Sphere{Center: capsule.Bottom, Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
+			point, success = checks.IntersectRaySphere(ray, s)
+			if success {
+				distSq := point.Sub(line.P1).LenSqr()
+				if distSq < minDistSq && distSq <= lineDistSqr {
+					hit = true
+					minDistSq = distSq
+					hitPoint = point
+					entityID = e.GetID()
+				}
+			}
+		} else if e.HasTriMeshCollider() {
+			point, _, success := checks.IntersectRayTriMesh(ray, e.TriMeshCollider())
+			if !success {
+				continue
+			}
+			distSq := point.Sub(line.P1).LenSqr()
+			if distSq < minDistSq && distSq <= lineDistSqr {
+				hit = true
+				minDistSq = distSq
+				hitPoint = point
+				entityID = e.GetID()
+			}
+		}
+
+	}
+
+	return entityID, hitPoint, hit
 }

@@ -133,6 +133,16 @@ func (s *SpatialPartition) PartitionsByLineSegment(inLine collider.Line) []Parti
 	x, y, z := ix0, iy0, iz0
 	endX, endY, endZ := ix1, iy1, iz1
 
+	// clip partitions
+
+	endX = min(endX, s.PartitionCount-1)
+	endY = min(endY, s.PartitionCount-1)
+	endZ = min(endZ, s.PartitionCount-1)
+
+	endX = max(endX, 0)
+	endY = max(endY, 0)
+	endZ = max(endZ, 0)
+
 	var result []PartitionKey
 
 	for {

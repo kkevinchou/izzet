@@ -23,6 +23,7 @@ type Entity struct {
 	Animation       *AnimationComponent
 	RenderBlend     *RenderBlend
 	CameraComponent *CameraComponent
+	HealthComponent *HealthComponent
 
 	Static                      bool
 	ClientSidePredicted         bool

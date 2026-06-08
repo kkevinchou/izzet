@@ -38,7 +38,7 @@ func (s *PostFrameSystem) Update(delta time.Duration, world system.GameWorld) {
 			}
 
 			if bs.Deadge {
-				world.DeleteEntity(bs.EntityID)
+				// 	world.DeleteEntity(bs.EntityID)
 			} else {
 				entity.SetLocalPosition(e, bs.Position)
 				e.SetLocalRotation(bs.Rotation)

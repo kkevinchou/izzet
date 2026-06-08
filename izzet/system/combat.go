@@ -1,0 +1,49 @@
+package system
+
+import (
+	"time"
+
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/collision"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
+)
+
+const (
+	maxBulletDistance float64 = 15
+)
+
+type CombatSystem struct {
+	app App
+}
+
+func NewCombatSystem(app App) *CombatSystem {
+	return &CombatSystem{app: app}
+}
+
+func (s *CombatSystem) Name() string {
+	return "CombatSystem"
+}
+
+func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
+	for _, e := range world.Entities() {
+		if e.AimDownSightsComponent == nil || !e.AimDownSightsComponent.Fire {
+			continue
+		}
+		camera := world.GetEntityByID(e.CharacterControllerComponent.CameraEntityID)
+
+		bulletRange := camera.LocalRotation.Rotate(mgl64.Vec3{0, 0, -1}).Normalize().Mul(maxBulletDistance)
+		position := camera.Position()
+
+		line := collider.Line{P1: position, P2: position.Add(bulletRange)}
+		hitTargets := world.SpatialPartition().EntitiesByLineSegment(line)
+		if hitEntityID, _, hit := collision.ClosestHit(line, hitTargets); hit {
+			hitEntity := world.GetEntityByID(hitEntityID)
+			if hitEntity.HealthComponent != nil {
+				hitEntity.HealthComponent.Amount -= 50
+				if hitEntity.HealthComponent.Amount <= 0 {
+					hitEntity.Deadge = true
+				}
+			}
+		}
+	}
+}

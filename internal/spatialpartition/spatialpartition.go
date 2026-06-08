@@ -13,6 +13,10 @@ type Entity interface {
 	GetID() int
 	Position() mgl64.Vec3
 	BoundingBox() collider.BoundingBox
+	TriMeshCollider() collider.TriMesh
+	HasTriMeshCollider() bool
+	CapsuleCollider() collider.Capsule
+	HasCapsuleCollider() bool
 }
 
 type Partition struct {

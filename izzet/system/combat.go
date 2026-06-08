@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	maxBulletDistance float64 = 15
+	maxBulletDistance float64 = 300
 )
 
 type CombatSystem struct {

@@ -47,7 +47,7 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 
 		camera := prefab.CreateCamera(e.PlayerID)
 		playerEntity.CharacterControllerComponent.CameraEntityID = camera.GetID()
-		camera.CameraComponent.Target = &playerEntity.ID
+		camera.CameraComponent.Target = playerEntity.ID
 
 		world.AddEntity(playerEntity)
 		world.AddEntity(camera)

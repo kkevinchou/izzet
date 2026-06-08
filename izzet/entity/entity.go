@@ -71,3 +71,7 @@ func (e *Entity) Dirty() bool {
 func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
 }
+
+const (
+	InvalidEntityID int = -1
+)

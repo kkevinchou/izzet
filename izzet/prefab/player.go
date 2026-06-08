@@ -22,7 +22,7 @@ func CreatePlayer(app App) *entity.Entity {
 		Bottom: mgl64.Vec3{0, radius, 0},
 	}
 	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
-	e.CharacterControllerComponent = &entity.CharacterControllerComponent{}
+	e.CharacterControllerComponent = &entity.CharacterControllerComponent{CameraEntityID: entity.InvalidEntityID}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	handle := assets.NewSingleEntityMeshHandle("mannequin_m")
 

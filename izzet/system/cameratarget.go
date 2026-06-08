@@ -35,22 +35,12 @@ func (s *CameraTargetSystem) Update(delta time.Duration, world GameWorld) {
 }
 
 func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera *entity.Entity) {
-	if camera.CameraComponent.Target == nil {
-		return
-	}
-
-	targetID := camera.CameraComponent.Target
-	if targetID == nil {
-		return
-	}
-
-	targetEntity := world.GetEntityByID(*targetID)
-	if targetEntity == nil {
-		return
-	}
-
 	// swivel around target
-	target := world.GetEntityByID(*camera.CameraComponent.Target)
+	target := world.GetEntityByID(camera.CameraComponent.Target)
+	if target == nil {
+		return
+	}
+
 	position := target.Position()
 	if target.RenderBlend.Active {
 		deltaMs := time.Since(target.RenderBlend.StartTime).Milliseconds()
@@ -102,7 +92,7 @@ func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera
 		if ent.Collider == nil || ent.Collider.TriMeshCollider == nil {
 			continue
 		}
-		if ent.ID == *targetID {
+		if ent.ID == target.GetID() {
 			continue
 		}
 

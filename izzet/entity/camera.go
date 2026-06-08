@@ -1,7 +1,7 @@
 package entity
 
 type CameraComponent struct {
-	Target     *int
+	Target     int
 	CameraMode CameraMode
 }
 

@@ -20,17 +20,7 @@ func (s *CharacterControllerSystem) Name() string {
 }
 
 func (s *CharacterControllerSystem) Update(delta time.Duration, world system.GameWorld) {
-	camera := s.app.GetPlayerCamera()
-
-	if camera == nil || camera.CameraComponent.Target == nil {
-		return
-	}
-
-	e := world.GetEntityByID(*camera.CameraComponent.Target)
-	if e == nil || e.CharacterControllerComponent == nil {
-		return
-	}
-
+	e := s.app.GetPlayerEntity()
 	frameInput := s.app.GetFrameInput()
 	shared.UpdateCharacterController(delta, frameInput, e)
 }

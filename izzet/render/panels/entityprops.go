@@ -135,28 +135,6 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		return
 	}
 
-	if e.CameraComponent != nil {
-		if imgui.CollapsingHeaderTreeNodeFlagsV("Camera Properties", imgui.TreeNodeFlagsNone) {
-			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
-
-			panelutils.SetupRow("Target ID", func() {
-				var target int32
-
-				if e.CameraComponent.Target != nil {
-					target = int32(*e.CameraComponent.Target)
-				}
-
-				if imgui.InputInt("", &target) {
-					intTarget := int(target)
-					e.CameraComponent.Target = &intTarget
-				}
-			}, true)
-
-			imgui.EndTable()
-		}
-	}
-
 	if e.LightInfo != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Light Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)

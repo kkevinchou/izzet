@@ -19,31 +19,20 @@ func (s *CharacterControllerSystem) Name() string {
 	return "CharacterControllerSystem"
 }
 
-var moveCount int
-
 func (s *CharacterControllerSystem) Update(delta time.Duration, world system.GameWorld) {
-	for _, entity := range world.Entities() {
-		if entity.PlayerInput == nil {
+	for _, camera := range world.Entities() {
+		if camera.CameraComponent == nil {
 			continue
 		}
 
-		if entity.CameraComponent == nil {
-			continue
-		}
-
-		camera := entity
-		if camera.CameraComponent.Target == nil {
-			return
-		}
-
-		targetEntity := world.GetEntityByID(*camera.CameraComponent.Target)
-		if targetEntity == nil || targetEntity.CharacterControllerComponent == nil {
+		target := world.GetEntityByID(camera.CameraComponent.Target)
+		if target == nil || target.CharacterControllerComponent == nil {
 			return
 		}
 
 		frameInput := s.app.GetPlayerInput(camera.PlayerInput.PlayerID)
 
 		camera.SetLocalRotation(frameInput.CameraRotation)
-		shared.UpdateCharacterController(delta, frameInput, targetEntity)
+		shared.UpdateCharacterController(delta, frameInput, target)
 	}
 }

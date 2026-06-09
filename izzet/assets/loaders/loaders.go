@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/backends/opengl"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type TextureLoadJob struct {
@@ -156,4 +157,50 @@ func LoadFonts(directory string) map[string]fonts.Font {
 	}
 
 	return fonts
+}
+
+type AudioData struct {
+	Device sdl.AudioDeviceID
+	Bytes  []byte
+}
+
+func LoadAudio(directory string) map[string]AudioData {
+	var subDirectories []string = []string{"audio"}
+
+	extensions := map[string]any{
+		".wav": nil,
+	}
+
+	// fonts := map[string]fonts.Font{}
+	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
+
+	audioData := map[string]AudioData{}
+
+	for _, metaData := range fileMetaData {
+		if strings.HasPrefix(metaData.Name, "_") {
+			continue
+		}
+		buf, spec := sdl.LoadWAV(metaData.Path)
+		desired := *spec
+		desired.Callback = nil // nil callback means we will use QueueAudio
+
+		var obtained sdl.AudioSpec
+		device, err := sdl.OpenAudioDevice(
+			"",    // default audio device
+			false, // false = playback, true = capture/recording
+			&desired,
+			&obtained,
+			0, // do not allow SDL to change the format
+		)
+		if err != nil {
+			panic(fmt.Errorf("open audio device: %w", err))
+		}
+
+		// Start playback. SDL audio devices start paused.
+		sdl.PauseAudioDevice(device, false)
+
+		audioData[metaData.Name] = AudioData{Device: device, Bytes: buf}
+	}
+
+	return audioData
 }

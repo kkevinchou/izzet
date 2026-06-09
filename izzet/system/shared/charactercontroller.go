@@ -20,7 +20,9 @@ func UpdateCharacterController(delta time.Duration, frameInput input.Input, e *e
 
 	e.CharacterControllerComponent.ControlVector = apputils.GetControlVector(keyboardInput)
 	e.AimDownSightsComponent.Active = e.Kinematic.Grounded && mouseInput.MouseButtonState[1]
-	e.AimDownSightsComponent.Fire = mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown
+	if e.AimDownSightsComponent.Active {
+		e.AimDownSightsComponent.Fire = mouseInput.MouseButtonEvent[0] == input.MouseButtonEventDown
+	}
 
 	updateKinematicComponent(frameInput, e)
 }

@@ -46,9 +46,13 @@ func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
 		if hitEntityID, _, hit := collision.ClosestHit(line, hitTargets); hit {
 			hitEntity := world.GetEntityByID(hitEntityID)
 			if hitEntity.HealthComponent != nil {
-				hitEntity.HealthComponent.Amount -= 50
-				if hitEntity.HealthComponent.Amount <= 0 {
-					hitEntity.Deadge = true
+				if s.app.IsServer() {
+					hitEntity.HealthComponent.Amount -= 50
+					if hitEntity.HealthComponent.Amount <= 0 {
+						hitEntity.Deadge = true
+					}
+				} else {
+					s.app.AssetManager().Play("hit-pip")
 				}
 			}
 		}

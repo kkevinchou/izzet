@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -40,4 +41,5 @@ type App interface {
 	AppMode() types.AppMode
 	RuntimeConfig() *runtimeconfig.RuntimeConfig
 	PredictionDebugLogging() bool
+	AssetManager() *assets.AssetManager
 }

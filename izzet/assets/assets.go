@@ -17,6 +17,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 var materialIDGen int = 0
@@ -51,16 +52,23 @@ type AssetManager struct {
 	RootJoints map[string]int
 
 	processVisuals bool
+	audioDevice    sdl.AudioDeviceID
+	audioData      map[string]loaders.AudioData
 }
 
 func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManager {
 	var loadedTextures map[string]*textures.Texture
 	var loadedFonts map[string]fonts.Font
 
+	var audioDevice sdl.AudioDeviceID
+	var audioData map[string]loaders.AudioData
+
 	if processVisualAssets {
 		start := time.Now()
 		loadedTextures = loaders.LoadTextures(settings.BuiltinAssetsDir)
 		loadedFonts = loaders.LoadFonts(settings.BuiltinAssetsDir)
+
+		audioData = loaders.LoadAudio(settings.BuiltinAssetsDir)
 		iztlog.Logger.Info(fmt.Sprintf("loaded fonts and textures in %f seconds", time.Since(start).Seconds()))
 	}
 
@@ -68,6 +76,8 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		logger:         logger,
 		textures:       loadedTextures,
 		fonts:          loadedFonts,
+		audioDevice:    audioDevice,
+		audioData:      audioData,
 		processVisuals: processVisualAssets,
 		documentAssets: map[string]DocumentAsset{},
 		Primitives:     map[types.MeshHandle][]Primitive{},
@@ -89,6 +99,14 @@ func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
 		result = append(result, utils.ModelSpecVertsToVec3(p.Primitive.UniqueVertices)...)
 	}
 	return result
+}
+
+func (a *AssetManager) Play(name string) {
+	if audioData, ok := a.audioData[name]; ok {
+		if err := sdl.QueueAudio(audioData.Device, audioData.Bytes); err != nil {
+			panic(fmt.Errorf("queue audio: %w", err))
+		}
+	}
 }
 
 func (a *AssetManager) GetTexture(name string) *textures.Texture {

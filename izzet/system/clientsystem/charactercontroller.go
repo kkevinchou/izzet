@@ -23,4 +23,7 @@ func (s *CharacterControllerSystem) Update(delta time.Duration, world system.Gam
 	e := s.app.GetPlayerEntity()
 	frameInput := s.app.GetFrameInput()
 	shared.UpdateCharacterController(delta, frameInput, e)
+	if e.AimDownSightsComponent.Fire {
+		s.app.AssetManager().Play("shot")
+	}
 }

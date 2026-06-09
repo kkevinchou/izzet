@@ -15,6 +15,13 @@ import (
 	"github.com/kkevinchou/izzet/izzet/system"
 )
 
+// TODO - Architecture
+//
+//	the Input system should read raw inputs and constructs the frame input
+//	the Player Command system interprets the frame input and constructs player commands (intents)
+//		- aim down sights
+//		- fire weapon
+//		- jump
 type InputSystem struct {
 	app App
 	f   *os.File
@@ -32,8 +39,8 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	frameInput := s.app.GetFrameInputPtr()
 
 	s.attachPlayerCameraInputs(frameInput)
-
 	s.handleSendInputToServer(frameInput)
+
 	s.handleSetPathfindingTarget(frameInput)
 	s.handleSpawnPatrolEntity(frameInput)
 	s.handleSpawnEntity(frameInput)
@@ -41,20 +48,8 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 }
 
 func (s *InputSystem) attachPlayerCameraInputs(frameInput *input.Input) {
-	playerCamera := s.app.GetPlayerCamera()
-	cameraRotation := s.computePlayerCameraRotation(playerCamera, *frameInput)
+	cameraRotation := s.computePlayerCameraRotation(*frameInput)
 	frameInput.CameraRotation = cameraRotation
-}
-
-func (s *InputSystem) handleSendInputToServer(frameInput *input.Input) {
-	inputMessage := network.InputMessage{
-		Input: *frameInput,
-	}
-
-	err := s.app.Client().Send(inputMessage, s.app.CommandFrame())
-	if err != nil {
-		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
-	}
 }
 
 func (s *InputSystem) handleSetPathfindingTarget(frameInput *input.Input) {
@@ -128,23 +123,28 @@ func (s *InputSystem) handleToggleMouseCapture(frameInput *input.Input) {
 	}
 }
 
-func (s *InputSystem) computePlayerCameraRotation(camera *entity.Entity, frameInput input.Input) mgl64.Quat {
+func (s *InputSystem) computePlayerCameraRotation(frameInput input.Input) mgl64.Quat {
+	camera := s.app.GetPlayerCamera()
 	if s.app.MouseCaptured() {
-		newRotation := computeCameraRotation(frameInput, camera)
+		var sensitivity float64 = 0.003
+		player := s.app.GetPlayerEntity()
+		if player.AimDownSightsComponent.Active {
+			sensitivity *= 0.5
+		}
+		newRotation := computeCameraRotation(frameInput, camera, sensitivity)
 		camera.SetLocalRotation(newRotation)
 	}
 	return camera.GetLocalRotation()
 }
 
-func computeCameraRotation(frameInput input.Input, camera *entity.Entity) mgl64.Quat {
+func computeCameraRotation(frameInput input.Input, camera *entity.Entity, sensitivity float64) mgl64.Quat {
 	// camera rotations
 	var xRel, yRel float64
 	mouseInput := frameInput.MouseInput
-	var mouseSensitivity float64 = 0.005
 
 	if !mouseInput.MouseMotionEvent.IsZero() {
-		xRel += -mouseInput.MouseMotionEvent.XRel * mouseSensitivity
-		yRel += -mouseInput.MouseMotionEvent.YRel * mouseSensitivity
+		xRel += -mouseInput.MouseMotionEvent.XRel * sensitivity
+		yRel += -mouseInput.MouseMotionEvent.YRel * sensitivity
 	}
 
 	forwardVector := camera.LocalRotation.Rotate(mgl64.Vec3{0, 0, -1})
@@ -163,4 +163,15 @@ func computeCameraRotation(frameInput input.Input, camera *entity.Entity) mgl64.
 	}
 
 	return newRotation
+}
+
+func (s *InputSystem) handleSendInputToServer(frameInput *input.Input) {
+	inputMessage := network.InputMessage{
+		Input: *frameInput,
+	}
+
+	err := s.app.Client().Send(inputMessage, s.app.CommandFrame())
+	if err != nil {
+		fmt.Println(fmt.Errorf("failed to write input message to connection %w", err))
+	}
 }

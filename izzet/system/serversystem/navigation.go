@@ -25,7 +25,7 @@ func (s *NavigationSystem) Name() string {
 func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range world.Entities() {
 		navigationComponent := e.NavigationComponent
-		if navigationComponent == nil || e.Kinematic == nil || e.Deadge {
+		if navigationComponent == nil || e.Kinematic == nil {
 			continue
 		}
 
@@ -49,9 +49,7 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 				navigationComponent.Path = straightPath
 				navigationComponent.NextTarget = 1
 				navigationComponent.State = entity.PathfindingStatePathing
-			}
-
-			if navigationComponent.State == entity.PathfindingStatePathing {
+			} else if navigationComponent.State == entity.PathfindingStatePathing {
 				path := navigationComponent.Path
 
 				targetIndex := navigationComponent.NextTarget

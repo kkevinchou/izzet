@@ -9,13 +9,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
-	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 )
 
 type ReplicationSystem struct {
 	app                   App
-	accumulator           int
 	destroyEntityConsumer *events.Consumer[events.DestroyEntityEvent]
 }
 
@@ -32,11 +30,9 @@ func (s *ReplicationSystem) Name() string {
 }
 
 func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) {
-	s.accumulator += int(delta.Milliseconds())
-	if s.accumulator < settings.MSPerGameStateUpdate {
+	if s.app.CommandFrame()%10 != 0 {
 		return
 	}
-	s.accumulator = 0
 
 	players := s.app.GetPlayers()
 

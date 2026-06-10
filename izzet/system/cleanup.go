@@ -29,6 +29,8 @@ func (s *CleanupSystem) Update(delta time.Duration, world GameWorld) {
 			entity.Collider.Contacts = nil
 		}
 		if entity.Animation != nil {
+			entity.Animation.ReplicationSource = ""
+			entity.Animation.ReplicationDestination = ""
 			// clear out transitions and retain the backing array to avoid reallocation
 			// entity.Animation.AnimationTransitions = entity.Animation.AnimationTransitions[:0]
 		}

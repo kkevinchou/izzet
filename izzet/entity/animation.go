@@ -28,7 +28,9 @@ type AnimationComponent struct {
 	AnimationPlayer       *iztanimation.AnimationPlayer                                    `json:"-"`
 
 	// For Replication
-	AnimationTransitions []AnimationTransition
+	AnimationTransitions   []AnimationTransition
+	ReplicationSource      string
+	ReplicationDestination string
 }
 
 type AnimationTransition struct {

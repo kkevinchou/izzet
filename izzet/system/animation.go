@@ -42,6 +42,10 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
 			}
 		} else {
+			if e.Kinematic == nil {
+				continue
+			}
+
 			if e.Kinematic != nil && ((s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer()) {
 				var ctx animationparser.GameContext
 				ctx.Grounded = e.Kinematic.Grounded
@@ -56,33 +60,24 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 
 				ctx.Dead = e.Deadge
-				prevState := e.Animation.AnimationStateMachine.CurrentAnimationState()
-				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
-				currentState := e.Animation.AnimationStateMachine.CurrentAnimationState()
+				src, dst, transitioned := e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
 
-				// there's probably a better way to do this like with a callback within the animation state machine.
-				// we could record more internal details.
-				//
-				// this doesn't handle looping
-				if prevState != currentState {
+				if transitioned {
 					e.Animation.AnimationTransitions = append(
 						e.Animation.AnimationTransitions,
 						entity.AnimationTransition{
-							SourceState:      prevState,
-							DestinationState: currentState,
+							SourceState:      src,
+							DestinationState: dst,
 							CommandFrame:     s.app.CommandFrame(),
 						},
 					)
 				}
 			} else {
-				// entities replicated to the client just need their animation player updated.
-				// we rely on the game state update message to set the animation clip
-				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
-					e.Animation.AnimationPlayer.Update(delta)
-					if e.Animation.AnimationPlayer.NormalizedClipProgress() >= 1 {
-						e.Animation.AnimationPlayer.PlayClip(e.Animation.AnimationPlayer.CurrentAnimation())
-					}
+				// trigger transitions sent over from the server
+				if e.Animation.ReplicationSource != "" {
+					e.Animation.AnimationStateMachine.TriggerTransition(e.Animation.AnimationPlayer, e.Animation.ReplicationSource, e.Animation.ReplicationDestination)
 				}
+				e.Animation.AnimationPlayer.Update(delta)
 			}
 		}
 	}

@@ -136,9 +136,25 @@ func (sm *AnimationStateMachine[T]) CurrentAnimationState() string {
 	return sm.currentState.Name
 }
 
-func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) {
+func (sm *AnimationStateMachine[T]) TriggerTransition(player *AnimationPlayer, source, destination string) {
+	for _, t := range sm.transitions {
+		if sm.currentState.Name != t.SourceState().Name {
+			continue
+		}
+
+		if t.SourceState().Name == source && t.NextState().Name == destination {
+			sm.currentState = t.NextState()
+			player.SetPlayRate(sm.currentState.PlayRate)
+			player.BlendClip(sm.currentState.ClipName, 100*time.Millisecond)
+			return
+		}
+	}
+	fmt.Println("failed to find transition")
+}
+
+func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) (string, string, bool) {
 	if sm.currentState == nil {
-		return
+		return "", "", false
 	}
 
 	// TDOO - maybe find a better place to initialize the player
@@ -160,7 +176,9 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 
 		if t.Evaluate(ctx) {
 			var blend bool
-			if sm.currentState != t.NextState() {
+			src := sm.currentState.Name
+			dst := t.NextState().Name
+			if sm.currentState.Name != t.NextState().Name {
 				blend = true
 			}
 			sm.currentState = t.NextState()
@@ -171,9 +189,10 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 			} else {
 				player.PlayClip(sm.currentState.ClipName)
 			}
-			break
+			return src, dst, true
 		}
 	}
+	return "", "", false
 }
 
 func transitionName(source string, transition transitionConfig, index int) string {

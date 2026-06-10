@@ -92,6 +92,14 @@ func (player *AnimationPlayer) Update(delta time.Duration) {
 		return
 	}
 
+	if player.elapsedTime == player.currentAnimation.Length {
+		// Update() has been called on the animation player while the current clip has finished playing.
+		// skip incrementing elapsedTime and leftover to avoid runaway time values.
+		// the animation transforms are for the final frame of the current clip
+		player.leftover = 0
+		return
+	}
+
 	player.elapsedTime += time.Duration(float64(delta+player.leftover) * player.playRate)
 	player.leftover = 0
 

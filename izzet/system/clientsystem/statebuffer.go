@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -20,10 +21,15 @@ type Frame struct {
 }
 
 type EntityState struct {
+	GlobalCommandFrame int
+
 	EntityID int
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
 	Deadge   bool
+
+	AnimationTransitionSource      string
+	AnimationTransitionDestination string
 }
 
 func NewStateBuffer() *StateBuffer {
@@ -94,6 +100,23 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame
 	cfStep := float64(1) / float64(numFrames)
 
+	transitionLookup := map[int]map[int]network.AnimationTransition{}
+
+	for _, state := range updateMsg.EntityStates {
+		transitions := state.AnimationTransitions
+		if len(transitions) == 0 {
+			continue
+		}
+
+		if _, ok := transitionLookup[state.EntityID]; !ok {
+			transitionLookup[state.EntityID] = map[int]network.AnimationTransition{}
+		}
+
+		for _, t := range transitions {
+			transitionLookup[state.EntityID][t.CommandFrame] = t
+		}
+	}
+
 	for i := 1; i <= numFrames; i++ {
 		frame := Frame{}
 
@@ -101,10 +124,23 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 			endSnapshot := blendEnd[id]
 			startSnapshot := blendStart[id]
 
+			var source, destination string
+
+			if _, ok := transitionLookup[id]; ok {
+				if t, ok := transitionLookup[id][sb.prevGSUpdate.GlobalCommandFrame+i]; ok {
+					source = t.SourceState
+					destination = t.DestinationState
+					iztlog.ClientLogger.Info("transition", "id", id, "source", t.SourceState, "destination", t.DestinationState)
+				}
+			}
+
 			bs := EntityState{
-				EntityID: id,
-				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
-				Rotation: QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
+				GlobalCommandFrame:             sb.prevGSUpdate.GlobalCommandFrame + i,
+				EntityID:                       id,
+				Position:                       endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
+				Rotation:                       QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
+				AnimationTransitionSource:      source,
+				AnimationTransitionDestination: destination,
 			}
 
 			frame.EntityStates = append(frame.EntityStates, bs)

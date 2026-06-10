@@ -161,7 +161,6 @@ func (g *Client) Start() {
 		renderAccumulator += delta
 
 		numSimulatedFrames := 0
-		startFrame := g.CommandFrame()
 		for accumulator >= float64(settings.MSPerCommandFrame) {
 			g.platform.NewFrame()
 			inputCollector := input.NewInputCollector()
@@ -185,10 +184,6 @@ func (g *Client) Start() {
 				g.Logger().Info("ran into max command frames per loop", "max", settings.MaxCommandFramesPerLoop)
 				accumulator = 0
 			}
-		}
-
-		if numSimulatedFrames > 1 {
-			g.Logger().Info(fmt.Sprintf("simulated %d frames this loop", numSimulatedFrames), "start frame", startFrame)
 		}
 
 		if g.RuntimeConfig().LockRenderingToCommandFrameRate {

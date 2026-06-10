@@ -29,8 +29,7 @@ const (
 
 	MaxEntityCount int = 100000
 
-	// MSPerGameStateUpdate is the duration between each game state update sent from server to client
-	MSPerGameStateUpdate int = 100
+	NumFramesPerGameStateUpdate int = 10
 
 	// FPS is the number of rendered frames per second, separate from command frames
 	FPS int = 144

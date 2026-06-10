@@ -9,6 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 )
 
@@ -30,7 +31,7 @@ func (s *ReplicationSystem) Name() string {
 }
 
 func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) {
-	if s.app.CommandFrame()%10 != 0 {
+	if s.app.CommandFrame()%settings.NumFramesPerGameStateUpdate != 0 {
 		return
 	}
 

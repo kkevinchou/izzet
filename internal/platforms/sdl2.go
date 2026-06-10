@@ -6,6 +6,7 @@ import (
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/veandco/go-sdl2/mix"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -223,6 +224,11 @@ func InitSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
 	}
+
+	if err := mix.OpenAudio(48000, mix.DEFAULT_FORMAT, 2, 1024); err != nil {
+		panic(fmt.Errorf("open mixer audio: %w", err))
+	}
+	mix.AllocateChannels(32)
 
 	// Enable hints for multisampling which allows opengl to use the default
 	// multisampling algorithms implemented by the OpenGL rasterizer

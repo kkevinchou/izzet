@@ -26,6 +26,15 @@ type AnimationComponent struct {
 
 	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext] `json:"-"`
 	AnimationPlayer       *iztanimation.AnimationPlayer                                    `json:"-"`
+
+	// For Replication
+	AnimationTransitions []AnimationTransition
+}
+
+type AnimationTransition struct {
+	SourceState      string
+	DestinationState string
+	CommandFrame     int
 }
 
 func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -53,12 +54,14 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 			Position: entity.GetLocalPosition(),
 			Rotation: entity.GetLocalRotation(),
 		}
+
 		if entity.Kinematic != nil {
 			// entityState.Velocity = entity.Kinematic.Velocity
 			entityState.GravityEnabled = entity.Kinematic.GravityEnabled
 		}
 		if entity.Animation != nil {
 			entityState.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()
+			entityState.AnimationTransitions = convertAnimationTransitions(entity.Animation.AnimationTransitions)
 		}
 		entityStates = append(entityStates, entityState)
 	}
@@ -99,4 +102,16 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 		s.app.Logger().Info("replication", "cf", gamestateUpdateMessage.LastInputCommandFrame, "gcf", s.app.CommandFrame())
 		player.Client.Send(gamestateUpdateMessage, s.app.CommandFrame())
 	}
+}
+
+func convertAnimationTransitions(animationTransitions []entity.AnimationTransition) []network.AnimationTransition {
+	result := make([]network.AnimationTransition, len(animationTransitions))
+	for i := range len(animationTransitions) {
+		result[i] = network.AnimationTransition{
+			SourceState:      animationTransitions[i].SourceState,
+			DestinationState: animationTransitions[i].DestinationState,
+			CommandFrame:     animationTransitions[i].CommandFrame,
+		}
+	}
+	return result
 }

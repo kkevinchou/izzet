@@ -64,6 +64,7 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 	} else {
 		for _, entity := range sb.prevGSUpdate.EntityStates {
 			blendStart[entity.EntityID] = EntityState{
+				EntityID: entity.EntityID,
 				Position: entity.Position,
 				Rotation: entity.Rotation,
 			}
@@ -90,7 +91,7 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 }
 
 func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdateMessage, blendStart map[int]EntityState, blendEnd map[int]EntityState) {
-	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame + 1
+	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame
 	cfStep := float64(1) / float64(numFrames)
 
 	for i := 1; i <= numFrames; i++ {

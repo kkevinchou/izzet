@@ -5,6 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/utils"
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type AnimationSystem struct {
@@ -55,7 +56,24 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 
 				ctx.Dead = e.Deadge
+				prevState := e.Animation.AnimationStateMachine.CurrentAnimationState()
 				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
+				currentState := e.Animation.AnimationStateMachine.CurrentAnimationState()
+
+				// there's probably a better way to do this like with a callback within the animation state machine.
+				// we could record more internal details.
+				//
+				// this doesn't handle looping
+				if prevState != currentState {
+					e.Animation.AnimationTransitions = append(
+						e.Animation.AnimationTransitions,
+						entity.AnimationTransition{
+							SourceState:      prevState,
+							DestinationState: currentState,
+							CommandFrame:     s.app.CommandFrame(),
+						},
+					)
+				}
 			} else {
 				// entities replicated to the client just need their animation player updated.
 				// we rely on the game state update message to set the animation clip

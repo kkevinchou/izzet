@@ -12,19 +12,19 @@ import (
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 )
 
-type CameraTargetSystem struct {
+type CameraSystem struct {
 	app App
 }
 
-func NewCameraTargetSystem(app App) *CameraTargetSystem {
-	return &CameraTargetSystem{app: app}
+func NewCameraSystem(app App) *CameraSystem {
+	return &CameraSystem{app: app}
 }
 
-func (s *CameraTargetSystem) Name() string {
-	return "CameraTargetSystem"
+func (s *CameraSystem) Name() string {
+	return "CameraSystem"
 }
 
-func (s *CameraTargetSystem) Update(delta time.Duration, world GameWorld) {
+func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 	for _, entity := range world.Entities() {
 		if entity.CameraComponent == nil {
 			continue
@@ -34,7 +34,7 @@ func (s *CameraTargetSystem) Update(delta time.Duration, world GameWorld) {
 	}
 }
 
-func (s *CameraTargetSystem) update(delta time.Duration, world GameWorld, camera *entity.Entity) {
+func (s *CameraSystem) update(delta time.Duration, world GameWorld, camera *entity.Entity) {
 	// swivel around target
 	target := world.GetEntityByID(camera.CameraComponent.Target)
 	if target == nil {

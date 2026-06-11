@@ -194,3 +194,8 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 func transitionName(source string, transition transitionConfig, index int) string {
 	return fmt.Sprintf("%s_to_%s_%d", source, transition.To, index)
 }
+
+type AnimationTransition struct {
+	Source      string
+	Destination string
+}

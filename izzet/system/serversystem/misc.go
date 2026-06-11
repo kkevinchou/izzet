@@ -26,8 +26,13 @@ func (s *RulesSystem) Update(delta time.Duration, world system.GameWorld) {
 		if !e.Deadge {
 			continue
 		}
-		e.NavigationComponent.ClearGoal()
-		e.Kinematic.MoveIntent = mgl64.Vec3{}
+		if e.NavigationComponent != nil {
+			e.NavigationComponent.ClearGoal()
+		}
+
+		if e.Kinematic != nil {
+			e.Kinematic.MoveIntent = mgl64.Vec3{}
+		}
 
 		// world.DeleteEntity(e.GetID())
 		// s.app.EventsManager().DestroyEntityTopic.Write(events.DestroyEntityEvent{EntityID: e.ID})

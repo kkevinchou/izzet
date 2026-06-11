@@ -8,6 +8,10 @@ PROTOC_PATH = ~/protoc-21.7-win64/bin/protoc.exe
 client:
 	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT
 
+.PHONY: client_no_logs
+client_no_logs:
+	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT --logs=false
+
 # profile fetched from http://localhost:6868/debug/pprof/profile
 .PHONY: pprof
 pprof:
@@ -55,7 +59,7 @@ clean:
 .PHONY: release
 release: clean
 	mkdir -p $(RELEASE_FOLDER)
-	cp config.json $(RELEASE_FOLDER)/
+	public_ip=$$(curl -fsS https://api.ipify.org); port=$$(sed -nE 's/.*"server_address"[[:space:]]*:[[:space:]]*"[^"]*:([^"]*)".*/\1/p' config.json); sed -E 's#"server_address"[[:space:]]*:[[:space:]]*"[^"]*"#"server_address": "'"$$public_ip:$$port"'"#' config.json > build/release/config.json
 	cp -r shaders $(RELEASE_FOLDER)/
 	cp -r _assets $(RELEASE_FOLDER)/
 	cp -r .project $(RELEASE_FOLDER)/

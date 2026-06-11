@@ -72,6 +72,10 @@ func parseCondition(name string) iztanimation.Condition[GameContext] {
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return ctx.Dead
 		})
+	case "alive":
+		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
+			return !ctx.Dead
+		})
 	case "airborne":
 		return iztanimation.NewGameCondition(name, func(ctx GameContext) bool {
 			return !ctx.Grounded

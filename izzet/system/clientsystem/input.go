@@ -44,12 +44,25 @@ func (s *InputSystem) Update(delta time.Duration, world system.GameWorld) {
 	s.handleSetPathfindingTarget(frameInput)
 	s.handleSpawnPatrolEntity(frameInput)
 	s.handleSpawnEntity(frameInput)
+	s.handleRessurect(frameInput)
 	s.handleToggleMouseCapture(frameInput)
 }
 
 func (s *InputSystem) attachPlayerCameraInputs(frameInput *input.Input) {
 	cameraRotation := s.computePlayerCameraRotation(*frameInput)
 	frameInput.CameraRotation = cameraRotation
+}
+
+func (s *InputSystem) handleRessurect(frameInput *input.Input) {
+	event, ok := frameInput.KeyboardInput[input.KeyboardKeyZ]
+	if !ok || event.Event != input.KeyboardEventUp {
+		return
+	}
+
+	rpcMessage := network.RPCMessage{
+		RessurectRPC: &network.RessurectRPC{ID: s.app.GetPlayerEntity().ID},
+	}
+	s.app.Client().Send(rpcMessage, s.app.CommandFrame())
 }
 
 func (s *InputSystem) handleSetPathfindingTarget(frameInput *input.Input) {

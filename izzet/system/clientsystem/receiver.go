@@ -49,16 +49,18 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				s.app.SetServerStats(gamestateUpdateMessage.ServerStats)
 
 				playerEntityID := s.app.GetPlayerEntity().GetID()
-				var serverTransform network.EntityState
+				var serverEntityState network.EntityState
 
-				for _, transform := range gamestateUpdateMessage.EntityStates {
-					e := world.GetEntityByID(transform.EntityID)
+				for _, entityState := range gamestateUpdateMessage.EntityStates {
+					e := world.GetEntityByID(entityState.EntityID)
 					if e == nil {
 						continue
 					}
 
 					if e.GetID() == playerEntityID {
-						serverTransform = transform
+						// TODO - move this into statebuffer handling
+						e.Deadge = entityState.Deadge
+						serverEntityState = entityState
 						continue
 					}
 				}
@@ -78,7 +80,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 					panic(err)
 				}
 				state := cf.PostCFState
-				if apputils.Vec3ApproxEqualThreshold(state.Position, serverTransform.Position, 0.001) {
+				if apputils.Vec3ApproxEqualThreshold(state.Position, serverEntityState.Position, 0.001) {
 					mr.Inc("prediction_hit", 1)
 					// 		gamestateUpdateMessage.LastInputCommandFrame,
 					// 	)

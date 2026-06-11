@@ -127,6 +127,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		uiTableRow("Parent", parentStr)
 		if e != nil {
 			uiTableRow("Static", fmt.Sprintf("%v", e.Static))
+			uiTableRow("Deadge", fmt.Sprintf("%v", e.Deadge))
 		}
 		imgui.EndTable()
 	}

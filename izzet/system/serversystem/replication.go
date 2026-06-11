@@ -50,6 +50,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 			EntityID: entity.ID,
 			Position: entity.GetLocalPosition(),
 			Rotation: entity.GetLocalRotation(),
+			Deadge:   entity.Deadge,
 		}
 
 		if entity.Kinematic != nil {

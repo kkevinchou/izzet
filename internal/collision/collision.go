@@ -151,30 +151,16 @@ func ClosestHit[T TriMeshEntities](line collider.Line, entities []T) (int, mgl64
 		}
 
 		if e.HasCapsuleCollider() {
-			capsule := e.CapsuleCollider()
-			s := collider.Sphere{Center: capsule.Top, Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
-
-			point, success := checks.IntersectRaySphere(ray, s)
-			if success {
-				distSq := point.Sub(line.P1).LenSqr()
-				if distSq < minDistSq && distSq <= lineDistSqr {
-					hit = true
-					minDistSq = distSq
-					hitPoint = point
-					entityID = e.GetID()
-				}
+			point, success := checks.IntersectRayCapsule(ray, e.CapsuleCollider())
+			if !success {
+				continue
 			}
-
-			s = collider.Sphere{Center: capsule.Bottom, Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
-			point, success = checks.IntersectRaySphere(ray, s)
-			if success {
-				distSq := point.Sub(line.P1).LenSqr()
-				if distSq < minDistSq && distSq <= lineDistSqr {
-					hit = true
-					minDistSq = distSq
-					hitPoint = point
-					entityID = e.GetID()
-				}
+			distSq := point.Sub(line.P1).LenSqr()
+			if distSq < minDistSq && distSq <= lineDistSqr {
+				hit = true
+				minDistSq = distSq
+				hitPoint = point
+				entityID = e.GetID()
 			}
 		} else if e.HasTriMeshCollider() {
 			point, _, success := checks.IntersectRayTriMesh(ray, e.TriMeshCollider())
@@ -189,7 +175,6 @@ func ClosestHit[T TriMeshEntities](line collider.Line, entities []T) (int, mgl64
 				entityID = e.GetID()
 			}
 		}
-
 	}
 
 	return entityID, hitPoint, hit

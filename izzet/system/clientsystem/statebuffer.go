@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
-	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -121,7 +120,7 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 
 			if transition, ok := transitionLookup.At(commandFrame, id); ok {
 				bs.AnimationTransition = &transition
-				iztlog.ClientLogger.Info("transition", "gcf", commandFrame, "id", id, "src", transition.Source, "dst", transition.Destination)
+				// iztlog.ClientLogger.Info("transition", "gcf", commandFrame, "id", id, "src", transition.Source, "dst", transition.Destination)
 			}
 
 			frame.EntityStates = append(frame.EntityStates, bs)

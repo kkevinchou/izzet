@@ -166,7 +166,7 @@ func (g *Server) AppMode() types.AppMode {
 }
 
 func (g *Server) RuntimeConfig() *runtimeconfig.RuntimeConfig {
-	panic("server should not be accessing runtime config")
+	return nil
 }
 
 func (g *Server) PredictionDebugLogging() bool {

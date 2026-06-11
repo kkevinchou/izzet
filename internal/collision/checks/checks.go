@@ -93,6 +93,53 @@ func IntersectRayTriMesh(ray collider.Ray, triMesh collider.TriMesh) (mgl64.Vec3
 	return mgl64.Vec3{}, mgl64.Vec3{}, false
 }
 
+// TODO - implement real ray : capsule collision. right now we just approximate with 3 spheres
+func IntersectRayCapsule(ray collider.Ray, capsule collider.Capsule) (mgl64.Vec3, bool) {
+	var hit bool
+	var hitPoint mgl64.Vec3
+
+	minDistSq := math.MaxFloat64
+	lineDistSqr := math.MaxFloat64
+
+	// top
+	s := collider.Sphere{Center: capsule.Top, Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
+	point, success := IntersectRaySphere(ray, s)
+	if success {
+		distSq := point.Sub(ray.Origin).LenSqr()
+		if distSq < minDistSq && distSq <= lineDistSqr {
+			hit = true
+			minDistSq = distSq
+			hitPoint = point
+		}
+	}
+
+	// middle
+	s = collider.Sphere{Center: capsule.Bottom.Add(capsule.Top).Mul(0.5), Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
+	point, success = IntersectRaySphere(ray, s)
+	if success {
+		distSq := point.Sub(ray.Origin).LenSqr()
+		if distSq < minDistSq && distSq <= lineDistSqr {
+			hit = true
+			minDistSq = distSq
+			hitPoint = point
+		}
+	}
+
+	// bottom
+	s = collider.Sphere{Center: capsule.Bottom, Radius: capsule.Radius, RadiusSquared: capsule.Radius * capsule.Radius}
+	point, success = IntersectRaySphere(ray, s)
+	if success {
+		distSq := point.Sub(ray.Origin).LenSqr()
+		if distSq < minDistSq && distSq <= lineDistSqr {
+			hit = true
+			minDistSq = distSq
+			hitPoint = point
+		}
+	}
+
+	return hitPoint, hit
+}
+
 func IntersectRaySphere(ray collider.Ray, sphere collider.Sphere) (mgl64.Vec3, bool) {
 	O := ray.Origin
 	C := sphere.Center

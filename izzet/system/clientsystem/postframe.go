@@ -24,31 +24,21 @@ func (s *PostFrameSystem) Update(delta time.Duration, world system.GameWorld) {
 	playerEntity := s.app.GetPlayerEntity()
 	if bi, ok := sb.Pull(s.app.CommandFrame()); ok {
 		for _, bs := range bi.EntityStates {
-			if bs.EntityID == playerEntity.ID {
-				if bs.Deadge {
-					playerEntity.Deadge = true
-				}
-				continue
-			}
-
 			e := world.GetEntityByID(bs.EntityID)
 			if e == nil {
 				continue
 			}
 
-			if e.ID == s.app.GetPlayerCamera().ID {
-				continue
+			e.Deadge = bs.Deadge
 
+			if bs.EntityID == playerEntity.ID || bs.EntityID == playerEntity.CharacterControllerComponent.CameraEntityID {
+				continue
 			}
 
-			if bs.Deadge {
-				// 	world.DeleteEntity(bs.EntityID)
-			} else {
-				entity.SetLocalPosition(e, bs.Position)
-				e.SetLocalRotation(bs.Rotation)
-				if e.Animation != nil {
-					e.Animation.ReplicatedAnimationTransition = bs.AnimationTransition
-				}
+			entity.SetLocalPosition(e, bs.Position)
+			e.SetLocalRotation(bs.Rotation)
+			if e.Animation != nil {
+				e.Animation.ReplicatedAnimationTransition = bs.AnimationTransition
 			}
 		}
 	}

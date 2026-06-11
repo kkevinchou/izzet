@@ -31,10 +31,19 @@ func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager)
 	// rebuild animation player
 	if e.Animation != nil {
 		animation := e.Animation
+		// TODO - this is kinda annoying because by default we aren't going to synchronize
+		// new animation component fields. revisit how this works
 		e.Animation = entity.NewAnimationComponent(animation.AnimationHandle, assetManager)
 		e.Animation.SelectedAnimation = animation.SelectedAnimation
 		e.Animation.SelectedKeyFrame = animation.SelectedKeyFrame
 		e.Animation.LoopAnimation = animation.LoopAnimation
+
+		if animation.AnimationStateMachine != nil {
+			e.Animation.AnimationStateMachine.SetCurrentState(animation.AnimationStateMachine.CurrentAnimationState().Name)
+			currentState := e.Animation.AnimationStateMachine.CurrentAnimationState()
+			e.Animation.AnimationPlayer.PlayClip(currentState.ClipName)
+			e.Animation.AnimationPlayer.Update(0)
+		}
 	}
 
 	if e.MeshComponent != nil && e.Collider != nil {

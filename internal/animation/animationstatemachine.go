@@ -6,25 +6,27 @@ import (
 	"sort"
 	"time"
 
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"gopkg.in/yaml.v3"
 )
 
-type animationState struct {
+type AnimationState struct {
 	Name     string
 	ClipName string
 	PlayRate float64
 }
 
 type AnimationStateMachine[T any] struct {
-	currentState    *animationState
-	states          map[string]*animationState
+	CurrentState *AnimationState `json:"CurrentState"`
+
+	states          map[string]*AnimationState
 	transitionNames map[string]struct{}
 	transitions     []transition[T]
 }
 
 func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser func(string) Condition[T]) *AnimationStateMachine[T] {
 	sm := &AnimationStateMachine[T]{
-		states:          map[string]*animationState{},
+		states:          map[string]*AnimationState{},
 		transitionNames: map[string]struct{}{},
 	}
 
@@ -82,7 +84,7 @@ func (sm *AnimationStateMachine[T]) RegisterAnimationState(name, clipName string
 		panic(fmt.Sprintf("animation state %q is already registered", name))
 	}
 
-	sm.states[name] = &animationState{Name: name, ClipName: clipName, PlayRate: playRate}
+	sm.states[name] = &AnimationState{Name: name, ClipName: clipName, PlayRate: playRate}
 }
 
 func (sm *AnimationStateMachine[T]) RegisterTransition(name, sourceStateName, targetStateName string, conditions ...Condition[T]) {
@@ -125,42 +127,38 @@ func (sm *AnimationStateMachine[T]) SetCurrentState(name string) {
 		panic(fmt.Sprintf("unknown animation state %q", name))
 	}
 
-	sm.currentState = state
+	sm.CurrentState = state
 }
 
-func (sm *AnimationStateMachine[T]) CurrentAnimationState() string {
-	if sm.currentState == nil {
-		return ""
-	}
-
-	return sm.currentState.Name
+func (sm *AnimationStateMachine[T]) CurrentAnimationState() *AnimationState {
+	return sm.CurrentState
 }
 
 func (sm *AnimationStateMachine[T]) TriggerTransition(player *AnimationPlayer, source, destination string) {
 	for _, t := range sm.transitions {
-		if sm.currentState.Name != t.SourceState().Name {
+		if sm.CurrentState.Name != t.SourceState().Name {
 			continue
 		}
 
 		if t.SourceState().Name == source && t.NextState().Name == destination {
-			sm.currentState = t.NextState()
-			player.SetPlayRate(sm.currentState.PlayRate)
-			player.BlendClip(sm.currentState.ClipName, 100*time.Millisecond)
+			sm.CurrentState = t.NextState()
+			player.SetPlayRate(sm.CurrentState.PlayRate)
+			player.BlendClip(sm.CurrentState.ClipName, 100*time.Millisecond)
 			return
 		}
 	}
-	fmt.Println("failed to find transition")
+	iztlog.Logger.Info("failed to trigger transition, hard setting animation state", "current", sm.CurrentState.Name, "src", source, "dst", destination)
 }
 
 func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) (string, string, bool) {
-	if sm.currentState == nil {
+	if sm.CurrentState == nil {
 		return "", "", false
 	}
 
 	// TDOO - maybe find a better place to initialize the player
 	if player.CurrentAnimation() == "" {
-		player.SetPlayRate(sm.currentState.PlayRate)
-		player.PlayClip(sm.currentState.ClipName)
+		player.SetPlayRate(sm.CurrentState.PlayRate)
+		player.PlayClip(sm.CurrentState.ClipName)
 	}
 
 	player.Update(delta)
@@ -170,24 +168,24 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 	}
 
 	for _, t := range sm.transitions {
-		if sm.currentState.Name != t.SourceState().Name {
+		if sm.CurrentState.Name != t.SourceState().Name {
 			continue
 		}
 
 		if t.Evaluate(ctx) {
 			var blend bool
-			src := sm.currentState.Name
+			src := sm.CurrentState.Name
 			dst := t.NextState().Name
-			if sm.currentState.Name != t.NextState().Name {
+			if sm.CurrentState.Name != t.NextState().Name {
 				blend = true
 			}
-			sm.currentState = t.NextState()
-			player.SetPlayRate(sm.currentState.PlayRate)
+			sm.CurrentState = t.NextState()
+			player.SetPlayRate(sm.CurrentState.PlayRate)
 
 			if blend {
-				player.BlendClip(sm.currentState.ClipName, 100*time.Millisecond)
+				player.BlendClip(sm.CurrentState.ClipName, 100*time.Millisecond)
 			} else {
-				player.PlayClip(sm.currentState.ClipName)
+				player.PlayClip(sm.CurrentState.ClipName)
 			}
 			return src, dst, true
 		}

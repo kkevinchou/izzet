@@ -24,8 +24,8 @@ type AnimationComponent struct {
 	SelectedKeyFrame  int
 	LoopAnimation     bool
 
-	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext] `json:"-"`
-	AnimationPlayer       *iztanimation.AnimationPlayer                                    `json:"-"`
+	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
+	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
 
 	// For Replication
 	AnimationTransitions   []AnimationTransition

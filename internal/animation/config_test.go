@@ -25,9 +25,7 @@ states:
 
 	sm := NewAnimationStateMachine[TestContext](strings.NewReader(config), testConditionParser[TestContext])
 
-	if got, want := sm.CurrentAnimationState(), "idle"; got != want {
-		t.Fatalf("current animation state = %q, want %q", got, want)
-	}
+	assertCurrentState(t, sm, "idle", "Idle_Loop", 1)
 }
 
 func TestNewAnimationStateMachineParsesBuiltInClipCompletedCondition(t *testing.T) {
@@ -47,7 +45,5 @@ states:
 
 	sm := NewAnimationStateMachine[TestContext](strings.NewReader(config), nil)
 
-	if got, want := sm.CurrentAnimationState(), "idle"; got != want {
-		t.Fatalf("current animation state = %q, want %q", got, want)
-	}
+	assertCurrentState(t, sm, "idle", "Idle_Loop", 1)
 }

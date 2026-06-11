@@ -11,7 +11,6 @@ type EntityState struct {
 	Rotation             mgl64.Quat
 	Velocity             mgl64.Vec3
 	GravityEnabled       bool
-	Animation            string
 	AnimationTransitions []AnimationTransition
 }
 

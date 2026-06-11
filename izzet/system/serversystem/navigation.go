@@ -30,23 +30,24 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 		}
 
 		e.Kinematic.MoveIntent = mgl64.Vec3{}
-		position := e.Position()
 
 		if s.app.NavMesh() != nil {
-			if navigationComponent.State == entity.PathfindingStateGoalSet {
+			position := e.Position()
+
+			if navigationComponent.PathDirty {
 				polyPath := navmesh.FindPath(s.app.NavMesh(), e.Position(), navigationComponent.Goal)
 				straightPath := navmesh.FindStraightPath(s.app.NavMesh().Tiles[0], e.Position(), navigationComponent.Goal, polyPath)
 				navmesh.PATHVERTICES = straightPath
 
 				if len(straightPath) < 2 {
 					navigationComponent.Path = nil
-					navigationComponent.NextTarget = -1
-					navigationComponent.State = entity.PathfindingStateNoGoal
+					navigationComponent.NextTarget = entity.InvalidNavigationTarget
+					navigationComponent.State = entity.Idle
 					continue
 				}
 
-				navigationComponent.PolyPath = polyPath
 				navigationComponent.Path = straightPath
+				navigationComponent.PathDirty = false
 				navigationComponent.NextTarget = 1
 				navigationComponent.State = entity.PathfindingStatePathing
 			}
@@ -62,7 +63,7 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 					position = target
 					if targetIndex == len(path)-1 {
 						navigationComponent.Path = nil
-						navigationComponent.NextTarget = -1
+						navigationComponent.NextTarget = entity.InvalidNavigationTarget
 						atGoal = true
 					} else {
 						targetIndex = (targetIndex + 1) % len(path)
@@ -85,7 +86,7 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 						}
 					}
 				} else {
-					navigationComponent.State = entity.PathfindingStateNoGoal
+					navigationComponent.State = entity.Idle
 				}
 			}
 		}

@@ -121,7 +121,7 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 
 			if transition, ok := transitionLookup.At(commandFrame, id); ok {
 				bs.AnimationTransition = &transition
-				iztlog.ClientLogger.Info("transition", "id", id, "source", transition.Source, "destination", transition.Destination)
+				iztlog.ClientLogger.Info("transition", "gcf", commandFrame, "id", id, "src", transition.Source, "dst", transition.Destination)
 			}
 
 			frame.EntityStates = append(frame.EntityStates, bs)

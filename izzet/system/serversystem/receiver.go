@@ -79,7 +79,7 @@ func (s *ReceiverSystem) handlePathfindRPC(rpc network.RPCMessage) {
 			continue
 		}
 		e.NavigationComponent.Goal = rpc.Pathfind.Goal
-		e.NavigationComponent.State = entity.PathfindingStateGoalSet
+		e.NavigationComponent.PathDirty = true
 	}
 }
 

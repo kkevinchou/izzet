@@ -37,7 +37,7 @@ func (s *BrainSystem) Update(delta time.Duration, world system.GameWorld) {
 	}
 
 	for _, e := range world.Entities() {
-		if e.AttackComponent == nil || e.NavigationComponent == nil {
+		if e.AttackComponent == nil || e.NavigationComponent == nil || e.Deadge {
 			continue
 		}
 

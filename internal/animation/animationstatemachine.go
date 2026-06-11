@@ -146,9 +146,9 @@ func (sm *AnimationStateMachine[T]) TriggerTransition(player *AnimationPlayer, s
 	iztlog.Logger.Info("failed to trigger transition, hard setting animation state", "current", sm.CurrentState.Name, "src", source, "dst", destination)
 }
 
-func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) (string, string, bool) {
+func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) (AnimationTransition, bool) {
 	if sm.CurrentState == nil {
-		return "", "", false
+		return AnimationTransition{}, false
 	}
 
 	// TDOO - maybe find a better place to initialize the player
@@ -170,8 +170,10 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 
 		if t.Evaluate(ctx) {
 			var blend bool
-			src := sm.CurrentState.Name
-			dst := t.NextState().Name
+			stateTransition := AnimationTransition{
+				Source:      sm.CurrentState.Name,
+				Destination: t.NextState().Name,
+			}
 			if sm.CurrentState.Name != t.NextState().Name {
 				blend = true
 			}
@@ -183,10 +185,10 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 			} else {
 				player.PlayClip(sm.CurrentState.ClipName)
 			}
-			return src, dst, true
+			return stateTransition, true
 		}
 	}
-	return "", "", false
+	return AnimationTransition{}, false
 }
 
 func transitionName(source string, transition transitionConfig, index int) string {

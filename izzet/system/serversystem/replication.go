@@ -101,12 +101,12 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 	}
 }
 
-func convertAnimationTransitions(animationTransitions []entity.AnimationTransition) []network.AnimationTransition {
+func convertAnimationTransitions(animationTransitions []entity.ServerSideAnimationTransition) []network.AnimationTransition {
 	result := make([]network.AnimationTransition, len(animationTransitions))
 	for i := range len(animationTransitions) {
 		result[i] = network.AnimationTransition{
-			SourceState:      animationTransitions[i].Source,
-			DestinationState: animationTransitions[i].Destination,
+			SourceState:      animationTransitions[i].AnimationTransition.Source,
+			DestinationState: animationTransitions[i].AnimationTransition.Destination,
 			CommandFrame:     animationTransitions[i].GlobalCommandFrame,
 		}
 	}

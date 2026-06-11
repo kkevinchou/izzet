@@ -27,15 +27,16 @@ type AnimationComponent struct {
 	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
 	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
 
-	// For Replication
-	AnimationTransitions   []AnimationTransition
-	ReplicationSource      string
-	ReplicationDestination string
+	// AnimationTransitions is the collection of animation transitions since the last
+	// game state update was replicated to clients
+	AnimationTransitions []ServerSideAnimationTransition
+
+	// ReplicatedAnimationTransition is the animation transition we wish to apply this frame
+	ReplicatedAnimationTransition *iztanimation.AnimationTransition
 }
 
-type AnimationTransition struct {
-	Source             string
-	Destination        string
+type ServerSideAnimationTransition struct {
+	iztanimation.AnimationTransition
 	GlobalCommandFrame int
 }
 

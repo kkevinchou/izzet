@@ -60,22 +60,25 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 
 				ctx.Dead = e.Deadge
-				src, dst, transitioned := e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
+				transition, transitioned := e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
 
 				if s.app.IsServer() && transitioned {
 					e.Animation.AnimationTransitions = append(
 						e.Animation.AnimationTransitions,
-						entity.AnimationTransition{
-							Source:             src,
-							Destination:        dst,
-							GlobalCommandFrame: s.app.CommandFrame(),
+						entity.ServerSideAnimationTransition{
+							AnimationTransition: transition,
+							GlobalCommandFrame:  s.app.CommandFrame(),
 						},
 					)
 				}
 			} else {
 				// trigger transitions sent over from the server
-				if e.Animation.ReplicationSource != "" {
-					e.Animation.AnimationStateMachine.TriggerTransition(e.Animation.AnimationPlayer, e.Animation.ReplicationSource, e.Animation.ReplicationDestination)
+				if e.Animation.ReplicatedAnimationTransition != nil {
+					e.Animation.AnimationStateMachine.TriggerTransition(
+						e.Animation.AnimationPlayer,
+						e.Animation.ReplicatedAnimationTransition.Source,
+						e.Animation.ReplicatedAnimationTransition.Destination,
+					)
 				}
 				e.Animation.AnimationPlayer.Update(delta)
 			}

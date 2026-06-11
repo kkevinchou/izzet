@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -28,9 +29,10 @@ type EntityState struct {
 	Rotation mgl64.Quat
 	Deadge   bool
 
-	AnimationTransitionSource      string
-	AnimationTransitionDestination string
+	AnimationTransition *iztanimation.AnimationTransition
 }
+
+type animationTransitionLookup map[int]map[int]iztanimation.AnimationTransition
 
 func NewStateBuffer() *StateBuffer {
 	return &StateBuffer{prevGSUpdate: network.GameStateUpdateMessage{LastInputCommandFrame: -1}}
@@ -100,47 +102,26 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame
 	cfStep := float64(1) / float64(numFrames)
 
-	transitionLookup := map[int]map[int]network.AnimationTransition{}
-
-	for _, state := range updateMsg.EntityStates {
-		transitions := state.AnimationTransitions
-		if len(transitions) == 0 {
-			continue
-		}
-
-		if _, ok := transitionLookup[state.EntityID]; !ok {
-			transitionLookup[state.EntityID] = map[int]network.AnimationTransition{}
-		}
-
-		for _, t := range transitions {
-			transitionLookup[state.EntityID][t.CommandFrame] = t
-		}
-	}
+	transitionLookup := newAnimationTransitionLookup(updateMsg.EntityStates)
 
 	for i := 1; i <= numFrames; i++ {
 		frame := Frame{}
+		commandFrame := sb.prevGSUpdate.GlobalCommandFrame + i
 
 		for id := range blendStart {
 			endSnapshot := blendEnd[id]
 			startSnapshot := blendStart[id]
 
-			var source, destination string
-
-			if _, ok := transitionLookup[id]; ok {
-				if t, ok := transitionLookup[id][sb.prevGSUpdate.GlobalCommandFrame+i]; ok {
-					source = t.SourceState
-					destination = t.DestinationState
-					iztlog.ClientLogger.Info("transition", "id", id, "source", t.SourceState, "destination", t.DestinationState)
-				}
+			bs := EntityState{
+				GlobalCommandFrame: commandFrame,
+				EntityID:           id,
+				Position:           endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
+				Rotation:           QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
 			}
 
-			bs := EntityState{
-				GlobalCommandFrame:             sb.prevGSUpdate.GlobalCommandFrame + i,
-				EntityID:                       id,
-				Position:                       endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
-				Rotation:                       QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
-				AnimationTransitionSource:      source,
-				AnimationTransitionDestination: destination,
+			if transition, ok := transitionLookup.At(commandFrame, id); ok {
+				bs.AnimationTransition = &transition
+				iztlog.ClientLogger.Info("transition", "id", id, "source", transition.Source, "destination", transition.Destination)
 			}
 
 			frame.EntityStates = append(frame.EntityStates, bs)
@@ -160,6 +141,35 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 		}
 		sb.count += 1
 	}
+}
+
+func newAnimationTransitionLookup(entityStates []network.EntityState) animationTransitionLookup {
+	lookup := animationTransitionLookup{}
+
+	for _, state := range entityStates {
+		for _, transition := range state.AnimationTransitions {
+			if _, ok := lookup[transition.CommandFrame]; !ok {
+				lookup[transition.CommandFrame] = map[int]iztanimation.AnimationTransition{}
+			}
+
+			lookup[transition.CommandFrame][state.EntityID] = iztanimation.AnimationTransition{
+				Source:      transition.SourceState,
+				Destination: transition.DestinationState,
+			}
+		}
+	}
+
+	return lookup
+}
+
+func (lookup animationTransitionLookup) At(commandFrame, entityID int) (iztanimation.AnimationTransition, bool) {
+	transitions, ok := lookup[commandFrame]
+	if !ok {
+		return iztanimation.AnimationTransition{}, false
+	}
+
+	transition, ok := transitions[entityID]
+	return transition, ok
 }
 
 func (sb *StateBuffer) Pull(localCommandFrame int) (Frame, bool) {

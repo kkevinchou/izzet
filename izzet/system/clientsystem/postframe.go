@@ -43,8 +43,7 @@ func (s *PostFrameSystem) Update(delta time.Duration, world system.GameWorld) {
 				entity.SetLocalPosition(e, bs.Position)
 				e.SetLocalRotation(bs.Rotation)
 				if e.Animation != nil {
-					e.Animation.ReplicationSource = bs.AnimationTransitionSource
-					e.Animation.ReplicationDestination = bs.AnimationTransitionDestination
+					e.Animation.ReplicatedAnimationTransition = bs.AnimationTransition
 				}
 			}
 		}

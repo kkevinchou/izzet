@@ -57,9 +57,10 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 						continue
 					}
 
+					// TODO - move this into statebuffer handling
+					e.Deadge = entityState.Deadge
+
 					if e.GetID() == playerEntityID {
-						// TODO - move this into statebuffer handling
-						e.Deadge = entityState.Deadge
 						serverEntityState = entityState
 						continue
 					}

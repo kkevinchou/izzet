@@ -105,9 +105,9 @@ func convertAnimationTransitions(animationTransitions []entity.AnimationTransiti
 	result := make([]network.AnimationTransition, len(animationTransitions))
 	for i := range len(animationTransitions) {
 		result[i] = network.AnimationTransition{
-			SourceState:      animationTransitions[i].SourceState,
-			DestinationState: animationTransitions[i].DestinationState,
-			CommandFrame:     animationTransitions[i].CommandFrame,
+			SourceState:      animationTransitions[i].Source,
+			DestinationState: animationTransitions[i].Destination,
+			CommandFrame:     animationTransitions[i].GlobalCommandFrame,
 		}
 	}
 	return result

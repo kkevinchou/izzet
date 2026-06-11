@@ -66,9 +66,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					e.Animation.AnimationTransitions = append(
 						e.Animation.AnimationTransitions,
 						entity.AnimationTransition{
-							SourceState:      src,
-							DestinationState: dst,
-							CommandFrame:     s.app.CommandFrame(),
+							Source:             src,
+							Destination:        dst,
+							GlobalCommandFrame: s.app.CommandFrame(),
 						},
 					)
 				}

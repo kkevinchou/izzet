@@ -34,9 +34,9 @@ type AnimationComponent struct {
 }
 
 type AnimationTransition struct {
-	SourceState      string
-	DestinationState string
-	CommandFrame     int
+	Source             string
+	Destination        string
+	GlobalCommandFrame int
 }
 
 func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {

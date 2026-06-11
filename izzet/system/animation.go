@@ -62,7 +62,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				ctx.Dead = e.Deadge
 				src, dst, transitioned := e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
 
-				if transitioned {
+				if s.app.IsServer() && transitioned {
 					e.Animation.AnimationTransitions = append(
 						e.Animation.AnimationTransitions,
 						entity.AnimationTransition{

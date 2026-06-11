@@ -58,9 +58,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 		}
 		if entity.Animation != nil {
 			entityState.AnimationTransitions = convertAnimationTransitions(entity.Animation.AnimationTransitions)
-			if len(entityState.AnimationTransitions) > 0 {
-				entity.Animation.AnimationTransitions = entity.Animation.AnimationTransitions[:0]
-			}
+			entity.Animation.AnimationTransitions = entity.Animation.AnimationTransitions[:0]
 		}
 		entityStates = append(entityStates, entityState)
 	}

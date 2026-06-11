@@ -25,7 +25,16 @@ func (s *CameraSystem) Name() string {
 }
 
 func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
-	for _, entity := range world.Entities() {
+	var entities []*entity.Entity
+
+	if s.app.IsClient() {
+		entity := s.app.GetPlayerCamera()
+		entities = append(entities, entity)
+	} else {
+		entities = world.Entities()
+	}
+
+	for _, entity := range entities {
 		if entity.CameraComponent == nil {
 			continue
 		}

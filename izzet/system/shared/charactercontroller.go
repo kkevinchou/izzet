@@ -12,7 +12,7 @@ import (
 )
 
 func UpdateCharacterController(delta time.Duration, frameInput input.Input, e *entity.Entity) {
-	if e.Kinematic == nil {
+	if e.Kinematic == nil || e.Deadge {
 		return
 	}
 	keyboardInput := frameInput.KeyboardInput

@@ -59,6 +59,10 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 					if rpc.CreateEntity != nil {
 						s.handleCreateEntityRPC(world, rpc)
 					}
+
+					if rpc.RessurectRPC != nil {
+						s.handleRessurectRPC(world, rpc)
+					}
 				}
 			case <-player.DisconnectChannel:
 				s.app.EventsManager().PlayerDisconnectTopic.Write(events.PlayerDisconnectEvent{PlayerID: player.ID})
@@ -77,6 +81,15 @@ func (s *ReceiverSystem) handlePathfindRPC(rpc network.RPCMessage) {
 		e.NavigationComponent.Goal = rpc.Pathfind.Goal
 		e.NavigationComponent.State = entity.PathfindingStateGoalSet
 	}
+}
+
+func (s *ReceiverSystem) handleRessurectRPC(world system.GameWorld, rpc network.RPCMessage) {
+	e := world.GetEntityByID(rpc.RessurectRPC.ID)
+	if e == nil {
+		return
+	}
+	e.HealthComponent.Amount = 100
+	e.Deadge = false
 }
 
 func (s *ReceiverSystem) handleCreateEntityRPC(world system.GameWorld, rpc network.RPCMessage) {

@@ -5,6 +5,8 @@ states:
     clip: Idle_Loop
     playRate: 1
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSights
@@ -20,6 +22,8 @@ states:
     clip: Jump_Loop
     playRate: 1.5
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpLand
         when: [grounded]
       - to: airborne
@@ -29,6 +33,8 @@ states:
     clip: Jump_Start
     playRate: 2
     transitions:
+      - to: death
+        when: [dead]
       - to: airborne
         when: [clipCompleted, airborne]
       - to: jumpLand
@@ -38,6 +44,8 @@ states:
     clip: Jump_Land
     playRate: 1.5
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSights
@@ -51,6 +59,8 @@ states:
     clip: Pistol_Aim_Neutral
     playRate: 1
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSightsFire
@@ -68,6 +78,8 @@ states:
     clip: Pistol_Shoot
     playRate: 1
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSightsFire
@@ -85,6 +97,8 @@ states:
     clip: Sprint_Loop
     playRate: 1
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSights
@@ -102,6 +116,8 @@ states:
     clip: Sprint_Enter
     playRate: 1.5
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSights
@@ -117,6 +133,8 @@ states:
     clip: Sprint_Exit
     playRate: 2
     transitions:
+      - to: death
+        when: [dead]
       - to: jumpStart
         when: [jumpTriggered]
       - to: aimDownSights
@@ -125,3 +143,10 @@ states:
         when: [moving, grounded]
       - to: idle
         when: [stationary, grounded, clipCompleted]
+
+  death:
+    clip: Death01
+    playRate: 1
+    transitions:
+      - to: idle
+        when: [alive]

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"net/http"
@@ -37,6 +38,8 @@ type Game interface {
 }
 
 func main() {
+	mode, logsEnabled := parseCommandLine(os.Args[1:])
+
 	configFile, err := os.Open("config.json")
 	config := settings.NewConfig()
 
@@ -73,26 +76,8 @@ func main() {
 		},
 	}
 
-	f, err := os.OpenFile("app.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	iztlog.SetLogger(slog.New(slog.NewJSONHandler(f, logHandlerOptions)))
-
-	f, err = os.OpenFile("_logs_client.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(f, logHandlerOptions)))
-
-	f, err = os.OpenFile("_logs_server.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	iztlog.SetServerLogger(slog.New(slog.NewJSONHandler(f, logHandlerOptions)))
+	closeLogs := configureLoggers(logsEnabled, logHandlerOptions)
+	defer closeLogs()
 
 	iztlog.Logger.Info("====================================================================================")
 	iztlog.Logger.Info("IZZET SESSION START")
@@ -105,15 +90,6 @@ func main() {
 	iztlog.ServerLogger.Info("====================================================================================")
 	iztlog.ServerLogger.Info("IZZET SERVER SESSION START")
 	iztlog.ServerLogger.Info("====================================================================================")
-
-	mode := "CLIENT"
-
-	if len(os.Args) > 1 {
-		mode = strings.ToUpper(os.Args[1])
-		if mode != "SERVER" && mode != "CLIENT" && mode != "HEADLESS" {
-			panic(fmt.Sprintf("unexpected mode %s", mode))
-		}
-	}
 
 	if mode == "SERVER" {
 		clientApp := client.New("shaders", config)
@@ -129,4 +105,81 @@ func main() {
 	}
 
 	sdl.Quit()
+}
+
+func parseCommandLine(args []string) (string, bool) {
+	mode := modeClient
+	logsEnabled := true
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--logs=") {
+			value, err := strconv.ParseBool(strings.TrimPrefix(arg, "--logs="))
+			if err != nil {
+				panic(fmt.Sprintf("unexpected --logs value %q", strings.TrimPrefix(arg, "--logs=")))
+			}
+			logsEnabled = value
+			continue
+		}
+
+		if strings.HasPrefix(arg, "--") {
+			panic(fmt.Sprintf("unexpected flag %s", arg))
+		}
+
+		mode = strings.ToUpper(arg)
+		if mode != modeServer && mode != modeClient && mode != "HEADLESS" {
+			panic(fmt.Sprintf("unexpected mode %s", mode))
+		}
+	}
+
+	return mode, logsEnabled
+}
+
+func configureLoggers(logsEnabled bool, logHandlerOptions *slog.HandlerOptions) func() {
+	if !logsEnabled {
+		f, err := os.OpenFile("_logs_garbage.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		logger := slog.New(slog.NewJSONHandler(f, logHandlerOptions))
+		iztlog.SetLogger(logger)
+		iztlog.SetClientLogger(logger)
+		iztlog.SetServerLogger(logger)
+
+		return func() {
+			if err := f.Close(); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	appLog, err := os.OpenFile("app.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	iztlog.SetLogger(slog.New(slog.NewJSONHandler(appLog, logHandlerOptions)))
+
+	clientLog, err := os.OpenFile("_logs_client.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(clientLog, logHandlerOptions)))
+
+	serverLog, err := os.OpenFile("_logs_server.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	iztlog.SetServerLogger(slog.New(slog.NewJSONHandler(serverLog, logHandlerOptions)))
+
+	return func() {
+		if err := appLog.Close(); err != nil {
+			panic(err)
+		}
+		if err := clientLog.Close(); err != nil {
+			panic(err)
+		}
+		if err := serverLog.Close(); err != nil {
+			panic(err)
+		}
+	}
 }

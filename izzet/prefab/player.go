@@ -24,6 +24,7 @@ func CreatePlayer(app App) *entity.Entity {
 	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
 	e.CharacterControllerComponent = &entity.CharacterControllerComponent{CameraEntityID: entity.InvalidEntityID}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
+	e.HealthComponent = &entity.HealthComponent{Amount: 100}
 	handle := assets.NewSingleEntityMeshHandle("mannequin_m")
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}

@@ -21,9 +21,13 @@ func (s *PostFrameSystem) Name() string {
 
 func (s *PostFrameSystem) Update(delta time.Duration, world system.GameWorld) {
 	sb := s.app.StateBuffer()
+	playerEntity := s.app.GetPlayerEntity()
 	if bi, ok := sb.Pull(s.app.CommandFrame()); ok {
 		for _, bs := range bi.EntityStates {
-			if bs.EntityID == s.app.GetPlayerEntity().ID {
+			if bs.EntityID == playerEntity.ID {
+				if bs.Deadge {
+					playerEntity.Deadge = true
+				}
 				continue
 			}
 

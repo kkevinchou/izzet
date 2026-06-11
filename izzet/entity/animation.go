@@ -18,14 +18,14 @@ type AnimationComponent struct {
 	RootJointID     int
 	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
 
-	// AnimationNames map[string]string
-
 	SelectedAnimation string
 	SelectedKeyFrame  int
 	LoopAnimation     bool
 
 	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
 	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
+
+	// --- Replication ---
 
 	// AnimationTransitions is the collection of animation transitions since the last
 	// game state update was replicated to clients

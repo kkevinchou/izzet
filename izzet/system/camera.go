@@ -9,7 +9,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 type CameraSystem struct {
@@ -30,7 +30,16 @@ func (s *CameraSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
+		s.setFOVX(delta, entity)
 		s.update(delta, world, entity)
+	}
+}
+
+func (s *CameraSystem) setFOVX(delta time.Duration, camera *entity.Entity) {
+	if s.app.IsClient() {
+		camera.CameraComponent.FovX = float64(s.app.RuntimeConfig().FovX)
+	} else {
+		camera.CameraComponent.FovX = settings.DefaultFOVX
 	}
 }
 
@@ -48,37 +57,30 @@ func (s *CameraSystem) update(delta time.Duration, world GameWorld, camera *enti
 		position = position.Sub(target.RenderBlend.BlendStartPosition).Mul(t).Add(target.RenderBlend.BlendStartPosition)
 	}
 
-	var targetPosition mgl64.Vec3
-	var cameraPosition mgl64.Vec3
+	// pivot is the 3d point that the camera will rotate around
+	pivot := position.Add(mgl64.Vec3{0, 1.75, 0})
 
-	if s.app.IsClient() {
-		s.app.RuntimeConfig().FovX = runtimeconfig.DefaultFovX
-		runtimeConfig := s.app.RuntimeConfig()
-		targetPosition = position.Add(runtimeConfig.CameraTargetOffset)
-
-		cameraOffset := runtimeConfig.CameraOverShoulderOffset
+	// vecFromPivot is a relative vector from the pivot to the camera
+	// this vector is not yet in world space
+	var vecFromPivot mgl64.Vec3
+	if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
+		vecFromPivot = mgl64.Vec3{0, 0, 5}
+	} else if camera.CameraComponent.CameraMode == entity.CameraModeOverShoulder {
 		if target.AimDownSightsComponent != nil && target.AimDownSightsComponent.Active {
-			cameraOffset = mgl64.Vec3{0.6, 0, 1.1}
-			s.app.RuntimeConfig().FovX = 85
-		}
-
-		cameraPosition = camera.GetLocalRotation().Rotate(cameraOffset).Add(targetPosition)
-		if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
-			cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
+			vecFromPivot = mgl64.Vec3{0.6, 0, 1.1}
+			camera.CameraComponent.FovX = 85
+		} else {
+			vecFromPivot = mgl64.Vec3{0.65, 0, 2.0}
 		}
 	} else {
-		targetPosition = position.Add(mgl64.Vec3{0, 1.75, 0})
-
-		cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0.65, 0, 2.0}).Add(targetPosition)
-		if camera.CameraComponent.CameraMode == entity.CameraModeWideView {
-			cameraPosition = camera.GetLocalRotation().Rotate(mgl64.Vec3{0, 0, 5}).Add(targetPosition)
-		}
+		panic("wat")
 	}
 
-	entityCameraLine := collider.Line{P1: targetPosition, P2: cameraPosition}
+	cameraWorldSpacePosition := camera.GetLocalRotation().Rotate(vecFromPivot).Add(pivot)
+	entityCameraLine := collider.Line{P1: pivot, P2: cameraWorldSpacePosition}
 	ents := s.app.World().SpatialPartition().EntitiesByLineSegment(entityCameraLine)
 
-	dir := cameraPosition.Sub(targetPosition)
+	dir := cameraWorldSpacePosition.Sub(pivot)
 	cameraDistanceSqr := dir.LenSqr()
 	dir = dir.Normalize()
 
@@ -96,7 +98,7 @@ func (s *CameraSystem) update(delta time.Duration, world GameWorld, camera *enti
 			continue
 		}
 
-		ray := collider.Ray{Origin: targetPosition, Direction: dir}
+		ray := collider.Ray{Origin: pivot, Direction: dir}
 
 		if _, _, success := checks.IntersectLineAABB(entityCameraLine, ent.BoundingBox()); !success {
 			continue
@@ -107,7 +109,7 @@ func (s *CameraSystem) update(delta time.Duration, world GameWorld, camera *enti
 			continue
 		}
 
-		distSq := point.Sub(targetPosition).LenSqr()
+		distSq := point.Sub(pivot).LenSqr()
 		if distSq < minDistSq && distSq < cameraDistanceSqr {
 			hit = true
 			minDistSq = distSq
@@ -118,6 +120,6 @@ func (s *CameraSystem) update(delta time.Duration, world GameWorld, camera *enti
 	if hit {
 		entity.SetLocalPosition(camera, hitPoint)
 	} else {
-		entity.SetLocalPosition(camera, cameraPosition)
+		entity.SetLocalPosition(camera, cameraWorldSpacePosition)
 	}
 }

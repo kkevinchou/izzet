@@ -331,7 +331,14 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	start := time.Now()
 	var renderContext context.RenderContext
 	width, height := r.SceneSize()
-	renderContext = context.NewRenderContext(width, height, float64(r.app.RuntimeConfig().FovX))
+
+	var fovX float64
+	if r.app.AppMode() == types.AppModePlay {
+		fovX = r.app.GetPlayerCamera().CameraComponent.FovX
+	} else {
+		fovX = settings.DefaultFOVX
+	}
+	renderContext = context.NewRenderContext(width, height, fovX)
 
 	// configure camera viewer context
 

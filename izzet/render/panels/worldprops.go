@@ -64,14 +64,6 @@ func WorldProps(app renderiface.App) {
 			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
 		}, true)
 
-		panelutils.SetupRow("Camera Target Offset", func() {
-			inputVec3(&runtimeConfig.CameraTargetOffset)
-		}, false)
-
-		panelutils.SetupRow("Camera Over Shoulder Offset", func() {
-			inputVec3(&runtimeConfig.CameraOverShoulderOffset)
-		}, false)
-
 		imgui.EndTable()
 	}
 

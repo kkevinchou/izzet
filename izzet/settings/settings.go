@@ -32,7 +32,8 @@ const (
 	NumFramesPerGameStateUpdate int = 10
 
 	// FPS is the number of rendered frames per second, separate from command frames
-	FPS int = 144
+	FPS         int     = 144
+	DefaultFOVX float64 = 105
 
 	// MSPerCommandFrame is the size of the simulation step for reading input,
 	// physics, etc.

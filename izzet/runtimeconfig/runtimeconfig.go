@@ -3,13 +3,12 @@ package runtimeconfig
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
 type RuntimeConfig struct {
-	CameraPosition           mgl64.Vec3
-	CameraRotation           mgl64.Quat
-	CameraTargetOffset       mgl64.Vec3
-	CameraOverShoulderOffset mgl64.Vec3
+	CameraPosition mgl64.Vec3
+	CameraRotation mgl64.Quat
 
 	DirectionalLightDir             [3]float32
 	Roughness                       float32
@@ -164,10 +163,6 @@ type CloudTexture struct {
 	ColorChannel  string
 }
 
-const (
-	DefaultFovX float32 = 105
-)
-
 func DefaultRuntimeConfig() *RuntimeConfig {
 	return &RuntimeConfig{
 		DirectionalLightDir:      [3]float32{-1, -1, -1},
@@ -191,12 +186,10 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		BloomUpsamplingScale:     1.0,
 		Color:                    [3]float32{1, 1, 1},
 		RenderSpatialPartition:   false,
-		CameraTargetOffset:       mgl64.Vec3{0, 1.75, 0},
-		CameraOverShoulderOffset: mgl64.Vec3{0.65, 0, 2.0},
 
 		Near: 0.1,
 		Far:  500,
-		FovX: DefaultFovX,
+		FovX: float32(settings.DefaultFOVX),
 
 		FogStart:   200,
 		FogEnd:     1000,

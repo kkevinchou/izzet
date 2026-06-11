@@ -56,7 +56,7 @@ func assertPanics(t *testing.T, f func()) {
 func assertCurrentState[T any](t *testing.T, sm *AnimationStateMachine[T], wantName, wantClip string, wantPlayRate float64) {
 	t.Helper()
 
-	state := sm.CurrentAnimationState()
+	state := sm.CurrentState
 	if state == nil {
 		t.Fatal("current animation state is nil")
 	}

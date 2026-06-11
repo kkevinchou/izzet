@@ -39,8 +39,8 @@ func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager)
 		e.Animation.LoopAnimation = animation.LoopAnimation
 
 		if animation.AnimationStateMachine != nil {
-			e.Animation.AnimationStateMachine.SetCurrentState(animation.AnimationStateMachine.CurrentAnimationState().Name)
-			currentState := e.Animation.AnimationStateMachine.CurrentAnimationState()
+			e.Animation.AnimationStateMachine.SetCurrentState(animation.AnimationStateMachine.CurrentState.Name)
+			currentState := e.Animation.AnimationStateMachine.CurrentState
 			e.Animation.AnimationPlayer.PlayClip(currentState.ClipName)
 			e.Animation.AnimationPlayer.Update(0)
 		}

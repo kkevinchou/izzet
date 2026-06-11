@@ -130,10 +130,6 @@ func (sm *AnimationStateMachine[T]) SetCurrentState(name string) {
 	sm.CurrentState = state
 }
 
-func (sm *AnimationStateMachine[T]) CurrentAnimationState() *AnimationState {
-	return sm.CurrentState
-}
-
 func (sm *AnimationStateMachine[T]) TriggerTransition(player *AnimationPlayer, source, destination string) {
 	for _, t := range sm.transitions {
 		if sm.CurrentState.Name != t.SourceState().Name {

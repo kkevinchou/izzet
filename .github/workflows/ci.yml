@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: izzet
+
+    steps:
+      - name: Check out izzet
+        uses: actions/checkout@v4
+        with:
+          path: izzet
+
+      - name: Check out kitolib
+        uses: actions/checkout@v4
+        with:
+          repository: kkevinchou/kitolib
+          path: kitolib
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev \
+            libglfw3-dev \
+            libsdl2-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxxf86vm-dev
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: izzet/go.mod
+          cache-dependency-path: izzet/go.sum
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...

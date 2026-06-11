@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/events"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
@@ -14,7 +15,6 @@ import (
 
 type ReplicationSystem struct {
 	app                   App
-	accumulator           int
 	destroyEntityConsumer *events.Consumer[events.DestroyEntityEvent]
 }
 
@@ -31,11 +31,9 @@ func (s *ReplicationSystem) Name() string {
 }
 
 func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) {
-	s.accumulator += int(delta.Milliseconds())
-	if s.accumulator < settings.MSPerGameStateUpdate {
+	if s.app.CommandFrame()%settings.NumFramesPerGameStateUpdate != 0 {
 		return
 	}
-	s.accumulator = 0
 
 	players := s.app.GetPlayers()
 
@@ -53,12 +51,14 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 			Position: entity.GetLocalPosition(),
 			Rotation: entity.GetLocalRotation(),
 		}
+
 		if entity.Kinematic != nil {
 			// entityState.Velocity = entity.Kinematic.Velocity
 			entityState.GravityEnabled = entity.Kinematic.GravityEnabled
 		}
 		if entity.Animation != nil {
-			entityState.Animation = entity.Animation.AnimationPlayer.CurrentAnimation()
+			entityState.AnimationTransitions = convertAnimationTransitions(entity.Animation.AnimationTransitions)
+			entity.Animation.AnimationTransitions = entity.Animation.AnimationTransitions[:0]
 		}
 		entityStates = append(entityStates, entityState)
 	}
@@ -99,4 +99,16 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 		s.app.Logger().Info("replication", "cf", gamestateUpdateMessage.LastInputCommandFrame, "gcf", s.app.CommandFrame())
 		player.Client.Send(gamestateUpdateMessage, s.app.CommandFrame())
 	}
+}
+
+func convertAnimationTransitions(animationTransitions []entity.ServerSideAnimationTransition) []network.AnimationTransition {
+	result := make([]network.AnimationTransition, len(animationTransitions))
+	for i := range len(animationTransitions) {
+		result[i] = network.AnimationTransition{
+			SourceState:      animationTransitions[i].AnimationTransition.Source,
+			DestinationState: animationTransitions[i].AnimationTransition.Destination,
+			CommandFrame:     animationTransitions[i].GlobalCommandFrame,
+		}
+	}
+	return result
 }

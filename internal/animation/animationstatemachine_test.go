@@ -21,14 +21,12 @@ states:
 
 	sm := NewAnimationStateMachine[struct{}](strings.NewReader(config), nil)
 
-	if got, want := sm.CurrentAnimationState(), "idle"; got != want {
-		t.Fatalf("current animation state = %q, want %q", got, want)
-	}
+	assertCurrentState(t, sm, "idle", "Idle_Loop", 1)
 }
 
 func TestAnimationStateMachineRegistrationValidation(t *testing.T) {
 	sm := &AnimationStateMachine[struct{}]{
-		states:          map[string]*animationState{},
+		states:          map[string]*AnimationState{},
 		transitionNames: map[string]struct{}{},
 	}
 
@@ -53,4 +51,22 @@ func assertPanics(t *testing.T, f func()) {
 	}()
 
 	f()
+}
+
+func assertCurrentState[T any](t *testing.T, sm *AnimationStateMachine[T], wantName, wantClip string, wantPlayRate float64) {
+	t.Helper()
+
+	state := sm.CurrentState
+	if state == nil {
+		t.Fatal("current animation state is nil")
+	}
+	if state.Name != wantName {
+		t.Fatalf("current animation state name = %q, want %q", state.Name, wantName)
+	}
+	if state.ClipName != wantClip {
+		t.Fatalf("current animation state clip = %q, want %q", state.ClipName, wantClip)
+	}
+	if state.PlayRate != wantPlayRate {
+		t.Fatalf("current animation state play rate = %v, want %v", state.PlayRate, wantPlayRate)
+	}
 }

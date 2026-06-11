@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/go-gl/mathgl/mgl64"
+	iztanimation "github.com/kkevinchou/izzet/internal/animation"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -20,11 +22,17 @@ type Frame struct {
 }
 
 type EntityState struct {
+	GlobalCommandFrame int
+
 	EntityID int
 	Position mgl64.Vec3
 	Rotation mgl64.Quat
 	Deadge   bool
+
+	AnimationTransition *iztanimation.AnimationTransition
 }
+
+type animationTransitionLookup map[int]map[int]iztanimation.AnimationTransition
 
 func NewStateBuffer() *StateBuffer {
 	return &StateBuffer{prevGSUpdate: network.GameStateUpdateMessage{LastInputCommandFrame: -1}}
@@ -64,6 +72,7 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 	} else {
 		for _, entity := range sb.prevGSUpdate.EntityStates {
 			blendStart[entity.EntityID] = EntityState{
+				EntityID: entity.EntityID,
 				Position: entity.Position,
 				Rotation: entity.Rotation,
 			}
@@ -90,20 +99,29 @@ func (sb *StateBuffer) Push(updateMsg network.GameStateUpdateMessage, localComma
 }
 
 func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdateMessage, blendStart map[int]EntityState, blendEnd map[int]EntityState) {
-	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame + 1
+	numFrames := updateMsg.GlobalCommandFrame - sb.prevGSUpdate.GlobalCommandFrame
 	cfStep := float64(1) / float64(numFrames)
+
+	transitionLookup := newAnimationTransitionLookup(updateMsg.EntityStates)
 
 	for i := 1; i <= numFrames; i++ {
 		frame := Frame{}
+		commandFrame := sb.prevGSUpdate.GlobalCommandFrame + i
 
 		for id := range blendStart {
 			endSnapshot := blendEnd[id]
 			startSnapshot := blendStart[id]
 
 			bs := EntityState{
-				EntityID: id,
-				Position: endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
-				Rotation: QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
+				GlobalCommandFrame: commandFrame,
+				EntityID:           id,
+				Position:           endSnapshot.Position.Sub(startSnapshot.Position).Mul(float64(i) * cfStep).Add(startSnapshot.Position),
+				Rotation:           QInterpolate64(startSnapshot.Rotation, endSnapshot.Rotation, float64(i)*cfStep),
+			}
+
+			if transition, ok := transitionLookup.At(commandFrame, id); ok {
+				bs.AnimationTransition = &transition
+				iztlog.ClientLogger.Info("transition", "id", id, "source", transition.Source, "destination", transition.Destination)
 			}
 
 			frame.EntityStates = append(frame.EntityStates, bs)
@@ -123,6 +141,35 @@ func (sb *StateBuffer) writeInterpolatedStates(updateMsg network.GameStateUpdate
 		}
 		sb.count += 1
 	}
+}
+
+func newAnimationTransitionLookup(entityStates []network.EntityState) animationTransitionLookup {
+	lookup := animationTransitionLookup{}
+
+	for _, state := range entityStates {
+		for _, transition := range state.AnimationTransitions {
+			if _, ok := lookup[transition.CommandFrame]; !ok {
+				lookup[transition.CommandFrame] = map[int]iztanimation.AnimationTransition{}
+			}
+
+			lookup[transition.CommandFrame][state.EntityID] = iztanimation.AnimationTransition{
+				Source:      transition.SourceState,
+				Destination: transition.DestinationState,
+			}
+		}
+	}
+
+	return lookup
+}
+
+func (lookup animationTransitionLookup) At(commandFrame, entityID int) (iztanimation.AnimationTransition, bool) {
+	transitions, ok := lookup[commandFrame]
+	if !ok {
+		return iztanimation.AnimationTransition{}, false
+	}
+
+	transition, ok := transitions[entityID]
+	return transition, ok
 }
 
 func (sb *StateBuffer) Pull(localCommandFrame int) (Frame, bool) {

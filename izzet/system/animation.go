@@ -5,6 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/utils"
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
+	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 type AnimationSystem struct {
@@ -41,6 +42,10 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
 			}
 		} else {
+			if e.Kinematic == nil {
+				continue
+			}
+
 			if e.Kinematic != nil && ((s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer()) {
 				var ctx animationparser.GameContext
 				ctx.Grounded = e.Kinematic.Grounded
@@ -55,16 +60,27 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				}
 
 				ctx.Dead = e.Deadge
-				e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
-			} else {
-				// entities replicated to the client just need their animation player updated.
-				// we rely on the game state update message to set the animation clip
-				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
-					e.Animation.AnimationPlayer.Update(delta)
-					if e.Animation.AnimationPlayer.NormalizedClipProgress() >= 1 {
-						e.Animation.AnimationPlayer.PlayClip(e.Animation.AnimationPlayer.CurrentAnimation())
-					}
+				transition, transitioned := e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
+
+				if s.app.IsServer() && transitioned {
+					e.Animation.AnimationTransitions = append(
+						e.Animation.AnimationTransitions,
+						entity.ServerSideAnimationTransition{
+							AnimationTransition: transition,
+							GlobalCommandFrame:  s.app.CommandFrame(),
+						},
+					)
 				}
+			} else {
+				// trigger transitions sent over from the server
+				if e.Animation.ReplicatedAnimationTransition != nil {
+					e.Animation.AnimationStateMachine.TriggerTransition(
+						e.Animation.AnimationPlayer,
+						e.Animation.ReplicatedAnimationTransition.Source,
+						e.Animation.ReplicatedAnimationTransition.Destination,
+					)
+				}
+				e.Animation.AnimationPlayer.Update(delta)
 			}
 		}
 	}

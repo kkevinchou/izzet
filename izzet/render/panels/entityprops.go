@@ -425,7 +425,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			}, true)
 
 			panelutils.SetupRow("Animation State", func() {
-				imgui.LabelText("", e.Animation.AnimationStateMachine.CurrentAnimationState())
+				imgui.LabelText("", e.Animation.AnimationStateMachine.CurrentState.Name)
 			}, true)
 			panelutils.SetupRow("Clip Elapsed Time", func() {
 				text := ""

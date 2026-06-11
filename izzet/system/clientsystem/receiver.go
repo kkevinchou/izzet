@@ -61,12 +61,6 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 						serverTransform = transform
 						continue
 					}
-
-					if e.Animation != nil && e.Animation.AnimationPlayer.CurrentAnimation() != transform.Animation {
-						// TODO: set proper playrate
-						e.Animation.AnimationPlayer.SetPlayRate(1)
-						e.Animation.AnimationPlayer.PlayClip(transform.Animation)
-					}
 				}
 
 				if len(gamestateUpdateMessage.DestroyedEntities) > 0 {

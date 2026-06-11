@@ -18,14 +18,26 @@ type AnimationComponent struct {
 	RootJointID     int
 	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
 
-	// AnimationNames map[string]string
-
 	SelectedAnimation string
 	SelectedKeyFrame  int
 	LoopAnimation     bool
 
-	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext] `json:"-"`
-	AnimationPlayer       *iztanimation.AnimationPlayer                                    `json:"-"`
+	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
+	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
+
+	// --- Replication ---
+
+	// AnimationTransitions is the collection of animation transitions since the last
+	// game state update was replicated to clients
+	AnimationTransitions []ServerSideAnimationTransition
+
+	// ReplicatedAnimationTransition is the animation transition we wish to apply this frame
+	ReplicatedAnimationTransition *iztanimation.AnimationTransition
+}
+
+type ServerSideAnimationTransition struct {
+	iztanimation.AnimationTransition
+	GlobalCommandFrame int
 }
 
 func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *AnimationComponent {

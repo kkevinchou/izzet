@@ -426,7 +426,19 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			}, true)
 
 			panelutils.SetupRow("Animation State", func() {
-				imgui.LabelText("", e.Animation.AnimationStateMachine.CurrentState.Name)
+				state := e.Animation.AnimationStateMachine.CurrentState.Name
+				if app.AppMode() == types.AppModeEditor {
+					state = ""
+				}
+				imgui.LabelText("", state)
+			}, true)
+			panelutils.SetupRow("Length (ms)", func() {
+				text := ""
+				animationName := e.Animation.AnimationPlayer.CurrentAnimation()
+				if animation := e.Animation.Animations[animationName]; animation != nil {
+					text = fmt.Sprintf("%d", animation.Length.Milliseconds())
+				}
+				imgui.LabelText("", text)
 			}, true)
 			panelutils.SetupRow("Clip Elapsed Time", func() {
 				text := ""

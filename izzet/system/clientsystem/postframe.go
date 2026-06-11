@@ -29,8 +29,6 @@ func (s *PostFrameSystem) Update(delta time.Duration, world system.GameWorld) {
 				continue
 			}
 
-			e.Deadge = bs.Deadge
-
 			if bs.EntityID == playerEntity.ID || bs.EntityID == playerEntity.CharacterControllerComponent.CameraEntityID {
 				continue
 			}

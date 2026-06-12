@@ -8,8 +8,8 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/ui"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/sqweek/dialog"
@@ -116,67 +116,64 @@ func importAssetModal(app renderiface.App) {
 
 	imgui.OpenPopupStr("Import Asset")
 	if imgui.BeginPopupModalV("Import Asset", nil, imgui.WindowFlagsAlwaysAutoResize) {
-		imgui.BeginTableV("Import Asset", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-
-		panelutils.SetupRow("ID", func() {
-			imgui.SetNextItemWidth(200)
-			imgui.InputTextWithHint("##ID", "", &wipImportAssetConfig.Name, imgui.InputTextFlagsNone, nil)
-		}, true)
-		panelutils.SetupRow("File Path", func() {
-			imgui.SetNextItemWidth(200)
-			imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
-			imgui.SameLine()
-			if imgui.Button("...") {
-				d := dialog.File()
-				currentDir, err := os.Getwd()
-				if err != nil {
-					panic(err)
-				}
-				d = d.SetStartDir(filepath.Join(currentDir, settings.BuiltinAssetsDir, "gltf"))
-				d = d.Filter("GLTF file", "gltf")
-
-				assetFilePath, err := d.Load()
-				if err != nil {
-					if err != dialog.ErrCancelled {
+		ui.Table("Import Asset", func() {
+			ui.RowV("ID", func() {
+				imgui.SetNextItemWidth(200)
+				imgui.InputTextWithHint("##ID", "", &wipImportAssetConfig.Name, imgui.InputTextFlagsNone, nil)
+			}, true)
+			ui.RowV("File Path", func() {
+				imgui.SetNextItemWidth(200)
+				imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
+				imgui.SameLine()
+				if imgui.Button("...") {
+					d := dialog.File()
+					currentDir, err := os.Getwd()
+					if err != nil {
 						panic(err)
 					}
-				} else {
-					wipImportAssetConfig.FilePath = assetFilePath
-					wipImportAssetConfig.Name = apputils.NameFromAssetFilePath(assetFilePath)
-				}
-			}
-		}, true)
-		panelutils.SetupRow("Collider Type", func() {
-			if imgui.BeginCombo("##", string(SelectedColliderType)) {
-				for _, option := range types.ColliderTypes {
-					if imgui.SelectableBool(string(option)) {
-						SelectedColliderType = option
-						wipImportAssetConfig.ColliderType = string(option)
-					}
-				}
-				imgui.EndCombo()
-			}
-		}, true)
-		panelutils.SetupRow("Collider Group", func() {
-			if imgui.BeginCombo("##", string(SelectedColliderGroup)) {
-				for _, option := range types.ColliderGroups {
-					if imgui.SelectableBool(string(option)) {
-						SelectedColliderGroup = option
-						wipImportAssetConfig.ColliderGroup = string(option)
-					}
-				}
-				imgui.EndCombo()
-			}
-		}, true)
-		panelutils.SetupRow("Static", func() {
-			imgui.Checkbox("##", &wipImportAssetConfig.Static)
-		}, true)
-		panelutils.SetupRow("Physics", func() {
-			imgui.Checkbox("##", &wipImportAssetConfig.Physics)
-		}, true)
+					d = d.SetStartDir(filepath.Join(currentDir, settings.BuiltinAssetsDir, "gltf"))
+					d = d.Filter("GLTF file", "gltf")
 
-		imgui.EndTable()
+					assetFilePath, err := d.Load()
+					if err != nil {
+						if err != dialog.ErrCancelled {
+							panic(err)
+						}
+					} else {
+						wipImportAssetConfig.FilePath = assetFilePath
+						wipImportAssetConfig.Name = apputils.NameFromAssetFilePath(assetFilePath)
+					}
+				}
+			}, true)
+			ui.RowV("Collider Type", func() {
+				if imgui.BeginCombo("##", string(SelectedColliderType)) {
+					for _, option := range types.ColliderTypes {
+						if imgui.SelectableBool(string(option)) {
+							SelectedColliderType = option
+							wipImportAssetConfig.ColliderType = string(option)
+						}
+					}
+					imgui.EndCombo()
+				}
+			}, true)
+			ui.RowV("Collider Group", func() {
+				if imgui.BeginCombo("##", string(SelectedColliderGroup)) {
+					for _, option := range types.ColliderGroups {
+						if imgui.SelectableBool(string(option)) {
+							SelectedColliderGroup = option
+							wipImportAssetConfig.ColliderGroup = string(option)
+						}
+					}
+					imgui.EndCombo()
+				}
+			}, true)
+			ui.RowV("Static", func() {
+				imgui.Checkbox("##", &wipImportAssetConfig.Static)
+			}, true)
+			ui.RowV("Physics", func() {
+				imgui.Checkbox("##", &wipImportAssetConfig.Physics)
+			}, true)
+		})
 
 		if imgui.Button("Import") {
 			app.ImportAsset(wipImportAssetConfig)

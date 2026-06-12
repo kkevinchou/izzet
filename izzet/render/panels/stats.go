@@ -8,8 +8,8 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/internal/metrics"
 	"github.com/kkevinchou/izzet/izzet/globals"
-	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/ui"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -30,64 +30,52 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 	caser := cases.Title(language.English)
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
+		ui.Table("", func() {
+			ui.LabelRow("Render Time", fmt.Sprintf("%.2f", mr.AvgOver("renderer_cpu_time", metricRange)))
+			ui.LabelRow("Command Frame Time", fmt.Sprintf("%.2f", mr.AvgOver("command_frame_nanoseconds", metricRange)/1000000))
+			ui.LabelRow("Client Sleep Time", fmt.Sprintf("%.2f", mr.AvgOver("client_sleep_nanoseconds", metricRange)/1000000))
+			ui.LabelRow("FPS", fmt.Sprintf("%.1f", mr.RatePerSec("fps", metricRange)))
+			ui.LabelRow("CFPS", fmt.Sprintf("%.1f", mr.RatePerSec("command_frames", metricRange)))
+			ui.LabelRow("Command Frame", fmt.Sprintf("%d", app.CommandFrame()))
+			ui.LabelRow("Ping", fmt.Sprintf("%d", int(mr.AvgOver("ping", 1))))
+			ui.LabelRow("Prediction Hit", fmt.Sprintf("%d", int(mr.RatePerSec("prediction_hit", metricRange))))
+			ui.LabelRow("Prediction Miss", fmt.Sprintf("%d", int(mr.RatePerSec("prediction_miss", metricRange))))
 
-		panelutils.SetupRow("Render Time", func() { imgui.LabelText("", fmt.Sprintf("%.2f", mr.AvgOver("renderer_cpu_time", metricRange))) }, true)
-		panelutils.SetupRow("Command Frame Time", func() {
-			imgui.LabelText("", fmt.Sprintf("%.2f", mr.AvgOver("command_frame_nanoseconds", metricRange)/1000000))
-		}, true)
-		panelutils.SetupRow("Client Sleep Time", func() {
-			imgui.LabelText("", fmt.Sprintf("%.2f", mr.AvgOver("client_sleep_nanoseconds", metricRange)/1000000))
-		}, true)
-		panelutils.SetupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("fps", metricRange))) }, true)
-		panelutils.SetupRow("CFPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("command_frames", metricRange))) }, true)
-		panelutils.SetupRow("Command Frame", func() { imgui.LabelText("", fmt.Sprintf("%d", app.CommandFrame())) }, true)
-		panelutils.SetupRow("Ping", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.AvgOver("ping", 1)))) }, true)
-		panelutils.SetupRow("Prediction Hit", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.RatePerSec("prediction_hit", metricRange)))) }, true)
-		panelutils.SetupRow("Prediction Miss", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.RatePerSec("prediction_miss", metricRange)))) }, true)
-
-		panelutils.SetupRow("Triangle Draw Count", func() { imgui.LabelText("", formatNumber(runtimeConfig.TriangleDrawCount)) }, true)
-		panelutils.SetupRow("Draw Count", func() { imgui.LabelText("", formatNumber(runtimeConfig.DrawCount)) }, true)
-		// panelutils.SetupRow("Draw Entity Count", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.GetLatest("draw_entity_count")))) }, true)
-		panelutils.SetupRow("gl.GenBuffers() count", func() { imgui.LabelText("", fmt.Sprintf("%0.f", mr.RatePerSec("gen_buffers", metricRange))) }, true)
-
-		imgui.EndTable()
+			ui.LabelRow("Triangle Draw Count", formatNumber(runtimeConfig.TriangleDrawCount))
+			ui.LabelRow("Draw Count", formatNumber(runtimeConfig.DrawCount))
+			ui.LabelRow("gl.GenBuffers() count", fmt.Sprintf("%0.f", mr.RatePerSec("gen_buffers", metricRange)))
+		})
 	}
 
 	// rendering metrics tracked from gpu
 	pairs, total := metricPairsByPrefix(mr, "render_gpu_")
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV(fmt.Sprintf("Rendering - GPU (%.2f)###gpu_rendering_header", total), imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-		for _, pair := range pairs {
-			panelutils.SetupRow(caser.String(pair.name), func() { imgui.LabelText("", fmt.Sprintf("%.2f", pair.value)) }, true)
-		}
-		imgui.EndTable()
+		ui.Table("", func() {
+			for _, pair := range pairs {
+				ui.LabelRow(caser.String(pair.name), fmt.Sprintf("%.2f", pair.value))
+			}
+		})
 	}
 
 	// rendering metrics tracked from cpu
 	pairs, total = metricPairsByPrefix(mr, "render_cpu_")
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV(fmt.Sprintf("Rendering - CPU (%.2f)###cpu_rendering_header", total), imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-		for _, pair := range pairs {
-			panelutils.SetupRow(caser.String(pair.name), func() { imgui.LabelText("", fmt.Sprintf("%.2f", pair.value)) }, true)
-		}
-		imgui.EndTable()
+		ui.Table("", func() {
+			for _, pair := range pairs {
+				ui.LabelRow(caser.String(pair.name), fmt.Sprintf("%.2f", pair.value))
+			}
+		})
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Server Stats", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-
-		stats := app.GetServerStats()
-		for _, stat := range stats.Data {
-			panelutils.SetupRow(stat.Name, func() { imgui.LabelText(stat.Name, stat.Value) }, true)
-		}
-		imgui.EndTable()
+		ui.Table("", func() {
+			stats := app.GetServerStats()
+			for _, stat := range stats.Data {
+				ui.LabelRow(stat.Name, stat.Value)
+			}
+		})
 	}
 }
 

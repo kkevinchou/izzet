@@ -5,10 +5,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
 
-var (
-	tableFlags imgui.TableFlags = imgui.TableFlagsBordersInnerV
-)
-
 var worldName string = ""
 var selectedWorldName string = ""
 

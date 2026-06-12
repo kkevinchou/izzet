@@ -13,8 +13,8 @@ import (
 	"github.com/kkevinchou/izzet/internal/geometry"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/ui"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
@@ -81,7 +81,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		}
 
 		imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
+		ui.InitColumns()
 		uiTableRow("ID", entityIDStr)
 		uiTableRow("Name", entityNameStr)
 
@@ -92,7 +92,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			x, y, z = float32(position.X()), float32(position.Y()), float32(position.Z())
 		}
 
-		panelutils.SetupRow("Local Position", func() {
+		ui.RowV("Local Position", func() {
 			if e != nil {
 				imgui.PushItemWidth(imgui.ContentRegionAvail().X / 3.0)
 				if imgui.InputFloatV("##x", &x, 0, 0, "%.2f", imgui.InputTextFlagsNone) {
@@ -139,7 +139,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 	if e.LightInfo != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Light Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
 			lightTypeStr := "?"
 			if e.LightInfo.Type == entity.LightTypePoint {
@@ -148,10 +148,10 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				lightTypeStr = "Directional Light"
 			}
 			uiTableRow("Light Type", lightTypeStr)
-			panelutils.SetupRow("Color", func() {
+			ui.RowV("Color", func() {
 				imgui.ColorEdit3V("", &e.LightInfo.Diffuse3F, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			}, true)
-			panelutils.SetupRow("Color Intensity", func() {
+			ui.RowV("Color Intensity", func() {
 				if e.LightInfo.Type == entity.LightTypePoint {
 					imgui.SliderFloatV("", &e.LightInfo.PreScaledIntensity, 0, 0.1, "%.3f", imgui.SliderFlagsNone)
 				} else if e.LightInfo.Type == entity.LightTypeDirection {
@@ -160,9 +160,9 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			}, true)
 
 			if e.LightInfo.Type == entity.LightTypePoint {
-				panelutils.SetupRow("Light Range", func() { imgui.SliderFloatV("", &e.LightInfo.Range, 1, 1500, "%.0f", imgui.SliderFlagsNone) }, true)
+				ui.RowV("Light Range", func() { imgui.SliderFloatV("", &e.LightInfo.Range, 1, 1500, "%.0f", imgui.SliderFlagsNone) }, true)
 			} else if e.LightInfo.Type == entity.LightTypeDirection {
-				panelutils.SetupRow("Directional Light Direction", func() { imgui.SliderFloat3("", &e.LightInfo.Direction3F, -1, 1) }, true)
+				ui.RowV("Directional Light Direction", func() { imgui.SliderFloat3("", &e.LightInfo.Direction3F, -1, 1) }, true)
 			}
 			imgui.EndTable()
 			imgui.PushIDStr("remove light")
@@ -177,20 +177,20 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		imageComponent := e.ImageComponent
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Image Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
-			panelutils.SetupRow("Image Name", func() {
+			ui.RowV("Image Name", func() {
 				imgui.InputTextWithHint("", "default.png", &imageComponent.ImageName, imgui.InputTextFlagsNone, nil)
 			}, true)
 
-			panelutils.SetupRow("Scale", func() {
+			ui.RowV("Scale", func() {
 				scale := float32(imageComponent.Scale)
 				if imgui.InputFloatV("", &scale, 0.1, 1, "%.2f", imgui.InputTextFlagsNone) {
 					imageComponent.Scale = float64(scale)
 				}
 			}, true)
 
-			panelutils.SetupRow("Billboard", func() {
+			ui.RowV("Billboard", func() {
 				imgui.Checkbox("", &imageComponent.Billboard)
 			}, true)
 
@@ -206,26 +206,26 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 	if e.Material != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Material Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
-			// panelutils.SetupRow("Diffuse", func() {
+			// ui.RowV("Diffuse", func() {
 			// 	imgui.ColorEdit3V("", &entity.Material.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			// }, true)
-			// panelutils.SetupRow("Invisible", func() {
+			// ui.RowV("Invisible", func() {
 			// 	imgui.Checkbox("", &entity.Material.Material.Invisible)
 			// }, true)
 
-			// panelutils.SetupRow("Diffuse Intensity", func() {
+			// ui.RowV("Diffuse Intensity", func() {
 			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 100, "%.1f", imgui.SliderFlagsNone)
 			// }, true)
 
-			// panelutils.SetupRow("Roughness", func() {
+			// ui.RowV("Roughness", func() {
 			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone)
 			// }, true)
-			// panelutils.SetupRow("Metallic Factor", func() {
+			// ui.RowV("Metallic Factor", func() {
 			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
 			// }, true)
-			panelutils.SetupRow("Current Material", func() {
+			ui.RowV("Current Material", func() {
 				materialName := app.AssetManager().GetMaterial(e.Material.MaterialHandle).Name
 				imgui.LabelText("", materialName)
 			}, true)
@@ -265,9 +265,9 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Mesh Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
-			panelutils.SetupRow("Visible", func() { imgui.Checkbox("", &e.MeshComponent.Visible) }, true)
-			panelutils.SetupRow("Shadow Casting", func() { imgui.Checkbox("", &e.MeshComponent.ShadowCasting) }, true)
+			ui.InitColumns()
+			ui.RowV("Visible", func() { imgui.Checkbox("", &e.MeshComponent.Visible) }, true)
+			ui.RowV("Shadow Casting", func() { imgui.Checkbox("", &e.MeshComponent.ShadowCasting) }, true)
 
 			uiTableRow("Original Triangle Count", originalMeshTriCount)
 			imgui.EndTable()
@@ -279,25 +279,25 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		velocity := &physicsComponent.Velocity
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Physics Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
 			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.X())
 
-			panelutils.SetupRow("Velocity X", func() {
+			ui.RowV("Velocity X", func() {
 				imgui.PushIDStr("velocity x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[0] = float64(x)
 				}
 				imgui.PopID()
 			}, true)
-			panelutils.SetupRow("Velocity Y", func() {
+			ui.RowV("Velocity Y", func() {
 				imgui.PushIDStr("velocity y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[1] = float64(y)
 				}
 				imgui.PopID()
 			}, true)
-			panelutils.SetupRow("Velocity Z", func() {
+			ui.RowV("Velocity Z", func() {
 				imgui.PushIDStr("velocity z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[2] = float64(z)
@@ -317,35 +317,35 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		velocity := e.TotalKinematicVelocity()
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Kinematic Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
 			var x, y, z int32 = int32(velocity.X()), int32(velocity.Y()), int32(velocity.Z())
 
-			panelutils.SetupRow("Velocity X", func() {
+			ui.RowV("Velocity X", func() {
 				imgui.PushIDStr("velocity x")
 				if imgui.InputIntV("", &x, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[0] = float64(x)
 				}
 				imgui.PopID()
 			}, true)
-			panelutils.SetupRow("Velocity Y", func() {
+			ui.RowV("Velocity Y", func() {
 				imgui.PushIDStr("velocity y")
 				if imgui.InputIntV("", &y, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[1] = float64(y)
 				}
 				imgui.PopID()
 			}, true)
-			panelutils.SetupRow("Velocity Z", func() {
+			ui.RowV("Velocity Z", func() {
 				imgui.PushIDStr("velocity z")
 				if imgui.InputIntV("", &z, 0, 0, imgui.InputTextFlagsNone) {
 					velocity[2] = float64(z)
 				}
 				imgui.PopID()
 			}, true)
-			panelutils.SetupRow("Grounded", func() {
+			ui.RowV("Grounded", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", e.Kinematic.Grounded))
 			}, true)
-			panelutils.SetupRow("Enable Gravity", func() { imgui.Checkbox("", &e.Kinematic.GravityEnabled) }, true)
+			ui.RowV("Enable Gravity", func() { imgui.Checkbox("", &e.Kinematic.GravityEnabled) }, true)
 			imgui.EndTable()
 			imgui.PushIDStr("remove kinematic")
 			if imgui.Button("Remove") {
@@ -358,18 +358,18 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 	if e.Collider != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Collider Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
-			panelutils.SetupRow("Collider Type", func() {
+			ui.RowV("Collider Type", func() {
 				imgui.LabelText("", string(types.ColliderFlagToGroupName[e.Collider.ColliderGroup]))
 			}, true)
-			panelutils.SetupRow("Capsule", func() {
+			ui.RowV("Capsule", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", e.Collider.CapsuleCollider != nil))
 			}, true)
-			panelutils.SetupRow("Triangular Mesh", func() {
+			ui.RowV("Triangular Mesh", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", e.Collider.TriMeshCollider != nil))
 			}, true)
-			panelutils.SetupRow("Bounding Box", func() {
+			ui.RowV("Bounding Box", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", e.Collider.BoundingBoxCollider != nil))
 			}, true)
 
@@ -401,16 +401,16 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 	if e.Collider != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Debugging Properties", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
 			collisionObserver := app.CollisionObserver()
-			panelutils.SetupRow("Entities In Partition", func() { imgui.LabelText("", formatNumber(collisionObserver.SpatialQuery[e.GetID()])) }, true)
-			panelutils.SetupRow("Bounding Box Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.BoundingBoxCheck[e.GetID()])) }, true)
-			panelutils.SetupRow("Collision Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheck[e.GetID()])) }, true)
-			panelutils.SetupRow("Triangle Mesh Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriMesh[e.GetID()])) }, true)
-			panelutils.SetupRow("Triangle Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriangle[e.GetID()])) }, true)
-			panelutils.SetupRow("Capsule Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckCapsule[e.GetID()])) }, true)
-			panelutils.SetupRow("Collision Resolutions", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionResolution[e.GetID()])) }, true)
+			ui.RowV("Entities In Partition", func() { imgui.LabelText("", formatNumber(collisionObserver.SpatialQuery[e.GetID()])) }, true)
+			ui.RowV("Bounding Box Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.BoundingBoxCheck[e.GetID()])) }, true)
+			ui.RowV("Collision Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheck[e.GetID()])) }, true)
+			ui.RowV("Triangle Mesh Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriMesh[e.GetID()])) }, true)
+			ui.RowV("Triangle Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckTriangle[e.GetID()])) }, true)
+			ui.RowV("Capsule Checks", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionCheckCapsule[e.GetID()])) }, true)
+			ui.RowV("Collision Resolutions", func() { imgui.LabelText("", formatNumber(collisionObserver.CollisionResolution[e.GetID()])) }, true)
 
 			imgui.EndTable()
 		}
@@ -419,20 +419,20 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 	if e.Animation != nil {
 		if imgui.CollapsingHeaderTreeNodeFlagsV("Animation", imgui.TreeNodeFlagsNone) {
 			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			panelutils.InitColumns()
+			ui.InitColumns()
 
-			panelutils.SetupRow("Current Animation", func() {
+			ui.RowV("Current Animation", func() {
 				imgui.LabelText("", e.Animation.AnimationPlayer.CurrentAnimation())
 			}, true)
 
-			panelutils.SetupRow("Animation State", func() {
+			ui.RowV("Animation State", func() {
 				state := e.Animation.AnimationStateMachine.CurrentState.Name
 				if app.AppMode() == types.AppModeEditor {
 					state = ""
 				}
 				imgui.LabelText("", state)
 			}, true)
-			panelutils.SetupRow("Length (ms)", func() {
+			ui.RowV("Length (ms)", func() {
 				text := ""
 				animationName := e.Animation.AnimationPlayer.CurrentAnimation()
 				if animation := e.Animation.Animations[animationName]; animation != nil {
@@ -440,7 +440,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				}
 				imgui.LabelText("", text)
 			}, true)
-			panelutils.SetupRow("Clip Elapsed Time", func() {
+			ui.RowV("Clip Elapsed Time", func() {
 				text := ""
 				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
 					elapsedTime := e.Animation.AnimationPlayer.ElapsedTime()
@@ -448,7 +448,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				}
 				imgui.LabelText("", text)
 			}, true)
-			panelutils.SetupRow("Normalized Clip Progress", func() {
+			ui.RowV("Normalized Clip Progress", func() {
 				text := ""
 				if e.Animation.AnimationPlayer.CurrentAnimation() != "" {
 					progress := e.Animation.AnimationPlayer.NormalizedClipProgress()
@@ -457,7 +457,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				imgui.LabelText("", text)
 			}, true)
 
-			panelutils.SetupRow("Animation", func() {
+			ui.RowV("Animation", func() {
 				var animationList []string
 				for animation := range e.Animation.Animations {
 					animationList = append(animationList, animation)
@@ -503,7 +503,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				}
 			}, true)
 
-			panelutils.SetupRow("Key Frame", func() {
+			ui.RowV("Key Frame", func() {
 				currentAnimation := e.Animation.SelectedAnimation
 				animations, _, _ := app.AssetManager().GetAnimations(e.Animation.AnimationHandle)
 				animation := animations[currentAnimation]
@@ -516,7 +516,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				}
 			}, true)
 
-			panelutils.SetupRow("LoopAnimation", func() { imgui.Checkbox("", &e.Animation.LoopAnimation) }, true)
+			ui.RowV("LoopAnimation", func() { imgui.Checkbox("", &e.Animation.LoopAnimation) }, true)
 
 			imgui.EndTable()
 		}

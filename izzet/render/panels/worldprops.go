@@ -7,8 +7,8 @@ import (
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/render/panels/panelutils"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/ui"
 )
 
 type NavMeshRenderComboOption string
@@ -52,117 +52,103 @@ func WorldProps(app renderiface.App) {
 	runtimeConfig := app.RuntimeConfig()
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("General", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.BeginTableV("General Table", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-
-		panelutils.SetupRow("Camera Position", func() {
-			imgui.LabelText("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", runtimeConfig.CameraPosition[0], runtimeConfig.CameraPosition[1], runtimeConfig.CameraPosition[2]))
-		}, true)
-
-		panelutils.SetupRow("Camera Viewing Direction", func() {
+		ui.Table("General Table", func() {
+			ui.LabelRow("Camera Position", fmt.Sprintf("{%.1f, %.1f, %.1f}", runtimeConfig.CameraPosition[0], runtimeConfig.CameraPosition[1], runtimeConfig.CameraPosition[2]))
 			viewDir := runtimeConfig.CameraRotation.Rotate(mgl64.Vec3{0, 0, -1})
-			imgui.LabelText("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
-		}, true)
-
-		imgui.EndTable()
+			ui.LabelRow("Camera Viewing Direction", fmt.Sprintf("{%.1f, %.1f, %.1f}", viewDir[0], viewDir[1], viewDir[2]))
+		})
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Editing", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Editing Table", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-		panelutils.SetupRow("Grid Snapping Size", func() {
-			var value float32 = float32(app.RuntimeConfig().SnapSize)
-			if imgui.SliderFloatV("noiseZ", &value, 0.1, 2, "%.3f", imgui.SliderFlagsNone) {
-				app.RuntimeConfig().SnapSize = float64(value)
-			}
-		}, true)
-		panelutils.SetupRow("Rotation Snapping Size", func() {
-			if imgui.InputIntV("", &runtimeConfig.RotationSnapSize, 0, 0, imgui.InputTextFlagsNone) {
-				if runtimeConfig.RotationSnapSize < 1 {
-					runtimeConfig.RotationSnapSize = 1
+		ui.Table("Editing Table", func() {
+			ui.Row("Grid Snapping Size", func() {
+				var value float32 = float32(app.RuntimeConfig().SnapSize)
+				if imgui.SliderFloatV("noiseZ", &value, 0.1, 2, "%.3f", imgui.SliderFlagsNone) {
+					app.RuntimeConfig().SnapSize = float64(value)
 				}
-			}
-		}, true)
-		panelutils.SetupRow("Rotation Sensitivity", func() {
-			if imgui.InputIntV("", &runtimeConfig.RotationSensitivity, 0, 0, imgui.InputTextFlagsNone) {
-				if runtimeConfig.RotationSensitivity < 1 {
-					runtimeConfig.RotationSensitivity = 1
+			})
+			ui.Row("Rotation Snapping Size", func() {
+				if imgui.InputIntV("##value", &runtimeConfig.RotationSnapSize, 0, 0, imgui.InputTextFlagsNone) {
+					if runtimeConfig.RotationSnapSize < 1 {
+						runtimeConfig.RotationSnapSize = 1
+					}
 				}
-			}
-		}, true)
-
-		imgui.EndTable()
+			})
+			ui.Row("Rotation Sensitivity", func() {
+				if imgui.InputIntV("##value", &runtimeConfig.RotationSensitivity, 0, 0, imgui.InputTextFlagsNone) {
+					if runtimeConfig.RotationSensitivity < 1 {
+						runtimeConfig.RotationSensitivity = 1
+					}
+				}
+			})
+		})
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Navigation Mesh", imgui.TreeNodeFlagsNone) {
-		imgui.BeginTableV("Navigation Mesh Table", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.SetupRow("Iterations", func() {
-			var i int32 = runtimeConfig.NavigationMeshIterations
-			if imgui.InputInt("", &i) {
-				runtimeConfig.NavigationMeshIterations = i
-			}
-		}, true)
-		panelutils.SetupRow("Walkable Height", func() {
-			var i int32 = runtimeConfig.NavigationMeshWalkableHeight
-			if imgui.InputInt("", &i) {
-				runtimeConfig.NavigationMeshWalkableHeight = i
-			}
-		}, true)
-		panelutils.SetupRow("Climbable Height", func() {
-			var i int32 = runtimeConfig.NavigationMeshClimbableHeight
-			if imgui.InputInt("", &i) {
-				runtimeConfig.NavigationMeshClimbableHeight = i
-			}
-		}, true)
-		panelutils.SetupRow("Min Region Area", func() {
-			var i int32 = runtimeConfig.NavigationMeshMinRegionArea
-			if imgui.InputInt("", &i) {
-				runtimeConfig.NavigationMeshMinRegionArea = i
-			}
-		}, true)
-		panelutils.SetupRow("Max Error", func() {
-			var f float32 = float32(runtimeConfig.NavigationmeshMaxError)
-			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-				runtimeConfig.NavigationmeshMaxError = f
-			}
-		}, true)
-		panelutils.SetupRow("Max Edge Length", func() {
-			var f float32 = float32(runtimeConfig.NavigationmeshMaxEdgeLength)
-			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-				runtimeConfig.NavigationmeshMaxEdgeLength = f
-			}
-		}, true)
-		panelutils.SetupRow("Agent Radius", func() {
-			var f float32 = float32(runtimeConfig.NavigationMeshAgentRadius)
-			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-				runtimeConfig.NavigationMeshAgentRadius = f
-			}
-		}, true)
-		panelutils.SetupRow("Cell Size", func() {
-			f := runtimeConfig.NavigationMeshCellSize
-			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-				runtimeConfig.NavigationMeshCellSize = f
-			}
-		}, true)
-		panelutils.SetupRow("Cell Height", func() {
-			f := runtimeConfig.NavigationMeshCellHeight
-			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-				runtimeConfig.NavigationMeshCellHeight = f
-			}
-		}, true)
-		panelutils.SetupRow("Sample Dist", func() {
-			var f float32 = float32(runtimeConfig.NavigationmeshSampleDist)
-			if imgui.InputFloatV("", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-				runtimeConfig.NavigationmeshSampleDist = f
-			}
-		}, true)
-		panelutils.SetupRow("Filter Ledge Spans", func() {
-			imgui.Checkbox("##", &runtimeConfig.NavigationMeshFilterLedgeSpans)
-		}, true)
-		panelutils.SetupRow("Filter Low Height Spans", func() {
-			imgui.Checkbox("##", &runtimeConfig.NavigationMeshFilterLowHeightSpans)
-		}, true)
-		imgui.EndTable()
+		ui.Table("Navigation Mesh Table", func() {
+			ui.Row("Iterations", func() {
+				var i int32 = runtimeConfig.NavigationMeshIterations
+				if imgui.InputInt("##value", &i) {
+					runtimeConfig.NavigationMeshIterations = i
+				}
+			})
+			ui.Row("Walkable Height", func() {
+				var i int32 = runtimeConfig.NavigationMeshWalkableHeight
+				if imgui.InputInt("##value", &i) {
+					runtimeConfig.NavigationMeshWalkableHeight = i
+				}
+			})
+			ui.Row("Climbable Height", func() {
+				var i int32 = runtimeConfig.NavigationMeshClimbableHeight
+				if imgui.InputInt("##value", &i) {
+					runtimeConfig.NavigationMeshClimbableHeight = i
+				}
+			})
+			ui.Row("Min Region Area", func() {
+				var i int32 = runtimeConfig.NavigationMeshMinRegionArea
+				if imgui.InputInt("##value", &i) {
+					runtimeConfig.NavigationMeshMinRegionArea = i
+				}
+			})
+			ui.Row("Max Error", func() {
+				var f float32 = float32(runtimeConfig.NavigationmeshMaxError)
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationmeshMaxError = f
+				}
+			})
+			ui.Row("Max Edge Length", func() {
+				var f float32 = float32(runtimeConfig.NavigationmeshMaxEdgeLength)
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationmeshMaxEdgeLength = f
+				}
+			})
+			ui.Row("Agent Radius", func() {
+				var f float32 = float32(runtimeConfig.NavigationMeshAgentRadius)
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationMeshAgentRadius = f
+				}
+			})
+			ui.Row("Cell Size", func() {
+				f := runtimeConfig.NavigationMeshCellSize
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationMeshCellSize = f
+				}
+			})
+			ui.Row("Cell Height", func() {
+				f := runtimeConfig.NavigationMeshCellHeight
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationMeshCellHeight = f
+				}
+			})
+			ui.Row("Sample Dist", func() {
+				var f float32 = float32(runtimeConfig.NavigationmeshSampleDist)
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationmeshSampleDist = f
+				}
+			})
+			ui.CheckboxRow("Filter Ledge Spans", &runtimeConfig.NavigationMeshFilterLedgeSpans)
+			ui.CheckboxRow("Filter Low Height Spans", &runtimeConfig.NavigationMeshFilterLowHeightSpans)
+		})
 
 		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
 			runtimeConfig.DebugBlob1IntMap = map[int]bool{}
@@ -201,20 +187,20 @@ func WorldProps(app renderiface.App) {
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
 		}
 
-		imgui.BeginTableV("Navigation Mesh Table", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.SetupRow("Start", func() {
-			var i int32 = runtimeConfig.NavigationMeshStart
-			if imgui.InputInt("##", &i) {
-				runtimeConfig.NavigationMeshStart = i
-			}
-		}, true)
-		panelutils.SetupRow("Goal", func() {
-			var i int32 = int32(runtimeConfig.NavigationMeshGoal)
-			if imgui.InputInt("##", &i) {
-				runtimeConfig.NavigationMeshGoal = i
-			}
-		}, true)
-		imgui.EndTable()
+		ui.Table("Navigation Mesh Table", func() {
+			ui.Row("Start", func() {
+				var i int32 = runtimeConfig.NavigationMeshStart
+				if imgui.InputInt("##value", &i) {
+					runtimeConfig.NavigationMeshStart = i
+				}
+			})
+			ui.Row("Goal", func() {
+				var i int32 = int32(runtimeConfig.NavigationMeshGoal)
+				if imgui.InputInt("##value", &i) {
+					runtimeConfig.NavigationMeshGoal = i
+				}
+			})
+		})
 
 		if imgui.Button("Find Path") {
 			app.FindPath(app.RuntimeConfig().NavigationMeshStartPoint, app.RuntimeConfig().NavigationMeshGoalPoint)
@@ -222,69 +208,67 @@ func WorldProps(app renderiface.App) {
 	}
 
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsDefaultOpen) {
-		imgui.BeginTableV("Noise Table", 2, tableFlags, imgui.Vec2{}, 0)
-		panelutils.InitColumns()
-
-		panelutils.SetupRow("Cloud Texture Index", func() {
-			if imgui.BeginCombo("##", fmt.Sprintf("%d", SelectedCloudTextureIndex)) {
-				for i := range 2 {
-					if imgui.SelectableBool(fmt.Sprintf("%d", i)) {
-						SelectedCloudTextureIndex = i
-						app.RuntimeConfig().ActiveCloudTextureIndex = int(i)
+		ui.Table("Noise Table", func() {
+			ui.Row("Cloud Texture Index", func() {
+				if imgui.BeginCombo("##value", fmt.Sprintf("%d", SelectedCloudTextureIndex)) {
+					for i := range 2 {
+						if imgui.SelectableBool(fmt.Sprintf("%d", i)) {
+							SelectedCloudTextureIndex = i
+							app.RuntimeConfig().ActiveCloudTextureIndex = int(i)
+						}
 					}
+					imgui.EndCombo()
 				}
-				imgui.EndCombo()
-			}
-		}, true)
+			})
 
-		panelutils.SetupRow("Cloud Channel Index", func() {
-			if imgui.BeginCombo("##", fmt.Sprintf("%d", SelectedCloudTextureChannelIndex)) {
-				for i := range 4 {
-					if imgui.SelectableBool(fmt.Sprintf("%d", i)) {
-						SelectedCloudTextureChannelIndex = i
-						app.RuntimeConfig().ActiveCloudTextureChannelIndex = int(i)
+			ui.Row("Cloud Channel Index", func() {
+				if imgui.BeginCombo("##value", fmt.Sprintf("%d", SelectedCloudTextureChannelIndex)) {
+					for i := range 4 {
+						if imgui.SelectableBool(fmt.Sprintf("%d", i)) {
+							SelectedCloudTextureChannelIndex = i
+							app.RuntimeConfig().ActiveCloudTextureChannelIndex = int(i)
+						}
 					}
+					imgui.EndCombo()
 				}
-				imgui.EndCombo()
-			}
-		}, true)
+			})
 
-		cloudTexture := &app.RuntimeConfig().CloudTextures[app.RuntimeConfig().ActiveCloudTextureIndex]
-		activeChannelIndex := &app.RuntimeConfig().ActiveCloudTextureChannelIndex
-		panelutils.SetupRow("Noise Z", func() {
-			imgui.SliderFloatV("noiseZ", &cloudTexture.Channels[*activeChannelIndex].NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
-		}, true)
-		panelutils.SetupRow("Cell Width", func() {
-			if imgui.SliderInt("cellWidth", &cloudTexture.Channels[*activeChannelIndex].CellWidth, 1, 30) {
-				RecreateCloudTexture = true
-			}
-		}, true)
-		panelutils.SetupRow("Cell Height", func() {
-			if imgui.SliderInt("cellHeight", &cloudTexture.Channels[*activeChannelIndex].CellHeight, 1, 30) {
-				RecreateCloudTexture = true
-			}
-		}, true)
-		panelutils.SetupRow("Cell Depth", func() {
-			if imgui.SliderInt("cellDepth", &cloudTexture.Channels[*activeChannelIndex].CellDepth, 1, 30) {
-				RecreateCloudTexture = true
-			}
-		}, true)
-		panelutils.SetupRow("WGroup Width", func() {
-			if imgui.SliderInt("workGroupWidth", &cloudTexture.WorkGroupWidth, 1, 512) {
-				RecreateCloudTexture = true
-			}
-		}, true)
-		panelutils.SetupRow("WGroup Height", func() {
-			if imgui.SliderInt("workGroupHeight", &cloudTexture.WorkGroupHeight, 1, 512) {
-				RecreateCloudTexture = true
-			}
-		}, true)
-		panelutils.SetupRow("WGroup Depth", func() {
-			if imgui.SliderInt("workGroupDepth", &cloudTexture.WorkGroupDepth, 1, 512) {
-				RecreateCloudTexture = true
-			}
-		}, true)
-		imgui.EndTable()
+			cloudTexture := &app.RuntimeConfig().CloudTextures[app.RuntimeConfig().ActiveCloudTextureIndex]
+			activeChannelIndex := &app.RuntimeConfig().ActiveCloudTextureChannelIndex
+			ui.Row("Noise Z", func() {
+				imgui.SliderFloatV("##value", &cloudTexture.Channels[*activeChannelIndex].NoiseZ, 0, 1, "%.3f", imgui.SliderFlagsNone)
+			})
+			ui.Row("Cell Width", func() {
+				if imgui.SliderInt("##value", &cloudTexture.Channels[*activeChannelIndex].CellWidth, 1, 30) {
+					RecreateCloudTexture = true
+				}
+			})
+			ui.Row("Cell Height", func() {
+				if imgui.SliderInt("##value", &cloudTexture.Channels[*activeChannelIndex].CellHeight, 1, 30) {
+					RecreateCloudTexture = true
+				}
+			})
+			ui.Row("Cell Depth", func() {
+				if imgui.SliderInt("##value", &cloudTexture.Channels[*activeChannelIndex].CellDepth, 1, 30) {
+					RecreateCloudTexture = true
+				}
+			})
+			ui.Row("WGroup Width", func() {
+				if imgui.SliderInt("##value", &cloudTexture.WorkGroupWidth, 1, 512) {
+					RecreateCloudTexture = true
+				}
+			})
+			ui.Row("WGroup Height", func() {
+				if imgui.SliderInt("##value", &cloudTexture.WorkGroupHeight, 1, 512) {
+					RecreateCloudTexture = true
+				}
+			})
+			ui.Row("WGroup Depth", func() {
+				if imgui.SliderInt("##value", &cloudTexture.WorkGroupDepth, 1, 512) {
+					RecreateCloudTexture = true
+				}
+			})
+		})
 	}
 }
 

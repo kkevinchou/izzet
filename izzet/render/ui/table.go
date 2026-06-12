@@ -3,7 +3,7 @@ package ui
 import "github.com/AllenDang/cimgui-go/imgui"
 
 var (
-	TableColumn0Width float32          = 180
+	TableColumn0Width float32          = 190
 	DefaultTableFlags imgui.TableFlags = imgui.TableFlagsBordersInnerV
 )
 

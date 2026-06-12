@@ -1,8 +1,6 @@
 package runtimeconfig
 
 import (
-	"math"
-
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -86,8 +84,8 @@ type RuntimeConfig struct {
 
 	// Navigation Mesh
 	NavigationMeshIterations           int32
-	NavigationMeshWalkableHeight       int32
-	NavigationMeshClimbableHeight      int32
+	NavigationMeshWalkableHeight       float32
+	NavigationMeshClimbableHeight      float32
 	NavigationMeshMinRegionArea        int32
 	NavigationMeshAgentRadius          float32
 	NavigationMeshCellSize             float32
@@ -220,10 +218,10 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		ShowTextureViewer:        false,
 
 		NavigationMeshIterations:           500,
-		NavigationMeshWalkableHeight:       10,
-		NavigationMeshClimbableHeight:      3,
+		NavigationMeshWalkableHeight:       float32(settings.EntityCapsuleColliderLength + (2 * settings.EntityCapsuleColliderRadius)),
+		NavigationMeshClimbableHeight:      0.3,
 		NavigationMeshMinRegionArea:        4,
-		NavigationMeshAgentRadius:          5,
+		NavigationMeshAgentRadius:          float32(settings.EntityCapsuleColliderRadius),
 		NavigationMeshCellSize:             0.1,
 		NavigationMeshCellHeight:           0.1,
 		NavigationmeshMaxError:             1,
@@ -316,9 +314,6 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		TestAO:                     1,
 		EnableAntialiasing:         true,
 	}
-
-	config.NavigationMeshAgentRadius = float32(settings.EntityCapsuleColliderRadius) / config.NavigationMeshCellSize
-	config.NavigationMeshWalkableHeight = int32(math.Ceil((settings.EntityCapsuleColliderLength + (2 * settings.EntityCapsuleColliderRadius)) / float64(config.NavigationMeshCellHeight)))
 
 	return config
 }

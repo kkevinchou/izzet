@@ -92,16 +92,22 @@ func WorldProps(app renderiface.App) {
 					runtimeConfig.NavigationMeshIterations = i
 				}
 			})
-			ui.Row("Walkable Height", func() {
-				var i int32 = runtimeConfig.NavigationMeshWalkableHeight
-				if imgui.InputInt("##value", &i) {
-					runtimeConfig.NavigationMeshWalkableHeight = i
+			ui.Row("Walkable Height (World)", func() {
+				f := runtimeConfig.NavigationMeshWalkableHeight
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationMeshWalkableHeight = f
 				}
 			})
-			ui.Row("Climbable Height", func() {
-				var i int32 = runtimeConfig.NavigationMeshClimbableHeight
-				if imgui.InputInt("##value", &i) {
-					runtimeConfig.NavigationMeshClimbableHeight = i
+			ui.Row("Climbable Height (World)", func() {
+				f := runtimeConfig.NavigationMeshClimbableHeight
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationMeshClimbableHeight = f
+				}
+			})
+			ui.Row("Agent Radius (World)", func() {
+				var f float32 = float32(runtimeConfig.NavigationMeshAgentRadius)
+				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
+					runtimeConfig.NavigationMeshAgentRadius = f
 				}
 			})
 			ui.Row("Min Region Area", func() {
@@ -120,12 +126,6 @@ func WorldProps(app renderiface.App) {
 				var f float32 = float32(runtimeConfig.NavigationmeshMaxEdgeLength)
 				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
 					runtimeConfig.NavigationmeshMaxEdgeLength = f
-				}
-			})
-			ui.Row("Agent Radius", func() {
-				var f float32 = float32(runtimeConfig.NavigationMeshAgentRadius)
-				if imgui.InputFloatV("##value", &f, 0.1, 0.1, "%.1f", imgui.InputTextFlagsNone) {
-					runtimeConfig.NavigationMeshAgentRadius = f
 				}
 			})
 			ui.Row("Cell Size", func() {
@@ -179,8 +179,8 @@ func WorldProps(app renderiface.App) {
 		}
 		if imgui.Button("Build") {
 			iterations := int(runtimeConfig.NavigationMeshIterations)
-			walkableHeight := int(runtimeConfig.NavigationMeshWalkableHeight)
-			climbableHeight := int(runtimeConfig.NavigationMeshClimbableHeight)
+			walkableHeight := runtimeConfig.NavigationMeshWalkableHeight
+			climbableHeight := runtimeConfig.NavigationMeshClimbableHeight
 			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
 			sampleDist := float64(runtimeConfig.NavigationmeshSampleDist)
@@ -207,7 +207,7 @@ func WorldProps(app renderiface.App) {
 		}
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsDefaultOpen) {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Noise", imgui.TreeNodeFlagsNone) {
 		ui.Table("Noise Table", func() {
 			ui.Row("Cloud Texture Index", func() {
 				if imgui.BeginCombo("##value", fmt.Sprintf("%d", SelectedCloudTextureIndex)) {

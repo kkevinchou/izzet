@@ -2,10 +2,10 @@ package navmesh
 
 import "math"
 
-func ErodeWalkableArea(chf *CompactHeightField, erosionRadius float32) {
+func ErodeWalkableArea(chf *CompactHeightField, erosionRadius int) {
 	distances := computeDistances(chf)
 
-	minBoundaryDistance := int(erosionRadius * 2)
+	minBoundaryDistance := erosionRadius * 2
 	for i := 0; i < chf.spanCount; i++ {
 		if distances[i] < minBoundaryDistance {
 			chf.areas[i] = NULL_AREA

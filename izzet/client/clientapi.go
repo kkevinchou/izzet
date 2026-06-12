@@ -465,7 +465,7 @@ func (g *Client) SelectedEntity() *entity.Entity {
 	return g.selectedEntity
 }
 
-func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight int, climbableHeight int, minRegionArea int, sampleDist float64, maxError float64) {
+func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight float32, climbableHeight float32, minRegionArea int, sampleDist float64, maxError float64) {
 	start := time.Now()
 	defer func() {
 		fmt.Println("BuildNavMesh completed in", time.Since(start))
@@ -475,9 +475,9 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 	ch := app.RuntimeConfig().NavigationMeshCellHeight
 	walkableRadius := app.RuntimeConfig().NavigationMeshAgentRadius
 
-	// walkableRadius /= cs
-	// walkableHeight = (int(math.Ceil(float64(walkableHeight) / float64(ch))))
-	// climbableHeight = (int(math.Floor(float64(climbableHeight) / float64(ch))))
+	walkableRadiusVoxels := navmesh.WorldRadiusToVoxels(walkableRadius, cs)
+	walkableHeightVoxels := navmesh.WorldHeightToVoxels(walkableHeight, ch)
+	climbableHeightVoxels := navmesh.WorldClimbToVoxels(climbableHeight, ch)
 
 	minVertex := mgl64.Vec3{-200.0, -5.0, -200.0}
 	maxVertex := mgl64.Vec3{200.0, 80.0, 200.0}
@@ -526,22 +526,22 @@ func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableH
 				normal := tv1.Cross(tv2).Normalize()
 				isUp := normal.Dot(up) >= 0.7
 
-				navmesh.RasterizeTriangle(v1, v2, v3, float64(cs), float64(ch), hf, isUp, climbableHeight)
+				navmesh.RasterizeTriangle(v1, v2, v3, float64(cs), float64(ch), hf, isUp, climbableHeightVoxels)
 			}
 		}
 	}
 
 	if app.RuntimeConfig().NavigationMeshFilterLedgeSpans {
-		navmesh.FilterLedgeSpans(walkableHeight, climbableHeight, hf)
+		navmesh.FilterLedgeSpans(walkableHeightVoxels, climbableHeightVoxels, hf)
 	}
 
 	if app.RuntimeConfig().NavigationMeshFilterLowHeightSpans {
-		navmesh.FilterLowHeightSpans(walkableHeight, hf)
+		navmesh.FilterLowHeightSpans(walkableHeightVoxels, hf)
 	}
 
-	chf := navmesh.NewCompactHeightField(walkableHeight, climbableHeight, hf)
+	chf := navmesh.NewCompactHeightField(walkableHeightVoxels, climbableHeightVoxels, hf)
 
-	navmesh.ErodeWalkableArea(chf, walkableRadius)
+	navmesh.ErodeWalkableArea(chf, walkableRadiusVoxels)
 	navmesh.BuildDistanceField(chf)
 
 	navmesh.BuildRegions(chf, iterationCount, minRegionArea, 1)

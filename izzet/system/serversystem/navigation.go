@@ -85,7 +85,7 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 					dir := vecToTarget2D
 					if dir.LenSqr() > 0 {
 						dir = dir.Normalize()
-						dir = applyNeighborSeparation(e, world, dir)
+						dir = applyNeighborSeparation(e, getNeighbors(e, world), dir)
 						e.Kinematic.MoveIntent = dir
 
 						if !utils.Vec3IsZero(dir) {
@@ -101,13 +101,16 @@ func (s *NavigationSystem) Update(delta time.Duration, world system.GameWorld) {
 	}
 }
 
-func applyNeighborSeparation(e *entity.Entity, world system.GameWorld, desiredDir mgl64.Vec3) mgl64.Vec3 {
+func getNeighbors(e *entity.Entity, world system.GameWorld) []*entity.Entity {
 	spatialEntities := world.SpatialPartition().QueryEntities(e.BoundingBox())
-
 	var entities []*entity.Entity
 	for _, spatialEntity := range spatialEntities {
 		entities = append(entities, world.GetEntityByID(spatialEntity.GetID()))
 	}
+	return entities
+}
+
+func applyNeighborSeparation(e *entity.Entity, entities []*entity.Entity, desiredDir mgl64.Vec3) mgl64.Vec3 {
 
 	separation := navigationNeighborSeparation(e, entities)
 	if utils.Vec3IsZero(separation) {

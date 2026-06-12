@@ -16,8 +16,8 @@ func create(app renderiface.App) {
 		if imgui.MenuItemBool("Build Nav Mesh") {
 			runtimeConfig := app.RuntimeConfig()
 			iterations := int(runtimeConfig.NavigationMeshIterations)
-			walkableHeight := int(runtimeConfig.NavigationMeshWalkableHeight)
-			climbableHeight := int(runtimeConfig.NavigationMeshClimbableHeight)
+			walkableHeight := runtimeConfig.NavigationMeshWalkableHeight
+			climbableHeight := runtimeConfig.NavigationMeshClimbableHeight
 			minRegionArea := int(runtimeConfig.NavigationMeshMinRegionArea)
 			sampleDist := float64(runtimeConfig.NavigationmeshSampleDist)
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)

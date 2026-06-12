@@ -55,7 +55,7 @@ type App interface {
 	SelectedEntity() *entity.Entity
 	CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset, merged bool) *entity.Entity
 	DeleteDocument(documentAsset assets.DocumentAsset) []int
-	BuildNavMesh(App, int, int, int, int, float64, float64)
+	BuildNavMesh(App, int, float32, float32, int, float64, float64)
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld
 

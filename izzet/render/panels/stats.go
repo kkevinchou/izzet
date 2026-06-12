@@ -43,7 +43,7 @@ func Stats(app renderiface.App, renderContext RenderContext) {
 		panelutils.SetupRow("FPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("fps", metricRange))) }, true)
 		panelutils.SetupRow("CFPS", func() { imgui.LabelText("", fmt.Sprintf("%.1f", mr.RatePerSec("command_frames", metricRange))) }, true)
 		panelutils.SetupRow("Command Frame", func() { imgui.LabelText("", fmt.Sprintf("%d", app.CommandFrame())) }, true)
-		// panelutils.SetupRow("Ping", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.GetLatest("ping")))) }, true)
+		panelutils.SetupRow("Ping", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.AvgOver("ping", 1)))) }, true)
 		panelutils.SetupRow("Prediction Hit", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.RatePerSec("prediction_hit", metricRange)))) }, true)
 		panelutils.SetupRow("Prediction Miss", func() { imgui.LabelText("", fmt.Sprintf("%d", int(mr.RatePerSec("prediction_miss", metricRange)))) }, true)
 

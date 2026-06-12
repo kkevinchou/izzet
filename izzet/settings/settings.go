@@ -84,6 +84,9 @@ const (
 
 	DrawerbarSize        float32 = 35
 	NavmeshRenderYOffset float64 = 0.1
+
+	EntityCapsuleColliderRadius float64 = 0.4
+	EntityCapsuleColliderLength float64 = 1
 )
 
 var (

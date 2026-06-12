@@ -12,15 +12,17 @@ import (
 )
 
 func CreatePlayer(app App) *entity.Entity {
-	var radius float64 = 0.4
-	var length float64 = 1.0
 	e := entity.CreateEmptyEntity("player")
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
+
+	var radius float64 = settings.EntityCapsuleColliderRadius
+	var length float64 = settings.EntityCapsuleColliderLength
 	capsule := collider.Capsule{
 		Radius: radius,
 		Top:    mgl64.Vec3{0, radius + length, 0},
 		Bottom: mgl64.Vec3{0, radius, 0},
 	}
+
 	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
 	e.CharacterControllerComponent = &entity.CharacterControllerComponent{CameraEntityID: entity.InvalidEntityID}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}

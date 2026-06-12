@@ -8,6 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
@@ -27,7 +28,14 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	e.HealthComponent = &entity.HealthComponent{Amount: 100}
 
-	capsule := collider.NewCapsule(mgl64.Vec3{0, 3, 0}, mgl64.Vec3{0, 1, 0}, 1)
+	var radius float64 = settings.EntityCapsuleColliderRadius
+	var length float64 = settings.EntityCapsuleColliderLength
+	capsule := collider.Capsule{
+		Radius: radius,
+		Top:    mgl64.Vec3{0, radius + length, 0},
+		Bottom: mgl64.Vec3{0, radius, 0},
+	}
+
 	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
 	e.Collider.CapsuleCollider = &capsule
 

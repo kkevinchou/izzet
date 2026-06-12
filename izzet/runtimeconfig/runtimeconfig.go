@@ -1,6 +1,8 @@
 package runtimeconfig
 
 import (
+	"math"
+
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -164,7 +166,7 @@ type CloudTexture struct {
 }
 
 func DefaultRuntimeConfig() *RuntimeConfig {
-	return &RuntimeConfig{
+	config := &RuntimeConfig{
 		DirectionalLightDir:      [3]float32{-1, -1, -1},
 		Roughness:                0.55,
 		Metallic:                 0,
@@ -314,4 +316,9 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		TestAO:                     1,
 		EnableAntialiasing:         true,
 	}
+
+	config.NavigationMeshAgentRadius = float32(settings.EntityCapsuleColliderRadius) / config.NavigationMeshCellSize
+	config.NavigationMeshWalkableHeight = int32(math.Ceil((settings.EntityCapsuleColliderLength + (2 * settings.EntityCapsuleColliderRadius)) / float64(config.NavigationMeshCellHeight)))
+
+	return config
 }

@@ -81,19 +81,6 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		return nil, err
 	}
 
-	// set Peripheral files as they're used and copied over for importing
-	for _, buffer := range gltfDocument.Buffers {
-		if buffer.URI != "" {
-			document.PeripheralFiles = append(document.PeripheralFiles, buffer.URI)
-		}
-	}
-
-	for _, image := range gltfDocument.Images {
-		if image.URI != "" {
-			document.PeripheralFiles = append(document.PeripheralFiles, image.URI)
-		}
-	}
-
 	var parsedJoints *ParsedJoints
 	for _, skin := range gltfDocument.Skins {
 		parsedJoints, err = parseJoints(gltfDocument, skin)

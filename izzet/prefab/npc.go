@@ -14,10 +14,13 @@ import (
 
 func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	var modelName string
+	var scale float64 = 1
 	if entityType == entity.EntityTypeVelociraptor {
 		modelName = "velociraptor"
+		scale = 0.5
 	} else if entityType == entity.EntityTypeParasaurolophus {
 		modelName = "parasaurolophus"
+		scale = 0.5
 	} else {
 		panic(fmt.Sprintf("unexpected entity type %s", entityType))
 	}
@@ -28,8 +31,8 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	e.HealthComponent = &entity.HealthComponent{Amount: 100}
 
-	var radius float64 = settings.EntityCapsuleColliderRadius
-	var length float64 = settings.EntityCapsuleColliderLength
+	var radius float64 = settings.EntityCapsuleColliderRadius * (1 / scale)
+	var length float64 = settings.EntityCapsuleColliderLength * (1 / scale)
 	capsule := collider.Capsule{
 		Radius: radius,
 		Top:    mgl64.Vec3{0, radius + length, 0},
@@ -42,7 +45,7 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
 	e.Animation = entity.NewAnimationComponent(modelName, app.AssetManager())
 	e.AttackComponent = &entity.AttackComponent{AttackRange: 3}
-	entity.SetScale(e, mgl64.Vec3{0.5, 0.5, 0.5})
+	entity.SetScale(e, mgl64.Vec3{scale, scale, scale})
 
 	e.AIComponent = &entity.AIComponent{}
 

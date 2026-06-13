@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"strings"
+
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
@@ -44,9 +46,12 @@ func NewAnimationComponent(animationHandle string, ml *assets.AssetManager) *Ani
 	animations, joints, rootJointID := ml.GetAnimations(animationHandle)
 	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
-	animationStateMachine := animationparser.NewPlayerAnimationStateMachine()
-	if animationHandle == string(EntityTypeVelociraptor) || animationHandle == "velociraptor" {
+
+	var animationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
+	if strings.Contains(animationHandle, "velociraptor") {
 		animationStateMachine = animationparser.NewRaptorAnimationStateMachine()
+	} else {
+		animationStateMachine = animationparser.NewPlayerAnimationStateMachine()
 	}
 
 	return &AnimationComponent{

@@ -20,6 +20,7 @@ import (
 
 var (
 	chfVAOCache      uint32
+	chfVAOCacheValid bool
 	chfInstanceCount int
 	chfVertexCount   int
 
@@ -63,11 +64,12 @@ var (
 
 func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
-		start := time.Now()
-		chfVAOCache, chfVertexCount, chfInstanceCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
-		iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start).Seconds(), "instances", chfInstanceCount)
+		chfVAOCacheValid = false
+		chfVAOCache = 0
+		chfVertexCount = 0
+		chfInstanceCount = 0
 
-		start = time.Now()
+		start := time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 		iztlog.ClientLogger.Info("create navmesh raw contour vao", "time", time.Since(start).Seconds(), "vertices", rawContourVertexCount)
 
@@ -107,6 +109,12 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
+		if !chfVAOCacheValid {
+			start := time.Now()
+			chfVAOCache, chfVertexCount, chfInstanceCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
+			chfVAOCacheValid = true
+			iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start).Seconds(), "instances", chfInstanceCount)
+		}
 		if chfInstanceCount > 0 {
 			shader := shaderManager.GetShaderProgram("navmesh")
 			shader.SetUniformInt("useInstancing", 1)

@@ -52,6 +52,13 @@ func IztDrawElements(count int32) {
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
 }
 
+func IztDrawElementsInstanced(vertexCount, instanceCount int) {
+	runtimeConfig := currentRuntimeConfig()
+	runtimeConfig.TriangleDrawCount += vertexCount / 3 * instanceCount
+	runtimeConfig.DrawCount += 1
+	gl.DrawElementsInstanced(gl.TRIANGLES, int32(vertexCount), gl.UNSIGNED_INT, nil, int32(instanceCount))
+}
+
 func IztDrawArrays(first, count int32) {
 	runtimeConfig := currentRuntimeConfig()
 	runtimeConfig.TriangleDrawCount += int(count / 3)

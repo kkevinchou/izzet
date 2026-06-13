@@ -14,8 +14,8 @@ type AnimationPlayer struct {
 	animationTransforms map[int]mgl32.Mat4
 	currentAnimation    *modelspec.AnimationSpec
 
-	currentPose     map[int]modelspec.JointTransform
-	blendSourcePose map[int]modelspec.JointTransform
+	currentPose     []modelspec.JointTransform
+	blendSourcePose []modelspec.JointTransform
 	blendDuration   time.Duration
 
 	// these fields are from the loaded animation and should not be modified
@@ -157,20 +157,16 @@ func (player *AnimationPlayer) Length() time.Duration {
 	return player.currentAnimation.Length
 }
 
-func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mgl32.Mat4, poseTransforms map[int]mgl32.Mat4, transforms map[int]mgl32.Mat4) {
-	localTransform := poseTransforms[joint.ID]
+func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mgl32.Mat4, poseTransforms []mgl32.Mat4, transforms map[int]mgl32.Mat4) {
+	// if there is no pose in the animation, just use the local bind transform.
+	// when a pose is present, the keyframe data already includes the local bind transform
+	// using the identity matrix is not correct, we still need the bind transform.
 
-	if _, ok := poseTransforms[joint.ID]; !ok {
-		// if there is no pose in the animation, just use the local bind transform.
-		// when a pose is present, the keyframe data already includes the local bind transform
-
-		// using the identity matrix is not correct, we still need the bind transform.
-		// localTransform = mgl32.Ident4()
-
-		// further down, we multiply by the inverse bind transform which is what allows us
-		// to cancel out the local bind transform and produce the actual output identity matrix
-
-		localTransform = joint.LocalBindTransform
+	// further down, we multiply by the inverse bind transform which is what allows us
+	// to cancel out the local bind transform and produce the actual output identity matrix
+	localTransform := joint.LocalBindTransform
+	if joint.ID >= 0 && joint.ID < len(poseTransforms) {
+		localTransform = poseTransforms[joint.ID]
 	}
 
 	// model-space transform that includes all the parental transforms
@@ -187,7 +183,7 @@ func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mg
 	transforms[joint.ID] = poseTransform.Mul4(joint.InverseBindTransform)
 }
 
-func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*modelspec.KeyFrame) map[int]modelspec.JointTransform {
+func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*modelspec.KeyFrame) []modelspec.JointTransform {
 	var startKeyFrame *modelspec.KeyFrame
 	var endKeyFrame *modelspec.KeyFrame
 	var progression float32
@@ -216,8 +212,8 @@ func calculateCurrentAnimationPose(elapsedTime time.Duration, keyFrames []*model
 	return interpolatePoses(startKeyFrame.Pose, endKeyFrame.Pose, progression)
 }
 
-func convertPoseToTransformMatrix(pose map[int]modelspec.JointTransform) map[int]mgl32.Mat4 {
-	transformMatrices := map[int]mgl32.Mat4{}
+func convertPoseToTransformMatrix(pose []modelspec.JointTransform) []mgl32.Mat4 {
+	transformMatrices := make([]mgl32.Mat4, len(pose))
 	for jointID, transform := range pose {
 		translation := transform.Translation
 		rotation := transform.Rotation.Mat4()
@@ -227,7 +223,7 @@ func convertPoseToTransformMatrix(pose map[int]modelspec.JointTransform) map[int
 	return transformMatrices
 }
 
-func interpolatePoses(j1, j2 map[int]modelspec.JointTransform, progression float32) map[int]modelspec.JointTransform {
+func interpolatePoses(j1, j2 []modelspec.JointTransform, progression float32) []modelspec.JointTransform {
 	if progression > 1 {
 		progression = 1
 	}
@@ -236,8 +232,20 @@ func interpolatePoses(j1, j2 map[int]modelspec.JointTransform, progression float
 		progression = 0
 	}
 
-	interpolatedPose := map[int]modelspec.JointTransform{}
-	for jointID := range j1 {
+	if len(j1) == 0 {
+		return clonePose(j2)
+	}
+	if len(j2) == 0 {
+		return clonePose(j1)
+	}
+
+	if len(j1) != len(j2) {
+		panic(fmt.Errorf("joint count from two interpolated poses differ (%d and %d)", len(j1), len(j2)))
+	}
+	jointCount := len(j1)
+
+	interpolatedPose := make([]modelspec.JointTransform, jointCount)
+	for jointID := 0; jointID < jointCount; jointID++ {
 		k1JointTransform := j1[jointID]
 		k2JointTransform := j2[jointID]
 
@@ -256,6 +264,12 @@ func interpolatePoses(j1, j2 map[int]modelspec.JointTransform, progression float
 		}
 	}
 	return interpolatedPose
+}
+
+func clonePose(pose []modelspec.JointTransform) []modelspec.JointTransform {
+	cloned := make([]modelspec.JointTransform, len(pose))
+	copy(cloned, pose)
+	return cloned
 }
 
 func bindPoseHelper(joint *modelspec.JointSpec, transforms map[int]mgl32.Mat4) {

@@ -468,7 +468,7 @@ func (g *Client) SelectedEntity() *entity.Entity {
 func (g *Client) BuildNavMesh(app renderiface.App, iterationCount int, walkableHeight float32, climbableHeight float32, minRegionArea int, sampleDist float64, maxError float64) {
 	start := time.Now()
 	defer func() {
-		fmt.Println("BuildNavMesh completed in", time.Since(start))
+		iztlog.ClientLogger.Info("built new nav mesh", "build time", time.Since(start))
 	}()
 
 	cs := app.RuntimeConfig().NavigationMeshCellSize

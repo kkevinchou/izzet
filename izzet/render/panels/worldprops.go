@@ -2,8 +2,6 @@ package panels
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
@@ -150,33 +148,6 @@ func WorldProps(app renderiface.App) {
 			ui.CheckboxRow("Filter Low Height Spans", &runtimeConfig.NavigationMeshFilterLowHeightSpans)
 		})
 
-		if imgui.InputTextWithHint("##DebugBlob1", "", &runtimeConfig.DebugBlob1, imgui.InputTextFlagsNone, nil) {
-			runtimeConfig.DebugBlob1IntMap = map[int]bool{}
-			runtimeConfig.DebugBlob1IntSlice = nil
-			sIDs := strings.Split(runtimeConfig.DebugBlob1, ",")
-			for _, sID := range sIDs {
-				id, err := strconv.Atoi(sID)
-				if err != nil {
-					continue
-				}
-				runtimeConfig.DebugBlob1IntMap[id] = true
-				runtimeConfig.DebugBlob1IntSlice = append(runtimeConfig.DebugBlob1IntSlice, id)
-			}
-		}
-		if imgui.InputTextWithHint("##DebugBlob2", "", &runtimeConfig.DebugBlob2, imgui.InputTextFlagsNone, nil) {
-			runtimeConfig.DebugBlob2IntMap = map[int]bool{}
-			runtimeConfig.DebugBlob2IntSlice = nil
-			sIDs := strings.Split(runtimeConfig.DebugBlob2, ",")
-			for _, sID := range sIDs {
-				id, err := strconv.Atoi(sID)
-				if err != nil {
-					continue
-				}
-				runtimeConfig.DebugBlob2IntMap[id] = true
-				runtimeConfig.DebugBlob2IntSlice = append(runtimeConfig.DebugBlob2IntSlice, id)
-			}
-
-		}
 		if imgui.Button("Build") {
 			iterations := int(runtimeConfig.NavigationMeshIterations)
 			walkableHeight := runtimeConfig.NavigationMeshWalkableHeight
@@ -185,25 +156,6 @@ func WorldProps(app renderiface.App) {
 			maxError := float64(runtimeConfig.NavigationmeshMaxError)
 			sampleDist := float64(runtimeConfig.NavigationmeshSampleDist)
 			app.BuildNavMesh(app, iterations, walkableHeight, climbableHeight, minRegionArea, sampleDist, maxError)
-		}
-
-		ui.Table("Navigation Mesh Table", func() {
-			ui.Row("Start", func() {
-				var i int32 = runtimeConfig.NavigationMeshStart
-				if imgui.InputInt("##value", &i) {
-					runtimeConfig.NavigationMeshStart = i
-				}
-			})
-			ui.Row("Goal", func() {
-				var i int32 = int32(runtimeConfig.NavigationMeshGoal)
-				if imgui.InputInt("##value", &i) {
-					runtimeConfig.NavigationMeshGoal = i
-				}
-			})
-		})
-
-		if imgui.Button("Find Path") {
-			app.FindPath(app.RuntimeConfig().NavigationMeshStartPoint, app.RuntimeConfig().NavigationMeshGoalPoint)
 		}
 	}
 

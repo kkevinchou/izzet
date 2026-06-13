@@ -217,7 +217,7 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		ShowColliders:            false,
 		ShowTextureViewer:        false,
 
-		NavigationMeshIterations:           500,
+		NavigationMeshIterations:           2500,
 		NavigationMeshWalkableHeight:       float32(settings.EntityCapsuleColliderLength + (2 * settings.EntityCapsuleColliderRadius)),
 		NavigationMeshClimbableHeight:      0.3,
 		NavigationMeshMinRegionArea:        4,

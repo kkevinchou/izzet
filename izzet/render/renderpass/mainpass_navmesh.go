@@ -1,13 +1,13 @@
 package renderpass
 
 import (
-	"fmt"
 	"math"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -64,38 +64,45 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 	if nm.Invalidated {
 		start := time.Now()
 		chfVAOCache, chfVertexCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
-		fmt.Printf("%.1f seconds to create chf vao\n", time.Since(start).Seconds())
+		iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start), "vertices", chfVertexCount)
+
 		start = time.Now()
-		// voxelVAOCache, voxelVAOCacheVertexCount = createVoxelVAO(nm.HeightField)
-		// fmt.Printf("%.1f seconds to create voxel vao\n", time.Since(start).Seconds())
-		// start = time.Now()
-		// distanceFieldVAOCache, distanceFieldVertexCount = createDistanceFieldVAO(nm.CompactHeightField)
-		// fmt.Printf("%.1f seconds to create distance field vao\n", time.Since(start).Seconds())
-		// start = time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
-		fmt.Printf("%.1f seconds to create contour vao\n", time.Since(start).Seconds())
+		iztlog.ClientLogger.Info("create navmesh raw contour vao", "time", time.Since(start), "vertices", rawContourVertexCount)
+
 		start = time.Now()
 		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
-		fmt.Printf("%.1f seconds to create simplified contour vao\n", time.Since(start).Seconds())
+		iztlog.ClientLogger.Info("create navmesh simplified contour vao", "time", time.Since(start), "vertices", simplifiedContourVertexCount)
+
 		start = time.Now()
 		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
-		fmt.Printf("%.1f seconds to create premerge triangle vao\n", time.Since(start).Seconds())
+		iztlog.ClientLogger.Info("create navmesh premerge triangle vao", "time", time.Since(start), "vertices", premergeTrianglesVertexCount)
+
 		start = time.Now()
 		polygonVAOCache, polygonVertexCount = p.createPolygonMeshVAO(nm, colorStyleRegionID)
 		polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleBlack)
-		fmt.Printf("%.1f seconds to create polygon vao\n", time.Since(start).Seconds())
-		// debugVAOCache, debugVertexCount = r.createDebugVAO(nm)
+		iztlog.ClientLogger.Info("create navmesh polygon vao", "time", time.Since(start), "polygon vertices", polygonVertexCount, "outline vertices", polygonColoredOutlineVertexCount)
+
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = p.createDetailedMeshVAO(nm, colorStyleRegionID)
 		detailedMeshOutlineSamplesVAOCache, detailedMeshOutlineSamplesVertexCount = p.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.OutlineSamples, []float32{1, 0, 0})
 		detailedMeshInteriorSamplesVAOCache, detailedMeshInteriorSamplesVertexCount = p.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.InteriorSamples, []float32{0, 0, 1})
 		detailedMeshAllSamplesVAOCache, detailedMeshAllSamplesVertexCount = p.createDetailedMeshSamplesVAO(nm, nm.DetailedMesh.AllSamples, []float32{0.1, 0.1, 0.1})
 		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = p.createDetailedMeshLinesVAO(nm)
-		fmt.Printf("%.1f seconds to create detailed mesh vao\n", time.Since(start).Seconds())
+		iztlog.ClientLogger.Info(
+			"create navmesh detailed mesh vao",
+			"time", time.Since(start),
+			"triangles", detailedMeshVertexCount,
+			"line vertices", detailedMeshLinesVertexCount,
+			"outline sample vertices", detailedMeshOutlineSamplesVertexCount,
+			"interior sample vertices", detailedMeshInteriorSamplesVertexCount,
+			"all sample vertices", detailedMeshAllSamplesVertexCount,
+		)
+
 		start = time.Now()
 
 		// pathVAOCache, pathVertexCount = createPathVAO()
-		fmt.Printf("%.1f seconds to create path vao\n", time.Since(start).Seconds())
+		iztlog.ClientLogger.Info("create navmesh path vao", "time", time.Since(start), "vertices", pathVertexCount)
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {

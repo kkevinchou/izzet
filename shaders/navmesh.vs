@@ -5,6 +5,8 @@ const int MAX_WEIGHTS = 4;
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec3 aColor;
+layout (location = 3) in vec3 aInstancePosition;
+layout (location = 4) in vec3 aInstanceColor;
 
 out VS_OUT {
     vec3 FragPos;
@@ -23,12 +25,20 @@ uniform mat4 lightSpaceMatrix;
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
 uniform uint entityID;
+uniform int useInstancing;
+uniform vec3 instanceScale;
 
 void main() {
     vec4 totalPos = vec4(0.0);
 	vec4 totalNormal = vec4(0.0);
+    vec3 color = aColor;
 
-    totalPos = vec4(aPos, 1);
+    if (useInstancing == 1) {
+        totalPos = vec4(aInstancePosition + aPos * instanceScale, 1);
+        color = aInstanceColor;
+    } else {
+        totalPos = vec4(aPos, 1);
+    }
     totalNormal = vec4(aNormal, 1.0);
 
     // NOTE - just transposing the inverse of the rotation matrix didn't look right for some static geometry
@@ -37,7 +47,7 @@ void main() {
     vs_out.View = view;
 
     vs_out.TexCoord = vec2(0.0);
-    vs_out.Color = vec4(aColor, 0.9);
+    vs_out.Color = vec4(color, 0.9);
     vs_out.EntityID = entityID;
 
     gl_Position = (projection * (view * (model * totalPos)));

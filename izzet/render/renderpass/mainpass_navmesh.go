@@ -19,8 +19,10 @@ import (
 )
 
 var (
-	chfVAOCache    uint32
-	chfVertexCount int32
+	chfVAOCache      uint32
+	chfVAOCacheValid bool
+	chfInstanceCount int
+	chfVertexCount   int
 
 	voxelVAOCache            uint32
 	voxelVAOCacheVertexCount int32
@@ -62,11 +64,12 @@ var (
 
 func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, nm *navmesh.NavigationMesh) {
 	if nm.Invalidated {
-		start := time.Now()
-		chfVAOCache, chfVertexCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
-		iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start).Seconds(), "vertices", chfVertexCount)
+		chfVAOCacheValid = false
+		chfVAOCache = 0
+		chfVertexCount = 0
+		chfInstanceCount = 0
 
-		start = time.Now()
+		start := time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
 		iztlog.ClientLogger.Info("create navmesh raw contour vao", "time", time.Since(start).Seconds(), "vertices", rawContourVertexCount)
 
@@ -106,17 +109,32 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 	}
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
-		if chfVertexCount > 0 {
+		if !chfVAOCacheValid {
+			start := time.Now()
+			chfVAOCache, chfVertexCount, chfInstanceCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
+			chfVAOCacheValid = true
+			iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start).Seconds(), "instances", chfInstanceCount)
+		}
+		if chfInstanceCount > 0 {
+			shader := shaderManager.GetShaderProgram("navmesh")
+			shader.SetUniformInt("useInstancing", 1)
+			shader.SetUniformVec3("instanceScale", mgl32.Vec3{
+				float32(nm.CompactHeightField.CellSize),
+				float32(nm.CompactHeightField.CellHeight),
+				float32(nm.CompactHeightField.CellSize),
+			})
 			gl.BindVertexArray(chfVAOCache)
-			rutils.IztDrawElements(chfVertexCount * 36)
+			rutils.IztDrawElementsInstanced(6, chfInstanceCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDistanceField {
 		if distanceFieldVertexCount > 0 {
+			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 0)
 			gl.BindVertexArray(distanceFieldVAOCache)
 			rutils.IztDrawElements(distanceFieldVertexCount * 36)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionVoxel {
 		if voxelVAOCacheVertexCount > 0 {
+			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 0)
 			gl.BindVertexArray(voxelVAOCache)
 			rutils.IztDrawElements(voxelVAOCacheVertexCount * 36)
 		}
@@ -134,6 +152,7 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionPolygons {
 		if polygonVertexCount > 0 {
+			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 0)
 			gl.BindVertexArray(polygonVAOCache)
 			rutils.IztDrawElements(polygonVertexCount * 3)
 		}
@@ -145,12 +164,14 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMesh {
 		if detailedMeshLinesVertexCount > 0 {
+			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 0)
 			gl.BindVertexArray(detailedMeshVAOCache)
 			rutils.IztDrawElements(detailedMeshVertexCount * 3)
 			p.drawContour(shaderManager, viewerContext, detailedMeshLinesVAOCache, detailedMeshLinesVertexCount)
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDetailedMeshAndSamples {
 		if detailedMeshLinesVertexCount > 0 {
+			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 0)
 			gl.BindVertexArray(detailedMeshVAOCache)
 			rutils.IztDrawElements(detailedMeshVertexCount * 3)
 			gl.BindVertexArray(detailedMeshOutlineSamplesVAOCache)
@@ -166,41 +187,13 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 		}
 	} else if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionDebug {
 		if debugVertexCount > 0 {
+			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 0)
 			gl.BindVertexArray(debugVAOCache)
 			rutils.IztDrawElements(debugVertexCount * 36)
 		}
 	} else {
 		panic("WAT")
 	}
-}
-
-func (p *MainRenderPass) createDebugVAO(nm *navmesh.NavigationMesh) (uint32, int32) {
-	var positions []mgl32.Vec3
-	var colors []float32
-
-	chf := nm.CompactHeightField
-	contour := nm.ContourSet.Contours[0]
-	var lengths []float32
-
-	for j := range len(contour.Verts) {
-		v0 := contour.Verts[j]
-		position := mgl32.Vec3{
-			float32(v0.X),
-			float32(v0.Y),
-			float32(v0.Z),
-		}
-		positions = append(positions, position)
-		colors = append(colors, 1, 1, 1)
-		lengths = append(lengths, 1)
-	}
-
-	if len(positions) == 0 {
-		return 0, 0
-	}
-
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
-
-	return vao, int32(len(positions))
 }
 
 func (p *MainRenderPass) drawContour(shaderManager *shaders.ShaderManager, viewerContext context.ViewerContext, vao uint32, count int32) {
@@ -468,24 +461,6 @@ func (p *MainRenderPass) createDetailedMeshSamplesVAO(nm *navmesh.NavigationMesh
 	return vao, int32(len(positions))
 }
 
-func createPathVAO() (uint32, int32) {
-	var vertexAttributes []float32
-	for i := 0; i < len(navmesh.PATHVERTICES)-1; i++ {
-		v0 := navmesh.PATHVERTICES[i]
-		v1 := navmesh.PATHVERTICES[i+1]
-
-		color := []float32{1, 0, 0}
-
-		// v0
-		vertexAttributes = append(vertexAttributes, float32(v0.X()), float32(v0.Y()+1), float32(v0.Z()))
-		vertexAttributes = append(vertexAttributes, color...)
-
-		vertexAttributes = append(vertexAttributes, float32(v1.X()), float32(v1.Y()+1), float32(v1.Z()))
-		vertexAttributes = append(vertexAttributes, color...)
-	}
-	return createLineVAO(vertexAttributes)
-}
-
 func createContourVAO(nm *navmesh.NavigationMesh, simplified bool) (uint32, int32) {
 	contourSet := nm.ContourSet
 	minVertex := nm.Volume.MinVertex
@@ -576,46 +551,14 @@ func createLineVAO(vertexAttributes []float32) (uint32, int32) {
 	return vao, int32(len(vertexAttributes) / int(totalAttributeSize))
 }
 
-func createDistanceFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
-	var positions []mgl32.Vec3
-	var colors []float32
-	var lengths []float32
-
-	for x := range chf.Width() {
-		for z := range chf.Height() {
-			cell := chf.Cells()[x+z*chf.Width()]
-			spanIndex := cell.SpanIndex
-			spanCount := cell.SpanCount
-
-			for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
-				span := chf.Spans()[i]
-				position := mgl32.Vec3{
-					float32(x),
-					float32(span.Y()),
-					float32(z),
-				}
-				positions = append(positions, position)
-				colors = append(colors, distanceToColor(float32(chf.Distances[i]))...)
-				lengths = append(lengths, 1)
-			}
-		}
-	}
-
-	if len(positions) == 0 {
-		return 0, 0
-	}
-
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
-
-	return vao, int32(len(positions))
-}
-
-func (p *MainRenderPass) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int32) {
-	var positions []mgl32.Vec3
-	var colors []float32
-	var lengths []float32
-
+func (p *MainRenderPass) createCompactHeightFieldVAO(chf *navmesh.CompactHeightField) (uint32, int, int) {
 	debugSlice := p.app.RuntimeConfig().DebugBlob1IntSlice
+	cellSize := float32(chf.CellSize)
+	cellHeight := float32(chf.CellHeight)
+	offset := utils.Vec3F64ToF32(chf.BMin())
+
+	const instanceAttributeSize int = 6
+	instanceAttributes := make([]float32, 0, len(chf.Spans())*instanceAttributeSize)
 
 	for x := range chf.Width() {
 		for z := range chf.Height() {
@@ -625,86 +568,27 @@ func (p *MainRenderPass) createCompactHeightFieldVAO(chf *navmesh.CompactHeightF
 
 			for i := spanIndex; i < spanIndex+navmesh.SpanIndex(spanCount); i++ {
 				span := chf.Spans()[i]
-				position := mgl32.Vec3{
-					float32(x),
-					float32(span.Y()),
-					float32(z),
-				}
-				positions = append(positions, position)
 				color := regionIDToColor(span.RegionID())
 				if len(debugSlice) >= 2 && debugSlice[0] == x && debugSlice[1] == z {
 					color = []float32{1, 1, 1}
-
 				}
-				colors = append(colors, color...)
-				lengths = append(lengths, 1)
+				instanceAttributes = append(instanceAttributes,
+					float32(x)*cellSize+offset.X(),
+					float32(span.Y())*cellHeight+offset.Y(),
+					float32(z)*cellSize+offset.Z(),
+					color[0],
+					color[1],
+					color[2],
+				)
 			}
 		}
 	}
 
-	if len(positions) == 0 {
-		return 0, 0
+	if len(instanceAttributes) == 0 {
+		return 0, 0, 0
 	}
 
-	vao := cubeAttributes(positions, lengths, colors, float32(chf.CellSize), float32(chf.CellHeight), utils.Vec3F64ToF32(chf.BMin()), float32(chf.CellSize))
-
-	return vao, int32(len(positions))
-}
-
-func debugCheck(x, z int) bool {
-	for i := 0; i < len(navmesh.DBG); i += 2 {
-		if navmesh.DBG[i] == x && navmesh.DBG[i+1] == z {
-			return true
-		}
-	}
-
-	// if x == 686 && z == 102 {
-	// 	return true
-	// } else if x == 696 && z == 101 {
-	// 	return true
-	// } else if x == 720 && z == 98 {
-	// 	return true
-	// } else if x == 754 && z == 94 {
-	// 	return true
-	// } else if x == 812 && z == 88 {
-	// 	return true
-	// } else if x == 688 && z == 235 {
-	// 	return true
-	// }
-	return false
-}
-
-func createVoxelVAO(hf *navmesh.HeightField) (uint32, int32) {
-	var positions []mgl32.Vec3
-	var colors []float32
-	var lengths []float32
-
-	for z := range hf.Height {
-		for x := range hf.Width {
-			index := x + z*hf.Width
-			span := hf.Spans[index]
-			for span != nil {
-				position := mgl32.Vec3{
-					float32(x),
-					float32(span.Min),
-					float32(z),
-				}
-				positions = append(positions, position)
-				color := []float32{.9, .9, .9}
-				colors = append(colors, color...)
-				lengths = append(lengths, float32(span.Max-span.Min+1))
-
-				span = span.Next
-			}
-		}
-	}
-
-	if len(positions) == 0 {
-		return 0, 0
-	}
-
-	vao := cubeAttributes(positions, lengths, colors, float32(hf.CellSize), float32(hf.CellHeight), utils.Vec3F64ToF32(hf.BMin), float32(hf.CellSize))
-	return vao, int32(len(positions))
+	return instancedCubeAttributes(instanceAttributes, instanceAttributeSize)
 }
 
 func triangleAttributes(triangles [][3]mgl32.Vec3, colors []float32) uint32 {
@@ -883,120 +767,58 @@ func samplesCubeAttributes(positions []mgl32.Vec3, colors []float32, size, heigh
 	return vao
 }
 
-func cubeAttributes(positions []mgl32.Vec3, lengths []float32, colors []float32, cellSize, cellHeight float32, offset mgl32.Vec3, size float32) uint32 {
-	var vertexAttributes []float32
-
-	for i := range len(positions) {
-		position := positions[i]
-		x, y, z := position.X(), position.Y(), position.Z()
-		r, g, b := colors[i*3], colors[i*3+1], colors[i*3+2]
-
-		vertexAttributes = append(vertexAttributes, []float32{
-			// front
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
-
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 0, 1, r, g, b,
-
-			// back
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 0, -1, r, g, b,
-
-			// rig1
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 1, 0, 0, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 1, 0, 0, r, g, b,
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 1, 0, 0, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 1, 0, 0, r, g, b,
-
-			// left
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), -1, 0, 0, r, g, b,
-
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), -1, 0, 0, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), -1, 0, 0, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), -1, 0, 0, r, g, b,
-
-			// top
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 1, 0, r, g, b,
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 1, 0, r, g, b,
-
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, 1, 0, r, g, b,
-			x*cellSize + size + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
-			x*cellSize + offset.X(), (lengths[i]+y)*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, 1, 0, r, g, b,
-
-			// bottom
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, -1, 0, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, -1, 0, r, g, b,
-
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			x*cellSize + size + offset.X(), y*cellHeight + offset.Y(), z*cellSize + offset.Z(), 0, -1, 0, r, g, b,
-			x*cellSize + offset.X(), y*cellHeight + offset.Y(), z*cellSize + size + offset.Z(), 0, -1, 0, r, g, b,
-		}...)
+func instancedCubeAttributes(instanceAttributes []float32, instanceAttributeSize int) (uint32, int, int) {
+	baseVertexAttributes := []float32{
+		// top
+		1, 1, 1, 0, 1, 0,
+		1, 1, 0, 0, 1, 0,
+		0, 1, 0, 0, 1, 0,
+		0, 1, 1, 0, 1, 0,
 	}
 
-	totalAttributeSize := 9
+	vertexIndices := []uint32{
+		0, 1, 2, 2, 3, 0,
+	}
 
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
 
-	// lay out the position, normal, and color in a VBO
-	var vbo uint32
-	apputils.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertexAttributes)*4, gl.Ptr(vertexAttributes), gl.STATIC_DRAW)
+	var vertexVBO uint32
+	apputils.GenBuffers(1, &vertexVBO)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vertexVBO)
+	gl.BufferData(gl.ARRAY_BUFFER, len(baseVertexAttributes)*4, gl.Ptr(baseVertexAttributes), gl.STATIC_DRAW)
 
-	ptrOffset := 0
-	var floatSize int32 = 4
+	const baseAttributeSize = 6
+	const floatSize = 4
 
-	// position
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, nil)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, baseAttributeSize*floatSize, nil)
 	gl.EnableVertexAttribArray(0)
 
-	ptrOffset += 3
-
-	// normal
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, baseAttributeSize*floatSize, gl.PtrOffset(3*floatSize))
 	gl.EnableVertexAttribArray(1)
 
-	ptrOffset += 3
+	var instanceVBO uint32
+	apputils.GenBuffers(1, &instanceVBO)
+	gl.BindBuffer(gl.ARRAY_BUFFER, instanceVBO)
+	gl.BufferData(gl.ARRAY_BUFFER, len(instanceAttributes)*4, gl.Ptr(instanceAttributes), gl.STATIC_DRAW)
 
-	// color
-	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, int32(totalAttributeSize)*floatSize, gl.PtrOffset(ptrOffset*int(floatSize)))
-	gl.EnableVertexAttribArray(2)
+	instanceStride := int32(instanceAttributeSize * floatSize)
 
-	vertexIndices := make([]uint32, len(vertexAttributes)/totalAttributeSize)
-	for i := range len(vertexIndices) {
-		vertexIndices[i] = uint32(i)
-	}
+	gl.VertexAttribPointer(3, 3, gl.FLOAT, false, instanceStride, nil)
+	gl.EnableVertexAttribArray(3)
+	gl.VertexAttribDivisor(3, 1)
 
-	// set up the EBO, each triplet of indices point to three vertices
-	// that form a triangle.
+	gl.VertexAttribPointer(4, 3, gl.FLOAT, false, instanceStride, gl.PtrOffset(3*floatSize))
+	gl.EnableVertexAttribArray(4)
+	gl.VertexAttribDivisor(4, 1)
+
 	var ebo uint32
 	apputils.GenBuffers(1, &ebo)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*4, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
 
-	return vao
-}
-
-func distanceToColor(distance float32) []float32 {
-	c := distance / 100
-	return []float32{c, c, c}
+	return vao, len(vertexIndices), len(instanceAttributes) / instanceAttributeSize
 }
 
 // regionIDToColor converts a regionID into an rgb color

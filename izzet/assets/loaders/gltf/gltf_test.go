@@ -8,7 +8,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 )
 
-var testFile string = "../../../../_assets/gltf/velociraptor.gltf"
+var testFile string = "../../../../_assets/gltf/mannequin_m.gltf"
 
 // bug hint: when a joint is defined but has no poses our
 // animation loading code freaks out. i removed the joint animatiosn from the legs

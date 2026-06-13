@@ -13,10 +13,9 @@ type AnimationSpec struct {
 	Length    time.Duration
 }
 
-// KeyFrame contains a "Pose" which is the mapping from joint index to
-// the transformations that should be applied to the joint for this pose
+// KeyFrame contains a "Pose" indexed by the skin-local joint index.
 type KeyFrame struct {
-	Pose  map[int]JointTransform
+	Pose  []JointTransform
 	Start time.Duration
 }
 

@@ -20,7 +20,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/assets/loaders"
+	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
@@ -370,7 +370,7 @@ func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) []int {
 }
 
 func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {
-	peripheralFiles, err := loaders.GetPeripheralFiles(config.FilePath)
+	peripheralFiles, err := gltf.GetPeripheralFiles(config.FilePath)
 	if err != nil {
 		panic(err)
 	}

@@ -83,7 +83,6 @@ func (p *MainRenderPass) Init(width, height int, ctx *context.RenderPassContext)
 
 	// init textures
 	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
-	p.redCircleFB, p.redCircleTexture = createCircleTexture(1024, 1024)
 	p.greenCircleFB, p.greenCircleTexture = createCircleTexture(1024, 1024)
 	p.blueCircleFB, p.blueCircleTexture = createCircleTexture(1024, 1024)
 	p.yellowCircleFB, p.yellowCircleTexture = createCircleTexture(1024, 1024)

@@ -64,24 +64,24 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 	if nm.Invalidated {
 		start := time.Now()
 		chfVAOCache, chfVertexCount = p.createCompactHeightFieldVAO(nm.CompactHeightField)
-		iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start), "vertices", chfVertexCount)
+		iztlog.ClientLogger.Info("create navmesh compact height field vao", "time", time.Since(start).Seconds(), "vertices", chfVertexCount)
 
 		start = time.Now()
 		rawContourVAOCache, rawContourVertexCount = createContourVAO(nm, false)
-		iztlog.ClientLogger.Info("create navmesh raw contour vao", "time", time.Since(start), "vertices", rawContourVertexCount)
+		iztlog.ClientLogger.Info("create navmesh raw contour vao", "time", time.Since(start).Seconds(), "vertices", rawContourVertexCount)
 
 		start = time.Now()
 		simplifiedContourVAOCache, simplifiedContourVertexCount = createContourVAO(nm, true)
-		iztlog.ClientLogger.Info("create navmesh simplified contour vao", "time", time.Since(start), "vertices", simplifiedContourVertexCount)
+		iztlog.ClientLogger.Info("create navmesh simplified contour vao", "time", time.Since(start).Seconds(), "vertices", simplifiedContourVertexCount)
 
 		start = time.Now()
 		premergeTrianglesVAOCache, premergeTrianglesVertexCount = createPremergeTriangleVAO(nm)
-		iztlog.ClientLogger.Info("create navmesh premerge triangle vao", "time", time.Since(start), "vertices", premergeTrianglesVertexCount)
+		iztlog.ClientLogger.Info("create navmesh premerge triangle vao", "time", time.Since(start).Seconds(), "vertices", premergeTrianglesVertexCount)
 
 		start = time.Now()
 		polygonVAOCache, polygonVertexCount = p.createPolygonMeshVAO(nm, colorStyleRegionID)
 		polygonColoredOutlineVAOCache, polygonColoredOutlineVertexCount = p.createPolygonOutlineVAO(nm, colorStyleBlack)
-		iztlog.ClientLogger.Info("create navmesh polygon vao", "time", time.Since(start), "polygon vertices", polygonVertexCount, "outline vertices", polygonColoredOutlineVertexCount)
+		iztlog.ClientLogger.Info("create navmesh polygon vao", "time", time.Since(start).Seconds(), "polygon vertices", polygonVertexCount, "outline vertices", polygonColoredOutlineVertexCount)
 
 		start = time.Now()
 		detailedMeshVAOCache, detailedMeshVertexCount = p.createDetailedMeshVAO(nm, colorStyleRegionID)
@@ -91,7 +91,7 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 		detailedMeshLinesVAOCache, detailedMeshLinesVertexCount = p.createDetailedMeshLinesVAO(nm)
 		iztlog.ClientLogger.Info(
 			"create navmesh detailed mesh vao",
-			"time", time.Since(start),
+			"time", time.Since(start).Seconds(),
 			"triangles", detailedMeshVertexCount,
 			"line vertices", detailedMeshLinesVertexCount,
 			"outline sample vertices", detailedMeshOutlineSamplesVertexCount,

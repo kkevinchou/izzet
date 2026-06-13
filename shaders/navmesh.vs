@@ -6,8 +6,7 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec3 aColor;
 layout (location = 3) in vec3 aInstancePosition;
-layout (location = 4) in vec3 aInstanceScale;
-layout (location = 5) in vec3 aInstanceColor;
+layout (location = 4) in vec3 aInstanceColor;
 
 out VS_OUT {
     vec3 FragPos;
@@ -27,6 +26,7 @@ uniform int isAnimated;
 uniform int colorTextureCoordIndex;
 uniform uint entityID;
 uniform int useInstancing;
+uniform vec3 instanceScale;
 
 void main() {
     vec4 totalPos = vec4(0.0);
@@ -34,7 +34,7 @@ void main() {
     vec3 color = aColor;
 
     if (useInstancing == 1) {
-        totalPos = vec4(aInstancePosition + aPos * aInstanceScale, 1);
+        totalPos = vec4(aInstancePosition + aPos * instanceScale, 1);
         color = aInstanceColor;
     } else {
         totalPos = vec4(aPos, 1);

@@ -108,7 +108,13 @@ func (p *MainRenderPass) drawNavmesh(shaderManager *shaders.ShaderManager, viewe
 
 	if panels.SelectedNavmeshRenderComboOption == panels.ComboOptionCompactHeightField {
 		if chfInstanceCount > 0 {
-			shaderManager.GetShaderProgram("navmesh").SetUniformInt("useInstancing", 1)
+			shader := shaderManager.GetShaderProgram("navmesh")
+			shader.SetUniformInt("useInstancing", 1)
+			shader.SetUniformVec3("instanceScale", mgl32.Vec3{
+				float32(nm.CompactHeightField.CellSize),
+				float32(nm.CompactHeightField.CellHeight),
+				float32(nm.CompactHeightField.CellSize),
+			})
 			gl.BindVertexArray(chfVAOCache)
 			rutils.IztDrawElementsInstanced(6, chfInstanceCount)
 		}
@@ -543,7 +549,7 @@ func (p *MainRenderPass) createCompactHeightFieldVAO(chf *navmesh.CompactHeightF
 	cellHeight := float32(chf.CellHeight)
 	offset := utils.Vec3F64ToF32(chf.BMin())
 
-	const instanceAttributeSize int = 9
+	const instanceAttributeSize int = 6
 	instanceAttributes := make([]float32, 0, len(chf.Spans())*instanceAttributeSize)
 
 	for x := range chf.Width() {
@@ -562,9 +568,6 @@ func (p *MainRenderPass) createCompactHeightFieldVAO(chf *navmesh.CompactHeightF
 					float32(x)*cellSize+offset.X(),
 					float32(span.Y())*cellHeight+offset.Y(),
 					float32(z)*cellSize+offset.Z(),
-					cellSize,
-					cellHeight,
-					cellSize,
 					color[0],
 					color[1],
 					color[2],
@@ -801,10 +804,6 @@ func instancedCubeAttributes(instanceAttributes []float32, instanceAttributeSize
 	gl.VertexAttribPointer(4, 3, gl.FLOAT, false, instanceStride, gl.PtrOffset(3*floatSize))
 	gl.EnableVertexAttribArray(4)
 	gl.VertexAttribDivisor(4, 1)
-
-	gl.VertexAttribPointer(5, 3, gl.FLOAT, false, instanceStride, gl.PtrOffset(6*floatSize))
-	gl.EnableVertexAttribArray(5)
-	gl.VertexAttribDivisor(5, 1)
 
 	var ebo uint32
 	apputils.GenBuffers(1, &ebo)

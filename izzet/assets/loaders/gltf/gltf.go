@@ -38,12 +38,16 @@ type ParseConfig struct {
 }
 
 func GetPeripheralFiles(documentPath string) ([]string, error) {
-	var peripheralFiles []string
-
 	gltfDocument, err := gltf.Open(documentPath)
 	if err != nil {
 		return nil, err
 	}
+
+	return getPeripheralFiles(gltfDocument)
+}
+
+func getPeripheralFiles(gltfDocument *gltf.Document) ([]string, error) {
+	var peripheralFiles []string
 
 	// set Peripheral files as they're used and copied over for importing
 	for _, buffer := range gltfDocument.Buffers {
@@ -72,7 +76,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		return nil, err
 	}
 
-	document.PeripheralFiles, err = GetPeripheralFiles(documentPath)
+	document.PeripheralFiles, err = getPeripheralFiles(gltfDocument)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
@@ -117,7 +119,9 @@ func LoadDocuments(directory string) map[string]*modelspec.Document {
 		}
 
 		if metaData.Extension == ".gltf" {
+			start := time.Now()
 			scene := LoadDocument(metaData.Name, metaData.Path)
+			iztlog.ClientLogger.Info("load document", "name", metaData.Name, "time", time.Since(start).Milliseconds())
 			scenes[metaData.Name] = scene
 		} else {
 			panic(fmt.Sprintf("wtf unexpected extension %s", metaData.Extension))
@@ -125,10 +129,6 @@ func LoadDocuments(directory string) map[string]*modelspec.Document {
 	}
 
 	return scenes
-}
-
-func GetPeripheralFiles(filepath string) ([]string, error) {
-	return gltf.GetPeripheralFiles(filepath)
 }
 
 func LoadDocument(name string, filepath string) *modelspec.Document {

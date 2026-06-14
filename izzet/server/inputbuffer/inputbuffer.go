@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 )
 
 const maxBufferedInput int = 10
@@ -22,7 +23,6 @@ type PlayerBuffer struct {
 	count  int
 	inputs []BufferedInput
 	cursor int
-	// lastPulledInputCF int
 }
 
 type App interface {
@@ -55,12 +55,12 @@ func (b *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput 
 func (b *InputBuffer) PullInput(playerID int, globalCommandFrame int) BufferedInput {
 	buffer := b.playerBuffers[playerID]
 	if buffer.count == 0 {
-		// fmt.Println("no input found for player", playerID)
 		return BufferedInput{}
 	}
 
 	stale := false
 	if buffer.cursor >= buffer.count && buffer.count != 0 {
+		stale = true
 		buffer.cursor = buffer.count - 1
 	}
 
@@ -68,7 +68,7 @@ func (b *InputBuffer) PullInput(playerID int, globalCommandFrame int) BufferedIn
 	buffer.cursor++
 
 	if stale {
-		b.app.Logger().Info("read stale output", "cf", bufferedInput.LocalCommandFrame, "gcf", globalCommandFrame)
+		iztlog.ServerLogger.Info("read stale output", "cf", bufferedInput.LocalCommandFrame, "gcf", globalCommandFrame)
 	}
 
 	return bufferedInput

@@ -20,6 +20,7 @@ type RuntimeConfig struct {
 	ShadowFarDistance               float32
 	ShadowNearDistance              float32
 	ShadowCascadeBlendFactor        float32
+	ShadowMapMaxCascadeIndex        int32
 	ShadowSpatialPartitionNearPlane float32
 	BloomIntensity                  float32
 	Exposure                        float32
@@ -172,9 +173,10 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		ShadowMapMinBias:         0,
 		ShadowMapAngleBiasRate:   0,
 		EnableShadowMapping:      true,
-		ShadowFarDistance:        600,
+		ShadowFarDistance:        200,
 		ShadowNearDistance:       0.01,
-		ShadowCascadeBlendFactor: 0.95,
+		ShadowCascadeBlendFactor: 0.90,
+		ShadowMapMaxCascadeIndex: int32(settings.NumShadowMapCascades - 1),
 		ShadowmapZOffset:         250,
 		BloomIntensity:           0.04,
 		Exposure:                 1.0,

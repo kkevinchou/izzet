@@ -348,6 +348,7 @@ func commonPBRShaderSetup(app renderiface.App, shader *shaders.ShaderProgram, re
 	shader.SetUniformFloat("pointLightBias", app.RuntimeConfig().PointLightBias)
 	shader.SetUniformFloat("shadowMapMinBias", app.RuntimeConfig().ShadowMapMinBias/100000)
 	shader.SetUniformFloat("shadowMapAngleBiasRate", app.RuntimeConfig().ShadowMapAngleBiasRate/100000)
+	shader.SetUniformInt("shadowMapMaxCascadeIndex", app.RuntimeConfig().ShadowMapMaxCascadeIndex)
 	if len(renderContext.PointLights) > 0 {
 		shader.SetUniformFloat("far_plane", renderContext.PointLights[0].LightInfo.Range)
 	}

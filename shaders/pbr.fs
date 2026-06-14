@@ -66,6 +66,7 @@ uniform int hasPBRBaseColorTexture;
 uniform float pointLightBias;
 uniform float shadowMapMinBias;
 uniform float shadowMapAngleBiasRate;
+uniform int shadowMapMaxCascadeIndex;
 
 const float PI = 3.14159265359;
 
@@ -136,6 +137,10 @@ float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
             cascadeLayer = i;
             break;
         }
+    }
+
+    if (cascadeLayer > shadowMapMaxCascadeIndex) {
+        return 0.0;
     }
 
     vec4 fragPosLightSpace = lightSpaceMatrixArray[cascadeLayer] * vec4(fs_in.FragPos, 1.0);

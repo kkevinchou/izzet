@@ -97,7 +97,7 @@ func (g *Client) SaveProjectAs(name string) error {
 		newDocument := document
 		// in the event where we're saving a new project from the original, we want to overwrite the
 		// filepaths so that we reference the documents in the new project directory and not the old one.
-		newDocument.Config.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
+		newDocument.Config.FilePath = filepath.ToSlash(filepath.Join(contentDir, filepath.Base(config.FilePath)))
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
 			DocumentAsset: newDocument,
 		})

@@ -382,7 +382,7 @@ func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.A
 
 	contentDir := filepath.Join(settings.ProjectsDirectory, g.project.Name, "content")
 	newConfig := config
-	newConfig.FilePath = filepath.Join(contentDir, filepath.Base(config.FilePath))
+	newConfig.FilePath = filepath.ToSlash(filepath.Join(contentDir, filepath.Base(config.FilePath)))
 
 	sourceRootDir := filepath.Dir(config.FilePath)
 	err = copySourceFiles(sourceFilePaths, sourceRootDir, contentDir)

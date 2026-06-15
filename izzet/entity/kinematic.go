@@ -5,7 +5,9 @@ import (
 )
 
 type KinematicComponent struct {
-	Velocity            mgl64.Vec3
+	// Velocity is the per frame contributed velocity from movement input
+	Velocity mgl64.Vec3
+	// AccumulatedVelocity is velocity that has been accumulated from past frames e.g. jumping or gravity
 	AccumulatedVelocity mgl64.Vec3
 	Grounded            bool
 	GravityEnabled      bool

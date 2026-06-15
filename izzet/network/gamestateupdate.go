@@ -10,6 +10,8 @@ type EntityState struct {
 	Position             mgl64.Vec3
 	Rotation             mgl64.Quat
 	Velocity             mgl64.Vec3
+	AccumulatedVelocity  mgl64.Vec3
+	Grounded             bool
 	GravityEnabled       bool
 	Deadge               bool
 	AnimationTransitions []AnimationTransition

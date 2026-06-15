@@ -51,7 +51,9 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 		}
 
 		if entity.Kinematic != nil {
-			// entityState.Velocity = entity.Kinematic.Velocity
+			entityState.Velocity = entity.Kinematic.Velocity
+			entityState.AccumulatedVelocity = entity.Kinematic.AccumulatedVelocity
+			entityState.Grounded = entity.Kinematic.Grounded
 			entityState.GravityEnabled = entity.Kinematic.GravityEnabled
 		}
 		if entity.Animation != nil {

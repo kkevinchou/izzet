@@ -140,10 +140,6 @@ func (g *Server) Start(started chan bool, done chan bool) {
 
 			accumulator -= float64(settings.MSPerCommandFrame)
 			currentLoopCommandFrames++
-			if currentLoopCommandFrames > settings.MaxCommandFramesPerLoop {
-				g.Logger().Info("ran into max command frames per loop")
-				accumulator = 0
-			}
 		}
 
 		nextCommandFrameMs := msPerCommandFrame - accumulator

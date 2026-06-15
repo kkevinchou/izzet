@@ -29,6 +29,8 @@ func replay(app App, e *entity.Entity, gamestateUpdateMessage network.GameStateU
 		entity.SetLocalPosition(e, transform.Position)
 		e.SetLocalRotation(transform.Rotation)
 		e.Kinematic.Velocity = transform.Velocity
+		e.Kinematic.AccumulatedVelocity = transform.AccumulatedVelocity
+		e.Kinematic.Grounded = transform.Grounded
 		e.Kinematic.GravityEnabled = transform.GravityEnabled
 
 		// if app.PredictionDebugLogging() {

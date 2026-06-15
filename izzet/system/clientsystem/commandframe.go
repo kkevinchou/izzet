@@ -10,11 +10,13 @@ import (
 )
 
 type PostCommandFrameState struct {
-	ID             int
-	Position       mgl64.Vec3
-	Rotation       mgl64.Quat
-	Velocity       mgl64.Vec3
-	GravityEnabled bool
+	ID                  int
+	Position            mgl64.Vec3
+	Rotation            mgl64.Quat
+	Velocity            mgl64.Vec3
+	AccumulatedVelocity mgl64.Vec3
+	Grounded            bool
+	GravityEnabled      bool
 }
 
 type CommandFrame struct {
@@ -42,11 +44,13 @@ func (h *CommandFrameHistory) AddCommandFrame(frameNumber int, frameInput input.
 		FrameNumber: frameNumber,
 		FrameInput:  frameInput,
 		PostCFState: PostCommandFrameState{
-			ID:             player.GetID(),
-			Position:       player.LocalPosition,
-			Rotation:       player.LocalRotation,
-			Velocity:       player.Kinematic.Velocity,
-			GravityEnabled: player.Kinematic.GravityEnabled,
+			ID:                  player.GetID(),
+			Position:            player.LocalPosition,
+			Rotation:            player.LocalRotation,
+			Velocity:            player.Kinematic.Velocity,
+			AccumulatedVelocity: player.Kinematic.AccumulatedVelocity,
+			Grounded:            player.Kinematic.Grounded,
+			GravityEnabled:      player.Kinematic.GravityEnabled,
 		},
 	}
 

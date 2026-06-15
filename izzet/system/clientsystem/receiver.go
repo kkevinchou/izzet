@@ -80,8 +80,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				if err != nil {
 					panic(err)
 				}
-				state := cf.PostCFState
-				if apputils.Vec3ApproxEqualThreshold(state.Position, serverEntityState.Position, 0.001) {
+				if predictedStateMatchesServer(cf.PostCFState, serverEntityState) {
 					mr.Inc("prediction_hit", 1)
 					// 		gamestateUpdateMessage.LastInputCommandFrame,
 					// 	)
@@ -134,4 +133,20 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 			return
 		}
 	}
+}
+
+func predictedStateMatchesServer(predicted PostCommandFrameState, server network.EntityState) bool {
+	const threshold = 0.001
+
+	if !apputils.Vec3ApproxEqualThreshold(predicted.Position, server.Position, threshold) {
+		return false
+	}
+	if !apputils.Vec3ApproxEqualThreshold(predicted.Velocity, server.Velocity, threshold) {
+		return false
+	}
+	if !apputils.Vec3ApproxEqualThreshold(predicted.AccumulatedVelocity, server.AccumulatedVelocity, threshold) {
+		return false
+	}
+
+	return predicted.Grounded == server.Grounded && predicted.GravityEnabled == server.GravityEnabled
 }

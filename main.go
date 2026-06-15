@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -18,6 +19,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/veandco/go-sdl2/sdl"
 )
+
+const logDir = "logs"
 
 func init() {
 	// We want to lock the main thread to this goroutine.  Otherwise,
@@ -135,8 +138,12 @@ func parseCommandLine(args []string) (string, bool) {
 }
 
 func configureLoggers(logsEnabled bool, logHandlerOptions *slog.HandlerOptions) func() {
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		panic(err)
+	}
+
 	if !logsEnabled {
-		f, err := os.OpenFile("_logs_garbage.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(filepath.Join(logDir, "garbage.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		if err != nil {
 			panic(err)
 		}
@@ -153,19 +160,19 @@ func configureLoggers(logsEnabled bool, logHandlerOptions *slog.HandlerOptions) 
 		}
 	}
 
-	appLog, err := os.OpenFile("app.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	appLog, err := os.OpenFile(filepath.Join(logDir, "app.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	iztlog.SetLogger(slog.New(slog.NewJSONHandler(appLog, logHandlerOptions)))
 
-	clientLog, err := os.OpenFile("_logs_client.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	clientLog, err := os.OpenFile(filepath.Join(logDir, "client.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(clientLog, logHandlerOptions)))
 
-	serverLog, err := os.OpenFile("_logs_server.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	serverLog, err := os.OpenFile(filepath.Join(logDir, "server.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}

@@ -1,0 +1,14 @@
+SDL2*\.dll
+.vscode
+.project
+.project_backup
+imgui.ini
+.gitignore
+_assets
+logs
+logs/*.log
+tools/logviewer/node_modules/
+tools/logviewer/dist/
+_tools
+tools/logviewer/devserver*.log
+tools/logviewer/devserver*.err

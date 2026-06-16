@@ -425,7 +425,12 @@ function App() {
             hasInvalidContextRadius={contextRadius === null}
             onContextRadiusChange={setContextRadiusText}
             onToggleContext={() => {
-              setIsContextViewActive((active) => !active);
+              setIsContextViewActive((active) => {
+                if (active) {
+                  setSelectedEventId(null);
+                }
+                return !active;
+              });
               resetPagination();
             }}
           />
@@ -846,6 +851,13 @@ function EventRow({
     previousEvent && event.hasTime && previousEvent.hasTime
       ? `+${formatDuration(Math.abs(event.timeMs - previousEvent.timeMs))}`
       : "";
+  const frameBadge =
+    event.source === "server"
+      ? { field: "gcf", value: getFieldValue(event, "gcf"), tone: "server" }
+      : event.source === "client"
+        ? { field: "cf", value: getFieldValue(event, "cf"), tone: "client" }
+        : { field: "frame", value: null, tone: "empty" };
+  const hasFrameValue = frameBadge.value !== null;
 
   return (
     <article
@@ -865,7 +877,15 @@ function EventRow({
         <span>{event.timeText}</span>
         {timeGap ? <span>{timeGap}</span> : null}
       </div>
-      <div className="eventDot" />
+      <div className="frameCell">
+        <span
+          className={`frameBadge frameBadge-${hasFrameValue ? frameBadge.tone : "empty"}`}
+          title={hasFrameValue ? `${frameBadge.field}=${frameBadge.value}` : "No cf/gcf"}
+          aria-label={hasFrameValue ? `${frameBadge.field} ${frameBadge.value}` : "No cf or gcf"}
+        >
+          {frameBadge.value}
+        </span>
+      </div>
       <div className="eventBody">
         <div className="eventContent">
           <div>

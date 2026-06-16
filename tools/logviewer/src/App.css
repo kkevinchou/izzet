@@ -464,7 +464,7 @@ h2 {
 .eventRow {
   position: relative;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: 82px 52px minmax(0, 1fr);
   gap: 20px;
   cursor: pointer;
 }
@@ -483,18 +483,6 @@ h2 {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: right;
-}
-
-.eventDot {
-  position: absolute;
-  top: 18px;
-  left: 88px;
-  width: 9px;
-  height: 9px;
-  border: 2px solid var(--panel);
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 1px var(--border-strong);
 }
 
 .eventBody {
@@ -519,15 +507,53 @@ h2 {
   background: #f2fbf8;
 }
 
-.eventRow[aria-selected="true"] .eventDot {
-  background: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-weak), 0 0 0 1px var(--border-strong);
-}
-
 .eventContent {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
   gap: 16px;
+}
+
+.frameCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.frameBadge {
+  display: inline-grid;
+  place-items: center;
+  width: 100%;
+  height: 80%;
+  min-height: 26px;
+  padding: 4px 6px;
+  border: 1px solid #86b7ff;
+  border-radius: 8px;
+  background: #eaf2ff;
+  color: #1d4ed8;
+  font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.frameBadge-server {
+  border-color: #86b7ff;
+  background: #eaf2ff;
+  color: #1d4ed8;
+}
+
+.frameBadge-client {
+  border-color: #fdba74;
+  background: #fff3e4;
+  color: #c2410c;
+}
+
+.frameBadge-empty {
+  border-color: var(--border-strong);
+  background: var(--panel-strong);
+  color: transparent;
 }
 
 .eventSide {
@@ -699,6 +725,7 @@ h2 {
   }
 
   .eventSide {
+    grid-column: 1 / -1;
     justify-items: start;
   }
 
@@ -729,20 +756,29 @@ h2 {
   }
 
   .eventRow {
-    grid-template-columns: 1fr;
+    grid-template-columns: 44px minmax(0, 1fr);
     gap: 6px;
     padding-left: 22px;
   }
 
   .eventTime {
+    grid-column: 1 / -1;
     display: flex;
     gap: 8px;
     padding-top: 0;
     text-align: left;
   }
 
-  .eventDot {
-    top: 8px;
-    left: 6px;
+  .frameCell {
+    grid-column: 1;
   }
+
+  .frameBadge {
+    font-size: 15px;
+  }
+
+  .eventBody {
+    grid-column: 2;
+  }
+
 }

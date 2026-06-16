@@ -23,6 +23,11 @@ type Platform interface {
 	MoveMouse(int32, int32)
 }
 
+type WindowModeController interface {
+	Fullscreen() bool
+	SetFullscreen(bool) error
+}
+
 type InputCollector interface {
 	SetMousePosition(x float64, y float64)
 	SetMouseButtonState(i int, value bool)

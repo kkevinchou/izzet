@@ -220,6 +220,24 @@ func (platform *SDLPlatform) MoveMouse(x, y int32) {
 	platform.window.WarpMouseInWindow(x, y)
 }
 
+const fullscreenMode = sdl.WINDOW_FULLSCREEN_DESKTOP
+
+func (platform *SDLPlatform) Fullscreen() bool {
+	return platform.window.GetFlags()&fullscreenMode != 0
+}
+
+func (platform *SDLPlatform) SetFullscreen(fullscreen bool) error {
+	if fullscreen {
+		return platform.window.SetFullscreen(fullscreenMode)
+	}
+
+	if err := platform.window.SetFullscreen(0); err != nil {
+		return err
+	}
+	// platform.window.Maximize()
+	return nil
+}
+
 func InitSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
@@ -243,10 +261,9 @@ func InitSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
 
 	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
 	if fullscreen {
+		windowFlags |= fullscreenMode
+	} else {
 		windowFlags |= sdl.WINDOW_MAXIMIZED
-		// windowFlags |= sdl.WINDOW_MAXIMIZED
-		// windowFlags |= sdl.WINDOW_FULLSCREEN_DESKTOP
-		// windowFlags |= sdl.WINDOW_FULLSCREEN
 	}
 
 	win, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(width), int32(height), uint32(windowFlags))

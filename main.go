@@ -95,6 +95,7 @@ func main() {
 	iztlog.ServerLogger.Info("====================================================================================")
 
 	if mode == "SERVER" {
+		config.Fullscreen = false
 		clientApp := client.New("shaders", config)
 		if err != nil {
 			panic(err)

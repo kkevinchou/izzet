@@ -16,8 +16,7 @@ func SetupMenuBar(app renderiface.App, renderContext RenderContext) {
 	view(app, renderContext)
 	multiplayer(app)
 	create(app)
-	window(app)
-	other(app)
+	settingsMenu(app)
 
 	imgui.EndMainMenuBar()
 	imgui.PopStyleVar()

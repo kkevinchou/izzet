@@ -120,8 +120,7 @@ type RuntimeConfig struct {
 	CloudTextures                  [2]CloudTexture
 
 	// post processing
-	WindowEnablePostProcessing bool
-	KuwaharaFilter             bool
+	KuwaharaFilter bool
 
 	// SSAO
 	SSAORadius float32
@@ -303,18 +302,17 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 				WorkGroupDepth:  128,
 			},
 		},
-		WindowEnablePostProcessing: true,
-		EnableSSAO:                 true,
-		SSAORadius:                 5,
-		SSAOBias:                   0.025,
-		TestPosition:               mgl32.Vec3{0, 4, 6},
-		TestAngle:                  -35,
-		TestObjectRotation:         35,
-		TestAlbedo:                 [3]float32{0.5, 0.5, 0.5},
-		TestMetallic:               0,
-		TestRoughness:              1,
-		TestAO:                     1,
-		EnableAntialiasing:         true,
+		EnableSSAO:         true,
+		SSAORadius:         5,
+		SSAOBias:           0.025,
+		TestPosition:       mgl32.Vec3{0, 4, 6},
+		TestAngle:          -35,
+		TestObjectRotation: 35,
+		TestAlbedo:         [3]float32{0.5, 0.5, 0.5},
+		TestMetallic:       0,
+		TestRoughness:      1,
+		TestAO:             1,
+		EnableAntialiasing: true,
 	}
 
 	return config

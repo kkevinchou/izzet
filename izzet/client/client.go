@@ -250,24 +250,6 @@ func (g *Client) setupSystems() {
 	g.editorModeSystems = append(g.editorModeSystems, system.NewAnimationSystem(g))
 }
 
-func (g *Client) setupEntities() {
-	pointLight := entity.CreatePointLight()
-	pointLight.LightInfo.PreScaledIntensity = 0.05
-	pointLight.LightInfo.Diffuse3F = [3]float32{0.77, 0.11, 0}
-	entity.SetLocalPosition(pointLight, mgl64.Vec3{0, 100, 0})
-	g.world.AddEntity(pointLight)
-
-	cube := entity.CreateCube(g.assetManager, 50)
-	entity.SetLocalPosition(cube, mgl64.Vec3{0, 100, 0})
-	g.world.AddEntity(cube)
-
-	directionalLight := entity.CreateDirectionalLight()
-	directionalLight.Name = "directional_light"
-	directionalLight.LightInfo.PreScaledIntensity = 0.1
-	entity.SetLocalPosition(directionalLight, mgl64.Vec3{0, 500, 0})
-	g.world.AddEntity(directionalLight)
-}
-
 func (g *Client) mousePosToNearPlane(mousePosition mgl64.Vec2, width, height int) mgl64.Vec3 {
 	x := mousePosition.X()
 	y := mousePosition.Y()

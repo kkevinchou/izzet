@@ -91,7 +91,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 				} else {
 					mr.Inc("prediction_miss", 1)
 					player := s.app.GetPlayerEntity()
-					s.app.Logger().Info("prediction miss", "cf", gamestateUpdateMessage.LastInputCommandFrame)
+					s.app.Logger().Info("prediction miss", "last input command frame", gamestateUpdateMessage.LastInputCommandFrame)
 
 					// if s.app.PredictionDebugLogging() {
 					// 	fmt.Printf("\t - Predictiton Miss [Frame: %d] [Client: %s] [Server: %s]\n",

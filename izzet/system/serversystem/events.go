@@ -64,11 +64,11 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 
 		s.notifyEntityCreation(camera)
 		s.notifyEntityCreation(playerEntity)
-		iztlog.Logger.Info("player joined", "player id", e.PlayerID, "camera id", camera.GetID(), "player entity id", playerEntity.GetID())
+		iztlog.ServerLogger.Info("player joined", "player id", e.PlayerID, "camera id", camera.GetID(), "player entity id", playerEntity.GetID())
 	}
 
 	for _, e := range s.playerDisconnectConsumer.ReadNewEvents() {
-		iztlog.Logger.Info("player disconnected", "player id", e.PlayerID)
+		iztlog.ServerLogger.Info("player disconnected", "player id", e.PlayerID)
 		s.app.DeregisterPlayer(e.PlayerID)
 	}
 
@@ -86,7 +86,7 @@ func (s *EventsSystem) notifyEntityCreation(entity *entity.Entity) {
 	for _, player := range s.app.GetPlayers() {
 		player.Client.Send(entityMessage, s.app.CommandFrame())
 	}
-	iztlog.Logger.Info("spawned entity", "entity id", entity.GetID())
+	iztlog.ServerLogger.Info("spawned entity", "entity id", entity.GetID())
 }
 
 func createEntityMessage(playerID int, entity *entity.Entity) (network.CreateEntityMessage, error) {

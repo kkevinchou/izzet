@@ -66,7 +66,7 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		loadedFonts = loaders.LoadFonts(settings.BuiltinAssetsDir)
 
 		audioData = loaders.LoadAudio(settings.BuiltinAssetsDir)
-		iztlog.Logger.Info(fmt.Sprintf("loaded fonts and textures in %f seconds", time.Since(start).Seconds()))
+		iztlog.ClientLogger.Info(fmt.Sprintf("loaded fonts and textures in %f seconds", time.Since(start).Seconds()))
 	}
 
 	assetManager := AssetManager{

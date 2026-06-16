@@ -2,19 +2,16 @@ package gltf
 
 import (
 	"fmt"
-	"log/slog"
 	"path"
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/qmuntal/gltf"
 	"github.com/qmuntal/gltf/modeler"
 )
 
 func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspec.Document, error) {
-	logger := iztlog.Logger.With("document path", documentPath)
 	var document modelspec.Document
 
 	document.Name = name
@@ -71,9 +68,8 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		document.Textures = append(document.Textures, name)
 	}
 
-	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures, logger)
+	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures)
 	if err != nil {
-		iztlog.Logger.Error(err.Error())
 		return nil, err
 	}
 	document.Materials = materialSpecs
@@ -81,7 +77,6 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 	for i, mesh := range gltfDocument.Meshes {
 		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, materialIndexMapping, config)
 		if err != nil {
-			iztlog.Logger.Error(err.Error())
 			return nil, err
 		}
 
@@ -199,7 +194,7 @@ func getNodeTransform(node *gltf.Node) mgl32.Mat4 {
 // parseMaterialSpecs creates MaterialSpecifications from the gltf materials list
 // we also return an id mapping from the gltf id to the internal material id
 // (this might be overkill since their ids are probably also zero index and incrementing)
-func parseMaterialSpecs(document *gltf.Document, textures []string, logger *slog.Logger) ([]modelspec.MaterialSpecification, map[int]string, error) {
+func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.MaterialSpecification, map[int]string, error) {
 	var materials []modelspec.MaterialSpecification
 	idMapping := map[int]string{}
 
@@ -210,7 +205,6 @@ func parseMaterialSpecs(document *gltf.Document, textures []string, logger *slog
 		switch gltfMaterial.AlphaMode {
 		case gltf.AlphaMask:
 			alphaMode = modelspec.AlphaModeMask
-			logger.Warn("unsupported alpha mode alpha mask")
 		case gltf.AlphaBlend:
 			alphaMode = modelspec.AlphaModeBlend
 		}
@@ -278,10 +272,6 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 					return nil, err
 				}
 
-				if len(positions) != len(primitiveSpec.UniqueVertices) {
-					iztlog.Logger.Info("dafuq")
-				}
-
 				for i, position := range positions {
 					primitiveSpec.UniqueVertices[i].Position = position
 				}
@@ -333,8 +323,6 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 				for i, jointWeights := range readJointWeights {
 					primitiveSpec.UniqueVertices[i].JointWeights = jointWeights
 				}
-			} else {
-				iztlog.Logger.Info("[%s] unhandled attribute %s\n", mesh.Name, attribute)
 			}
 		}
 

@@ -70,7 +70,7 @@ func (g *Client) initializeAppAndWorld(reader io.Reader, projectName string) {
 	var err error
 	g.world, err = serialization.Read(reader, g.assetManager)
 	if err != nil {
-		iztlog.Logger.Error("failed to load world", "error", err)
+		iztlog.ClientLogger.Error("failed to load world", "error", err)
 		panic(err)
 	}
 
@@ -129,7 +129,7 @@ func (g *Client) Connect() error {
 		return nil
 	}
 
-	iztlog.Logger.Info("connecting to " + g.serverAddress)
+	iztlog.ClientLogger.Info("connecting to " + g.serverAddress)
 	conn, err := net.Dial("tcp", g.serverAddress)
 	if err != nil {
 		return err
@@ -144,7 +144,7 @@ func (g *Client) Connect() error {
 	if err != nil {
 		return err
 	}
-	iztlog.Logger.Info("connected to server", "project name", message.ProjectName)
+	iztlog.ClientLogger.Info("connected to server", "project name", message.ProjectName)
 
 	g.ConfigureUI(false)
 	g.SelectEntity(nil)
@@ -163,7 +163,7 @@ func (g *Client) Connect() error {
 	g.SetPlayerEntity(playerEntity)
 	g.SetMouseCaptured(true)
 
-	iztlog.Logger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
+	iztlog.ClientLogger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
 
 	// TODO a done channel to close out the goroutine
 	go func() {
@@ -176,7 +176,7 @@ func (g *Client) Connect() error {
 					continue
 				}
 
-				iztlog.Logger.Error("error reading incoming message, closing connection", "error", err.Error())
+				iztlog.ClientLogger.Error("error reading incoming message, closing connection", "error", err.Error())
 				return
 			}
 

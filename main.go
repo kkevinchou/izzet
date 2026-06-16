@@ -82,18 +82,6 @@ func main() {
 	closeLogs := configureLoggers(logsEnabled, logHandlerOptions)
 	defer closeLogs()
 
-	iztlog.Logger.Info("====================================================================================")
-	iztlog.Logger.Info("IZZET SESSION START")
-	iztlog.Logger.Info("====================================================================================")
-
-	iztlog.ClientLogger.Info("====================================================================================")
-	iztlog.ClientLogger.Info("IZZET CLIENT SESSION START")
-	iztlog.ClientLogger.Info("====================================================================================")
-
-	iztlog.ServerLogger.Info("====================================================================================")
-	iztlog.ServerLogger.Info("IZZET SERVER SESSION START")
-	iztlog.ServerLogger.Info("====================================================================================")
-
 	if mode == "SERVER" {
 		config.Fullscreen = false
 		clientApp := client.New("shaders", config)
@@ -144,28 +132,11 @@ func configureLoggers(logsEnabled bool, logHandlerOptions *slog.HandlerOptions) 
 	}
 
 	if !logsEnabled {
-		f, err := os.OpenFile(filepath.Join(logDir, "garbage.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-		if err != nil {
-			panic(err)
-		}
-
-		logger := slog.New(slog.NewJSONHandler(f, logHandlerOptions))
-		iztlog.SetLogger(logger)
+		logger := slog.New(slog.NewJSONHandler(io.Discard, logHandlerOptions))
 		iztlog.SetClientLogger(logger)
 		iztlog.SetServerLogger(logger)
-
-		return func() {
-			if err := f.Close(); err != nil {
-				panic(err)
-			}
-		}
+		return func() {}
 	}
-
-	appLog, err := os.OpenFile(filepath.Join(logDir, "app.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	iztlog.SetLogger(slog.New(slog.NewJSONHandler(appLog, logHandlerOptions)))
 
 	clientLog, err := os.OpenFile(filepath.Join(logDir, "client.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
@@ -180,9 +151,6 @@ func configureLoggers(logsEnabled bool, logHandlerOptions *slog.HandlerOptions) 
 	iztlog.SetServerLogger(slog.New(slog.NewJSONHandler(serverLog, logHandlerOptions)))
 
 	return func() {
-		if err := appLog.Close(); err != nil {
-			panic(err)
-		}
 		if err := clientLog.Close(); err != nil {
 			panic(err)
 		}

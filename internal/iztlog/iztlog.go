@@ -13,25 +13,35 @@ func init() {
 	ServerLogger = slog.Default()
 }
 
-func SetClientLogger(logger *slog.Logger, commandFrameFn func() int) {
-	ClientLogger = withCommandFrame(logger, "cf", commandFrameFn)
+func SetClientLogger(logger *slog.Logger, commandFrameFn func() int, playerIDFn func() int) {
+	ClientLogger = withClientAttrs(logger, commandFrameFn, playerIDFn)
 }
 func SetServerLogger(logger *slog.Logger, commandFrameFn func() int) {
-	ServerLogger = withCommandFrame(logger, "gcf", commandFrameFn)
+	ServerLogger = withServerAttrs(logger, commandFrameFn)
 }
 
-func withCommandFrame(logger *slog.Logger, key string, fn func() int) *slog.Logger {
+func withClientAttrs(logger *slog.Logger, commandFrameFn func() int, playerIDFn func() int) *slog.Logger {
 	return slog.New(IztLogHandler{
-		handler: logger.Handler(),
-		key:     key,
-		fn:      fn,
+		handler:         logger.Handler(),
+		commandFrameKey: "cf",
+		commandFrameFn:  commandFrameFn,
+		playerIDFn:      playerIDFn,
+	})
+}
+
+func withServerAttrs(logger *slog.Logger, commandFrameFn func() int) *slog.Logger {
+	return slog.New(IztLogHandler{
+		handler:         logger.Handler(),
+		commandFrameKey: "gcf",
+		commandFrameFn:  commandFrameFn,
 	})
 }
 
 type IztLogHandler struct {
-	handler slog.Handler
-	key     string
-	fn      func() int
+	handler         slog.Handler
+	commandFrameKey string
+	commandFrameFn  func() int
+	playerIDFn      func() int
 }
 
 func (h IztLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
@@ -39,26 +49,53 @@ func (h IztLogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h IztLogHandler) Handle(ctx context.Context, record slog.Record) error {
-	record = withRecordAttr(record, slog.Int(h.key, h.fn()))
+	var attrs []slog.Attr
+	if h.commandFrameFn != nil {
+		attrs = append(attrs, slog.Int(h.commandFrameKey, h.commandFrameFn()))
+	}
+	if h.playerIDFn != nil {
+		attrs = append(attrs, slog.Int("player id", h.playerIDFn()))
+	}
+
+	record = withRecordAttrs(record, attrs...)
 	return h.handler.Handle(ctx, record)
 }
 
 func (h IztLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return IztLogHandler{handler: h.handler.WithAttrs(attrs)}
+	return IztLogHandler{
+		handler:         h.handler.WithAttrs(attrs),
+		commandFrameKey: h.commandFrameKey,
+		commandFrameFn:  h.commandFrameFn,
+		playerIDFn:      h.playerIDFn,
+	}
 }
 
 func (h IztLogHandler) WithGroup(name string) slog.Handler {
-	return IztLogHandler{handler: h.handler.WithGroup(name)}
+	return IztLogHandler{
+		handler:         h.handler.WithGroup(name),
+		commandFrameKey: h.commandFrameKey,
+		commandFrameFn:  h.commandFrameFn,
+		playerIDFn:      h.playerIDFn,
+	}
 }
 
-func withRecordAttr(record slog.Record, nextAttr slog.Attr) slog.Record {
+func withRecordAttrs(record slog.Record, nextAttrs ...slog.Attr) slog.Record {
 	next := slog.NewRecord(record.Time, record.Level, record.Message, record.PC)
 	record.Attrs(func(attr slog.Attr) bool {
-		if attr.Key != nextAttr.Key {
+		if !hasAttrKey(nextAttrs, attr.Key) {
 			next.AddAttrs(attr)
 		}
 		return true
 	})
-	next.AddAttrs(nextAttr)
+	next.AddAttrs(nextAttrs...)
 	return next
+}
+
+func hasAttrKey(attrs []slog.Attr, key string) bool {
+	for _, attr := range attrs {
+		if attr.Key == key {
+			return true
+		}
+	}
+	return false
 }

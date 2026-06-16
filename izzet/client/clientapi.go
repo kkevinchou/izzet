@@ -163,7 +163,7 @@ func (g *Client) Connect() error {
 	g.SetPlayerEntity(playerEntity)
 	g.SetMouseCaptured(true)
 
-	iztlog.ClientLogger.Info("client connected", "player id", playerEntity.GetID(), "camera id", camera.GetID())
+	iztlog.ClientLogger.Info("client connected", "player entity id", playerEntity.GetID(), "camera id", camera.GetID())
 
 	// TODO a done channel to close out the goroutine
 	go func() {

@@ -130,9 +130,9 @@ func New(shaderDirectory string, config settings.Config, logsEnabled bool) *Clie
 		if err != nil {
 			panic(err)
 		}
-		iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(clientLog, logHandlerOptions)), g.CommandFrame)
+		iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(clientLog, logHandlerOptions)), g.CommandFrame, g.GetPlayerID)
 	} else {
-		iztlog.SetClientLogger(slog.New(slog.DiscardHandler), func() int { return 0 })
+		iztlog.SetClientLogger(slog.New(slog.DiscardHandler), g.CommandFrame, g.GetPlayerID)
 	}
 
 	g.assetManager = assets.NewAssetManager(true, iztlog.ClientLogger)

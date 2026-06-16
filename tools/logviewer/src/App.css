@@ -190,29 +190,6 @@ h2 {
   font-size: 12px;
 }
 
-.timeRangeInputs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.timeRangeInputs label {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.timeRangeInputs span {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.timeRangeInputs input[aria-invalid="true"] {
-  border-color: var(--error);
-}
-
 .filterHint {
   color: var(--muted);
   font-size: 12px;
@@ -225,6 +202,53 @@ h2 {
 .fieldValueControls {
   display: grid;
   gap: 8px;
+}
+
+.contextControls {
+  display: grid;
+  gap: 8px;
+}
+
+.contextControls label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.contextControls span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.contextControls input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.contextToggleButton {
+  border-color: #6fb5a9;
+  background: #e6f5f1;
+  color: #075d53;
+  font-weight: 700;
+  box-shadow: 0 1px 0 rgba(23, 33, 30, 0.08);
+}
+
+.contextToggleButton:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: #d7eee9;
+}
+
+.contextToggleButton[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #d7eee9;
+  color: #075d53;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.24);
+  transform: translateY(1px);
+}
+
+.contextToggleButton[aria-pressed="true"]:hover:not(:disabled) {
+  background: #c6e7df;
 }
 
 .fieldValueControls label {
@@ -329,7 +353,7 @@ h2 {
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -442,6 +466,11 @@ h2 {
   display: grid;
   grid-template-columns: 82px minmax(0, 1fr);
   gap: 20px;
+  cursor: pointer;
+}
+
+.eventRow:focus-visible {
+  outline: none;
 }
 
 .eventTime {
@@ -478,6 +507,21 @@ h2 {
 
 .eventBody:hover {
   border-color: var(--border-strong);
+}
+
+.eventRow:focus-visible .eventBody {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.eventRow[aria-selected="true"] .eventBody {
+  border-color: var(--accent);
+  background: #f2fbf8;
+}
+
+.eventRow[aria-selected="true"] .eventDot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak), 0 0 0 1px var(--border-strong);
 }
 
 .eventContent {

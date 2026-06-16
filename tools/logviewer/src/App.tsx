@@ -81,9 +81,9 @@ const LEVEL_ORDER = ["TRACE", "DEBUG", "INFO", "WARN", "WARNING", "ERROR", "FATA
 const SOURCE_ORDER = ["client", "server", "app"];
 const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 const DEFAULT_PAGE_SIZE = 100;
+const DEFAULT_CONTEXT_RADIUS = 20;
 const LOG_FILE_PATTERN = /(^.*\.(log|jsonl|json|txt)$)/i;
 const DEFAULT_LOGS_ENDPOINT = "/default-logs";
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -97,8 +97,9 @@ function App() {
   const [fieldFilterValue, setFieldFilterValue] = useState("");
   const [selectedGcf, setSelectedGcf] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [timeStartText, setTimeStartText] = useState("");
-  const [timeEndText, setTimeEndText] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [contextRadiusText, setContextRadiusText] = useState(String(DEFAULT_CONTEXT_RADIUS));
+  const [isContextViewActive, setIsContextViewActive] = useState(false);
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
@@ -150,27 +151,15 @@ function App() {
     });
   }, [events, searchText, selectedLevels, selectedSources]);
 
-  const timeStartMs = useMemo(() => parseTimeRangeInput(timeStartText), [timeStartText]);
-  const timeEndMs = useMemo(() => parseTimeRangeInput(timeEndText), [timeEndText]);
-  const hasInvalidTimeRange = isInvalidTimeRangeInput(timeStartText) || isInvalidTimeRangeInput(timeEndText);
-
-  const timeFilteredEvents = useMemo(() => {
-    if (hasInvalidTimeRange || (timeStartMs === null && timeEndMs === null)) {
-      return textFilteredEvents;
-    }
-
-    return textFilteredEvents.filter((event) => eventMatchesTimeRange(event, timeStartMs, timeEndMs));
-  }, [hasInvalidTimeRange, textFilteredEvents, timeEndMs, timeStartMs]);
-
-  const gcfCounts = useMemo(() => topGcfCounts(timeFilteredEvents, 5), [timeFilteredEvents]);
+  const gcfCounts = useMemo(() => topGcfCounts(textFilteredEvents, 5), [textFilteredEvents]);
 
   const gcfFilteredEvents = useMemo(() => {
     if (selectedGcf === null) {
-      return timeFilteredEvents;
+      return textFilteredEvents;
     }
 
-    return timeFilteredEvents.filter((event) => eventHasFieldValue(event, "gcf", selectedGcf));
-  }, [selectedGcf, timeFilteredEvents]);
+    return textFilteredEvents.filter((event) => eventHasFieldValue(event, "gcf", selectedGcf));
+  }, [selectedGcf, textFilteredEvents]);
 
   const fieldIndex = useMemo(() => buildFieldIndex(gcfFilteredEvents), [gcfFilteredEvents]);
 
@@ -187,15 +176,49 @@ function App() {
     return filtered;
   }, [baseFilteredEvents, sortDirection]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
+  const unfilteredSortedEvents = useMemo(() => {
+    const sorted = [...events];
+    sortEvents(sorted, sortDirection);
+    return sorted;
+  }, [events, sortDirection]);
+
+  const selectedEvent = useMemo(
+    () => events.find((event) => event.id === selectedEventId) || null,
+    [events, selectedEventId],
+  );
+  const contextRadius = parseContextRadius(contextRadiusText);
+  const contextEvents = useMemo(() => {
+    if (!isContextViewActive || selectedEventId === null || contextRadius === null) {
+      return [];
+    }
+
+    const selectedIndex = unfilteredSortedEvents.findIndex((event) => event.id === selectedEventId);
+    if (selectedIndex === -1) {
+      return [];
+    }
+
+    const start = Math.max(0, selectedIndex - contextRadius);
+    const end = Math.min(unfilteredSortedEvents.length, selectedIndex + contextRadius + 1);
+    return unfilteredSortedEvents.slice(start, end);
+  }, [contextRadius, isContextViewActive, selectedEventId, unfilteredSortedEvents]);
+  const timelineEvents = isContextViewActive ? contextEvents : filteredEvents;
+
+  const pageCount = isContextViewActive ? 1 : Math.max(1, Math.ceil(timelineEvents.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, pageCount);
-  const pageStart = filteredEvents.length ? (safeCurrentPage - 1) * pageSize : 0;
-  const visibleEvents = filteredEvents.slice(pageStart, pageStart + pageSize);
+  const pageStart = timelineEvents.length && !isContextViewActive ? (safeCurrentPage - 1) * pageSize : 0;
+  const visibleEvents = isContextViewActive ? timelineEvents : timelineEvents.slice(pageStart, pageStart + pageSize);
   const pageEnd = pageStart + visibleEvents.length;
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, pageCount));
   }, [pageCount]);
+
+  useEffect(() => {
+    if (selectedEventId !== null && !selectedEvent) {
+      setSelectedEventId(null);
+      setIsContextViewActive(false);
+    }
+  }, [selectedEvent, selectedEventId]);
 
   async function loadDefaultLogs() {
     setStatusMessage("Loading default client/server logs...");
@@ -273,8 +296,9 @@ function App() {
     setSelectedFieldKey("");
     setFieldFilterValue("");
     setSelectedGcf(null);
-    setTimeStartText("");
-    setTimeEndText("");
+    setSelectedEventId(null);
+    setIsContextViewActive(false);
+    setContextRadiusText(String(DEFAULT_CONTEXT_RADIUS));
     resetPagination();
   }
 
@@ -286,8 +310,9 @@ function App() {
     setFieldFilterValue("");
     setSelectedGcf(null);
     setSearchText("");
-    setTimeStartText("");
-    setTimeEndText("");
+    setSelectedEventId(null);
+    setIsContextViewActive(false);
+    setContextRadiusText(String(DEFAULT_CONTEXT_RADIUS));
     resetPagination();
     setStatusMessage("No logs loaded");
   }
@@ -314,6 +339,11 @@ function App() {
 
   function toggleGcf(gcf: string) {
     setSelectedGcf((current) => (current === gcf ? null : gcf));
+    resetPagination();
+  }
+
+  function selectEvent(eventId: string) {
+    setSelectedEventId(eventId);
     resetPagination();
   }
 
@@ -388,55 +418,17 @@ function App() {
             />
           </section>
 
-          <section className="filterGroup">
-            <div className="groupHeader">
-              <h2>Time Range</h2>
-              <button
-                type="button"
-                disabled={!timeStartText && !timeEndText}
-                onClick={() => {
-                  setTimeStartText("");
-                  setTimeEndText("");
-                  resetPagination();
-                }}
-              >
-                Clear
-              </button>
-            </div>
-            <div className="timeRangeInputs">
-              <label>
-                <span>From</span>
-                <input
-                  type="text"
-                  placeholder="7:00 PM"
-                  value={timeStartText}
-                  aria-invalid={isInvalidTimeRangeInput(timeStartText)}
-                  onChange={(event) => {
-                    setTimeStartText(event.target.value);
-                    resetPagination();
-                  }}
-                />
-              </label>
-              <label>
-                <span>To</span>
-                <input
-                  type="text"
-                  placeholder="7:05 PM"
-                  value={timeEndText}
-                  aria-invalid={isInvalidTimeRangeInput(timeEndText)}
-                  onChange={(event) => {
-                    setTimeEndText(event.target.value);
-                    resetPagination();
-                  }}
-                />
-              </label>
-            </div>
-            {hasInvalidTimeRange ? (
-              <div className="filterHint error">Use times like 19:06:21.579 or 7:06 PM.</div>
-            ) : (
-              <div className="filterHint">Matches event times inclusively.</div>
-            )}
-          </section>
+          <ContextControls
+            selectedEvent={selectedEvent}
+            contextRadiusText={contextRadiusText}
+            isContextViewActive={isContextViewActive}
+            hasInvalidContextRadius={contextRadius === null}
+            onContextRadiusChange={setContextRadiusText}
+            onToggleContext={() => {
+              setIsContextViewActive((active) => !active);
+              resetPagination();
+            }}
+          />
 
           <GcfFilter
             items={gcfCounts}
@@ -503,13 +495,14 @@ function App() {
         <section className="timelinePanel" aria-label="Timeline">
           <div className="summaryGrid" aria-label="Log summary">
             <Metric label="Loaded" value={formatNumber(events.length)} />
-            <Metric label="Visible" value={formatNumber(filteredEvents.length)} />
-            <Metric label="Range" value={formatRange(filteredEvents)} />
+            <Metric label="Visible" value={formatNumber(timelineEvents.length)} />
           </div>
 
           <div className="timelineToolbar">
             <div className="resultMeta">
-              {resultMeta(events, pageStart, pageEnd, filteredEvents.length)}
+              {isContextViewActive
+                ? contextResultMeta(events, selectedEvent, pageStart, pageEnd, timelineEvents.length)
+                : resultMeta(events, pageStart, pageEnd, timelineEvents.length)}
             </div>
             <div className="timelineControls">
               <label className="sortControl">
@@ -544,6 +537,7 @@ function App() {
               <PaginationControls
                 currentPage={safeCurrentPage}
                 pageCount={pageCount}
+                disabled={isContextViewActive}
                 onPageChange={setCurrentPage}
               />
             </div>
@@ -555,12 +549,18 @@ function App() {
                 <EventRow
                   key={event.id}
                   event={event}
-                  previousEvent={pageStart + index > 0 ? filteredEvents[pageStart + index - 1] : undefined}
+                  previousEvent={pageStart + index > 0 ? timelineEvents[pageStart + index - 1] : undefined}
+                  selected={selectedEventId === event.id}
+                  onSelect={() => selectEvent(event.id)}
                 />
               ))
             ) : (
               <div className="emptyTimeline">
-                {events.length ? "No events match the current filters" : "Open logs or open a folder"}
+                {events.length
+                  ? isContextViewActive
+                    ? "No context events"
+                    : "No events match the current filters"
+                  : "Open logs or open a folder"}
               </div>
             )}
           </div>
@@ -573,32 +573,81 @@ function App() {
 function PaginationControls({
   currentPage,
   pageCount,
+  disabled,
   onPageChange,
 }: {
   currentPage: number;
   pageCount: number;
+  disabled?: boolean;
   onPageChange: (page: number) => void;
 }) {
   return (
     <nav className="paginationControls" aria-label="Pagination">
-      <button type="button" disabled={currentPage <= 1} onClick={() => onPageChange(1)}>
+      <button type="button" disabled={disabled || currentPage <= 1} onClick={() => onPageChange(1)}>
         First
       </button>
-      <button type="button" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)}>
+      <button type="button" disabled={disabled || currentPage <= 1} onClick={() => onPageChange(currentPage - 1)}>
         Previous
       </button>
       <span>{`Page ${formatNumber(currentPage)} of ${formatNumber(pageCount)}`}</span>
       <button
         type="button"
-        disabled={currentPage >= pageCount}
+        disabled={disabled || currentPage >= pageCount}
         onClick={() => onPageChange(currentPage + 1)}
       >
         Next
       </button>
-      <button type="button" disabled={currentPage >= pageCount} onClick={() => onPageChange(pageCount)}>
+      <button type="button" disabled={disabled || currentPage >= pageCount} onClick={() => onPageChange(pageCount)}>
         Last
       </button>
     </nav>
+  );
+}
+
+function ContextControls({
+  selectedEvent,
+  contextRadiusText,
+  isContextViewActive,
+  hasInvalidContextRadius,
+  onContextRadiusChange,
+  onToggleContext,
+}: {
+  selectedEvent: ParsedEvent | null;
+  contextRadiusText: string;
+  isContextViewActive: boolean;
+  hasInvalidContextRadius: boolean;
+  onContextRadiusChange: (value: string) => void;
+  onToggleContext: () => void;
+}) {
+  return (
+    <section className="filterGroup">
+      <div className="groupHeader">
+        <h2>Line Context</h2>
+      </div>
+      <div className="contextControls">
+        <label>
+          <span>Before/after</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            inputMode="numeric"
+            value={contextRadiusText}
+            aria-invalid={hasInvalidContextRadius}
+            onChange={(event) => onContextRadiusChange(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="contextToggleButton"
+          aria-pressed={isContextViewActive}
+          disabled={!isContextViewActive && (selectedEvent === null || hasInvalidContextRadius)}
+          onClick={onToggleContext}
+        >
+          Show context
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -782,14 +831,36 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function EventRow({ event, previousEvent }: { event: ParsedEvent; previousEvent?: ParsedEvent }) {
+function EventRow({
+  event,
+  previousEvent,
+  selected,
+  onSelect,
+}: {
+  event: ParsedEvent;
+  previousEvent?: ParsedEvent;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const timeGap =
     previousEvent && event.hasTime && previousEvent.hasTime
       ? `+${formatDuration(Math.abs(event.timeMs - previousEvent.timeMs))}`
       : "";
 
   return (
-    <article className="eventRow">
+    <article
+      className="eventRow"
+      aria-selected={selected}
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+    >
       <div className="eventTime">
         <span>{event.timeText}</span>
         {timeGap ? <span>{timeGap}</span> : null}
@@ -1023,79 +1094,14 @@ function parseTimeOfDay(text: string): number | null {
   return ((hours * 60 + minutes) * 60 + seconds) * 1000 + millis;
 }
 
-function parseTimeRangeInput(text: string): number | null {
+function parseContextRadius(text: string): number | null {
   const trimmed = text.trim();
-  if (!trimmed) {
+  if (!/^\d+$/.test(trimmed)) {
     return null;
   }
 
-  const match = trimmed.match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2})(?:\.(\d{1,6}))?)?\s*(am|pm)?$/i);
-  if (!match) {
-    return null;
-  }
-
-  let hours = Number(match[1]);
-  const minutes = match[2] === undefined ? 0 : Number(match[2]);
-  const seconds = match[3] === undefined ? 0 : Number(match[3]);
-  const fractional = (match[4] || "").padEnd(3, "0").slice(0, 3);
-  const millis = fractional ? Number(fractional) : 0;
-  const meridiem = match[5]?.toLowerCase();
-
-  if (meridiem) {
-    if (hours < 1 || hours > 12) {
-      return null;
-    }
-    hours = hours % 12;
-    if (meridiem === "pm") {
-      hours += 12;
-    }
-  } else if (hours > 23) {
-    return null;
-  }
-
-  if (minutes > 59 || seconds > 59) {
-    return null;
-  }
-
-  return ((hours * 60 + minutes) * 60 + seconds) * 1000 + millis;
-}
-
-function isInvalidTimeRangeInput(text: string): boolean {
-  return text.trim() !== "" && parseTimeRangeInput(text) === null;
-}
-
-function eventMatchesTimeRange(event: ParsedEvent, startMs: number | null, endMs: number | null): boolean {
-  const timeOfDayMs = eventTimeOfDayMs(event);
-  if (timeOfDayMs === null) {
-    return false;
-  }
-
-  if (startMs !== null && endMs !== null && startMs > endMs) {
-    return timeOfDayMs >= startMs || timeOfDayMs <= endMs;
-  }
-
-  if (startMs !== null && timeOfDayMs < startMs) {
-    return false;
-  }
-  if (endMs !== null && timeOfDayMs > endMs) {
-    return false;
-  }
-  return true;
-}
-
-function eventTimeOfDayMs(event: ParsedEvent): number | null {
-  if (!event.hasTime) {
-    return null;
-  }
-  if (event.timeMs >= 0 && event.timeMs < DAY_MS) {
-    return event.timeMs;
-  }
-
-  const date = new Date(event.timeMs);
-  if (!Number.isFinite(date.getTime())) {
-    return null;
-  }
-  return ((date.getHours() * 60 + date.getMinutes()) * 60 + date.getSeconds()) * 1000 + date.getMilliseconds();
+  const value = Number(trimmed);
+  return Number.isSafeInteger(value) ? value : null;
 }
 
 function formatEpochTime(epochMs: number): string {
@@ -1399,25 +1405,6 @@ function toggleSetValue(set: Set<string>, value: string): Set<string> {
   return next;
 }
 
-function formatRange(events: ParsedEvent[]): string {
-  const timed = events.filter((event) => event.hasTime);
-  if (!timed.length) {
-    return "-";
-  }
-
-  let first = timed[0];
-  let last = timed[0];
-  for (const event of timed) {
-    if (event.timeMs < first.timeMs) {
-      first = event;
-    }
-    if (event.timeMs > last.timeMs) {
-      last = event;
-    }
-  }
-  return first.timeText === last.timeText ? first.timeText : `${first.timeText} - ${last.timeText}`;
-}
-
 function formatDuration(ms: number): string {
   if (ms < 1000) {
     return `${ms}ms`;
@@ -1452,6 +1439,27 @@ function resultMeta(
       ? `${formatNumber(pageStart + 1)}-${formatNumber(pageEnd)} shown`
       : "0 shown";
   return `${shownText} of ${formatNumber(visibleCount)} visible${parsedText}`;
+}
+
+function contextResultMeta(
+  allEvents: ParsedEvent[],
+  selectedEvent: ParsedEvent | null,
+  pageStart: number,
+  pageEnd: number,
+  visibleCount: number,
+): string {
+  if (!allEvents.length) {
+    return "0 events";
+  }
+  if (!selectedEvent) {
+    return "No selected line";
+  }
+
+  const shownText =
+    visibleCount > 0
+      ? `${formatNumber(pageStart + 1)}-${formatNumber(pageEnd)} shown`
+      : "0 shown";
+  return `${shownText} of ${formatNumber(visibleCount)} unfiltered around ${selectedEvent.fileName}:${selectedEvent.lineNumber}`;
 }
 
 function statusForLoadedFiles(sources: LogSource[]): string {

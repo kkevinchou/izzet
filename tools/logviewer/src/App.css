@@ -190,27 +190,6 @@ h2 {
   font-size: 12px;
 }
 
-.segmentedControl {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.segmentedControl button {
-  min-height: 32px;
-  border: 0;
-  border-radius: 0;
-  font-size: 12px;
-}
-
-.segmentedControl button[aria-pressed="true"] {
-  background: var(--accent-weak);
-  color: #064c43;
-  font-weight: 700;
-}
-
 .timeRangeInputs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -243,16 +222,28 @@ h2 {
   color: var(--error);
 }
 
+.fieldValueControls {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldValueControls label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fieldValueControls span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .chipGrid {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-}
-
-.tagGrid {
-  max-height: 260px;
-  overflow: auto;
-  padding-right: 2px;
 }
 
 .gcfList {
@@ -338,7 +329,7 @@ h2 {
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -580,16 +571,14 @@ h2 {
   overflow-wrap: anywhere;
 }
 
-.fieldList,
-.eventTags {
+.fieldList {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
 }
 
-.fieldPill,
-.tagPill {
+.fieldPill {
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -601,13 +590,6 @@ h2 {
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.tagPill {
-  background: var(--accent-weak);
-  color: #064c43;
-  font-family: inherit;
-  font-weight: 700;
 }
 
 .rawDetails {

@@ -26,8 +26,6 @@ type ParsedEvent = {
   timeText: string;
   timeMs: number;
   hasTime: boolean;
-  tags: string[];
-  tagKeys: string[];
   fields: LogField[];
   searchText: string;
 };
@@ -37,13 +35,22 @@ type LogField = {
   value: string;
 };
 
+type FieldOption = {
+  key: string;
+  count: number;
+};
+
+type FieldIndex = {
+  fields: FieldOption[];
+  eventsByFieldValue: Map<string, Map<string, ParsedEvent[]>>;
+};
+
 type GcfCount = {
   value: string;
   count: number;
 };
 
 type SortDirection = "asc" | "desc";
-type TagMode = "all" | "any";
 
 type FileSystemFileEntry = {
   kind: "file";
@@ -64,22 +71,11 @@ const TIME_KEYS = ["time", "timestamp", "ts", "@timestamp", "datetime", "date"];
 const MESSAGE_KEYS = ["msg", "message", "event", "error"];
 const LEVEL_KEYS = ["level", "severity"];
 const SOURCE_KEYS = ["source", "log_source", "logger", "service", "side"];
-const TAG_KEYS = ["tags", "tag", "labels", "label"];
-const TAG_LIKE_KEYS = [
-  "category",
-  "component",
-  "subsystem",
-  "system",
-  "scope",
-  "event_type",
-  "eventType",
-];
 const FIELD_EXCLUDE_KEYS = new Set([
   ...TIME_KEYS,
   ...MESSAGE_KEYS,
   ...LEVEL_KEYS,
   ...SOURCE_KEYS,
-  ...TAG_KEYS,
 ]);
 const LEVEL_ORDER = ["TRACE", "DEBUG", "INFO", "WARN", "WARNING", "ERROR", "FATAL"];
 const SOURCE_ORDER = ["client", "server", "app"];
@@ -97,13 +93,12 @@ function App() {
   const [statusIsError, setStatusIsError] = useState(false);
   const [selectedSources, setSelectedSources] = useState<Set<string>>(new Set());
   const [selectedLevels, setSelectedLevels] = useState<Set<string>>(new Set());
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [selectedFieldKey, setSelectedFieldKey] = useState("");
+  const [fieldFilterValue, setFieldFilterValue] = useState("");
   const [selectedGcf, setSelectedGcf] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [timeStartText, setTimeStartText] = useState("");
   const [timeEndText, setTimeEndText] = useState("");
-  const [tagSearchText, setTagSearchText] = useState("");
-  const [tagMode, setTagMode] = useState<TagMode>("all");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
@@ -167,21 +162,30 @@ function App() {
     return textFilteredEvents.filter((event) => eventMatchesTimeRange(event, timeStartMs, timeEndMs));
   }, [hasInvalidTimeRange, textFilteredEvents, timeEndMs, timeStartMs]);
 
-  const gcfCounts = useMemo(() => topGcfCounts(timeFilteredEvents, 10), [timeFilteredEvents]);
+  const gcfCounts = useMemo(() => topGcfCounts(timeFilteredEvents, 5), [timeFilteredEvents]);
 
-  const baseFilteredEvents = useMemo(() => {
+  const gcfFilteredEvents = useMemo(() => {
     if (selectedGcf === null) {
       return timeFilteredEvents;
     }
 
-    return timeFilteredEvents.filter((event) => getGcfValue(event) === selectedGcf);
+    return timeFilteredEvents.filter((event) => eventHasFieldValue(event, "gcf", selectedGcf));
   }, [selectedGcf, timeFilteredEvents]);
 
+  const fieldIndex = useMemo(() => buildFieldIndex(gcfFilteredEvents), [gcfFilteredEvents]);
+
+  const baseFilteredEvents = useMemo(
+    () => applyFieldValueFilter(gcfFilteredEvents, fieldIndex, selectedFieldKey, fieldFilterValue),
+    [fieldFilterValue, fieldIndex, gcfFilteredEvents, selectedFieldKey],
+  );
+
+  const isFieldFilterActive = selectedFieldKey !== "" && fieldFilterValue.trim() !== "";
+
   const filteredEvents = useMemo(() => {
-    const filtered = applyTagFilters(baseFilteredEvents, selectedTags, tagMode);
+    const filtered = [...baseFilteredEvents];
     sortEvents(filtered, sortDirection);
     return filtered;
-  }, [baseFilteredEvents, selectedTags, sortDirection, tagMode]);
+  }, [baseFilteredEvents, sortDirection]);
 
   const pageCount = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, pageCount);
@@ -192,29 +196,6 @@ function App() {
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, pageCount));
   }, [pageCount]);
-
-  const tagCounts = useMemo(() => {
-    let items = Array.from(countTags(baseFilteredEvents).entries()).map(([key, item]) => ({
-      key,
-      label: item.label,
-      count: item.count,
-    }));
-
-    const filterText = tagSearchText.trim().toLowerCase();
-    if (filterText) {
-      items = items.filter((item) => item.label.toLowerCase().includes(filterText));
-    }
-
-    return items.sort((a, b) => {
-      const selectedDelta = Number(selectedTags.has(b.key)) - Number(selectedTags.has(a.key));
-      return selectedDelta || b.count - a.count || a.label.localeCompare(b.label);
-    });
-  }, [baseFilteredEvents, selectedTags, tagSearchText]);
-
-  const uniqueTagCount = useMemo(
-    () => new Set(events.flatMap((event) => event.tagKeys)).size,
-    [events],
-  );
 
   async function loadDefaultLogs() {
     setStatusMessage("Loading default client/server logs...");
@@ -289,7 +270,8 @@ function App() {
     setEvents(nextEvents);
     setSelectedSources(new Set(uniqueValues(nextEvents, "source")));
     setSelectedLevels(new Set(uniqueValues(nextEvents, "level")));
-    setSelectedTags(new Set());
+    setSelectedFieldKey("");
+    setFieldFilterValue("");
     setSelectedGcf(null);
     setTimeStartText("");
     setTimeEndText("");
@@ -300,12 +282,12 @@ function App() {
     setEvents([]);
     setSelectedSources(new Set());
     setSelectedLevels(new Set());
-    setSelectedTags(new Set());
+    setSelectedFieldKey("");
+    setFieldFilterValue("");
     setSelectedGcf(null);
     setSearchText("");
     setTimeStartText("");
     setTimeEndText("");
-    setTagSearchText("");
     resetPagination();
     setStatusMessage("No logs loaded");
   }
@@ -327,11 +309,6 @@ function App() {
 
   function toggleLevel(level: string) {
     setSelectedLevels((current) => toggleSetValue(current, level));
-    resetPagination();
-  }
-
-  function toggleTag(tag: string) {
-    setSelectedTags((current) => toggleSetValue(current, tag));
     resetPagination();
   }
 
@@ -471,6 +448,27 @@ function App() {
             }}
           />
 
+          <FieldValueFilter
+            fields={fieldIndex.fields}
+            selectedFieldKey={selectedFieldKey}
+            fieldFilterValue={fieldFilterValue}
+            isActive={isFieldFilterActive}
+            onFieldChange={(fieldKey) => {
+              setSelectedFieldKey(fieldKey);
+              setFieldFilterValue("");
+              resetPagination();
+            }}
+            onValueChange={(value) => {
+              setFieldFilterValue(value);
+              resetPagination();
+            }}
+            onClear={() => {
+              setSelectedFieldKey("");
+              setFieldFilterValue("");
+              resetPagination();
+            }}
+          />
+
           <FilterGroup
             title="Sources"
             items={sourceCounts}
@@ -500,65 +498,6 @@ function App() {
               resetPagination();
             }}
           />
-
-          <section className="filterGroup">
-            <div className="groupHeader">
-              <h2>Tags</h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedTags(new Set());
-                  resetPagination();
-                }}
-              >
-                Clear
-              </button>
-            </div>
-            <div className="segmentedControl" role="group" aria-label="Tag match mode">
-              <button
-                type="button"
-                aria-pressed={tagMode === "all"}
-                onClick={() => {
-                  setTagMode("all");
-                  resetPagination();
-                }}
-              >
-                All selected
-              </button>
-              <button
-                type="button"
-                aria-pressed={tagMode === "any"}
-                onClick={() => {
-                  setTagMode("any");
-                  resetPagination();
-                }}
-              >
-                Any selected
-              </button>
-            </div>
-            <input
-              type="search"
-              placeholder="find tags"
-              autoComplete="off"
-              value={tagSearchText}
-              onChange={(event) => setTagSearchText(event.target.value)}
-            />
-            <div className="chipGrid tagGrid">
-              {tagCounts.length ? (
-                tagCounts.map((item) => (
-                  <Chip
-                    key={item.key}
-                    label={item.label}
-                    count={item.count}
-                    selected={selectedTags.has(item.key)}
-                    onClick={() => toggleTag(item.key)}
-                  />
-                ))
-              ) : (
-                <div className="emptyHint">{events.length ? "No matching tags" : "No tags loaded"}</div>
-              )}
-            </div>
-          </section>
         </aside>
 
         <section className="timelinePanel" aria-label="Timeline">
@@ -566,12 +505,11 @@ function App() {
             <Metric label="Loaded" value={formatNumber(events.length)} />
             <Metric label="Visible" value={formatNumber(filteredEvents.length)} />
             <Metric label="Range" value={formatRange(filteredEvents)} />
-            <Metric label="Tags" value={formatNumber(uniqueTagCount)} />
           </div>
 
           <div className="timelineToolbar">
             <div className="resultMeta">
-              {resultMeta(events, pageStart, pageEnd, filteredEvents.length, baseFilteredEvents.length)}
+              {resultMeta(events, pageStart, pageEnd, filteredEvents.length)}
             </div>
             <div className="timelineControls">
               <label className="sortControl">
@@ -661,6 +599,70 @@ function PaginationControls({
         Last
       </button>
     </nav>
+  );
+}
+
+function FieldValueFilter({
+  fields,
+  selectedFieldKey,
+  fieldFilterValue,
+  isActive,
+  onFieldChange,
+  onValueChange,
+  onClear,
+}: {
+  fields: FieldOption[];
+  selectedFieldKey: string;
+  fieldFilterValue: string;
+  isActive: boolean;
+  onFieldChange: (fieldKey: string) => void;
+  onValueChange: (value: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <section className="filterGroup">
+      <div className="groupHeader">
+        <h2>Field Value</h2>
+        <button type="button" disabled={!selectedFieldKey && !fieldFilterValue} onClick={onClear}>
+          Clear
+        </button>
+      </div>
+      <div className="fieldValueControls">
+        <label>
+          <span>Field</span>
+          <select
+            value={selectedFieldKey}
+            disabled={!fields.length}
+            onChange={(event) => onFieldChange(event.target.value)}
+          >
+            <option value="">Select field</option>
+            {fields.map((field) => (
+              <option value={field.key} key={field.key}>
+                {`${field.key} (${formatNumber(field.count)})`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Value</span>
+          <input
+            type="text"
+            placeholder="value prefix"
+            autoComplete="off"
+            value={fieldFilterValue}
+            disabled={!selectedFieldKey}
+            onChange={(event) => onValueChange(event.target.value)}
+          />
+        </label>
+        {fields.length ? (
+          <div className="filterHint">
+            {isActive ? "Matching field values by prefix." : "Choose a field and enter a value prefix."}
+          </div>
+        ) : (
+          <div className="emptyHint">No fields loaded</div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -798,16 +800,6 @@ function EventRow({ event, previousEvent }: { event: ParsedEvent; previousEvent?
           <div>
             <div className="message">{event.message}</div>
 
-            {event.tags.length ? (
-              <div className="eventTags">
-                {event.tags.map((tag) => (
-                  <span className="tagPill" key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
             {event.fields.length ? (
               <div className="fieldList">
                 {event.fields.slice(0, 10).map((field) => (
@@ -898,7 +890,6 @@ function normalizeEvent({
   const source = inferSource(fileName, record);
   const level = normalizeLevel(firstValue(record, LEVEL_KEYS));
   const message = normalizeMessage(firstValue(record, MESSAGE_KEYS), rawLine, parsed.ok);
-  const tags = extractTags(record);
   const fields = extractFields(record);
   const searchText = buildSearchText({
     fileName,
@@ -906,7 +897,6 @@ function normalizeEvent({
     source,
     level,
     message,
-    tags,
     fields,
     rawLine,
   });
@@ -925,8 +915,6 @@ function normalizeEvent({
     timeText: parsedTime.text,
     timeMs: parsedTime.ms,
     hasTime: parsedTime.hasTime,
-    tags,
-    tagKeys: tags.map((tag) => tag.toLowerCase()),
     fields,
     searchText,
   };
@@ -1175,67 +1163,6 @@ function normalizeMessage(value: unknown, rawLine: string, parsedJson: boolean):
   return stringifyValue(value);
 }
 
-function extractTags(record: RawRecord): string[] {
-  const tagsByKey = new Map<string, string>();
-
-  for (const key of TAG_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(record, key)) {
-      addTagValue(tagsByKey, record[key]);
-    }
-  }
-
-  for (const key of TAG_LIKE_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(record, key)) {
-      const value = record[key];
-      if (isPrimitive(value) && String(value).trim()) {
-        addTag(tagsByKey, `${key}:${value}`);
-      }
-    }
-  }
-
-  return Array.from(tagsByKey.values()).sort((a, b) => a.localeCompare(b));
-}
-
-function addTagValue(tagsByKey: Map<string, string>, value: unknown) {
-  if (value === undefined || value === null || value === false) {
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      addTagValue(tagsByKey, item);
-    }
-    return;
-  }
-
-  if (typeof value === "object") {
-    for (const [key, entry] of Object.entries(value as RawRecord)) {
-      if (entry === true) {
-        addTag(tagsByKey, key);
-      } else if (entry !== false && entry !== undefined && entry !== null) {
-        addTag(tagsByKey, `${key}:${stringifyValue(entry)}`);
-      }
-    }
-    return;
-  }
-
-  const pieces = String(value).split(/[,\s]+/).map((part) => part.trim()).filter(Boolean);
-  for (const piece of pieces) {
-    addTag(tagsByKey, piece);
-  }
-}
-
-function addTag(tagsByKey: Map<string, string>, tag: string) {
-  const text = String(tag).trim();
-  if (!text) {
-    return;
-  }
-  const key = text.toLowerCase();
-  if (!tagsByKey.has(key)) {
-    tagsByKey.set(key, text);
-  }
-}
-
 function extractFields(record: RawRecord): LogField[] {
   return Object.entries(record)
     .filter(([key]) => !FIELD_EXCLUDE_KEYS.has(key))
@@ -1259,17 +1186,12 @@ function stringifyValue(value: unknown): string {
   }
 }
 
-function isPrimitive(value: unknown): boolean {
-  return value === null || ["string", "number", "boolean"].includes(typeof value);
-}
-
 function buildSearchText(event: {
   fileName: string;
   lineNumber: number;
   source: string;
   level: string;
   message: string;
-  tags: string[];
   fields: LogField[];
   rawLine: string;
 }): string {
@@ -1279,7 +1201,6 @@ function buildSearchText(event: {
     event.source,
     event.level,
     event.message,
-    ...event.tags,
     ...event.fields.flatMap((field) => [field.key, field.value]),
     event.rawLine,
   ].join(" ").toLowerCase();
@@ -1319,34 +1240,6 @@ function parseSearchTerms(text: string): string[] {
 
   pushCurrent();
   return terms;
-}
-
-function applyTagFilters(events: ParsedEvent[], selectedTags: Set<string>, tagMode: TagMode): ParsedEvent[] {
-  if (!selectedTags.size) {
-    return [...events];
-  }
-
-  return events.filter((event) => {
-    if (!event.tagKeys.length) {
-      return false;
-    }
-
-    if (tagMode === "any") {
-      for (const selectedTag of selectedTags) {
-        if (event.tagKeys.includes(selectedTag)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    for (const selectedTag of selectedTags) {
-      if (!event.tagKeys.includes(selectedTag)) {
-        return false;
-      }
-    }
-    return true;
-  });
 }
 
 function sortEvents(events: ParsedEvent[], sortDirection: SortDirection) {
@@ -1389,26 +1282,10 @@ function countBy(events: ParsedEvent[], keyFn: (event: ParsedEvent) => string): 
   return counts;
 }
 
-function countTags(events: ParsedEvent[]): Map<string, { label: string; count: number }> {
-  const counts = new Map<string, { label: string; count: number }>();
-  for (const event of events) {
-    for (const tag of event.tags) {
-      const key = tag.toLowerCase();
-      const existing = counts.get(key);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        counts.set(key, { label: tag, count: 1 });
-      }
-    }
-  }
-  return counts;
-}
-
 function topGcfCounts(events: ParsedEvent[], limit: number): GcfCount[] {
   const counts = new Map<string, number>();
   for (const event of events) {
-    const gcf = getGcfValue(event);
+    const gcf = getFieldValue(event, "gcf");
     if (gcf !== null) {
       counts.set(gcf, (counts.get(gcf) || 0) + 1);
     }
@@ -1416,29 +1293,96 @@ function topGcfCounts(events: ParsedEvent[], limit: number): GcfCount[] {
 
   return Array.from(counts.entries())
     .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => b.count - a.count || compareGcfValues(a.value, b.value))
+    .sort((a, b) => b.count - a.count || compareFieldValues(a.value, b.value))
     .slice(0, limit);
 }
 
-function getGcfValue(event: ParsedEvent): string | null {
-  const value = event.raw.gcf;
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return String(value);
-  }
-  if (typeof value === "string") {
-    const text = value.trim();
-    return text ? text : null;
-  }
-  return null;
+function eventHasFieldValue(event: ParsedEvent, key: string, value: string): boolean {
+  return event.fields.some((field) => field.key === key && field.value === value);
 }
 
-function compareGcfValues(a: string, b: string): number {
+function getFieldValue(event: ParsedEvent, key: string): string | null {
+  const field = event.fields.find((item) => item.key === key && item.value.trim());
+  return field ? field.value : null;
+}
+
+function compareFieldValues(a: string, b: string): number {
   const aNumber = Number(a);
   const bNumber = Number(b);
   if (Number.isFinite(aNumber) && Number.isFinite(bNumber) && aNumber !== bNumber) {
     return aNumber - bNumber;
   }
   return a.localeCompare(b);
+}
+
+function buildFieldIndex(events: ParsedEvent[]): FieldIndex {
+  const fieldCounts = new Map<string, number>();
+  const eventsByFieldValue = new Map<string, Map<string, ParsedEvent[]>>();
+
+  for (const event of events) {
+    const seenFields = new Set<string>();
+
+    for (const field of event.fields) {
+      if (!seenFields.has(field.key)) {
+        fieldCounts.set(field.key, (fieldCounts.get(field.key) || 0) + 1);
+        seenFields.add(field.key);
+      }
+
+      let valueIndex = eventsByFieldValue.get(field.key);
+      if (!valueIndex) {
+        valueIndex = new Map<string, ParsedEvent[]>();
+        eventsByFieldValue.set(field.key, valueIndex);
+      }
+
+      const indexedEvents = valueIndex.get(field.value);
+      if (indexedEvents) {
+        indexedEvents.push(event);
+      } else {
+        valueIndex.set(field.value, [event]);
+      }
+    }
+  }
+
+  return {
+    fields: Array.from(fieldCounts.entries())
+      .map(([key, count]) => ({ key, count }))
+      .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key)),
+    eventsByFieldValue,
+  };
+}
+
+function applyFieldValueFilter(
+  events: ParsedEvent[],
+  fieldIndex: FieldIndex,
+  selectedFieldKey: string,
+  fieldFilterValue: string,
+): ParsedEvent[] {
+  const value = fieldFilterValue.trim();
+  if (!selectedFieldKey || !value) {
+    return events;
+  }
+
+  const valueIndex = fieldIndex.eventsByFieldValue.get(selectedFieldKey);
+  if (!valueIndex) {
+    return [];
+  }
+
+  const matches: ParsedEvent[] = [];
+  const matchedIds = new Set<string>();
+  for (const [indexedValue, indexedEvents] of valueIndex) {
+    if (!indexedValue.startsWith(value)) {
+      continue;
+    }
+
+    for (const event of indexedEvents) {
+      if (!matchedIds.has(event.id)) {
+        matches.push(event);
+        matchedIds.add(event.id);
+      }
+    }
+  }
+
+  return matches;
 }
 
 function uniqueValues(events: ParsedEvent[], key: "source" | "level"): string[] {
@@ -1496,7 +1440,6 @@ function resultMeta(
   pageStart: number,
   pageEnd: number,
   visibleCount: number,
-  beforeTagFilterCount: number,
 ): string {
   if (!allEvents.length) {
     return "0 events";
@@ -1504,13 +1447,11 @@ function resultMeta(
 
   const parseErrors = allEvents.filter((event) => event.parseError).length;
   const parsedText = parseErrors ? `, ${formatNumber(parseErrors)} plain-text lines` : "";
-  const baseFilteredText =
-    beforeTagFilterCount !== visibleCount ? `, ${formatNumber(beforeTagFilterCount)} before tag filters` : "";
   const shownText =
     visibleCount > 0
       ? `${formatNumber(pageStart + 1)}-${formatNumber(pageEnd)} shown`
       : "0 shown";
-  return `${shownText} of ${formatNumber(visibleCount)} visible${baseFilteredText}${parsedText}`;
+  return `${shownText} of ${formatNumber(visibleCount)} visible${parsedText}`;
 }
 
 function statusForLoadedFiles(sources: LogSource[]): string {

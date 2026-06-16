@@ -227,7 +227,7 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		NavigationMeshCellSize:             0.1,
 		NavigationMeshCellHeight:           0.1,
 		NavigationmeshMaxError:             1,
-		NavigationmeshMaxEdgeLength:        100,
+		NavigationmeshMaxEdgeLength:        500,
 		NavigationmeshSampleDist:           1,
 		NavigationMeshFilterLedgeSpans:     true,
 		NavigationMeshFilterLowHeightSpans: true,

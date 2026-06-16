@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 type RawRecord = Record<string, unknown>;
@@ -851,12 +851,7 @@ function EventRow({
     previousEvent && event.hasTime && previousEvent.hasTime
       ? `+${formatDuration(Math.abs(event.timeMs - previousEvent.timeMs))}`
       : "";
-  const frameBadge =
-    event.source === "server"
-      ? { field: "gcf", value: getFieldValue(event, "gcf"), tone: "server" }
-      : event.source === "client"
-        ? { field: "cf", value: getFieldValue(event, "cf"), tone: "client" }
-        : { field: "frame", value: null, tone: "empty" };
+  const frameBadge = frameBadgeForEvent(event);
   const hasFrameValue = frameBadge.value !== null;
 
   return (
@@ -920,6 +915,18 @@ function EventRow({
       </div>
     </article>
   );
+}
+
+function frameBadgeForEvent(event: ParsedEvent) {
+  if (event.source === "server") {
+    return { field: "gcf", value: getFieldValue(event, "gcf"), tone: "server" };
+  }
+
+  if (event.source === "client") {
+    return { field: "cf", value: getFieldValue(event, "cf"), tone: "client" };
+  }
+
+  return { field: "frame", value: null, tone: "empty" };
 }
 
 async function collectLogFiles(directory: FileSystemDirectoryEntry): Promise<File[]> {

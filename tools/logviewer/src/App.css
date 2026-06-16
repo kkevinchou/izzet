@@ -464,7 +464,7 @@ h2 {
 .eventRow {
   position: relative;
   display: grid;
-  grid-template-columns: 82px 52px minmax(0, 1fr);
+  grid-template-columns: 82px auto minmax(0, 1fr);
   gap: 20px;
   cursor: pointer;
 }
@@ -523,7 +523,7 @@ h2 {
 .frameBadge {
   display: inline-grid;
   place-items: center;
-  width: 100%;
+  width: 8ch;
   height: 80%;
   min-height: 26px;
   padding: 4px 6px;
@@ -536,6 +536,7 @@ h2 {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .frameBadge-server {
@@ -756,7 +757,7 @@ h2 {
   }
 
   .eventRow {
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 6px;
     padding-left: 22px;
   }

@@ -2,11 +2,15 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/kkevinchou/izzet/internal/input"
+	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
@@ -74,6 +78,20 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 		eventManager: events.NewEventManager(),
 		projectName:  projectName,
 	}
+
+	logHandlerOptions := &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if attr.Key == slog.TimeKey && attr.Value.Kind() == slog.KindTime {
+				attr.Value = slog.StringValue(attr.Value.Time().Local().Format("15:04:05.000"))
+			}
+			return attr
+		},
+	}
+	serverLog, err := os.OpenFile(filepath.Join(settings.LogDir, "server.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	iztlog.SetServerLogger(slog.New(slog.NewJSONHandler(serverLog, logHandlerOptions)), g.CommandFrame)
 
 	g.inputBuffer = inputbuffer.New(g)
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()

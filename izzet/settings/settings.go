@@ -87,6 +87,7 @@ const (
 
 	EntityCapsuleColliderRadius float64 = 0.4
 	EntityCapsuleColliderLength float64 = 1
+	LogDir                      string  = "logs"
 )
 
 var (

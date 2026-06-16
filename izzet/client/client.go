@@ -2,7 +2,10 @@ package client
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -81,7 +84,7 @@ type Client struct {
 	predictionDebugLogging bool
 }
 
-func New(shaderDirectory string, config settings.Config) *Client {
+func New(shaderDirectory string, config settings.Config, logsEnabled bool) *Client {
 	initSeed()
 
 	sdlPlatform, window, err := platforms.NewSDLPlatform(config.Width, config.Height, config.Fullscreen)
@@ -106,17 +109,33 @@ func New(shaderDirectory string, config settings.Config) *Client {
 
 	w, h := window.GetSize()
 
-	assetManager := assets.NewAssetManager(true, iztlog.ClientLogger)
-
 	g := &Client{
 		asyncServerDone: make(chan bool),
 		window:          window,
 		appMode:         types.AppModeEditor,
 		platform:        sdlPlatform,
-		assetManager:    assetManager,
 		serverAddress:   config.ServerAddress,
 	}
 
+	if logsEnabled {
+		logHandlerOptions := &slog.HandlerOptions{
+			ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+				if attr.Key == slog.TimeKey && attr.Value.Kind() == slog.KindTime {
+					attr.Value = slog.StringValue(attr.Value.Time().Local().Format("15:04:05.000"))
+				}
+				return attr
+			},
+		}
+		clientLog, err := os.OpenFile(filepath.Join(settings.LogDir, "client.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		iztlog.SetClientLogger(slog.New(slog.NewJSONHandler(clientLog, logHandlerOptions)), g.CommandFrame)
+	} else {
+		iztlog.SetClientLogger(slog.New(slog.DiscardHandler), func() int { return 0 })
+	}
+
+	g.assetManager = assets.NewAssetManager(true, iztlog.ClientLogger)
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()
 	g.renderSystem = render.New(g, shaderDirectory, w, h)
 

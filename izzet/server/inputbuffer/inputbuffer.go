@@ -52,7 +52,7 @@ func (b *InputBuffer) PushInput(localCommandFrame int, playerID int, frameInput 
 	}
 }
 
-func (b *InputBuffer) PullInput(playerID int, globalCommandFrame int) BufferedInput {
+func (b *InputBuffer) PullInput(playerID int) BufferedInput {
 	buffer := b.playerBuffers[playerID]
 	if buffer.count == 0 {
 		return BufferedInput{}
@@ -68,7 +68,7 @@ func (b *InputBuffer) PullInput(playerID int, globalCommandFrame int) BufferedIn
 	buffer.cursor++
 
 	if stale {
-		iztlog.ServerLogger.Info("read stale input", "player id", playerID, "cf", bufferedInput.LocalCommandFrame, "gcf", globalCommandFrame)
+		iztlog.ServerLogger.Info("read stale input", "player id", playerID, "input command frame", bufferedInput.LocalCommandFrame)
 	}
 
 	return bufferedInput

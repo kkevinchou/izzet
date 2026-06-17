@@ -31,7 +31,6 @@ type RuntimeConfig struct {
 	BloomThresholdPasses            int32
 	BloomThreshold                  float32
 	BloomUpsamplingScale            float32
-	Color                           [3]float32
 
 	ShowImguiDemo          bool
 	ShowTextureViewer      bool
@@ -187,7 +186,6 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		BloomThresholdPasses:           1,
 		BloomThreshold:                 0.8,
 		BloomUpsamplingScale:           1.0,
-		Color:                          [3]float32{1, 1, 1},
 		RenderSpatialPartition:         false,
 
 		Near: 0.1,

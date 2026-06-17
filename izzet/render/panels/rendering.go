@@ -15,10 +15,6 @@ func Rendering(app renderiface.App) {
 			ui.SliderFloatRow("Near", &runtimeConfig.Near, 0.1, 1)
 			ui.SliderFloatRow("Far", &runtimeConfig.Far, 0, 1500)
 			ui.SliderFloatRow("FovX", &runtimeConfig.FovX, 0, 170)
-
-			ui.Row("Debug Color", func() {
-				imgui.ColorEdit3V("##value", &runtimeConfig.Color, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
-			})
 			ui.CheckboxRow("Batch Render", &runtimeConfig.BatchRenderingEnabled)
 			ui.CheckboxRow("Antialiasing", &runtimeConfig.EnableAntialiasing)
 			ui.CheckboxRow("SSAO", &runtimeConfig.EnableSSAO)
@@ -37,18 +33,13 @@ func Rendering(app renderiface.App) {
 		})
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("SSAO", imgui.TreeNodeFlagsDefaultOpen) {
-		ui.Table("SSAO", func() {
-			ui.SliderFloatRow("Radius", &runtimeConfig.SSAORadius, 0, 10)
-			ui.SliderFloatRow("Bias", &runtimeConfig.SSAOBias, 0, 1)
-		})
-	}
-
 	if imgui.CollapsingHeaderTreeNodeFlagsV("Lighting", imgui.TreeNodeFlagsNone) {
 		ui.Table("Lighting Table", func() {
+			ui.SectionRow("Lights")
 			ui.SliderFloatRow("Ambient Factor", &runtimeConfig.AmbientFactor, 0, 100)
 			ui.SliderFloatRow("Specular Factor", &runtimeConfig.SpecularFactor, 0, 1)
 			ui.SliderFloatRow("Point Light Bias", &runtimeConfig.PointLightBias, 0, 1)
+			ui.SectionRow("Shadow Cascades")
 			ui.SliderFloatRow("Shadow Map Min Bias", &runtimeConfig.ShadowMapMinBias, 0, 100)
 			ui.SliderFloatRow("Shadow Map Angle Bias Rate", &runtimeConfig.ShadowMapAngleBiasRate, 0, 100)
 			ui.SliderFloatRow("Shadow Near Distance", &runtimeConfig.ShadowNearDistance, 0.01, 1)
@@ -56,12 +47,20 @@ func Rendering(app renderiface.App) {
 			ui.SliderFloatRow("Shadow Cascade Blend", &runtimeConfig.ShadowCascadeBlendFactor, 0, 1)
 			ui.SliderFloatRow("Shadow Cascade Crossfade", &runtimeConfig.ShadowCascadeCrossfadeBoundary, 0, 1)
 			ui.SliderIntRow("Shadow Max Cascade", &runtimeConfig.ShadowMapMaxCascadeIndex, 0, int32(settings.NumShadowMapCascades-1))
-			ui.SliderIntRow("Fog Density", &runtimeConfig.FogDensity, 0, 500)
+			ui.SectionRow("Bloom")
 			ui.SliderFloatRow("Bloom Intensity", &runtimeConfig.BloomIntensity, 0, 1)
 			ui.SliderIntRow("Bloom Threshold Passes", &runtimeConfig.BloomThresholdPasses, 0, 3)
 			ui.SliderFloatRow("Bloom Threshold", &runtimeConfig.BloomThreshold, 0, 3)
 			ui.SliderFloatRow("Bloom Upsampling Scale", &runtimeConfig.BloomUpsamplingScale, 0, 5.0)
 			ui.SliderFloatRow("Shadow Map Z Offset", &runtimeConfig.ShadowmapZOffset, 0, 2000)
+			ui.SectionRow("SSAO")
+			ui.SliderFloatRow("Radius", &runtimeConfig.SSAORadius, 0, 10)
+			ui.SliderFloatRow("Bias", &runtimeConfig.SSAOBias, 0, 1)
+		})
+	}
+
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Skybox", imgui.TreeNodeFlagsNone) {
+		ui.Table("Skybox Table", func() {
 			ui.Row("Skybox Top Color", func() {
 				imgui.ColorEdit3V("##value", &runtimeConfig.SkyboxTopColor, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
 			})
@@ -72,9 +71,10 @@ func Rendering(app renderiface.App) {
 		})
 	}
 
-	if imgui.CollapsingHeaderTreeNodeFlagsV("Post Processing", imgui.TreeNodeFlagsNone) {
-		ui.Table("Post Processing Table", func() {
+	if imgui.CollapsingHeaderTreeNodeFlagsV("Misc", imgui.TreeNodeFlagsNone) {
+		ui.Table("Misc Table", func() {
 			ui.CheckboxRow("Kuwahara Filter", &runtimeConfig.KuwaharaFilter)
+			ui.SliderIntRow("Fog Density", &runtimeConfig.FogDensity, 0, 500)
 		})
 	}
 

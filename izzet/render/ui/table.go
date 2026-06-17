@@ -55,6 +55,14 @@ func LabelRow(label string, value string) {
 	Row(label, func() { imgui.LabelText("##value", value) })
 }
 
+func SectionRow(label string) {
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	imgui.TextDisabled(label)
+	imgui.TableSetColumnIndex(1)
+	imgui.Separator()
+}
+
 func SliderFloatRow(label string, value *float32, min float32, max float32) {
 	Row(label, func() { imgui.SliderFloat("##value", value, min, max) })
 }

@@ -67,6 +67,7 @@ uniform float pointLightBias;
 uniform float shadowMapMinBias;
 uniform float shadowMapAngleBiasRate;
 uniform int shadowMapMaxCascadeIndex;
+uniform float shadowCascadeCrossfadeBoundary;
 
 const float PI = 3.14159265359;
 
@@ -122,24 +123,9 @@ float PointLightShadowCalculation(vec3 fragPos, vec3 lightPos)
     return shadow;
 }
 
-float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
+float DirectionalLightCascadeShadowCalculation(int cascadeLayer, vec3 normal, vec3 lightDir)
 {
-    float viewDepth = abs((fs_in.View * vec4(fs_in.FragPos, 1.0)).z);
-
-    if (viewDepth > shadowDistance) {
-        return 0.0;
-    }
-
-    int cascadeLayer = cascadeCount-1;
-
-    for (int i = 0; i < cascadeCount; ++i) {
-        if (viewDepth <= cascadePlaneDistances[i]) {
-            cascadeLayer = i;
-            break;
-        }
-    }
-
-    if (cascadeLayer > shadowMapMaxCascadeIndex) {
+    if (cascadeLayer < 0 || cascadeLayer >= cascadeCount || cascadeLayer > shadowMapMaxCascadeIndex) {
         return 0.0;
     }
 
@@ -171,12 +157,56 @@ float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
         {
             float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, float(cascadeLayer))).r; 
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
-        }    
+        }
     }
 
     shadow /= 9.0;
 
     return shadow;
+}
+
+float DirectionalLightShadowCalculation(vec3 normal, vec3 lightDir)
+{
+    float viewDepth = abs((fs_in.View * vec4(fs_in.FragPos, 1.0)).z);
+
+    if (viewDepth > shadowDistance) {
+        return 0.0;
+    }
+
+    int cascadeLayer = cascadeCount-1;
+
+    for (int i = 0; i < cascadeCount; ++i) {
+        if (viewDepth <= cascadePlaneDistances[i]) {
+            cascadeLayer = i;
+            break;
+        }
+    }
+
+    if (cascadeLayer > shadowMapMaxCascadeIndex) {
+        return 0.0;
+    }
+
+    float shadow = DirectionalLightCascadeShadowCalculation(cascadeLayer, normal, lightDir);
+    int nextCascadeLayer = cascadeLayer + 1;
+
+    if (shadowCascadeCrossfadeBoundary <= 0.0 ||
+        nextCascadeLayer >= cascadeCount ||
+        nextCascadeLayer > shadowMapMaxCascadeIndex) {
+        return shadow;
+    }
+
+    float cascadeFar = cascadePlaneDistances[cascadeLayer];
+    float cascadeNear = cascadeLayer == 0 ? near : cascadePlaneDistances[cascadeLayer - 1];
+    float cascadeRange = cascadeFar - cascadeNear;
+    float blendRange = cascadeRange * clamp(shadowCascadeCrossfadeBoundary, 0.0, 1.0);
+
+    if (blendRange <= 0.0 || viewDepth < cascadeFar - blendRange) {
+        return shadow;
+    }
+
+    float nextShadow = DirectionalLightCascadeShadowCalculation(nextCascadeLayer, normal, lightDir);
+    float blend = smoothstep(cascadeFar - blendRange, cascadeFar, viewDepth);
+    return mix(shadow, nextShadow, blend);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {

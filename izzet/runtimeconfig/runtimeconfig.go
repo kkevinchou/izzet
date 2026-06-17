@@ -20,6 +20,7 @@ type RuntimeConfig struct {
 	ShadowFarDistance               float32
 	ShadowNearDistance              float32
 	ShadowCascadeBlendFactor        float32
+	ShadowCascadeCrossfadeBoundary  float32
 	ShadowMapMaxCascadeIndex        int32
 	ShadowSpatialPartitionNearPlane float32
 	BloomIntensity                  float32
@@ -165,28 +166,29 @@ type CloudTexture struct {
 
 func DefaultRuntimeConfig() *RuntimeConfig {
 	config := &RuntimeConfig{
-		DirectionalLightDir:      [3]float32{-1, -1, -1},
-		Roughness:                0.55,
-		Metallic:                 0,
-		PointLightBias:           0.3,
-		ShadowMapMinBias:         0,
-		ShadowMapAngleBiasRate:   0,
-		EnableShadowMapping:      true,
-		ShadowFarDistance:        200,
-		ShadowNearDistance:       0.01,
-		ShadowCascadeBlendFactor: 0.70,
-		ShadowMapMaxCascadeIndex: int32(settings.NumShadowMapCascades - 1),
-		ShadowmapZOffset:         250,
-		BloomIntensity:           0.04,
-		Exposure:                 1.0,
-		AmbientFactor:            0.1,
-		SpecularFactor:           1.0,
-		Bloom:                    true,
-		BloomThresholdPasses:     1,
-		BloomThreshold:           0.8,
-		BloomUpsamplingScale:     1.0,
-		Color:                    [3]float32{1, 1, 1},
-		RenderSpatialPartition:   false,
+		DirectionalLightDir:            [3]float32{-1, -1, -1},
+		Roughness:                      0.55,
+		Metallic:                       0,
+		PointLightBias:                 0.3,
+		ShadowMapMinBias:               0,
+		ShadowMapAngleBiasRate:         0,
+		EnableShadowMapping:            true,
+		ShadowFarDistance:              200,
+		ShadowNearDistance:             0.01,
+		ShadowCascadeBlendFactor:       0.70,
+		ShadowCascadeCrossfadeBoundary: 0.1,
+		ShadowMapMaxCascadeIndex:       int32(settings.NumShadowMapCascades - 1),
+		ShadowmapZOffset:               250,
+		BloomIntensity:                 0.04,
+		Exposure:                       1.0,
+		AmbientFactor:                  0.1,
+		SpecularFactor:                 1.0,
+		Bloom:                          true,
+		BloomThresholdPasses:           1,
+		BloomThreshold:                 0.8,
+		BloomUpsamplingScale:           1.0,
+		Color:                          [3]float32{1, 1, 1},
+		RenderSpatialPartition:         false,
 
 		Near: 0.1,
 		Far:  500,

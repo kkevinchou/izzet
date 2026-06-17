@@ -54,6 +54,7 @@ func Rendering(app renderiface.App) {
 			ui.SliderFloatRow("Shadow Near Distance", &runtimeConfig.ShadowNearDistance, 0.01, 1)
 			ui.SliderFloatRow("Shadow Far Distance", &runtimeConfig.ShadowFarDistance, 0, 1000)
 			ui.SliderFloatRow("Shadow Cascade Blend", &runtimeConfig.ShadowCascadeBlendFactor, 0, 1)
+			ui.SliderFloatRow("Shadow Cascade Crossfade", &runtimeConfig.ShadowCascadeCrossfadeBoundary, 0, 1)
 			ui.SliderIntRow("Shadow Max Cascade", &runtimeConfig.ShadowMapMaxCascadeIndex, 0, int32(settings.NumShadowMapCascades-1))
 			ui.SliderIntRow("Fog Density", &runtimeConfig.FogDensity, 0, 500)
 			ui.SliderFloatRow("Bloom Intensity", &runtimeConfig.BloomIntensity, 0, 1)

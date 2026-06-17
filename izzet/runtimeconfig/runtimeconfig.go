@@ -174,7 +174,7 @@ func DefaultRuntimeConfig() *RuntimeConfig {
 		EnableShadowMapping:      true,
 		ShadowFarDistance:        200,
 		ShadowNearDistance:       0.01,
-		ShadowCascadeBlendFactor: 0.90,
+		ShadowCascadeBlendFactor: 0.70,
 		ShadowMapMaxCascadeIndex: int32(settings.NumShadowMapCascades - 1),
 		ShadowmapZOffset:         250,
 		BloomIntensity:           0.04,

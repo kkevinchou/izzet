@@ -421,9 +421,14 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 }
 
 func computeCascadeSplits(near, far float64, count int, lambda float64) [][2]float64 {
-	var cascades [][2]float64
-	prev := near
+	cascades := make([][2]float64, count)
 
+	// for quality purposes we fix the first cascade to 5 units to keep nearby shadows crisp
+	cascades[0] = [2]float64{near, 5}
+
+	// blend blend between linear and log functions for the remaining cascades
+	prev := cascades[0][1]
+	count -= 1
 	for i := 1; i <= count; i++ {
 		p := float64(i) / float64(count)
 
@@ -432,7 +437,7 @@ func computeCascadeSplits(near, far float64, count int, lambda float64) [][2]flo
 
 		split := uniform*(1-lambda) + logarithmic*lambda
 
-		cascades = append(cascades, [2]float64{prev, split})
+		cascades[i] = [2]float64{prev, split}
 		prev = split
 	}
 

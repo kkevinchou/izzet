@@ -128,6 +128,7 @@ func (g *Client) Connect() error {
 	if g.IsConnected() {
 		return nil
 	}
+	g.commandFrame = 0
 
 	iztlog.ClientLogger.Info("connecting to " + g.serverAddress)
 	conn, err := net.Dial("tcp", g.serverAddress)

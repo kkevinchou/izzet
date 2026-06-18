@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Zyko0/go-sdl3/sdl"
+	"github.com/Zyko0/go-sdl3/ttf"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
@@ -29,8 +31,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/system/clientsystem"
 	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
-	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/ttf"
 )
 
 type Client struct {
@@ -165,7 +165,7 @@ func (g *Client) Start() {
 
 	// 1 - vsync on
 	// 0 - vsync off
-	err := sdl.GLSetSwapInterval(1)
+	err := sdl.GL_SetSwapInterval(1)
 	if err != nil {
 		panic(err)
 	}

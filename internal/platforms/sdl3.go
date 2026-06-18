@@ -5,10 +5,17 @@ import (
 	"math"
 
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/Zyko0/go-sdl3/bin/binmix"
+	"github.com/Zyko0/go-sdl3/bin/binsdl"
+	"github.com/Zyko0/go-sdl3/bin/binttf"
+	"github.com/Zyko0/go-sdl3/mixer"
+	"github.com/Zyko0/go-sdl3/sdl"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/veandco/go-sdl2/mix"
-	"github.com/veandco/go-sdl2/sdl"
 )
+
+var audioMixer *mixer.Mixer
+
+var mouseButtonOrder = []sdl.MouseButtonFlags{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE}
 
 type SDLPlatform struct {
 	imguiIO *imgui.IO
@@ -20,12 +27,43 @@ type SDLPlatform struct {
 	keyMap map[sdl.Scancode]imgui.Key
 }
 
+func LoadSDL3Libraries() {
+	_ = binsdl.Load()
+	_ = binttf.Load()
+	_ = binmix.Load()
+
+	// return func() {
+	// 	if audioMixer != nil {
+	// 		audioMixer.Destroy()
+	// 		audioMixer = nil
+	// 	}
+	// 	mixer.Quit()
+	// 	ttf.Quit()
+	// 	sdl.Quit()
+
+	// 	if err := mixer.CloseLibrary(); err != nil {
+	// 		panic(fmt.Errorf("close SDL3_mixer library: %w", err))
+	// 	}
+	// 	if err := ttf.CloseLibrary(); err != nil {
+	// 		panic(fmt.Errorf("close SDL3_ttf library: %w", err))
+	// 	}
+	// 	sdlLib.Unload()
+	// }
+}
+
+func AudioMixer() *mixer.Mixer {
+	return audioMixer
+}
+
 func NewSDLPlatform(width, height int, fullscreen bool) (*SDLPlatform, *SDLWindow, error) {
+	LoadSDL3Libraries()
+	// defer shutdownSDL3()
+
 	imgui.CreateContext()
 	imguiIO := imgui.CurrentIO()
 	imgui.CurrentIO().Fonts().AddFontFromFileTTF("_assets/fonts/roboto-regular.ttf", settings.FontSize)
 
-	window, err := InitSDL(width, height, fullscreen)
+	window, err := initSDL(width, height, fullscreen)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -41,36 +79,36 @@ func NewSDLPlatform(width, height int, fullscreen bool) (*SDLPlatform, *SDLWindo
 }
 
 func (platform *SDLPlatform) ProcessEvents(inputCollector InputCollector) {
-	x, y, mouseState := sdl.GetMouseState()
+	mouseState, x, y := sdl.GetMouseState()
 	inputCollector.SetMousePosition(float64(x), float64(y))
-	for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
-		enabled := mouseState&sdl.Button(button) != 0
+	for i, button := range mouseButtonOrder {
+		enabled := mouseState&sdl.ButtonMask(button) != 0
 		inputCollector.SetMouseButtonState(i, enabled)
 	}
 
 	// key state is more reliable than key down events since they dont' fire for every polling cycle every frame
 	keyState := sdl.GetKeyboardState()
 	for k, v := range keyState {
-		if v <= 0 {
+		if !v {
 			continue
 		}
-		inputCollector.SetKeyStateEnabled(sdl.GetScancodeName(sdl.Scancode(k)))
+		inputCollector.SetKeyStateEnabled(sdl.Scancode(k).Name())
 	}
 
-	// return platform.currentFrameInput
-	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-		platform.processEvent(event, inputCollector)
+	var event sdl.Event
+	for sdl.PollEvent(&event) {
+		platform.processEvent(&event, inputCollector)
 	}
 }
 
-func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputCollector) {
-	switch event.GetType() {
-	case sdl.DROPFILE:
+func (platform *SDLPlatform) processEvent(event *sdl.Event, inputCollector InputCollector) {
+	switch event.Type {
+	case sdl.EVENT_DROP_FILE:
 		break
-	case sdl.QUIT:
+	case sdl.EVENT_QUIT:
 		platform.shouldStop = true
-	case sdl.MOUSEWHEEL:
-		wheelEvent := event.(*sdl.MouseWheelEvent)
+	case sdl.EVENT_MOUSE_WHEEL:
+		wheelEvent := event.MouseWheelEvent()
 		var deltaX, deltaY float32
 		if wheelEvent.X > 0 {
 			deltaX++
@@ -84,37 +122,37 @@ func (platform *SDLPlatform) processEvent(event sdl.Event, inputCollector InputC
 		}
 		platform.imguiIO.AddMouseWheelDelta(deltaX, deltaY)
 		inputCollector.AddMouseWheelDelta(float64(deltaX), float64(deltaY))
-	case sdl.MOUSEMOTION:
-		motionEvent := event.(*sdl.MouseMotionEvent)
-		inputCollector.AddMouseMotion(float64(motionEvent.XRel), float64(motionEvent.YRel))
-	case sdl.MOUSEBUTTONDOWN:
-		buttonEvent := event.(*sdl.MouseButtonEvent)
-		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
-			if uint32(buttonEvent.Button) == button {
+	case sdl.EVENT_MOUSE_MOTION:
+		motionEvent := event.MouseMotionEvent()
+		inputCollector.AddMouseMotion(float64(motionEvent.Xrel), float64(motionEvent.Yrel))
+	case sdl.EVENT_MOUSE_BUTTON_DOWN:
+		buttonEvent := event.MouseButtonEvent()
+		for i, button := range mouseButtonOrder {
+			if buttonEvent.Button == uint8(button) {
 				inputCollector.SetMouseButtonEvent(i, true)
 			}
 		}
-	case sdl.MOUSEBUTTONUP:
-		buttonEvent := event.(*sdl.MouseButtonEvent)
-		for i, button := range []uint32{sdl.BUTTON_LEFT, sdl.BUTTON_RIGHT, sdl.BUTTON_MIDDLE} {
-			if uint32(buttonEvent.Button) == button {
+	case sdl.EVENT_MOUSE_BUTTON_UP:
+		buttonEvent := event.MouseButtonEvent()
+		for i, button := range mouseButtonOrder {
+			if buttonEvent.Button == uint8(button) {
 				inputCollector.SetMouseButtonEvent(i, false)
 			}
 		}
-	case sdl.TEXTINPUT:
-		inputEvent := event.(*sdl.TextInputEvent)
-		platform.imguiIO.AddInputCharactersUTF8(string(inputEvent.Text[:]))
-	case sdl.KEYDOWN:
-		keyEvent := event.(*sdl.KeyboardEvent)
-		if keyEvent.Repeat != 0 {
+	case sdl.EVENT_TEXT_INPUT:
+		inputEvent := event.TextInputEvent()
+		platform.imguiIO.AddInputCharactersUTF8(inputEvent.Text)
+	case sdl.EVENT_KEY_DOWN:
+		keyEvent := event.KeyboardEvent()
+		if keyEvent.Repeat {
 			return
 		}
 		platform.addKeyEvent(keyEvent, true)
-		inputCollector.AddKeyEvent(sdl.GetScancodeName(keyEvent.Keysym.Scancode), true)
-	case sdl.KEYUP:
-		keyEvent := event.(*sdl.KeyboardEvent)
+		inputCollector.AddKeyEvent(keyEvent.Scancode.Name(), true)
+	case sdl.EVENT_KEY_UP:
+		keyEvent := event.KeyboardEvent()
 		platform.addKeyEvent(keyEvent, false)
-		inputCollector.AddKeyEvent(sdl.GetScancodeName(keyEvent.Keysym.Scancode), false)
+		inputCollector.AddKeyEvent(keyEvent.Scancode.Name(), false)
 	}
 }
 
@@ -135,30 +173,36 @@ func (platform *SDLPlatform) NewFrame() {
 	platform.time = currentTime
 
 	// Setup inputs
-	x, y, state := sdl.GetMouseState()
-	if platform.window.GetFlags()&sdl.WINDOW_INPUT_FOCUS != 0 {
-		platform.imguiIO.SetMousePos(imgui.Vec2{X: float32(x), Y: float32(y)})
+	state, x, y := sdl.GetMouseState()
+	if platform.window.Flags()&sdl.WINDOW_INPUT_FOCUS != 0 {
+		platform.imguiIO.SetMousePos(imgui.Vec2{X: x, Y: y})
 	} else {
 		platform.imguiIO.SetMousePos(imgui.Vec2{X: -math.MaxFloat32, Y: -math.MaxFloat32})
 	}
 
-	down := state&sdl.ButtonLMask() != 0
+	down := state&sdl.ButtonMask(sdl.BUTTON_LEFT) != 0
 	platform.imguiIO.SetMouseButtonDown(0, down)
-	down = state&sdl.ButtonRMask() != 0
+	down = state&sdl.ButtonMask(sdl.BUTTON_RIGHT) != 0
 	platform.imguiIO.SetMouseButtonDown(1, down)
-	down = state&sdl.ButtonMMask() != 0
+	down = state&sdl.ButtonMask(sdl.BUTTON_MIDDLE) != 0
 	platform.imguiIO.SetMouseButtonDown(2, down)
 }
 
 // DisplaySize returns the dimension of the display.
 func (platform *SDLPlatform) DisplaySize() [2]float32 {
-	w, h := platform.window.GetSize()
+	w, h, err := platform.window.Size()
+	if err != nil {
+		panic(fmt.Errorf("get SDL window size: %w", err))
+	}
 	return [2]float32{float32(w), float32(h)}
 }
 
 // FramebufferSize returns the dimension of the framebuffer.
 func (platform *SDLPlatform) FramebufferSize() [2]float32 {
-	w, h := platform.window.GLGetDrawableSize()
+	w, h, err := platform.window.SizeInPixels()
+	if err != nil {
+		panic(fmt.Errorf("get SDL window pixel size: %w", err))
+	}
 	return [2]float32{float32(w), float32(h)}
 }
 
@@ -196,7 +240,7 @@ func (platform *SDLPlatform) setKeyMapping() {
 
 // key events for imgui actions. these keys powers things like copy/paste from input text, esc to lose focus, etc
 func (platform *SDLPlatform) addKeyEvent(keyEvent *sdl.KeyboardEvent, active bool) {
-	scanCode := keyEvent.Keysym.Scancode
+	scanCode := keyEvent.Scancode
 	if mapped, ok := platform.keyMap[scanCode]; ok {
 		platform.imguiIO.AddKeyEvent(mapped, active)
 	}
@@ -213,51 +257,59 @@ func (platform *SDLPlatform) SetClipboardText(text string) {
 }
 
 func (platform *SDLPlatform) SetRelativeMouse(value bool) {
-	sdl.SetRelativeMouseMode(value)
+	_ = platform.window.SetRelativeMouseMode(value)
 }
 
 func (platform *SDLPlatform) MoveMouse(x, y int32) {
-	platform.window.WarpMouseInWindow(x, y)
+	platform.window.WarpMouseIn(float32(x), float32(y))
 }
 
-const fullscreenMode = sdl.WINDOW_FULLSCREEN_DESKTOP
+const fullscreenMode = sdl.WINDOW_FULLSCREEN
 
 func (platform *SDLPlatform) Fullscreen() bool {
-	return platform.window.GetFlags()&fullscreenMode != 0
+	return platform.window.Flags()&fullscreenMode != 0
 }
 
 func (platform *SDLPlatform) SetFullscreen(fullscreen bool) error {
-	if fullscreen {
-		return platform.window.SetFullscreen(fullscreenMode)
-	}
-
-	if err := platform.window.SetFullscreen(0); err != nil {
-		return err
-	}
-	// platform.window.Maximize()
-	return nil
+	return platform.window.SetFullscreen(fullscreen)
 }
 
-func InitSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
-	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
+func initSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
+	if err := sdl.Init(sdl.INIT_VIDEO | sdl.INIT_AUDIO | sdl.INIT_EVENTS); err != nil {
 		return nil, fmt.Errorf("failed to init SDL %s", err)
 	}
 
-	if err := mix.OpenAudio(48000, mix.DEFAULT_FORMAT, 2, 1024); err != nil {
-		panic(fmt.Errorf("open mixer audio: %w", err))
+	if err := mixer.Init(); err != nil {
+		return nil, fmt.Errorf("failed to init SDL mixer: %w", err)
 	}
-	mix.AllocateChannels(32)
+
+	var err error
+	audioMixer, err = mixer.CreateMixerDevice(sdl.AUDIO_DEVICE_DEFAULT_PLAYBACK, &sdl.AudioSpec{
+		Format:   sdl.AUDIO_S16,
+		Channels: 2,
+		Freq:     48000,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create mixer audio device: %w", err)
+	}
 
 	// Enable hints for multisampling which allows opengl to use the default
 	// multisampling algorithms implemented by the OpenGL rasterizer
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 3)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, sdl.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG)
-
-	sdl.SetRelativeMouseMode(false)
+	glAttributes := []struct {
+		attr  sdl.GLAttr
+		value int32
+	}{
+		{sdl.GL_MULTISAMPLEBUFFERS, 1},
+		{sdl.GL_MULTISAMPLESAMPLES, 4},
+		{sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE},
+		{sdl.GL_CONTEXT_MAJOR_VERSION, 4},
+		{sdl.GL_CONTEXT_MINOR_VERSION, 3},
+	}
+	for _, glAttribute := range glAttributes {
+		if err := sdl.GL_SetAttribute(glAttribute.attr, glAttribute.value); err != nil {
+			return nil, fmt.Errorf("set SDL GL attribute %d: %w", glAttribute.attr, err)
+		}
+	}
 
 	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
 	if fullscreen {
@@ -266,21 +318,26 @@ func InitSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
 		windowFlags |= sdl.WINDOW_MAXIMIZED
 	}
 
-	win, err := sdl.CreateWindow("IZZET GAME ENGINE", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(width), int32(height), uint32(windowFlags))
+	win, err := sdl.CreateWindow("IZZET GAME ENGINE", width, height, windowFlags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create window %s", err)
 	}
 
-	_, err = win.GLCreateContext()
-	if err != nil {
+	if _, err = sdl.GL_CreateContext(win); err != nil {
 		return nil, fmt.Errorf("failed to create context %s", err)
+	}
+
+	if err := win.SetRelativeMouseMode(false); err != nil {
+		return nil, fmt.Errorf("set relative mouse mode: %w", err)
 	}
 
 	return win, nil
 }
 
 func (platform *SDLPlatform) PostRender() {
-	platform.window.GLSwap()
+	if err := sdl.GL_SwapWindow(platform.window); err != nil {
+		panic(fmt.Errorf("swap SDL GL window: %w", err))
+	}
 }
 
 func (platform *SDLPlatform) ShouldStop() bool {
@@ -292,17 +349,23 @@ type SDLWindow struct {
 }
 
 func (w *SDLWindow) Minimized() bool {
-	return w.window.GetFlags()&sdl.WINDOW_MINIMIZED > 0
+	return w.window.Flags()&sdl.WINDOW_MINIMIZED > 0
 }
 
 func (w *SDLWindow) GetSize() (int, int) {
-	width, height := w.window.GetSize()
+	width, height, err := w.window.Size()
+	if err != nil {
+		panic(fmt.Errorf("get SDL window size: %w", err))
+	}
 	return int(width), int(height)
 }
 
 func (w *SDLWindow) Swap() {
-	w.window.GLSwap()
+	if err := sdl.GL_SwapWindow(w.window); err != nil {
+		panic(fmt.Errorf("swap SDL GL window: %w", err))
+	}
 }
+
 func (w *SDLWindow) WindowFocused() bool {
-	return w.window.GetFlags()&sdl.WINDOW_INPUT_FOCUS > 0
+	return w.window.Flags()&sdl.WINDOW_INPUT_FOCUS > 0
 }

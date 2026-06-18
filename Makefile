@@ -6,11 +6,11 @@ PROTOC_PATH = ~/protoc-21.7-win64/bin/protoc.exe
 
 .PHONY: client
 client:
-	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT
+	go run main.go CLIENT
 
 .PHONY: client_no_logs
 client_no_logs:
-	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go CLIENT --logs=false
+	go run main.go CLIENT --logs=false
 
 # profile fetched from http://localhost:6868/debug/pprof/profile
 .PHONY: pprof
@@ -41,11 +41,11 @@ test:
 
 .PHONY: build
 build:
-	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go build -o izzet.exe 
+	go build -o izzet.exe
 
 .PHONY: server
 server:
-	CGO_LDFLAGS="-LC:/Users/kkevi/mingw64/x86_64-w64-mingw32/lib -lSDL2" go run main.go SERVER
+	go run main.go SERVER
 
 .PHONY: headless
 headless:

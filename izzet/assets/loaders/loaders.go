@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Zyko0/go-sdl3/mixer"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
@@ -15,7 +16,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/backends/opengl"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/kkevinchou/izzet/izzet/assets/textures"
-	"github.com/veandco/go-sdl2/mix"
 )
 
 type TextureLoadJob struct {
@@ -160,10 +160,19 @@ func LoadFonts(directory string) map[string]fonts.Font {
 }
 
 type AudioData struct {
-	Chunk *mix.Chunk
+	mixer *mixer.Mixer
+	Audio *mixer.Audio
 }
 
-func LoadAudio(directory string) map[string]AudioData {
+func (data AudioData) Play() error {
+	return data.mixer.PlayAudio(data.Audio)
+}
+
+func LoadAudio(directory string, mix *mixer.Mixer) map[string]AudioData {
+	if mix == nil {
+		panic("load audio: SDL mixer is not initialized")
+	}
+
 	var subDirectories []string = []string{"audio"}
 	extensions := map[string]any{
 		".wav": nil,
@@ -177,12 +186,12 @@ func LoadAudio(directory string) map[string]AudioData {
 			continue
 		}
 
-		chunk, err := mix.LoadWAV(metaData.Path)
+		audio, err := mix.LoadAudio(metaData.Path, true)
 		if err != nil {
 			panic(fmt.Errorf("load audio %s: %w", metaData.Path, err))
 		}
 
-		audioData[metaData.Name] = AudioData{Chunk: chunk}
+		audioData[metaData.Name] = AudioData{mixer: mix, Audio: audio}
 	}
 
 	return audioData

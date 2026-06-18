@@ -14,7 +14,6 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/client"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 const logDir = "logs"
@@ -84,8 +83,6 @@ func main() {
 		clientApp.Connect()
 		clientApp.Start()
 	}
-
-	sdl.Quit()
 }
 
 func parseCommandLine(args []string) (string, bool) {

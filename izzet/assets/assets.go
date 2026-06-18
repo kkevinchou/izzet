@@ -11,6 +11,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
@@ -65,7 +66,7 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		loadedTextures = loaders.LoadTextures(settings.BuiltinAssetsDir)
 		loadedFonts = loaders.LoadFonts(settings.BuiltinAssetsDir)
 
-		audioData = loaders.LoadAudio(settings.BuiltinAssetsDir)
+		audioData = loaders.LoadAudio(settings.BuiltinAssetsDir, platforms.AudioMixer())
 		iztlog.ClientLogger.Info(fmt.Sprintf("loaded fonts and textures in %f seconds", time.Since(start).Seconds()))
 	}
 
@@ -99,7 +100,7 @@ func UniqueVerticesFromPrimitives(primitives []Primitive) []mgl64.Vec3 {
 
 func (a *AssetManager) Play(name string) {
 	if audioData, ok := a.audioData[name]; ok {
-		if _, err := audioData.Chunk.Play(-1, 0); err != nil {
+		if err := audioData.Play(); err != nil {
 			panic(fmt.Errorf("play audio %s: %w", name, err))
 		}
 	}

@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
+
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.Document {
@@ -61,7 +62,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	a.documentAssets[config.Name] = DocumentAsset{
 		Config:        config,
 		Document:      document,
-		MatIDToHandle: map[string]types.MaterialHandle{},
+		MatIDToHandle: map[string]handle.Material{},
 	}
 
 	if a.processVisuals {
@@ -110,7 +111,7 @@ func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification)
 	return fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID)
 }
 
-func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]types.MaterialHandle) {
+func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]handle.Material) {
 	// registration of all primitives under one handle to support merged entity instantiation
 	handle := NewSingleEntityMeshHandle(document.Name)
 	for _, mesh := range document.Meshes {
@@ -124,7 +125,7 @@ func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matI
 	}
 }
 
-func (m *AssetManager) registerMeshPrimitivesWithHandle(handle types.MeshHandle, mesh *modelspec.MeshSpecification, matIDToHandle map[string]types.MaterialHandle) types.MeshHandle {
+func (m *AssetManager) registerMeshPrimitivesWithHandle(handle handle.Mesh, mesh *modelspec.MeshSpecification, matIDToHandle map[string]handle.Material) handle.Mesh {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {

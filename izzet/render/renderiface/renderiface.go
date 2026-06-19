@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -63,7 +64,7 @@ type App interface {
 	FindPath(start, goal mgl64.Vec3)
 	SetupBatchedStaticRendering()
 
-	QueueCreateMaterialTexture(handle types.MaterialHandle)
+	QueueCreateMaterialTexture(handle handle.Material)
 }
 
 type RenderContext interface {

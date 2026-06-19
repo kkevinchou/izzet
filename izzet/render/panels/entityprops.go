@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
+
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
@@ -36,7 +38,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 }
 
 var (
-	selectedMaterialHandle types.MaterialHandle
+	selectedMaterialHandle handle.Material
 	selectedMaterialName   string
 	animationFilterText    string
 )

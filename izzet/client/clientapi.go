@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
+
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
@@ -593,7 +595,7 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
 }
 
-func (g *Client) QueueCreateMaterialTexture(handle types.MaterialHandle) {
+func (g *Client) QueueCreateMaterialTexture(handle handle.Material) {
 	g.renderSystem.QueueCreateMaterialTexture(handle)
 }
 

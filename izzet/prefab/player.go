@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -27,10 +28,10 @@ func CreatePlayer(app App) *entity.Entity {
 	e.CharacterControllerComponent = &entity.CharacterControllerComponent{CameraEntityID: entity.InvalidEntityID}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	e.HealthComponent = &entity.HealthComponent{Amount: 100}
-	handle := assets.NewSingleEntityMeshHandle("mannequin_m")
+	meshHandle := assets.NewSingleEntityMeshHandle("mannequin_m")
 
-	e.MeshComponent = &entity.MeshComponent{MeshHandle: handle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-	e.Animation = entity.NewAnimationComponent("mannequin_m", app.AssetManager())
+	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
+	e.Animation = entity.NewAnimationComponent(handle.Animation("mannequin_m"), app.AssetManager())
 	e.RenderBlend = &entity.RenderBlend{}
 	entity.SetScale(e, mgl64.Vec3{1, 1, 1})
 

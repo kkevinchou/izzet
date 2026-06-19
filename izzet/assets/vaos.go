@@ -3,18 +3,19 @@ package assets
 import (
 	"sort"
 
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type Batch struct {
 	VAO            uint32
 	VertexCount    int32
-	MaterialHandle types.MaterialHandle
+	MaterialHandle handle.Material
 
 	vertexAttributes      []float32
 	jointIDsAttribute     []int32
@@ -25,8 +26,8 @@ type Batch struct {
 	vertexIndices     []uint32
 }
 
-func (m *AssetManager) SetupBatchedStaticRendering(meshHandles []types.MeshHandle, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
-	batches := map[types.MaterialHandle]*Batch{}
+func (m *AssetManager) SetupBatchedStaticRendering(meshHandles []handle.Mesh, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
+	batches := map[handle.Material]*Batch{}
 
 	for i, meshHandle := range meshHandles {
 		for _, p := range m.GetPrimitives(meshHandle) {

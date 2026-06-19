@@ -2,9 +2,9 @@ package drawer
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type DrawerTab string
@@ -26,7 +26,7 @@ var (
 	expanded bool
 )
 
-func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[types.MaterialHandle]uint32) {
+func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[handle.Material]uint32) {
 	var drawerbarX float32 = settings.WindowPadding[0]
 	var drawerbarY float32 = imgui.MainViewport().Pos().Y + imgui.MainViewport().Size().Y - settings.DrawerbarSize
 

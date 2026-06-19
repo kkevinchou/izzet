@@ -5,19 +5,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 )
 
-type MeshHandle struct {
-	Namespace string
-	ID        string
-}
-
-type MaterialHandle struct {
-	ID string
-}
-
-func (h MaterialHandle) String() string {
-	return h.ID
-}
-
 type KinematicEntity interface {
 	GetID() int
 	IsKinematic() bool

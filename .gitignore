@@ -12,3 +12,4 @@ tools/logviewer/dist/
 _tools
 tools/logviewer/devserver*.log
 tools/logviewer/devserver*.err
+.gitattributes

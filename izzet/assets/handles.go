@@ -2,13 +2,13 @@ package assets
 
 import (
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	"github.com/kkevinchou/izzet/izzet/types"
+	"github.com/kkevinchou/izzet/izzet/assets/handle"
 )
 
 var (
-	DefaultMaterialHandle = types.MaterialHandle{ID: "custom/default"}
-	WhiteMaterialHandle   = types.MaterialHandle{ID: "custom/white"}
-	DefaultCubeHandle     = types.MeshHandle{Namespace: "global", ID: "cube"}
+	DefaultMaterialHandle = handle.Material{ID: "custom/default"}
+	WhiteMaterialHandle   = handle.Material{ID: "custom/white"}
+	DefaultCubeHandle     = handle.Mesh{Namespace: "global", ID: "cube"}
 )
 
 type Primitive struct {
@@ -23,7 +23,7 @@ type Primitive struct {
 	// but not normals, texture coords
 	GeometryVAO uint32
 
-	MaterialHandle types.MaterialHandle
+	MaterialHandle handle.Material
 }
 
 // CONTEXT
@@ -47,20 +47,21 @@ type Primitive struct {
 //     or just instantiatign individual meshes from the document
 //
 // - the instantiated entities should have meshes/materials that point to loaded meshes/materials
-func NewSingleEntityMeshHandle(namespace string) types.MeshHandle {
+func NewSingleEntityMeshHandle(namespace string) handle.Mesh {
 	return NewMeshHandle(namespace, "__merged__")
 }
 
-func NewMeshHandle(namespace string, id string) types.MeshHandle {
-	return types.MeshHandle{Namespace: namespace, ID: id}
+func NewMeshHandle(namespace string, id string) handle.Mesh {
+	return handle.Mesh{Namespace: namespace, ID: id}
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally
-func (m *AssetManager) GetAnimations(handle string) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
-	return m.Animations[handle], m.Joints[handle], m.RootJoints[handle]
+func (m *AssetManager) GetAnimations(animationHandle handle.Animation) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
+	id := animationHandle.String()
+	return m.Animations[id], m.Joints[id], m.RootJoints[id]
 }
 
-func (m *AssetManager) GetPrimitives(handle types.MeshHandle) []Primitive {
+func (m *AssetManager) GetPrimitives(handle handle.Mesh) []Primitive {
 	if _, ok := m.Primitives[handle]; !ok {
 		return nil
 	}

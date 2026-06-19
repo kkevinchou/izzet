@@ -178,7 +178,7 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 }
 
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) handle.Material {
-	handle := handle.Material{ID: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
+	handle := handle.NewMaterial(fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen))
 	if mat, ok := m.materialAssets[handle]; ok {
 		panic(fmt.Sprintf("material with id %s already exists in asset manager. %v", handle, mat))
 	}
@@ -188,7 +188,7 @@ func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Mate
 }
 
 func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) handle.Material {
-	handle := handle.Material{ID: id}
+	handle := handle.NewMaterial(id)
 	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	return handle
 }
@@ -197,9 +197,9 @@ func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.
 	if _, ok := m.materialAssets[handle]; !ok {
 		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
 	}
-	if strings.HasPrefix(handle.ID, izzetMaterialPrefix) {
+	if strings.HasPrefix(handle.ID(), izzetMaterialPrefix) {
 		// this is an ugly hack, pls fix
-		split := strings.Split(handle.ID, "/")
+		split := strings.Split(handle.ID(), "/")
 		if len(split) == 2 {
 			if id, err := strconv.Atoi(split[1]); err == nil {
 				if materialIDGen <= id {

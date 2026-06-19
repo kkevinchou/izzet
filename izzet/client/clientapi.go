@@ -360,7 +360,7 @@ func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) []int {
 		if e.MeshComponent == nil {
 			continue
 		}
-		if e.MeshComponent.MeshHandle.Namespace == namespace {
+		if e.MeshComponent.MeshHandle.Namespace() == namespace {
 			referencingEntityIDs = append(referencingEntityIDs, e.ID)
 		}
 	}

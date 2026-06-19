@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	DefaultMaterialHandle = handle.Material{ID: "custom/default"}
-	WhiteMaterialHandle   = handle.Material{ID: "custom/white"}
-	DefaultCubeHandle     = handle.Mesh{Namespace: "global", ID: "cube"}
+	DefaultMaterialHandle = handle.NewMaterial("custom/default")
+	WhiteMaterialHandle   = handle.NewMaterial("custom/white")
+	DefaultCubeHandle     = handle.NewMesh("global", "cube")
 )
 
 type Primitive struct {
@@ -52,7 +52,7 @@ func NewSingleEntityMeshHandle(namespace string) handle.Mesh {
 }
 
 func NewMeshHandle(namespace string, id string) handle.Mesh {
-	return handle.Mesh{Namespace: namespace, ID: id}
+	return handle.NewMesh(namespace, id)
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally

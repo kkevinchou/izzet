@@ -37,7 +37,7 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 	g.world.AddEntity(e)
 
 	if len(document.Animations) > 0 {
-		e.Animation = entity.NewAnimationComponent(handle.Animation(document.Name), g.assetManager)
+		e.Animation = entity.NewAnimationComponent(handle.NewAnimation(document.Name), g.assetManager)
 	}
 
 	return e

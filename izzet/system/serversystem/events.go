@@ -6,7 +6,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -16,18 +16,18 @@ import (
 
 type EventsSystem struct {
 	app                      App
-	playerJoinConsumer       *events.Consumer[events.PlayerJoinEvent]
-	playerDisconnectConsumer *events.Consumer[events.PlayerDisconnectEvent]
-	entitySpawnConsumer      *events.Consumer[events.EntitySpawnEvent]
+	playerJoinConsumer       *event.Consumer[event.PlayerJoinEvent]
+	playerDisconnectConsumer *event.Consumer[event.PlayerDisconnectEvent]
+	entitySpawnConsumer      *event.Consumer[event.EntitySpawnEvent]
 }
 
 func NewEventsSystem(app App) *EventsSystem {
 	eventsManager := app.EventsManager()
 	return &EventsSystem{
 		app:                      app,
-		playerJoinConsumer:       events.NewConsumer(eventsManager.PlayerJoinTopic),
-		playerDisconnectConsumer: events.NewConsumer(eventsManager.PlayerDisconnectTopic),
-		entitySpawnConsumer:      events.NewConsumer(eventsManager.EntitySpawnTopic),
+		playerJoinConsumer:       event.NewConsumer(eventsManager.PlayerJoinTopic),
+		playerDisconnectConsumer: event.NewConsumer(eventsManager.PlayerDisconnectTopic),
+		entitySpawnConsumer:      event.NewConsumer(eventsManager.EntitySpawnTopic),
 	}
 }
 

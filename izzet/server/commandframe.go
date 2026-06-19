@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
-	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/globals"
 )
 
@@ -24,7 +24,7 @@ func (g *Server) runCommandFrame(delta time.Duration) {
 func (g *Server) handlePlayerConnections() {
 	select {
 	case connection := <-g.newConnections:
-		g.eventManager.PlayerJoinTopic.Write(events.PlayerJoinEvent{
+		g.eventManager.PlayerJoinTopic.Write(event.PlayerJoinEvent{
 			PlayerID:   connection.PlayerID,
 			Connection: connection.Connection,
 		})

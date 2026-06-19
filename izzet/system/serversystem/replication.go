@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -15,14 +15,14 @@ import (
 
 type ReplicationSystem struct {
 	app                   App
-	destroyEntityConsumer *events.Consumer[events.DestroyEntityEvent]
+	destroyEntityConsumer *event.Consumer[event.DestroyEntityEvent]
 }
 
 func NewReplicationSystem(app App) *ReplicationSystem {
 	eventsManager := app.EventsManager()
 	return &ReplicationSystem{
 		app:                   app,
-		destroyEntityConsumer: events.NewConsumer(eventsManager.DestroyEntityTopic),
+		destroyEntityConsumer: event.NewConsumer(eventsManager.DestroyEntityTopic),
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -119,7 +119,7 @@ func (g *Server) CollisionObserver() *collisionobserver.CollisionObserver {
 	return nil
 }
 
-func (g *Server) EventsManager() *events.EventManager {
+func (g *Server) EventsManager() *event.EventManager {
 	return g.eventManager
 }
 

@@ -35,6 +35,6 @@ func (s *RulesSystem) Update(delta time.Duration, world system.GameWorld) {
 		}
 
 		// world.DeleteEntity(e.GetID())
-		// s.app.EventsManager().DestroyEntityTopic.Write(events.DestroyEntityEvent{EntityID: e.ID})
+		// s.app.EventsManager().DestroyEntityTopic.Write(event.DestroyEntityEvent{EntityID: e.ID})
 	}
 }

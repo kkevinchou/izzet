@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/system"
@@ -65,7 +65,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 					}
 				}
 			case <-player.DisconnectChannel:
-				s.app.EventsManager().PlayerDisconnectTopic.Write(events.PlayerDisconnectEvent{PlayerID: player.ID})
+				s.app.EventsManager().PlayerDisconnectTopic.Write(event.PlayerDisconnectEvent{PlayerID: player.ID})
 			default:
 				noMessage = true
 			}
@@ -115,5 +115,5 @@ func (s *ReceiverSystem) handleCreateEntityRPC(world system.GameWorld, rpc netwo
 		entity.SetLocalPosition(e, spawnPoint.Position())
 	}
 
-	s.app.EventsManager().EntitySpawnTopic.Write(events.EntitySpawnEvent{Entity: e})
+	s.app.EventsManager().EntitySpawnTopic.Write(event.EntitySpawnEvent{Entity: e})
 }

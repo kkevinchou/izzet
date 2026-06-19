@@ -15,7 +15,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/events"
+	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -50,7 +50,7 @@ type Server struct {
 	commandFrame int
 	inputBuffer  *inputbuffer.InputBuffer
 	playerInput  map[int]input.Input
-	eventManager *events.EventManager
+	eventManager *event.EventManager
 
 	navMesh *navmesh.CompiledNavMesh
 
@@ -75,7 +75,7 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	g := &Server{
 		players:      map[int]*network.Player{},
 		playerInput:  map[int]input.Input{},
-		eventManager: events.NewEventManager(),
+		eventManager: event.NewEventManager(),
 		projectName:  projectName,
 	}
 

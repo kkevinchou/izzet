@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
@@ -360,7 +358,7 @@ func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) []int {
 		if e.MeshComponent == nil {
 			continue
 		}
-		if e.MeshComponent.MeshHandle.Namespace() == namespace {
+		if g.assetManager.MeshHandleReferencesDocument(e.MeshComponent.MeshHandle, namespace) {
 			referencingEntityIDs = append(referencingEntityIDs, e.ID)
 		}
 	}
@@ -409,7 +407,7 @@ func (g *Client) LoadDefaultAssets() {
 		},
 	}
 
-	g.assetManager.CreateMaterialWithHandle("default material", defaultMaterial, assets.DefaultMaterialHandle)
+	g.assetManager.CreateMaterialWithHandle("default material", defaultMaterial, g.assetManager.DefaultMaterialHandle())
 
 	whiteMaterial := modelspec.MaterialSpecification{
 		PBRMaterial: modelspec.PBRMaterial{
@@ -420,7 +418,7 @@ func (g *Client) LoadDefaultAssets() {
 			},
 		},
 	}
-	g.assetManager.CreateMaterialWithHandle("white material", whiteMaterial, assets.WhiteMaterialHandle)
+	g.assetManager.CreateMaterialWithHandle("white material", whiteMaterial, g.assetManager.WhiteMaterialHandle())
 
 	// default models
 
@@ -595,7 +593,7 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
 }
 
-func (g *Client) QueueCreateMaterialTexture(handle handle.Material) {
+func (g *Client) QueueCreateMaterialTexture(handle assets.MaterialHandle) {
 	g.renderSystem.QueueCreateMaterialTexture(handle)
 }
 

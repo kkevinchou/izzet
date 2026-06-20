@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -81,10 +79,10 @@ type RenderSystem struct {
 
 	hoveredEntityID *int
 
-	materialTextureMap map[handle.Material]uint32
+	materialTextureMap map[assets.MaterialHandle]uint32
 
 	// list of materials whose textures need to be generated
-	materialTextureQueue []handle.Material
+	materialTextureQueue []assets.MaterialHandle
 
 	batchRenders []assets.Batch
 
@@ -122,7 +120,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 	r.imguiRenderer = imguiRenderer
 	r.ndcQuadVAO = rutils.Init2f2fVAO()
-	r.materialTextureMap = map[handle.Material]uint32{}
+	r.materialTextureMap = map[assets.MaterialHandle]uint32{}
 
 	r.initorReinitTextures(width, height, true)
 
@@ -170,7 +168,7 @@ func (r *RenderSystem) assertShaderConfigurations() {
 	}
 }
 
-func (r *RenderSystem) CreateMaterialTexture(handle handle.Material) {
+func (r *RenderSystem) CreateMaterialTexture(handle assets.MaterialHandle) {
 	material := r.app.AssetManager().GetMaterial(handle)
 	materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
 	r.materialTextureMap[material.Handle] = materialTexture
@@ -898,7 +896,7 @@ func initOpenGLRenderSettings() {
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
-func (r *RenderSystem) QueueCreateMaterialTexture(handle handle.Material) {
+func (r *RenderSystem) QueueCreateMaterialTexture(handle assets.MaterialHandle) {
 	r.materialTextureQueue = append(r.materialTextureQueue, handle)
 }
 
@@ -914,5 +912,5 @@ func (r *RenderSystem) createMaterialTextures() {
 	for _, materialHandle := range r.materialTextureQueue {
 		r.CreateMaterialTexture(materialHandle)
 	}
-	r.materialTextureQueue = []handle.Material{}
+	r.materialTextureQueue = []assets.MaterialHandle{}
 }

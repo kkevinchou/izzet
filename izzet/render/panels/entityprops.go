@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
@@ -38,7 +36,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 }
 
 var (
-	selectedMaterialHandle handle.Material
+	selectedMaterialHandle assets.MaterialHandle
 	selectedMaterialName   string
 	animationFilterText    string
 )
@@ -538,7 +536,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		if selectedEntity != nil {
 			if SelectedComponentComboOption == MaterialComboOption {
 				selectedEntity.Material = &entity.MaterialComponent{
-					MaterialHandle: assets.DefaultMaterialHandle,
+					MaterialHandle: app.AssetManager().DefaultMaterialHandle(),
 				}
 			} else if SelectedComponentComboOption == LightComboOption {
 				selectedEntity.LightInfo = &entity.LightInfo{

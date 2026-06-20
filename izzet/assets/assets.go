@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
@@ -27,7 +25,7 @@ var izzetMaterialPrefix = "izzet/"
 var fallbackTexture string = "default"
 
 type DocumentAsset struct {
-	MatIDToHandle map[string]handle.Material
+	MatIDToHandle map[string]MaterialHandle
 	Document      *modelspec.Document `json:"-"`
 	Config        AssetConfig
 }
@@ -35,7 +33,7 @@ type DocumentAsset struct {
 type MaterialAsset struct {
 	Material modelspec.MaterialSpecification
 	Name     string
-	Handle   handle.Material
+	Handle   MaterialHandle
 }
 
 type AssetManager struct {
@@ -44,10 +42,10 @@ type AssetManager struct {
 	textures       map[string]*textures.Texture
 	documentAssets map[string]DocumentAsset
 	fonts          map[string]fonts.Font
-	materialAssets map[handle.Material]MaterialAsset
+	materialAssets map[MaterialHandle]MaterialAsset
 
 	// Asset References
-	Primitives map[handle.Mesh][]Primitive
+	Primitives map[MeshHandle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
 	Joints     map[string]map[int]*modelspec.JointSpec
 	RootJoints map[string]int
@@ -78,14 +76,14 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		audioData:      audioData,
 		processVisuals: processVisualAssets,
 		documentAssets: map[string]DocumentAsset{},
-		Primitives:     map[handle.Mesh][]Primitive{},
-		materialAssets: map[handle.Material]MaterialAsset{},
+		Primitives:     map[MeshHandle][]Primitive{},
+		materialAssets: map[MaterialHandle]MaterialAsset{},
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:         map[string]map[int]*modelspec.JointSpec{},
 		RootJoints:     map[string]int{},
 	}
 
-	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, CreateCubeMesh(1), nil)
+	assetManager.registerMeshPrimitivesWithHandle(defaultCubeHandle, CreateCubeMesh(1), nil)
 
 	return &assetManager
 }
@@ -157,16 +155,16 @@ func (a *AssetManager) GetMaterials() []MaterialAsset {
 	return materials
 }
 
-func (m *AssetManager) GetMaterial(handle handle.Material) MaterialAsset {
-	if materialAsset, ok := m.materialAssets[handle]; ok {
+func (m *AssetManager) GetMaterial(materialHandle MaterialHandle) MaterialAsset {
+	if materialAsset, ok := m.materialAssets[materialHandle]; ok {
 		return materialAsset
 	}
-	material := m.materialAssets[DefaultMaterialHandle]
+	material := m.materialAssets[defaultMaterialHandle]
 	return material
 }
 
-func (m *AssetManager) DeleteMaterial(handle handle.Material) {
-	delete(m.materialAssets, handle)
+func (m *AssetManager) DeleteMaterial(materialHandle MaterialHandle) {
+	delete(m.materialAssets, materialHandle)
 }
 
 func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
@@ -174,32 +172,33 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 		m.materialAssets[material.Handle] = material
 		return
 	}
-	panic(fmt.Sprintf("%s handle not found", material.Handle.String()))
+	panic("material handle not found")
 }
 
-func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) handle.Material {
-	handle := handle.NewMaterial(fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen))
-	if mat, ok := m.materialAssets[handle]; ok {
-		panic(fmt.Sprintf("material with id %s already exists in asset manager. %v", handle, mat))
+func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) MaterialHandle {
+	materialHandle := newMaterialHandle(fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen))
+	if mat, ok := m.materialAssets[materialHandle]; ok {
+		panic(fmt.Sprintf("material already exists in asset manager. %v", mat))
 	}
 	materialIDGen++
-	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
-	return handle
+	m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
+	return materialHandle
 }
 
-func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) handle.Material {
-	handle := handle.NewMaterial(id)
-	m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
-	return handle
+func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) MaterialHandle {
+	materialHandle := newMaterialHandle(id)
+	m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
+	return materialHandle
 }
 
-func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, handle handle.Material) {
-	if _, ok := m.materialAssets[handle]; !ok {
-		m.materialAssets[handle] = MaterialAsset{Material: material, Handle: handle, Name: name}
+func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, materialHandle MaterialHandle) {
+	if _, ok := m.materialAssets[materialHandle]; !ok {
+		m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
 	}
-	if strings.HasPrefix(handle.ID(), izzetMaterialPrefix) {
+	materialID := string(materialHandle.id)
+	if strings.HasPrefix(materialID, izzetMaterialPrefix) {
 		// this is an ugly hack, pls fix
-		split := strings.Split(handle.ID(), "/")
+		split := strings.Split(materialID, "/")
 		if len(split) == 2 {
 			if id, err := strconv.Atoi(split[1]); err == nil {
 				if materialIDGen <= id {
@@ -218,8 +217,8 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 // meant to be called when a mesh is created at runtime and needs to be registered
-func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, matIDToHandle map[string]handle.Material) handle.Mesh {
-	handle := NewMeshHandle("runtime", fmt.Sprintf("%d", runtimeMeshIDGen))
+func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, matIDToHandle map[string]MaterialHandle) MeshHandle {
+	handle := newMeshHandle("runtime", fmt.Sprintf("%d", runtimeMeshIDGen))
 	runtimeMeshIDGen++
 	return m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 }

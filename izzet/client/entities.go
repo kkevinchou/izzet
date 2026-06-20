@@ -3,8 +3,6 @@ package client
 import (
 	"fmt"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/modelspec"
@@ -25,7 +23,7 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 
 	namespace := documentAsset.Config.Name
 	document := documentAsset.Document
-	meshHandle := assets.NewSingleEntityMeshHandle(namespace)
+	meshHandle := g.assetManager.GetSingleEntityMeshHandle(namespace)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
 	}
@@ -37,7 +35,7 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 	g.world.AddEntity(e)
 
 	if len(document.Animations) > 0 {
-		e.Animation = entity.NewAnimationComponent(handle.NewAnimation(document.Name), g.assetManager)
+		e.Animation = entity.NewAnimationComponent(g.assetManager.GetAnimationHandle(document.Name), g.assetManager)
 	}
 
 	return e
@@ -80,7 +78,7 @@ func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node
 	var e *entity.Entity
 
 	if node.MeshID != nil {
-		meshHandle := assets.NewMeshHandle(namespace, fmt.Sprintf("%d", *node.MeshID))
+		meshHandle := g.assetManager.GetDocumentMeshHandle(namespace, fmt.Sprintf("%d", *node.MeshID))
 		e = g.createEntity(documentAsset, node.Name, meshHandle, node)
 	}
 
@@ -104,7 +102,7 @@ func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node
 	return allEntities
 }
 
-func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle handle.Mesh, node *modelspec.Node) *entity.Entity {
+func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle assets.MeshHandle, node *modelspec.Node) *entity.Entity {
 	document := documentAsset.Document
 	config := documentAsset.Config
 	e := entity.CreateEmptyEntity(name)

@@ -11,6 +11,7 @@ import (
 type StateMachineID string
 
 const (
+	StateMachineIDUnassigned   StateMachineID = "UNASSIGNED"
 	StateMachineIDPlayer       StateMachineID = "PLAYER"
 	StateMachineIDVelociraptor StateMachineID = "VELOCIRAPTOR"
 )

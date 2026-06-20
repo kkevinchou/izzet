@@ -22,8 +22,9 @@ type AnimationComponent struct {
 	SelectedKeyFrame  int
 	LoopAnimation     bool
 
-	AnimationStateMachine *iztanimation.AnimationStateMachine[animation.GameContext]
-	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
+	AnimationStateMachineID animation.StateMachineID
+	AnimationStateMachine   *iztanimation.AnimationStateMachine[animation.GameContext]
+	AnimationPlayer         *iztanimation.AnimationPlayer `json:"-"`
 
 	// --- Replication ---
 
@@ -40,24 +41,18 @@ type ServerSideAnimationTransition struct {
 	GlobalCommandFrame int
 }
 
-func NewAnimationComponent(animationHandle assets.AnimationHandle, ml *assets.AssetManager) *AnimationComponent {
-	animations, joints, rootJointID := ml.GetAnimations(animationHandle)
+func NewAnimationComponent(animationHandle assets.AnimationHandle, id animation.StateMachineID, am *assets.AssetManager) *AnimationComponent {
+	animations, joints, rootJointID := am.GetAnimations(animationHandle)
 	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
-
-	var animationStateMachine *iztanimation.AnimationStateMachine[animation.GameContext]
-	if ml.IsRaptorAnimationHandle(animationHandle) {
-		animationStateMachine = animation.NewStateMachine(animation.StateMachineIDVelociraptor)
-	} else {
-		animationStateMachine = animation.NewStateMachine(animation.StateMachineIDPlayer)
-	}
 
 	return &AnimationComponent{
 		RootJointID:     rootJointID,
 		AnimationHandle: animationHandle,
 		Animations:      animations,
 
-		AnimationPlayer:       animationPlayer,
-		AnimationStateMachine: animationStateMachine,
+		AnimationPlayer:         animationPlayer,
+		AnimationStateMachineID: id,
+		AnimationStateMachine:   animation.NewStateMachine(id),
 	}
 }

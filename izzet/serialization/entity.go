@@ -3,8 +3,10 @@ package serialization
 import (
 	"encoding/json"
 
+	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/geometry"
+	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 )
@@ -24,25 +26,20 @@ func DeserializeEntity(bytes []byte, assetManager *assets.AssetManager) (*entity
 	return &e, err
 }
 
-func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager) {
-	// set dirty flags
+func initDeserializedEntity(e *entity.Entity, am *assets.AssetManager) {
 	e.DirtyTransformFlag = true
 
-	// rebuild animation player
+	// reinitialize the animation player and state machine
 	if e.Animation != nil {
-		animation := e.Animation
-		// TODO - this is kinda annoying because by default we aren't going to synchronize
-		// new animation component fields. revisit how this works
-		e.Animation = entity.NewAnimationComponent(animation.AnimationHandle, assetManager)
-		e.Animation.SelectedAnimation = animation.SelectedAnimation
-		e.Animation.SelectedKeyFrame = animation.SelectedKeyFrame
-		e.Animation.LoopAnimation = animation.LoopAnimation
+		animations, joints, rootJointID := am.GetAnimations(e.Animation.AnimationHandle)
+		e.Animation.AnimationPlayer = iztanimation.NewAnimationPlayer()
+		e.Animation.AnimationPlayer.Initialize(animations, joints[rootJointID])
 
-		if animation.AnimationStateMachine != nil {
-			e.Animation.AnimationStateMachine.SetCurrentState(animation.AnimationStateMachine.CurrentState.Name)
-			currentState := e.Animation.AnimationStateMachine.CurrentState
-			e.Animation.AnimationPlayer.PlayClip(currentState.ClipName)
-			e.Animation.AnimationPlayer.Update(0)
+		if e.Animation.AnimationStateMachine != nil {
+			currentState := e.Animation.AnimationStateMachine.CurrentState.Name
+			e.Animation.AnimationStateMachine = animation.NewStateMachine(e.Animation.AnimationStateMachineID)
+			e.Animation.AnimationStateMachine.SetCurrentState(currentState)
+			e.Animation.AnimationPlayer.PlayClip(e.Animation.AnimationStateMachine.CurrentState.ClipName)
 		}
 	}
 
@@ -52,9 +49,9 @@ func initDeserializedEntity(e *entity.Entity, assetManager *assets.AssetManager)
 		if e.Collider.CapsuleCollider == nil {
 			// rebuild trimesh collider
 			meshHandle := e.MeshComponent.MeshHandle
-			primitives := assetManager.GetPrimitives(meshHandle)
+			primitives := am.GetPrimitives(meshHandle)
 			if len(primitives) > 0 {
-				primitives := assetManager.GetPrimitives(meshHandle)
+				primitives := am.GetPrimitives(meshHandle)
 				t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
 				bb := collider.BoundingBoxFromVertices(assets.UniqueVerticesFromPrimitives(primitives))
 				var simplifiedTriMesh *collider.TriMesh

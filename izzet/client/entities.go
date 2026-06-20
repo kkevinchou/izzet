@@ -7,6 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -35,7 +36,7 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 	g.world.AddEntity(e)
 
 	if len(document.Animations) > 0 {
-		e.Animation = entity.NewAnimationComponent(g.assetManager.GetAnimationHandle(document.Name), g.assetManager)
+		e.Animation = entity.NewAnimationComponent(g.assetManager.GetAnimationHandle(document.Name), animation.StateMachineIDUnassigned, g.assetManager)
 	}
 
 	return e

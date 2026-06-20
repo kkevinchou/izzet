@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
+	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -42,7 +43,7 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	e.Collider.CapsuleCollider = &capsule
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-	e.Animation = entity.NewAnimationComponent(app.AssetManager().GetAnimationHandle(modelName), app.AssetManager())
+	e.Animation = entity.NewAnimationComponent(app.AssetManager().GetAnimationHandle(modelName), animation.StateMachineIDVelociraptor, app.AssetManager())
 	e.AttackComponent = &entity.AttackComponent{AttackRange: 3}
 	entity.SetScale(e, mgl64.Vec3{scale, scale, scale})
 

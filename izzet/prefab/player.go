@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
+	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
@@ -29,7 +30,7 @@ func CreatePlayer(app App) *entity.Entity {
 	meshHandle := app.AssetManager().GetSingleEntityMeshHandle("mannequin_m")
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-	e.Animation = entity.NewAnimationComponent(app.AssetManager().GetAnimationHandle("mannequin_m"), app.AssetManager())
+	e.Animation = entity.NewAnimationComponent(app.AssetManager().GetAnimationHandle("mannequin_m"), animation.StateMachineIDPlayer, app.AssetManager())
 	e.RenderBlend = &entity.RenderBlend{}
 	entity.SetScale(e, mgl64.Vec3{1, 1, 1})
 

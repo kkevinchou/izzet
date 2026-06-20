@@ -43,7 +43,8 @@ func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
 	e.Collider.CapsuleCollider = &capsule
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-	e.Animation = entity.NewAnimationComponent(app.AssetManager().GetAnimationHandle(modelName), animation.StateMachineIDVelociraptor, app.AssetManager())
+	handle := app.AssetManager().GetAnimationHandle(modelName)
+	e.Animation = entity.NewAnimationComponent(app.AssetManager(), handle, animation.StateMachineIDVelociraptor)
 	e.AttackComponent = &entity.AttackComponent{AttackRange: 3}
 	entity.SetScale(e, mgl64.Vec3{scale, scale, scale})
 

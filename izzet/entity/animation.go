@@ -41,18 +41,29 @@ type ServerSideAnimationTransition struct {
 	GlobalCommandFrame int
 }
 
-func NewAnimationComponent(animationHandle assets.AnimationHandle, id animation.StateMachineID, am *assets.AssetManager) *AnimationComponent {
-	animations, joints, rootJointID := am.GetAnimations(animationHandle)
-	animationPlayer := iztanimation.NewAnimationPlayer()
-	animationPlayer.Initialize(animations, joints[rootJointID])
+func NewAnimationComponent(am *assets.AssetManager, handle assets.AnimationHandle, id animation.StateMachineID) *AnimationComponent {
+	c := &AnimationComponent{}
+	InitializeAnimationComponent(c, am, handle, id, "")
+	return c
+}
 
-	return &AnimationComponent{
-		RootJointID:     rootJointID,
-		AnimationHandle: animationHandle,
-		Animations:      animations,
+func InitializeAnimationComponent(c *AnimationComponent, am *assets.AssetManager, handle assets.AnimationHandle, id animation.StateMachineID, startState string) {
+	animations, joints, rootJointID := am.GetAnimations(handle)
 
-		AnimationPlayer:         animationPlayer,
-		AnimationStateMachineID: id,
-		AnimationStateMachine:   animation.NewStateMachine(id),
+	c.RootJointID = rootJointID
+	c.AnimationHandle = handle
+	c.Animations = animations
+	c.AnimationStateMachineID = id
+
+	player := iztanimation.NewAnimationPlayer()
+	player.Initialize(animations, joints[rootJointID])
+
+	stateMachine := animation.NewStateMachine(id)
+	if startState != "" {
+		stateMachine.SetCurrentState(startState)
 	}
+	stateMachine.SynchronizePlayer(player)
+
+	c.AnimationPlayer = player
+	c.AnimationStateMachine = stateMachine
 }

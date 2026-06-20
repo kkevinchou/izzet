@@ -10,6 +10,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type AnimationTransition struct {
+	Source      string
+	Destination string
+}
+
 type AnimationState struct {
 	Name     string
 	ClipName string
@@ -62,17 +67,9 @@ func NewAnimationStateMachine[T any](configReader io.Reader, conditionParser fun
 	return sm
 }
 
-func parseCondition[T any](name string, conditionParser func(string) Condition[T]) Condition[T] {
-	switch name {
-	case ConditionClipCompleted:
-		return ClipCompletedCondition[T]()
-	}
-
-	if conditionParser == nil {
-		panic(fmt.Sprintf("unknown animation condition %q", name))
-	}
-
-	return conditionParser(name)
+// SynchronizePlayer aligns a player with the state machine's current state
+func (sm *AnimationStateMachine[T]) SynchronizePlayer(player *AnimationPlayer) {
+	player.PlayClip(sm.CurrentState.ClipName)
 }
 
 func (sm *AnimationStateMachine[T]) RegisterAnimationState(name, clipName string, playRate float64) {
@@ -151,12 +148,6 @@ func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *Animatio
 		return AnimationTransition{}, false
 	}
 
-	// TDOO - maybe find a better place to initialize the player
-	if player.CurrentAnimation() == "" {
-		player.SetPlayRate(sm.CurrentState.PlayRate)
-		player.PlayClip(sm.CurrentState.ClipName)
-	}
-
 	player.Update(delta)
 	ctx := evalContext[T]{
 		game:   gameCtx,
@@ -195,7 +186,15 @@ func transitionName(source string, transition transitionConfig, index int) strin
 	return fmt.Sprintf("%s_to_%s_%d", source, transition.To, index)
 }
 
-type AnimationTransition struct {
-	Source      string
-	Destination string
+func parseCondition[T any](name string, conditionParser func(string) Condition[T]) Condition[T] {
+	switch name {
+	case ConditionClipCompleted:
+		return ClipCompletedCondition[T]()
+	}
+
+	if conditionParser == nil {
+		panic(fmt.Sprintf("unknown animation condition %q", name))
+	}
+
+	return conditionParser(name)
 }

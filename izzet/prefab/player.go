@@ -30,7 +30,8 @@ func CreatePlayer(app App) *entity.Entity {
 	meshHandle := app.AssetManager().GetSingleEntityMeshHandle("mannequin_m")
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-	e.Animation = entity.NewAnimationComponent(app.AssetManager().GetAnimationHandle("mannequin_m"), animation.StateMachineIDPlayer, app.AssetManager())
+	handle := app.AssetManager().GetAnimationHandle("mannequin_m")
+	e.Animation = entity.NewAnimationComponent(app.AssetManager(), handle, animation.StateMachineIDPlayer)
 	e.RenderBlend = &entity.RenderBlend{}
 	entity.SetScale(e, mgl64.Vec3{1, 1, 1})
 

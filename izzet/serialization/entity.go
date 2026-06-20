@@ -3,10 +3,8 @@ package serialization
 import (
 	"encoding/json"
 
-	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/geometry"
-	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 )
@@ -31,16 +29,10 @@ func initDeserializedEntity(e *entity.Entity, am *assets.AssetManager) {
 
 	// reinitialize the animation player and state machine
 	if e.Animation != nil {
-		animations, joints, rootJointID := am.GetAnimations(e.Animation.AnimationHandle)
-		e.Animation.AnimationPlayer = iztanimation.NewAnimationPlayer()
-		e.Animation.AnimationPlayer.Initialize(animations, joints[rootJointID])
-
-		if e.Animation.AnimationStateMachine != nil {
-			currentState := e.Animation.AnimationStateMachine.CurrentState.Name
-			e.Animation.AnimationStateMachine = animation.NewStateMachine(e.Animation.AnimationStateMachineID)
-			e.Animation.AnimationStateMachine.SetCurrentState(currentState)
-			e.Animation.AnimationPlayer.PlayClip(e.Animation.AnimationStateMachine.CurrentState.ClipName)
-		}
+		state := e.Animation.AnimationStateMachine.CurrentState.Name
+		handle := e.Animation.AnimationHandle
+		id := e.Animation.AnimationStateMachineID
+		entity.InitializeAnimationComponent(e.Animation, am, handle, id, state)
 	}
 
 	if e.MeshComponent != nil && e.Collider != nil {

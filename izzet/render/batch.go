@@ -3,12 +3,12 @@ package render
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 )
 
 func (r *RenderSystem) SetupBatchedStaticRendering() {
-	var meshHandles []handle.Mesh
+	var meshHandles []assets.MeshHandle
 
 	var modelMatrices []mgl32.Mat4
 	var ids []uint32

@@ -3,8 +3,6 @@ package drawer
 import (
 	"fmt"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -22,7 +20,7 @@ const (
 var pendingDeleteMaterial *assets.MaterialAsset
 var showDeleteMaterialConfirmationPopup bool
 
-func materialssUI(app renderiface.App, materialTextureMap map[handle.Material]uint32) {
+func materialssUI(app renderiface.App, materialTextureMap map[assets.MaterialHandle]uint32) {
 	style := imgui.CurrentStyle()
 	imgui.PushStyleVarVec2(
 		imgui.StyleVarCellPadding,

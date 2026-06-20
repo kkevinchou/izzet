@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
-
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 )
@@ -62,7 +60,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	a.documentAssets[config.Name] = DocumentAsset{
 		Config:        config,
 		Document:      document,
-		MatIDToHandle: map[string]handle.Material{},
+		MatIDToHandle: map[string]MaterialHandle{},
 	}
 
 	if a.processVisuals {
@@ -97,11 +95,11 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 }
 
 func (a *AssetManager) clearDocumentPrimitives(config AssetConfig) {
-	delete(a.Primitives, NewSingleEntityMeshHandle(config.Name))
+	delete(a.Primitives, newSingleEntityMeshHandle(config.Name))
 
 	if existingAsset, ok := a.documentAssets[config.Name]; ok && existingAsset.Document != nil {
 		for _, mesh := range existingAsset.Document.Meshes {
-			delete(a.Primitives, NewMeshHandle(config.Name, fmt.Sprintf("%d", mesh.ID)))
+			delete(a.Primitives, MeshHandle{namespace: config.Name, id: fmt.Sprintf("%d", mesh.ID)})
 		}
 	}
 }
@@ -111,21 +109,21 @@ func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification)
 	return fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID)
 }
 
-func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]handle.Material) {
+func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]MaterialHandle) {
 	// registration of all primitives under one handle to support merged entity instantiation
-	handle := NewSingleEntityMeshHandle(document.Name)
+	handle := newSingleEntityMeshHandle(document.Name)
 	for _, mesh := range document.Meshes {
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 	}
 
 	// per entity primitive registration
 	for _, mesh := range document.Meshes {
-		handle := NewMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
+		handle := MeshHandle{namespace: document.Name, id: fmt.Sprintf("%d", mesh.ID)}
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 	}
 }
 
-func (m *AssetManager) registerMeshPrimitivesWithHandle(handle handle.Mesh, mesh *modelspec.MeshSpecification, matIDToHandle map[string]handle.Material) handle.Mesh {
+func (m *AssetManager) registerMeshPrimitivesWithHandle(handle MeshHandle, mesh *modelspec.MeshSpecification, matIDToHandle map[string]MaterialHandle) MeshHandle {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {

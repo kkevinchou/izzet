@@ -1,13 +1,10 @@
 package entity
 
 import (
-	"strings"
-
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/assets/handle"
 )
 
 const (
@@ -17,7 +14,7 @@ const (
 )
 
 type AnimationComponent struct {
-	AnimationHandle handle.Animation
+	AnimationHandle assets.AnimationHandle
 	RootJointID     int
 	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
 
@@ -43,13 +40,13 @@ type ServerSideAnimationTransition struct {
 	GlobalCommandFrame int
 }
 
-func NewAnimationComponent(animationHandle handle.Animation, ml *assets.AssetManager) *AnimationComponent {
+func NewAnimationComponent(animationHandle assets.AnimationHandle, ml *assets.AssetManager) *AnimationComponent {
 	animations, joints, rootJointID := ml.GetAnimations(animationHandle)
 	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
 
 	var animationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
-	if strings.Contains(animationHandle.String(), "velociraptor") {
+	if ml.IsRaptorAnimationHandle(animationHandle) {
 		animationStateMachine = animationparser.NewRaptorAnimationStateMachine()
 	} else {
 		animationStateMachine = animationparser.NewPlayerAnimationStateMachine()

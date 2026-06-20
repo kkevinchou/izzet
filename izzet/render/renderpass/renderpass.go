@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
@@ -390,7 +389,7 @@ func drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
-	if e.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
+	if e.MeshComponent.MeshHandle == app.AssetManager().DefaultCubeHandle() {
 		shader.SetUniformInt("repeatTexture", 1)
 	} else {
 		shader.SetUniformInt("repeatTexture", 0)

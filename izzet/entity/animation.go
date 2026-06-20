@@ -3,7 +3,7 @@ package entity
 import (
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/modelspec"
-	animationparser "github.com/kkevinchou/izzet/izzet/animation"
+	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 )
 
@@ -22,7 +22,7 @@ type AnimationComponent struct {
 	SelectedKeyFrame  int
 	LoopAnimation     bool
 
-	AnimationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
+	AnimationStateMachine *iztanimation.AnimationStateMachine[animation.GameContext]
 	AnimationPlayer       *iztanimation.AnimationPlayer `json:"-"`
 
 	// --- Replication ---
@@ -45,11 +45,11 @@ func NewAnimationComponent(animationHandle assets.AnimationHandle, ml *assets.As
 	animationPlayer := iztanimation.NewAnimationPlayer()
 	animationPlayer.Initialize(animations, joints[rootJointID])
 
-	var animationStateMachine *iztanimation.AnimationStateMachine[animationparser.GameContext]
+	var animationStateMachine *iztanimation.AnimationStateMachine[animation.GameContext]
 	if ml.IsRaptorAnimationHandle(animationHandle) {
-		animationStateMachine = animationparser.NewRaptorAnimationStateMachine()
+		animationStateMachine = animation.NewStateMachine(animation.StateMachineIDVelociraptor)
 	} else {
-		animationStateMachine = animationparser.NewPlayerAnimationStateMachine()
+		animationStateMachine = animation.NewStateMachine(animation.StateMachineIDPlayer)
 	}
 
 	return &AnimationComponent{

@@ -8,6 +8,18 @@ import (
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 )
 
+type StateMachineID string
+
+const (
+	StateMachineIDPlayer       StateMachineID = "PLAYER"
+	StateMachineIDVelociraptor StateMachineID = "VELOCIRAPTOR"
+)
+
+var typeToConfig map[StateMachineID][]byte = map[StateMachineID][]byte{
+	StateMachineIDPlayer:       playerStateMachineConfig,
+	StateMachineIDVelociraptor: raptorStateMachineConfig,
+}
+
 type GameContext struct {
 	Grounded          bool
 	JumpTriggered     bool
@@ -24,12 +36,11 @@ var playerStateMachineConfig []byte
 //go:embed raptor_state_machine.yaml
 var raptorStateMachineConfig []byte
 
-func NewPlayerAnimationStateMachine() *iztanimation.AnimationStateMachine[GameContext] {
-	return iztanimation.NewAnimationStateMachine(bytes.NewReader(playerStateMachineConfig), parseCondition)
-}
-
-func NewRaptorAnimationStateMachine() *iztanimation.AnimationStateMachine[GameContext] {
-	return iztanimation.NewAnimationStateMachine(bytes.NewReader(raptorStateMachineConfig), parseCondition)
+func NewStateMachine(id StateMachineID) *iztanimation.AnimationStateMachine[GameContext] {
+	if cfg, ok := typeToConfig[id]; ok {
+		return iztanimation.NewAnimationStateMachine(bytes.NewReader(cfg), parseCondition)
+	}
+	panic(fmt.Sprintf("unexpected state machine id: %s", id))
 }
 
 // parseCondition takes in a condition name and generates the condition function

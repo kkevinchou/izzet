@@ -99,7 +99,7 @@ func (a *AssetManager) clearDocumentPrimitives(config AssetConfig) {
 
 	if existingAsset, ok := a.documentAssets[config.Name]; ok && existingAsset.Document != nil {
 		for _, mesh := range existingAsset.Document.Meshes {
-			delete(a.Primitives, newMeshHandle(config.Name, fmt.Sprintf("%d", mesh.ID)))
+			delete(a.Primitives, MeshHandle{namespace: config.Name, id: fmt.Sprintf("%d", mesh.ID)})
 		}
 	}
 }
@@ -118,7 +118,7 @@ func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matI
 
 	// per entity primitive registration
 	for _, mesh := range document.Meshes {
-		handle := newMeshHandle(document.Name, fmt.Sprintf("%d", mesh.ID))
+		handle := MeshHandle{namespace: document.Name, id: fmt.Sprintf("%d", mesh.ID)}
 		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 	}
 }

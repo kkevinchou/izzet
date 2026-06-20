@@ -36,6 +36,21 @@ type MaterialAsset struct {
 	Handle   MaterialHandle
 }
 
+type Primitive struct {
+	Primitive *modelspec.PrimitiveSpecification
+
+	// vao that contains all vertex attributes
+	// position, normals, texture coords, joint indices/weights, etc
+	VAO uint32
+
+	// vao that only contains geometry related vertex attributes
+	// i.e. vertex positions and joint indices / weights
+	// but not normals, texture coords
+	GeometryVAO uint32
+
+	MaterialHandle MaterialHandle
+}
+
 type AssetManager struct {
 	logger *slog.Logger
 	// Static Assets
@@ -176,7 +191,7 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 }
 
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) MaterialHandle {
-	materialHandle := newMaterialHandle(fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen))
+	materialHandle := MaterialHandle{id: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
 	if mat, ok := m.materialAssets[materialHandle]; ok {
 		panic(fmt.Sprintf("material already exists in asset manager. %v", mat))
 	}
@@ -186,7 +201,7 @@ func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Mate
 }
 
 func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) MaterialHandle {
-	materialHandle := newMaterialHandle(id)
+	materialHandle := MaterialHandle{id: id}
 	m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
 	return materialHandle
 }
@@ -218,7 +233,7 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 
 // meant to be called when a mesh is created at runtime and needs to be registered
 func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, matIDToHandle map[string]MaterialHandle) MeshHandle {
-	handle := newMeshHandle("runtime", fmt.Sprintf("%d", runtimeMeshIDGen))
+	handle := MeshHandle{namespace: "runtime", id: fmt.Sprintf("%d", runtimeMeshIDGen)}
 	runtimeMeshIDGen++
 	return m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
 }

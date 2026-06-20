@@ -331,6 +331,10 @@ func initSDL(width, height int, fullscreen bool) (*sdl.Window, error) {
 		return nil, fmt.Errorf("set relative mouse mode: %w", err)
 	}
 
+	if err := win.StartTextInput(); err != nil {
+		return nil, fmt.Errorf("start text input: %w", err)
+	}
+
 	return win, nil
 }
 

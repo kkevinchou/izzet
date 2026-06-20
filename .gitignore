@@ -13,3 +13,4 @@ _tools
 tools/logviewer/devserver*.log
 tools/logviewer/devserver*.err
 .gitattributes
+build

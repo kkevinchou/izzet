@@ -26,31 +26,18 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		if e.Animation.SelectedAnimation != "" {
-			animationComponent := e.Animation
-			animationPlayer := e.Animation.AnimationPlayer
-
-			if animationComponent.LoopAnimation {
-				if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation || animationPlayer.NormalizedClipProgress() >= 1 {
-					animationPlayer.PlayClip(animationComponent.SelectedAnimation)
-				}
-				animationPlayer.Update(delta)
-			} else {
-				if animationPlayer.CurrentAnimation() != animationComponent.SelectedAnimation {
-					animationPlayer.PlayClip(animationComponent.SelectedAnimation)
-				}
-				animationPlayer.SetCurrentAnimationFrame(animationComponent.SelectedAnimation, animationComponent.SelectedKeyFrame)
-			}
-		} else {
+		if e.Animation.Mode == entity.AnimationModeStateMachine {
 			if e.Kinematic == nil {
 				continue
 			}
 
-			if e.Kinematic != nil && ((s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer()) {
+			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
 				var ctx animationparser.GameContext
 				ctx.Grounded = e.Kinematic.Grounded
 				ctx.JumpTriggered = e.Kinematic.Jump
 				ctx.Moving = !utils.Vec3IsZero(e.Kinematic.MoveIntent)
+				ctx.Dead = e.Deadge
+
 				if e.AttackComponent != nil {
 					ctx.Attacking = e.AttackComponent.Attacking
 				}
@@ -59,9 +46,9 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					ctx.AimDownSightsFire = e.AimDownSightsComponent.Fire
 				}
 
-				ctx.Dead = e.Deadge
 				transition, transitioned := e.Animation.AnimationStateMachine.Update(delta, e.Animation.AnimationPlayer, ctx)
 
+				// store animation transitions in preparation for replication
 				if s.app.IsServer() && transitioned {
 					e.Animation.AnimationTransitions = append(
 						e.Animation.AnimationTransitions,
@@ -81,6 +68,23 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					)
 				}
 				e.Animation.AnimationPlayer.Update(delta)
+			}
+		} else if e.Animation.Mode == entity.AnimationModeClip {
+			if e.Animation.SelectedAnimation != "" {
+				c := e.Animation
+				player := c.AnimationPlayer
+
+				if c.LoopAnimation {
+					if player.CurrentAnimation() != c.SelectedAnimation || player.NormalizedClipProgress() >= 1 {
+						player.PlayClip(c.SelectedAnimation)
+					}
+					player.Update(delta)
+				} else {
+					if player.CurrentAnimation() != c.SelectedAnimation {
+						player.PlayClip(c.SelectedAnimation)
+					}
+					player.SetCurrentAnimationFrame(c.SelectedAnimation, c.SelectedKeyFrame)
+				}
 			}
 		}
 	}

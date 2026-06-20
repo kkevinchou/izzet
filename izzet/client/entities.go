@@ -37,8 +37,9 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 
 	if len(document.Animations) > 0 {
 		handle := g.assetManager.GetAnimationHandle(document.Name)
-		id := animation.StateMachineIDUnassigned
-		e.Animation = entity.NewAnimationComponent(g.assetManager, handle, id)
+		var id animation.StateMachineID
+		mode := entity.AnimationModeClip
+		e.Animation = entity.NewAnimationComponent(g.assetManager, handle, id, mode)
 	}
 
 	return e

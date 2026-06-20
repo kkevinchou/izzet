@@ -13,10 +13,18 @@ const (
 	AnimationKeyRun    = "RUN"
 )
 
+type AnimationMode string
+
+const (
+	AnimationModeClip         AnimationMode = "CLIP"
+	AnimationModeStateMachine AnimationMode = "STATEMACHINE"
+)
+
 type AnimationComponent struct {
 	AnimationHandle assets.AnimationHandle
 	RootJointID     int
 	Animations      map[string]*modelspec.AnimationSpec `json:"-"`
+	Mode            AnimationMode
 
 	SelectedAnimation string
 	SelectedKeyFrame  int
@@ -41,29 +49,31 @@ type ServerSideAnimationTransition struct {
 	GlobalCommandFrame int
 }
 
-func NewAnimationComponent(am *assets.AssetManager, handle assets.AnimationHandle, id animation.StateMachineID) *AnimationComponent {
+func NewAnimationComponent(am *assets.AssetManager, handle assets.AnimationHandle, id animation.StateMachineID, mode AnimationMode) *AnimationComponent {
 	c := &AnimationComponent{}
-	InitializeAnimationComponent(c, am, handle, id, "")
+	InitializeAnimationComponent(c, am, handle, id, "", mode)
 	return c
 }
 
-func InitializeAnimationComponent(c *AnimationComponent, am *assets.AssetManager, handle assets.AnimationHandle, id animation.StateMachineID, startState string) {
+func InitializeAnimationComponent(c *AnimationComponent, am *assets.AssetManager, handle assets.AnimationHandle, id animation.StateMachineID, startState string, mode AnimationMode) {
 	animations, joints, rootJointID := am.GetAnimations(handle)
 
 	c.RootJointID = rootJointID
 	c.AnimationHandle = handle
 	c.Animations = animations
 	c.AnimationStateMachineID = id
+	c.Mode = mode
 
 	player := iztanimation.NewAnimationPlayer()
 	player.Initialize(animations, joints[rootJointID])
-
-	stateMachine := animation.NewStateMachine(id)
-	if startState != "" {
-		stateMachine.SetCurrentState(startState)
-	}
-	stateMachine.SynchronizePlayer(player)
-
 	c.AnimationPlayer = player
-	c.AnimationStateMachine = stateMachine
+
+	if mode == AnimationModeStateMachine {
+		stateMachine := animation.NewStateMachine(id)
+		if startState != "" {
+			stateMachine.SetCurrentState(startState)
+		}
+		stateMachine.SynchronizePlayer(player)
+		c.AnimationStateMachine = stateMachine
+	}
 }

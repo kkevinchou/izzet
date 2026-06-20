@@ -426,9 +426,12 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			}, true)
 
 			ui.RowV("Animation State", func() {
-				state := e.Animation.AnimationStateMachine.CurrentState.Name
-				if app.AppMode() == types.AppModeEditor {
-					state = ""
+				var state string
+
+				if app.AppMode() == types.AppModePlay {
+					if e.Animation.Mode == entity.AnimationModeStateMachine {
+						state = e.Animation.AnimationStateMachine.CurrentState.Name
+					}
 				}
 				imgui.LabelText("", state)
 			}, true)

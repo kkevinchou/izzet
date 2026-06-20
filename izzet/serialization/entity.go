@@ -5,6 +5,7 @@ import (
 
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/geometry"
+	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 )
@@ -29,10 +30,16 @@ func initDeserializedEntity(e *entity.Entity, am *assets.AssetManager) {
 
 	// reinitialize the animation player and state machine
 	if e.Animation != nil {
-		state := e.Animation.AnimationStateMachine.CurrentState.Name
+		var state string
+		var id animation.StateMachineID
 		handle := e.Animation.AnimationHandle
-		id := e.Animation.AnimationStateMachineID
-		entity.InitializeAnimationComponent(e.Animation, am, handle, id, state)
+
+		if e.Animation.Mode == entity.AnimationModeStateMachine {
+			state = e.Animation.AnimationStateMachine.CurrentState.Name
+			id = e.Animation.AnimationStateMachineID
+		}
+
+		entity.InitializeAnimationComponent(e.Animation, am, handle, id, state, e.Animation.Mode)
 	}
 
 	if e.MeshComponent != nil && e.Collider != nil {

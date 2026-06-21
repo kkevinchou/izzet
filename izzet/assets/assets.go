@@ -20,7 +20,6 @@ import (
 )
 
 var materialIDGen int = 0
-var runtimeMeshIDGen int = 0
 var izzetMaterialPrefix = "izzet/"
 var fallbackTexture string = "default"
 

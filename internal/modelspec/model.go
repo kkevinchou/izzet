@@ -53,25 +53,6 @@ type MaterialSpecification struct {
 	PBRMaterial PBRMaterial
 }
 
-// ModelSpecification is the output of any parsed model files (e.g. from Blender, Maya, etc)
-// and acts a the blueprint for the model that contains all the associated vertex and
-// animation data. This struct should be agnostic to the 3D modelling tool that produced the data.
-type ModelSpecification struct {
-	Meshes []*MeshSpecification
-
-	// Joint Hierarchy
-	RootJoint *JointSpec
-
-	// Animations
-	Animations map[string]*AnimationSpec
-
-	JointMap map[int]*JointSpec
-
-	// list of textures by name. the index within this slice is
-	// the id for which the modespec references textures
-	Textures []string
-}
-
 type Scene struct {
 	Nodes []*Node
 }

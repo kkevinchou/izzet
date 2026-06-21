@@ -396,7 +396,7 @@ func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.A
 func (g *Client) LoadDefaultAssets() {
 	// default materials
 
-	defaultMaterial := modelspec.MaterialSpecification{
+	defaultMaterial := modelspec.Material{
 		PBRMaterial: modelspec.PBRMaterial{
 			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 				BaseColorTextureName: settings.DefaultTexture,
@@ -409,7 +409,7 @@ func (g *Client) LoadDefaultAssets() {
 
 	g.assetManager.CreateMaterialWithHandle("default material", defaultMaterial, g.assetManager.DefaultMaterialHandle())
 
-	whiteMaterial := modelspec.MaterialSpecification{
+	whiteMaterial := modelspec.Material{
 		PBRMaterial: modelspec.PBRMaterial{
 			PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 				BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},

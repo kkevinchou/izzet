@@ -2,7 +2,7 @@ package modelspec
 
 import "github.com/go-gl/mathgl/mgl32"
 
-type JointSpec struct {
+type Joint struct {
 	ID   int
 	Name string
 
@@ -16,5 +16,5 @@ type JointSpec struct {
 
 	LocalBindTransform mgl32.Mat4
 
-	Children []*JointSpec
+	Children []*Joint
 }

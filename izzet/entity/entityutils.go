@@ -53,8 +53,8 @@ func RemoveParent(child *Entity) {
 	}
 }
 
-func AssetPrimitiveToSpecPrimitive(primitives []assets.Primitive) []*modelspec.PrimitiveSpecification {
-	var result []*modelspec.PrimitiveSpecification
+func AssetPrimitiveToSpecPrimitive(primitives []assets.Primitive) []*modelspec.Primitive {
+	var result []*modelspec.Primitive
 	for _, p := range primitives {
 		result = append(result, p.Primitive)
 	}

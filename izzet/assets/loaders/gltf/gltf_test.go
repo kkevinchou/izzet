@@ -43,7 +43,7 @@ func TestFullKeyFrames(t *testing.T) {
 	}
 }
 
-func jointCount(joint *modelspec.JointSpec) int {
+func jointCount(joint *modelspec.Joint) int {
 	count := 1
 	for _, child := range joint.Children {
 		count += jointCount(child)

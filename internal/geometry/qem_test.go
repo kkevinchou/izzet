@@ -19,7 +19,7 @@ import (
 // }
 
 func TestFlatShape(t *testing.T) {
-	p := &modelspec.PrimitiveSpecification{
+	p := &modelspec.Primitive{
 		VertexIndices: []uint32{
 			0, 3, 4,
 			0, 4, 1,
@@ -50,7 +50,7 @@ func TestFlatShape(t *testing.T) {
 }
 
 func TestPyramid(t *testing.T) {
-	p := &modelspec.PrimitiveSpecification{
+	p := &modelspec.Primitive{
 		VertexIndices: []uint32{
 			2, 1, 3,
 			2, 3, 0,
@@ -69,7 +69,7 @@ func TestPyramid(t *testing.T) {
 }
 
 func TestBox(t *testing.T) {
-	p := &modelspec.PrimitiveSpecification{
+	p := &modelspec.Primitive{
 		VertexIndices: []uint32{
 			// left
 			4, 0, 3,
@@ -116,7 +116,7 @@ func TestBox(t *testing.T) {
 }
 
 func TestTriangleMerge(t *testing.T) {
-	p := &modelspec.PrimitiveSpecification{
+	p := &modelspec.Primitive{
 		VertexIndices: []uint32{
 			0, 1, 4,
 			1, 2, 4,

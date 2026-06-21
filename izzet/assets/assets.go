@@ -31,13 +31,13 @@ type DocumentAsset struct {
 }
 
 type MaterialAsset struct {
-	Material modelspec.MaterialSpecification
+	Material modelspec.Material
 	Name     string
 	Handle   MaterialHandle
 }
 
 type Primitive struct {
-	Primitive *modelspec.PrimitiveSpecification
+	Primitive *modelspec.Primitive
 
 	// vao that contains all vertex attributes
 	// position, normals, texture coords, joint indices/weights, etc
@@ -62,7 +62,7 @@ type AssetManager struct {
 	// Asset References
 	Primitives map[MeshHandle][]Primitive
 	Animations map[string]map[string]*modelspec.AnimationSpec
-	Joints     map[string]map[int]*modelspec.JointSpec
+	Joints     map[string]map[int]*modelspec.Joint
 	RootJoints map[string]int
 
 	processVisuals bool
@@ -94,7 +94,7 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		Primitives:     map[MeshHandle][]Primitive{},
 		materialAssets: map[MaterialHandle]MaterialAsset{},
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
-		Joints:         map[string]map[int]*modelspec.JointSpec{},
+		Joints:         map[string]map[int]*modelspec.Joint{},
 		RootJoints:     map[string]int{},
 	}
 
@@ -190,7 +190,7 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 	panic("material handle not found")
 }
 
-func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.MaterialSpecification) MaterialHandle {
+func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Material) MaterialHandle {
 	materialHandle := MaterialHandle{id: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
 	if mat, ok := m.materialAssets[materialHandle]; ok {
 		panic(fmt.Sprintf("material already exists in asset manager. %v", mat))
@@ -200,13 +200,13 @@ func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Mate
 	return materialHandle
 }
 
-func (m *AssetManager) createMaterial(name string, id string, material modelspec.MaterialSpecification) MaterialHandle {
+func (m *AssetManager) createMaterial(name string, id string, material modelspec.Material) MaterialHandle {
 	materialHandle := MaterialHandle{id: id}
 	m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
 	return materialHandle
 }
 
-func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.MaterialSpecification, materialHandle MaterialHandle) {
+func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.Material, materialHandle MaterialHandle) {
 	if _, ok := m.materialAssets[materialHandle]; !ok {
 		m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
 	}
@@ -232,7 +232,7 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 // meant to be called when a mesh is created at runtime and needs to be registered
-func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.MeshSpecification, matIDToHandle map[string]MaterialHandle) MeshHandle {
+func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.Mesh, matIDToHandle map[string]MaterialHandle) MeshHandle {
 	handle := MeshHandle{namespace: "runtime", id: fmt.Sprintf("%d", runtimeMeshIDGen)}
 	runtimeMeshIDGen++
 	return m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)

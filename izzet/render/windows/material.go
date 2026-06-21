@@ -171,7 +171,7 @@ func renderMaterialWindow(app renderiface.App) {
 func assignDefaultMaterial() {
 	activeMaterial = assets.MaterialAsset{
 		Name: defaultMaterialName,
-		Material: modelspec.MaterialSpecification{
+		Material: modelspec.Material{
 			PBRMaterial: modelspec.PBRMaterial{
 				PBRMetallicRoughness: modelspec.PBRMetallicRoughness{
 					BaseColorFactor: mgl32.Vec4{1, 1, 1, 1},

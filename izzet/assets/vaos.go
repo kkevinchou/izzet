@@ -151,7 +151,7 @@ func (m *AssetManager) SetupBatchedStaticRendering(meshHandles []MeshHandle, mod
 // also, when we merged everything into one vao, we need to first apply any node transformations
 // onto the vertices since we won't be able to set uniforms for each mesh, as we now render them
 // all at once, rather than one at a time and setting the transform uniforms
-func createVAOs(meshes []*modelspec.MeshSpecification) [][]uint32 {
+func createVAOs(meshes []*modelspec.Mesh) [][]uint32 {
 	vaos := [][]uint32{}
 	for i, mesh := range meshes {
 		vaos = append(vaos, []uint32{})
@@ -250,7 +250,7 @@ func createVAOs(meshes []*modelspec.MeshSpecification) [][]uint32 {
 	return vaos
 }
 
-func createGeometryVAOs(meshes []*modelspec.MeshSpecification) [][]uint32 {
+func createGeometryVAOs(meshes []*modelspec.Mesh) [][]uint32 {
 	vaos := [][]uint32{}
 	for i, mesh := range meshes {
 		vaos = append(vaos, []uint32{})

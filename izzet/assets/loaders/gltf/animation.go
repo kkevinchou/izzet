@@ -17,10 +17,10 @@ type jointMeta struct {
 }
 
 type ParsedJoints struct {
-	RootJoint       *modelspec.JointSpec
+	RootJoint       *modelspec.Joint
 	NodeIDToJointID map[int]int
 	JointIDToNodeID map[int]int
-	JointMap        map[int]*modelspec.JointSpec
+	JointMap        map[int]*modelspec.Joint
 }
 
 type preparedAnimationChannel struct {
@@ -217,7 +217,7 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 		jms[jointID].inverseBindMatrix = inverseBindMatrix
 	}
 
-	joints := map[int]*modelspec.JointSpec{}
+	joints := map[int]*modelspec.Joint{}
 	for nodeID, node := range document.Nodes {
 		if _, ok := nodeIDToJointID[nodeID]; !ok {
 			continue
@@ -236,7 +236,7 @@ func parseJoints(document *gltf.Document, skin *gltf.Skin) (*ParsedJoints, error
 		rotationMatrix := mgl32.Quat{V: mgl32.Vec3{rotation[0], rotation[1], rotation[2]}, W: rotation[3]}.Mat4()
 		scaleMatrix := mgl32.Scale3D(scale[0], scale[1], scale[2])
 
-		joints[jointID] = &modelspec.JointSpec{
+		joints[jointID] = &modelspec.Joint{
 			Name:                 fmt.Sprintf("joint_%s_%d", node.Name, jointID),
 			ID:                   jointID,
 			LocalBindTransform:   translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix)),
@@ -332,7 +332,7 @@ func prepareAnimationChannels(ctx *parseContext, document *gltf.Document, animat
 // if skin.skeleton is present, it points to the root node
 //
 // TODO - support multiple skins
-func selectRootJoint(joints map[int]*modelspec.JointSpec, jointNodeIDs []int, nodeIDToJointID map[int]int, childIDSet map[int]bool) *modelspec.JointSpec {
+func selectRootJoint(joints map[int]*modelspec.Joint, jointNodeIDs []int, nodeIDToJointID map[int]int, childIDSet map[int]bool) *modelspec.Joint {
 	for _, nodeID := range jointNodeIDs {
 		jointID := nodeIDToJointID[nodeID]
 		if childIDSet[jointID] {

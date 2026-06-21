@@ -117,7 +117,7 @@ func (m *AssetManager) IsRaptorAnimationHandle(animationHandle AnimationHandle) 
 }
 
 // this should probably look up a document, and get the animations from there, rather than storing these locally
-func (m *AssetManager) GetAnimations(animationHandle AnimationHandle) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.JointSpec, int) {
+func (m *AssetManager) GetAnimations(animationHandle AnimationHandle) (map[string]*modelspec.AnimationSpec, map[int]*modelspec.Joint, int) {
 	id := string(animationHandle.id)
 	return m.Animations[id], m.Joints[id], m.RootJoints[id]
 }

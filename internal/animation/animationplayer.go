@@ -20,7 +20,7 @@ type AnimationPlayer struct {
 
 	// these fields are from the loaded animation and should not be modified
 	animations map[string]*modelspec.AnimationSpec
-	rootJoint  *modelspec.JointSpec
+	rootJoint  *modelspec.Joint
 
 	leftover time.Duration
 	playRate float64
@@ -31,7 +31,7 @@ func NewAnimationPlayer() *AnimationPlayer {
 	return &AnimationPlayer{playRate: 1}
 }
 
-func (player *AnimationPlayer) Initialize(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.JointSpec) {
+func (player *AnimationPlayer) Initialize(animations map[string]*modelspec.AnimationSpec, rootJoint *modelspec.Joint) {
 	player.animations = animations
 	player.rootJoint = rootJoint
 }
@@ -157,7 +157,7 @@ func (player *AnimationPlayer) Length() time.Duration {
 	return player.currentAnimation.Length
 }
 
-func computeJointTransformsHelper(joint *modelspec.JointSpec, parentTransform mgl32.Mat4, poseTransforms []mgl32.Mat4, transforms map[int]mgl32.Mat4) {
+func computeJointTransformsHelper(joint *modelspec.Joint, parentTransform mgl32.Mat4, poseTransforms []mgl32.Mat4, transforms map[int]mgl32.Mat4) {
 	// if there is no pose in the animation, just use the local bind transform.
 	// when a pose is present, the keyframe data already includes the local bind transform
 	// using the identity matrix is not correct, we still need the bind transform.
@@ -272,7 +272,7 @@ func clonePose(pose []modelspec.JointTransform) []modelspec.JointTransform {
 	return cloned
 }
 
-func bindPoseHelper(joint *modelspec.JointSpec, transforms map[int]mgl32.Mat4) {
+func bindPoseHelper(joint *modelspec.Joint, transforms map[int]mgl32.Mat4) {
 	transforms[joint.ID] = joint.FullBindTransform
 	for _, child := range joint.Children {
 		bindPoseHelper(child, transforms)

@@ -58,7 +58,7 @@ type Vertex struct {
 //
 // stop after we've reached a target number of triangles/ stop after some number of contractions
 
-func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *HalfEdgeSurface {
+func CreateHalfEdgeSurface(primitives []*modelspec.Primitive) *HalfEdgeSurface {
 	var halfEdgeCursor int
 	p := primitives[0]
 
@@ -100,7 +100,7 @@ func CreateHalfEdgeSurface(primitives []*modelspec.PrimitiveSpecification) *Half
 	return surface
 }
 
-func createBoundaryHalfEdge(surface *HalfEdgeSurface, primitive *modelspec.PrimitiveSpecification, halfEdgeCount int) {
+func createBoundaryHalfEdge(surface *HalfEdgeSurface, primitive *modelspec.Primitive, halfEdgeCount int) {
 	halfEdgesWithNilNext := map[int][]*HalfEdge{}
 	for i := 0; i < halfEdgeCount; i++ {
 		he := surface.HalfEdges[i]

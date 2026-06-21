@@ -24,7 +24,7 @@ type TriangleVAO struct {
 }
 
 type RenderData struct {
-	Primitive   *modelspec.PrimitiveSpecification
+	Primitive   *modelspec.Primitive
 	Transform   mgl32.Mat4
 	VAO         uint32
 	GeometryVAO uint32

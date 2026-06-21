@@ -149,7 +149,7 @@ func (g *Server) NavMesh() *navmesh.CompiledNavMesh {
 
 func (g *Server) CopyLoadedAnimations(
 	animations map[string]map[string]*modelspec.AnimationSpec,
-	joints map[string]map[int]*modelspec.JointSpec,
+	joints map[string]map[int]*modelspec.Joint,
 	rootJoints map[string]int,
 ) {
 	g.assetManager.Animations = animations

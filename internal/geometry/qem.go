@@ -14,7 +14,7 @@ import (
 )
 
 // TODO - we should check that a merged edge doesn't cause the mesh to be degenerate. if so, skip
-func SimplifyMesh(primitive *modelspec.PrimitiveSpecification, iterations int) *collider.TriMesh {
+func SimplifyMesh(primitive *modelspec.Primitive, iterations int) *collider.TriMesh {
 	allVertIndices, allVertPositions, v2t, triangles := mergeVerticesByDistance(primitive, 0.00001)
 
 	// 1. Compute the Q matrices for all the initial vertices.
@@ -212,7 +212,7 @@ func (p Point) Bounds() *rtreego.Rect {
 	return p.RPoint.ToRect(p.Distance)
 }
 
-func mergeVerticesByDistance(primitive *modelspec.PrimitiveSpecification, distance float64) ([]int, []mgl64.Vec3, map[int][]int, map[int][3]int) {
+func mergeVerticesByDistance(primitive *modelspec.Primitive, distance float64) ([]int, []mgl64.Vec3, map[int][]int, map[int][3]int) {
 	var allVertPositions []mgl64.Vec3
 	for _, v := range primitive.UniqueVertices {
 		allVertPositions = append(allVertPositions, utils.Vec3F32ToF64(v.Position))

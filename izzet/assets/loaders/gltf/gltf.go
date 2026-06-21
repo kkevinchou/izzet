@@ -80,7 +80,7 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 			return nil, err
 		}
 
-		meshSpec := &modelspec.MeshSpecification{ID: i, Primitives: primitiveSpecs}
+		meshSpec := &modelspec.Mesh{ID: i, Primitives: primitiveSpecs}
 		document.Meshes = append(document.Meshes, meshSpec)
 	}
 
@@ -194,8 +194,8 @@ func getNodeTransform(node *gltf.Node) mgl32.Mat4 {
 // parseMaterialSpecs creates MaterialSpecifications from the gltf materials list
 // we also return an id mapping from the gltf id to the internal material id
 // (this might be overkill since their ids are probably also zero index and incrementing)
-func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.MaterialSpecification, map[int]string, error) {
-	var materials []modelspec.MaterialSpecification
+func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.Material, map[int]string, error) {
+	var materials []modelspec.Material
 	idMapping := map[int]string{}
 
 	for gltfIdx, gltfMaterial := range document.Materials {
@@ -224,7 +224,7 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 			pbrMaterial.PBRMetallicRoughness.BaseColorTextureName = textures[intIndex]
 			pbrMaterial.PBRMetallicRoughness.BaseColorTextureCoordsIndex = int(pbr.BaseColorTexture.TexCoord)
 		}
-		material := modelspec.MaterialSpecification{
+		material := modelspec.Material{
 			ID:          fmt.Sprintf("%d", gltfIdx),
 			PBRMaterial: pbrMaterial,
 		}
@@ -239,14 +239,14 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 // index - the index of the mesh, since meshes can have multiple primitives, we can have
 // mesh model specifications with the same index. this is okay, external applications should
 // not reference this and instead use the mesh id
-func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]string, config *ParseConfig) ([]*modelspec.PrimitiveSpecification, error) {
-	var primitiveSpecs []*modelspec.PrimitiveSpecification
+func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]string, config *ParseConfig) ([]*modelspec.Primitive, error) {
+	var primitiveSpecs []*modelspec.Primitive
 
 	for _, primitive := range mesh.Primitives {
 		if primitive.Mode != gltf.PrimitiveTriangles {
 			panic(fmt.Sprintf("received primitive mode %v but can only support triangles", primitive.Mode))
 		}
-		primitiveSpec := &modelspec.PrimitiveSpecification{}
+		primitiveSpec := &modelspec.Primitive{}
 		acrIndex := *primitive.Indices
 		indicesAccessor := document.Accessors[int(acrIndex)]
 		meshIndices, err := modeler.ReadIndices(document, indicesAccessor, nil)

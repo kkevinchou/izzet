@@ -36,7 +36,7 @@ type Vertex struct {
 	JointWeights []float32
 }
 
-type PrimitiveSpecification struct {
+type Primitive struct {
 	VertexIndices []uint32
 	// the unique vertices in the mesh chunk. VertexIndices details
 	// how the unique vertices are arranged to construct the mesh
@@ -48,7 +48,7 @@ type PrimitiveSpecification struct {
 	MaterialIndex string
 }
 
-type MaterialSpecification struct {
+type Material struct {
 	ID          string
 	PBRMaterial PBRMaterial
 }
@@ -72,22 +72,22 @@ type Document struct {
 	Name string
 
 	Scenes    []*Scene
-	Meshes    []*MeshSpecification
-	Materials []MaterialSpecification
+	Meshes    []*Mesh
+	Materials []Material
 	Textures  []string
 
-	JointMap   map[int]*JointSpec
+	JointMap   map[int]*Joint
 	Animations map[string]*AnimationSpec
 
 	// not sure where to put this
-	RootJoint *JointSpec
+	RootJoint *Joint
 
 	PeripheralFiles []string
 }
 
-type MeshSpecification struct {
+type Mesh struct {
 	ID         int
-	Primitives []*PrimitiveSpecification
+	Primitives []*Primitive
 }
 
 func NormalizeWeights(jointWeights []JointWeight) {
@@ -117,13 +117,3 @@ func (s byWeights) Swap(i, j int) {
 func (s byWeights) Less(i, j int) bool {
 	return s[i].Weight < s[j].Weight
 }
-
-// careful with this method. i believe this assumes that the local bind pose is in a tpose but this isn't always the case.
-// in collada files it's more reliable to read the inv bind matrix from the data file itself rather than try to calculate it
-// func calculateInverseBindTransform(joint *modelspec.JointSpec, parentBindTransform mgl32.Mat4) {
-// 	bindTransform := parentBindTransform.Mul4(joint.BindTransform) // model-space relative to the origin
-// 	joint.InverseBindTransform = bindTransform.Inv()
-// 	for _, child := range joint.Children {
-// 		calculateInverseBindTransform(child, bindTransform)
-// 	}
-// }

@@ -104,7 +104,7 @@ func (a *AssetManager) clearDocumentPrimitives(config AssetConfig) {
 	}
 }
 
-func createMaterialUniqueID(fp string, material modelspec.MaterialSpecification) string {
+func createMaterialUniqueID(fp string, material modelspec.Material) string {
 	split := strings.Split(filepath.ToSlash(fp), "/")
 	return fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID)
 }
@@ -123,12 +123,12 @@ func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matI
 	}
 }
 
-func (m *AssetManager) registerMeshPrimitivesWithHandle(handle MeshHandle, mesh *modelspec.MeshSpecification, matIDToHandle map[string]MaterialHandle) MeshHandle {
+func (m *AssetManager) registerMeshPrimitivesWithHandle(handle MeshHandle, mesh *modelspec.Mesh, matIDToHandle map[string]MaterialHandle) MeshHandle {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {
-		vaos = createVAOs([]*modelspec.MeshSpecification{mesh})
-		geometryVAOs = createGeometryVAOs([]*modelspec.MeshSpecification{mesh})
+		vaos = createVAOs([]*modelspec.Mesh{mesh})
+		geometryVAOs = createGeometryVAOs([]*modelspec.Mesh{mesh})
 	}
 
 	for i, primitive := range mesh.Primitives {

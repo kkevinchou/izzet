@@ -62,7 +62,7 @@ func (t TriMesh) Transform(transform mgl64.Mat4) TriMesh {
 // 	return triMesh
 // }
 
-func CreateTriMeshFromPrimitives(primitives []*modelspec.PrimitiveSpecification) *TriMesh {
+func CreateTriMeshFromPrimitives(primitives []*modelspec.Primitive) *TriMesh {
 	triMesh := TriMesh{}
 
 	for _, p := range primitives {

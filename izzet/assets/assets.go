@@ -231,13 +231,6 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 	return a.fonts[name]
 }
 
-// meant to be called when a mesh is created at runtime and needs to be registered
-func (m *AssetManager) RegisterRuntimeMesh(mesh *modelspec.Mesh, matIDToHandle map[string]MaterialHandle) MeshHandle {
-	handle := MeshHandle{namespace: "runtime", id: fmt.Sprintf("%d", runtimeMeshIDGen)}
-	runtimeMeshIDGen++
-	return m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
-}
-
 func (a *AssetManager) DeleteDocument(documentAsset DocumentAsset) {
 	delete(a.documentAssets, documentAsset.Config.Name)
 }

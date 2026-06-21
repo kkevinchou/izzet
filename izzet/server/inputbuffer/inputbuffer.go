@@ -7,7 +7,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/iztlog"
 )
 
-const maxBufferedInput int = 10
+const maxBufferedInput int = 2
 
 type BufferedInput struct {
 	Input             input.Input

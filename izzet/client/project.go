@@ -164,7 +164,6 @@ func (g *Client) NewProject(name string) {
 	// set up the default scene
 
 	cube := entity.CreateCube(g.AssetManager(), 1)
-	cube.Material = &entity.MaterialComponent{MaterialHandle: g.AssetManager().DefaultMaterialHandle()}
 	entity.SetLocalPosition(cube, mgl64.Vec3{0, -1, 0})
 	entity.SetScale(cube, mgl64.Vec3{75, 2, 75})
 	g.World().AddEntity(cube)

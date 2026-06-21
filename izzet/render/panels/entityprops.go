@@ -11,7 +11,6 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/ui"
@@ -20,15 +19,14 @@ import (
 
 type ComponentComboOption string
 
-var MaterialComboOption ComponentComboOption = "Material Component"
+var SelectedComponentComboOption ComponentComboOption = PhysicsComboOption
+
 var PhysicsComboOption ComponentComboOption = "Physics Component"
 var LightComboOption ComponentComboOption = "Light Component"
 var ImageComboOption ComponentComboOption = "Image Component"
 var SpawnPointComboOption ComponentComboOption = "Spawn Point Component"
-var SelectedComponentComboOption ComponentComboOption = MaterialComboOption
 
 var componentComboOptions []ComponentComboOption = []ComponentComboOption{
-	MaterialComboOption,
 	PhysicsComboOption,
 	LightComboOption,
 	ImageComboOption,
@@ -36,9 +34,7 @@ var componentComboOptions []ComponentComboOption = []ComponentComboOption{
 }
 
 var (
-	selectedMaterialHandle assets.MaterialHandle
-	selectedMaterialName   string
-	animationFilterText    string
+	animationFilterText string
 )
 
 const animationComboListHeight float32 = 200
@@ -203,59 +199,6 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 		}
 	}
 
-	if e.Material != nil {
-		if imgui.CollapsingHeaderTreeNodeFlagsV("Material Properties", imgui.TreeNodeFlagsNone) {
-			imgui.BeginTableV("", 2, imgui.TableFlagsBorders|imgui.TableFlagsResizable, imgui.Vec2{}, 0)
-			ui.InitColumns()
-
-			// ui.RowV("Diffuse", func() {
-			// 	imgui.ColorEdit3V("", &entity.Material.Material.PBR.Diffuse, imgui.ColorEditFlagsNoInputs|imgui.ColorEditFlagsNoLabel)
-			// }, true)
-			// ui.RowV("Invisible", func() {
-			// 	imgui.Checkbox("", &entity.Material.Material.Invisible)
-			// }, true)
-
-			// ui.RowV("Diffuse Intensity", func() {
-			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.DiffuseIntensity, 1, 100, "%.1f", imgui.SliderFlagsNone)
-			// }, true)
-
-			// ui.RowV("Roughness", func() {
-			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Roughness, 0, 1, "%.2f", imgui.SliderFlagsNone)
-			// }, true)
-			// ui.RowV("Metallic Factor", func() {
-			// 	imgui.SliderFloatV("", &entity.Material.Material.PBR.Metallic, 0, 1, "%.2f", imgui.SliderFlagsNone)
-			// }, true)
-			ui.RowV("Current Material", func() {
-				materialName := app.AssetManager().GetMaterial(e.Material.MaterialHandle).Name
-				imgui.LabelText("", materialName)
-			}, true)
-			imgui.EndTable()
-			imgui.PushIDStr("Material Combo")
-			if imgui.BeginCombo("", selectedMaterialName) {
-				for i, material := range app.AssetManager().GetMaterials() {
-					if imgui.SelectableBool(fmt.Sprintf("%s##%d", material.Name, i)) {
-						selectedMaterialHandle = material.Handle
-						selectedMaterialName = material.Name
-					}
-				}
-				imgui.EndCombo()
-			}
-			imgui.PopID()
-			imgui.PushIDStr("assign")
-			if imgui.Button("Assign") {
-				// material := app.AssetManager().GetMaterial(selectedMaterialHandle)
-				e.Material.MaterialHandle = selectedMaterialHandle
-			}
-			imgui.PopID()
-			imgui.SameLine()
-			imgui.PushIDStr("remove material")
-			if imgui.Button("Remove") {
-				e.Material = nil
-			}
-			imgui.PopID()
-		}
-	}
-
 	originalMeshTriCount := 0
 
 	if e.MeshComponent != nil {
@@ -270,6 +213,16 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			ui.RowV("Shadow Casting", func() { imgui.Checkbox("", &e.MeshComponent.ShadowCasting) }, true)
 
 			uiTableRow("Original Triangle Count", originalMeshTriCount)
+			var materialStrs []string
+			for _, handle := range e.MeshComponent.Materials {
+				m := app.AssetManager().GetMaterial(handle)
+				materialStrs = append(materialStrs, m.Name)
+			}
+			materialText := "-"
+			if len(materialStrs) > 0 {
+				materialText = strings.Join(materialStrs, ", ")
+			}
+			uiTableRow("Materials", materialText)
 			imgui.EndTable()
 		}
 	}
@@ -537,11 +490,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 	if imgui.Button("Add Component") {
 		selectedEntity := app.SelectedEntity()
 		if selectedEntity != nil {
-			if SelectedComponentComboOption == MaterialComboOption {
-				selectedEntity.Material = &entity.MaterialComponent{
-					MaterialHandle: app.AssetManager().DefaultMaterialHandle(),
-				}
-			} else if SelectedComponentComboOption == LightComboOption {
+			if SelectedComponentComboOption == LightComboOption {
 				selectedEntity.LightInfo = &entity.LightInfo{
 					PreScaledIntensity: 0.05,
 					Diffuse3F:          [3]float32{1, 1, 1},

@@ -361,11 +361,6 @@ func drawModel(
 	shader *shaders.ShaderProgram,
 	e *entity.Entity,
 ) {
-	// var animationPlayer *animation.AnimationPlayer
-	// if e.Animation != nil {
-	// 	animationPlayer = e.Animation.AnimationPlayer
-	// }
-
 	var animationPlayer *animation.AnimationPlayer
 	if e.Animation != nil {
 		animationPlayer = e.Animation.AnimationPlayer
@@ -394,11 +389,14 @@ func drawModel(
 	} else {
 		shader.SetUniformInt("repeatTexture", 0)
 	}
-	for _, prim := range primitives {
+	for i, prim := range primitives {
+		// once we have prefabs working we should drop the use of materials from the primitive
+		// the material from the primitive is the original material from the source asset
 		materialHandle := prim.MaterialHandle
-		if e.Material != nil {
-			materialHandle = e.Material.MaterialHandle
+		if len(e.MeshComponent.Materials) > 0 && i < len(e.MeshComponent.Materials) {
+			materialHandle = e.MeshComponent.Materials[i]
 		}
+
 		primitiveMaterial := app.AssetManager().GetMaterial(materialHandle).Material
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 		alphaMode := primitiveMaterial.PBRMaterial.AlphaMode

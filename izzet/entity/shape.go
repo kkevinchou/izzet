@@ -49,6 +49,7 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	handle := ml.DefaultCubeHandle()
 	entity.MeshComponent = &MeshComponent{
 		MeshHandle:    handle,
+		Materials:     []assets.MaterialHandle{ml.DefaultMaterialHandle()},
 		Transform:     mgl64.Ident4(),
 		Visible:       true,
 		ShadowCasting: true,
@@ -61,6 +62,7 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	t := collider.CreateTriMeshFromPrimitives(AssetPrimitiveToSpecPrimitive(primitives))
 	entity.Collider = CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, types.ColliderGroupFlagTerrain, *t, nil, bb)
 	entity.Physics = &PhysicsComponent{Velocity: mgl64.Vec3{0, 0, 0}}
+	entity.Static = true
 
 	entityIDGen += 1
 	return entity

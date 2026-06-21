@@ -19,7 +19,6 @@ type Entity struct {
 	LightInfo       *LightInfo
 	ImageComponent  *ImageComponent
 	ShapeData       []*ShapeData
-	Material        *MaterialComponent
 	Animation       *AnimationComponent
 	RenderBlend     *RenderBlend
 	CameraComponent *CameraComponent

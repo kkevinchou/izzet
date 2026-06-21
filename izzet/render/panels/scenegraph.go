@@ -24,11 +24,6 @@ func SceneGraph(app renderiface.App) {
 		if imgui.BeginPopupContextItemV("NULL", imgui.PopupFlagsMouseButtonRight) {
 			if imgui.Button("Add Cube") {
 				e := entity.CreateCube(app.AssetManager(), 1)
-				e.Material = &entity.MaterialComponent{
-					MaterialHandle: app.AssetManager().DefaultMaterialHandle(),
-				}
-				e.Static = true
-
 				world.AddEntity(e)
 				app.SelectEntity(e)
 				imgui.CloseCurrentPopup()

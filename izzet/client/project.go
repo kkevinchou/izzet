@@ -35,7 +35,7 @@ type MaterialsJSON struct {
 type AssetsJSON struct {
 	Documents []DocumentJSON
 	Materials []MaterialsJSON
-	Prefabs   []prefab.Prefab
+	Prefabs   []prefab.Asset
 }
 
 func (g *Client) InitializeProjectFolders(name string) error {
@@ -121,9 +121,7 @@ func (g *Client) SaveProjectAs(name string) error {
 
 	// prefabs
 
-	for _, prefab := range prefab.PrefabRegistry {
-		assetsJSON.Prefabs = append(assetsJSON.Prefabs, prefab)
-	}
+	assetsJSON.Prefabs = prefab.SaveAssets()
 
 	// assets file
 
@@ -258,6 +256,10 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 
 	for _, material := range assetsJSON.Materials {
 		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
+	}
+
+	if err := prefab.LoadAssets(assetsJSON.Prefabs); err != nil {
+		panic(err)
 	}
 }
 

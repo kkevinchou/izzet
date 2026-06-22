@@ -35,6 +35,7 @@ type RuntimeConfig struct {
 	ShowImguiDemo          bool
 	ShowTextureViewer      bool
 	ShowMaterialEditor     bool
+	ShowPrefabEditor       bool
 	DebugTexture           uint32  // 64 bits as we need extra bits to specify a the type of texture to IMGUI
 	DebugAspectRatio       float64 // the aspect ratio of the debug texture
 	TextureArrayDebugLayer int32

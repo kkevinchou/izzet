@@ -51,6 +51,8 @@ func renderMaterialWindow(app renderiface.App) {
 
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 12, Y: 12})
+	defer imgui.PopStyleVar()
 
 	if imgui.BeginV(materialWindow, &app.RuntimeConfig().ShowMaterialEditor, imgui.WindowFlagsNone) {
 		var materialUpdated bool

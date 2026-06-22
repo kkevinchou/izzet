@@ -32,11 +32,11 @@ func CreateDefaultPrefabs(app App) {
 	player := createPlayer(app)
 	velociraptor := createNPC(app, entity.EntityTypeVelociraptor)
 
-	PrefabRegistry[PrefabHandleMannequin] = New(player)
-	PrefabRegistry[PrefabHandleVelociraptor] = New(velociraptor)
+	PrefabRegistry[PrefabHandleMannequin] = new(player)
+	PrefabRegistry[PrefabHandleVelociraptor] = new(velociraptor)
 }
 
-func New(e *entity.Entity) Prefab {
+func new(e *entity.Entity) Prefab {
 	bytes, err := serialization.SerializeEntity(e)
 	if err != nil {
 		panic(err)

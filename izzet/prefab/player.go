@@ -12,7 +12,7 @@ import (
 )
 
 func createPlayer(app App) *entity.Entity {
-	e := entity.CreateEmptyEntity("player")
+	e := entity.InstantiateBaseEntity("player", 0)
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
 
 	var radius float64 = settings.EntityCapsuleColliderRadius

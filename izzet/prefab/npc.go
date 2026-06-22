@@ -26,7 +26,7 @@ func createNPC(app App, entityType entity.EntityType) *entity.Entity {
 	}
 
 	meshHandle := app.AssetManager().GetSingleEntityMeshHandle(modelName)
-	e := entity.CreateEmptyEntity(modelName)
+	e := entity.InstantiateBaseEntity(modelName, 0)
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: 7}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	e.HealthComponent = &entity.HealthComponent{Amount: 100}

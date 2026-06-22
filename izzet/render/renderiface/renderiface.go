@@ -53,8 +53,8 @@ type App interface {
 	ImportAsset(config assets.AssetConfig)
 	SelectEntity(entity *entity.Entity)
 	SelectedEntity() *entity.Entity
-	CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset, merged bool) *entity.Entity
-	DeleteDocument(documentAsset assets.DocumentAsset) []int
+	CreateEntitiesFromDocument(d assets.Document, merged bool) *entity.Entity
+	DeleteDocument(d assets.Document) []int
 	BuildNavMesh(App, int, float32, float32, int, float64, float64)
 	NavMesh() *navmesh.NavigationMesh
 	World() *world.GameWorld

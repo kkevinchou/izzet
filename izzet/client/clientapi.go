@@ -351,7 +351,7 @@ func (g *Client) ImportAsset(config assets.AssetConfig) {
 	g.assetManager.LoadAndRegisterDocument(newConfig)
 }
 
-func (g *Client) DeleteDocument(documentAsset assets.DocumentAsset) []int {
+func (g *Client) DeleteDocument(documentAsset assets.Document) []int {
 	var referencingEntityIDs []int
 	namespace := documentAsset.Config.Name
 	for _, e := range g.world.Entities() {

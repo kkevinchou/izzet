@@ -23,13 +23,13 @@ var materialIDGen int = 0
 var izzetMaterialPrefix = "izzet/"
 var fallbackTexture string = "default"
 
-type DocumentAsset struct {
+type Document struct {
 	MatIDToHandle map[string]MaterialHandle
 	Document      *modelspec.Document `json:"-"`
 	Config        AssetConfig
 }
 
-type MaterialAsset struct {
+type Material struct {
 	Material modelspec.Material
 	Name     string
 	Handle   MaterialHandle
@@ -53,10 +53,10 @@ type Primitive struct {
 type AssetManager struct {
 	logger *slog.Logger
 	// Static Assets
-	textures       map[string]*textures.Texture
-	documentAssets map[string]DocumentAsset
-	fonts          map[string]fonts.Font
-	materialAssets map[MaterialHandle]MaterialAsset
+	textures  map[string]*textures.Texture
+	documents map[string]Document
+	fonts     map[string]fonts.Font
+	materials map[MaterialHandle]Material
 
 	// Asset References
 	Primitives map[MeshHandle][]Primitive
@@ -89,9 +89,9 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		fonts:          loadedFonts,
 		audioData:      audioData,
 		processVisuals: processVisualAssets,
-		documentAssets: map[string]DocumentAsset{},
+		documents:      map[string]Document{},
 		Primitives:     map[MeshHandle][]Primitive{},
-		materialAssets: map[MaterialHandle]MaterialAsset{},
+		materials:      map[MaterialHandle]Material{},
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:         map[string]map[int]*modelspec.Joint{},
 		RootJoints:     map[string]int{},
@@ -133,24 +133,24 @@ func (a *AssetManager) GetTextureWithFallback(name string) *textures.Texture {
 	return a.textures[name]
 }
 
-func (a *AssetManager) GetDocumentAsset(name string) DocumentAsset {
-	if _, ok := a.documentAssets[name]; !ok {
+func (a *AssetManager) GetDocumentAsset(name string) Document {
+	if _, ok := a.documents[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
 	}
-	return a.documentAssets[name]
+	return a.documents[name]
 }
 
 func (a *AssetManager) GetDocument(name string) *modelspec.Document {
-	if _, ok := a.documentAssets[name]; !ok {
+	if _, ok := a.documents[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))
 	}
-	return a.documentAssets[name].Document
+	return a.documents[name].Document
 }
 
-func (a *AssetManager) GetDocuments() []DocumentAsset {
-	var documents []DocumentAsset
-	for _, documentAsset := range a.documentAssets {
-		documents = append(documents, documentAsset)
+func (a *AssetManager) GetDocuments() []Document {
+	var documents []Document
+	for _, d := range a.documents {
+		documents = append(documents, d)
 	}
 	sort.Slice(documents, func(i, j int) bool {
 		return documents[i].Config.Name < documents[j].Config.Name
@@ -158,9 +158,9 @@ func (a *AssetManager) GetDocuments() []DocumentAsset {
 	return documents
 }
 
-func (a *AssetManager) GetMaterials() []MaterialAsset {
-	var materials []MaterialAsset
-	for _, material := range a.materialAssets {
+func (a *AssetManager) GetMaterials() []Material {
+	var materials []Material
+	for _, material := range a.materials {
 		materials = append(materials, material)
 	}
 	sort.Slice(materials, func(i, j int) bool {
@@ -169,21 +169,21 @@ func (a *AssetManager) GetMaterials() []MaterialAsset {
 	return materials
 }
 
-func (m *AssetManager) GetMaterial(materialHandle MaterialHandle) MaterialAsset {
-	if materialAsset, ok := m.materialAssets[materialHandle]; ok {
+func (m *AssetManager) GetMaterial(materialHandle MaterialHandle) Material {
+	if materialAsset, ok := m.materials[materialHandle]; ok {
 		return materialAsset
 	}
-	material := m.materialAssets[defaultMaterialHandle]
+	material := m.materials[defaultMaterialHandle]
 	return material
 }
 
 func (m *AssetManager) DeleteMaterial(materialHandle MaterialHandle) {
-	delete(m.materialAssets, materialHandle)
+	delete(m.materials, materialHandle)
 }
 
-func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
-	if _, ok := m.materialAssets[material.Handle]; ok {
-		m.materialAssets[material.Handle] = material
+func (m *AssetManager) UpdateMaterialAsset(material Material) {
+	if _, ok := m.materials[material.Handle]; ok {
+		m.materials[material.Handle] = material
 		return
 	}
 	panic("material handle not found")
@@ -191,23 +191,23 @@ func (m *AssetManager) UpdateMaterialAsset(material MaterialAsset) {
 
 func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Material) MaterialHandle {
 	materialHandle := MaterialHandle{id: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
-	if mat, ok := m.materialAssets[materialHandle]; ok {
+	if mat, ok := m.materials[materialHandle]; ok {
 		panic(fmt.Sprintf("material already exists in asset manager. %v", mat))
 	}
 	materialIDGen++
-	m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
+	m.materials[materialHandle] = Material{Material: material, Handle: materialHandle, Name: name}
 	return materialHandle
 }
 
 func (m *AssetManager) createMaterial(name string, id string, material modelspec.Material) MaterialHandle {
 	materialHandle := MaterialHandle{id: id}
-	m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
+	m.materials[materialHandle] = Material{Material: material, Handle: materialHandle, Name: name}
 	return materialHandle
 }
 
 func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.Material, materialHandle MaterialHandle) {
-	if _, ok := m.materialAssets[materialHandle]; !ok {
-		m.materialAssets[materialHandle] = MaterialAsset{Material: material, Handle: materialHandle, Name: name}
+	if _, ok := m.materials[materialHandle]; !ok {
+		m.materials[materialHandle] = Material{Material: material, Handle: materialHandle, Name: name}
 	}
 	materialID := string(materialHandle.id)
 	if strings.HasPrefix(materialID, izzetMaterialPrefix) {
@@ -230,6 +230,6 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 	return a.fonts[name]
 }
 
-func (a *AssetManager) DeleteDocument(documentAsset DocumentAsset) {
-	delete(a.documentAssets, documentAsset.Config.Name)
+func (a *AssetManager) DeleteDocument(document Document) {
+	delete(a.documents, document.Config.Name)
 }

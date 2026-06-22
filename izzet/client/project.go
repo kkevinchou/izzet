@@ -25,11 +25,11 @@ type Project struct {
 }
 
 type DocumentJSON struct {
-	DocumentAsset assets.DocumentAsset
+	Document assets.Document
 }
 
 type MaterialsJSON struct {
-	MaterialAsset assets.MaterialAsset
+	MaterialAsset assets.Material
 }
 
 type AssetsJSON struct {
@@ -101,7 +101,7 @@ func (g *Client) SaveProjectAs(name string) error {
 		// filepaths so that we reference the documents in the new project directory and not the old one.
 		newDocument.Config.FilePath = filepath.ToSlash(filepath.Join(contentDir, filepath.Base(config.FilePath)))
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
-			DocumentAsset: newDocument,
+			Document: newDocument,
 		})
 
 		if sourceRootDir == contentDir {
@@ -254,7 +254,7 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 		// which still points to the default location for assets. actually is this an issue?
 		// ideally all assets are pointed to the .project folder. perhaps we should have a new project
 		// setup step that copies assets over from _assets rather than loading directly from _assets?
-		g.assetManager.LoadAndRegisterDocumentAsset(document.DocumentAsset)
+		g.assetManager.LoadAndRegisterDocumentAsset(document.Document)
 	}
 
 	for _, material := range assetsJSON.Materials {

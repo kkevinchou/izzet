@@ -10,18 +10,18 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 )
 
-func (a *AssetManager) LoadAndRegisterDocumentAsset(d DocumentAsset) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Document {
 	start := time.Now()
 
 	config := d.Config
 	document := loaders.LoadDocument(config.Name, config.FilePath)
-	if _, ok := a.documentAssets[config.Name]; ok {
+	if _, ok := a.documents[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
 	}
 
 	a.clearDocumentPrimitives(config)
 	d.Document = document
-	a.documentAssets[d.Config.Name] = d
+	a.documents[d.Config.Name] = d
 
 	if a.processVisuals {
 		for _, file := range document.PeripheralFiles {
@@ -52,12 +52,12 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	start := time.Now()
 
 	document := loaders.LoadDocument(config.Name, config.FilePath)
-	if _, ok := a.documentAssets[config.Name]; ok {
+	if _, ok := a.documents[config.Name]; ok {
 		fmt.Printf("document with name %s already previously loaded\n", config.Name)
 	}
 
 	a.clearDocumentPrimitives(config)
-	a.documentAssets[config.Name] = DocumentAsset{
+	a.documents[config.Name] = Document{
 		Config:        config,
 		Document:      document,
 		MatIDToHandle: map[string]MaterialHandle{},
@@ -77,11 +77,11 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 		for _, material := range document.Materials {
 			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
 			handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
-			a.documentAssets[config.Name].MatIDToHandle[material.ID] = handle
+			a.documents[config.Name].MatIDToHandle[material.ID] = handle
 		}
 	}
 
-	a.registerDocumentMeshes(document, a.documentAssets[config.Name].MatIDToHandle)
+	a.registerDocumentMeshes(document, a.documents[config.Name].MatIDToHandle)
 
 	if len(document.Animations) > 0 {
 		a.Animations[config.Name] = document.Animations
@@ -97,7 +97,7 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 func (a *AssetManager) clearDocumentPrimitives(config AssetConfig) {
 	delete(a.Primitives, newSingleEntityMeshHandle(config.Name))
 
-	if existingAsset, ok := a.documentAssets[config.Name]; ok && existingAsset.Document != nil {
+	if existingAsset, ok := a.documents[config.Name]; ok && existingAsset.Document != nil {
 		for _, mesh := range existingAsset.Document.Meshes {
 			delete(a.Primitives, MeshHandle{namespace: config.Name, id: fmt.Sprintf("%d", mesh.ID)})
 		}

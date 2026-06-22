@@ -17,7 +17,7 @@ const (
 	deleteMaterialConfirmationPopup = "Delete Material"
 )
 
-var pendingDeleteMaterial *assets.MaterialAsset
+var pendingDeleteMaterial *assets.Material
 var showDeleteMaterialConfirmationPopup bool
 
 func materialssUI(app renderiface.App, materialTextureMap map[assets.MaterialHandle]uint32) {
@@ -45,7 +45,7 @@ func materialssUI(app renderiface.App, materialTextureMap map[assets.MaterialHan
 	renderDeleteMaterialConfirmationPopup(app)
 }
 
-func drawMaterialCell(app renderiface.App, material assets.MaterialAsset, textureID uint32, idx int) {
+func drawMaterialCell(app renderiface.App, material assets.Material, textureID uint32, idx int) {
 	// push a stable ID so nothing collides
 	imgui.PushIDInt(int32(idx))
 	defer imgui.PopID()

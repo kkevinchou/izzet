@@ -13,17 +13,17 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAsset, merged bool) *entity.Entity {
+func (g *Client) CreateEntitiesFromDocument(d assets.Document, merged bool) *entity.Entity {
 	if !merged {
-		spawnedEntities := g.createEntitiesFromDocument(documentAsset)
+		spawnedEntities := g.createEntitiesFromDocument(d)
 		for _, entity := range spawnedEntities {
 			g.world.AddEntity(entity)
 		}
 		return spawnedEntities[0]
 	}
 
-	namespace := documentAsset.Config.Name
-	document := documentAsset.Document
+	namespace := d.Config.Name
+	document := d.Document
 	meshHandle := g.assetManager.GetSingleEntityMeshHandle(namespace)
 	if len(document.Scenes) != 1 {
 		panic("single entity asset loading only supports a singular scene")
@@ -32,7 +32,7 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 	scene := document.Scenes[0]
 	node := scene.Nodes[0]
 
-	e := g.createEntity(documentAsset, namespace, meshHandle, node)
+	e := g.createEntity(d, namespace, meshHandle, node)
 	g.world.AddEntity(e)
 
 	if len(document.Animations) > 0 {
@@ -45,8 +45,8 @@ func (g *Client) CreateEntitiesFromDocumentAsset(documentAsset assets.DocumentAs
 	return e
 }
 
-func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) []*entity.Entity {
-	document := documentAsset.Document
+func (g *Client) createEntitiesFromDocument(d assets.Document) []*entity.Entity {
+	document := d.Document
 
 	var spawnedEntities []*entity.Entity
 	parent := entity.CreateEmptyEntity(fmt.Sprintf("%s-parent", document.Name))
@@ -54,7 +54,7 @@ func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) 
 
 	for _, scene := range document.Scenes {
 		for _, node := range scene.Nodes {
-			spawnedEntities = append(spawnedEntities, g.createEntitiesFromNode(documentAsset, node, document.Name)...)
+			spawnedEntities = append(spawnedEntities, g.createEntitiesFromNode(d, node, document.Name)...)
 		}
 	}
 
@@ -78,12 +78,12 @@ func (g *Client) createEntitiesFromDocument(documentAsset assets.DocumentAsset) 
 	return spawnedEntities
 }
 
-func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node *modelspec.Node, namespace string) []*entity.Entity {
+func (g *Client) createEntitiesFromNode(d assets.Document, node *modelspec.Node, namespace string) []*entity.Entity {
 	var e *entity.Entity
 
 	if node.MeshID != nil {
 		meshHandle := g.assetManager.GetDocumentMeshHandle(namespace, fmt.Sprintf("%d", *node.MeshID))
-		e = g.createEntity(documentAsset, node.Name, meshHandle, node)
+		e = g.createEntity(d, node.Name, meshHandle, node)
 	}
 
 	allEntities := []*entity.Entity{}
@@ -92,7 +92,7 @@ func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node
 	}
 
 	for _, childNode := range node.Children {
-		cs := g.createEntitiesFromNode(documentAsset, childNode, namespace)
+		cs := g.createEntitiesFromNode(d, childNode, namespace)
 		// the first element of parseEntities is the root child node
 		if e != nil {
 			if cs[0] != nil {
@@ -106,9 +106,9 @@ func (g *Client) createEntitiesFromNode(documentAsset assets.DocumentAsset, node
 	return allEntities
 }
 
-func (g *Client) createEntity(documentAsset assets.DocumentAsset, name string, meshHandle assets.MeshHandle, node *modelspec.Node) *entity.Entity {
-	document := documentAsset.Document
-	config := documentAsset.Config
+func (g *Client) createEntity(d assets.Document, name string, meshHandle assets.MeshHandle, node *modelspec.Node) *entity.Entity {
+	document := d.Document
+	config := d.Config
 	e := entity.CreateEmptyEntity(name)
 
 	e.MeshComponent = &entity.MeshComponent{

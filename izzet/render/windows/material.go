@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	activeMaterial     assets.MaterialAsset
+	activeMaterial     assets.Material
 	isCreatingMaterial bool
-	backupMaterial     assets.MaterialAsset
+	backupMaterial     assets.Material
 	materialWindow     string
 )
 
@@ -32,7 +32,7 @@ func ShowCreateMaterialWindow(app renderiface.App) {
 	assignDefaultMaterial()
 }
 
-func ShowEditMaterialWindow(app renderiface.App, material assets.MaterialAsset) {
+func ShowEditMaterialWindow(app renderiface.App, material assets.Material) {
 	app.RuntimeConfig().ShowMaterialEditor = true
 	isCreatingMaterial = false
 	materialWindow = "Edit Material"
@@ -169,7 +169,7 @@ func renderMaterialWindow(app renderiface.App) {
 }
 
 func assignDefaultMaterial() {
-	activeMaterial = assets.MaterialAsset{
+	activeMaterial = assets.Material{
 		Name: defaultMaterialName,
 		Material: modelspec.Material{
 			PBRMaterial: modelspec.PBRMaterial{

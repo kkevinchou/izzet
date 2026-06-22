@@ -22,7 +22,7 @@ var blockedDeleteDocumentName string
 var blockedDeleteDocumentEntityIDs []int
 var showDeleteDocumentBlockedPopup bool
 
-var pendingDeleteDocument *assets.DocumentAsset
+var pendingDeleteDocument *assets.Document
 var showDeleteDocumentConfirmationPopup bool
 
 func contentBrowser(app renderiface.App) {
@@ -47,9 +47,9 @@ func contentBrowser(app renderiface.App) {
 	renderDeleteDocumentBlockedPopup()
 }
 
-func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset) {
-	documentName := documentAsset.Document.Name
-	documentID := documentAsset.Config.Name
+func drawDocumentCell(app renderiface.App, document assets.Document) {
+	documentName := document.Document.Name
+	documentID := document.Config.Name
 
 	t := app.AssetManager().GetTexture("document")
 
@@ -68,15 +68,15 @@ func drawDocumentCell(app renderiface.App, documentAsset assets.DocumentAsset) {
 
 	if imgui.BeginPopupContextItemV(fmt.Sprintf("document-context-%s", documentID), imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate Entities") {
-			app.CreateEntitiesFromDocumentAsset(documentAsset, false)
+			app.CreateEntitiesFromDocument(document, false)
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Instantiate As Merged Entity") {
-			app.CreateEntitiesFromDocumentAsset(documentAsset, true)
+			app.CreateEntitiesFromDocument(document, true)
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Delete") {
-			pendingDeleteDocument = &documentAsset
+			pendingDeleteDocument = &document
 			showDeleteDocumentConfirmationPopup = true
 			imgui.CloseCurrentPopup()
 		}

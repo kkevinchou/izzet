@@ -26,7 +26,8 @@ var fallbackTexture string = "default"
 type Document struct {
 	MatIDToHandle map[string]MaterialHandle
 	Document      *modelspec.Document `json:"-"`
-	Config        AssetConfig
+	ID            string
+	Filepath      string
 }
 
 type Material struct {
@@ -153,7 +154,7 @@ func (a *AssetManager) GetDocuments() []Document {
 		documents = append(documents, d)
 	}
 	sort.Slice(documents, func(i, j int) bool {
-		return documents[i].Config.Name < documents[j].Config.Name
+		return documents[i].ID < documents[j].ID
 	})
 	return documents
 }
@@ -231,5 +232,5 @@ func (a *AssetManager) GetFont(name string) fonts.Font {
 }
 
 func (a *AssetManager) DeleteDocument(document Document) {
-	delete(a.documents, document.Config.Name)
+	delete(a.documents, document.ID)
 }

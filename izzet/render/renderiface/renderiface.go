@@ -50,7 +50,7 @@ type App interface {
 	ConfigureUI(enabled bool)
 	Minimized() bool
 	WindowFocused() bool
-	ImportAsset(config assets.AssetConfig)
+	ImportAsset(name string, path string)
 	SelectEntity(entity *entity.Entity)
 	SelectedEntity() *entity.Entity
 	CreateEntitiesFromDocument(d assets.Document, merged bool) *entity.Entity

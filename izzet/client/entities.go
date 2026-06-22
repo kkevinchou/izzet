@@ -22,7 +22,7 @@ func (g *Client) CreateEntitiesFromDocument(d assets.Document, merged bool) *ent
 		return spawnedEntities[0]
 	}
 
-	namespace := d.Config.Name
+	namespace := d.ID
 	document := d.Document
 	meshHandle := g.assetManager.GetSingleEntityMeshHandle(namespace)
 	if len(document.Scenes) != 1 {
@@ -108,7 +108,6 @@ func (g *Client) createEntitiesFromNode(d assets.Document, node *modelspec.Node,
 
 func (g *Client) createEntity(d assets.Document, name string, meshHandle assets.MeshHandle, node *modelspec.Node) *entity.Entity {
 	document := d.Document
-	config := d.Config
 	e := entity.CreateEmptyEntity(name)
 
 	e.MeshComponent = &entity.MeshComponent{
@@ -124,16 +123,10 @@ func (g *Client) createEntity(d assets.Document, name string, meshHandle assets.
 	e.SetLocalRotation(utils.QuatF32ToF64(node.Rotation))
 	entity.SetScale(e, utils.Vec3F32ToF64(node.Scale))
 
-	e.Static = config.Static
-	if config.Physics {
-		e.Physics = &entity.PhysicsComponent{}
-	}
+	primitives := g.assetManager.GetPrimitives(meshHandle)
+	t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
+	bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
+	e.Collider = entity.CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, 0, *t, nil, bb)
 
-	if types.ColliderType(config.ColliderType) == types.ColliderTypeMesh {
-		primitives := g.assetManager.GetPrimitives(meshHandle)
-		t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
-		bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-		e.Collider = entity.CreateTriMeshColliderComponent(types.ConvertGroupToFlag(types.ColliderGroup(config.ColliderGroup)), 0, *t, nil, bb)
-	}
 	return e
 }

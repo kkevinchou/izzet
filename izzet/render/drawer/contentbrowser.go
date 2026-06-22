@@ -49,7 +49,7 @@ func contentBrowser(app renderiface.App) {
 
 func drawDocumentCell(app renderiface.App, document assets.Document) {
 	documentName := document.Document.Name
-	documentID := document.Config.Name
+	documentID := document.ID
 
 	t := app.AssetManager().GetTexture("document")
 
@@ -112,12 +112,12 @@ func renderDeleteDocumentConfirmationPopup(app renderiface.App) {
 
 	renderConfirmationModal(
 		deleteDocumentConfirmationPopup,
-		fmt.Sprintf("Delete document [%s]?", pendingDeleteDocument.Config.Name),
+		fmt.Sprintf("Delete document [%s]?", pendingDeleteDocument.ID),
 		&showDeleteDocumentConfirmationPopup,
 		func() {
 			referencingEntityIDs := app.DeleteDocument(*pendingDeleteDocument)
 			if len(referencingEntityIDs) > 0 {
-				blockedDeleteDocumentName = pendingDeleteDocument.Config.Name
+				blockedDeleteDocumentName = pendingDeleteDocument.ID
 				blockedDeleteDocumentEntityIDs = referencingEntityIDs
 				showDeleteDocumentBlockedPopup = true
 			}

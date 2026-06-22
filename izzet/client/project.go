@@ -85,21 +85,20 @@ func (g *Client) SaveProjectAs(name string) error {
 
 	// documents
 	for _, document := range g.AssetManager().GetDocuments() {
-		config := document.Config
-		sourceRootDir := filepath.Dir(config.FilePath)
+		sourceRootDir := filepath.Dir(document.Filepath)
 
 		// don't need to copy assets into the project directory if
 		// we loaded it from there
 
-		sourceFilePaths := []string{config.FilePath}
+		sourceFilePaths := []string{document.Filepath}
 		for _, peripheralFilePath := range document.Document.PeripheralFiles {
-			sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(config.FilePath), peripheralFilePath))
+			sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(document.Filepath), peripheralFilePath))
 		}
 
 		newDocument := document
 		// in the event where we're saving a new project from the original, we want to overwrite the
 		// filepaths so that we reference the documents in the new project directory and not the old one.
-		newDocument.Config.FilePath = filepath.ToSlash(filepath.Join(contentDir, filepath.Base(config.FilePath)))
+		newDocument.Filepath = filepath.ToSlash(filepath.Join(contentDir, filepath.Base(document.Filepath)))
 		assetsJSON.Documents = append(assetsJSON.Documents, DocumentJSON{
 			Document: newDocument,
 		})

@@ -7,22 +7,16 @@ import (
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/ui"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/sqweek/dialog"
 )
 
 var errorModal error
 var showImportAssetModal bool
-
-var defaultColliderType types.ColliderType = types.ColliderTypeMesh
-var defaultColliderGroup types.ColliderGroup = types.ColliderGroupTerrain
-
-var SelectedColliderType types.ColliderType = defaultColliderType
-var SelectedColliderGroup types.ColliderGroup = defaultColliderGroup
+var importAssetId string
+var importAssetPath string
 
 func file(app renderiface.App) {
 	if imgui.BeginMenu("File") {
@@ -92,10 +86,6 @@ func file(app renderiface.App) {
 		}
 
 		if imgui.MenuItemBool("Import Asset") {
-			wipImportAssetConfig = assets.AssetConfig{
-				ColliderType:  string(defaultColliderType),
-				ColliderGroup: string(defaultColliderGroup),
-			}
 			showImportAssetModal = true
 		}
 
@@ -107,8 +97,6 @@ func file(app renderiface.App) {
 	}
 }
 
-var wipImportAssetConfig assets.AssetConfig
-
 func importAssetModal(app renderiface.App) {
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
@@ -119,11 +107,11 @@ func importAssetModal(app renderiface.App) {
 		ui.Table("Import Asset", func() {
 			ui.RowV("ID", func() {
 				imgui.SetNextItemWidth(200)
-				imgui.InputTextWithHint("##ID", "", &wipImportAssetConfig.Name, imgui.InputTextFlagsNone, nil)
+				imgui.InputTextWithHint("##ID", "", &importAssetId, imgui.InputTextFlagsNone, nil)
 			}, true)
 			ui.RowV("File Path", func() {
 				imgui.SetNextItemWidth(200)
-				imgui.InputTextWithHint("##FilePath", "", &wipImportAssetConfig.FilePath, imgui.InputTextFlagsNone, nil)
+				imgui.InputTextWithHint("##FilePath", "", &importAssetPath, imgui.InputTextFlagsNone, nil)
 				imgui.SameLine()
 				if imgui.Button("...") {
 					d := dialog.File()
@@ -140,51 +128,26 @@ func importAssetModal(app renderiface.App) {
 							panic(err)
 						}
 					} else {
-						wipImportAssetConfig.FilePath = assetFilePath
-						wipImportAssetConfig.Name = apputils.NameFromAssetFilePath(assetFilePath)
+						assetFilePath = filepath.ToSlash(assetFilePath)
+						importAssetId = apputils.NameFromAssetFilePath(assetFilePath)
+						importAssetPath = assetFilePath
 					}
 				}
-			}, true)
-			ui.RowV("Collider Type", func() {
-				if imgui.BeginCombo("##", string(SelectedColliderType)) {
-					for _, option := range types.ColliderTypes {
-						if imgui.SelectableBool(string(option)) {
-							SelectedColliderType = option
-							wipImportAssetConfig.ColliderType = string(option)
-						}
-					}
-					imgui.EndCombo()
-				}
-			}, true)
-			ui.RowV("Collider Group", func() {
-				if imgui.BeginCombo("##", string(SelectedColliderGroup)) {
-					for _, option := range types.ColliderGroups {
-						if imgui.SelectableBool(string(option)) {
-							SelectedColliderGroup = option
-							wipImportAssetConfig.ColliderGroup = string(option)
-						}
-					}
-					imgui.EndCombo()
-				}
-			}, true)
-			ui.RowV("Static", func() {
-				imgui.Checkbox("##", &wipImportAssetConfig.Static)
-			}, true)
-			ui.RowV("Physics", func() {
-				imgui.Checkbox("##", &wipImportAssetConfig.Physics)
 			}, true)
 		})
 
 		if imgui.Button("Import") {
-			app.ImportAsset(wipImportAssetConfig)
+			app.ImportAsset(importAssetId, importAssetPath)
 			imgui.CloseCurrentPopup()
+			importAssetId = ""
+			importAssetPath = ""
 			showImportAssetModal = false
-			SelectedColliderType = defaultColliderType
-			SelectedColliderGroup = defaultColliderGroup
 		}
 		imgui.SameLine()
 		if imgui.Button("Cancel") {
 			imgui.CloseCurrentPopup()
+			importAssetId = ""
+			importAssetPath = ""
 			showImportAssetModal = false
 		}
 

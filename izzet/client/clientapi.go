@@ -346,14 +346,14 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 	return g.serverStats
 }
 
-func (g *Client) ImportAsset(config assets.AssetConfig) {
-	newConfig := g.CopyDocumentToProjectFolder(config)
-	g.assetManager.LoadAndRegisterDocument(newConfig)
+func (g *Client) ImportAsset(name string, path string) {
+	newPath := g.CopyDocumentToProjectFolder(path)
+	g.assetManager.LoadAndRegisterDocument(name, newPath)
 }
 
-func (g *Client) DeleteDocument(documentAsset assets.Document) []int {
+func (g *Client) DeleteDocument(d assets.Document) []int {
 	var referencingEntityIDs []int
-	namespace := documentAsset.Config.Name
+	namespace := d.ID
 	for _, e := range g.world.Entities() {
 		if e.MeshComponent == nil {
 			continue
@@ -366,31 +366,30 @@ func (g *Client) DeleteDocument(documentAsset assets.Document) []int {
 		return referencingEntityIDs
 	}
 
-	g.assetManager.DeleteDocument(documentAsset)
+	g.assetManager.DeleteDocument(d)
 	return nil
 }
 
-func (g *Client) CopyDocumentToProjectFolder(config assets.AssetConfig) assets.AssetConfig {
-	peripheralFiles, err := gltf.GetPeripheralFiles(config.FilePath)
+func (g *Client) CopyDocumentToProjectFolder(path string) string {
+	peripheralFiles, err := gltf.GetPeripheralFiles(path)
 	if err != nil {
 		panic(err)
 	}
 
-	sourceFilePaths := []string{config.FilePath}
+	sourceFilePaths := []string{path}
 	for _, peripheralFilePath := range peripheralFiles {
-		sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(config.FilePath), peripheralFilePath))
+		sourceFilePaths = append(sourceFilePaths, filepath.Join(filepath.Dir(path), peripheralFilePath))
 	}
 
 	contentDir := filepath.Join(settings.ProjectsDirectory, g.project.Name, "content")
-	newConfig := config
-	newConfig.FilePath = filepath.ToSlash(filepath.Join(contentDir, filepath.Base(config.FilePath)))
+	newPath := filepath.ToSlash(filepath.Join(contentDir, filepath.Base(path)))
 
-	sourceRootDir := filepath.Dir(config.FilePath)
+	sourceRootDir := filepath.Dir(path)
 	err = copySourceFiles(sourceFilePaths, sourceRootDir, contentDir)
 	if err != nil {
 		panic(err)
 	}
-	return newConfig
+	return newPath
 }
 
 func (g *Client) LoadDefaultAssets() {
@@ -432,13 +431,7 @@ func (g *Client) LoadDefaultAssets() {
 			continue
 		}
 
-		config := assets.AssetConfig{
-			Name:          metaData.Name,
-			FilePath:      metaData.Path,
-			ColliderType:  string(types.ColliderTypeMesh),
-			ColliderGroup: string(types.ColliderGroupPlayer),
-		}
-		g.ImportAsset(config)
+		g.ImportAsset(metaData.Name, metaData.Path)
 	}
 }
 

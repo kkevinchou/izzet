@@ -13,15 +13,14 @@ import (
 func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Document {
 	start := time.Now()
 
-	config := d.Config
-	document := loaders.LoadDocument(config.Name, config.FilePath)
-	if _, ok := a.documents[config.Name]; ok {
-		fmt.Printf("document with name %s already previously loaded\n", config.Name)
+	document := loaders.LoadDocument(d.ID, d.Filepath)
+	if _, ok := a.documents[d.ID]; ok {
+		fmt.Printf("document with name %s already previously loaded\n", d.ID)
 	}
 
-	a.clearDocumentPrimitives(config)
+	a.clearDocumentPrimitives(d.ID)
 	d.Document = document
-	a.documents[d.Config.Name] = d
+	a.documents[d.ID] = d
 
 	if a.processVisuals {
 		for _, file := range document.PeripheralFiles {
@@ -31,16 +30,16 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Docum
 			}
 
 			key := file[0 : len(file)-len(extension)]
-			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
+			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(d.Filepath), file))
 		}
 	}
 
 	a.registerDocumentMeshes(document, d.MatIDToHandle)
 
 	if len(document.Animations) > 0 {
-		a.Animations[config.Name] = document.Animations
-		a.Joints[config.Name] = document.JointMap
-		a.RootJoints[config.Name] = document.RootJoint.ID
+		a.Animations[d.ID] = document.Animations
+		a.Joints[d.ID] = document.JointMap
+		a.RootJoints[d.ID] = document.RootJoint.ID
 	}
 
 	a.logger.Info("LoadAndRegisterDocumentAsset", "name", d.Document.Name, "time (ms)", time.Since(start).Milliseconds())
@@ -48,17 +47,18 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Docum
 	return document
 }
 
-func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Document {
+func (a *AssetManager) LoadAndRegisterDocument(id string, path string) *modelspec.Document {
 	start := time.Now()
 
-	document := loaders.LoadDocument(config.Name, config.FilePath)
-	if _, ok := a.documents[config.Name]; ok {
-		fmt.Printf("document with name %s already previously loaded\n", config.Name)
+	document := loaders.LoadDocument(id, path)
+	if _, ok := a.documents[id]; ok {
+		fmt.Printf("document with name %s already previously loaded\n", id)
 	}
 
-	a.clearDocumentPrimitives(config)
-	a.documents[config.Name] = Document{
-		Config:        config,
+	a.clearDocumentPrimitives(id)
+	a.documents[id] = Document{
+		ID:            id,
+		Filepath:      path,
 		Document:      document,
 		MatIDToHandle: map[string]MaterialHandle{},
 	}
@@ -71,22 +71,22 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 			}
 
 			key := file[0 : len(file)-len(extension)]
-			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(config.FilePath), file))
+			a.textures[key] = loaders.LoadTexture(filepath.Join(filepath.Dir(path), file))
 		}
 
 		for _, material := range document.Materials {
 			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
-			handle := a.createMaterial(name, createMaterialUniqueID(config.FilePath, material), material)
-			a.documents[config.Name].MatIDToHandle[material.ID] = handle
+			handle := a.createMaterial(name, createMaterialUniqueID(path, material), material)
+			a.documents[id].MatIDToHandle[material.ID] = handle
 		}
 	}
 
-	a.registerDocumentMeshes(document, a.documents[config.Name].MatIDToHandle)
+	a.registerDocumentMeshes(document, a.documents[id].MatIDToHandle)
 
 	if len(document.Animations) > 0 {
-		a.Animations[config.Name] = document.Animations
-		a.Joints[config.Name] = document.JointMap
-		a.RootJoints[config.Name] = document.RootJoint.ID
+		a.Animations[id] = document.Animations
+		a.Joints[id] = document.JointMap
+		a.RootJoints[id] = document.RootJoint.ID
 	}
 
 	a.logger.Info("LoadAndRegisterDocument", "name", document.Name, "time (ms)", time.Since(start).Milliseconds())
@@ -94,12 +94,12 @@ func (a *AssetManager) LoadAndRegisterDocument(config AssetConfig) *modelspec.Do
 	return document
 }
 
-func (a *AssetManager) clearDocumentPrimitives(config AssetConfig) {
-	delete(a.Primitives, newSingleEntityMeshHandle(config.Name))
+func (a *AssetManager) clearDocumentPrimitives(name string) {
+	delete(a.Primitives, newSingleEntityMeshHandle(name))
 
-	if existingAsset, ok := a.documents[config.Name]; ok && existingAsset.Document != nil {
+	if existingAsset, ok := a.documents[name]; ok && existingAsset.Document != nil {
 		for _, mesh := range existingAsset.Document.Meshes {
-			delete(a.Primitives, MeshHandle{namespace: config.Name, id: fmt.Sprintf("%d", mesh.ID)})
+			delete(a.Primitives, MeshHandle{namespace: name, id: fmt.Sprintf("%d", mesh.ID)})
 		}
 	}
 }

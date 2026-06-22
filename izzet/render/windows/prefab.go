@@ -25,7 +25,6 @@ type prefabEditorState struct {
 	IncludeMesh          bool
 	MeshSourceAsset      string
 	MeshMaterials        []assets.MaterialHandle
-	MaterialAppendIndex  int32
 	IncludeAnimation     bool
 	AnimationSourceAsset string
 	StateMachineID       animation.StateMachineID
@@ -48,8 +47,14 @@ type prefabEditorState struct {
 var activePrefabEditor prefabEditorState
 
 const (
-	defaultPrefabName            string  = "custom_velociraptor"
+	defaultPrefabName            string  = "<new prefab>"
 	prefabEditorLabelColumnWidth float32 = 260
+	prefabEditorPropertyIndent   float32 = 18
+)
+
+var (
+	prefabEditorHeaderTextColor   = imgui.Vec4{X: 0.92, Y: 0.92, Z: 0.92, W: 1}
+	prefabEditorPropertyTextColor = imgui.Vec4{X: 0.65, Y: 0.65, Z: 0.65, W: 1}
 )
 
 func ShowCreatePrefabWindow(app renderiface.App) {
@@ -64,7 +69,7 @@ func renderPrefabWindow(app renderiface.App) {
 
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: 520, Y: 680}, imgui.CondAppearing)
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: 720, Y: 680}, imgui.CondAppearing)
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 12, Y: 12})
 	defer imgui.PopStyleVar()
 
@@ -88,36 +93,36 @@ func renderPrefabEditor(app renderiface.App) {
 
 		sectionHeading("Transform")
 		inputFloatRow("Scale", &activePrefabEditor.Scale, 0.1, 5, "%.2f")
-		componentSection("Mesh Component", &activePrefabEditor.IncludeMesh, func() {
-			ui.Row("Source Asset", func() {
+		componentSection("Mesh", &activePrefabEditor.IncludeMesh, func() {
+			propertyRow("Source Asset", func() {
 				renderSourceAssetCombo(app, &activePrefabEditor.MeshSourceAsset)
 			})
 			renderPrefabMaterialSlots(app)
 		})
-		componentSection("Animation Component", &activePrefabEditor.IncludeAnimation, func() {
-			ui.Row("Source Asset", func() {
+		componentSection("Animation", &activePrefabEditor.IncludeAnimation, func() {
+			propertyRow("Source Asset", func() {
 				renderSourceAssetCombo(app, &activePrefabEditor.AnimationSourceAsset)
 			})
-			ui.Row("State Machine", func() {
+			propertyRow("State Machine", func() {
 				renderStateMachineCombo(&activePrefabEditor.StateMachineID)
 			})
 		})
-		componentSection("Capsule Collider Component", &activePrefabEditor.IncludeCapsule, func() {
+		componentSection("Capsule Collider", &activePrefabEditor.IncludeCapsule, func() {
 			inputFloatRow("Radius", &activePrefabEditor.CapsuleRadius, 0.01, 10, "%.2f")
 			inputFloatRow("Length", &activePrefabEditor.CapsuleLength, 0.01, 10, "%.2f")
 		})
-		componentSection("Kinematic Component", &activePrefabEditor.IncludeKinematic, func() {
-			ui.CheckboxRow("Gravity", &activePrefabEditor.KinematicGravity)
+		componentSection("Kinematic", &activePrefabEditor.IncludeKinematic, func() {
+			checkboxPropertyRow("Gravity", &activePrefabEditor.KinematicGravity)
 			inputFloatRow("Speed", &activePrefabEditor.KinematicSpeed, 0.1, 100, "%.2f")
 		})
-		componentSection("Health Component", &activePrefabEditor.IncludeHealth, func() {
+		componentSection("Health", &activePrefabEditor.IncludeHealth, func() {
 			inputIntRow("Health Amount", &activePrefabEditor.HealthAmount)
 		})
-		componentSection("Aim Down Sights Component", &activePrefabEditor.IncludeAimDownSights, nil)
-		componentSection("Attack Component", &activePrefabEditor.IncludeAttack, func() {
+		componentSection("Aim Down Sights", &activePrefabEditor.IncludeAimDownSights, nil)
+		componentSection("Attack", &activePrefabEditor.IncludeAttack, func() {
 			inputFloatRow("Attack Range", &activePrefabEditor.AttackRange, 0.1, 100, "%.2f")
 		})
-		componentSection("AI Component", &activePrefabEditor.IncludeAI, nil)
+		componentSection("AI", &activePrefabEditor.IncludeAI, nil)
 	})
 
 	if activePrefabEditor.Error != "" {
@@ -142,7 +147,11 @@ func renderPrefabEditor(app renderiface.App) {
 }
 
 func sectionHeading(label string) {
-	ui.SectionRow(label)
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	sectionHeaderText(label)
+	imgui.TableSetColumnIndex(1)
+	imgui.Separator()
 }
 
 func componentSection(label string, enabled *bool, body func()) {
@@ -153,13 +162,41 @@ func componentSection(label string, enabled *bool, body func()) {
 	imgui.TableSetColumnIndex(0)
 	imgui.Checkbox("##enabled", enabled)
 	imgui.SameLine()
-	imgui.TextDisabled(label)
+	sectionHeaderText(label)
 	imgui.TableSetColumnIndex(1)
 	imgui.Separator()
 
 	if *enabled && body != nil {
 		body()
 	}
+}
+
+func sectionHeaderText(label string) {
+	imgui.PushStyleColorVec4(imgui.ColText, prefabEditorHeaderTextColor)
+	imgui.Text(label)
+	imgui.PopStyleColor()
+}
+
+func propertyRow(label string, body func()) {
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	cursor := imgui.CursorPos()
+	imgui.SetCursorPosX(cursor.X + prefabEditorPropertyIndent)
+	imgui.PushStyleColorVec4(imgui.ColText, prefabEditorPropertyTextColor)
+	imgui.Text(label)
+	imgui.PopStyleColor()
+	imgui.TableSetColumnIndex(1)
+	imgui.PushIDStr(label)
+	imgui.PushItemWidth(-1)
+	body()
+	imgui.PopItemWidth()
+	imgui.PopID()
+}
+
+func checkboxPropertyRow(label string, value *bool) {
+	propertyRow(label, func() {
+		imgui.Checkbox("##value", value)
+	})
 }
 
 func renderSourceAssetCombo(app renderiface.App, sourceAsset *string) {
@@ -207,6 +244,15 @@ func renderStateMachineCombo(selected *animation.StateMachineID) {
 func renderPrefabMaterialSlots(app renderiface.App) {
 	materials := app.AssetManager().GetMaterials()
 
+	materialSlotRow("Material Slots", func() {
+		if imgui.Button("Append") {
+			activePrefabEditor.MeshMaterials = append(
+				activePrefabEditor.MeshMaterials,
+				app.AssetManager().DefaultMaterialHandle(),
+			)
+		}
+	})
+
 	removeIndex := -1
 	for i := range activePrefabEditor.MeshMaterials {
 		index := i
@@ -230,39 +276,6 @@ func renderPrefabMaterialSlots(app renderiface.App) {
 			activePrefabEditor.MeshMaterials[removeIndex+1:]...,
 		)
 	}
-
-	materialSlotRow("Append Material", func() {
-		if len(materials) == 0 {
-			imgui.TextDisabled("No materials")
-			return
-		}
-
-		if activePrefabEditor.MaterialAppendIndex < 0 || activePrefabEditor.MaterialAppendIndex >= int32(len(materials)) {
-			activePrefabEditor.MaterialAppendIndex = 0
-		}
-
-		comboWidth := imgui.ContentRegionAvail().X - 90
-		if comboWidth < 120 {
-			comboWidth = imgui.ContentRegionAvail().X
-		}
-		imgui.SetNextItemWidth(comboWidth)
-		if imgui.BeginCombo("##material", materials[activePrefabEditor.MaterialAppendIndex].Name) {
-			for i, material := range materials {
-				if imgui.SelectableBool(material.Name) {
-					activePrefabEditor.MaterialAppendIndex = int32(i)
-				}
-			}
-			imgui.EndCombo()
-		}
-
-		imgui.SameLine()
-		if imgui.Button("Append") {
-			activePrefabEditor.MeshMaterials = append(
-				activePrefabEditor.MeshMaterials,
-				materials[activePrefabEditor.MaterialAppendIndex].Handle,
-			)
-		}
-	})
 }
 
 func renderMaterialHandleCombo(id string, selected *assets.MaterialHandle, materials []assets.Material) {
@@ -286,13 +299,7 @@ func renderMaterialHandleCombo(id string, selected *assets.MaterialHandle, mater
 }
 
 func materialSlotRow(label string, body func()) {
-	imgui.TableNextRow()
-	imgui.TableSetColumnIndex(0)
-	imgui.Text(label)
-	imgui.TableSetColumnIndex(1)
-	imgui.PushIDStr(label)
-	body()
-	imgui.PopID()
+	propertyRow(label, body)
 }
 
 func materialHandleExists(handle assets.MaterialHandle, materials []assets.Material) bool {
@@ -314,13 +321,13 @@ func materialHandleName(handle assets.MaterialHandle, materials []assets.Materia
 }
 
 func inputFloatRow(label string, value *float32, step float32, fastStep float32, format string) {
-	ui.Row(label, func() {
+	propertyRow(label, func() {
 		imgui.InputFloatV("##value", value, step, fastStep, format, imgui.InputTextFlagsNone)
 	})
 }
 
 func inputIntRow(label string, value *int32) {
-	ui.Row(label, func() {
+	propertyRow(label, func() {
 		imgui.InputIntV("##value", value, 0, 0, imgui.InputTextFlagsNone)
 	})
 }

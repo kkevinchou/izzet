@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"sort"
 
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 )
@@ -18,6 +19,17 @@ const (
 var typeToConfig map[StateMachineID][]byte = map[StateMachineID][]byte{
 	StateMachineIDPlayer:       playerStateMachineConfig,
 	StateMachineIDVelociraptor: raptorStateMachineConfig,
+}
+
+func StateMachineIDs() []StateMachineID {
+	ids := make([]StateMachineID, 0, len(typeToConfig))
+	for id := range typeToConfig {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool {
+		return string(ids[i]) < string(ids[j])
+	})
+	return ids
 }
 
 type GameContext struct {

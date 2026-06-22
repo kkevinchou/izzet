@@ -1,0 +1,473 @@
+package windows
+
+import (
+	"fmt"
+	"math"
+	"strings"
+
+	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/go-gl/mathgl/mgl64"
+	"github.com/kkevinchou/izzet/internal/collision/collider"
+	"github.com/kkevinchou/izzet/izzet/animation"
+	"github.com/kkevinchou/izzet/izzet/assets"
+	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/prefab"
+	"github.com/kkevinchou/izzet/izzet/render/renderiface"
+	"github.com/kkevinchou/izzet/izzet/render/ui"
+	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/types"
+)
+
+type prefabEditorState struct {
+	Name  string
+	Scale float32
+
+	IncludeMesh          bool
+	MeshSourceAsset      string
+	MeshMaterials        []assets.MaterialHandle
+	MaterialAppendIndex  int32
+	IncludeAnimation     bool
+	AnimationSourceAsset string
+	StateMachineID       animation.StateMachineID
+	IncludeCapsule       bool
+	CapsuleRadius        float32
+	CapsuleLength        float32
+	IncludeKinematic     bool
+	KinematicGravity     bool
+	KinematicSpeed       float32
+	IncludeHealth        bool
+	HealthAmount         int32
+	IncludeAimDownSights bool
+	IncludeAttack        bool
+	AttackRange          float32
+	IncludeAI            bool
+
+	Error string
+}
+
+var activePrefabEditor prefabEditorState
+
+const (
+	defaultPrefabName            string  = "custom_velociraptor"
+	prefabEditorLabelColumnWidth float32 = 260
+)
+
+func ShowCreatePrefabWindow(app renderiface.App) {
+	app.RuntimeConfig().ShowPrefabEditor = true
+	assignDefaultPrefab(app)
+}
+
+func renderPrefabWindow(app renderiface.App) {
+	if !app.RuntimeConfig().ShowPrefabEditor {
+		return
+	}
+
+	center := imgui.MainViewport().Center()
+	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: 520, Y: 680}, imgui.CondAppearing)
+	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 12, Y: 12})
+	defer imgui.PopStyleVar()
+
+	if imgui.BeginV("Create Prefab", &app.RuntimeConfig().ShowPrefabEditor, imgui.WindowFlagsNone) {
+		renderPrefabEditor(app)
+	}
+	imgui.End()
+}
+
+func renderPrefabEditor(app renderiface.App) {
+	originalColumnWidth := ui.TableColumn0Width
+	ui.TableColumn0Width = prefabEditorLabelColumnWidth
+	defer func() {
+		ui.TableColumn0Width = originalColumnWidth
+	}()
+
+	ui.Table("Prefab Editor", func() {
+		ui.Row("Prefab Name", func() {
+			imgui.InputTextWithHint("##value", defaultPrefabName, &activePrefabEditor.Name, imgui.InputTextFlagsNone, nil)
+		})
+
+		sectionHeading("Transform")
+		inputFloatRow("Scale", &activePrefabEditor.Scale, 0.1, 5, "%.2f")
+		componentSection("Mesh Component", &activePrefabEditor.IncludeMesh, func() {
+			ui.Row("Source Asset", func() {
+				renderSourceAssetCombo(app, &activePrefabEditor.MeshSourceAsset)
+			})
+			renderPrefabMaterialSlots(app)
+		})
+		componentSection("Animation Component", &activePrefabEditor.IncludeAnimation, func() {
+			ui.Row("Source Asset", func() {
+				renderSourceAssetCombo(app, &activePrefabEditor.AnimationSourceAsset)
+			})
+			ui.Row("State Machine", func() {
+				renderStateMachineCombo(&activePrefabEditor.StateMachineID)
+			})
+		})
+		componentSection("Capsule Collider Component", &activePrefabEditor.IncludeCapsule, func() {
+			inputFloatRow("Radius", &activePrefabEditor.CapsuleRadius, 0.01, 10, "%.2f")
+			inputFloatRow("Length", &activePrefabEditor.CapsuleLength, 0.01, 10, "%.2f")
+		})
+		componentSection("Kinematic Component", &activePrefabEditor.IncludeKinematic, func() {
+			ui.CheckboxRow("Gravity", &activePrefabEditor.KinematicGravity)
+			inputFloatRow("Speed", &activePrefabEditor.KinematicSpeed, 0.1, 100, "%.2f")
+		})
+		componentSection("Health Component", &activePrefabEditor.IncludeHealth, func() {
+			inputIntRow("Health Amount", &activePrefabEditor.HealthAmount)
+		})
+		componentSection("Aim Down Sights Component", &activePrefabEditor.IncludeAimDownSights, nil)
+		componentSection("Attack Component", &activePrefabEditor.IncludeAttack, func() {
+			inputFloatRow("Attack Range", &activePrefabEditor.AttackRange, 0.1, 100, "%.2f")
+		})
+		componentSection("AI Component", &activePrefabEditor.IncludeAI, nil)
+	})
+
+	if activePrefabEditor.Error != "" {
+		imgui.PushStyleColorVec4(imgui.ColText, imgui.Vec4{X: 1, Y: 0.25, Z: 0.25, W: 1})
+		imgui.Text(activePrefabEditor.Error)
+		imgui.PopStyleColor()
+	}
+
+	if imgui.Button("Save") {
+		if err := savePrefab(app); err != nil {
+			activePrefabEditor.Error = err.Error()
+		} else {
+			app.RuntimeConfig().ShowPrefabEditor = false
+			assignDefaultPrefab(app)
+		}
+	}
+	imgui.SameLine()
+	if imgui.Button("Cancel") {
+		app.RuntimeConfig().ShowPrefabEditor = false
+		assignDefaultPrefab(app)
+	}
+}
+
+func sectionHeading(label string) {
+	ui.SectionRow(label)
+}
+
+func componentSection(label string, enabled *bool, body func()) {
+	imgui.PushIDStr(label)
+	defer imgui.PopID()
+
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	imgui.Checkbox("##enabled", enabled)
+	imgui.SameLine()
+	imgui.TextDisabled(label)
+	imgui.TableSetColumnIndex(1)
+	imgui.Separator()
+
+	if *enabled && body != nil {
+		body()
+	}
+}
+
+func renderSourceAssetCombo(app renderiface.App, sourceAsset *string) {
+	documents := app.AssetManager().GetDocuments()
+	if len(documents) == 0 {
+		imgui.TextDisabled("No documents")
+		return
+	}
+
+	if *sourceAsset == "" {
+		*sourceAsset = defaultSourceAssetName(documents)
+	}
+
+	if imgui.BeginCombo("##value", *sourceAsset) {
+		for _, document := range documents {
+			if imgui.SelectableBool(document.ID) {
+				*sourceAsset = document.ID
+			}
+		}
+		imgui.EndCombo()
+	}
+}
+
+func renderStateMachineCombo(selected *animation.StateMachineID) {
+	ids := animation.StateMachineIDs()
+	if len(ids) == 0 {
+		imgui.TextDisabled("No state machines")
+		return
+	}
+
+	if *selected == "" {
+		*selected = ids[0]
+	}
+
+	if imgui.BeginCombo("##value", string(*selected)) {
+		for _, id := range ids {
+			if imgui.SelectableBool(string(id)) {
+				*selected = id
+			}
+		}
+		imgui.EndCombo()
+	}
+}
+
+func renderPrefabMaterialSlots(app renderiface.App) {
+	materials := app.AssetManager().GetMaterials()
+
+	removeIndex := -1
+	for i := range activePrefabEditor.MeshMaterials {
+		index := i
+		materialSlotRow(fmt.Sprintf("Material Slot %d", index), func() {
+			comboWidth := imgui.ContentRegionAvail().X - 90
+			if comboWidth < 120 {
+				comboWidth = imgui.ContentRegionAvail().X
+			}
+			imgui.SetNextItemWidth(comboWidth)
+			renderMaterialHandleCombo("##material", &activePrefabEditor.MeshMaterials[index], materials)
+			imgui.SameLine()
+			if imgui.Button("Remove") {
+				removeIndex = index
+			}
+		})
+	}
+
+	if removeIndex >= 0 {
+		activePrefabEditor.MeshMaterials = append(
+			activePrefabEditor.MeshMaterials[:removeIndex],
+			activePrefabEditor.MeshMaterials[removeIndex+1:]...,
+		)
+	}
+
+	materialSlotRow("Append Material", func() {
+		if len(materials) == 0 {
+			imgui.TextDisabled("No materials")
+			return
+		}
+
+		if activePrefabEditor.MaterialAppendIndex < 0 || activePrefabEditor.MaterialAppendIndex >= int32(len(materials)) {
+			activePrefabEditor.MaterialAppendIndex = 0
+		}
+
+		comboWidth := imgui.ContentRegionAvail().X - 90
+		if comboWidth < 120 {
+			comboWidth = imgui.ContentRegionAvail().X
+		}
+		imgui.SetNextItemWidth(comboWidth)
+		if imgui.BeginCombo("##material", materials[activePrefabEditor.MaterialAppendIndex].Name) {
+			for i, material := range materials {
+				if imgui.SelectableBool(material.Name) {
+					activePrefabEditor.MaterialAppendIndex = int32(i)
+				}
+			}
+			imgui.EndCombo()
+		}
+
+		imgui.SameLine()
+		if imgui.Button("Append") {
+			activePrefabEditor.MeshMaterials = append(
+				activePrefabEditor.MeshMaterials,
+				materials[activePrefabEditor.MaterialAppendIndex].Handle,
+			)
+		}
+	})
+}
+
+func renderMaterialHandleCombo(id string, selected *assets.MaterialHandle, materials []assets.Material) {
+	if len(materials) == 0 {
+		imgui.TextDisabled("No materials")
+		return
+	}
+
+	if !materialHandleExists(*selected, materials) {
+		*selected = materials[0].Handle
+	}
+
+	if imgui.BeginCombo(id, materialHandleName(*selected, materials)) {
+		for _, material := range materials {
+			if imgui.SelectableBool(material.Name) {
+				*selected = material.Handle
+			}
+		}
+		imgui.EndCombo()
+	}
+}
+
+func materialSlotRow(label string, body func()) {
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	imgui.Text(label)
+	imgui.TableSetColumnIndex(1)
+	imgui.PushIDStr(label)
+	body()
+	imgui.PopID()
+}
+
+func materialHandleExists(handle assets.MaterialHandle, materials []assets.Material) bool {
+	for _, material := range materials {
+		if material.Handle == handle {
+			return true
+		}
+	}
+	return false
+}
+
+func materialHandleName(handle assets.MaterialHandle, materials []assets.Material) string {
+	for _, material := range materials {
+		if material.Handle == handle {
+			return material.Name
+		}
+	}
+	return ""
+}
+
+func inputFloatRow(label string, value *float32, step float32, fastStep float32, format string) {
+	ui.Row(label, func() {
+		imgui.InputFloatV("##value", value, step, fastStep, format, imgui.InputTextFlagsNone)
+	})
+}
+
+func inputIntRow(label string, value *int32) {
+	ui.Row(label, func() {
+		imgui.InputIntV("##value", value, 0, 0, imgui.InputTextFlagsNone)
+	})
+}
+
+func savePrefab(app renderiface.App) error {
+	name := strings.TrimSpace(activePrefabEditor.Name)
+	if name == "" {
+		return fmt.Errorf("prefab name is required")
+	}
+	if activePrefabEditor.Scale <= 0 {
+		return fmt.Errorf("scale must be greater than zero")
+	}
+	if activePrefabEditor.IncludeCapsule && (activePrefabEditor.CapsuleRadius <= 0 || activePrefabEditor.CapsuleLength <= 0) {
+		return fmt.Errorf("capsule dimensions must be greater than zero")
+	}
+	if activePrefabEditor.IncludeKinematic && activePrefabEditor.KinematicSpeed < 0 {
+		return fmt.Errorf("kinematic speed cannot be negative")
+	}
+	if activePrefabEditor.IncludeHealth && activePrefabEditor.HealthAmount < 0 {
+		return fmt.Errorf("health cannot be negative")
+	}
+	if activePrefabEditor.IncludeAttack && activePrefabEditor.AttackRange < 0 {
+		return fmt.Errorf("attack range cannot be negative")
+	}
+
+	documents := app.AssetManager().GetDocuments()
+	if activePrefabEditor.IncludeMesh {
+		if !documentExists(documents, activePrefabEditor.MeshSourceAsset) {
+			return fmt.Errorf("source asset [%s] is not loaded", activePrefabEditor.MeshSourceAsset)
+		}
+	}
+	if activePrefabEditor.IncludeAnimation {
+		if !documentExists(documents, activePrefabEditor.AnimationSourceAsset) {
+			return fmt.Errorf("source asset [%s] is not loaded", activePrefabEditor.AnimationSourceAsset)
+		}
+	}
+
+	animationHandle := app.AssetManager().GetAnimationHandle(activePrefabEditor.AnimationSourceAsset)
+	if activePrefabEditor.IncludeAnimation && !hasAnimations(app.AssetManager(), animationHandle) {
+		return fmt.Errorf("source asset [%s] has no animations", activePrefabEditor.AnimationSourceAsset)
+	}
+
+	template := buildPrefabTemplate(app, name)
+	return prefab.RegisterTemplate(name, template)
+}
+
+func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity {
+	template := entity.InstantiateBaseEntity(prefabName, 0)
+	scale := float64(activePrefabEditor.Scale)
+	entity.SetScale(template, mgl64.Vec3{scale, scale, scale})
+
+	if activePrefabEditor.IncludeMesh {
+		template.MeshComponent = &entity.MeshComponent{
+			MeshHandle:    app.AssetManager().GetSingleEntityMeshHandle(activePrefabEditor.MeshSourceAsset),
+			Materials:     append([]assets.MaterialHandle{}, activePrefabEditor.MeshMaterials...),
+			Transform:     mgl64.Rotate3DY(math.Pi).Mat4(),
+			Visible:       true,
+			ShadowCasting: true,
+		}
+	}
+
+	if activePrefabEditor.IncludeAnimation {
+		animationHandle := app.AssetManager().GetAnimationHandle(activePrefabEditor.AnimationSourceAsset)
+		template.Animation = entity.NewAnimationComponent(app.AssetManager(), animationHandle, activePrefabEditor.StateMachineID, entity.AnimationModeStateMachine)
+	}
+
+	if activePrefabEditor.IncludeCapsule {
+		radius := float64(activePrefabEditor.CapsuleRadius)
+		length := float64(activePrefabEditor.CapsuleLength)
+		capsule := collider.Capsule{
+			Radius: radius,
+			Top:    mgl64.Vec3{0, radius + length, 0},
+			Bottom: mgl64.Vec3{0, radius, 0},
+		}
+		template.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
+	}
+
+	if activePrefabEditor.IncludeKinematic {
+		template.Kinematic = &entity.KinematicComponent{
+			GravityEnabled: activePrefabEditor.KinematicGravity,
+			Speed:          float64(activePrefabEditor.KinematicSpeed),
+		}
+	}
+	if activePrefabEditor.IncludeHealth {
+		template.HealthComponent = &entity.HealthComponent{Amount: int(activePrefabEditor.HealthAmount)}
+	}
+	if activePrefabEditor.IncludeAimDownSights {
+		template.AimDownSightsComponent = &entity.AimDownSightsComponent{}
+	}
+	if activePrefabEditor.IncludeAttack {
+		template.AttackComponent = &entity.AttackComponent{AttackRange: float64(activePrefabEditor.AttackRange)}
+	}
+	if activePrefabEditor.IncludeAI {
+		template.AIComponent = &entity.AIComponent{}
+	}
+
+	return template
+}
+
+func assignDefaultPrefab(app renderiface.App) {
+	sourceAssetName := defaultSourceAssetName(app.AssetManager().GetDocuments())
+	scale := float32(1)
+	activePrefabEditor = prefabEditorState{
+		Name:                 defaultPrefabName,
+		Scale:                scale,
+		IncludeMesh:          true,
+		MeshSourceAsset:      sourceAssetName,
+		IncludeAnimation:     true,
+		AnimationSourceAsset: sourceAssetName,
+		StateMachineID:       animation.StateMachineIDVelociraptor,
+		IncludeCapsule:       true,
+		CapsuleRadius:        float32(settings.EntityCapsuleColliderRadius) * (1 / scale),
+		CapsuleLength:        float32(settings.EntityCapsuleColliderLength) * (1 / scale),
+		IncludeKinematic:     true,
+		KinematicGravity:     true,
+		KinematicSpeed:       7,
+		IncludeHealth:        true,
+		HealthAmount:         100,
+		IncludeAimDownSights: true,
+		IncludeAttack:        true,
+		AttackRange:          3,
+		IncludeAI:            true,
+	}
+}
+
+func defaultSourceAssetName(documents []assets.Document) string {
+	for _, document := range documents {
+		if document.ID == "velociraptor" {
+			return document.ID
+		}
+	}
+	if len(documents) > 0 {
+		return documents[0].ID
+	}
+	return ""
+}
+
+func documentExists(documents []assets.Document, id string) bool {
+	for _, document := range documents {
+		if document.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func hasAnimations(assetManager *assets.AssetManager, animationHandle assets.AnimationHandle) bool {
+	animations, joints, _ := assetManager.GetAnimations(animationHandle)
+	return len(animations) > 0 && len(joints) > 0
+}

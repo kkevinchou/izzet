@@ -61,6 +61,10 @@ func RegisterTemplate(name string, template *entity.Entity) error {
 	return nil
 }
 
+func Delete(handle PrefabHandle) {
+	delete(PrefabRegistry, handle)
+}
+
 func SaveAssets() []Asset {
 	handles := make([]PrefabHandle, 0, len(PrefabRegistry))
 	for handle := range PrefabRegistry {

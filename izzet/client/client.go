@@ -23,6 +23,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
+	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
@@ -151,6 +152,7 @@ func New(shaderDirectory string, config settings.Config, logsEnabled bool) *Clie
 	}
 
 	g.setupSystems()
+	prefab.CreateDefaultPrefabs(g)
 
 	return g
 }

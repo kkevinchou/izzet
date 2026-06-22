@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
@@ -34,6 +35,7 @@ type MaterialsJSON struct {
 type AssetsJSON struct {
 	Documents []DocumentJSON
 	Materials []MaterialsJSON
+	Prefabs   []prefab.Prefab
 }
 
 func (g *Client) InitializeProjectFolders(name string) error {
@@ -118,6 +120,14 @@ func (g *Client) SaveProjectAs(name string) error {
 		assetsJSON.Materials = append(assetsJSON.Materials, MaterialsJSON{MaterialAsset: material})
 	}
 
+	// prefabs
+
+	for _, prefab := range prefab.PrefabRegistry {
+		assetsJSON.Prefabs = append(assetsJSON.Prefabs, prefab)
+	}
+
+	// assets file
+
 	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
 	assetsFile, err := os.OpenFile(assetsFilePath, os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -133,6 +143,8 @@ func (g *Client) SaveProjectAs(name string) error {
 	}
 
 	g.project.AssetsFile = assetsFilePath
+
+	// write the project files
 
 	f, err := os.OpenFile(filepath.Join(settings.ProjectsDirectory, name, "main_project.izt"), os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {

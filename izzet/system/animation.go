@@ -6,6 +6,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	animationparser "github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type AnimationSystem struct {
@@ -31,7 +32,7 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 				continue
 			}
 
-			if (s.app.IsClient() && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
+			if (s.app.IsClient() && s.app.AppMode() == types.AppModePlay && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
 				var ctx animationparser.GameContext
 				ctx.Grounded = e.Kinematic.Grounded
 				ctx.JumpTriggered = e.Kinematic.Jump

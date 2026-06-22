@@ -11,7 +11,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func CreatePlayer(app App) *entity.Entity {
+func createPlayer(app App) *entity.Entity {
 	e := entity.CreateEmptyEntity("player")
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
 

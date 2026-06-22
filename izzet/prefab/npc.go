@@ -12,7 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func CreateNPC(app App, entityType entity.EntityType) *entity.Entity {
+func createNPC(app App, entityType entity.EntityType) *entity.Entity {
 	var modelName string
 	var scale float64 = 1
 	if entityType == entity.EntityTypeVelociraptor {

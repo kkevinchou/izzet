@@ -15,20 +15,28 @@ type Prefab struct {
 	bytes  []byte `json:"-"`
 }
 
-var PrefabRegistry []Prefab
+type PrefabHandle string
+
+var (
+	PrefabHandleMannequin    PrefabHandle = "mannequin"
+	PrefabHandleVelociraptor PrefabHandle = "velociraptor"
+)
+
+var PrefabRegistry map[PrefabHandle]Prefab
+
+func init() {
+	PrefabRegistry = map[PrefabHandle]Prefab{}
+}
 
 func CreateDefaultPrefabs(app App) {
-	player := CreatePlayer(app)
-	velociraptor := CreateNPC(app, entity.EntityTypeVelociraptor)
-	// parasaurolophus := CreateNPC(app, entity.EntityTypeParasaurolophus)
-	PrefabRegistry = append(PrefabRegistry,
-		New(player),
-		New(velociraptor),
-	)
+	player := createPlayer(app)
+	velociraptor := createNPC(app, entity.EntityTypeVelociraptor)
+
+	PrefabRegistry[PrefabHandleMannequin] = New(player)
+	PrefabRegistry[PrefabHandleVelociraptor] = New(velociraptor)
 }
 
 func New(e *entity.Entity) Prefab {
-	// p := Prefab{Entity: e},
 	bytes, err := serialization.SerializeEntity(e)
 	if err != nil {
 		panic(err)
@@ -37,7 +45,8 @@ func New(e *entity.Entity) Prefab {
 	return Prefab{Entity: e, bytes: bytes}
 }
 
-func Instantiate(p Prefab, am *assets.AssetManager) *entity.Entity {
+func Instantiate(handle PrefabHandle, am *assets.AssetManager) *entity.Entity {
+	p := PrefabRegistry[handle]
 	e, err := serialization.DeserializeEntity(p.bytes, am)
 	if err != nil {
 		panic(err)

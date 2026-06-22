@@ -39,13 +39,13 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
-		playerEntity := prefab.CreatePlayer(s.app)
+		playerEntity := prefab.Instantiate(prefab.PrefabHandleMannequin, s.app.AssetManager())
 		spawnPoint := world.GetSpawnPoint()
 		if spawnPoint != nil {
 			entity.SetLocalPosition(playerEntity, spawnPoint.Position())
 		}
 
-		camera := prefab.CreateCamera(e.PlayerID)
+		camera := createCamera(e.PlayerID)
 		playerEntity.CharacterControllerComponent.CameraEntityID = camera.GetID()
 		camera.CameraComponent.Target = playerEntity.ID
 
@@ -114,4 +114,12 @@ func createAckPlayerJoinMessage(playerID int, cameraEntityID int, playerEntityID
 	ackPlayerJoinMessage.SerializedWorld = worldBytesBuffer.Bytes()
 
 	return ackPlayerJoinMessage, nil
+}
+
+func createCamera(playerID int) *entity.Entity {
+	e := entity.CreateEmptyEntity("camera")
+	e.CameraComponent = &entity.CameraComponent{CameraMode: entity.CameraModeOverShoulder, Target: entity.InvalidEntityID}
+	e.ImageComponent = entity.NewImageComponent("camera.png", 1, true)
+	e.PlayerInput = &entity.PlayerInputComponent{PlayerID: playerID}
+	return e
 }

@@ -93,7 +93,7 @@ func (s *ReceiverSystem) handleRessurectRPC(world system.GameWorld, rpc network.
 }
 
 func (s *ReceiverSystem) handleCreateEntityRPC(world system.GameWorld, rpc network.RPCMessage) {
-	e := prefab.CreateNPC(s.app, entity.EntityType(rpc.CreateEntity.EntityType))
+	e := prefab.Instantiate(prefab.PrefabHandleVelociraptor, s.app.AssetManager())
 
 	if rpc.CreateEntity.Patrol {
 		jitterX := rand.Intn(10)

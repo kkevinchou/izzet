@@ -27,12 +27,28 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 			continue
 		}
 
-		if e.Animation.Mode == entity.AnimationModeStateMachine {
-			if e.Kinematic == nil {
-				continue
+		if s.app.IsClient() && s.app.AppMode() == types.AppModeEditor {
+			c := e.Animation
+			player := c.AnimationPlayer
+			if e.Animation.SelectedAnimation != "" {
+				if c.LoopAnimation {
+					if player.CurrentAnimation() != c.SelectedAnimation || player.NormalizedClipProgress() >= 1 {
+						player.PlayClip(c.SelectedAnimation)
+					}
+					player.Update(delta)
+				} else {
+					if player.CurrentAnimation() != c.SelectedAnimation {
+						player.PlayClip(c.SelectedAnimation)
+					}
+					player.SetCurrentAnimationFrame(c.SelectedAnimation, c.SelectedKeyFrame)
+				}
 			}
-
+		} else if e.Animation.Mode == entity.AnimationModeStateMachine {
 			if (s.app.IsClient() && s.app.AppMode() == types.AppModePlay && s.app.GetPlayerEntity().GetID() == e.GetID()) || s.app.IsServer() {
+				if e.Kinematic == nil {
+					continue
+				}
+
 				var ctx animationparser.GameContext
 				ctx.Grounded = e.Kinematic.Grounded
 				ctx.JumpTriggered = e.Kinematic.Jump
@@ -69,23 +85,6 @@ func (s *AnimationSystem) Update(delta time.Duration, world GameWorld) {
 					)
 				}
 				e.Animation.AnimationPlayer.Update(delta)
-			}
-		} else if e.Animation.Mode == entity.AnimationModeClip {
-			if e.Animation.SelectedAnimation != "" {
-				c := e.Animation
-				player := c.AnimationPlayer
-
-				if c.LoopAnimation {
-					if player.CurrentAnimation() != c.SelectedAnimation || player.NormalizedClipProgress() >= 1 {
-						player.PlayClip(c.SelectedAnimation)
-					}
-					player.Update(delta)
-				} else {
-					if player.CurrentAnimation() != c.SelectedAnimation {
-						player.PlayClip(c.SelectedAnimation)
-					}
-					player.SetCurrentAnimationFrame(c.SelectedAnimation, c.SelectedKeyFrame)
-				}
 			}
 		}
 	}

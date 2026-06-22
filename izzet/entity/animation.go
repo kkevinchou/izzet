@@ -76,4 +76,7 @@ func InitializeAnimationComponent(c *AnimationComponent, am *assets.AssetManager
 		stateMachine.SynchronizePlayer(player)
 		c.AnimationStateMachine = stateMachine
 	}
+
+	// calculate initial animation transforms
+	player.Update(0)
 }

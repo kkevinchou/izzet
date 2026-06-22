@@ -12,6 +12,7 @@ type DrawerTab string
 const DrawerTabNone DrawerTab = "NONE"
 const DrawerTabContent DrawerTab = "CONTENT"
 const DrawerTabMaterials DrawerTab = "MATERIALS"
+const DrawerTabPrefabs DrawerTab = "PREFABS"
 
 const (
 	drawerTabHeight float32 = 210
@@ -66,6 +67,24 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 	}
 	imgui.PopStyleColor()
 
+	imgui.SameLine()
+
+	if last == DrawerTabPrefabs {
+		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorActive)
+	} else {
+		imgui.PushStyleColorVec4(imgui.ColButton, buttonColorInactive)
+	}
+	if imgui.Button("Prefabs") {
+		if last != DrawerTabPrefabs {
+			expanded = true
+			last = DrawerTabPrefabs
+		} else {
+			expanded = false
+			last = DrawerTabNone
+		}
+	}
+	imgui.PopStyleColor()
+
 	if expanded {
 		var open bool = true
 		var drawerTabFlags imgui.WindowFlags = imgui.WindowFlagsNoResize | imgui.WindowFlagsNoMove | imgui.WindowFlagsNoCollapse
@@ -81,6 +100,8 @@ func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext
 			contentBrowser(app)
 		} else if last == DrawerTabMaterials {
 			materialssUI(app, materialTextureMap)
+		} else if last == DrawerTabPrefabs {
+			prefabsUI(app)
 		}
 		imgui.End()
 		imgui.PopStyleVar()

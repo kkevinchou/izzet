@@ -40,11 +40,11 @@ func CreateDefaultPrefabs(app App) {
 	player := createPlayer(app)
 	velociraptor := createNPC(app, entity.EntityTypeVelociraptor)
 
-	_ = RegisterTemplate(string(PrefabHandleMannequin), player)
-	_ = RegisterTemplate(string(PrefabHandleVelociraptor), velociraptor)
+	_ = RegisterPrefab(string(PrefabHandleMannequin), player)
+	_ = RegisterPrefab(string(PrefabHandleVelociraptor), velociraptor)
 }
 
-func RegisterTemplate(name string, template *entity.Entity) error {
+func RegisterPrefab(name string, template *entity.Entity) error {
 	if name == "" {
 		return fmt.Errorf("prefab name is required")
 	}
@@ -93,7 +93,7 @@ func LoadAssets(app App, assets []Asset) error {
 		if asset.Name == "" || asset.Prefab.Entity == nil {
 			continue
 		}
-		if err := RegisterTemplate(asset.Name, asset.Prefab.Entity); err != nil {
+		if err := RegisterPrefab(asset.Name, asset.Prefab.Entity); err != nil {
 			return err
 		}
 	}

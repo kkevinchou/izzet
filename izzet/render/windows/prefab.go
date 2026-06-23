@@ -18,6 +18,8 @@ import (
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
+var showPrefabWindow bool
+
 type prefabEditorState struct {
 	Name  string
 	Scale float32
@@ -50,6 +52,8 @@ const (
 	defaultPrefabName            string  = "<new prefab>"
 	prefabEditorLabelColumnWidth float32 = 260
 	prefabEditorPropertyIndent   float32 = 18
+	prefabWindowWidth            float32 = 720
+	prefabWindowHeight           float32 = 680
 )
 
 var (
@@ -58,22 +62,22 @@ var (
 )
 
 func ShowCreatePrefabWindow(app renderiface.App) {
-	app.RuntimeConfig().ShowPrefabEditor = true
+	showPrefabWindow = true
 	assignDefaultPrefab(app)
 }
 
 func renderPrefabWindow(app renderiface.App) {
-	if !app.RuntimeConfig().ShowPrefabEditor {
+	if !showPrefabWindow {
 		return
 	}
 
 	center := imgui.MainViewport().Center()
 	imgui.SetNextWindowPosV(center, imgui.CondAppearing, imgui.Vec2{X: 0.5, Y: 0.5})
-	imgui.SetNextWindowSizeV(imgui.Vec2{X: 720, Y: 680}, imgui.CondAppearing)
+	imgui.SetNextWindowSizeV(imgui.Vec2{X: prefabWindowWidth, Y: prefabWindowHeight}, imgui.CondAppearing)
 	imgui.PushStyleVarVec2(imgui.StyleVarWindowPadding, imgui.Vec2{X: 12, Y: 12})
 	defer imgui.PopStyleVar()
 
-	if imgui.BeginV("Create Prefab", &app.RuntimeConfig().ShowPrefabEditor, imgui.WindowFlagsNone) {
+	if imgui.BeginV("Create Prefab", &showPrefabWindow, imgui.WindowFlagsNone) {
 		renderPrefabEditor(app)
 	}
 	imgui.End()
@@ -135,13 +139,13 @@ func renderPrefabEditor(app renderiface.App) {
 		if err := savePrefab(app); err != nil {
 			activePrefabEditor.Error = err.Error()
 		} else {
-			app.RuntimeConfig().ShowPrefabEditor = false
+			showPrefabWindow = false
 			assignDefaultPrefab(app)
 		}
 	}
 	imgui.SameLine()
 	if imgui.Button("Cancel") {
-		app.RuntimeConfig().ShowPrefabEditor = false
+		showPrefabWindow = false
 		assignDefaultPrefab(app)
 	}
 }
@@ -371,7 +375,7 @@ func savePrefab(app renderiface.App) error {
 	}
 
 	template := buildPrefabTemplate(app, name)
-	return prefab.RegisterTemplate(name, template)
+	return prefab.RegisterPrefab(name, template)
 }
 
 func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity {

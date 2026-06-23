@@ -7,12 +7,13 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/animation"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func createNPC(app App, entityType entity.EntityType) *entity.Entity {
+func createNPC(am *assets.AssetManager, entityType entity.EntityType) *entity.Entity {
 	var modelName string
 	var scale float64 = 1
 	if entityType == entity.EntityTypeVelociraptor {
@@ -25,7 +26,7 @@ func createNPC(app App, entityType entity.EntityType) *entity.Entity {
 		panic(fmt.Sprintf("unexpected entity type %s", entityType))
 	}
 
-	meshHandle := app.AssetManager().GetSingleEntityMeshHandle(modelName)
+	meshHandle := am.GetSingleEntityMeshHandle(modelName)
 	e := entity.InstantiateBaseEntity(modelName, 0)
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: 7}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
@@ -43,8 +44,8 @@ func createNPC(app App, entityType entity.EntityType) *entity.Entity {
 	e.Collider.CapsuleCollider = &capsule
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}
-	handle := app.AssetManager().GetAnimationHandle(modelName)
-	e.Animation = entity.NewAnimationComponent(app.AssetManager(), handle, animation.StateMachineIDVelociraptor, entity.AnimationModeStateMachine)
+	handle := am.GetAnimationHandle(modelName)
+	e.Animation = entity.NewAnimationComponent(am, handle, animation.StateMachineIDVelociraptor, entity.AnimationModeStateMachine)
 	e.AttackComponent = &entity.AttackComponent{AttackRange: 3}
 	entity.SetScale(e, mgl64.Vec3{scale, scale, scale})
 

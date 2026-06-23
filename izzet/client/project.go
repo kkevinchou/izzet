@@ -32,10 +32,14 @@ type MaterialsJSON struct {
 	MaterialAsset assets.Material
 }
 
+type PrefabsJSON struct {
+	PrefabAsset prefab.Prefab
+}
+
 type AssetsJSON struct {
 	Documents []DocumentJSON
 	Materials []MaterialsJSON
-	Prefabs   []prefab.Asset
+	Prefabs   []PrefabsJSON
 }
 
 func (g *Client) InitializeProjectFolders(name string) error {
@@ -121,7 +125,9 @@ func (g *Client) SaveProjectAs(name string) error {
 
 	// prefabs
 
-	assetsJSON.Prefabs = prefab.SaveAssets()
+	for _, p := range prefab.Prefabs() {
+		assetsJSON.Prefabs = append(assetsJSON.Prefabs, PrefabsJSON{PrefabAsset: p})
+	}
 
 	// assets file
 
@@ -241,7 +247,6 @@ func (g *Client) loadAssets(name string) {
 
 	g.assetManager = assets.NewAssetManager(true, g.Logger())
 
-	// TODO - take assetJSON as the input?
 	for _, document := range assetsJSON.Documents {
 		// TODO - issue: the document in document asset is populated by reading the config
 		// which still points to the default location for assets. actually is this an issue?
@@ -254,8 +259,12 @@ func (g *Client) loadAssets(name string) {
 		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
 	}
 
-	if err := prefab.LoadAssets(g, assetsJSON.Prefabs); err != nil {
-		panic(err)
+	prefab.InitializePrefabs(g.assetManager)
+	for _, p := range assetsJSON.Prefabs {
+		err := prefab.RegisterPrefabWithHandle(p.PrefabAsset.Handle, p.PrefabAsset.Name, p.PrefabAsset.Entity)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

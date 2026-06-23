@@ -1,6 +1,7 @@
 package prefab
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -14,50 +15,50 @@ type App interface {
 }
 
 type Prefab struct {
+	Name   string
+	Handle PrefabHandle
 	Entity *entity.Entity
 	bytes  []byte `json:"-"`
 }
 
 type Asset struct {
-	Name   string
 	Prefab Prefab
 }
 
-type PrefabHandle string
+type PrefabHandle struct {
+	id string
+}
 
 var (
-	PrefabHandleMannequin    PrefabHandle = "mannequin"
-	PrefabHandleVelociraptor PrefabHandle = "velociraptor"
+	PrefabHandleMannequin    PrefabHandle = PrefabHandle{id: "mannequin"}
+	PrefabHandleVelociraptor PrefabHandle = PrefabHandle{id: "velociraptor"}
 )
 
 var PrefabRegistry map[PrefabHandle]Prefab
 
-func init() {
+func InitializePrefabs(am *assets.AssetManager) {
 	PrefabRegistry = map[PrefabHandle]Prefab{}
+	CreateDefaultPrefabs(am)
 }
 
-func CreateDefaultPrefabs(app App) {
-	player := createPlayer(app)
-	velociraptor := createNPC(app, entity.EntityTypeVelociraptor)
+func CreateDefaultPrefabs(am *assets.AssetManager) {
+	player := createPlayer(am)
+	velociraptor := createNPC(am, entity.EntityTypeVelociraptor)
 
-	_ = RegisterPrefab(string(PrefabHandleMannequin), player)
-	_ = RegisterPrefab(string(PrefabHandleVelociraptor), velociraptor)
+	_ = RegisterPrefabWithHandle(PrefabHandleMannequin, "mannequin", player)
+	_ = RegisterPrefabWithHandle(PrefabHandleVelociraptor, "velociraptor", velociraptor)
 }
 
 func RegisterPrefab(name string, template *entity.Entity) error {
-	if name == "" {
-		return fmt.Errorf("prefab name is required")
-	}
+	return RegisterPrefabWithHandle(PrefabHandle{id: name}, name, template)
+}
+
+func RegisterPrefabWithHandle(handle PrefabHandle, name string, template *entity.Entity) error {
 	if template == nil {
-		return fmt.Errorf("prefab [%s] template entity is nil", name)
+		return fmt.Errorf("prefab [%s] template entity is nil", handle.id)
 	}
 
-	handle := PrefabHandle(name)
-	if _, ok := PrefabRegistry[handle]; ok {
-		return fmt.Errorf("prefab [%s] already exists", name)
-	}
-
-	PrefabRegistry[handle] = newPrefab(template)
+	PrefabRegistry[handle] = newPrefab(handle, name, template)
 	return nil
 }
 
@@ -65,48 +66,29 @@ func Delete(handle PrefabHandle) {
 	delete(PrefabRegistry, handle)
 }
 
-func SaveAssets() []Asset {
+func Prefabs() []Prefab {
 	handles := make([]PrefabHandle, 0, len(PrefabRegistry))
 	for handle := range PrefabRegistry {
 		handles = append(handles, handle)
 	}
 	sort.Slice(handles, func(i, j int) bool {
-		return string(handles[i]) < string(handles[j])
+		return string(handles[i].id) < string(handles[j].id)
 	})
 
-	var assets []Asset
+	var prefabs []Prefab
 	for _, handle := range handles {
-		assets = append(assets, Asset{
-			Name:   string(handle),
-			Prefab: PrefabRegistry[handle],
-		})
+		prefabs = append(prefabs, PrefabRegistry[handle])
 	}
-	return assets
+	return prefabs
 }
 
-func LoadAssets(app App, assets []Asset) error {
-	PrefabRegistry = map[PrefabHandle]Prefab{}
-
-	CreateDefaultPrefabs(app)
-
-	for _, asset := range assets {
-		if asset.Name == "" || asset.Prefab.Entity == nil {
-			continue
-		}
-		if err := RegisterPrefab(asset.Name, asset.Prefab.Entity); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func newPrefab(e *entity.Entity) Prefab {
+func newPrefab(handle PrefabHandle, name string, e *entity.Entity) Prefab {
 	bytes, err := serialization.SerializeEntity(e)
 	if err != nil {
 		panic(err)
 	}
 
-	return Prefab{Entity: e, bytes: bytes}
+	return Prefab{Name: name, Entity: e, bytes: bytes, Handle: handle}
 }
 
 func Instantiate(handle PrefabHandle, am *assets.AssetManager) *entity.Entity {
@@ -118,4 +100,23 @@ func Instantiate(handle PrefabHandle, am *assets.AssetManager) *entity.Entity {
 	id := entity.GetNextIDAndAdvance()
 	e.ID = id
 	return e
+}
+
+func (h PrefabHandle) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ID string
+	}{
+		ID: string(h.id),
+	})
+}
+
+func (h *PrefabHandle) UnmarshalJSON(data []byte) error {
+	var value struct {
+		ID string
+	}
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*h = PrefabHandle{id: value.ID}
+	return nil
 }

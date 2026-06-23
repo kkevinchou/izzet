@@ -2,7 +2,6 @@ package drawer
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/prefab"
@@ -11,7 +10,7 @@ import (
 
 const deletePrefabConfirmationPopup = "Delete Prefab"
 
-var pendingDeletePrefab *prefab.PrefabHandle
+var pendingDeletePrefab *prefab.Prefab
 var showDeletePrefabConfirmationPopup bool
 
 func prefabsUI(app renderiface.App) {
@@ -22,13 +21,13 @@ func prefabsUI(app renderiface.App) {
 	)
 	defer imgui.PopStyleVar()
 
-	handles := sortedPrefabHandles()
+	prefabs := prefab.Prefabs()
 	if imgui.BeginTableV("PrefabsTable", itemsPerRow,
 		imgui.TableFlagsSizingFixedSame, imgui.Vec2{X: 0, Y: 0}, 0) {
 
-		for _, handle := range handles {
+		for _, p := range prefabs {
 			imgui.TableNextColumn()
-			drawPrefabCell(app, handle)
+			drawPrefabCell(app, p)
 		}
 		imgui.EndTable()
 	}
@@ -36,20 +35,8 @@ func prefabsUI(app renderiface.App) {
 	renderDeletePrefabConfirmationPopup()
 }
 
-func sortedPrefabHandles() []prefab.PrefabHandle {
-	handles := make([]prefab.PrefabHandle, 0, len(prefab.PrefabRegistry))
-	for handle := range prefab.PrefabRegistry {
-		handles = append(handles, handle)
-	}
-
-	sort.Slice(handles, func(i, j int) bool {
-		return string(handles[i]) < string(handles[j])
-	})
-	return handles
-}
-
-func drawPrefabCell(app renderiface.App, handle prefab.PrefabHandle) {
-	name := string(handle)
+func drawPrefabCell(app renderiface.App, p prefab.Prefab) {
+	name := p.Name
 
 	imgui.PushIDStr(name)
 	defer imgui.PopID()
@@ -67,13 +54,13 @@ func drawPrefabCell(app renderiface.App, handle prefab.PrefabHandle) {
 
 	if imgui.BeginPopupContextItemV("prefab-context-"+name, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate") {
-			e := prefab.Instantiate(handle, app.AssetManager())
+			e := prefab.Instantiate(p.Handle, app.AssetManager())
 			app.World().AddEntity(e)
 			app.SelectEntity(e)
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Delete") {
-			pendingDeletePrefab = &handle
+			pendingDeletePrefab = &p
 			showDeletePrefabConfirmationPopup = true
 			imgui.CloseCurrentPopup()
 		}
@@ -100,10 +87,10 @@ func renderDeletePrefabConfirmationPopup() {
 
 	renderConfirmationModal(
 		deletePrefabConfirmationPopup,
-		fmt.Sprintf("Delete prefab [%s]?", string(*pendingDeletePrefab)),
+		fmt.Sprintf("Delete prefab [%s]?", pendingDeletePrefab.Handle),
 		&showDeletePrefabConfirmationPopup,
 		func() {
-			prefab.Delete(*pendingDeletePrefab)
+			prefab.Delete(pendingDeletePrefab.Handle)
 			pendingDeletePrefab = nil
 		},
 		func() {

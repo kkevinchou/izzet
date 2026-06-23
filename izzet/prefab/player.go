@@ -6,12 +6,13 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/animation"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/types"
 )
 
-func createPlayer(app App) *entity.Entity {
+func createPlayer(am *assets.AssetManager) *entity.Entity {
 	e := entity.InstantiateBaseEntity("player", 0)
 	e.Kinematic = &entity.KinematicComponent{GravityEnabled: true, Speed: settings.CharacterSpeed}
 
@@ -27,11 +28,11 @@ func createPlayer(app App) *entity.Entity {
 	e.CharacterControllerComponent = &entity.CharacterControllerComponent{CameraEntityID: entity.InvalidEntityID}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	e.HealthComponent = &entity.HealthComponent{Amount: 100}
-	meshHandle := app.AssetManager().GetSingleEntityMeshHandle("mannequin_m")
+	meshHandle := am.GetSingleEntityMeshHandle("mannequin_m")
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true, InvisibleToPlayerOwner: settings.FirstPersonCamera}
-	handle := app.AssetManager().GetAnimationHandle("mannequin_m")
-	e.Animation = entity.NewAnimationComponent(app.AssetManager(), handle, animation.StateMachineIDPlayer, entity.AnimationModeStateMachine)
+	handle := am.GetAnimationHandle("mannequin_m")
+	e.Animation = entity.NewAnimationComponent(am, handle, animation.StateMachineIDPlayer, entity.AnimationModeStateMachine)
 	e.RenderBlend = &entity.RenderBlend{}
 	entity.SetScale(e, mgl64.Vec3{1, 1, 1})
 

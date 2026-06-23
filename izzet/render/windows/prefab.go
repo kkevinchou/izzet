@@ -150,192 +150,6 @@ func renderPrefabEditor(app renderiface.App) {
 	}
 }
 
-func sectionHeading(label string) {
-	imgui.TableNextRow()
-	imgui.TableSetColumnIndex(0)
-	sectionHeaderText(label)
-	imgui.TableSetColumnIndex(1)
-	imgui.Separator()
-}
-
-func componentSection(label string, enabled *bool, body func()) {
-	imgui.PushIDStr(label)
-	defer imgui.PopID()
-
-	imgui.TableNextRow()
-	imgui.TableSetColumnIndex(0)
-	imgui.Checkbox("##enabled", enabled)
-	imgui.SameLine()
-	sectionHeaderText(label)
-	imgui.TableSetColumnIndex(1)
-	imgui.Separator()
-
-	if *enabled && body != nil {
-		body()
-	}
-}
-
-func sectionHeaderText(label string) {
-	imgui.PushStyleColorVec4(imgui.ColText, prefabEditorHeaderTextColor)
-	imgui.Text(label)
-	imgui.PopStyleColor()
-}
-
-func propertyRow(label string, body func()) {
-	imgui.TableNextRow()
-	imgui.TableSetColumnIndex(0)
-	cursor := imgui.CursorPos()
-	imgui.SetCursorPosX(cursor.X + prefabEditorPropertyIndent)
-	imgui.PushStyleColorVec4(imgui.ColText, prefabEditorPropertyTextColor)
-	imgui.Text(label)
-	imgui.PopStyleColor()
-	imgui.TableSetColumnIndex(1)
-	imgui.PushIDStr(label)
-	imgui.PushItemWidth(-1)
-	body()
-	imgui.PopItemWidth()
-	imgui.PopID()
-}
-
-func checkboxPropertyRow(label string, value *bool) {
-	propertyRow(label, func() {
-		imgui.Checkbox("##value", value)
-	})
-}
-
-func renderSourceAssetCombo(app renderiface.App, sourceAsset *string) {
-	documents := app.AssetManager().GetDocuments()
-	if len(documents) == 0 {
-		imgui.TextDisabled("No documents")
-		return
-	}
-
-	if *sourceAsset == "" {
-		*sourceAsset = defaultSourceAssetName(documents)
-	}
-
-	if imgui.BeginCombo("##value", *sourceAsset) {
-		for _, document := range documents {
-			if imgui.SelectableBool(document.ID) {
-				*sourceAsset = document.ID
-			}
-		}
-		imgui.EndCombo()
-	}
-}
-
-func renderStateMachineCombo(selected *animation.StateMachineID) {
-	ids := animation.StateMachineIDs()
-	if len(ids) == 0 {
-		imgui.TextDisabled("No state machines")
-		return
-	}
-
-	if *selected == "" {
-		*selected = ids[0]
-	}
-
-	if imgui.BeginCombo("##value", string(*selected)) {
-		for _, id := range ids {
-			if imgui.SelectableBool(string(id)) {
-				*selected = id
-			}
-		}
-		imgui.EndCombo()
-	}
-}
-
-func renderPrefabMaterialSlots(app renderiface.App) {
-	materials := app.AssetManager().GetMaterials()
-
-	materialSlotRow("Material Slots", func() {
-		if imgui.Button("Append") {
-			activePrefabEditor.MeshMaterials = append(
-				activePrefabEditor.MeshMaterials,
-				app.AssetManager().DefaultMaterialHandle(),
-			)
-		}
-	})
-
-	removeIndex := -1
-	for i := range activePrefabEditor.MeshMaterials {
-		index := i
-		materialSlotRow(fmt.Sprintf("Material Slot %d", index), func() {
-			comboWidth := imgui.ContentRegionAvail().X - 90
-			if comboWidth < 120 {
-				comboWidth = imgui.ContentRegionAvail().X
-			}
-			imgui.SetNextItemWidth(comboWidth)
-			renderMaterialHandleCombo("##material", &activePrefabEditor.MeshMaterials[index], materials)
-			imgui.SameLine()
-			if imgui.Button("Remove") {
-				removeIndex = index
-			}
-		})
-	}
-
-	if removeIndex >= 0 {
-		activePrefabEditor.MeshMaterials = append(
-			activePrefabEditor.MeshMaterials[:removeIndex],
-			activePrefabEditor.MeshMaterials[removeIndex+1:]...,
-		)
-	}
-}
-
-func renderMaterialHandleCombo(id string, selected *assets.MaterialHandle, materials []assets.Material) {
-	if len(materials) == 0 {
-		imgui.TextDisabled("No materials")
-		return
-	}
-
-	if !materialHandleExists(*selected, materials) {
-		*selected = materials[0].Handle
-	}
-
-	if imgui.BeginCombo(id, materialHandleName(*selected, materials)) {
-		for _, material := range materials {
-			if imgui.SelectableBool(material.Name) {
-				*selected = material.Handle
-			}
-		}
-		imgui.EndCombo()
-	}
-}
-
-func materialSlotRow(label string, body func()) {
-	propertyRow(label, body)
-}
-
-func materialHandleExists(handle assets.MaterialHandle, materials []assets.Material) bool {
-	for _, material := range materials {
-		if material.Handle == handle {
-			return true
-		}
-	}
-	return false
-}
-
-func materialHandleName(handle assets.MaterialHandle, materials []assets.Material) string {
-	for _, material := range materials {
-		if material.Handle == handle {
-			return material.Name
-		}
-	}
-	return ""
-}
-
-func inputFloatRow(label string, value *float32, step float32, fastStep float32, format string) {
-	propertyRow(label, func() {
-		imgui.InputFloatV("##value", value, step, fastStep, format, imgui.InputTextFlagsNone)
-	})
-}
-
-func inputIntRow(label string, value *int32) {
-	propertyRow(label, func() {
-		imgui.InputIntV("##value", value, 0, 0, imgui.InputTextFlagsNone)
-	})
-}
-
 func savePrefab(app renderiface.App) error {
 	name := strings.TrimSpace(activePrefabEditor.Name)
 	if name == "" {
@@ -355,18 +169,6 @@ func savePrefab(app renderiface.App) error {
 	}
 	if activePrefabEditor.IncludeAttack && activePrefabEditor.AttackRange < 0 {
 		return fmt.Errorf("attack range cannot be negative")
-	}
-
-	documents := app.AssetManager().GetDocuments()
-	if activePrefabEditor.IncludeMesh {
-		if !documentExists(documents, activePrefabEditor.MeshSourceAsset) {
-			return fmt.Errorf("source asset [%s] is not loaded", activePrefabEditor.MeshSourceAsset)
-		}
-	}
-	if activePrefabEditor.IncludeAnimation {
-		if !documentExists(documents, activePrefabEditor.AnimationSourceAsset) {
-			return fmt.Errorf("source asset [%s] is not loaded", activePrefabEditor.AnimationSourceAsset)
-		}
 	}
 
 	animationHandle := app.AssetManager().GetAnimationHandle(activePrefabEditor.AnimationSourceAsset)
@@ -432,7 +234,11 @@ func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity 
 }
 
 func assignDefaultPrefab(app renderiface.App) {
-	sourceAssetName := defaultSourceAssetName(app.AssetManager().GetDocuments())
+	var sourceAssetName string
+	if documents := app.AssetManager().GetDocuments(); len(documents) > 0 {
+		sourceAssetName = documents[0].ID
+	}
+
 	scale := float32(1)
 	activePrefabEditor = prefabEditorState{
 		Name:                 defaultPrefabName,
@@ -441,7 +247,7 @@ func assignDefaultPrefab(app renderiface.App) {
 		MeshSourceAsset:      sourceAssetName,
 		IncludeAnimation:     true,
 		AnimationSourceAsset: sourceAssetName,
-		StateMachineID:       animation.StateMachineIDVelociraptor,
+		StateMachineID:       animation.StateMachineIDPlayer,
 		IncludeCapsule:       true,
 		CapsuleRadius:        float32(settings.EntityCapsuleColliderRadius) * (1 / scale),
 		CapsuleLength:        float32(settings.EntityCapsuleColliderLength) * (1 / scale),
@@ -457,25 +263,173 @@ func assignDefaultPrefab(app renderiface.App) {
 	}
 }
 
-func defaultSourceAssetName(documents []assets.Document) string {
-	for _, document := range documents {
-		if document.ID == "velociraptor" {
-			return document.ID
-		}
+func sectionHeading(label string) {
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	sectionHeaderText(label)
+	imgui.TableSetColumnIndex(1)
+	imgui.Separator()
+}
+
+func componentSection(label string, enabled *bool, body func()) {
+	imgui.PushIDStr(label)
+	defer imgui.PopID()
+
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	imgui.Checkbox("##enabled", enabled)
+	imgui.SameLine()
+	sectionHeaderText(label)
+	imgui.TableSetColumnIndex(1)
+	imgui.Separator()
+
+	if *enabled && body != nil {
+		body()
 	}
-	if len(documents) > 0 {
-		return documents[0].ID
+}
+
+func sectionHeaderText(label string) {
+	imgui.PushStyleColorVec4(imgui.ColText, prefabEditorHeaderTextColor)
+	imgui.Text(label)
+	imgui.PopStyleColor()
+}
+
+func propertyRow(label string, body func()) {
+	imgui.TableNextRow()
+	imgui.TableSetColumnIndex(0)
+	cursor := imgui.CursorPos()
+	imgui.SetCursorPosX(cursor.X + prefabEditorPropertyIndent)
+	imgui.PushStyleColorVec4(imgui.ColText, prefabEditorPropertyTextColor)
+	imgui.Text(label)
+	imgui.PopStyleColor()
+	imgui.TableSetColumnIndex(1)
+	imgui.PushIDStr(label)
+	imgui.PushItemWidth(-1)
+	body()
+	imgui.PopItemWidth()
+	imgui.PopID()
+}
+
+func checkboxPropertyRow(label string, value *bool) {
+	propertyRow(label, func() {
+		imgui.Checkbox("##value", value)
+	})
+}
+
+func renderSourceAssetCombo(app renderiface.App, sourceAsset *string) {
+	documents := app.AssetManager().GetDocuments()
+	if len(documents) == 0 {
+		imgui.TextDisabled("No documents")
+		return
+	}
+
+	if *sourceAsset == "" {
+		*sourceAsset = documents[0].ID
+	}
+
+	if imgui.BeginCombo("##value", *sourceAsset) {
+		for _, document := range documents {
+			if imgui.SelectableBool(document.ID) {
+				*sourceAsset = document.ID
+			}
+		}
+		imgui.EndCombo()
+	}
+}
+
+func renderStateMachineCombo(selected *animation.StateMachineID) {
+	ids := animation.StateMachineIDs()
+	if len(ids) == 0 {
+		imgui.TextDisabled("No state machines")
+		return
+	}
+
+	if *selected == "" {
+		*selected = ids[0]
+	}
+
+	if imgui.BeginCombo("##value", string(*selected)) {
+		for _, id := range ids {
+			if imgui.SelectableBool(string(id)) {
+				*selected = id
+			}
+		}
+		imgui.EndCombo()
+	}
+}
+
+func renderPrefabMaterialSlots(app renderiface.App) {
+	materials := app.AssetManager().GetMaterials()
+
+	propertyRow("Material Slots", func() {
+		if imgui.Button("Append") {
+			activePrefabEditor.MeshMaterials = append(
+				activePrefabEditor.MeshMaterials,
+				app.AssetManager().DefaultMaterialHandle(),
+			)
+		}
+	})
+
+	removeIndex := -1
+	for i := range activePrefabEditor.MeshMaterials {
+		index := i
+		propertyRow(fmt.Sprintf("Material Slot %d", index), func() {
+			comboWidth := imgui.ContentRegionAvail().X - 90
+			if comboWidth < 120 {
+				comboWidth = imgui.ContentRegionAvail().X
+			}
+			imgui.SetNextItemWidth(comboWidth)
+			renderMaterialHandleCombo("##material", &activePrefabEditor.MeshMaterials[index], materials)
+			imgui.SameLine()
+			if imgui.Button("Remove") {
+				removeIndex = index
+			}
+		})
+	}
+
+	if removeIndex >= 0 {
+		activePrefabEditor.MeshMaterials = append(
+			activePrefabEditor.MeshMaterials[:removeIndex],
+			activePrefabEditor.MeshMaterials[removeIndex+1:]...,
+		)
+	}
+}
+
+func renderMaterialHandleCombo(id string, selected *assets.MaterialHandle, materials []assets.Material) {
+	if len(materials) == 0 {
+		imgui.TextDisabled("No materials")
+		return
+	}
+
+	if imgui.BeginCombo(id, materialHandleName(*selected, materials)) {
+		for _, material := range materials {
+			if imgui.SelectableBool(material.Name) {
+				*selected = material.Handle
+			}
+		}
+		imgui.EndCombo()
+	}
+}
+
+func materialHandleName(handle assets.MaterialHandle, materials []assets.Material) string {
+	for _, material := range materials {
+		if material.Handle == handle {
+			return material.Name
+		}
 	}
 	return ""
 }
 
-func documentExists(documents []assets.Document, id string) bool {
-	for _, document := range documents {
-		if document.ID == id {
-			return true
-		}
-	}
-	return false
+func inputFloatRow(label string, value *float32, step float32, fastStep float32, format string) {
+	propertyRow(label, func() {
+		imgui.InputFloatV("##value", value, step, fastStep, format, imgui.InputTextFlagsNone)
+	})
+}
+
+func inputIntRow(label string, value *int32) {
+	propertyRow(label, func() {
+		imgui.InputIntV("##value", value, 0, 0, imgui.InputTextFlagsNone)
+	})
 }
 
 func hasAnimations(assetManager *assets.AssetManager, animationHandle assets.AnimationHandle) bool {

@@ -1,12 +1,18 @@
 package drawer
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/izzet/prefab"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 )
+
+const deletePrefabConfirmationPopup = "Delete Prefab"
+
+var pendingDeletePrefab *prefab.PrefabHandle
+var showDeletePrefabConfirmationPopup bool
 
 func prefabsUI(app renderiface.App) {
 	style := imgui.CurrentStyle()
@@ -26,6 +32,8 @@ func prefabsUI(app renderiface.App) {
 		}
 		imgui.EndTable()
 	}
+
+	renderDeletePrefabConfirmationPopup()
 }
 
 func sortedPrefabHandles() []prefab.PrefabHandle {
@@ -64,6 +72,11 @@ func drawPrefabCell(app renderiface.App, handle prefab.PrefabHandle) {
 			app.SelectEntity(e)
 			imgui.CloseCurrentPopup()
 		}
+		if imgui.Button("Delete") {
+			pendingDeletePrefab = &handle
+			showDeletePrefabConfirmationPopup = true
+			imgui.CloseCurrentPopup()
+		}
 		imgui.EndPopup()
 	}
 
@@ -78,4 +91,23 @@ func drawPrefabCell(app renderiface.App, handle prefab.PrefabHandle) {
 	cur := imgui.CursorPos()
 	imgui.SetCursorPosX(cur.X + (cellWidth-textSize.X)*0.5)
 	imgui.TextUnformatted(label)
+}
+
+func renderDeletePrefabConfirmationPopup() {
+	if pendingDeletePrefab == nil {
+		return
+	}
+
+	renderConfirmationModal(
+		deletePrefabConfirmationPopup,
+		fmt.Sprintf("Delete prefab [%s]?", string(*pendingDeletePrefab)),
+		&showDeletePrefabConfirmationPopup,
+		func() {
+			prefab.Delete(*pendingDeletePrefab)
+			pendingDeletePrefab = nil
+		},
+		func() {
+			pendingDeletePrefab = nil
+		},
+	)
 }

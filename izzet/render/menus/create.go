@@ -13,6 +13,9 @@ func create(app renderiface.App) {
 		if imgui.MenuItemBool("Create Material") {
 			windows.ShowCreateMaterialWindow(app)
 		}
+		if imgui.MenuItemBool("Create Prefab") {
+			windows.ShowCreatePrefabWindow(app)
+		}
 		if imgui.MenuItemBool("Build Nav Mesh") {
 			runtimeConfig := app.RuntimeConfig()
 			iterations := int(runtimeConfig.NavigationMeshIterations)

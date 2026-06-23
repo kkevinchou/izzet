@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"sort"
 
 	iztanimation "github.com/kkevinchou/izzet/internal/animation"
 )
@@ -15,9 +16,20 @@ const (
 	StateMachineIDVelociraptor StateMachineID = "VELOCIRAPTOR"
 )
 
-var typeToConfig map[StateMachineID][]byte = map[StateMachineID][]byte{
+var stateMachineRegistry map[StateMachineID][]byte = map[StateMachineID][]byte{
 	StateMachineIDPlayer:       playerStateMachineConfig,
 	StateMachineIDVelociraptor: raptorStateMachineConfig,
+}
+
+func StateMachineIDs() []StateMachineID {
+	ids := make([]StateMachineID, 0, len(stateMachineRegistry))
+	for id := range stateMachineRegistry {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool {
+		return string(ids[i]) < string(ids[j])
+	})
+	return ids
 }
 
 type GameContext struct {
@@ -37,7 +49,7 @@ var playerStateMachineConfig []byte
 var raptorStateMachineConfig []byte
 
 func NewStateMachine(id StateMachineID) *iztanimation.AnimationStateMachine[GameContext] {
-	if cfg, ok := typeToConfig[id]; ok {
+	if cfg, ok := stateMachineRegistry[id]; ok {
 		return iztanimation.NewAnimationStateMachine(bytes.NewReader(cfg), parseCondition)
 	}
 	panic(fmt.Sprintf("unexpected state machine id: %s", id))

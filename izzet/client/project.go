@@ -35,7 +35,7 @@ type MaterialsJSON struct {
 type AssetsJSON struct {
 	Documents []DocumentJSON
 	Materials []MaterialsJSON
-	Prefabs   []prefab.Prefab
+	Prefabs   []prefab.Asset
 }
 
 func (g *Client) InitializeProjectFolders(name string) error {
@@ -121,9 +121,7 @@ func (g *Client) SaveProjectAs(name string) error {
 
 	// prefabs
 
-	for _, prefab := range prefab.PrefabRegistry {
-		assetsJSON.Prefabs = append(assetsJSON.Prefabs, prefab)
-	}
+	assetsJSON.Prefabs = prefab.SaveAssets()
 
 	// assets file
 
@@ -221,7 +219,7 @@ func (g *Client) LoadProject(name string) bool {
 	return true
 }
 
-func (g *Client) initializeAssetManagerWithProject(name string) {
+func (g *Client) loadAssets(name string) {
 	assetsFilePath := path.Join(settings.ProjectsDirectory, name, "assets.json")
 	_, err := os.Stat(assetsFilePath)
 	if err != nil {
@@ -243,10 +241,6 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 
 	g.assetManager = assets.NewAssetManager(true, g.Logger())
 
-	// load meshes, skip materials
-	// materials are skipped because the materials from the document should already
-	// be saved to our assets.json file which is loaded independently
-
 	// TODO - take assetJSON as the input?
 	for _, document := range assetsJSON.Documents {
 		// TODO - issue: the document in document asset is populated by reading the config
@@ -258,6 +252,10 @@ func (g *Client) initializeAssetManagerWithProject(name string) {
 
 	for _, material := range assetsJSON.Materials {
 		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
+	}
+
+	if err := prefab.LoadAssets(g, assetsJSON.Prefabs); err != nil {
+		panic(err)
 	}
 }
 

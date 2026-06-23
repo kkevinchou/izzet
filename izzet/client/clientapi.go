@@ -61,7 +61,7 @@ func (g *Client) saveWorld(worldFilePath string) {
 }
 
 func (g *Client) initializeAppAndWorld(reader io.Reader, projectName string) {
-	g.initializeAssetManagerWithProject(projectName)
+	g.loadAssets(projectName)
 	g.initializeApp()
 
 	g.runtimeConfig = runtimeconfig.DefaultRuntimeConfig()

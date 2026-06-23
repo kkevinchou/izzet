@@ -84,8 +84,10 @@ func SaveAssets() []Asset {
 	return assets
 }
 
-func LoadAssets(assets []Asset) error {
+func LoadAssets(app App, assets []Asset) error {
 	PrefabRegistry = map[PrefabHandle]Prefab{}
+
+	CreateDefaultPrefabs(app)
 
 	for _, asset := range assets {
 		if asset.Name == "" || asset.Prefab.Entity == nil {

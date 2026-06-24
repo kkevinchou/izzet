@@ -7,7 +7,7 @@ import (
 
 type MeshComponent struct {
 	MeshHandle             assets.MeshHandle
-	Materials              []assets.MaterialHandle
+	Materials              []assets.MaterialID
 	Transform              mgl64.Mat4
 	Visible                bool
 	InvisibleToPlayerOwner bool

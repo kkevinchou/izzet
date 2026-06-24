@@ -63,7 +63,7 @@ type App interface {
 	FindPath(start, goal mgl64.Vec3)
 	SetupBatchedStaticRendering()
 
-	QueueCreateMaterialTexture(handle assets.MaterialHandle)
+	QueueCreateMaterialTexture(id assets.MaterialID)
 }
 
 type RenderContext interface {

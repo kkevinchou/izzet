@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/google/uuid"
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/platforms"
@@ -19,21 +18,20 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
 
-var materialIDGen int = 0
-var izzetMaterialPrefix = "izzet/"
 var fallbackTexture string = "default"
 
 type Document struct {
-	MatIDToHandle map[string]MaterialHandle
-	Document      *modelspec.Document `json:"-"`
-	ID            string
-	Filepath      string
+	// mapping from the source document material ID to the in-engine material ids
+	SourceMaterialIDToMaterialID map[string]MaterialID
+	Document                     *modelspec.Document `json:"-"`
+	ID                           string
+	Filepath                     string
 }
 
 type Material struct {
 	Material modelspec.Material
 	Name     string
-	Handle   MaterialHandle
+	ID       MaterialID
 }
 
 type Primitive struct {
@@ -48,7 +46,7 @@ type Primitive struct {
 	// but not normals, texture coords
 	GeometryVAO uint32
 
-	MaterialHandle MaterialHandle
+	MaterialID MaterialID
 }
 
 type AssetManager struct {
@@ -57,7 +55,7 @@ type AssetManager struct {
 	textures  map[string]*textures.Texture
 	documents map[string]Document
 	fonts     map[string]fonts.Font
-	materials map[MaterialHandle]Material
+	materials map[MaterialID]Material
 
 	// Asset References
 	Primitives map[MeshHandle][]Primitive
@@ -92,7 +90,7 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		processVisuals: processVisualAssets,
 		documents:      map[string]Document{},
 		Primitives:     map[MeshHandle][]Primitive{},
-		materials:      map[MaterialHandle]Material{},
+		materials:      map[MaterialID]Material{},
 		Animations:     map[string]map[string]*modelspec.AnimationSpec{},
 		Joints:         map[string]map[int]*modelspec.Joint{},
 		RootJoints:     map[string]int{},
@@ -170,57 +168,43 @@ func (a *AssetManager) GetMaterials() []Material {
 	return materials
 }
 
-func (m *AssetManager) GetMaterial(materialHandle MaterialHandle) Material {
-	if materialAsset, ok := m.materials[materialHandle]; ok {
+func (m *AssetManager) GetMaterial(materialID MaterialID) Material {
+	if materialAsset, ok := m.materials[materialID]; ok {
 		return materialAsset
 	}
-	material := m.materials[defaultMaterialHandle]
+	material := m.materials[defaultMaterialID]
 	return material
 }
 
-func (m *AssetManager) DeleteMaterial(materialHandle MaterialHandle) {
-	delete(m.materials, materialHandle)
+func (m *AssetManager) DeleteMaterial(materialID MaterialID) {
+	delete(m.materials, materialID)
 }
 
 func (m *AssetManager) UpdateMaterialAsset(material Material) {
-	if _, ok := m.materials[material.Handle]; ok {
-		m.materials[material.Handle] = material
+	if _, ok := m.materials[material.ID]; ok {
+		m.materials[material.ID] = material
 		return
 	}
-	panic("material handle not found")
+	panic("material id not found")
 }
 
-func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Material) MaterialHandle {
-	materialHandle := MaterialHandle{id: fmt.Sprintf("%s%d", izzetMaterialPrefix, materialIDGen)}
-	if mat, ok := m.materials[materialHandle]; ok {
+func (m *AssetManager) CreateCustomMaterial(name string, material modelspec.Material) MaterialID {
+	materialID := MaterialID("material:" + uuid.NewString())
+	if mat, ok := m.materials[materialID]; ok {
 		panic(fmt.Sprintf("material already exists in asset manager. %v", mat))
 	}
-	materialIDGen++
-	m.materials[materialHandle] = Material{Material: material, Handle: materialHandle, Name: name}
-	return materialHandle
+	m.materials[materialID] = Material{Material: material, ID: materialID, Name: name}
+	return materialID
 }
 
-func (m *AssetManager) createMaterial(name string, id string, material modelspec.Material) MaterialHandle {
-	materialHandle := MaterialHandle{id: id}
-	m.materials[materialHandle] = Material{Material: material, Handle: materialHandle, Name: name}
-	return materialHandle
+func (m *AssetManager) createMaterial(name string, id MaterialID, material modelspec.Material) MaterialID {
+	m.materials[id] = Material{Material: material, ID: id, Name: name}
+	return id
 }
 
-func (m *AssetManager) CreateMaterialWithHandle(name string, material modelspec.Material, materialHandle MaterialHandle) {
-	if _, ok := m.materials[materialHandle]; !ok {
-		m.materials[materialHandle] = Material{Material: material, Handle: materialHandle, Name: name}
-	}
-	materialID := string(materialHandle.id)
-	if strings.HasPrefix(materialID, izzetMaterialPrefix) {
-		// this is an ugly hack, pls fix
-		split := strings.Split(materialID, "/")
-		if len(split) == 2 {
-			if id, err := strconv.Atoi(split[1]); err == nil {
-				if materialIDGen <= id {
-					materialIDGen = id + 1
-				}
-			}
-		}
+func (m *AssetManager) CreateMaterialWithID(name string, material modelspec.Material, materialID MaterialID) {
+	if _, ok := m.materials[materialID]; !ok {
+		m.materials[materialID] = Material{Material: material, ID: materialID, Name: name}
 	}
 }
 

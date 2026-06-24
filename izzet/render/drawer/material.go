@@ -20,7 +20,7 @@ const (
 var pendingDeleteMaterial *assets.Material
 var showDeleteMaterialConfirmationPopup bool
 
-func materialssUI(app renderiface.App, materialTextureMap map[assets.MaterialHandle]uint32) {
+func materialssUI(app renderiface.App, materialTextureMap map[assets.MaterialID]uint32) {
 	style := imgui.CurrentStyle()
 	imgui.PushStyleVarVec2(
 		imgui.StyleVarCellPadding,
@@ -36,7 +36,7 @@ func materialssUI(app renderiface.App, materialTextureMap map[assets.MaterialHan
 
 		for i, mat := range mats {
 			imgui.TableNextColumn()
-			drawMaterialCell(app, mat, materialTextureMap[mat.Handle], i)
+			drawMaterialCell(app, mat, materialTextureMap[mat.ID], i)
 		}
 
 		imgui.EndTable()
@@ -68,9 +68,9 @@ func drawMaterialCell(app renderiface.App, material assets.Material, textureID u
 	)
 
 	// right-click menu
-	if imgui.BeginPopupContextItemV(material.Name, imgui.PopupFlagsMouseButtonRight) {
+	if imgui.BeginPopupContextItemV(string(material.ID), imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Edit") {
-			material := app.AssetManager().GetMaterial(material.Handle)
+			material := app.AssetManager().GetMaterial(material.ID)
 			windows.ShowEditMaterialWindow(app, material)
 			imgui.CloseCurrentPopup()
 		}
@@ -108,7 +108,7 @@ func renderDeleteMaterialConfirmationPopup(app renderiface.App) {
 		fmt.Sprintf("Delete material [%s]?", pendingDeleteMaterial.Name),
 		&showDeleteMaterialConfirmationPopup,
 		func() {
-			app.AssetManager().DeleteMaterial(pendingDeleteMaterial.Handle)
+			app.AssetManager().DeleteMaterial(pendingDeleteMaterial.ID)
 			pendingDeleteMaterial = nil
 		},
 		func() {

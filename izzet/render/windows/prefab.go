@@ -26,7 +26,7 @@ type prefabEditorState struct {
 
 	IncludeMesh          bool
 	MeshSourceAsset      string
-	MeshMaterials        []assets.MaterialHandle
+	MeshMaterials        []assets.MaterialID
 	IncludeAnimation     bool
 	AnimationSourceAsset string
 	StateMachineID       animation.StateMachineID
@@ -188,7 +188,7 @@ func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity 
 	if activePrefabEditor.IncludeMesh {
 		template.MeshComponent = &entity.MeshComponent{
 			MeshHandle:    app.AssetManager().GetSingleEntityMeshHandle(activePrefabEditor.MeshSourceAsset),
-			Materials:     append([]assets.MaterialHandle{}, activePrefabEditor.MeshMaterials...),
+			Materials:     append([]assets.MaterialID{}, activePrefabEditor.MeshMaterials...),
 			Transform:     mgl64.Rotate3DY(math.Pi).Mat4(),
 			Visible:       true,
 			ShadowCasting: true,
@@ -365,7 +365,7 @@ func renderPrefabMaterialSlots(app renderiface.App) {
 		if imgui.Button("Append") {
 			activePrefabEditor.MeshMaterials = append(
 				activePrefabEditor.MeshMaterials,
-				app.AssetManager().DefaultMaterialHandle(),
+				app.AssetManager().DefaultMaterialID(),
 			)
 		}
 	})
@@ -379,7 +379,7 @@ func renderPrefabMaterialSlots(app renderiface.App) {
 				comboWidth = imgui.ContentRegionAvail().X
 			}
 			imgui.SetNextItemWidth(comboWidth)
-			renderMaterialHandleCombo("##material", &activePrefabEditor.MeshMaterials[index], materials)
+			renderMaterialIDCombo("##material", &activePrefabEditor.MeshMaterials[index], materials)
 			imgui.SameLine()
 			if imgui.Button("Remove") {
 				removeIndex = index
@@ -395,25 +395,25 @@ func renderPrefabMaterialSlots(app renderiface.App) {
 	}
 }
 
-func renderMaterialHandleCombo(id string, selected *assets.MaterialHandle, materials []assets.Material) {
+func renderMaterialIDCombo(id string, selected *assets.MaterialID, materials []assets.Material) {
 	if len(materials) == 0 {
 		imgui.TextDisabled("No materials")
 		return
 	}
 
-	if imgui.BeginCombo(id, materialHandleName(*selected, materials)) {
+	if imgui.BeginCombo(id, materialIDName(*selected, materials)) {
 		for _, material := range materials {
 			if imgui.SelectableBool(material.Name) {
-				*selected = material.Handle
+				*selected = material.ID
 			}
 		}
 		imgui.EndCombo()
 	}
 }
 
-func materialHandleName(handle assets.MaterialHandle, materials []assets.Material) string {
+func materialIDName(id assets.MaterialID, materials []assets.Material) string {
 	for _, material := range materials {
-		if material.Handle == handle {
+		if material.ID == id {
 			return material.Name
 		}
 	}

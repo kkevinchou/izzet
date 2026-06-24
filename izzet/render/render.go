@@ -79,10 +79,10 @@ type RenderSystem struct {
 
 	hoveredEntityID *int
 
-	materialTextureMap map[assets.MaterialHandle]uint32
+	materialTextureMap map[assets.MaterialID]uint32
 
 	// list of materials whose textures need to be generated
-	materialTextureQueue []assets.MaterialHandle
+	materialTextureQueue []assets.MaterialID
 
 	batchRenders []assets.Batch
 
@@ -120,7 +120,7 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	}
 	r.imguiRenderer = imguiRenderer
 	r.ndcQuadVAO = rutils.Init2f2fVAO()
-	r.materialTextureMap = map[assets.MaterialHandle]uint32{}
+	r.materialTextureMap = map[assets.MaterialID]uint32{}
 
 	r.initorReinitTextures(width, height, true)
 
@@ -168,10 +168,10 @@ func (r *RenderSystem) assertShaderConfigurations() {
 	}
 }
 
-func (r *RenderSystem) CreateMaterialTexture(handle assets.MaterialHandle) {
-	material := r.app.AssetManager().GetMaterial(handle)
+func (r *RenderSystem) CreateMaterialTexture(id assets.MaterialID) {
+	material := r.app.AssetManager().GetMaterial(id)
 	materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
-	r.materialTextureMap[material.Handle] = materialTexture
+	r.materialTextureMap[material.ID] = materialTexture
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, materialFBO)
 	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
@@ -896,21 +896,21 @@ func initOpenGLRenderSettings() {
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
-func (r *RenderSystem) QueueCreateMaterialTexture(handle assets.MaterialHandle) {
-	r.materialTextureQueue = append(r.materialTextureQueue, handle)
+func (r *RenderSystem) QueueCreateMaterialTexture(id assets.MaterialID) {
+	r.materialTextureQueue = append(r.materialTextureQueue, id)
 }
 
 func (r *RenderSystem) createMaterialTextures() {
 	for _, material := range r.app.AssetManager().GetMaterials() {
-		if _, ok := r.materialTextureMap[material.Handle]; ok {
+		if _, ok := r.materialTextureMap[material.ID]; ok {
 			continue
 		}
-		r.CreateMaterialTexture(material.Handle)
+		r.CreateMaterialTexture(material.ID)
 	}
 
 	// queued texture creations (e.g. from a material being updated)
-	for _, materialHandle := range r.materialTextureQueue {
-		r.CreateMaterialTexture(materialHandle)
+	for _, materialID := range r.materialTextureQueue {
+		r.CreateMaterialTexture(materialID)
 	}
-	r.materialTextureQueue = []assets.MaterialHandle{}
+	r.materialTextureQueue = []assets.MaterialID{}
 }

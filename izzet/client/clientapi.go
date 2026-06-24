@@ -406,7 +406,7 @@ func (g *Client) LoadDefaultAssets() {
 		},
 	}
 
-	g.assetManager.CreateMaterialWithHandle("default material", defaultMaterial, g.assetManager.DefaultMaterialHandle())
+	g.assetManager.CreateMaterialWithID("default material", defaultMaterial, g.assetManager.DefaultMaterialID())
 
 	whiteMaterial := modelspec.Material{
 		PBRMaterial: modelspec.PBRMaterial{
@@ -417,7 +417,7 @@ func (g *Client) LoadDefaultAssets() {
 			},
 		},
 	}
-	g.assetManager.CreateMaterialWithHandle("white material", whiteMaterial, g.assetManager.WhiteMaterialHandle())
+	g.assetManager.CreateMaterialWithID("white material", whiteMaterial, g.assetManager.WhiteMaterialID())
 
 	// default models
 
@@ -586,8 +586,8 @@ func (g *Client) SetPredictionDebugLogging(value bool) {
 	g.predictionDebugLogging = value
 }
 
-func (g *Client) QueueCreateMaterialTexture(handle assets.MaterialHandle) {
-	g.renderSystem.QueueCreateMaterialTexture(handle)
+func (g *Client) QueueCreateMaterialTexture(id assets.MaterialID) {
+	g.renderSystem.QueueCreateMaterialTexture(id)
 }
 
 func (g *Client) Logger() *slog.Logger {

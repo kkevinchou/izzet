@@ -226,7 +226,7 @@ func drawBatches(
 	shader.SetUniformMat4("model", mgl32.Scale3D(1, 1, 1))
 
 	for _, batch := range renderContext.BatchRenders {
-		primitiveMaterial := app.AssetManager().GetMaterial(batch.MaterialHandle).Material
+		primitiveMaterial := app.AssetManager().GetMaterial(batch.MaterialID).Material
 
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 		shader.SetUniformInt("colorTextureCoordIndex", int32(material.BaseColorTextureCoordsIndex))
@@ -392,12 +392,12 @@ func drawModel(
 	for i, prim := range primitives {
 		// once we have prefabs working we should drop the use of materials from the primitive
 		// the material from the primitive is the original material from the source asset
-		materialHandle := prim.MaterialHandle
+		materialID := prim.MaterialID
 		if len(e.MeshComponent.Materials) > 0 && i < len(e.MeshComponent.Materials) {
-			materialHandle = e.MeshComponent.Materials[i]
+			materialID = e.MeshComponent.Materials[i]
 		}
 
-		primitiveMaterial := app.AssetManager().GetMaterial(materialHandle).Material
+		primitiveMaterial := app.AssetManager().GetMaterial(materialID).Material
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 		alphaMode := primitiveMaterial.PBRMaterial.AlphaMode
 

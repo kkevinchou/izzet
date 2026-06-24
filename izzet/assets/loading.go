@@ -20,6 +20,9 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Docum
 
 	a.clearDocumentPrimitives(d.ID)
 	d.Document = document
+	if len(d.SourceMaterialIDToMaterialID) == 0 {
+		d.SourceMaterialIDToMaterialID = createSourceMaterialIDMap(d.Filepath, document)
+	}
 	a.documents[d.ID] = d
 
 	if a.processVisuals {
@@ -34,7 +37,7 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Docum
 		}
 	}
 
-	a.registerDocumentMeshes(document, d.MatIDToHandle)
+	a.registerDocumentMeshes(document, d.SourceMaterialIDToMaterialID)
 
 	if len(document.Animations) > 0 {
 		a.Animations[d.ID] = document.Animations
@@ -56,11 +59,12 @@ func (a *AssetManager) LoadAndRegisterDocument(id string, path string) *modelspe
 	}
 
 	a.clearDocumentPrimitives(id)
+	sourceMaterialIDToMaterialID := createSourceMaterialIDMap(path, document)
 	a.documents[id] = Document{
-		ID:            id,
-		Filepath:      path,
-		Document:      document,
-		MatIDToHandle: map[string]MaterialHandle{},
+		ID:                           id,
+		Filepath:                     path,
+		Document:                     document,
+		SourceMaterialIDToMaterialID: sourceMaterialIDToMaterialID,
 	}
 
 	if a.processVisuals {
@@ -76,12 +80,11 @@ func (a *AssetManager) LoadAndRegisterDocument(id string, path string) *modelspe
 
 		for _, material := range document.Materials {
 			name := fmt.Sprintf("%s/%s", document.Name, material.ID)
-			handle := a.createMaterial(name, createMaterialUniqueID(path, material), material)
-			a.documents[id].MatIDToHandle[material.ID] = handle
+			a.createMaterial(name, sourceMaterialIDToMaterialID[material.ID], material)
 		}
 	}
 
-	a.registerDocumentMeshes(document, a.documents[id].MatIDToHandle)
+	a.registerDocumentMeshes(document, a.documents[id].SourceMaterialIDToMaterialID)
 
 	if len(document.Animations) > 0 {
 		a.Animations[id] = document.Animations
@@ -104,26 +107,34 @@ func (a *AssetManager) clearDocumentPrimitives(name string) {
 	}
 }
 
-func createMaterialUniqueID(fp string, material modelspec.Material) string {
+func createMaterialUniqueID(fp string, material modelspec.Material) MaterialID {
 	split := strings.Split(filepath.ToSlash(fp), "/")
-	return fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID)
+	return MaterialID(fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID))
 }
 
-func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, matIDToHandle map[string]MaterialHandle) {
+func createSourceMaterialIDMap(fp string, document *modelspec.Document) map[string]MaterialID {
+	sourceMaterialIDToMaterialID := map[string]MaterialID{}
+	for _, material := range document.Materials {
+		sourceMaterialIDToMaterialID[material.ID] = createMaterialUniqueID(fp, material)
+	}
+	return sourceMaterialIDToMaterialID
+}
+
+func (m *AssetManager) registerDocumentMeshes(document *modelspec.Document, sourceMaterialIDToMaterialID map[string]MaterialID) {
 	// registration of all primitives under one handle to support merged entity instantiation
 	handle := newSingleEntityMeshHandle(document.Name)
 	for _, mesh := range document.Meshes {
-		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
+		m.registerMeshPrimitivesWithHandle(handle, mesh, sourceMaterialIDToMaterialID)
 	}
 
 	// per entity primitive registration
 	for _, mesh := range document.Meshes {
 		handle := MeshHandle{namespace: document.Name, id: fmt.Sprintf("%d", mesh.ID)}
-		m.registerMeshPrimitivesWithHandle(handle, mesh, matIDToHandle)
+		m.registerMeshPrimitivesWithHandle(handle, mesh, sourceMaterialIDToMaterialID)
 	}
 }
 
-func (m *AssetManager) registerMeshPrimitivesWithHandle(handle MeshHandle, mesh *modelspec.Mesh, matIDToHandle map[string]MaterialHandle) MeshHandle {
+func (m *AssetManager) registerMeshPrimitivesWithHandle(handle MeshHandle, mesh *modelspec.Mesh, sourceMaterialIDToMaterialID map[string]MaterialID) MeshHandle {
 	var vaos [][]uint32
 	var geometryVAOs [][]uint32
 	if m.processVisuals {
@@ -136,15 +147,17 @@ func (m *AssetManager) registerMeshPrimitivesWithHandle(handle MeshHandle, mesh 
 			Primitive: primitive,
 		}
 
+		if primitive.MaterialIndex != "" && len(sourceMaterialIDToMaterialID) > 0 {
+			materialID, ok := sourceMaterialIDToMaterialID[primitive.MaterialIndex]
+			if !ok {
+				panic("did not find material index in sourceMaterialIDToMaterialID map")
+			}
+			p.MaterialID = materialID
+		}
+
 		if m.processVisuals {
 			p.VAO = vaos[0][i]
 			p.GeometryVAO = geometryVAOs[0][i]
-			if len(matIDToHandle) > 0 {
-				if _, ok := matIDToHandle[primitive.MaterialIndex]; !ok {
-					panic("did not find material index in matIDToHandle map")
-				}
-				p.MaterialHandle = matIDToHandle[primitive.MaterialIndex]
-			}
 		}
 
 		m.Primitives[handle] = append(m.Primitives[handle], p)

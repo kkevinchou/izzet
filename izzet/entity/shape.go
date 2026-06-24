@@ -49,7 +49,7 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	handle := ml.DefaultCubeHandle()
 	entity.MeshComponent = &MeshComponent{
 		MeshHandle:    handle,
-		Materials:     []assets.MaterialHandle{ml.DefaultMaterialHandle()},
+		Materials:     []assets.MaterialID{ml.DefaultMaterialID()},
 		Transform:     mgl64.Ident4(),
 		Visible:       true,
 		ShadowCasting: true,

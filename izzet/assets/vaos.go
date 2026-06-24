@@ -11,9 +11,9 @@ import (
 )
 
 type Batch struct {
-	VAO            uint32
-	VertexCount    int32
-	MaterialHandle MaterialHandle
+	VAO         uint32
+	VertexCount int32
+	MaterialID  MaterialID
 
 	vertexAttributes      []float32
 	jointIDsAttribute     []int32
@@ -25,14 +25,14 @@ type Batch struct {
 }
 
 func (m *AssetManager) SetupBatchedStaticRendering(meshHandles []MeshHandle, modelMatrices []mgl32.Mat4, entityIDs []uint32) []Batch {
-	batches := map[MaterialHandle]*Batch{}
+	batches := map[MaterialID]*Batch{}
 
 	for i, meshHandle := range meshHandles {
 		for _, p := range m.GetPrimitives(meshHandle) {
-			if _, ok := batches[p.MaterialHandle]; !ok {
-				batches[p.MaterialHandle] = &Batch{MaterialHandle: p.MaterialHandle}
+			if _, ok := batches[p.MaterialID]; !ok {
+				batches[p.MaterialID] = &Batch{MaterialID: p.MaterialID}
 			}
-			batch := batches[p.MaterialHandle]
+			batch := batches[p.MaterialID]
 
 			for _, vertex := range p.Primitive.UniqueVertices {
 				position := modelMatrices[i].Mul4x1(vertex.Position.Vec4(1))

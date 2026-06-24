@@ -137,8 +137,8 @@ func renderMaterialWindow(app renderiface.App) {
 		if isCreatingMaterial {
 			if imgui.Button("Save") {
 				if activeMaterial.Name != "" {
-					materialHandle := app.AssetManager().CreateCustomMaterial(activeMaterial.Name, activeMaterial.Material)
-					app.QueueCreateMaterialTexture(materialHandle)
+					materialID := app.AssetManager().CreateCustomMaterial(activeMaterial.Name, activeMaterial.Material)
+					app.QueueCreateMaterialTexture(materialID)
 					app.RuntimeConfig().ShowMaterialEditor = false
 					assignDefaultMaterial()
 				} else {
@@ -148,7 +148,7 @@ func renderMaterialWindow(app renderiface.App) {
 		} else {
 			if imgui.Button("Save") {
 				app.RuntimeConfig().ShowMaterialEditor = false
-				app.QueueCreateMaterialTexture(activeMaterial.Handle)
+				app.QueueCreateMaterialTexture(activeMaterial.ID)
 			}
 		}
 		imgui.SameLine()

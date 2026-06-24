@@ -27,7 +27,7 @@ var (
 	expanded bool
 )
 
-func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[assets.MaterialHandle]uint32) {
+func BuildDrawerbar(app renderiface.App, renderContext renderiface.RenderContext, width int, materialTextureMap map[assets.MaterialID]uint32) {
 	var drawerbarX float32 = settings.WindowPadding[0]
 	var drawerbarY float32 = imgui.MainViewport().Pos().Y + imgui.MainViewport().Size().Y - settings.DrawerbarSize
 

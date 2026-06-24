@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	defaultMaterialHandle = MaterialHandle{id: "custom/default"}
-	whiteMaterialHandle   = MaterialHandle{id: "custom/white"}
-	defaultCubeHandle     = MeshHandle{namespace: "global", id: "cube"}
+	defaultMaterialID = MaterialID("custom/default")
+	whiteMaterialID   = MaterialID("custom/white")
+	defaultCubeHandle = MeshHandle{namespace: "global", id: "cube"}
 )
 
 type AnimationHandle struct {
@@ -57,39 +57,18 @@ func (h *MeshHandle) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type MaterialHandle struct {
-	id string
-}
+type MaterialID string
 
 func newSingleEntityMeshHandle(namespace string) MeshHandle {
 	return MeshHandle{namespace: namespace, id: "__merged__"}
 }
 
-func (h MaterialHandle) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		ID string
-	}{
-		ID: string(h.id),
-	})
+func (m *AssetManager) DefaultMaterialID() MaterialID {
+	return defaultMaterialID
 }
 
-func (h *MaterialHandle) UnmarshalJSON(data []byte) error {
-	var value struct {
-		ID string
-	}
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	*h = MaterialHandle{id: value.ID}
-	return nil
-}
-
-func (m *AssetManager) DefaultMaterialHandle() MaterialHandle {
-	return defaultMaterialHandle
-}
-
-func (m *AssetManager) WhiteMaterialHandle() MaterialHandle {
-	return whiteMaterialHandle
+func (m *AssetManager) WhiteMaterialID() MaterialID {
+	return whiteMaterialID
 }
 
 func (m *AssetManager) DefaultCubeHandle() MeshHandle {

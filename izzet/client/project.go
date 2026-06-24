@@ -256,7 +256,7 @@ func (g *Client) loadAssets(name string) {
 	}
 
 	for _, material := range assetsJSON.Materials {
-		g.assetManager.CreateMaterialWithHandle(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.Handle)
+		g.assetManager.CreateMaterialWithID(material.MaterialAsset.Name, material.MaterialAsset.Material, material.MaterialAsset.ID)
 	}
 
 	prefab.InitializePrefabs(g.assetManager)

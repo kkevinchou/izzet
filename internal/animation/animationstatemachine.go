@@ -141,6 +141,7 @@ func (sm *AnimationStateMachine[T]) TriggerTransition(player *AnimationPlayer, s
 		}
 	}
 	iztlog.ClientLogger.Info("failed to trigger transition, hard setting animation state", "current", sm.CurrentState.Name, "src", source, "dst", destination)
+	sm.SetCurrentState(destination)
 }
 
 func (sm *AnimationStateMachine[T]) Update(delta time.Duration, player *AnimationPlayer, gameCtx T) (AnimationTransition, bool) {

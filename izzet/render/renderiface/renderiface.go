@@ -64,6 +64,7 @@ type App interface {
 	SetupBatchedStaticRendering()
 
 	QueueCreateMaterialTexture(id assets.MaterialID)
+	ProjectName() string
 }
 
 type RenderContext interface {

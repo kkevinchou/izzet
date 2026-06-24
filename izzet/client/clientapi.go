@@ -593,3 +593,7 @@ func (g *Client) QueueCreateMaterialTexture(id assets.MaterialID) {
 func (g *Client) Logger() *slog.Logger {
 	return iztlog.ClientLogger
 }
+
+func (g *Client) ProjectName() string {
+	return g.project.Name
+}

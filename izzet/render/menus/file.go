@@ -19,6 +19,10 @@ var importAssetId string
 var importAssetPath string
 
 func file(app renderiface.App) {
+	if worldName == "" {
+		worldName = app.ProjectName()
+	}
+
 	if imgui.BeginMenu("File") {
 		imgui.InputTextWithHint("##WorldName", "", &worldName, imgui.InputTextFlagsNone, nil)
 

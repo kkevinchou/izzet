@@ -1,10 +1,10 @@
 package prefab
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 
+	"github.com/google/uuid"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -15,8 +15,8 @@ type App interface {
 }
 
 type Prefab struct {
+	ID     PrefabID
 	Name   string
-	Handle PrefabHandle
 	Entity *entity.Entity
 	bytes  []byte `json:"-"`
 }
@@ -25,19 +25,17 @@ type Asset struct {
 	Prefab Prefab
 }
 
-type PrefabHandle struct {
-	id string
-}
+type PrefabID string
 
 var (
-	PrefabHandleMannequin    PrefabHandle = PrefabHandle{id: "mannequin"}
-	PrefabHandleVelociraptor PrefabHandle = PrefabHandle{id: "velociraptor"}
+	PrefabIDMannequin    PrefabID = "mannequin"
+	PrefabIDVelociraptor PrefabID = "velociraptor"
 )
 
-var PrefabRegistry map[PrefabHandle]Prefab
+var PrefabRegistry map[PrefabID]Prefab
 
 func InitializePrefabs(am *assets.AssetManager) {
-	PrefabRegistry = map[PrefabHandle]Prefab{}
+	PrefabRegistry = map[PrefabID]Prefab{}
 	CreateDefaultPrefabs(am)
 }
 
@@ -45,78 +43,62 @@ func CreateDefaultPrefabs(am *assets.AssetManager) {
 	player := createPlayer(am)
 	velociraptor := createNPC(am, entity.EntityTypeVelociraptor)
 
-	_ = RegisterPrefabWithHandle(PrefabHandleMannequin, "mannequin", player)
-	_ = RegisterPrefabWithHandle(PrefabHandleVelociraptor, "velociraptor", velociraptor)
+	_ = RegisterPrefabWithID(PrefabIDMannequin, "mannequin", player)
+	_ = RegisterPrefabWithID(PrefabIDVelociraptor, "velociraptor", velociraptor)
 }
 
 func RegisterPrefab(name string, template *entity.Entity) error {
-	return RegisterPrefabWithHandle(PrefabHandle{id: name}, name, template)
+	return RegisterPrefabWithID(PrefabID(uuid.NewString()), name, template)
 }
 
-func RegisterPrefabWithHandle(handle PrefabHandle, name string, template *entity.Entity) error {
+func RegisterPrefabWithID(id PrefabID, name string, template *entity.Entity) error {
+	if id == "" {
+		return fmt.Errorf("prefab id is required")
+	}
 	if template == nil {
-		return fmt.Errorf("prefab [%s] template entity is nil", handle.id)
+		return fmt.Errorf("prefab [%s] template entity is nil", id)
 	}
 
-	PrefabRegistry[handle] = newPrefab(handle, name, template)
+	PrefabRegistry[id] = newPrefab(id, name, template)
 	return nil
 }
 
-func Delete(handle PrefabHandle) {
-	delete(PrefabRegistry, handle)
+func Delete(id PrefabID) {
+	delete(PrefabRegistry, id)
 }
 
 func Prefabs() []Prefab {
-	handles := make([]PrefabHandle, 0, len(PrefabRegistry))
-	for handle := range PrefabRegistry {
-		handles = append(handles, handle)
+	ids := make([]PrefabID, 0, len(PrefabRegistry))
+	for id := range PrefabRegistry {
+		ids = append(ids, id)
 	}
-	sort.Slice(handles, func(i, j int) bool {
-		return string(handles[i].id) < string(handles[j].id)
+	sort.Slice(ids, func(i, j int) bool {
+		return string(ids[i]) < string(ids[j])
 	})
 
 	var prefabs []Prefab
-	for _, handle := range handles {
-		prefabs = append(prefabs, PrefabRegistry[handle])
+	for _, id := range ids {
+		prefabs = append(prefabs, PrefabRegistry[id])
 	}
 	return prefabs
 }
 
-func newPrefab(handle PrefabHandle, name string, e *entity.Entity) Prefab {
+func newPrefab(id PrefabID, name string, e *entity.Entity) Prefab {
 	bytes, err := serialization.SerializeEntity(e)
 	if err != nil {
 		panic(err)
 	}
 
-	return Prefab{Name: name, Entity: e, bytes: bytes, Handle: handle}
+	return Prefab{ID: id, Name: name, Entity: e, bytes: bytes}
 }
 
-func Instantiate(handle PrefabHandle, am *assets.AssetManager) *entity.Entity {
-	p := PrefabRegistry[handle]
+func Instantiate(id PrefabID, am *assets.AssetManager) *entity.Entity {
+	p := PrefabRegistry[id]
 	e, err := serialization.DeserializeEntity(p.bytes, am)
 	if err != nil {
 		panic(err)
 	}
-	id := entity.GetNextIDAndAdvance()
-	e.ID = id
+	entityID := entity.GetNextIDAndAdvance()
+	e.ID = entityID
 	return e
-}
-
-func (h PrefabHandle) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		ID string
-	}{
-		ID: string(h.id),
-	})
-}
-
-func (h *PrefabHandle) UnmarshalJSON(data []byte) error {
-	var value struct {
-		ID string
-	}
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	*h = PrefabHandle{id: value.ID}
-	return nil
 }

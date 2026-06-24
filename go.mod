@@ -9,6 +9,7 @@ require (
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3
 	github.com/go-gl/mathgl v1.2.0
+	github.com/google/uuid v1.6.0
 	github.com/kkevinchou/kitolib v0.0.0-20250725081741-dd67f721910f
 	github.com/patrick-higgins/rtreego v0.0.0-20160917152848-00962878767d
 	github.com/qmuntal/gltf v0.23.1

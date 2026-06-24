@@ -54,7 +54,7 @@ func drawPrefabCell(app renderiface.App, p prefab.Prefab) {
 
 	if imgui.BeginPopupContextItemV("prefab-context-"+name, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate") {
-			e := prefab.Instantiate(p.Handle, app.AssetManager())
+			e := prefab.Instantiate(p.ID, app.AssetManager())
 			app.World().AddEntity(e)
 			app.SelectEntity(e)
 			imgui.CloseCurrentPopup()
@@ -87,10 +87,10 @@ func renderDeletePrefabConfirmationPopup() {
 
 	renderConfirmationModal(
 		deletePrefabConfirmationPopup,
-		fmt.Sprintf("Delete prefab [%s]?", pendingDeletePrefab.Handle),
+		fmt.Sprintf("Delete prefab [%s]?", pendingDeletePrefab.ID),
 		&showDeletePrefabConfirmationPopup,
 		func() {
-			prefab.Delete(pendingDeletePrefab.Handle)
+			prefab.Delete(pendingDeletePrefab.ID)
 			pendingDeletePrefab = nil
 		},
 		func() {

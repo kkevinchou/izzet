@@ -37,6 +37,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 		for _, s := range g.playModeSystems {
 			s.Update(delta, g.world)
 		}
+		g.stepPhysicsDebug(delta)
 	} else if g.AppMode() == types.AppModeEditor {
 		for _, s := range g.editorModeSystems {
 			s.Update(delta, g.world)

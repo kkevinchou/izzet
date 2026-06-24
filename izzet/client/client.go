@@ -82,6 +82,7 @@ type Client struct {
 
 	navMesh                *navmesh.NavigationMesh
 	predictionDebugLogging bool
+	physicsDebug           *physicsDebugState
 }
 
 func New(shaderDirectory string, config settings.Config, logsEnabled bool) *Client {

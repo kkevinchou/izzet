@@ -17,6 +17,10 @@ type CombatSystem struct {
 	app App
 }
 
+type physicsDebugSpawner interface {
+	SpawnPhysicsDebugCube(contactPoint mgl64.Vec3)
+}
+
 func NewCombatSystem(app App) *CombatSystem {
 	return &CombatSystem{app: app}
 }
@@ -43,7 +47,13 @@ func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
 			hitTargets = append(hitTargets, world.GetEntityByID(e.GetID()))
 		}
 
-		if hitEntityID, _, hit := collision.ClosestHit(line, hitTargets); hit {
+		if hitEntityID, hitPoint, hit := collision.ClosestHit(line, hitTargets); hit {
+			if s.app.IsClient() {
+				if spawner, ok := s.app.(physicsDebugSpawner); ok {
+					spawner.SpawnPhysicsDebugCube(hitPoint)
+				}
+			}
+
 			hitEntity := world.GetEntityByID(hitEntityID)
 			if hitEntity.HealthComponent != nil {
 				if s.app.IsServer() {

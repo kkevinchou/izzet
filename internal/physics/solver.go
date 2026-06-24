@@ -10,8 +10,9 @@ const (
 	positionSlop       = 0.001
 	positionCorrection = 0.8
 	restingVelocity    = 1.0
-	linearSleepSpeed   = 0.03
-	angularSleepSpeed  = 0.03
+	linearSleepSpeed   = 0.05
+	angularSleepSpeed  = 0.08
+	restingSupportDot  = 0.55
 )
 
 func resolveContactVelocity(c *contact) {
@@ -94,18 +95,20 @@ func impulseDenominator(a, b *Body, point, normal mgl64.Vec3) float64 {
 	return a.inverseMass + b.inverseMass + normal.Dot(angularA.Add(angularB))
 }
 
-func stabilizeRestingContacts(contacts []contact) {
+func (w *World) stabilizeRestingContacts(contacts []contact) {
+	supportUp := safeNormalize(w.gravity.Mul(-1), mgl64.Vec3{0, 1, 0})
 	for i := range contacts {
-		if contacts[i].positionCorrectionScale > 1.0/3.0 {
+		if !contacts[i].stableSupport && contacts[i].positionCorrectionScale > 1.0/3.0 {
 			continue
 		}
 
 		a := contacts[i].a
 		b := contacts[i].b
+		normalSupport := contacts[i].normal.Dot(supportUp)
 
-		if a.Static() && !b.Static() {
+		if a.Static() && !b.Static() && normalSupport >= restingSupportDot {
 			stabilizeRestingBody(b)
-		} else if b.Static() && !a.Static() {
+		} else if b.Static() && !a.Static() && normalSupport <= -restingSupportDot {
 			stabilizeRestingBody(a)
 		}
 	}

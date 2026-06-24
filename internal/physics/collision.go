@@ -13,6 +13,7 @@ type contact struct {
 	point                   mgl64.Vec3
 	penetration             float64
 	positionCorrectionScale float64
+	stableSupport           bool
 }
 
 func (w *World) detectContacts() []contact {
@@ -171,8 +172,11 @@ func cubeCubeContacts(a, b *Body) []contact {
 	}
 
 	points := cubeCubeContactPoints(a, b, normal, penetration)
+	stableSupport := len(points) >= 3
 	if len(points) == 0 {
 		points = []mgl64.Vec3{cubeCubeContactPoint(a, b, normal)}
+	} else if stableSupport {
+		points = []mgl64.Vec3{averagePoints(points)}
 	}
 
 	contacts := make([]contact, 0, len(points))
@@ -180,9 +184,18 @@ func cubeCubeContacts(a, b *Body) []contact {
 	for _, point := range points {
 		contact := newContact(a, b, normal, point, penetration)
 		contact.positionCorrectionScale = positionCorrectionScale
+		contact.stableSupport = stableSupport
 		contacts = append(contacts, contact)
 	}
 	return contacts
+}
+
+func averagePoints(points []mgl64.Vec3) mgl64.Vec3 {
+	total := mgl64.Vec3{}
+	for _, point := range points {
+		total = total.Add(point)
+	}
+	return total.Mul(1 / float64(len(points)))
 }
 
 func cubeCubeSAT(a, b *Body) (mgl64.Vec3, float64, bool) {

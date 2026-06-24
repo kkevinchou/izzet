@@ -205,5 +205,5 @@ func (w *World) Simulate(dt float64) {
 		}
 	}
 
-	stabilizeRestingContacts(contacts)
+	w.stabilizeRestingContacts(contacts)
 }

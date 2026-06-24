@@ -42,7 +42,7 @@ func (g *Client) SpawnPhysicsDebugCube(contactPoint mgl64.Vec3) {
 	bodyOptions.Restitution = 0.05
 	bodyOptions.Friction = 0.9
 	bodyOptions.LinearDamping = 0.05
-	bodyOptions.AngularDamping = 0.2
+	bodyOptions.AngularDamping = 0.1
 
 	bodyID, err := g.physicsDebug.world.CreateCubeWithOptions(physics.CubeOptions{
 		BodyOptions: bodyOptions,

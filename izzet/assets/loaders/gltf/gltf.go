@@ -68,14 +68,14 @@ func ParseGLTF(name string, documentPath string, config *ParseConfig) (*modelspe
 		document.Textures = append(document.Textures, name)
 	}
 
-	materialSpecs, materialIndexMapping, err := parseMaterialSpecs(gltfDocument, document.Textures)
+	materialSpecs, err := parseMaterialSpecs(gltfDocument, document.Textures)
 	if err != nil {
 		return nil, err
 	}
 	document.Materials = materialSpecs
 
 	for i, mesh := range gltfDocument.Meshes {
-		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, materialIndexMapping, config)
+		primitiveSpecs, err := parsePrimitiveSpecs(gltfDocument, mesh, config)
 		if err != nil {
 			return nil, err
 		}
@@ -191,12 +191,8 @@ func getNodeTransform(node *gltf.Node) mgl32.Mat4 {
 	return translationMatrix.Mul4(rotationMatrix.Mul4(scaleMatrix))
 }
 
-// parseMaterialSpecs creates MaterialSpecifications from the gltf materials list
-// we also return an id mapping from the gltf id to the internal material id
-// (this might be overkill since their ids are probably also zero index and incrementing)
-func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.Material, map[int]string, error) {
+func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec.Material, error) {
 	var materials []modelspec.Material
-	idMapping := map[int]string{}
 
 	for gltfIdx, gltfMaterial := range document.Materials {
 		pbr := *gltfMaterial.PBRMetallicRoughness
@@ -229,17 +225,16 @@ func parseMaterialSpecs(document *gltf.Document, textures []string) ([]modelspec
 			PBRMaterial: pbrMaterial,
 		}
 
-		idMapping[gltfIdx] = fmt.Sprintf("%d", len(materials))
 		materials = append(materials, material)
 	}
-	return materials, idMapping, nil
+	return materials, nil
 }
 
 // parsePrimitiveSpecs takes a gltf mesh and creates a primitive spec for each primitive within the mesh
 // index - the index of the mesh, since meshes can have multiple primitives, we can have
 // mesh model specifications with the same index. this is okay, external applications should
 // not reference this and instead use the mesh id
-func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndexMapping map[int]string, config *ParseConfig) ([]*modelspec.Primitive, error) {
+func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, config *ParseConfig) ([]*modelspec.Primitive, error) {
 	var primitiveSpecs []*modelspec.Primitive
 
 	for _, primitive := range mesh.Primitives {
@@ -257,7 +252,7 @@ func parsePrimitiveSpecs(document *gltf.Document, mesh *gltf.Mesh, materialIndex
 
 		if primitive.Material != nil {
 			gltfMaterialIndex := int(*primitive.Material)
-			primitiveSpec.MaterialIndex = materialIndexMapping[gltfMaterialIndex]
+			primitiveSpec.MaterialIndex = &gltfMaterialIndex
 		}
 
 		for attribute, index := range primitive.Attributes {

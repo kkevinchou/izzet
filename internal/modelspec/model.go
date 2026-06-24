@@ -45,7 +45,7 @@ type Primitive struct {
 	// the ordered vertices where each triplet forms a triangle for the mesh
 	Vertices []Vertex
 
-	MaterialIndex string
+	MaterialIndex *int
 }
 
 type Material struct {

@@ -21,11 +21,11 @@ import (
 var fallbackTexture string = "default"
 
 type Document struct {
-	// mapping from the source document material ID to the in-engine material ids
-	SourceMaterialIDToMaterialID map[string]MaterialID
-	Document                     *modelspec.Document `json:"-"`
-	ID                           string
-	Filepath                     string
+	// mapping from the source document material index to the in-engine material ids
+	SourceMaterialIndexToMaterialID map[int]MaterialID
+	Document                        *modelspec.Document `json:"-"`
+	ID                              string
+	Filepath                        string
 }
 
 type Material struct {

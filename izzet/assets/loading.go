@@ -107,7 +107,9 @@ func (a *AssetManager) clearDocumentPrimitives(name string) {
 	}
 }
 
-func createMaterialUniqueID(fp string, material modelspec.Material) MaterialID {
+// this material ID needs to be deterministic so that we don't recreate the same materials
+// over and over when we reload the gltf file
+func createStableMaterialID(fp string, material modelspec.Material) MaterialID {
 	split := strings.Split(filepath.ToSlash(fp), "/")
 	return MaterialID(fmt.Sprintf("%s/%s", strings.Join(split[3:], "/"), material.ID))
 }
@@ -115,7 +117,7 @@ func createMaterialUniqueID(fp string, material modelspec.Material) MaterialID {
 func createSourceMaterialIDMap(fp string, document *modelspec.Document) map[string]MaterialID {
 	sourceMaterialIDToMaterialID := map[string]MaterialID{}
 	for _, material := range document.Materials {
-		sourceMaterialIDToMaterialID[material.ID] = createMaterialUniqueID(fp, material)
+		sourceMaterialIDToMaterialID[material.ID] = createStableMaterialID(fp, material)
 	}
 	return sourceMaterialIDToMaterialID
 }

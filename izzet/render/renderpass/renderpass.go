@@ -418,7 +418,6 @@ func drawModel(
 		shader.SetUniformVec3("albedo", material.BaseColorFactor.Vec3())
 		shader.SetUniformFloat("roughness", material.RoughnessFactor)
 		shader.SetUniformFloat("metallic", material.MetalicFactor)
-		shader.SetUniformVec3("translation", utils.Vec3F64ToF32(e.Position()))
 		shader.SetUniformVec3("scale", utils.Vec3F64ToF32(e.Scale()))
 		shader.SetUniformInt("alphaMode", int32(alphaMode))
 

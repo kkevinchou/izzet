@@ -10,7 +10,9 @@ layout (location = 4) in vec3 aInstanceColor;
 
 out VS_OUT {
     vec3 FragPos;
+    vec3 ObjectPos;
     vec3 Normal;
+    vec3 ObjectNormal;
     mat4 View;
     vec2 TexCoord;
     vec4 Color;
@@ -43,7 +45,9 @@ void main() {
 
     // NOTE - just transposing the inverse of the rotation matrix didn't look right for some static geometry
     vs_out.Normal = vec3(transpose(inverse(model)) * totalNormal);
+    vs_out.ObjectNormal = totalNormal.xyz;
     vs_out.FragPos = vec3(model * totalPos);
+    vs_out.ObjectPos = totalPos.xyz;
     vs_out.View = view;
 
     vs_out.TexCoord = vec2(0.0);

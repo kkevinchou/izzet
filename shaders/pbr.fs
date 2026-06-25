@@ -7,7 +7,6 @@ layout (location = 1) out uint PickingColor;
 uniform vec3  albedo;
 uniform float metallic;
 uniform float roughness;
-uniform vec3  translation;
 uniform vec3  scale;
 
 uniform int repeatTexture;
@@ -75,7 +74,9 @@ const vec4 errorColor = vec4(255.0 / 255, 28.0 / 255, 217.0 / 121.0, 1.0);
 
 in VS_OUT {
     vec3 FragPos;
+    vec3 ObjectPos;
     vec3 Normal;
+    vec3 ObjectNormal;
     mat4 View;
     vec2 TexCoord;
     vec4 Color;
@@ -332,15 +333,16 @@ void main()
 
         if (repeatTexture == 1) {
             vec2 uv;
-            vec3 worldPos = fs_in.FragPos;
-            vec3 absNormal = abs(normal);
+            vec3 localPos = fs_in.ObjectPos * scale;
+            vec3 localNormal = normalize(fs_in.ObjectNormal);
+            vec3 absNormal = abs(localNormal);
 
             float textureFactor = 4;
 
             if (absNormal.z >= absNormal.x && absNormal.z >= absNormal.y) {
                 // Front/Back (Z)
-                uv = worldPos.xy / textureFactor - translation.xy / textureFactor;
-                if (normal.z < 0.0) {
+                uv = localPos.xy / textureFactor;
+                if (localNormal.z < 0.0) {
                     uv += vec2(-0.5 * scale.x, -0.5 * scale.y) / textureFactor;
                     uv.x = 1.0 - uv.x;
                 } else {
@@ -348,8 +350,8 @@ void main()
                 }
             } else if (absNormal.x >= absNormal.y && absNormal.x >= absNormal.z) {
                 // Left/Right (X)
-                uv = worldPos.zy / textureFactor - translation.zy / textureFactor;
-                if (normal.x > 0.0) {
+                uv = localPos.zy / textureFactor;
+                if (localNormal.x > 0.0) {
                     uv += vec2(-0.5 * scale.z, -0.5 * scale.y) / textureFactor;
                     uv.x = 1.0 - uv.x;
                 } else {
@@ -357,8 +359,8 @@ void main()
                 }
             } else {
                 // Top/Bottom (Y)
-                uv = worldPos.xz / textureFactor - translation.xz / textureFactor;
-                if (normal.y > 0.0) {
+                uv = localPos.xz / textureFactor;
+                if (localNormal.y > 0.0) {
                     uv += vec2(0.5 * scale.x, 0.5 * scale.z) / textureFactor;
                     uv.y = 1.0 - uv.y;
                 } else {

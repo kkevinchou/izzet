@@ -1,6 +1,7 @@
 package physics
 
 import (
+	"math"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -9,6 +10,8 @@ import (
 const (
 	DefaultVelocityIterations = 8
 	DefaultPositionIterations = 3
+	DefaultMaxSubstep         = 1.0 / 60.0
+	DefaultMaxSubsteps        = 8
 )
 
 type WorldOption func(*World)
@@ -22,6 +25,8 @@ type World struct {
 
 	VelocityIterations int
 	PositionIterations int
+	MaxSubstep         float64
+	MaxSubsteps        int
 }
 
 func NewWorld(options ...WorldOption) *World {
@@ -31,6 +36,8 @@ func NewWorld(options ...WorldOption) *World {
 		bodies:             map[BodyID]*Body{},
 		VelocityIterations: DefaultVelocityIterations,
 		PositionIterations: DefaultPositionIterations,
+		MaxSubstep:         DefaultMaxSubstep,
+		MaxSubsteps:        DefaultMaxSubsteps,
 	}
 
 	for _, option := range options {
@@ -42,6 +49,9 @@ func NewWorld(options ...WorldOption) *World {
 
 func WithGravity(gravity mgl64.Vec3) WorldOption {
 	return func(world *World) {
+		if !finiteVec3(gravity) {
+			return
+		}
 		world.gravity = gravity
 	}
 }
@@ -57,11 +67,25 @@ func WithSolverIterations(velocityIterations, positionIterations int) WorldOptio
 	}
 }
 
+func WithSubsteps(maxSubstep float64, maxSubsteps int) WorldOption {
+	return func(world *World) {
+		if finiteFloat(maxSubstep) && maxSubstep > 0 {
+			world.MaxSubstep = maxSubstep
+		}
+		if maxSubsteps > 0 {
+			world.MaxSubsteps = maxSubsteps
+		}
+	}
+}
+
 func (w *World) Gravity() mgl64.Vec3 {
 	return w.gravity
 }
 
 func (w *World) SetGravity(gravity mgl64.Vec3) {
+	if !finiteVec3(gravity) {
+		return
+	}
 	w.gravity = gravity
 }
 
@@ -182,10 +206,31 @@ func (w *World) Step(delta time.Duration) {
 }
 
 func (w *World) Simulate(dt float64) {
-	if dt <= 0 {
+	if !finiteFloat(dt) || dt <= 0 {
 		return
 	}
 
+	steps := w.substepCount(dt)
+	substep := dt / float64(steps)
+	for i := 0; i < steps; i++ {
+		w.simulateSubstep(substep)
+	}
+	w.clearForces()
+}
+
+func (w *World) substepCount(dt float64) int {
+	if !finiteFloat(w.MaxSubstep) || w.MaxSubstep <= 0 || dt <= w.MaxSubstep {
+		return 1
+	}
+
+	steps := int(math.Ceil(dt / w.MaxSubstep))
+	if w.MaxSubsteps > 0 && steps > w.MaxSubsteps {
+		return w.MaxSubsteps
+	}
+	return steps
+}
+
+func (w *World) simulateSubstep(dt float64) {
 	w.integrate(dt)
 	contacts := w.detectContacts()
 
@@ -206,4 +251,12 @@ func (w *World) Simulate(dt float64) {
 	}
 
 	w.stabilizeRestingContacts(contacts)
+}
+
+func (w *World) clearForces() {
+	for _, id := range w.bodyOrder {
+		if body, ok := w.bodies[id]; ok {
+			body.ClearForces()
+		}
+	}
 }

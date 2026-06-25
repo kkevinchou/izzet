@@ -16,6 +16,27 @@ type contact struct {
 	stableSupport           bool
 }
 
+const (
+	contactPlaneSlop = 1e-6
+	satTieTolerance  = 1e-7
+)
+
+type cubeSATAxisType int
+
+const (
+	cubeSATFaceA cubeSATAxisType = iota
+	cubeSATFaceB
+	cubeSATEdge
+)
+
+type cubeSATResult struct {
+	normal      mgl64.Vec3
+	penetration float64
+	axisType    cubeSATAxisType
+	axisA       int
+	axisB       int
+}
+
 func (w *World) detectContacts() []contact {
 	bodies := w.Bodies()
 	contacts := make([]contact, 0)
@@ -166,23 +187,35 @@ func dominantAxis(v mgl64.Vec3) int {
 }
 
 func cubeCubeContacts(a, b *Body) []contact {
-	normal, penetration, ok := cubeCubeSAT(a, b)
+	sat, ok := cubeCubeSAT(a, b)
 	if !ok {
 		return nil
 	}
 
-	points := cubeCubeContactPoints(a, b, normal, penetration)
-	stableSupport := len(points) >= 3
+	var points []mgl64.Vec3
+	stableSupport := false
+	switch sat.axisType {
+	case cubeSATFaceA:
+		points = cubeFaceContacts(a, b, sat.normal)
+		stableSupport = len(points) >= 3
+	case cubeSATFaceB:
+		points = cubeFaceContacts(b, a, sat.normal.Mul(-1))
+		stableSupport = len(points) >= 3
+	case cubeSATEdge:
+		a0, a1 := cubeSupportEdge(a, sat.axisA, sat.normal)
+		b0, b1 := cubeSupportEdge(b, sat.axisB, sat.normal.Mul(-1))
+		pointA, pointB := closestPointsOnSegments(a0, a1, b0, b1)
+		points = []mgl64.Vec3{pointA.Add(pointB).Mul(0.5)}
+	}
+
 	if len(points) == 0 {
-		points = []mgl64.Vec3{cubeCubeContactPoint(a, b, normal)}
-	} else if stableSupport {
-		points = []mgl64.Vec3{averagePoints(points)}
+		points = []mgl64.Vec3{cubeCubeContactPoint(a, b, sat.normal)}
 	}
 
 	contacts := make([]contact, 0, len(points))
 	positionCorrectionScale := 1 / float64(len(points))
 	for _, point := range points {
-		contact := newContact(a, b, normal, point, penetration)
+		contact := newContact(a, b, sat.normal, point, sat.penetration)
 		contact.positionCorrectionScale = positionCorrectionScale
 		contact.stableSupport = stableSupport
 		contacts = append(contacts, contact)
@@ -190,58 +223,64 @@ func cubeCubeContacts(a, b *Body) []contact {
 	return contacts
 }
 
-func averagePoints(points []mgl64.Vec3) mgl64.Vec3 {
-	total := mgl64.Vec3{}
-	for _, point := range points {
-		total = total.Add(point)
-	}
-	return total.Mul(1 / float64(len(points)))
-}
-
-func cubeCubeSAT(a, b *Body) (mgl64.Vec3, float64, bool) {
+func cubeCubeSAT(a, b *Body) (cubeSATResult, bool) {
 	axesA := cubeAxes(a)
 	axesB := cubeAxes(b)
-
 	centerDelta := b.position.Sub(a.position)
-	minOverlap := math.Inf(1)
-	var bestAxis mgl64.Vec3
 
-	for _, axis := range append(axesA[:], axesB[:]...) {
+	result := cubeSATResult{penetration: math.Inf(1)}
+	recordAxis := func(axis mgl64.Vec3, axisType cubeSATAxisType, axisA, axisB int) bool {
+		if axis.LenSqr() <= epsilon {
+			return true
+		}
+		axis = axis.Normalize()
 		overlap, ok := cubeProjectionOverlap(a, b, axis)
 		if !ok {
-			return mgl64.Vec3{}, 0, false
+			return false
 		}
-		if overlap < minOverlap {
-			minOverlap = overlap
-			bestAxis = axis
+		if overlap < result.penetration-satTieTolerance {
+			result = cubeSATResult{
+				normal:      axis,
+				penetration: overlap,
+				axisType:    axisType,
+				axisA:       axisA,
+				axisB:       axisB,
+			}
+		}
+		return true
+	}
+
+	for i, axis := range axesA {
+		if !recordAxis(axis, cubeSATFaceA, i, -1) {
+			return cubeSATResult{}, false
+		}
+	}
+	for i, axis := range axesB {
+		if !recordAxis(axis, cubeSATFaceB, -1, i) {
+			return cubeSATResult{}, false
 		}
 	}
 
-	edgeAxisBias := math.Max(0.02, minOverlap*0.05)
-	for _, axisA := range axesA {
-		for _, axisB := range axesB {
+	for i, axisA := range axesA {
+		for j, axisB := range axesB {
 			cross := axisA.Cross(axisB)
 			if cross.LenSqr() <= epsilon {
 				continue
 			}
-
-			axis := cross.Normalize()
-			overlap, ok := cubeProjectionOverlap(a, b, axis)
-			if !ok {
-				return mgl64.Vec3{}, 0, false
-			}
-			if overlap < minOverlap-edgeAxisBias {
-				minOverlap = overlap
-				bestAxis = axis
+			if !recordAxis(cross, cubeSATEdge, i, j) {
+				return cubeSATResult{}, false
 			}
 		}
 	}
 
-	if bestAxis.Dot(centerDelta) < 0 {
-		bestAxis = bestAxis.Mul(-1)
+	if result.normal.LenSqr() <= epsilon {
+		return cubeSATResult{}, false
+	}
+	if result.normal.Dot(centerDelta) < 0 {
+		result.normal = result.normal.Mul(-1)
 	}
 
-	return bestAxis, minOverlap, true
+	return result, true
 }
 
 func cubeProjectionOverlap(a, b *Body, axis mgl64.Vec3) (float64, bool) {
@@ -249,37 +288,35 @@ func cubeProjectionOverlap(a, b *Body, axis mgl64.Vec3) (float64, bool) {
 	minA, maxA := projectCube(a, axis)
 	minB, maxB := projectCube(b, axis)
 	overlap := math.Min(maxA, maxB) - math.Max(minA, minB)
-	return overlap, overlap >= 0
+	if overlap < 0 {
+		return 0, overlap >= -satTieTolerance
+	}
+	return overlap, true
 }
 
-func cubeCubeContactPoints(a, b *Body, normal mgl64.Vec3, penetration float64) []mgl64.Vec3 {
-	reference := a
-	incident := b
-	referenceNormal := normal
-	if b.Static() && !a.Static() {
-		reference = b
-		incident = a
-		referenceNormal = normal.Mul(-1)
-	}
-
-	incidentVertices := cubeVertices(incident)
-	minProjection := math.Inf(1)
-	for _, vertex := range incidentVertices {
-		projection := vertex.Dot(referenceNormal)
-		if projection < minProjection {
-			minProjection = projection
+func cubeFaceContacts(reference, incident *Body, referenceToIncidentNormal mgl64.Vec3) []mgl64.Vec3 {
+	faceNormal, faceCenter, sideAxes, sideExtents := cubeFaceFrame(reference, referenceToIncidentNormal)
+	polygon := cubeFaceVertices(incident, referenceToIncidentNormal.Mul(-1))
+	for i, sideAxis := range sideAxes {
+		extent := sideExtents[i]
+		polygon = clipPolygonAgainstPlane(polygon, reference.position.Sub(sideAxis.Mul(extent)), sideAxis)
+		if len(polygon) == 0 {
+			return nil
+		}
+		polygon = clipPolygonAgainstPlane(polygon, reference.position.Add(sideAxis.Mul(extent)), sideAxis.Mul(-1))
+		if len(polygon) == 0 {
+			return nil
 		}
 	}
 
-	points := make([]mgl64.Vec3, 0, 4)
-	vertexSlop := math.Max(0.02, penetration+0.01)
+	points := make([]mgl64.Vec3, 0, len(polygon))
 	seen := map[[3]int]bool{}
-	for _, vertex := range incidentVertices {
-		if vertex.Dot(referenceNormal)-minProjection > vertexSlop {
+	for _, vertex := range polygon {
+		separation := vertex.Sub(faceCenter).Dot(faceNormal)
+		if separation > positionSlop {
 			continue
 		}
-
-		point := cubeFacePoint(reference, referenceNormal, vertex)
+		point := vertex.Sub(faceNormal.Mul(separation * 0.5))
 		key := quantizedPointKey(point)
 		if seen[key] {
 			continue
@@ -289,6 +326,151 @@ func cubeCubeContactPoints(a, b *Body, normal mgl64.Vec3, penetration float64) [
 	}
 
 	return points
+}
+
+func cubeFaceFrame(body *Body, worldNormal mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3, [2]mgl64.Vec3, [2]float64) {
+	axes := cubeAxes(body)
+	localNormal := body.rotation.Conjugate().Rotate(worldNormal)
+	faceAxis := dominantAxis(localNormal)
+	sign := 1.0
+	if localNormal[faceAxis] < 0 {
+		sign = -1
+	}
+
+	sideAxis0, sideAxis1 := cubeFaceSideAxisIndices(faceAxis)
+	normal := axes[faceAxis].Mul(sign)
+	center := body.position.Add(normal.Mul(body.halfExtents[faceAxis]))
+	sideAxes := [2]mgl64.Vec3{axes[sideAxis0], axes[sideAxis1]}
+	sideExtents := [2]float64{body.halfExtents[sideAxis0], body.halfExtents[sideAxis1]}
+	return normal, center, sideAxes, sideExtents
+}
+
+func cubeFaceVertices(body *Body, worldNormal mgl64.Vec3) []mgl64.Vec3 {
+	axes := cubeAxes(body)
+	localNormal := body.rotation.Conjugate().Rotate(worldNormal)
+	faceAxis := dominantAxis(localNormal)
+	sign := 1.0
+	if localNormal[faceAxis] < 0 {
+		sign = -1
+	}
+
+	sideAxis0, sideAxis1 := cubeFaceSideAxisIndices(faceAxis)
+	center := body.position.Add(axes[faceAxis].Mul(body.halfExtents[faceAxis] * sign))
+	corners := [][2]float64{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}}
+	vertices := make([]mgl64.Vec3, 0, 4)
+	for _, corner := range corners {
+		vertex := center.
+			Add(axes[sideAxis0].Mul(body.halfExtents[sideAxis0] * corner[0])).
+			Add(axes[sideAxis1].Mul(body.halfExtents[sideAxis1] * corner[1]))
+		vertices = append(vertices, vertex)
+	}
+	return vertices
+}
+
+func cubeFaceSideAxisIndices(faceAxis int) (int, int) {
+	switch faceAxis {
+	case 0:
+		return 1, 2
+	case 1:
+		return 0, 2
+	default:
+		return 0, 1
+	}
+}
+
+func clipPolygonAgainstPlane(points []mgl64.Vec3, planePoint, inwardNormal mgl64.Vec3) []mgl64.Vec3 {
+	if len(points) == 0 {
+		return nil
+	}
+
+	clipped := make([]mgl64.Vec3, 0, len(points)+1)
+	previous := points[len(points)-1]
+	previousDistance := previous.Sub(planePoint).Dot(inwardNormal)
+	previousInside := previousDistance >= -contactPlaneSlop
+	for _, current := range points {
+		currentDistance := current.Sub(planePoint).Dot(inwardNormal)
+		currentInside := currentDistance >= -contactPlaneSlop
+		if currentInside != previousInside {
+			denominator := previousDistance - currentDistance
+			if math.Abs(denominator) > epsilon {
+				t := previousDistance / denominator
+				clipped = append(clipped, previous.Add(current.Sub(previous).Mul(t)))
+			}
+		}
+		if currentInside {
+			clipped = append(clipped, current)
+		}
+
+		previous = current
+		previousDistance = currentDistance
+		previousInside = currentInside
+	}
+	return clipped
+}
+
+func cubeSupportEdge(body *Body, edgeAxis int, direction mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3) {
+	axes := cubeAxes(body)
+	localDirection := body.rotation.Conjugate().Rotate(direction)
+	center := body.position
+	for axis := 0; axis < 3; axis++ {
+		if axis == edgeAxis {
+			continue
+		}
+		sign := 1.0
+		if localDirection[axis] < 0 {
+			sign = -1
+		}
+		center = center.Add(axes[axis].Mul(body.halfExtents[axis] * sign))
+	}
+
+	halfEdge := axes[edgeAxis].Mul(body.halfExtents[edgeAxis])
+	return center.Sub(halfEdge), center.Add(halfEdge)
+}
+
+func closestPointsOnSegments(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3) {
+	d1 := q1.Sub(p1)
+	d2 := q2.Sub(p2)
+	r := p1.Sub(p2)
+	a := d1.Dot(d1)
+	e := d2.Dot(d2)
+	f := d2.Dot(r)
+
+	if a <= epsilon && e <= epsilon {
+		return p1, p2
+	}
+
+	var s, t float64
+	if a <= epsilon {
+		s = 0
+		t = clamp(f/e, 0, 1)
+	} else {
+		c := d1.Dot(r)
+		if e <= epsilon {
+			t = 0
+			s = clamp(-c/a, 0, 1)
+		} else {
+			b := d1.Dot(d2)
+			denominator := a*e - b*b
+			if math.Abs(denominator) > epsilon {
+				s = clamp((b*f-c*e)/denominator, 0, 1)
+			} else {
+				s = 0
+			}
+
+			tNom := b*s + f
+			if tNom < 0 {
+				t = 0
+				s = clamp(-c/a, 0, 1)
+			} else if tNom > e {
+				t = 1
+				s = clamp((b-c)/a, 0, 1)
+			} else {
+				t = tNom / e
+			}
+		}
+	}
+
+	return p1.Add(d1.Mul(s)), p2.Add(d2.Mul(t))
 }
 
 func cubeCubeContactPoint(a, b *Body, normal mgl64.Vec3) mgl64.Vec3 {

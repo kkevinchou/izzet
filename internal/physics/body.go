@@ -13,9 +13,10 @@ const (
 )
 
 var (
-	ErrInvalidRadius = errors.New("physics: sphere radius must be greater than zero")
-	ErrInvalidSize   = errors.New("physics: cube size components must be greater than zero")
-	ErrInvalidMass   = errors.New("physics: mass cannot be negative")
+	ErrInvalidRadius      = errors.New("physics: sphere radius must be finite and greater than zero")
+	ErrInvalidSize        = errors.New("physics: cube size components must be finite and greater than zero")
+	ErrInvalidMass        = errors.New("physics: mass must be finite and non-negative")
+	ErrInvalidBodyOptions = errors.New("physics: body options must contain only finite values")
 )
 
 type BodyID int
@@ -104,22 +105,25 @@ func DefaultBodyOptions(mass float64) BodyOptions {
 }
 
 func newSphere(id BodyID, options SphereOptions) (*Body, error) {
-	if options.Radius <= 0 {
+	if !finiteFloat(options.Radius) || options.Radius <= 0 {
 		return nil, ErrInvalidRadius
 	}
 	return newBody(id, ShapeSphere, options.Radius, mgl64.Vec3{}, options.BodyOptions)
 }
 
 func newCube(id BodyID, options CubeOptions) (*Body, error) {
-	if options.Size.X() <= 0 || options.Size.Y() <= 0 || options.Size.Z() <= 0 {
+	if !finiteVec3(options.Size) || options.Size.X() <= 0 || options.Size.Y() <= 0 || options.Size.Z() <= 0 {
 		return nil, ErrInvalidSize
 	}
 	return newBody(id, ShapeCube, 0, options.Size.Mul(0.5), options.BodyOptions)
 }
 
 func newBody(id BodyID, shape ShapeType, radius float64, halfExtents mgl64.Vec3, options BodyOptions) (*Body, error) {
-	if options.Mass < 0 {
+	if !finiteFloat(options.Mass) || options.Mass < 0 {
 		return nil, ErrInvalidMass
+	}
+	if !finiteBodyOptions(options) {
+		return nil, ErrInvalidBodyOptions
 	}
 
 	inverseMass := 0.0
@@ -145,6 +149,17 @@ func newBody(id BodyID, shape ShapeType, radius float64, halfExtents mgl64.Vec3,
 	}
 	body.recomputeInertia(options.Mass)
 	return body, nil
+}
+
+func finiteBodyOptions(options BodyOptions) bool {
+	return finiteVec3(options.Position) &&
+		finiteQuat(options.Rotation) &&
+		finiteVec3(options.LinearVelocity) &&
+		finiteVec3(options.AngularVelocity) &&
+		finiteFloat(options.Restitution) &&
+		finiteFloat(options.Friction) &&
+		finiteFloat(options.LinearDamping) &&
+		finiteFloat(options.AngularDamping)
 }
 
 func (b *Body) recomputeInertia(mass float64) {
@@ -222,6 +237,9 @@ func (b *Body) Position() mgl64.Vec3 {
 }
 
 func (b *Body) SetPosition(position mgl64.Vec3) {
+	if !finiteVec3(position) {
+		return
+	}
 	b.position = position
 }
 
@@ -230,10 +248,16 @@ func (b *Body) Rotation() mgl64.Quat {
 }
 
 func (b *Body) SetRotation(rotation mgl64.Quat) {
+	if !finiteQuat(rotation) {
+		return
+	}
 	b.rotation = normalizeQuat(rotation)
 }
 
 func (b *Body) SetTransform(transform Transform) {
+	if !finiteVec3(transform.Position) || !finiteQuat(transform.Rotation) {
+		return
+	}
 	b.position = transform.Position
 	b.rotation = normalizeQuat(transform.Rotation)
 }
@@ -243,6 +267,9 @@ func (b *Body) LinearVelocity() mgl64.Vec3 {
 }
 
 func (b *Body) SetLinearVelocity(velocity mgl64.Vec3) {
+	if !finiteVec3(velocity) {
+		return
+	}
 	b.linearVelocity = velocity
 }
 
@@ -251,18 +278,21 @@ func (b *Body) AngularVelocity() mgl64.Vec3 {
 }
 
 func (b *Body) SetAngularVelocity(velocity mgl64.Vec3) {
+	if !finiteVec3(velocity) {
+		return
+	}
 	b.angularVelocity = velocity
 }
 
 func (b *Body) ApplyForce(force mgl64.Vec3) {
-	if b.Static() {
+	if b.Static() || !finiteVec3(force) {
 		return
 	}
 	b.force = b.force.Add(force)
 }
 
 func (b *Body) ApplyForceAtPoint(force, worldPoint mgl64.Vec3) {
-	if b.Static() {
+	if b.Static() || !finiteVec3(force) || !finiteVec3(worldPoint) {
 		return
 	}
 	b.force = b.force.Add(force)
@@ -270,6 +300,9 @@ func (b *Body) ApplyForceAtPoint(force, worldPoint mgl64.Vec3) {
 }
 
 func (b *Body) ApplyImpulse(impulse, worldPoint mgl64.Vec3) {
+	if !finiteVec3(impulse) || !finiteVec3(worldPoint) {
+		return
+	}
 	b.applyImpulse(impulse, worldPoint)
 }
 

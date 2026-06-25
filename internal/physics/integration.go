@@ -24,7 +24,6 @@ func (w *World) integrate(dt float64) {
 
 		body.position = body.position.Add(body.linearVelocity.Mul(dt))
 		body.rotation = integrateRotation(body.rotation, body.angularVelocity, dt)
-		body.ClearForces()
 	}
 }
 

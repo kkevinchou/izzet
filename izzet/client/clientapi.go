@@ -110,7 +110,7 @@ func (g *Client) StopLiveWorld() {
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
 	g.world = g.editorWorld
-	g.resetPhysicsDebug()
+	g.resetPhysics()
 }
 
 func (g *Client) AppMode() types.AppMode {
@@ -313,7 +313,7 @@ func (g *Client) initializeApp() {
 	g.stateBuffer = clientsystem.NewStateBuffer()
 	g.camera.Position = settings.EditorCameraStartPosition
 	g.camera.Rotation = mgl64.QuatIdent()
-	g.resetPhysicsDebug()
+	g.resetPhysics()
 }
 
 func (g *Client) ServerAddress() string {

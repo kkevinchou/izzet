@@ -17,8 +17,8 @@ type CombatSystem struct {
 	app App
 }
 
-type physicsDebugSpawner interface {
-	SpawnPhysicsDebugCube(contactPoint mgl64.Vec3)
+type physicsSpawner interface {
+	SpawnPhysicsCube(contactPoint mgl64.Vec3)
 }
 
 func NewCombatSystem(app App) *CombatSystem {
@@ -49,8 +49,8 @@ func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
 
 		if hitEntityID, hitPoint, hit := collision.ClosestHit(line, hitTargets); hit {
 			if s.app.IsClient() {
-				if spawner, ok := s.app.(physicsDebugSpawner); ok {
-					spawner.SpawnPhysicsDebugCube(hitPoint)
+				if spawner, ok := s.app.(physicsSpawner); ok {
+					spawner.SpawnPhysicsCube(hitPoint)
 				}
 			}
 

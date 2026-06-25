@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kkevinchou/izzet/internal/physics"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
@@ -24,6 +25,7 @@ type GameWorld interface {
 	GetEntityByID(int) *entity.Entity
 	DeleteEntity(int)
 	SpatialPartition() *spatialpartition.SpatialPartition
+	PhysicsWorld() *physics.World
 	AddEntity(*entity.Entity)
 	GetSpawnPoint() *entity.Entity
 }

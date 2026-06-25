@@ -55,7 +55,6 @@ func replay(app App, e *entity.Entity, gamestateUpdateMessage network.GameStateU
 
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, e)
 		shared.KinematicStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, e, app.World(), app)
-		// shared.PhysicsStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, e)
 		// shared.ResolveCollisions(app, observer)
 		// if app.PredictionDebugLogging() {
 		// 	fmt.Printf("\t - Replayed Frame [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), commandFrame.FrameNumber, apputils.FormatVec(e.Position()))

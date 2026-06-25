@@ -48,7 +48,7 @@ func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
 		}
 
 		if hitEntityID, hitPoint, hit := collision.ClosestHit(line, hitTargets); hit {
-			if s.app.IsClient() {
+			if s.app.IsServer() {
 				if spawner, ok := s.app.(physicsSpawner); ok {
 					spawner.SpawnPhysicsCube(hitPoint)
 				}

@@ -3,6 +3,7 @@ package world
 import (
 	"slices"
 
+	"github.com/kkevinchou/izzet/internal/physics"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/entity"
 )
@@ -10,6 +11,9 @@ import (
 func (g *GameWorld) AddEntity(e *entity.Entity) {
 	if _, ok := g.entities[e.GetID()]; ok {
 		return
+	}
+	if err := g.addPhysicsBody(e); err != nil {
+		panic(err)
 	}
 	g.entities[e.ID] = e
 	g.addEntityToSortedList(e)
@@ -40,6 +44,10 @@ func (g *GameWorld) DeleteEntity(entityID int) {
 
 	entity.RemoveParent(e)
 	g.spatialPartition.DeleteEntity(e.ID)
+	if e.Physics != nil && e.Physics.BodyID != 0 {
+		g.PhysicsWorld().RemoveBody(e.Physics.BodyID)
+		e.Physics.BodyID = 0
+	}
 	delete(g.entities, e.ID)
 
 	g.removeEntityFromSortedList(e.ID)
@@ -83,6 +91,13 @@ func (g *GameWorld) Lights() []*entity.Entity {
 
 func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
+}
+
+func (g *GameWorld) PhysicsWorld() *physics.World {
+	if g.physicsWorld == nil {
+		g.physicsWorld = physics.NewWorld()
+	}
+	return g.physicsWorld
 }
 
 func (g *GameWorld) GetSpawnPoint() *entity.Entity {

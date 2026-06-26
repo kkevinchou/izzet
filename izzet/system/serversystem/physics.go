@@ -1,28 +1,23 @@
-package system
+package serversystem
 
 import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/system"
 )
 
-type PhysicsSystem struct {
-	app App
-}
+type PhysicsSystem struct{}
 
-func NewPhysicsSystem(app App) *PhysicsSystem {
-	return &PhysicsSystem{app: app}
+func NewPhysicsSystem(_ App) *PhysicsSystem {
+	return &PhysicsSystem{}
 }
 
 func (s *PhysicsSystem) Name() string {
 	return "PhysicsSystem"
 }
 
-func (s *PhysicsSystem) Update(delta time.Duration, world GameWorld) {
-	if !s.app.IsServer() {
-		return
-	}
-
+func (s *PhysicsSystem) Update(delta time.Duration, world system.GameWorld) {
 	physicsWorld := world.PhysicsWorld()
 	physicsWorld.Step(delta)
 

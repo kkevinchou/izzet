@@ -124,9 +124,9 @@ func sphereCubeContact(sphere, cube *Body) (mgl64.Vec3, mgl64.Vec3, float64, boo
 	half := cube.halfExtents
 
 	clamped := mgl64.Vec3{
-		clamp(localSphereCenter.X(), -half.X(), half.X()),
-		clamp(localSphereCenter.Y(), -half.Y(), half.Y()),
-		clamp(localSphereCenter.Z(), -half.Z(), half.Z()),
+		mgl64.Clamp(localSphereCenter.X(), -half.X(), half.X()),
+		mgl64.Clamp(localSphereCenter.Y(), -half.Y(), half.Y()),
+		mgl64.Clamp(localSphereCenter.Z(), -half.Z(), half.Z()),
 	}
 
 	localDelta := localSphereCenter.Sub(clamped)
@@ -442,17 +442,17 @@ func closestPointsOnSegments(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3)
 	var s, t float64
 	if a <= epsilon {
 		s = 0
-		t = clamp(f/e, 0, 1)
+		t = mgl64.Clamp(f/e, 0, 1)
 	} else {
 		c := d1.Dot(r)
 		if e <= epsilon {
 			t = 0
-			s = clamp(-c/a, 0, 1)
+			s = mgl64.Clamp(-c/a, 0, 1)
 		} else {
 			b := d1.Dot(d2)
 			denominator := a*e - b*b
 			if math.Abs(denominator) > epsilon {
-				s = clamp((b*f-c*e)/denominator, 0, 1)
+				s = mgl64.Clamp((b*f-c*e)/denominator, 0, 1)
 			} else {
 				s = 0
 			}
@@ -460,10 +460,10 @@ func closestPointsOnSegments(p1, q1, p2, q2 mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3)
 			tNom := b*s + f
 			if tNom < 0 {
 				t = 0
-				s = clamp(-c/a, 0, 1)
+				s = mgl64.Clamp(-c/a, 0, 1)
 			} else if tNom > e {
 				t = 1
-				s = clamp((b-c)/a, 0, 1)
+				s = mgl64.Clamp((b-c)/a, 0, 1)
 			} else {
 				t = tNom / e
 			}
@@ -493,9 +493,9 @@ func cubeFacePoint(body *Body, worldNormal, target mgl64.Vec3) mgl64.Vec3 {
 	axis := dominantAxis(localNormal)
 
 	point := mgl64.Vec3{
-		clamp(localTarget.X(), -body.halfExtents.X(), body.halfExtents.X()),
-		clamp(localTarget.Y(), -body.halfExtents.Y(), body.halfExtents.Y()),
-		clamp(localTarget.Z(), -body.halfExtents.Z(), body.halfExtents.Z()),
+		mgl64.Clamp(localTarget.X(), -body.halfExtents.X(), body.halfExtents.X()),
+		mgl64.Clamp(localTarget.Y(), -body.halfExtents.Y(), body.halfExtents.Y()),
+		mgl64.Clamp(localTarget.Z(), -body.halfExtents.Z(), body.halfExtents.Z()),
 	}
 
 	sign := 1.0
@@ -548,24 +548,4 @@ func projectCube(body *Body, axis mgl64.Vec3) (float64, float64) {
 		math.Abs(axis.Dot(axes[1]))*body.halfExtents.Y() +
 		math.Abs(axis.Dot(axes[2]))*body.halfExtents.Z()
 	return center - radius, center + radius
-}
-
-func supportPoint(body *Body, direction mgl64.Vec3) mgl64.Vec3 {
-	switch body.shape {
-	case ShapeSphere:
-		return body.position.Add(safeNormalize(direction, mgl64.Vec3{0, 1, 0}).Mul(body.radius))
-	case ShapeCube:
-		axes := cubeAxes(body)
-		point := body.position
-		for i, axis := range axes {
-			sign := 1.0
-			if direction.Dot(axis) < 0 {
-				sign = -1
-			}
-			point = point.Add(axis.Mul(body.halfExtents[i] * sign))
-		}
-		return point
-	default:
-		return body.position
-	}
 }

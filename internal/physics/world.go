@@ -49,9 +49,6 @@ func NewWorld(options ...WorldOption) *World {
 
 func WithGravity(gravity mgl64.Vec3) WorldOption {
 	return func(world *World) {
-		if !finiteVec3(gravity) {
-			return
-		}
 		world.gravity = gravity
 	}
 }
@@ -69,7 +66,7 @@ func WithSolverIterations(velocityIterations, positionIterations int) WorldOptio
 
 func WithSubsteps(maxSubstep float64, maxSubsteps int) WorldOption {
 	return func(world *World) {
-		if finiteFloat(maxSubstep) && maxSubstep > 0 {
+		if maxSubstep > 0 {
 			world.MaxSubstep = maxSubstep
 		}
 		if maxSubsteps > 0 {
@@ -83,9 +80,6 @@ func (w *World) Gravity() mgl64.Vec3 {
 }
 
 func (w *World) SetGravity(gravity mgl64.Vec3) {
-	if !finiteVec3(gravity) {
-		return
-	}
 	w.gravity = gravity
 }
 
@@ -206,7 +200,7 @@ func (w *World) Step(delta time.Duration) {
 }
 
 func (w *World) Simulate(dt float64) {
-	if !finiteFloat(dt) || dt <= 0 {
+	if dt <= 0 {
 		return
 	}
 
@@ -219,7 +213,7 @@ func (w *World) Simulate(dt float64) {
 }
 
 func (w *World) substepCount(dt float64) int {
-	if !finiteFloat(w.MaxSubstep) || w.MaxSubstep <= 0 || dt <= w.MaxSubstep {
+	if w.MaxSubstep <= 0 || dt <= w.MaxSubstep {
 		return 1
 	}
 

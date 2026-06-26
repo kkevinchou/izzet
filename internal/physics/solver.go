@@ -52,7 +52,7 @@ func resolveContactVelocity(c *contact) {
 	jt := -relativeVelocity.Dot(tangent) / tangentDenominator
 	friction := math.Sqrt(c.a.friction * c.b.friction)
 	maxFriction := math.Abs(j) * friction
-	jt = clamp(jt, -maxFriction, maxFriction)
+	jt = mgl64.Clamp(jt, -maxFriction, maxFriction)
 
 	frictionImpulse := tangent.Mul(jt)
 	c.a.applyImpulse(frictionImpulse.Mul(-1), c.point)

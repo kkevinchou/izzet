@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/kkevinchou/izzet/internal/physics"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/entity"
 )
@@ -10,6 +11,7 @@ type GameWorld struct {
 
 	commandFrameCount int
 	spatialPartition  *spatialpartition.SpatialPartition
+	physicsWorld      *physics.World
 
 	sortedEntities []*entity.Entity
 }
@@ -22,6 +24,7 @@ func NewWithEntities(entities map[int]*entity.Entity) *GameWorld {
 	g := &GameWorld{
 		entities:         map[int]*entity.Entity{},
 		spatialPartition: spatialpartition.NewSpatialPartition(50, 10),
+		physicsWorld:     physics.NewWorld(),
 	}
 	for _, e := range entities {
 		g.AddEntity(e)

@@ -377,17 +377,6 @@ func resolveCollision(context *collisionContext, contact collision.Contact, obse
 }
 
 func postProcessing(context *collisionContext) {
-	// for _, pair := range context.pairs {
-	// 	e1 := getEntity(context, pair.PackedIndexA)
-	// 	if e1.Physics != nil {
-	// 		e1.Physics.Grounded = false
-	// 	}
-	// 	e2 := getEntity(context, pair.PackedIndexB)
-	// 	if e2.Physics != nil {
-	// 		e2.Physics.Grounded = false
-	// 	}
-	// }
-
 	// for _, contact := range context.contacts {
 	// 	if contact.SeparatingVector.Normalize().Dot(mgl64.Vec3{0, 1, 0}) > GroundedThreshold {
 	// 		entity := getEntity(context, contact.PackedIndexA)

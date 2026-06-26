@@ -121,6 +121,7 @@ func NewWithWorld(world *world.GameWorld, projectName string) *Server {
 	g.systems = append(g.systems, serversystem.NewMiscSystem(g))
 	g.systems = append(g.systems, system.NewCleanupSystem(g))
 	g.systems = append(g.systems, serversystem.NewEventsSystem(g))
+	g.systems = append(g.systems, serversystem.NewPhysicsSystem(g))
 	g.systems = append(g.systems, serversystem.NewReplicationSystem(g))
 
 	fmt.Println(time.Since(start), "to start up systems")

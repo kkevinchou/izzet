@@ -52,6 +52,10 @@ server:
 headless:
 	go run main.go HEADLESS
 
+.PHONY: clean
+clean:
+	rm -r $(RELEASE_FOLDER)
+
 .PHONY: release
 release: clean
 	mkdir -p $(RELEASE_FOLDER)

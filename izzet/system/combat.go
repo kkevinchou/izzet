@@ -47,12 +47,12 @@ func (s *CombatSystem) Update(delta time.Duration, world GameWorld) {
 			hitTargets = append(hitTargets, world.GetEntityByID(e.GetID()))
 		}
 
-		if hitEntityID, hitPoint, hit := collision.ClosestHit(line, hitTargets); hit {
-			if s.app.IsServer() {
-				if spawner, ok := s.app.(physicsSpawner); ok {
-					spawner.SpawnPhysicsCube(hitPoint)
-				}
-			}
+		if hitEntityID, _, hit := collision.ClosestHit(line, hitTargets); hit {
+			// if s.app.IsServer() {
+			// 	if spawner, ok := s.app.(physicsSpawner); ok {
+			// 		spawner.SpawnPhysicsCube(hitPoint)
+			// 	}
+			// }
 
 			hitEntity := world.GetEntityByID(hitEntityID)
 			if hitEntity.HealthComponent != nil {

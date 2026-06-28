@@ -8,12 +8,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
+	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/telemetry"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 type TriangleVAO struct {

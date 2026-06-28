@@ -9,10 +9,10 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/internal/noise"
+	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/render/panels"
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 const textureWidth, textureHeight int = 1024, 1024

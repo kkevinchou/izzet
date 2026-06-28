@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 type ShadowMapRenderPass struct {

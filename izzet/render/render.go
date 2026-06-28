@@ -12,6 +12,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/renderers"
+	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/appmode"
@@ -29,7 +30,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/telemetry"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 type GameWorld interface {

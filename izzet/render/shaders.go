@@ -1,7 +1,7 @@
 package render
 
 import (
-	"github.com/kkevinchou/kitolib/shaders"
+	"github.com/kkevinchou/izzet/internal/shaders"
 )
 
 func compileShaders(shaderManager *shaders.ShaderManager) {

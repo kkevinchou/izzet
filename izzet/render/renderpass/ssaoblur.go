@@ -2,10 +2,10 @@ package renderpass
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 type SSAOBlurRenderPass struct {

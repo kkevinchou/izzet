@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/animation"
 	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
@@ -18,7 +19,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/telemetry"
-	"github.com/kkevinchou/kitolib/shaders"
 )
 
 // RenderPass is a single step in the frame‐render pipeline.

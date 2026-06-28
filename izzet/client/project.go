@@ -174,6 +174,7 @@ func (g *Client) NewProject(name string) {
 
 	g.initializeApp()
 	g.LoadDefaultAssets()
+	prefab.InitializePrefabs(g.assetManager)
 	g.SelectEntity(nil)
 
 	// set up the default scene

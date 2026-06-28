@@ -7,11 +7,15 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type CharacterOrientationSystem struct {
 	app App
+}
+
+type orientationEntity interface {
+	GetLocalRotation() mgl64.Quat
+	SetLocalRotation(mgl64.Quat)
 }
 
 func NewCharacterOrientationSystem(app App) *CharacterOrientationSystem {
@@ -55,7 +59,7 @@ func (s *CharacterOrientationSystem) Update(delta time.Duration, world GameWorld
 	}
 }
 
-func rotateEntityToDir(entity types.KinematicEntity, movementDirWithoutY mgl64.Vec3) {
+func rotateEntityToDir(entity orientationEntity, movementDirWithoutY mgl64.Vec3) {
 	if !utils.Vec3IsZero(movementDirWithoutY) {
 		currentRotation := entity.GetLocalRotation()
 		currentViewingVector := currentRotation.Rotate(mgl64.Vec3{0, 0, -1})

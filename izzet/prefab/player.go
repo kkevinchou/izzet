@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 func createPlayer(am *assets.AssetManager) *entity.Entity {
@@ -24,7 +23,7 @@ func createPlayer(am *assets.AssetManager) *entity.Entity {
 		Bottom: mgl64.Vec3{0, radius, 0},
 	}
 
-	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
+	e.Collider = entity.CreateCapsuleColliderComponent(entity.ColliderGroupFlagPlayer, entity.ColliderGroupFlagTerrain|entity.ColliderGroupFlagPlayer, capsule)
 	e.CharacterControllerComponent = &entity.CharacterControllerComponent{CameraEntityID: entity.InvalidEntityID}
 	e.AimDownSightsComponent = &entity.AimDownSightsComponent{}
 	e.HealthComponent = &entity.HealthComponent{Amount: 100}

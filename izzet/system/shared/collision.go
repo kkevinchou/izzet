@@ -9,7 +9,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/checks"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -59,7 +58,7 @@ type collisionContext struct {
 type collisionData struct {
 	entityID               int
 	shouldResolve          bool
-	collisionMask          types.ColliderGroupFlag
+	collisionMask          entity.ColliderGroupFlag
 	boundingBox            collider.BoundingBox
 	boundingBoxInitialized bool
 

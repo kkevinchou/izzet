@@ -11,7 +11,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -40,7 +39,6 @@ type App interface {
 	GetPlayerCamera() *entity.Entity
 	CollisionObserver() *collisionobserver.CollisionObserver
 	World() *world.GameWorld
-	AppMode() types.AppMode
 	RuntimeConfig() *runtimeconfig.RuntimeConfig
 	PredictionDebugLogging() bool
 	AssetManager() *assets.AssetManager

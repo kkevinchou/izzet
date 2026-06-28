@@ -12,7 +12,6 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 const maxRunCount int = 100
@@ -24,6 +23,19 @@ type RayCastResult struct {
 	normal      mgl64.Vec3
 	hitDistance float64
 	hit         bool
+}
+
+type kinematicEntity interface {
+	GetID() int
+	BoundingBox() collider.BoundingBox
+	HasCapsuleCollider() bool
+	HasTriMeshCollider() bool
+	HasSimplifiedTriMeshCollider() bool
+	CapsuleCollider() collider.Capsule
+	TriMeshCollider() collider.TriMesh
+	SimplifiedTriMeshCollider() collider.TriMesh
+	GetLocalRotation() mgl64.Quat
+	SetLocalRotation(mgl64.Quat)
 }
 
 func KinematicStepSingle(delta time.Duration, e *entity.Entity, world GameWorld, app App) {
@@ -85,7 +97,7 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 			var minContact collision.Contact
 
 			for _, partitionEntity := range candidates {
-				var e2 types.KinematicEntity = world.GetEntityByID(partitionEntity.GetID())
+				e2 := world.GetEntityByID(partitionEntity.GetID())
 				if e1.GetID() == e2.GetID() {
 					continue
 				}
@@ -134,7 +146,7 @@ func KinematicStep(delta time.Duration, ents []*entity.Entity, world GameWorld, 
 	}
 }
 
-func rayCastToGround(world GameWorld, e1 types.KinematicEntity) RayCastResult {
+func rayCastToGround(world GameWorld, e1 kinematicEntity) RayCastResult {
 	capsule := e1.CapsuleCollider()
 	rayOrigin := capsule.Bottom
 	ray := collider.Ray{Origin: rayOrigin, Direction: mgl64.Vec3{0, -1, 0}}
@@ -183,11 +195,11 @@ func rayCastToGround(world GameWorld, e1 types.KinematicEntity) RayCastResult {
 	return result
 }
 
-func walkableGroundSupport(world GameWorld, e1 types.KinematicEntity) (mgl64.Vec3, float64, bool) {
+func walkableGroundSupport(world GameWorld, e1 kinematicEntity) (mgl64.Vec3, float64, bool) {
 	return walkableGroundSupportFromProbe(e1, rayCastToGround(world, e1))
 }
 
-func walkableGroundSupportFromProbe(e1 types.KinematicEntity, groundRayCastResult RayCastResult) (mgl64.Vec3, float64, bool) {
+func walkableGroundSupportFromProbe(e1 kinematicEntity, groundRayCastResult RayCastResult) (mgl64.Vec3, float64, bool) {
 	if !groundRayCastResult.hit {
 		return mgl64.Vec3{}, 0, false
 	}
@@ -245,7 +257,7 @@ func moveDirAlongSlope(movementDir mgl64.Vec3, slopeNormal mgl64.Vec3) mgl64.Vec
 	return movementDir.Normalize()
 }
 
-func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact {
+func collideKinematicEntities(e1, e2 kinematicEntity) []collision.Contact {
 	var result []collision.Contact
 
 	if (e1.HasCapsuleCollider() && e2.HasTriMeshCollider()) || (e2.HasCapsuleCollider() && e1.HasTriMeshCollider()) {
@@ -306,7 +318,7 @@ func collideKinematicEntities(e1, e2 types.KinematicEntity) []collision.Contact 
 	return filteredContacts
 }
 
-func rotateEntityToFaceMovement(entity types.KinematicEntity, movementDirWithoutY mgl64.Vec3) {
+func rotateEntityToFaceMovement(entity kinematicEntity, movementDirWithoutY mgl64.Vec3) {
 	if !utils.Vec3IsZero(movementDirWithoutY) {
 		currentRotation := entity.GetLocalRotation()
 		currentViewingVector := currentRotation.Rotate(mgl64.Vec3{0, 0, -1})

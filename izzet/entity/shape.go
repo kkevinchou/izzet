@@ -4,7 +4,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/izzet/assets"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type ShapeType string
@@ -60,7 +59,7 @@ func CreateCube(ml *assets.AssetManager, length float64) *Entity {
 	uniqueVertices := assets.UniqueVerticesFromPrimitives(primitives)
 	bb := collider.BoundingBoxFromVertices(uniqueVertices)
 	t := collider.CreateTriMeshFromPrimitives(AssetPrimitiveToSpecPrimitive(primitives))
-	entity.Collider = CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, types.ColliderGroupFlagTerrain, *t, nil, bb)
+	entity.Collider = CreateTriMeshColliderComponent(ColliderGroupFlagTerrain, ColliderGroupFlagTerrain, *t, nil, bb)
 	entity.Physics = &PhysicsComponent{Shape: PhysicsShapeCube}
 	entity.Static = true
 

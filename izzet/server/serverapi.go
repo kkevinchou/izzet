@@ -20,7 +20,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/server/inputbuffer"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -159,10 +158,6 @@ func (g *Server) CopyLoadedAnimations(
 
 func (g *Server) ProjectName() string {
 	return g.projectName
-}
-
-func (g *Server) AppMode() types.AppMode {
-	panic("app mode should not be called in server, conslidate app mode with isClient/isServer")
 }
 
 func (g *Server) RuntimeConfig() *runtimeconfig.RuntimeConfig {

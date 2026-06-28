@@ -2,8 +2,8 @@ package panels
 
 import (
 	"github.com/AllenDang/cimgui-go/imgui"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 var open bool
@@ -27,7 +27,7 @@ func BuildTabsSet(app renderiface.App, renderContext RenderContext) {
 			Stats(app, renderContext)
 			imgui.EndTabItem()
 		}
-		if app.AppMode() == types.AppModePlay {
+		if app.AppMode() == appmode.Play {
 			if imgui.BeginTabItem("Controls") {
 				controls(app, renderContext)
 				imgui.EndTabItem()

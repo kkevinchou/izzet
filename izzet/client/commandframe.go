@@ -12,6 +12,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entity"
@@ -20,7 +21,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 // Systems Context
@@ -33,11 +33,11 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
 	g.handleSpatialPartition()
 
-	if g.AppMode() == types.AppModePlay {
+	if g.AppMode() == appmode.Play {
 		for _, s := range g.playModeSystems {
 			s.Update(delta, g.world)
 		}
-	} else if g.AppMode() == types.AppModeEditor {
+	} else if g.AppMode() == appmode.Editor {
 		for _, s := range g.editorModeSystems {
 			s.Update(delta, g.world)
 		}
@@ -45,7 +45,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 
 	g.handleCommonInputCommands(frameInput)
 
-	if g.AppMode() == types.AppModeEditor {
+	if g.AppMode() == appmode.Editor {
 		g.handleEditorInputCommands(frameInput)
 		g.editorCameraMovement(frameInput, delta)
 		g.handleGizmos(frameInput)
@@ -222,9 +222,9 @@ func (g *Client) handleCommonInputCommands(frameInput input.Input) {
 
 	// shutdown
 	if event, ok := keyboardInput[input.KeyboardKeyEscape]; ok && event.Event == input.KeyboardEventUp {
-		if g.AppMode() == types.AppModeEditor {
+		if g.AppMode() == appmode.Editor {
 			g.Shutdown()
-		} else if g.AppMode() == types.AppModePlay {
+		} else if g.AppMode() == appmode.Play {
 			g.DisconnectClient()
 		}
 	}

@@ -11,10 +11,10 @@ import (
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/geometry"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/ui"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 type ComponentComboOption string
@@ -314,7 +314,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			ui.InitColumns()
 
 			ui.RowV("Collider Type", func() {
-				imgui.LabelText("", string(types.ColliderFlagToGroupName[e.Collider.ColliderGroup]))
+				imgui.LabelText("", entity.ColliderFlagToGroupName[e.Collider.ColliderGroup])
 			}, true)
 			ui.RowV("Capsule", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", e.Collider.CapsuleCollider != nil))
@@ -381,7 +381,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			ui.RowV("Animation State", func() {
 				var state string
 
-				if app.AppMode() == types.AppModePlay {
+				if app.AppMode() == appmode.Play {
 					if e.Animation.Mode == entity.AnimationModeStateMachine {
 						state = e.Animation.AnimationStateMachine.CurrentState.Name
 					}

@@ -15,7 +15,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/ui"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 var showPrefabWindow bool
@@ -208,7 +207,7 @@ func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity 
 			Top:    mgl64.Vec3{0, radius + length, 0},
 			Bottom: mgl64.Vec3{0, radius, 0},
 		}
-		template.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
+		template.Collider = entity.CreateCapsuleColliderComponent(entity.ColliderGroupFlagPlayer, entity.ColliderGroupFlagTerrain|entity.ColliderGroupFlagPlayer, capsule)
 	}
 
 	if activePrefabEditor.IncludeKinematic {

@@ -314,7 +314,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 			ui.InitColumns()
 
 			ui.RowV("Collider Type", func() {
-				imgui.LabelText("", string(types.ColliderFlagToGroupName[e.Collider.ColliderGroup]))
+				imgui.LabelText("", entity.ColliderFlagToGroupName[e.Collider.ColliderGroup])
 			}, true)
 			ui.RowV("Capsule", func() {
 				imgui.LabelText("", fmt.Sprintf("%t", e.Collider.CapsuleCollider != nil))

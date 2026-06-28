@@ -4,13 +4,24 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/collision"
 	"github.com/kkevinchou/izzet/internal/collision/collider"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
+
+type ColliderGroupFlag uint64
+
+const (
+	ColliderGroupFlagTerrain ColliderGroupFlag = 1 << 0
+	ColliderGroupFlagPlayer  ColliderGroupFlag = 2 << 0
+)
+
+var ColliderFlagToGroupName map[ColliderGroupFlag]string = map[ColliderGroupFlag]string{
+	ColliderGroupFlagTerrain: "TERRAIN",
+	ColliderGroupFlagPlayer:  "PLAYER",
+}
 
 type ColliderComponent struct {
 	// entities with the same collider group do not collide with each other
-	ColliderGroup types.ColliderGroupFlag
-	CollisionMask types.ColliderGroupFlag
+	ColliderGroup ColliderGroupFlag
+	CollisionMask ColliderGroupFlag
 
 	// Skip separation tells the collision system to skip the step of separating colliding entities
 	// for the entity that owns this component
@@ -78,7 +89,7 @@ func (c *ColliderComponent) proxyBoundingBox(transform mgl64.Mat4) collider.Boun
 	return c.proxyBoundingBoxCollider.BoundingBox
 }
 
-func CreateCapsuleColliderComponent(colliderGroup, collisionMask types.ColliderGroupFlag, capsule collider.Capsule) *ColliderComponent {
+func CreateCapsuleColliderComponent(colliderGroup, collisionMask ColliderGroupFlag, capsule collider.Capsule) *ColliderComponent {
 	bb := collider.BoundingBox{
 		MinVertex: capsule.Bottom.Sub(mgl64.Vec3{capsule.Radius, capsule.Radius, capsule.Radius}),
 		MaxVertex: capsule.Top.Add(mgl64.Vec3{capsule.Radius, capsule.Radius, capsule.Radius}),
@@ -94,7 +105,7 @@ func CreateCapsuleColliderComponent(colliderGroup, collisionMask types.ColliderG
 	}
 }
 
-func CreateTriMeshColliderComponent(colliderGroup, collisionMask types.ColliderGroupFlag, triMesh collider.TriMesh, simplifiedTriMesh *collider.TriMesh, boundingBox collider.BoundingBox) *ColliderComponent {
+func CreateTriMeshColliderComponent(colliderGroup, collisionMask ColliderGroupFlag, triMesh collider.TriMesh, simplifiedTriMesh *collider.TriMesh, boundingBox collider.BoundingBox) *ColliderComponent {
 	c := &ColliderComponent{
 		ColliderGroup:             colliderGroup,
 		CollisionMask:             collisionMask,

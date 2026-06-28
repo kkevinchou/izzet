@@ -10,7 +10,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 func createNPC(am *assets.AssetManager, entityType entity.EntityType) *entity.Entity {
@@ -40,7 +39,7 @@ func createNPC(am *assets.AssetManager, entityType entity.EntityType) *entity.En
 		Bottom: mgl64.Vec3{0, radius, 0},
 	}
 
-	e.Collider = entity.CreateCapsuleColliderComponent(types.ColliderGroupFlagPlayer, types.ColliderGroupFlagTerrain|types.ColliderGroupFlagPlayer, capsule)
+	e.Collider = entity.CreateCapsuleColliderComponent(entity.ColliderGroupFlagPlayer, entity.ColliderGroupFlagTerrain|entity.ColliderGroupFlagPlayer, capsule)
 	e.Collider.CapsuleCollider = &capsule
 
 	e.MeshComponent = &entity.MeshComponent{MeshHandle: meshHandle, Transform: mgl64.Rotate3DY(180 * math.Pi / 180).Mat4(), Visible: true, ShadowCasting: true}

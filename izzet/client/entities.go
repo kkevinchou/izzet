@@ -10,7 +10,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/animation"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/types"
 )
 
 func (g *Client) CreateEntitiesFromDocument(d assets.Document, merged bool) *entity.Entity {
@@ -126,7 +125,7 @@ func (g *Client) createEntity(d assets.Document, name string, meshHandle assets.
 	primitives := g.assetManager.GetPrimitives(meshHandle)
 	t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
 	bb := collider.BoundingBoxFromVertices(utils.ModelSpecVertsToVec3(vertices))
-	e.Collider = entity.CreateTriMeshColliderComponent(types.ColliderGroupFlagTerrain, 0, *t, nil, bb)
+	e.Collider = entity.CreateTriMeshColliderComponent(entity.ColliderGroupFlagTerrain, 0, *t, nil, bb)
 
 	return e
 }

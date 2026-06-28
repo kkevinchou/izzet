@@ -10,9 +10,9 @@ import (
 	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -579,7 +579,7 @@ func NDCToWorldPosition(viewerContext context.ViewerContext, directionVec mgl64.
 }
 
 func TimeFunc(name string, f func()) {
-	mr := globals.ClientRegistry()
+	mr := telemetry.ClientRegistry()
 	start := time.Now()
 	f()
 	mr.Inc(name, float64(time.Since(start).Nanoseconds())/1000000.0)

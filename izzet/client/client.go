@@ -22,7 +22,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/render"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
@@ -30,6 +29,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/system/clientsystem"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -192,8 +192,8 @@ func (g *Client) Start() {
 			g.frameInput = inputCollector.GetInput()
 
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
-			globals.ClientRegistry().Inc("command_frame_nanoseconds", float64(time.Since(start).Nanoseconds()))
-			globals.ClientRegistry().Inc("command_frames", 1)
+			telemetry.ClientRegistry().Inc("command_frame_nanoseconds", float64(time.Since(start).Nanoseconds()))
+			telemetry.ClientRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 			commandFrameCountBeforeRender += 1
 
@@ -227,21 +227,21 @@ func (g *Client) Start() {
 		if minNextFrameMs > 0 {
 			sleepStart := time.Now()
 			time.Sleep(time.Duration(minNextFrameMs * float64(time.Millisecond)))
-			globals.ClientRegistry().Inc("client_sleep_nanoseconds", float64(time.Since(sleepStart).Nanoseconds()))
+			telemetry.ClientRegistry().Inc("client_sleep_nanoseconds", float64(time.Since(sleepStart).Nanoseconds()))
 		}
 	}
 }
 
 func (g *Client) render(delta time.Duration) {
-	globals.ClientRegistry().Inc("fps", 1)
+	telemetry.ClientRegistry().Inc("fps", 1)
 
 	start := time.Now()
 	// todo - might have a bug here where a command frame hasn't run in this loop yet we'll call render here for imgui
 	g.renderSystem.Render(delta)
 	swapStart := time.Now()
 	g.window.Swap()
-	globals.ClientRegistry().Inc("render_cpu_swap", durationMilliseconds(swapStart))
-	globals.ClientRegistry().Inc("renderer_cpu_time", durationMilliseconds(start))
+	telemetry.ClientRegistry().Inc("render_cpu_swap", durationMilliseconds(swapStart))
+	telemetry.ClientRegistry().Inc("renderer_cpu_time", durationMilliseconds(start))
 }
 
 func durationMilliseconds(start time.Time) float64 {

@@ -17,7 +17,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
@@ -29,6 +28,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -240,7 +240,7 @@ func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
 }
 
 func (r *RenderSystem) Render(delta time.Duration) {
-	mr := globals.ClientRegistry()
+	mr := telemetry.ClientRegistry()
 
 	if r.sceneSize != r.nextSceneSize {
 		r.sceneSize = r.nextSceneSize
@@ -326,7 +326,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 }
 
 func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext) {
-	mr := globals.ClientRegistry()
+	mr := telemetry.ClientRegistry()
 
 	start := time.Now()
 	var renderContext context.RenderContext

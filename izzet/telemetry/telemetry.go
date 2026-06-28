@@ -1,4 +1,4 @@
-package globals
+package telemetry
 
 import (
 	"github.com/kkevinchou/izzet/internal/metrics"

@@ -13,11 +13,11 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -210,7 +210,7 @@ func renderGeometryWithoutColor(
 
 	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		drawBatches(app, renderContext, shader)
-		globals.ClientRegistry().Inc("draw_entity_count", 1)
+		telemetry.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 
@@ -302,13 +302,13 @@ func drawModels(
 		)
 		drawCount++
 	}
-	globals.ClientRegistry().Inc("draw_entity_count", float64(drawCount))
+	telemetry.ClientRegistry().Inc("draw_entity_count", float64(drawCount))
 
 	if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 {
 		batchShader.Use()
 		commonPBRShaderSetup(app, batchShader, renderContext, viewerContext)
 		drawBatches(app, renderContext, batchShader)
-		globals.ClientRegistry().Inc("draw_entity_count", 1)
+		telemetry.ClientRegistry().Inc("draw_entity_count", 1)
 	}
 }
 

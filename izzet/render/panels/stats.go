@@ -7,9 +7,9 @@ import (
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	"github.com/kkevinchou/izzet/internal/metrics"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
 	"github.com/kkevinchou/izzet/izzet/render/ui"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -25,7 +25,7 @@ type metricPair struct {
 }
 
 func Stats(app renderiface.App, renderContext RenderContext) {
-	mr := globals.ClientRegistry()
+	mr := telemetry.ClientRegistry()
 	runtimeConfig := app.RuntimeConfig()
 	caser := cases.Title(language.English)
 

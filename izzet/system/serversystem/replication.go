@@ -6,11 +6,11 @@ import (
 
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/event"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 )
 
 type ReplicationSystem struct {
@@ -67,7 +67,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 		Data: []serverstats.Stat{
 			{
 				Name:  "CFPS",
-				Value: fmt.Sprintf("%.0f", globals.ServerRegistry().RatePerSec("command_frames", 1)),
+				Value: fmt.Sprintf("%.0f", telemetry.ServerRegistry().RatePerSec("command_frames", 1)),
 			},
 		},
 	}
@@ -77,7 +77,7 @@ func (s *ReplicationSystem) Update(delta time.Duration, world system.GameWorld) 
 			stats.Data,
 			serverstats.Stat{
 				Name:  fmt.Sprintf("%s Time", systemName),
-				Value: fmt.Sprintf("%.2f", globals.ServerRegistry().AvgOver(fmt.Sprintf("%s_runtime", systemName), 1)),
+				Value: fmt.Sprintf("%.2f", telemetry.ServerRegistry().AvgOver(fmt.Sprintf("%s_runtime", systemName), 1)),
 			},
 		)
 	}

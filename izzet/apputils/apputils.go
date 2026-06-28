@@ -11,8 +11,8 @@ import (
 	"github.com/kkevinchou/izzet/internal/input"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/settings"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 )
 
 func NameFromAssetFilePath(assetFilePath string) string {
@@ -20,7 +20,7 @@ func NameFromAssetFilePath(assetFilePath string) string {
 }
 
 func GenBuffers(n int32, buffer *uint32) {
-	mr := globals.ClientRegistry()
+	mr := telemetry.ClientRegistry()
 	mr.Inc("gen_buffers", 1)
 	gl.GenBuffers(n, buffer)
 }

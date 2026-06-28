@@ -17,7 +17,7 @@ func NewRegistry(windowSize int, clock func() time.Time) *Registry {
 		clock = time.Now
 	}
 	return &Registry{
-		clock:      time.Now,
+		clock:      clock,
 		windowSize: windowSize,
 		counters:   make(map[string]*WindowCounter),
 	}

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/kkevinchou/izzet/izzet/apputils"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/system"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 )
 
 type ReceiverSystem struct {
@@ -25,7 +25,7 @@ func (s *ReceiverSystem) Name() string {
 }
 
 func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
-	mr := globals.ClientRegistry()
+	mr := telemetry.ClientRegistry()
 
 	for {
 		select {
@@ -127,7 +127,7 @@ func (s *ReceiverSystem) Update(delta time.Duration, world system.GameWorld) {
 					fmt.Println(fmt.Errorf("failed to deserialize ping message %w", err))
 					continue
 				}
-				globals.ClientRegistry().Inc("ping", float64(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
+				telemetry.ClientRegistry().Inc("ping", float64(time.Now().UnixNano()-pingMessage.UnixTime)/1000000.0)
 			}
 		default:
 			return

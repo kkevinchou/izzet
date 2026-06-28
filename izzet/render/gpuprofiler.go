@@ -2,7 +2,7 @@ package render
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/kkevinchou/izzet/izzet/globals"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 )
 
 type GPUTimerQuery struct {
@@ -32,7 +32,7 @@ func (p *GPUProfiler) CollectAvailable() {
 		gl.GetQueryObjectui64v(timer.query, gl.QUERY_RESULT, &elapsedNanoseconds)
 		gl.DeleteQueries(1, &timer.query)
 
-		globals.ClientRegistry().Inc("render_gpu_"+timer.name, float64(elapsedNanoseconds)/1000000.0)
+		telemetry.ClientRegistry().Inc("render_gpu_"+timer.name, float64(elapsedNanoseconds)/1000000.0)
 	}
 	p.pending = stillPending
 }

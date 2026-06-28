@@ -16,7 +16,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/event"
-	"github.com/kkevinchou/izzet/izzet/globals"
 	"github.com/kkevinchou/izzet/izzet/network"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serialization"
@@ -24,6 +23,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/system/serversystem"
+	"github.com/kkevinchou/izzet/izzet/telemetry"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -151,8 +151,8 @@ func (g *Server) Start(started chan bool, done chan bool) {
 			start := time.Now()
 			g.runCommandFrame(time.Duration(settings.MSPerCommandFrame) * time.Millisecond)
 			commandFrameNanos := time.Since(start).Nanoseconds()
-			globals.ServerRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
-			globals.ServerRegistry().Inc("command_frames", 1)
+			telemetry.ServerRegistry().Inc("command_frame_nanoseconds", float64(commandFrameNanos))
+			telemetry.ServerRegistry().Inc("command_frames", 1)
 			g.world.IncrementCommandFrameCount()
 
 			accumulator -= float64(settings.MSPerCommandFrame)

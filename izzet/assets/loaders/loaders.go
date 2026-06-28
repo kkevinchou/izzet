@@ -6,10 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/Zyko0/go-sdl3/mixer"
-	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/modelspec"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets/fonts"
@@ -101,34 +99,6 @@ func LoadTexture(filepath string) *textures.Texture {
 	textureInfo := opengl.ReadTextureInfo(filepath)
 	textureID := opengl.CreateOpenGLTexture(textureInfo)
 	return &textures.Texture{ID: textureID}
-}
-
-func LoadDocuments(directory string) map[string]*modelspec.Document {
-	var subDirectories []string = []string{"gltf"}
-
-	extensions := map[string]any{
-		".gltf": nil,
-	}
-
-	scenes := map[string]*modelspec.Document{}
-	fileMetaData := utils.GetFileMetaData(directory, subDirectories, extensions)
-
-	for _, metaData := range fileMetaData {
-		if strings.HasPrefix(metaData.Name, "_") {
-			continue
-		}
-
-		if metaData.Extension == ".gltf" {
-			start := time.Now()
-			scene := LoadDocument(metaData.Name, metaData.Path)
-			iztlog.ClientLogger.Info("load document", "name", metaData.Name, "time", time.Since(start).Milliseconds())
-			scenes[metaData.Name] = scene
-		} else {
-			panic(fmt.Sprintf("wtf unexpected extension %s", metaData.Extension))
-		}
-	}
-
-	return scenes
 }
 
 func LoadDocument(name string, filepath string) *modelspec.Document {

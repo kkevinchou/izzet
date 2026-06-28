@@ -24,7 +24,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/system/serversystem"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -38,7 +37,6 @@ type Server struct {
 	world *world.GameWorld
 
 	systems           []system.System
-	appMode           types.AppMode
 	collisionObserver *collisionobserver.CollisionObserver
 
 	runtimeConfig *runtimeconfig.RuntimeConfig

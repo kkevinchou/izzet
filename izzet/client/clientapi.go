@@ -19,6 +19,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/assets/loaders/gltf"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
@@ -33,7 +34,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/serverstats"
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system/clientsystem"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -103,16 +103,16 @@ func (g *Client) Undo() {
 }
 
 func (g *Client) StopLiveWorld() {
-	if g.AppMode() != types.AppModePlay {
+	if g.AppMode() != appmode.Play {
 		return
 	}
-	g.appMode = types.AppModeEditor
+	g.appMode = appmode.Editor
 	// TODO: more global state that needs to be cleaned up still, mostly around entities that are selected
 	g.SelectEntity(nil)
 	g.world = g.editorWorld
 }
 
-func (g *Client) AppMode() types.AppMode {
+func (g *Client) AppMode() appmode.Mode {
 	return g.appMode
 }
 
@@ -149,7 +149,7 @@ func (g *Client) Connect() error {
 
 	g.ConfigureUI(false)
 	g.SelectEntity(nil)
-	g.appMode = types.AppModePlay
+	g.appMode = appmode.Play
 
 	g.playerID = message.PlayerID
 	g.connection = conn

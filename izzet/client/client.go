@@ -16,6 +16,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/iztlog"
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/platforms"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/client/editorcamera"
@@ -29,7 +30,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/settings"
 	"github.com/kkevinchou/izzet/izzet/system"
 	"github.com/kkevinchou/izzet/izzet/system/clientsystem"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -54,7 +54,7 @@ type Client struct {
 
 	playModeSystems   []system.System
 	editorModeSystems []system.System
-	appMode           types.AppMode
+	appMode           appmode.Mode
 	collisionObserver *collisionobserver.CollisionObserver
 	stateBuffer       *clientsystem.StateBuffer
 
@@ -112,7 +112,7 @@ func New(shaderDirectory string, config settings.Config, logsEnabled bool) *Clie
 	g := &Client{
 		asyncServerDone: make(chan bool),
 		window:          window,
-		appMode:         types.AppModeEditor,
+		appMode:         appmode.Editor,
 		platform:        sdlPlatform,
 		serverAddress:   config.ServerAddress,
 	}

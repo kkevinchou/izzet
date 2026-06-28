@@ -14,6 +14,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/renderers"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/globals"
@@ -28,7 +29,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/windows"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -265,7 +265,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	// get the position and rotation of either the player camera or editor camera
 	var position mgl64.Vec3
 	var rotation mgl64.Quat
-	if r.app.AppMode() == types.AppModeEditor {
+	if r.app.AppMode() == appmode.Editor {
 		position = r.app.GetEditorCameraPosition()
 		rotation = r.app.GetEditorCameraRotation()
 	} else {
@@ -306,7 +306,7 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	// for performance reasons, only perform color picking when an entity
 	// has been selected
-	if r.app.AppMode() == types.AppModeEditor && r.app.SelectedEntity() != nil {
+	if r.app.AppMode() == appmode.Editor && r.app.SelectedEntity() != nil {
 		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
 	}
 	mr.Inc("render_cpu_colorpicking_pick", durationMilliseconds(start))
@@ -333,7 +333,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	width, height := r.SceneSize()
 
 	var fovX float64
-	if r.app.AppMode() == types.AppModePlay {
+	if r.app.AppMode() == appmode.Play {
 		fovX = r.app.GetPlayerCamera().CameraComponent.FovX
 	} else {
 		fovX = settings.DefaultFOVX

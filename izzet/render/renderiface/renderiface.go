@@ -6,12 +6,12 @@ import (
 	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/platforms"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/collisionobserver"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/runtimeconfig"
 	"github.com/kkevinchou/izzet/izzet/serverstats"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/izzet/izzet/world"
 )
 
@@ -22,7 +22,7 @@ type App interface {
 	CommandFrame() int
 
 	StopLiveWorld()
-	AppMode() types.AppMode
+	AppMode() appmode.Mode
 	MouseCaptured() bool
 
 	// for panels

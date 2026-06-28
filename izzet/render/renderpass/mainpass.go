@@ -10,6 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
+	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
@@ -18,7 +19,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/rendersettings"
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/settings"
-	"github.com/kkevinchou/izzet/izzet/types"
 	"github.com/kkevinchou/kitolib/shaders"
 )
 
@@ -157,7 +157,7 @@ func (p *MainRenderPass) Render(
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	p.renderGizmos(viewerContext, renderContext)
 
-	if p.app.AppMode() == types.AppModePlay && p.app.MouseCaptured() {
+	if p.app.AppMode() == appmode.Play && p.app.MouseCaptured() {
 		p.drawReticle()
 	}
 
@@ -414,7 +414,7 @@ func (p *MainRenderPass) drawNonEntity(
 			if e.ImageComponent != nil {
 				textureName := strings.Split(e.ImageComponent.ImageName, ".")[0]
 				texture := p.app.AssetManager().GetTextureWithFallback(textureName)
-				if p.app.AppMode() == types.AppModeEditor {
+				if p.app.AppMode() == appmode.Editor {
 					shader := p.sm.GetShaderProgram("world_space_quad")
 					shader.Use()
 
@@ -595,7 +595,7 @@ func (p *MainRenderPass) drawAnnotations(viewerContext context.ViewerContext, re
 		}
 	}
 
-	if p.app.AppMode() == types.AppModeEditor {
+	if p.app.AppMode() == appmode.Editor {
 		for _, entity := range p.app.World().Entities() {
 			lightInfo := entity.LightInfo
 			if lightInfo != nil {

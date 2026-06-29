@@ -14,8 +14,11 @@ import (
 	"github.com/kkevinchou/izzet/izzet/render/rutils"
 )
 
-const maxHemisphereSamples int = 64
-const maxSSAONoise int = 16
+const (
+	maxHemisphereSamples      int = 64
+	ssaoNoiseTextureDimension     = 4
+	maxSSAONoise                  = ssaoNoiseTextureDimension * ssaoNoiseTextureDimension
+)
 
 type SSAORenderPass struct {
 	app    renderiface.App
@@ -39,6 +42,11 @@ func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext)
 	ctx.SSAOTexture = textures[0]
 	p.ssaoSamples = randomHemisphereVectors()
 	p.setupSSAOTextures()
+
+	p.shader.Use()
+	for i := range maxHemisphereSamples {
+		p.shader.SetUniformVec3(fmt.Sprintf("samples[%d]", i), p.ssaoSamples[i])
+	}
 }
 
 func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContext) {
@@ -78,11 +86,11 @@ func (p *SSAORenderPass) Render(
 	gl.BindTexture(gl.TEXTURE_2D, p.ssaoNoiseTexture)
 	p.shader.SetUniformInt("texNoise", 2)
 
-	for i := range maxHemisphereSamples {
-		p.shader.SetUniformVec3(fmt.Sprintf("samples[%d]", i), p.ssaoSamples[i])
-	}
-
 	p.shader.SetUniformMat4("projection", utils.Mat4F64ToF32(viewerContext.ProjectionMatrix))
+	p.shader.SetUniformVec2("noiseScale", mgl32.Vec2{
+		float32(renderContext.Width()) / float32(ssaoNoiseTextureDimension),
+		float32(renderContext.Height()) / float32(ssaoNoiseTextureDimension),
+	})
 	p.shader.SetUniformFloat("radius", p.app.RuntimeConfig().SSAORadius)
 	p.shader.SetUniformFloat("bias", p.app.RuntimeConfig().SSAOBias)
 
@@ -99,7 +107,7 @@ func (p *SSAORenderPass) setupSSAOTextures() {
 	gl.BindTexture(gl.TEXTURE_2D, noiseTexture)
 
 	noiseFloats := ssaoNoise()
-	gl.TexImage2D(gl.TEXTURE_2D, 0, rendersettings.InternalTextureColorFormat16RGBA, 4, 4, 0, rendersettings.RenderFormatRGB, gl.FLOAT, gl.Ptr(noiseFloats))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, rendersettings.InternalTextureColorFormat16RGBA, ssaoNoiseTextureDimension, ssaoNoiseTextureDimension, 0, rendersettings.RenderFormatRGB, gl.FLOAT, gl.Ptr(noiseFloats))
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)

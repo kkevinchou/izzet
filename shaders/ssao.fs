@@ -18,7 +18,7 @@ uniform vec3 samples[64];
 uniform mat4 projection;
 
 // tile noise texture over screen, based on screen dimensions divided by noise size
-const vec2 noiseScale = vec2(1639.0/4.0, 1024.0/4.0); // screen = 800x600
+uniform vec2 noiseScale;
 
 void main() {
     vec3 fragPos   = texture(gPosition, TexCoords).xyz;

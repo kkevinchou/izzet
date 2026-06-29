@@ -20,8 +20,9 @@ import (
 var showPrefabWindow bool
 
 type prefabEditorState struct {
-	Name  string
-	Scale float32
+	Name   string
+	Scale  float32
+	Static bool
 
 	IncludeMesh          bool
 	MeshSourceAsset      string
@@ -94,7 +95,8 @@ func renderPrefabEditor(app renderiface.App) {
 			imgui.InputTextWithHint("##value", defaultPrefabName, &activePrefabEditor.Name, imgui.InputTextFlagsNone, nil)
 		})
 
-		sectionHeading("Transform")
+		sectionHeading("Entity Properties")
+		checkboxPropertyRow("Static", &activePrefabEditor.Static)
 		inputFloatRow("Scale", &activePrefabEditor.Scale, 0.1, 5, "%.2f")
 		componentSection("Mesh", &activePrefabEditor.IncludeMesh, func() {
 			propertyRow("Source Asset", func() {
@@ -181,6 +183,7 @@ func savePrefab(app renderiface.App) error {
 
 func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity {
 	template := entity.InstantiateBaseEntity(prefabName, 0)
+	template.Static = activePrefabEditor.Static
 	scale := float64(activePrefabEditor.Scale)
 	entity.SetScale(template, mgl64.Vec3{scale, scale, scale})
 

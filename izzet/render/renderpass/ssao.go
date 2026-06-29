@@ -21,11 +21,9 @@ const (
 )
 
 type SSAORenderPass struct {
-	app    renderiface.App
-	shader *shaders.ShaderProgram
-
+	app              renderiface.App
+	shader           *shaders.ShaderProgram
 	ssaoNoiseTexture uint32
-	ssaoSamples      [maxHemisphereSamples]mgl32.Vec3
 }
 
 func NewSSAOPass(app renderiface.App, sm *shaders.ShaderManager) *SSAORenderPass {
@@ -40,12 +38,12 @@ func (p *SSAORenderPass) Init(width, height int, ctx *context.RenderPassContext)
 	fbo, textures := initFrameBuffer(width, height, []int32{gl.RED}, []uint32{gl.RED}, []uint32{gl.FLOAT}, true, true)
 	ctx.SSAOFBO = fbo
 	ctx.SSAOTexture = textures[0]
-	p.ssaoSamples = randomHemisphereVectors()
 	p.setupSSAOTextures()
 
 	p.shader.Use()
+	ssaoSamples := randomHemisphereVectors()
 	for i := range maxHemisphereSamples {
-		p.shader.SetUniformVec3(fmt.Sprintf("samples[%d]", i), p.ssaoSamples[i])
+		p.shader.SetUniformVec3(fmt.Sprintf("samples[%d]", i), ssaoSamples[i])
 	}
 }
 

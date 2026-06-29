@@ -348,7 +348,7 @@ func (g *Client) GetServerStats() serverstats.ServerStats {
 
 func (g *Client) ImportAsset(name string, path string) {
 	newPath := g.CopyDocumentToProjectFolder(path)
-	g.assetManager.LoadAndRegisterDocument(name, newPath)
+	g.assetManager.ImportDocument(name, newPath)
 }
 
 func (g *Client) DeleteDocument(d assets.Document) []int {

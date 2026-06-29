@@ -10,7 +10,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/assets/loaders"
 )
 
-func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Document {
+func (a *AssetManager) ReloadDocument(d Document) *modelspec.Document {
 	start := time.Now()
 
 	document := loaders.LoadDocument(d.ID, d.Filepath)
@@ -42,12 +42,12 @@ func (a *AssetManager) LoadAndRegisterDocumentAsset(d Document) *modelspec.Docum
 		a.RootJoints[d.ID] = document.RootJoint.ID
 	}
 
-	a.logger.Info("LoadAndRegisterDocumentAsset", "name", d.Document.Name, "time (ms)", time.Since(start).Milliseconds())
+	a.logger.Info("ReloadDocument", "name", d.Document.Name, "time (ms)", time.Since(start).Milliseconds())
 
 	return document
 }
 
-func (a *AssetManager) LoadAndRegisterDocument(id string, path string) *modelspec.Document {
+func (a *AssetManager) ImportDocument(id string, path string) *modelspec.Document {
 	start := time.Now()
 
 	document := loaders.LoadDocument(id, path)

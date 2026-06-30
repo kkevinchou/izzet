@@ -346,7 +346,7 @@ func EntityProps(e *entity.Entity, app renderiface.App) {
 				primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
 				specPrimitives := entity.AssetPrimitiveToSpecPrimitive(primitives)
 				e.Collider.SimplifiedTriMeshCollider = geometry.SimplifyMesh(specPrimitives[0], int(app.RuntimeConfig().SimplifyMeshIterations))
-				e.SimplifiedTriMeshIterations = int(app.RuntimeConfig().SimplifyMeshIterations)
+				e.Collider.SimplifiedTriMeshIterations = int(app.RuntimeConfig().SimplifyMeshIterations)
 			}
 		}
 	}

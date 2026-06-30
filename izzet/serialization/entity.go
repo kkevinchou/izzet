@@ -54,8 +54,8 @@ func initDeserializedEntity(e *entity.Entity, am *assets.AssetManager) {
 				t := collider.CreateTriMeshFromPrimitives(entity.AssetPrimitiveToSpecPrimitive(primitives))
 				bb := collider.BoundingBoxFromVertices(assets.UniqueVerticesFromPrimitives(primitives))
 				var simplifiedTriMesh *collider.TriMesh
-				if e.SimplifiedTriMeshIterations > 0 {
-					simplifiedTriMesh = geometry.SimplifyMesh(entity.AssetPrimitiveToSpecPrimitive(primitives)[0], e.SimplifiedTriMeshIterations)
+				if e.Collider.SimplifiedTriMeshIterations > 0 {
+					simplifiedTriMesh = geometry.SimplifyMesh(entity.AssetPrimitiveToSpecPrimitive(primitives)[0], e.Collider.SimplifiedTriMeshIterations)
 				}
 				e.Collider = entity.CreateTriMeshColliderComponent(e.Collider.ColliderGroup, 0, *t, simplifiedTriMesh, bb)
 			}

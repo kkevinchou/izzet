@@ -19,6 +19,8 @@ var ColliderFlagToGroupName map[ColliderGroupFlag]string = map[ColliderGroupFlag
 }
 
 type ColliderComponent struct {
+	SimplifiedTriMeshIterations int
+
 	// entities with the same collider group do not collide with each other
 	ColliderGroup ColliderGroupFlag
 	CollisionMask ColliderGroupFlag

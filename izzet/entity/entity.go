@@ -10,6 +10,13 @@ type Entity struct {
 	ID   int
 	Name string
 
+	Static bool
+	Deadge bool
+
+	LocalPosition mgl64.Vec3
+	LocalRotation mgl64.Quat
+	LocalScale    mgl64.Vec3
+
 	// Optional Components
 	Physics         *PhysicsComponent
 	Kinematic       *KinematicComponent
@@ -24,19 +31,9 @@ type Entity struct {
 	CameraComponent *CameraComponent
 	HealthComponent *HealthComponent
 
-	Static                      bool
-	ClientSidePredicted         bool
-	SimplifiedTriMeshIterations int
-	Deadge                      bool
-
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
 	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
-
-	// each Entity has their own transforms and animation player
-	LocalPosition mgl64.Vec3
-	LocalRotation mgl64.Quat
-	LocalScale    mgl64.Vec3
 
 	MeshComponent *MeshComponent
 

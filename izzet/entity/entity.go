@@ -22,7 +22,6 @@ type Entity struct {
 	Kinematic       *KinematicComponent
 	Collider        *ColliderComponent
 	Particles       *ParticleGenerator
-	IsSocket        bool
 	LightInfo       *LightInfo
 	ImageComponent  *ImageComponent
 	ShapeData       []*ShapeData

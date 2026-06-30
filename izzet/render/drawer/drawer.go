@@ -15,7 +15,7 @@ const DrawerTabMaterials DrawerTab = "MATERIALS"
 const DrawerTabPrefabs DrawerTab = "PREFABS"
 
 const (
-	drawerTabHeight float32 = 210
+	drawerTabHeight float32 = 300
 	drawerTabWidth  float32 = 800
 )
 

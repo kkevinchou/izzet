@@ -13,43 +13,43 @@ type Entity struct {
 	Static bool
 	Deadge bool
 
-	LocalPosition mgl64.Vec3
-	LocalRotation mgl64.Quat
-	LocalScale    mgl64.Vec3
+	LocalPosition mgl64.Vec3 `json:",omitempty"`
+	LocalRotation mgl64.Quat `json:",omitempty"`
+	LocalScale    mgl64.Vec3 `json:",omitempty"`
 
 	// Optional Components
-	Physics         *PhysicsComponent
-	Kinematic       *KinematicComponent
-	Collider        *ColliderComponent
-	Particles       *ParticleGenerator
-	LightInfo       *LightInfo
-	ImageComponent  *ImageComponent
-	ShapeData       []*ShapeData
-	Animation       *AnimationComponent
-	RenderBlend     *RenderBlend
-	CameraComponent *CameraComponent
-	HealthComponent *HealthComponent
+	Physics         *PhysicsComponent   `json:",omitempty"`
+	Kinematic       *KinematicComponent `json:",omitempty"`
+	Collider        *ColliderComponent  `json:",omitempty"`
+	Particles       *ParticleGenerator  `json:",omitempty"`
+	LightInfo       *LightInfo          `json:",omitempty"`
+	ImageComponent  *ImageComponent     `json:",omitempty"`
+	ShapeData       []*ShapeData        `json:",omitempty"`
+	Animation       *AnimationComponent `json:",omitempty"`
+	RenderBlend     *RenderBlend        `json:",omitempty"`
+	CameraComponent *CameraComponent    `json:",omitempty"`
+	HealthComponent *HealthComponent    `json:",omitempty"`
 
 	// dirty flag caching world transform
 	DirtyTransformFlag   bool       `json:"-"`
 	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
 
-	MeshComponent *MeshComponent
+	MeshComponent *MeshComponent `json:",omitempty"`
 
-	CharacterControllerComponent *CharacterControllerComponent
+	CharacterControllerComponent *CharacterControllerComponent `json:",omitempty"`
 
 	// relationships
 	Parent   *Entity         `json:"-"`
 	Children map[int]*Entity `json:"-"`
 
-	PlayerInput *PlayerInputComponent
-	AIComponent *AIComponent
+	PlayerInput *PlayerInputComponent `json:",omitempty"`
+	AIComponent *AIComponent          `json:",omitempty"`
 
-	NavigationComponent *NavigationComponent
-	AttackComponent     *AttackComponent
+	NavigationComponent *NavigationComponent `json:",omitempty"`
+	AttackComponent     *AttackComponent     `json:",omitempty"`
 
-	SpawnPointComponent    *SpawnPoint
-	AimDownSightsComponent *AimDownSightsComponent
+	SpawnPointComponent    *SpawnPoint             `json:",omitempty"`
+	AimDownSightsComponent *AimDownSightsComponent `json:",omitempty"`
 }
 
 func (e *Entity) GetID() int {

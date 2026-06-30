@@ -15,7 +15,7 @@ type FileMetaData struct {
 	Extension string
 }
 
-func GetFileMetaData(directory string, subDirectories []string, extensions map[string]any) map[string]FileMetaData {
+func GetFileMetaData(directory string, subDirectories []string, extensions map[string]any) []FileMetaData {
 	var subPaths []string
 	for _, subDir := range subDirectories {
 		subPaths = append(subPaths, path.Join(directory, subDir))
@@ -24,7 +24,7 @@ func GetFileMetaData(directory string, subDirectories []string, extensions map[s
 		subPaths = append(subPaths, directory)
 	}
 
-	metaDataCollection := map[string]FileMetaData{}
+	var metaDataCollection []FileMetaData
 
 	for _, subDir := range subPaths {
 		files, err := os.ReadDir(subDir)
@@ -42,7 +42,7 @@ func GetFileMetaData(directory string, subDirectories []string, extensions map[s
 			path := filepath.Join(subDir, file.Name())
 			name := file.Name()[0 : len(file.Name())-len(extension)]
 
-			metaDataCollection[name] = FileMetaData{Name: name, Path: path, Extension: extension}
+			metaDataCollection = append(metaDataCollection, FileMetaData{Name: name, Path: path, Extension: extension})
 		}
 	}
 

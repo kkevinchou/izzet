@@ -424,6 +424,7 @@ func (g *Client) LoadDefaultAssets() {
 	var subDirectories []string = []string{"gltf"}
 	extensions := map[string]any{
 		".gltf": nil,
+		".glb":  nil,
 	}
 	fileMetaData := utils.GetFileMetaData(settings.BuiltinAssetsDir, subDirectories, extensions)
 	for _, metaData := range fileMetaData {

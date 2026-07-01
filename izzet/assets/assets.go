@@ -132,13 +132,6 @@ func (a *AssetManager) GetTextureWithFallback(name string) *textures.Texture {
 	return a.textures[name]
 }
 
-func (a *AssetManager) GetDocumentAsset(name string) Document {
-	if _, ok := a.documents[name]; !ok {
-		panic(fmt.Sprintf("could not find animated model %s", name))
-	}
-	return a.documents[name]
-}
-
 func (a *AssetManager) GetDocument(name string) *modelspec.Document {
 	if _, ok := a.documents[name]; !ok {
 		panic(fmt.Sprintf("could not find animated model %s", name))

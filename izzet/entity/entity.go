@@ -31,8 +31,8 @@ type Entity struct {
 	HealthComponent *HealthComponent    `json:",omitempty"`
 
 	// dirty flag caching world transform
-	DirtyTransformFlag   bool       `json:"-"`
-	cachedWorldTransform mgl64.Mat4 // TODO: initialize to identity
+	DirtyTransformFlag   bool `json:"-"`
+	cachedWorldTransform mgl64.Mat4
 
 	MeshComponent *MeshComponent `json:",omitempty"`
 

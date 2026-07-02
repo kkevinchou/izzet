@@ -54,8 +54,6 @@ func (p *SSAORenderPass) Resize(width, height int, ctx *context.RenderPassContex
 	ctx.SSAOTexture = textures[0]
 }
 
-// TODO - in general could make some better help methods to set uniforms
-// TODO - do the entity query ourselves? take in a world?
 func (p *SSAORenderPass) Render(
 	renderContext context.RenderContext,
 	renderPassContext *context.RenderPassContext,

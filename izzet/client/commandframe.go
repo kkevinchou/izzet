@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/internal/collision/checks"
-	"github.com/kkevinchou/izzet/internal/collision/collider"
 	"github.com/kkevinchou/izzet/internal/input"
-	"github.com/kkevinchou/izzet/internal/navmesh"
 	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/appmode"
@@ -17,8 +14,6 @@ import (
 	"github.com/kkevinchou/izzet/izzet/client/edithistory"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/gizmo"
-	"github.com/kkevinchou/izzet/izzet/render"
-	"github.com/kkevinchou/izzet/izzet/render/rutils"
 	"github.com/kkevinchou/izzet/izzet/serialization"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -140,59 +135,6 @@ func (g *Client) handleEditorInputCommands(frameInput input.Input) {
 		}
 	}
 
-	// set pathfinding start and goal
-	if event, ok := keyboardInput[input.KeyboardKeyN]; ok {
-		if event.Event == input.KeyboardEventUp {
-			if g.navMesh != nil {
-				mousePosition := frameInput.MouseInput.Position
-				width, height := g.renderSystem.SceneSize()
-				ctx := g.renderSystem.CameraViewerContext()
-
-				xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
-
-				menuBarSize := float64(render.CalculateMenuBarHeight())
-				yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
-
-				nearPlanePosition := rutils.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
-				point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
-
-				if success {
-					c := navmesh.CompileNavMesh(g.navMesh)
-					pt, p, success := navmesh.FindNearestPolygon(c.Tiles[0], point)
-					if success {
-						g.runtimeConfig.NavigationMeshStart = int32(p)
-						g.runtimeConfig.NavigationMeshStartPoint = pt
-					}
-				}
-			}
-		}
-	}
-
-	if event, ok := keyboardInput[input.KeyboardKeyM]; ok {
-		if event.Event == input.KeyboardEventUp {
-			mousePosition := frameInput.MouseInput.Position
-			width, height := g.renderSystem.SceneSize()
-			ctx := g.renderSystem.CameraViewerContext()
-
-			xNDC := (mousePosition.X()/float64(width) - 0.5) * 2
-
-			menuBarSize := float64(render.CalculateMenuBarHeight())
-			yNDC := ((float64(height)-mousePosition.Y()+menuBarSize)/float64(height) - 0.5) * 2
-
-			nearPlanePosition := rutils.NDCToWorldPosition(ctx, mgl64.Vec3{xNDC, yNDC, -float64(g.RuntimeConfig().Near)})
-			point, success := g.intersectRayWithEntities(g.GetEditorCameraPosition(), nearPlanePosition.Sub(g.GetEditorCameraPosition()).Normalize())
-
-			if success && g.navMesh != nil {
-				c := navmesh.CompileNavMesh(g.navMesh)
-				pt, p, success := navmesh.FindNearestPolygon(c.Tiles[0], point)
-				if success {
-					g.runtimeConfig.NavigationMeshGoal = int32(p)
-					g.runtimeConfig.NavigationMeshGoalPoint = pt
-				}
-			}
-		}
-	}
-
 	mouseInput := frameInput.MouseInput
 	if g.renderSystem.GameWindowHovered() {
 		if mouseInput.MouseButtonEvent[1] == input.MouseButtonEventDown {
@@ -228,44 +170,6 @@ func (g *Client) handleCommonInputCommands(frameInput input.Input) {
 			g.DisconnectClient()
 		}
 	}
-}
-
-func (g *Client) intersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
-	var hit bool
-	var hitPoint mgl64.Vec3
-
-	minDistSq := math.MaxFloat64
-
-	// TODO: this should ray cast against navmesh polys, not entity geometry
-	for _, e := range g.world.Entities() {
-		if e.Collider == nil || e.Collider.TriMeshCollider == nil {
-			continue
-		}
-
-		ray := collider.Ray{Origin: position, Direction: dir}
-		transformMatrix := entity.WorldTransform(e)
-		collider := e.Collider.TriMeshCollider.Transform(transformMatrix)
-
-		point, _, success := checks.IntersectRayTriMesh(ray, collider)
-		if !success {
-			continue
-		}
-
-		hit = true
-
-		distSq := position.Sub(point).LenSqr()
-		if distSq < minDistSq {
-			minDistSq = distSq
-			hitPoint = point
-		}
-
-	}
-
-	return hitPoint, hit
-}
-
-func (g *Client) IntersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool) {
-	return g.intersectRayWithEntities(position, dir)
 }
 
 func (g *Client) editorCameraMovement(frameInput input.Input, delta time.Duration) {

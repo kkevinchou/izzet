@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
@@ -42,5 +41,4 @@ type App interface {
 	SetCapturedMouseOrigin(x, y int32)
 	SceneSize() (int, int)
 	CameraViewerContext() context.ViewerContext
-	IntersectRayWithEntities(position, dir mgl64.Vec3) (mgl64.Vec3, bool)
 }

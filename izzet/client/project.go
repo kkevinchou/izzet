@@ -249,10 +249,6 @@ func (g *Client) loadAssets(name string) {
 	g.assetManager = assets.NewAssetManager(true, g.Logger())
 
 	for _, document := range assetsJSON.Documents {
-		// TODO - issue: the document in document asset is populated by reading the config
-		// which still points to the default location for assets. actually is this an issue?
-		// ideally all assets are pointed to the .project folder. perhaps we should have a new project
-		// setup step that copies assets over from _assets rather than loading directly from _assets?
 		g.assetManager.ReloadDocument(document.Document)
 	}
 

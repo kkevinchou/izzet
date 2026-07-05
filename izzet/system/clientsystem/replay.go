@@ -45,8 +45,6 @@ func replay(app App, e *entity.Entity, gamestateUpdateMessage network.GameStateU
 		return nil
 	}
 
-	// TODO: make this a dummy physics observer
-	// observer := collisionobserver.NewCollisionObserver()
 	for i := 1; i < len(commandFrames); i++ {
 		commandFrame := commandFrames[i]
 
@@ -55,10 +53,6 @@ func replay(app App, e *entity.Entity, gamestateUpdateMessage network.GameStateU
 
 		shared.UpdateCharacterController(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, commandFrame.FrameInput, e)
 		shared.KinematicStepSingle(time.Duration(settings.MSPerCommandFrame)*time.Millisecond, e, app.World(), app)
-		// shared.ResolveCollisions(app, observer)
-		// if app.PredictionDebugLogging() {
-		// 	fmt.Printf("\t - Replayed Frame [Current Frame: %d] [Replay Frame: %d] [Position: %s]\n", app.CommandFrame(), commandFrame.FrameNumber, apputils.FormatVec(e.Position()))
-		// }
 		cfHistory.AddCommandFrame(commandFrame.FrameNumber, commandFrame.FrameInput, e)
 	}
 	return nil

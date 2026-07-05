@@ -89,6 +89,17 @@ func (g *GameWorld) Lights() []*entity.Entity {
 	return result
 }
 
+func (g *GameWorld) ReindexSpatialEntities() {
+	spatialEntities := make([]spatialpartition.Entity, 0, len(g.sortedEntities))
+	for _, e := range g.sortedEntities {
+		if !e.HasBoundingBox() {
+			continue
+		}
+		spatialEntities = append(spatialEntities, e)
+	}
+	g.spatialPartition.IndexEntities(spatialEntities)
+}
+
 func (g *GameWorld) SpatialPartition() *spatialpartition.SpatialPartition {
 	return g.spatialPartition
 }

@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/izzet/event"
 	"github.com/kkevinchou/izzet/izzet/telemetry"
 )
 
 func (g *Server) runCommandFrame(delta time.Duration) {
 	g.commandFrame += 1
-	g.handleSpatialPartition()
+	g.world.ReindexSpatialEntities()
 	g.handlePlayerConnections()
 	for _, s := range g.systems {
 		start := time.Now()
@@ -31,15 +30,4 @@ func (g *Server) handlePlayerConnections() {
 	default:
 		return
 	}
-}
-
-func (g *Server) handleSpatialPartition() {
-	var spatialEntities []spatialpartition.Entity
-	for _, entity := range g.world.Entities() {
-		if !entity.HasBoundingBox() {
-			continue
-		}
-		spatialEntities = append(spatialEntities, entity)
-	}
-	g.world.SpatialPartition().IndexEntities(spatialEntities)
 }

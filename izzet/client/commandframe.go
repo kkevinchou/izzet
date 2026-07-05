@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/kkevinchou/izzet/internal/input"
-	"github.com/kkevinchou/izzet/internal/spatialpartition"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/apputils"
@@ -26,7 +25,7 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 
 	// THIS NEEDS TO BE THE FIRST THING THAT RUNS TO MAKE SURE THE SPATIAL PARTITION
 	// HAS A CHANCE TO SEE THE ENTITY AND INDEX IT
-	g.handleSpatialPartition()
+	g.world.ReindexSpatialEntities()
 
 	if g.AppMode() == appmode.Play {
 		for _, s := range g.playModeSystems {
@@ -51,17 +50,6 @@ func (g *Client) runCommandFrame(delta time.Duration) {
 	}
 	g.RuntimeConfig().CameraPosition = g.camera.Position
 	g.RuntimeConfig().CameraRotation = g.camera.Rotation
-}
-
-func (g *Client) handleSpatialPartition() {
-	var spatialEntities []spatialpartition.Entity
-	for _, entity := range g.world.Entities() {
-		if !entity.HasBoundingBox() {
-			continue
-		}
-		spatialEntities = append(spatialEntities, entity)
-	}
-	g.world.SpatialPartition().IndexEntities(spatialEntities)
 }
 
 var copiedEntity []byte

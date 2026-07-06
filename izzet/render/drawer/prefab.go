@@ -54,9 +54,11 @@ func drawPrefabCell(app renderiface.App, p prefab.Prefab) {
 
 	if imgui.BeginPopupContextItemV("prefab-context-"+name, imgui.PopupFlagsMouseButtonRight) {
 		if imgui.Button("Instantiate") {
-			e := prefab.Instantiate(p.ID, app.AssetManager())
-			app.World().AddEntity(e)
-			app.SelectEntity(e)
+			entities := prefab.Instantiate(p.ID, app.AssetManager())
+			for _, e := range entities {
+				app.World().AddEntity(e)
+			}
+			app.SelectEntity(entities[0])
 			imgui.CloseCurrentPopup()
 		}
 		if imgui.Button("Delete") {

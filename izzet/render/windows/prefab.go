@@ -178,7 +178,7 @@ func savePrefab(app renderiface.App) error {
 	}
 
 	template := buildPrefabTemplate(app, name)
-	return prefab.RegisterPrefab(name, template)
+	return prefab.RegisterPrefab(name, []*entity.Entity{template})
 }
 
 func buildPrefabTemplate(app renderiface.App, prefabName string) *entity.Entity {

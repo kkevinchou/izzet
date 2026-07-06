@@ -258,7 +258,7 @@ func (g *Client) loadAssets(name string) {
 
 	prefab.InitializePrefabs(g.assetManager)
 	for _, p := range assetsJSON.Prefabs {
-		err := prefab.RegisterPrefabWithID(p.PrefabAsset.ID, p.PrefabAsset.Name, p.PrefabAsset.Entity)
+		err := prefab.RegisterPrefabWithID(p.PrefabAsset.ID, p.PrefabAsset.Name, p.PrefabAsset.Entities)
 		if err != nil {
 			panic(err)
 		}

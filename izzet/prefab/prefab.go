@@ -14,11 +14,13 @@ type App interface {
 	AssetManager() *assets.AssetManager
 }
 
+type serializedEntity []byte
+
 type Prefab struct {
-	ID     PrefabID
-	Name   string
-	Entity *entity.Entity
-	bytes  []byte `json:"-"`
+	ID          PrefabID
+	Name        string
+	Entities    []*entity.Entity
+	entityBytes []serializedEntity `json:"-"`
 }
 
 type Asset struct {
@@ -43,23 +45,23 @@ func CreateDefaultPrefabs(am *assets.AssetManager) {
 	player := createPlayer(am)
 	velociraptor := createNPC(am, entity.EntityTypeVelociraptor)
 
-	_ = RegisterPrefabWithID(PrefabIDMannequin, "mannequin", player)
-	_ = RegisterPrefabWithID(PrefabIDVelociraptor, "velociraptor", velociraptor)
+	_ = RegisterPrefabWithID(PrefabIDMannequin, "mannequin", []*entity.Entity{player})
+	_ = RegisterPrefabWithID(PrefabIDVelociraptor, "velociraptor", []*entity.Entity{velociraptor})
 }
 
-func RegisterPrefab(name string, template *entity.Entity) error {
-	return RegisterPrefabWithID(PrefabID(uuid.NewString()), name, template)
+func RegisterPrefab(name string, ents []*entity.Entity) error {
+	return RegisterPrefabWithID(PrefabID(uuid.NewString()), name, ents)
 }
 
-func RegisterPrefabWithID(id PrefabID, name string, template *entity.Entity) error {
+func RegisterPrefabWithID(id PrefabID, name string, ents []*entity.Entity) error {
 	if id == "" {
 		return fmt.Errorf("prefab id is required")
 	}
-	if template == nil {
+	if ents == nil {
 		return fmt.Errorf("prefab [%s] template entity is nil", id)
 	}
 
-	PrefabRegistry[id] = newPrefab(id, name, template)
+	PrefabRegistry[id] = newPrefab(id, name, ents)
 	return nil
 }
 
@@ -83,22 +85,33 @@ func Prefabs() []Prefab {
 	return prefabs
 }
 
-func newPrefab(id PrefabID, name string, e *entity.Entity) Prefab {
-	bytes, err := serialization.SerializeEntity(e)
-	if err != nil {
-		panic(err)
+func newPrefab(id PrefabID, name string, ents []*entity.Entity) Prefab {
+	var serializedEntityBytes []serializedEntity
+
+	for _, e := range ents {
+		bytes, err := serialization.SerializeEntity(e)
+		if err != nil {
+			panic(err)
+		}
+		serializedEntityBytes = append(serializedEntityBytes, bytes)
 	}
 
-	return Prefab{ID: id, Name: name, Entity: e, bytes: bytes}
+	return Prefab{ID: id, Name: name, Entities: ents, entityBytes: serializedEntityBytes}
 }
 
-func Instantiate(id PrefabID, am *assets.AssetManager) *entity.Entity {
+func Instantiate(id PrefabID, am *assets.AssetManager) []*entity.Entity {
 	p := PrefabRegistry[id]
-	e, err := serialization.DeserializeEntity(p.bytes, am)
-	if err != nil {
-		panic(err)
+	var entities []*entity.Entity
+
+	for _, eBytes := range p.entityBytes {
+		e, err := serialization.DeserializeEntity(eBytes, am)
+		if err != nil {
+			panic(err)
+		}
+		entityID := entity.GetNextIDAndAdvance()
+		e.ID = entityID
+		entities = append(entities, e)
 	}
-	entityID := entity.GetNextIDAndAdvance()
-	e.ID = entityID
-	return e
+
+	return entities
 }

@@ -39,7 +39,7 @@ func (s *EventsSystem) Update(delta time.Duration, world system.GameWorld) {
 	for _, e := range s.playerJoinConsumer.ReadNewEvents() {
 		player := s.app.RegisterPlayer(e.PlayerID, e.Connection)
 
-		playerEntity := prefab.Instantiate(prefab.PrefabIDMannequin, s.app.AssetManager())
+		playerEntity := prefab.Instantiate(prefab.PrefabIDMannequin, s.app.AssetManager())[0]
 		spawnPoint := world.GetSpawnPoint()
 		if spawnPoint != nil {
 			entity.SetLocalPosition(playerEntity, spawnPoint.Position())

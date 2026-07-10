@@ -79,3 +79,18 @@ func BatchRenderable(entity *Entity) bool {
 	// right now the vaos that we generate for batch rendering can only load textures
 	return entity.MeshComponent != nil && entity.Static
 }
+
+func GetPrimitiveMaterialIDs(am *assets.AssetManager, e *Entity) []assets.MaterialID {
+	var materials []assets.MaterialID
+	primitives := am.GetPrimitives(e.MeshComponent.MeshHandle)
+	for i, prim := range primitives {
+		// once we have prefabs working we should drop the use of materials from the primitive
+		// the material from the primitive is the original material from the source asset
+		materialID := prim.MaterialID
+		if len(e.MeshComponent.Materials) > 0 && i < len(e.MeshComponent.Materials) {
+			materialID = e.MeshComponent.Materials[i]
+		}
+		materials = append(materials, materialID)
+	}
+	return materials
+}

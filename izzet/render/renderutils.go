@@ -119,9 +119,9 @@ func HSVtoRGB(hsv mgl32.Vec3) mgl32.Vec3 {
 	return mgl32.Vec3{r, g, b}
 }
 
-func (r *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
+func (s *RenderSystem) createCircleTexture(width, height int) (uint32, uint32) {
 	circleTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGBA}, []uint32{rendersettings.RenderFormatRGBA}, []uint32{gl.UNSIGNED_BYTE})
-	fbo, textures := r.initFrameBuffer(circleTextureFn)
+	fbo, textures := s.initFrameBuffer(circleTextureFn)
 	return fbo, textures[0]
 }
 
@@ -140,7 +140,7 @@ func textureFn(width int, height int, internalFormat []int32, format []uint32, x
 	}
 }
 
-func (r *RenderSystem) initFrameBuffer(tf TextureFn) (uint32, []uint32) {
+func (s *RenderSystem) initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -169,7 +169,7 @@ func (r *RenderSystem) initFrameBuffer(tf TextureFn) (uint32, []uint32) {
 	return fbo, textures
 }
 
-func (r *RenderSystem) initFrameBufferNoDepth(tf TextureFn) (uint32, []uint32) {
+func (s *RenderSystem) initFrameBufferNoDepth(tf TextureFn) (uint32, []uint32) {
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
@@ -207,8 +207,8 @@ func createTexture(width, height int, internalFormat int32, format uint32, xtype
 	return texture
 }
 
-func (r *RenderSystem) CameraViewerContext() context.ViewerContext {
-	return r.cameraViewerContext
+func (s *RenderSystem) CameraViewerContext() context.ViewerContext {
+	return s.cameraViewerContext
 }
 
 // NOTE: this method should only be called from within the render loop. if the frame
@@ -221,8 +221,8 @@ func (r *RenderSystem) CameraViewerContext() context.ViewerContext {
 // a package variable outside of the getEntityByPixelPosition method. in addition, i've
 // done better vao caching for our gizmos which previously were recreated whenever the
 // camera moves
-func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.Vec2) *int {
-	if r.app.Minimized() || !r.app.WindowFocused() {
+func (s *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.Vec2) *int {
+	if s.app.Minimized() || !s.app.WindowFocused() {
 		return nil
 	}
 
@@ -236,7 +236,7 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 		pickingBuffer = make([]byte, 4)
 	}
 
-	pickX, pickY := r.sceneViewFramebufferPosition(pixelPosition)
+	pickX, pickY := s.sceneViewFramebufferPosition(pixelPosition)
 
 	gl.ReadPixels(pickX, pickY, 1, 1, gl.RED_INTEGER, gl.UNSIGNED_INT, gl.Ptr(pickingBuffer))
 
@@ -249,11 +249,11 @@ func (r *RenderSystem) getEntityByPixelPosition(fbo uint32, pixelPosition mgl64.
 	return &id
 }
 
-func (r *RenderSystem) sceneViewFramebufferPosition(pixelPosition mgl64.Vec2) (int32, int32) {
-	_, height := r.SceneSize()
+func (s *RenderSystem) sceneViewFramebufferPosition(pixelPosition mgl64.Vec2) (int32, int32) {
+	_, height := s.SceneSize()
 
-	localX := pixelPosition.X() - float64(r.sceneViewPosition[0])
-	localY := pixelPosition.Y() - float64(r.sceneViewPosition[1])
+	localX := pixelPosition.X() - float64(s.sceneViewPosition[0])
+	localY := pixelPosition.Y() - float64(s.sceneViewPosition[1])
 
 	// ImGui/input coordinates are top-left origin; OpenGL framebuffer reads are bottom-left origin.
 	return int32(localX), int32(height) - 1 - int32(localY)
@@ -285,9 +285,9 @@ func calculateFrustumPoints(position mgl64.Vec3, rotation mgl64.Quat, near, far,
 	return verts
 }
 
-func (r *RenderSystem) iztDrawArrays(first, count int32) {
-	r.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
-	r.app.RuntimeConfig().DrawCount += 1
+func (s *RenderSystem) iztDrawArrays(first, count int32) {
+	s.app.RuntimeConfig().TriangleDrawCount += int(count / 3)
+	s.app.RuntimeConfig().DrawCount += 1
 	gl.DrawArrays(gl.TRIANGLES, first, count)
 }
 
@@ -296,8 +296,8 @@ func CalculateMenuBarHeight() float32 {
 	return settings.FontSize + style.FramePadding().Y*2
 }
 
-func (r *RenderSystem) SceneSize() (int, int) {
-	return r.sceneSize[0], r.sceneSize[1]
+func (s *RenderSystem) SceneSize() (int, int) {
+	return s.sceneSize[0], s.sceneSize[1]
 }
 
 // returns the orthographic projection matrix for the directional light as well as the "position" of the light

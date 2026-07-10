@@ -6,6 +6,10 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
+const (
+	InvalidEntityID int = -1
+)
+
 type Entity struct {
 	ID   int
 	Name string
@@ -67,7 +71,3 @@ func (e *Entity) Dirty() bool {
 func (e *Entity) NameID() string {
 	return fmt.Sprintf("%s-%d", e.Name, e.ID)
 }
-
-const (
-	InvalidEntityID int = -1
-)

@@ -5,17 +5,21 @@ import (
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/render/batch"
 )
 
-func (r *RenderSystem) SetupBatchedStaticRendering() {
+func (s *RenderSystem) SetupBatchedStaticRendering() {
 	var meshHandles []assets.MeshHandle
-
 	var modelMatrices []mgl32.Mat4
+	var materials [][]assets.MaterialID
 	var ids []uint32
-	for _, e := range r.app.World().Entities() {
+
+	for _, e := range s.app.World().Entities() {
 		if !entity.BatchRenderable(e) {
 			continue
 		}
+
+		materials = append(materials, entity.GetPrimitiveMaterialIDs(s.app.AssetManager(), e))
 
 		meshHandle := e.MeshComponent.MeshHandle
 		meshHandles = append(meshHandles, meshHandle)
@@ -26,5 +30,5 @@ func (r *RenderSystem) SetupBatchedStaticRendering() {
 		modelMatrices = append(modelMatrices, modelMat)
 		ids = append(ids, uint32(e.GetID()))
 	}
-	r.batchRenders = r.app.AssetManager().SetupBatchedStaticRendering(meshHandles, modelMatrices, ids)
+	s.batchRenders = batch.SetupBatchedStaticRendering(s.app.AssetManager(), meshHandles, modelMatrices, ids, materials)
 }

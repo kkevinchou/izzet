@@ -39,8 +39,8 @@ type WorleyOctave struct {
 	cellWidth, cellHeight, cellDepth float32
 }
 
-func (r *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
-	cloudTexture := r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
+func (s *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (uint32, uint32, uint32, uint32) {
+	cloudTexture := s.app.RuntimeConfig().CloudTextures[s.app.RuntimeConfig().ActiveCloudTextureIndex]
 	// channel := r.app.RuntimeConfig().ActiveCloudTextureChannelIndex
 
 	var octaves []WorleyOctave
@@ -114,15 +114,15 @@ func (r *RenderSystem) setupVolumetrics(shaderManager *shaders.ShaderManager) (u
 	return vao, worleyNoiseTexture, fbo, texture
 }
 
-func (r *RenderSystem) renderVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
-	cloudTexture := r.activeCloudTexture()
+func (s *RenderSystem) renderVolumetrics(shaderManager *shaders.ShaderManager, assetManager *assets.AssetManager) {
+	cloudTexture := s.activeCloudTexture()
 
 	if panels.RecreateCloudTexture {
 		gl.DeleteTextures(1, &cloudTexture.WorleyTexture)
 		gl.DeleteTextures(1, &cloudTexture.RenderTexture)
 		gl.DeleteVertexArrays(1, &cloudTexture.VAO)
 		gl.DeleteFramebuffers(1, &cloudTexture.FBO)
-		cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, cloudTexture.RenderTexture = r.setupVolumetrics(r.shaderManager)
+		cloudTexture.VAO, cloudTexture.WorleyTexture, cloudTexture.FBO, cloudTexture.RenderTexture = s.setupVolumetrics(s.shaderManager)
 		panels.RecreateCloudTexture = false
 	}
 
@@ -137,7 +137,7 @@ func (r *RenderSystem) renderVolumetrics(shaderManager *shaders.ShaderManager, a
 	shader := shaderManager.GetShaderProgram("worley")
 	shader.Use()
 
-	activeChannelIndex := r.app.RuntimeConfig().ActiveCloudTextureChannelIndex
+	activeChannelIndex := s.app.RuntimeConfig().ActiveCloudTextureChannelIndex
 	shader.SetUniformFloat("z", cloudTexture.Channels[activeChannelIndex].NoiseZ)
 	shader.SetUniformInt("channel", int32(activeChannelIndex))
 
@@ -150,7 +150,7 @@ func (r *RenderSystem) renderVolumetrics(shaderManager *shaders.ShaderManager, a
 	gl.BindTexture(gl.TEXTURE_2D, assetManager.GetTexture("color_grid").ID)
 
 	gl.BindVertexArray(vao)
-	r.iztDrawArrays(0, 6)
+	s.iztDrawArrays(0, 6)
 }
 
 func createWorlyNoiseTexture(octaves []WorleyOctave, workGroupWidth, workGroupHeight, workGroupDepth int32) uint32 {

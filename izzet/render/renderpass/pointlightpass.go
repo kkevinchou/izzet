@@ -114,7 +114,7 @@ func (p *PointLightRenderPass) Render(
 			continue
 		}
 
-		if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(e) {
+		if p.app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(p.app.AssetManager(), e) {
 			continue
 		}
 

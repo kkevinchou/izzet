@@ -18,6 +18,8 @@ out VS_OUT {
     vec2 TexCoord;
     vec4 Color;
     flat uint EntityID;
+    flat vec3 Scale;
+    flat uint RepeatTexture;
 } vs_out;
 
 uniform mat4 model;
@@ -28,6 +30,8 @@ uniform mat4 jointTransforms[MAX_JOINTS];
 uniform int isAnimated;
 uniform int colorTextureCoordIndex;
 uniform uint entityID;
+uniform vec3 scale;
+uniform int repeatTexture;
 
 void main() {
     vec4 totalPos = vec4(0.0);
@@ -67,6 +71,8 @@ void main() {
     }
 
     vs_out.EntityID = entityID;
+    vs_out.Scale = scale;
+    vs_out.RepeatTexture = uint(repeatTexture);
     vs_out.Color = vec4(1.0);
     gl_Position = (projection * (view * (model * totalPos)));
 }

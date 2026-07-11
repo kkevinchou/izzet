@@ -74,10 +74,12 @@ func VerticesFromNode(node *modelspec.Node, document *modelspec.Document, out *[
 	}
 }
 
-func BatchRenderable(entity *Entity) bool {
+func BatchRenderable(am *assets.AssetManager, entity *Entity) bool {
 	// batch renders don't currently support entities that have a material component assigned
 	// right now the vaos that we generate for batch rendering can only load textures
-	return entity.MeshComponent != nil && entity.Static
+	return entity.MeshComponent != nil &&
+		entity.MeshComponent.MeshHandle != am.DefaultCubeHandle() &&
+		entity.Static
 }
 
 func GetPrimitiveMaterialIDs(am *assets.AssetManager, e *Entity) []assets.MaterialID {

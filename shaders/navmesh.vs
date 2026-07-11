@@ -17,6 +17,8 @@ out VS_OUT {
     vec2 TexCoord;
     vec4 Color;
     flat uint EntityID;
+    flat vec3 Scale;
+    flat uint RepeatTexture;
 } vs_out;
 
 uniform mat4 model;
@@ -53,6 +55,8 @@ void main() {
     vs_out.TexCoord = vec2(0.0);
     vs_out.Color = vec4(color, 0.9);
     vs_out.EntityID = entityID;
+    vs_out.Scale = vec3(1.0);
+    vs_out.RepeatTexture = uint(0);
 
     gl_Position = (projection * (view * (model * totalPos)));
 }

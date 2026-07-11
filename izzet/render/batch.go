@@ -15,7 +15,7 @@ func (s *RenderSystem) SetupBatchedStaticRendering() {
 	var ids []uint32
 
 	for _, e := range s.app.World().Entities() {
-		if !entity.BatchRenderable(s.app.AssetManager(), e) {
+		if !entity.BatchRenderable(e) {
 			continue
 		}
 

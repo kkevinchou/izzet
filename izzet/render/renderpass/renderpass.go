@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -177,7 +178,7 @@ func renderGeometryWithoutColor(
 			continue
 		}
 
-		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(app.AssetManager(), e) {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(e) {
 			continue
 		}
 
@@ -291,7 +292,7 @@ func drawModels(
 
 	var drawCount int
 	for _, e := range ents {
-		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(app.AssetManager(), e) {
+		if app.RuntimeConfig().BatchRenderingEnabled && len(renderContext.BatchRenders) > 0 && entity.BatchRenderable(e) {
 			continue
 		}
 		renderShader.SetUniformUInt("entityID", uint32(e.ID))
@@ -384,7 +385,7 @@ func drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
-	if e.MeshComponent.MeshHandle == app.AssetManager().DefaultCubeHandle() {
+	if e.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
 		shader.SetUniformInt("repeatTexture", 1)
 	} else {
 		shader.SetUniformInt("repeatTexture", 0)

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultMaterialID = MaterialID("custom/default")
+	DefaultMaterialID = MaterialID("custom/default")
 	whiteMaterialID   = MaterialID("custom/white")
 	DefaultCubeHandle = MeshHandle{namespace: "global", id: "cube"}
 )
@@ -61,10 +61,6 @@ type MaterialID string
 
 func newSingleEntityMeshHandle(namespace string) MeshHandle {
 	return MeshHandle{namespace: namespace, id: "__merged__"}
-}
-
-func (m *AssetManager) DefaultMaterialID() MaterialID {
-	return defaultMaterialID
 }
 
 func (m *AssetManager) WhiteMaterialID() MaterialID {

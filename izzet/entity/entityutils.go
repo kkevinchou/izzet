@@ -75,9 +75,20 @@ func VerticesFromNode(node *modelspec.Node, document *modelspec.Document, out *[
 }
 
 func BatchRenderable(entity *Entity) bool {
-	return entity.MeshComponent != nil &&
-		entity.MeshComponent.MeshHandle != assets.DefaultCubeHandle &&
-		entity.Static
+	if !entity.Static || entity.MeshComponent == nil {
+		return false
+	}
+
+	// default cubes are not supported for batch rendering since the texture
+	// renders differently depending on the objects model space rotation and scale
+	// we would need to expensively store this data for each mesh even if it
+	// isn't a default cube
+
+	isDefaultCubeWithDefaultMesh := entity.MeshComponent.MeshHandle == assets.DefaultCubeHandle &&
+		len(entity.MeshComponent.Materials) > 0 &&
+		entity.MeshComponent.Materials[0] == assets.DefaultMaterialID
+
+	return !isDefaultCubeWithDefaultMesh
 }
 
 func GetPrimitiveMaterialIDs(am *assets.AssetManager, e *Entity) []assets.MaterialID {

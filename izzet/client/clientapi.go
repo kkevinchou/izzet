@@ -406,7 +406,7 @@ func (g *Client) LoadDefaultAssets() {
 		},
 	}
 
-	g.assetManager.CreateMaterialWithID("default material", defaultMaterial, g.assetManager.DefaultMaterialID())
+	g.assetManager.CreateMaterialWithID("default material", defaultMaterial, assets.DefaultMaterialID)
 
 	whiteMaterial := modelspec.Material{
 		PBRMaterial: modelspec.PBRMaterial{

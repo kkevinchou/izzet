@@ -96,7 +96,7 @@ func NewAssetManager(processVisualAssets bool, logger *slog.Logger) *AssetManage
 		RootJoints:     map[string]int{},
 	}
 
-	assetManager.registerMeshPrimitivesWithHandle(defaultCubeHandle, CreateCubeMesh(1), nil)
+	assetManager.registerMeshPrimitivesWithHandle(DefaultCubeHandle, CreateCubeMesh(1), nil)
 
 	return &assetManager
 }
@@ -165,7 +165,7 @@ func (m *AssetManager) GetMaterial(materialID MaterialID) Material {
 	if materialAsset, ok := m.materials[materialID]; ok {
 		return materialAsset
 	}
-	material := m.materials[defaultMaterialID]
+	material := m.materials[DefaultMaterialID]
 	return material
 }
 

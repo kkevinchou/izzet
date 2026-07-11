@@ -41,21 +41,21 @@ type ShapeData struct {
 	Triangle *Triangle
 }
 
-func CreateCube(ml *assets.AssetManager, length float64) *Entity {
+func CreateCube(am *assets.AssetManager, length float64) *Entity {
 	entity := InstantiateBaseEntity("cube", entityIDGen)
 	entity.LocalScale = mgl64.Vec3{length, length, length}
 
-	handle := ml.DefaultCubeHandle()
+	handle := assets.DefaultCubeHandle
 	entity.MeshComponent = &MeshComponent{
 		MeshHandle:    handle,
-		Materials:     []assets.MaterialID{ml.DefaultMaterialID()},
+		Materials:     []assets.MaterialID{assets.DefaultMaterialID},
 		Transform:     mgl64.Ident4(),
 		Visible:       true,
 		ShadowCasting: true,
 	}
 
 	// cube only has a singular primitives
-	primitives := ml.GetPrimitives(handle)
+	primitives := am.GetPrimitives(handle)
 	uniqueVertices := assets.UniqueVerticesFromPrimitives(primitives)
 	bb := collider.BoundingBoxFromVertices(uniqueVertices)
 	t := collider.CreateTriMeshFromPrimitives(AssetPrimitiveToSpecPrimitive(primitives))

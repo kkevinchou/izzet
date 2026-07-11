@@ -4,8 +4,8 @@ import (
 	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
-	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/render/batch"
 )
 
 type ViewerContext struct {
@@ -30,7 +30,7 @@ type RenderContext struct {
 	fovX        float64
 	fovY        float64
 
-	BatchRenders []assets.Batch
+	BatchRenders []batch.Batch
 
 	// entities
 	ShadowCastingEntities           []*entity.Entity

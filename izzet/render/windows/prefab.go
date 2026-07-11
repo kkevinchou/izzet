@@ -367,7 +367,7 @@ func renderPrefabMaterialSlots(app renderiface.App) {
 		if imgui.Button("Append") {
 			activePrefabEditor.MeshMaterials = append(
 				activePrefabEditor.MeshMaterials,
-				app.AssetManager().DefaultMaterialID(),
+				assets.DefaultMaterialID,
 			)
 		}
 	})

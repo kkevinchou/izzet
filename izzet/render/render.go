@@ -18,6 +18,7 @@ import (
 	"github.com/kkevinchou/izzet/izzet/appmode"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
+	"github.com/kkevinchou/izzet/izzet/render/batch"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/drawer"
 	"github.com/kkevinchou/izzet/izzet/render/menus"
@@ -84,7 +85,7 @@ type RenderSystem struct {
 	// list of materials whose textures need to be generated
 	materialTextureQueue []assets.MaterialID
 
-	batchRenders []assets.Batch
+	batchRenders []batch.Batch
 
 	renderPasses      []renderpass.RenderPass
 	renderPassContext *context.RenderPassContext
@@ -150,11 +151,11 @@ func New(app renderiface.App, shaderDirectory string, width, height int) *Render
 	return r
 }
 
-func (r *RenderSystem) assertShaderConfigurations() {
+func (s *RenderSystem) assertShaderConfigurations() {
 
 	var invocations int32
 	gl.GetProgramiv(
-		r.shaderManager.GetShaderProgram("cascaded_shadow_map").ID,
+		s.shaderManager.GetShaderProgram("cascaded_shadow_map").ID,
 		gl.GEOMETRY_SHADER_INVOCATIONS,
 		&invocations,
 	)
@@ -168,17 +169,17 @@ func (r *RenderSystem) assertShaderConfigurations() {
 	}
 }
 
-func (r *RenderSystem) CreateMaterialTexture(id assets.MaterialID) {
-	material := r.app.AssetManager().GetMaterial(id)
-	materialFBO, materialTexture := r.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
-	r.materialTextureMap[material.ID] = materialTexture
+func (s *RenderSystem) CreateMaterialTexture(id assets.MaterialID) {
+	material := s.app.AssetManager().GetMaterial(id)
+	materialFBO, materialTexture := s.createCircleTexture(int(materialTextureWidth), int(materialTextureHeight))
+	s.materialTextureMap[material.ID] = materialTexture
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, materialFBO)
 	gl.Viewport(0, 0, materialTextureWidth, materialTextureHeight)
 	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	shader := r.shaderManager.GetShaderProgram("material_preview")
+	shader := s.shaderManager.GetShaderProgram("material_preview")
 	shader.Use()
 
 	var vao uint32
@@ -192,7 +193,7 @@ func (r *RenderSystem) CreateMaterialTexture(id assets.MaterialID) {
 		shader.SetUniformInt("uAlbedoMap", int32(pbr.BaseColorTextureCoordsIndex))
 
 		gl.ActiveTexture(gl.TEXTURE0)
-		texture := r.app.AssetManager().GetTexture(pbr.BaseColorTextureName)
+		texture := s.app.AssetManager().GetTexture(pbr.BaseColorTextureName)
 		gl.BindTexture(gl.TEXTURE_2D, texture.ID)
 	} else {
 		shader.SetUniformInt("uUseAlbedoMap", 0)
@@ -209,95 +210,95 @@ func (r *RenderSystem) CreateMaterialTexture(id assets.MaterialID) {
 	shader.SetUniformVec3("uLightDir", mgl32.Vec3{0.5, 0.5, 0.5})
 	shader.SetUniformVec3("uLightColor", mgl32.Vec3{5, 5, 5})
 
-	r.iztDrawArrays(0, 6)
+	s.iztDrawArrays(0, 6)
 }
 
 // this might be the most garbage code i've ever written
-func (r *RenderSystem) initorReinitTextures(width, height int, init bool) {
+func (s *RenderSystem) initorReinitTextures(width, height int, init bool) {
 	// texture array debug resolve FBO
 	textureArrayDebugTextureFn := textureFn(width, height, []int32{rendersettings.InternalTextureColorFormatRGB}, []uint32{rendersettings.RenderFormatRGB}, []uint32{gl.FLOAT})
 	var textureArrayDebugTextures []uint32
 	if init {
-		r.textureArrayDebugFBO, textureArrayDebugTextures = r.initFrameBufferNoDepth(textureArrayDebugTextureFn)
+		s.textureArrayDebugFBO, textureArrayDebugTextures = s.initFrameBufferNoDepth(textureArrayDebugTextureFn)
 	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, r.textureArrayDebugFBO)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, s.textureArrayDebugFBO)
 		_, _, textureArrayDebugTextures = textureArrayDebugTextureFn()
 	}
-	gl.DeleteTextures(1, &r.textureArrayDebugTexture)
-	r.textureArrayDebugTexture = textureArrayDebugTextures[0]
+	gl.DeleteTextures(1, &s.textureArrayDebugTexture)
+	s.textureArrayDebugTexture = textureArrayDebugTextures[0]
 }
 
-func (r *RenderSystem) ReinitializeFrameBuffers() {
-	width, height := r.SceneSize()
-	r.initorReinitTextures(width, height, false)
-	for _, pass := range r.renderPasses {
-		pass.Resize(width, height, r.renderPassContext)
+func (s *RenderSystem) ReinitializeFrameBuffers() {
+	width, height := s.SceneSize()
+	s.initorReinitTextures(width, height, false)
+	for _, pass := range s.renderPasses {
+		pass.Resize(width, height, s.renderPassContext)
 	}
 }
 
-func (r *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
-	return &r.app.RuntimeConfig().CloudTextures[r.app.RuntimeConfig().ActiveCloudTextureIndex]
+func (s *RenderSystem) activeCloudTexture() *runtimeconfig.CloudTexture {
+	return &s.app.RuntimeConfig().CloudTextures[s.app.RuntimeConfig().ActiveCloudTextureIndex]
 }
 
-func (r *RenderSystem) Render(delta time.Duration) {
+func (s *RenderSystem) Render(delta time.Duration) {
 	mr := telemetry.ClientRegistry()
 
-	if r.sceneSize != r.nextSceneSize {
-		r.sceneSize = r.nextSceneSize
-		r.ReinitializeFrameBuffers()
+	if s.sceneSize != s.nextSceneSize {
+		s.sceneSize = s.nextSceneSize
+		s.ReinitializeFrameBuffers()
 	}
 
 	initOpenGLRenderSettings()
 
-	r.app.RuntimeConfig().TriangleDrawCount = 0
-	r.app.RuntimeConfig().DrawCount = 0
+	s.app.RuntimeConfig().TriangleDrawCount = 0
+	s.app.RuntimeConfig().DrawCount = 0
 
-	r.gpuProfiler.CollectAvailable()
+	s.gpuProfiler.CollectAvailable()
 
 	start := time.Now()
-	r.gpuProfiler.Profile("volumetrics", func() {
-		r.renderVolumetrics(r.shaderManager, r.app.AssetManager())
+	s.gpuProfiler.Profile("volumetrics", func() {
+		s.renderVolumetrics(s.shaderManager, s.app.AssetManager())
 	})
 	mr.Inc("render_cpu_volumetrics", durationMilliseconds(start))
 
-	r.createMaterialTextures()
+	s.createMaterialTextures()
 
 	// get the position and rotation of either the player camera or editor camera
 	var position mgl64.Vec3
 	var rotation mgl64.Quat
-	if r.app.AppMode() == appmode.Editor {
-		position = r.app.GetEditorCameraPosition()
-		rotation = r.app.GetEditorCameraRotation()
+	if s.app.AppMode() == appmode.Editor {
+		position = s.app.GetEditorCameraPosition()
+		rotation = s.app.GetEditorCameraRotation()
 	} else {
-		camera := r.app.GetPlayerCamera()
+		camera := s.app.GetPlayerCamera()
 		position = camera.Position()
 		rotation = camera.Rotation()
 	}
 
-	renderContext, cameraViewerContext := r.createRenderingContexts(position, rotation)
+	renderContext, cameraViewerContext := s.createRenderingContexts(position, rotation)
 
 	start = time.Now()
-	renderableEntities := r.fetchRenderableEntities(position, rotation, renderContext)
+	renderableEntities := s.fetchRenderableEntities(position, rotation, renderContext)
 	mr.Inc("render_cpu_query_renderable", durationMilliseconds(start))
 
 	start = time.Now()
-	shadowEntities := r.fetchShadowCastingEntities(position, rotation, renderContext)
+	shadowEntities := s.fetchShadowCastingEntities(position, rotation, renderContext)
 	mr.Inc("render_cpu_query_shadowcasting", durationMilliseconds(start))
 
 	start = time.Now()
-	pointLightShadowEntities := r.fetchPointLightShadowCastingEntities(renderContext)
+	pointLightShadowEntities := s.fetchPointLightShadowCastingEntities(renderContext)
 	mr.Inc("render_cpu_query_pointlight_shadowcasting", durationMilliseconds(start))
 
 	renderContext.RenderableEntities = renderableEntities
 	renderContext.ShadowCastingEntities = shadowEntities
 	renderContext.PointLightShadowCastingEntities = pointLightShadowEntities
 	renderContext.ShadowDistance = renderContext.ShadowMapCascades[len(renderContext.ShadowMapCascades)-1].Distance
-	renderContext.BatchRenders = r.batchRenders
+	renderContext.BatchRenders = s.batchRenders
 
-	for _, pass := range r.renderPasses {
-		r.gpuProfiler.Profile(pass.Name(), func() {
+	for _, pass := range s.renderPasses {
+		s.gpuProfiler.Profile(pass.Name(), func() {
 			start := time.Now()
-			pass.Render(renderContext, r.renderPassContext, cameraViewerContext)
+			pass.Render(renderContext, s.renderPassContext, cameraViewerContext)
 			mr.Inc("render_cpu_"+pass.Name(), durationMilliseconds(start))
 		})
 	}
@@ -306,12 +307,12 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	start = time.Now()
 	// for performance reasons, only perform color picking when an entity
 	// has been selected
-	if r.app.AppMode() == appmode.Editor && r.app.SelectedEntity() != nil {
-		r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
+	if s.app.AppMode() == appmode.Editor && s.app.SelectedEntity() != nil {
+		s.hoveredEntityID = s.getEntityByPixelPosition(s.renderPassContext.MainFBO, s.app.GetFrameInput().MouseInput.Position)
 	}
 	mr.Inc("render_cpu_colorpicking_pick", durationMilliseconds(start))
 
-	r.setDebugTexture(renderContext)
+	s.setDebugTexture(renderContext)
 
 	// render to back buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
@@ -319,22 +320,22 @@ func (r *RenderSystem) Render(delta time.Duration) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	start = time.Now()
-	r.gpuProfiler.Profile("imgui", func() {
-		r.renderHelper(renderContext)
+	s.gpuProfiler.Profile("imgui", func() {
+		s.renderHelper(renderContext)
 	})
 	mr.Inc("render_cpu_imgui", durationMilliseconds(start))
 }
 
-func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext) {
+func (s *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl64.Quat) (context.RenderContext, context.ViewerContext) {
 	mr := telemetry.ClientRegistry()
 
 	start := time.Now()
 	var renderContext context.RenderContext
-	width, height := r.SceneSize()
+	width, height := s.SceneSize()
 
 	var fovX float64
-	if r.app.AppMode() == appmode.Play {
-		fovX = r.app.GetPlayerCamera().CameraComponent.FovX
+	if s.app.AppMode() == appmode.Play {
+		fovX = s.app.GetPlayerCamera().CameraComponent.FovX
 	} else {
 		fovX = settings.DefaultFOVX
 	}
@@ -351,11 +352,11 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 
 		ViewMatrix:                   viewTranslationMatrix.Mul4(rotationMatrix).Inv(),
 		ViewMatrixWithoutTranslation: rotationMatrix.Inv(),
-		ProjectionMatrix:             mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(r.app.RuntimeConfig().Near), float64(r.app.RuntimeConfig().Far)),
+		ProjectionMatrix:             mgl64.Perspective(mgl64.DegToRad(renderContext.FovY()), renderContext.AspectRatio(), float64(s.app.RuntimeConfig().Near), float64(s.app.RuntimeConfig().Far)),
 	}
 
 	// find the directional light if there is one
-	lights := r.app.World().Lights()
+	lights := s.app.World().Lights()
 	var directionalLights []*entity.Entity
 	var pointLights []*entity.Entity
 
@@ -374,10 +375,10 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		directionalLightZ = float64(directionalLights[0].LightInfo.Direction3F[2])
 	}
 
-	near := float64(r.app.RuntimeConfig().ShadowNearDistance)
-	far := float64(r.app.RuntimeConfig().ShadowFarDistance)
+	near := float64(s.app.RuntimeConfig().ShadowNearDistance)
+	far := float64(s.app.RuntimeConfig().ShadowFarDistance)
 
-	cascades := computeCascadeSplits(near, far, settings.NumShadowMapCascades, float64(r.app.RuntimeConfig().ShadowCascadeBlendFactor))
+	cascades := computeCascadeSplits(near, far, settings.NumShadowMapCascades, float64(s.app.RuntimeConfig().ShadowCascadeBlendFactor))
 
 	for _, cascade := range cascades {
 		// CSM - calculate N sets of frustum points, we need to advance the position
@@ -391,7 +392,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 		)
 
 		lightRotation := utils.Vec3ToQuat(mgl64.Vec3{directionalLightX, directionalLightY, directionalLightZ})
-		lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, r.app.RuntimeConfig().ShadowmapZOffset)
+		lightPosition, lightProjectionMatrix := ComputeDirectionalLightProps(lightRotation.Mat4(), lightFrustumPoints, s.app.RuntimeConfig().ShadowmapZOffset)
 		lightViewMatrix := mgl64.Translate3D(lightPosition.X(), lightPosition.Y(), lightPosition.Z()).Mul4(lightRotation.Mat4()).Inv()
 
 		lightViewerContext := context.ViewerContext{
@@ -414,7 +415,7 @@ func (r *RenderSystem) createRenderingContexts(position mgl64.Vec3, rotation mgl
 	renderContext.Lights = lights
 	renderContext.PointLights = pointLights
 
-	r.cameraViewerContext = cameraViewerContext
+	s.cameraViewerContext = cameraViewerContext
 	mr.Inc("render_cpu_context_setup", durationMilliseconds(start))
 
 	return renderContext, cameraViewerContext
@@ -444,8 +445,8 @@ func computeCascadeSplits(near, far float64, count int, lambda float64) [][2]flo
 	return cascades
 }
 
-func (r *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.RenderContext, texture uint32, layerCount int32) uint32 {
-	runtimeConfig := r.app.RuntimeConfig()
+func (s *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.RenderContext, texture uint32, layerCount int32) uint32 {
+	runtimeConfig := s.app.RuntimeConfig()
 	maxLayer := layerCount - 1
 	if runtimeConfig.TextureArrayDebugLayer < 0 {
 		runtimeConfig.TextureArrayDebugLayer = 0
@@ -454,11 +455,11 @@ func (r *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.Ren
 		runtimeConfig.TextureArrayDebugLayer = maxLayer
 	}
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, r.textureArrayDebugFBO)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, s.textureArrayDebugFBO)
 	gl.Viewport(0, 0, int32(renderContext.Width()), int32(renderContext.Height()))
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	shader := r.shaderManager.GetShaderProgram("textureArrayDebug")
+	shader := s.shaderManager.GetShaderProgram("textureArrayDebug")
 	shader.Use()
 
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -467,69 +468,69 @@ func (r *RenderSystem) resolveTextureArrayDebugTexture(renderContext context.Ren
 	shader.SetUniformInt("depthMap", 0)
 	shader.SetUniformInt("layer", runtimeConfig.TextureArrayDebugLayer)
 
-	gl.BindVertexArray(r.ndcQuadVAO)
-	r.iztDrawArrays(0, 6)
+	gl.BindVertexArray(s.ndcQuadVAO)
+	s.iztDrawArrays(0, 6)
 
-	return r.textureArrayDebugTexture
+	return s.textureArrayDebugTexture
 }
 
-func (r *RenderSystem) setDebugTexture(renderContext context.RenderContext) {
+func (s *RenderSystem) setDebugTexture(renderContext context.RenderContext) {
 	if menus.SelectedDebugComboOption == menus.ComboOptionFinalRender {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.PostProcessingTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.PostProcessingTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionColorPicking {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainColorPickingTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.MainColorPickingTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionBloom {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.BloomTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.BloomTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionPreBloomHDR {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MainTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.MainTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionShadowDepthMap {
-		r.app.RuntimeConfig().DebugTexture = r.resolveTextureArrayDebugTexture(renderContext, r.renderPassContext.ShadowMapTexture, int32(settings.NumShadowMapCascades))
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.resolveTextureArrayDebugTexture(renderContext, s.renderPassContext.ShadowMapTexture, int32(settings.NumShadowMapCascades))
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionCameraDepthMap {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.CameraDepthTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.CameraDepthTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
-		cloudTexture := r.activeCloudTexture()
-		r.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		cloudTexture := s.activeCloudTexture()
+		s.app.RuntimeConfig().DebugTexture = cloudTexture.RenderTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAO {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.SSAOTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.SSAOTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferPosition {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.GPositionTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.GPositionTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionGBufferNormal {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.GNormalTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.GNormalTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionSSAOBlur {
-		r.app.RuntimeConfig().DebugTexture = r.renderPassContext.SSAOBlurTexture
-		r.app.RuntimeConfig().DebugAspectRatio = 0
+		s.app.RuntimeConfig().DebugTexture = s.renderPassContext.SSAOBlurTexture
+		s.app.RuntimeConfig().DebugAspectRatio = 0
 	} else if menus.SelectedDebugComboOption == menus.ComboOptionDebug {
 		// r.app.RuntimeConfig().DebugTexture = r.renderPassContext.MultiSampleDebugTexture
 		// r.app.RuntimeConfig().DebugAspectRatio = 0
 	}
 }
 
-func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entity.Entity {
+func (s *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entity.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
-		float64(r.app.RuntimeConfig().Near),
-		float64(r.app.RuntimeConfig().Far),
+		float64(s.app.RuntimeConfig().Near),
+		float64(s.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
 	)
 
-	sp := r.app.World().SpatialPartition()
+	sp := s.app.World().SpatialPartition()
 	bb := collider.BoundingBoxFromVertices(frustumPoints)
 
 	var result []*entity.Entity
 	for _, spatialEntity := range sp.QueryEntities(bb) {
-		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
+		e := s.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
 		if e.MeshComponent != nil && e.MeshComponent.ShadowCasting {
 			result = append(result, e)
 		}
@@ -537,7 +538,7 @@ func (r *RenderSystem) fetchShadowCastingEntities(cameraPosition mgl64.Vec3, rot
 	return result
 }
 
-func (r *RenderSystem) fetchPointLightShadowCastingEntities(renderContext context.RenderContext) []*entity.Entity {
+func (s *RenderSystem) fetchPointLightShadowCastingEntities(renderContext context.RenderContext) []*entity.Entity {
 	if len(renderContext.PointLights) == 0 {
 		return nil
 	}
@@ -550,10 +551,10 @@ func (r *RenderSystem) fetchPointLightShadowCastingEntities(renderContext contex
 		MaxVertex: position.Add(mgl64.Vec3{lightRange, lightRange, lightRange}),
 	}
 
-	sp := r.app.World().SpatialPartition()
+	sp := s.app.World().SpatialPartition()
 	var result []*entity.Entity
 	for _, spatialEntity := range sp.QueryEntities(queryBounds) {
-		e := r.app.World().GetEntityByID(spatialEntity.GetID())
+		e := s.app.World().GetEntityByID(spatialEntity.GetID())
 		if e.MeshComponent != nil && e.MeshComponent.ShadowCasting {
 			result = append(result, e)
 		}
@@ -561,22 +562,22 @@ func (r *RenderSystem) fetchPointLightShadowCastingEntities(renderContext contex
 	return result
 }
 
-func (r *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entity.Entity {
+func (s *RenderSystem) fetchRenderableEntities(cameraPosition mgl64.Vec3, rotation mgl64.Quat, renderContext context.RenderContext) []*entity.Entity {
 	frustumPoints := calculateFrustumPoints(
 		cameraPosition,
 		rotation,
-		float64(r.app.RuntimeConfig().Near),
-		float64(r.app.RuntimeConfig().Far),
+		float64(s.app.RuntimeConfig().Near),
+		float64(s.app.RuntimeConfig().Far),
 		renderContext.FovX(),
 		renderContext.FovY(),
 	)
 
-	sp := r.app.World().SpatialPartition()
+	sp := s.app.World().SpatialPartition()
 	bb := collider.BoundingBoxFromVertices(frustumPoints)
 
 	var result []*entity.Entity
 	for _, spatialEntity := range sp.QueryEntities(bb) {
-		e := r.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
+		e := s.app.World().GetEntityByID(spatialEntity.GetID()) // resolve fresh by ID
 		if e.MeshComponent != nil {
 			result = append(result, e)
 		}
@@ -606,8 +607,8 @@ func init() {
 	firstLoad = true
 }
 
-func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
-	uiEnabled := r.app.RuntimeConfig().UIEnabled
+func (s *RenderSystem) renderViewPort(renderContext context.RenderContext) {
+	uiEnabled := s.app.RuntimeConfig().UIEnabled
 	viewport := imgui.MainViewport()
 	imgui.SetNextWindowPos(viewport.Pos())
 	imgui.SetNextWindowSize(viewport.Size())
@@ -724,22 +725,22 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 		imgui.InternalDockBuilderFinish(dockspaceID)
 	}
 
-	menus.SetupMenuBar(r.app, renderContext)
-	windows.RenderWindows(r.app)
+	menus.SetupMenuBar(s.app, renderContext)
+	windows.RenderWindows(s.app)
 
 	imgui.End() // host window
 
 	if uiEnabled {
-		r.drawInspector()
-		r.drawSidebarPanels(renderContext)
+		s.drawInspector()
+		s.drawSidebarPanels(renderContext)
 	}
 
-	r.drawSceneView(renderContext, uiEnabled)
+	s.drawSceneView(renderContext, uiEnabled)
 
 	if uiEnabled {
-		if r.app.RuntimeConfig().ShowTextureViewer {
+		if s.app.RuntimeConfig().ShowTextureViewer {
 			imgui.SetNextWindowSizeV(imgui.Vec2{X: 400}, imgui.CondFirstUseEver)
-			if imgui.BeginV("Texture Viewer", &r.app.RuntimeConfig().ShowTextureViewer, imgui.WindowFlagsNone) {
+			if imgui.BeginV("Texture Viewer", &s.app.RuntimeConfig().ShowTextureViewer, imgui.WindowFlagsNone) {
 				imgui.SetNextItemWidth(200)
 				if imgui.BeginCombo("##", string(menus.SelectedDebugComboOption)) {
 					for _, option := range menus.DebugComboOptions {
@@ -754,16 +755,16 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 					imgui.SameLine()
 					maxLayer := int32(settings.NumShadowMapCascades - 1)
 					imgui.SetNextItemWidth(200)
-					imgui.SliderInt("Layer", &r.app.RuntimeConfig().TextureArrayDebugLayer, 0, maxLayer)
+					imgui.SliderInt("Layer", &s.app.RuntimeConfig().TextureArrayDebugLayer, 0, maxLayer)
 				}
 
 				regionSize := imgui.ContentRegionAvail()
 				imageWidth := regionSize.X
 
-				texture := imgui.TextureID(r.app.RuntimeConfig().DebugTexture)
+				texture := imgui.TextureID(s.app.RuntimeConfig().DebugTexture)
 				aspectRatio := float32(renderContext.AspectRatio())
-				if r.app.RuntimeConfig().DebugAspectRatio != 0 {
-					aspectRatio = float32(r.app.RuntimeConfig().DebugAspectRatio)
+				if s.app.RuntimeConfig().DebugAspectRatio != 0 {
+					aspectRatio = float32(s.app.RuntimeConfig().DebugAspectRatio)
 				}
 				size := imgui.Vec2{X: imageWidth, Y: imageWidth / aspectRatio}
 				if menus.SelectedDebugComboOption == menus.ComboOptionVolumetric {
@@ -786,20 +787,20 @@ func (r *RenderSystem) renderViewPort(renderContext context.RenderContext) {
 	imgui.PopStyleColorV(int32(len(colorStyles)))
 
 	if uiEnabled {
-		if r.app.RuntimeConfig().ShowImguiDemo {
+		if s.app.RuntimeConfig().ShowImguiDemo {
 			imgui.ShowDemoWindow()
 		}
 	}
 }
 
 // drawSceneView draws the main scene as well as the footer.
-func (r *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnabled bool) {
-	r.gameWindowHovered = false
+func (s *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnabled bool) {
+	s.gameWindowHovered = false
 	imgui.BeginV("SceneView", nil, imgui.WindowFlagsNoScrollbar|imgui.WindowFlagsNoScrollWithMouse)
 	if imgui.IsWindowHovered() {
-		r.gameWindowHovered = true
+		s.gameWindowHovered = true
 	}
-	texture := imgui.TextureID(r.renderPassContext.PostProcessingTexture)
+	texture := imgui.TextureID(s.renderPassContext.PostProcessingTexture)
 
 	var drawerbarSize float32
 	if uiEnabled {
@@ -808,14 +809,14 @@ func (r *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnab
 
 	sceneSize := imgui.ContentRegionAvail()
 	sceneSize = sceneSize.Sub(imgui.Vec2{X: 0, Y: drawerbarSize})
-	r.nextSceneSize = [2]int{int(sceneSize.X), int(sceneSize.Y)}
+	s.nextSceneSize = [2]int{int(sceneSize.X), int(sceneSize.Y)}
 
 	imagePosition := imgui.CursorScreenPos()
-	r.sceneViewPosition = [2]float32{imagePosition.X, imagePosition.Y}
+	s.sceneViewPosition = [2]float32{imagePosition.X, imagePosition.Y}
 
 	imgui.ImageV(
 		texture,
-		imgui.Vec2{X: float32(r.sceneSize[0]), Y: float32(r.sceneSize[1])},
+		imgui.Vec2{X: float32(s.sceneSize[0]), Y: float32(s.sceneSize[1])},
 		imgui.Vec2{X: 0, Y: 1},
 		imgui.Vec2{X: 1, Y: 0},
 		imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1},
@@ -823,60 +824,60 @@ func (r *RenderSystem) drawSceneView(renderContext context.RenderContext, uiEnab
 	)
 	if uiEnabled {
 		drawer.BuildDrawerbar(
-			r.app,
+			s.app,
 			renderContext,
-			r.sceneSize[0],
-			r.materialTextureMap,
+			s.sceneSize[0],
+			s.materialTextureMap,
 		)
 	}
 	imgui.End()
 }
 
-func (r *RenderSystem) drawInspector() {
+func (s *RenderSystem) drawInspector() {
 	imgui.Begin("Inspector")
-	panels.EntityProps(r.app.SelectedEntity(), r.app)
+	panels.EntityProps(s.app.SelectedEntity(), s.app)
 	imgui.End()
 }
 
-func (r *RenderSystem) drawSidebarPanels(renderContext context.RenderContext) {
+func (s *RenderSystem) drawSidebarPanels(renderContext context.RenderContext) {
 	imgui.Begin("Scene")
-	panels.SceneGraph(r.app)
+	panels.SceneGraph(s.app)
 	imgui.End()
 	imgui.Begin("WorldProps")
-	panels.WorldProps(r.app)
+	panels.WorldProps(s.app)
 	imgui.End()
 	imgui.Begin("Stats")
-	panels.Stats(r.app, renderContext)
+	panels.Stats(s.app, renderContext)
 	imgui.End()
 	imgui.Begin("Rendering")
-	panels.Rendering(r.app)
+	panels.Rendering(s.app)
 	imgui.End()
 }
 
-func (r *RenderSystem) renderHelper(renderContext context.RenderContext) {
-	r.app.Platform().NewFrame()
+func (s *RenderSystem) renderHelper(renderContext context.RenderContext) {
+	s.app.Platform().NewFrame()
 	imgui.NewFrame()
 
-	r.renderViewPort(renderContext)
+	s.renderViewPort(renderContext)
 
 	imgui.Render()
-	r.imguiRenderer.Render(r.app.Platform().DisplaySize(), r.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
+	s.imguiRenderer.Render(s.app.Platform().DisplaySize(), s.app.Platform().FramebufferSize(), imgui.CurrentDrawData())
 }
 
-func (r *RenderSystem) GameWindowHovered() bool {
-	return r.gameWindowHovered
+func (s *RenderSystem) GameWindowHovered() bool {
+	return s.gameWindowHovered
 }
 
-func (r *RenderSystem) HoveredEntityID() *int {
-	return r.hoveredEntityID
+func (s *RenderSystem) HoveredEntityID() *int {
+	return s.hoveredEntityID
 }
 
 // TODO - might have undefined behavior calling this outside of the render loop
 // rather than proactively sampling the color texture, we should treat this as
 // a buffered request that the renderer eventually gets to
-func (r *RenderSystem) TryHoverEntity() *int {
-	r.hoveredEntityID = r.getEntityByPixelPosition(r.renderPassContext.MainFBO, r.app.GetFrameInput().MouseInput.Position)
-	return r.hoveredEntityID
+func (s *RenderSystem) TryHoverEntity() *int {
+	s.hoveredEntityID = s.getEntityByPixelPosition(s.renderPassContext.MainFBO, s.app.GetFrameInput().MouseInput.Position)
+	return s.hoveredEntityID
 }
 
 func initOpenGLRenderSettings() {
@@ -896,21 +897,21 @@ func initOpenGLRenderSettings() {
 	gl.Disable(gl.FRAMEBUFFER_SRGB)
 }
 
-func (r *RenderSystem) QueueCreateMaterialTexture(id assets.MaterialID) {
-	r.materialTextureQueue = append(r.materialTextureQueue, id)
+func (s *RenderSystem) QueueCreateMaterialTexture(id assets.MaterialID) {
+	s.materialTextureQueue = append(s.materialTextureQueue, id)
 }
 
-func (r *RenderSystem) createMaterialTextures() {
-	for _, material := range r.app.AssetManager().GetMaterials() {
-		if _, ok := r.materialTextureMap[material.ID]; ok {
+func (s *RenderSystem) createMaterialTextures() {
+	for _, material := range s.app.AssetManager().GetMaterials() {
+		if _, ok := s.materialTextureMap[material.ID]; ok {
 			continue
 		}
-		r.CreateMaterialTexture(material.ID)
+		s.CreateMaterialTexture(material.ID)
 	}
 
 	// queued texture creations (e.g. from a material being updated)
-	for _, materialID := range r.materialTextureQueue {
-		r.CreateMaterialTexture(materialID)
+	for _, materialID := range s.materialTextureQueue {
+		s.CreateMaterialTexture(materialID)
 	}
-	r.materialTextureQueue = []assets.MaterialID{}
+	s.materialTextureQueue = []assets.MaterialID{}
 }

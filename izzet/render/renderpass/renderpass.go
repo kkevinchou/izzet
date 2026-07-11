@@ -13,6 +13,7 @@ import (
 	"github.com/kkevinchou/izzet/internal/shaders"
 	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
+	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/entity"
 	"github.com/kkevinchou/izzet/izzet/render/context"
 	"github.com/kkevinchou/izzet/izzet/render/renderiface"
@@ -384,19 +385,18 @@ func drawModel(
 
 	// THE HOTTEST CODE PATH IN THE ENGINE
 	primitives := app.AssetManager().GetPrimitives(e.MeshComponent.MeshHandle)
-	if e.MeshComponent.MeshHandle == app.AssetManager().DefaultCubeHandle() {
+	if e.MeshComponent.MeshHandle == assets.DefaultCubeHandle {
 		shader.SetUniformInt("repeatTexture", 1)
 	} else {
 		shader.SetUniformInt("repeatTexture", 0)
 	}
+
+	materialIDs := entity.GetPrimitiveMaterialIDs(app.AssetManager(), e)
+
 	for i, prim := range primitives {
 		// once we have prefabs working we should drop the use of materials from the primitive
 		// the material from the primitive is the original material from the source asset
-		materialID := prim.MaterialID
-		if len(e.MeshComponent.Materials) > 0 && i < len(e.MeshComponent.Materials) {
-			materialID = e.MeshComponent.Materials[i]
-		}
-
+		materialID := materialIDs[i]
 		primitiveMaterial := app.AssetManager().GetMaterial(materialID).Material
 		material := primitiveMaterial.PBRMaterial.PBRMetallicRoughness
 		alphaMode := primitiveMaterial.PBRMaterial.AlphaMode

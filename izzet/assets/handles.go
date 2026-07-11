@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	defaultMaterialID = MaterialID("custom/default")
+	DefaultMaterialID = MaterialID("custom/default")
 	whiteMaterialID   = MaterialID("custom/white")
-	defaultCubeHandle = MeshHandle{namespace: "global", id: "cube"}
+	DefaultCubeHandle = MeshHandle{namespace: "global", id: "cube"}
 )
 
 type AnimationHandle struct {
@@ -63,16 +63,8 @@ func newSingleEntityMeshHandle(namespace string) MeshHandle {
 	return MeshHandle{namespace: namespace, id: "__merged__"}
 }
 
-func (m *AssetManager) DefaultMaterialID() MaterialID {
-	return defaultMaterialID
-}
-
 func (m *AssetManager) WhiteMaterialID() MaterialID {
 	return whiteMaterialID
-}
-
-func (m *AssetManager) DefaultCubeHandle() MeshHandle {
-	return defaultCubeHandle
 }
 
 func (m *AssetManager) GetSingleEntityMeshHandle(namespace string) MeshHandle {

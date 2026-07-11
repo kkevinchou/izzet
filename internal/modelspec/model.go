@@ -89,31 +89,3 @@ type Mesh struct {
 	ID         int
 	Primitives []*Primitive
 }
-
-func NormalizeWeights(jointWeights []JointWeight) {
-	var totalWeight float32
-	for _, jw := range jointWeights {
-		totalWeight += jw.Weight
-	}
-
-	for i := range jointWeights {
-		jointWeights[i].Weight /= totalWeight
-	}
-}
-
-type byWeights []JointWeight
-
-type JointWeight struct {
-	JointID int
-	Weight  float32
-}
-
-func (s byWeights) Len() int {
-	return len(s)
-}
-func (s byWeights) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-func (s byWeights) Less(i, j int) bool {
-	return s[i].Weight < s[j].Weight
-}

@@ -3,6 +3,7 @@ package batch
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/assets"
 	"github.com/kkevinchou/izzet/izzet/settings"
@@ -48,7 +49,7 @@ func SetupBatchedStaticRendering(am *assets.AssetManager, meshHandles []assets.M
 					texture1Coords.X(), texture1Coords.Y(),
 				)
 
-				ids, weights := assets.FillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
+				ids, weights := utils.FillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
 				for _, id := range ids {
 					batch.jointIDsAttribute = append(batch.jointIDsAttribute, int32(id))
 				}

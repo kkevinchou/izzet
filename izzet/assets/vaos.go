@@ -1,10 +1,9 @@
 package assets
 
 import (
-	"sort"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/kkevinchou/izzet/internal/modelspec"
+	"github.com/kkevinchou/izzet/internal/utils"
 	"github.com/kkevinchou/izzet/izzet/apputils"
 	"github.com/kkevinchou/izzet/izzet/settings"
 )
@@ -44,7 +43,7 @@ func createVAOs(meshes []*modelspec.Mesh) [][]uint32 {
 					texture1Coords.X(), texture1Coords.Y(),
 				)
 
-				ids, weights := FillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
+				ids, weights := utils.FillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
 				for _, id := range ids {
 					jointIDsAttribute = append(jointIDsAttribute, int32(id))
 				}
@@ -137,7 +136,7 @@ func createGeometryVAOs(meshes []*modelspec.Mesh) [][]uint32 {
 					position.X(), position.Y(), position.Z(),
 				)
 
-				ids, weights := FillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
+				ids, weights := utils.FillWeights(jointIDs, jointWeights, settings.MaxAnimationJointWeights)
 				for _, id := range ids {
 					jointIDsAttribute = append(jointIDsAttribute, int32(id))
 				}
@@ -186,63 +185,4 @@ func createGeometryVAOs(meshes []*modelspec.Mesh) [][]uint32 {
 	}
 
 	return vaos
-}
-
-func FillWeights(jointIDs []int, weights []float32, maxAnimationJointWeights int) ([]int, []float32) {
-	j := []int{}
-	w := []float32{}
-
-	if len(jointIDs) <= maxAnimationJointWeights {
-		j = append(j, jointIDs...)
-		w = append(w, weights...)
-		// fill in empty jointIDs and weights
-		for i := 0; i < maxAnimationJointWeights-len(jointIDs); i++ {
-			j = append(j, 0)
-			w = append(w, 0)
-		}
-	} else if len(jointIDs) > maxAnimationJointWeights {
-		jointWeights := []JointWeight{}
-		for i := range jointIDs {
-			jointWeights = append(jointWeights, JointWeight{JointID: jointIDs[i], Weight: weights[i]})
-		}
-		sort.Sort(sort.Reverse(ByWeights(jointWeights)))
-
-		// take top 3 weights
-		jointWeights = jointWeights[:maxAnimationJointWeights]
-		NormalizeWeights(jointWeights)
-		for _, jw := range jointWeights {
-			j = append(j, jw.JointID)
-			w = append(w, jw.Weight)
-		}
-	}
-
-	return j, w
-}
-
-func NormalizeWeights(jointWeights []JointWeight) {
-	var totalWeight float32
-	for _, jw := range jointWeights {
-		totalWeight += jw.Weight
-	}
-
-	for i := range jointWeights {
-		jointWeights[i].Weight /= totalWeight
-	}
-}
-
-type ByWeights []JointWeight
-
-type JointWeight struct {
-	JointID int
-	Weight  float32
-}
-
-func (s ByWeights) Len() int {
-	return len(s)
-}
-func (s ByWeights) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-func (s ByWeights) Less(i, j int) bool {
-	return s[i].Weight < s[j].Weight
 }

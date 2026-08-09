@@ -10,3 +10,5 @@ Izzet is a 3D game engine sandbox written with Go/OpenGl. I use this space to le
 1. Gizmo controls for translation, rotation and scale
 1. UI for scene graph, entity properties, and prefabs
 1. World serialization
+
+bump

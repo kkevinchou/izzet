@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    env:
+      APT_PACKAGES: >-
+        pkg-config
+        libgl1-mesa-dev
+        libglfw3-dev
+        libgtk-3-dev
+        libsdl2-dev
+        libsdl2-mixer-dev
+        libsdl2-ttf-dev
+        libx11-dev
+        libxcursor-dev
+        libxi-dev
+        libxinerama-dev
+        libxrandr-dev
+        libxxf86vm-dev
+
+    defaults:
+      run:
+        working-directory: izzet
+
+    steps:
+      - name: Check out izzet
+        uses: actions/checkout@v4
+        with:
+          path: izzet
+
+      - name: Check out kitolib
+        uses: actions/checkout@v4
+        with:
+          repository: kkevinchou/kitolib
+          path: kitolib
+
+      - name: Restore native dependency cache
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: ${{ env.APT_PACKAGES }}
+          version: 1
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: izzet/go.mod
+          cache-dependency-path: izzet/go.sum
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
